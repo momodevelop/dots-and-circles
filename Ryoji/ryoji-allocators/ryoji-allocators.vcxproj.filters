@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{b46db5a3-823e-40f8-9def-f496324828ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\detail">
+      <UniqueIdentifier>{2467544f-9727-43e7-840b-74dea47b2ca1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="test">
+      <UniqueIdentifier>{9b8f835d-b13e-479d-95e6-061e7394bb76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{b39be399-454e-4d7b-bc66-7afe4d0687f0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\heap_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\linear_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\local_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\log_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\null_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\segregator_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\slab_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stack_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stl_adapter.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\blk.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fallback_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\freelist_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\detail\pointer.h">
+      <Filter>src\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="src\detail\predef_freelist_strategies.h">
+      <Filter>src\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ryoji-allocators.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="test\main.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
