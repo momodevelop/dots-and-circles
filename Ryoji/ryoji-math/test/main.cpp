@@ -1,5 +1,5 @@
 #include <iostream>
-#include "ryoji-math.h"
+#include "../include/ryoji-math.h"
 
 using namespace std;
 using namespace ryoji::math;
