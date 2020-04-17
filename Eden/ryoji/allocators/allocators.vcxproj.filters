@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="test">
+      <UniqueIdentifier>{04c64c71-95bd-47a0-a960-c58e89aa0dd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="include\zombification">
+      <UniqueIdentifier>{53f3672c-1d7f-4927-ba53-de12e55d17ef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="test\main.cpp">
+      <Filter>test</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\allocators.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\blk.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fallback_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\freelist_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\heap_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\linear_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\local_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\log_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\null_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\segregator_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\slab_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stack_allocator.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stl_adapter.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\zombification\pointer.h">
+      <Filter>include\zombification</Filter>
+    </ClInclude>
+    <ClInclude Include="include\zombification\predef_freelist_strategies.h">
+      <Filter>include\zombification</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
