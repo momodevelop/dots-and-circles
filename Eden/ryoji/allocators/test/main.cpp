@@ -3,17 +3,17 @@
 #include <list>
 
 
-#include "../include/fallback_allocator.h"
-#include "../include/freelist_allocator.h"
-#include "../include/heap_allocator.h"
-#include "../include/linear_allocator.h"
-#include "../include/local_allocator.h"
-#include "../include/log_allocator.h"
-#include "../include/null_allocator.h"
-#include "../include/segregator_allocator.h"
-#include "../include/slab_allocator.h"
-#include "../include/stack_allocator.h"
-#include "../include/stl_adapter.h"
+#include "fallback_allocator.h"
+#include "freelist_allocator.h"
+#include "heap_allocator.h"
+#include "linear_allocator.h"
+#include "local_allocator.h"
+#include "log_allocator.h"
+#include "null_allocator.h"
+#include "segregator_allocator.h"
+#include "slab_allocator.h"
+#include "stack_allocator.h"
+#include "stl_adapter.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
