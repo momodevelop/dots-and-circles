@@ -7,7 +7,7 @@
 #include <array>
 #include <type_traits>
 #include <cassert>
-#include "zombification/constants.h"
+#include "zawarudo/constants.h"
 #include "utils.h"
 
 #define DEFINE_SUBSCRIPT_OPS_AND_CONSTRUCTOR \
@@ -240,7 +240,7 @@ namespace ryoji::math {
 			Vector<T,N> ret = lhs;
 			T len = length(lhs);
 			
-			if (utils::isFloatEqualEnough(len, zombification::_1p0<T>))
+			if (utils::isFloatEqualEnough(len, zawarudo::_1p0<T>))
 				return ret;
 
 			for(size_t i = 0; i < N; ++i) {
@@ -256,18 +256,18 @@ namespace ryoji::math {
 
 		template<typename T, size_t N>
 		bool isPerpendicular(const Vector<T,N>& lhs, const Vector<T,N>& rhs) {
-			return utils::isFloatEqualEnough(dot(lhs, rhs), zombification::zero<T>);
+			return utils::isFloatEqualEnough(dot(lhs, rhs), zawarudo::zero<T>);
 		}
 
 
 		template<typename T, size_t N>
 		bool isSimilarDirection(const Vector<T,N>& lhs, const Vector<T,N>& rhs) {
-			return dot(lhs, rhs) > zombification::zero<T>;
+			return dot(lhs, rhs) > zawarudo::zero<T>;
 		}
 	
 		template<typename T, size_t N>
 		bool isOppositeDirection(const Vector<T,N>& lhs, const Vector<T,N>& rhs) {
-			return dot(lhs, rhs) < zombification::zero<T>;
+			return dot(lhs, rhs) < zawarudo::zero<T>;
 		}
 
 		template<typename T, size_t N>
@@ -290,8 +290,8 @@ namespace ryoji::math {
 			template<typename T, size_t N>
 			T angleBetween(const Vector<T,N>& lhs, const Vector<T,N>& rhs ) {
 				static_assert(std::is_floating_point_v<T>, "T must be floating point type");
-				assert(utils::isFloatEqualEnough(lengthSq(lhs), zombification::_1p0<T>));
-				assert(utils::isFloatEqualEnough(lengthSq(rhs), zombification::_1p0<T>));
+				assert(utils::isFloatEqualEnough(lengthSq(lhs), zawarudo::_1p0<T>));
+				assert(utils::isFloatEqualEnough(lengthSq(rhs), zawarudo::_1p0<T>));
 				return acos(dot(lhs, rhs));
 			}
 		}

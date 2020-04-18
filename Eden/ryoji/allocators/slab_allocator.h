@@ -7,7 +7,7 @@
 #include <cassert>
 #include "blk.h"
 
-#include "zombification/pointer.h"
+#include "zawarudo/pointer.h"
 #include "local_allocator.h"
 #include "heap_allocator.h"
 
@@ -77,7 +77,7 @@ namespace ryoji::allocators {
 		}
 
 		void deallocateAll() {
-			uint8_t adjustment = zombification::pointer::getAlignForwardDiff(start, ObjectAlignment);
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start, ObjectAlignment);
 
 			// save it as (void**)
 			freeList = reinterpret_cast<void**>(start + adjustment);
@@ -89,7 +89,7 @@ namespace ryoji::allocators {
 			void** itr = freeList;
 			for (size_t i = 0; i < objectNum - 1; ++i) {
 				// calculate and store the address of the next item
-				*itr = zombification::pointer::add(itr, ObjectSize);
+				*itr = zawarudo::pointer::add(itr, ObjectSize);
 				itr = reinterpret_cast<void**>(*itr);
 			}
 

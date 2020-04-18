@@ -1,5 +1,5 @@
-#ifndef __RYOJI_MATH_DETAIL_CONSTANTS_H__
-#define __RYOJI_MATH_DETAIL_CONSTANTS_H__
+#ifndef __RYOJI_MATH_ZAWARUDO_CONSTANTS_H__
+#define __RYOJI_MATH_ZAWARUDO_CONSTANTS_H__
 
 
 #ifndef MAKE_CONSTEXPR_FLOAT
@@ -8,7 +8,7 @@ template<typename T> constexpr auto __##whole##p##decimal() {\
 	if constexpr (std::is_same_v<T, float>) { return whole##.##decimal##f; }\
 	else if constexpr (std::is_same_v<T, double>) { return whole##.##decimal; }\
 	else if constexpr (std::is_same_v<T, long double>) { return whole##.##decimal##L; }\
-	else static_assert(zombification::always_false_v<T>);\
+	else static_assert(zawarudo::always_false_v<T>);\
 }\
 template<typename T> constexpr static auto _##whole##p##decimal = __##whole##p##decimal<T>(); 
 #endif
@@ -19,14 +19,14 @@ template<typename T> constexpr auto _##name() { \
 	if constexpr (std::is_same_v<T, float>) { return value ## f; }\
     else if constexpr (std::is_same_v<T, double>) { return value; }\
     else if constexpr (std::is_same_v<T, long double>) { return value ## L; }\
-    else static_assert(zombification::always_false_v<T>); \
+    else static_assert(zawarudo::always_false_v<T>); \
 }\
 template<typename T> constexpr static auto name = _##name<T>();
 #endif
 
 
 namespace ryoji::math {
-	namespace zombification {
+	namespace zawarudo {
 		template<class T> struct always_false : std::false_type {};
 		template<class T> struct always_true : std::true_type {};
 		template<class T> constexpr static auto always_false_v = always_false<T>::value;

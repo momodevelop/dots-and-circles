@@ -7,7 +7,7 @@
 #include <iostream>
 
 namespace ryoji::allocators {
-	namespace zombification {
+	namespace zawarudo {
 		class BasicLogStrategy {
 		public:
 			void printAllocate(Blk blk) {
@@ -20,7 +20,7 @@ namespace ryoji::allocators {
 	}
 
 
-	template<class Allocator, class LogStrategy = zombification::BasicLogStrategy>
+	template<class Allocator, class LogStrategy = zawarudo::BasicLogStrategy>
 	class LogAllocator
 	{
 		Allocator allocator;

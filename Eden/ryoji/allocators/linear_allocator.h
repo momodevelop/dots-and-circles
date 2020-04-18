@@ -7,7 +7,7 @@
 #include <cassert>
 #include "blk.h"
 
-#include "zombification/pointer.h"
+#include "zawarudo/pointer.h"
 #include "local_allocator.h"
 #include "heap_allocator.h"
 
@@ -37,7 +37,7 @@ namespace ryoji::allocators {
 		{
 			assert(size && alignment);
 
-			uint8_t adjustment = zombification::pointer::getAlignForwardDiff(current, alignment);
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(current, alignment);
 
 			// if not enough space, return nullptr
 			if (current + adjustment + size > start + Capacity) {

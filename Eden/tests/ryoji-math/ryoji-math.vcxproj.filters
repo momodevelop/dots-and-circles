@@ -5,14 +5,11 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="src\zombification">
+    <Filter Include="src\zawarudo">
       <UniqueIdentifier>{07ee93e9-a53f-435f-b1d7-ec9747d152a6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\ryoji\math\zombification\constants.h">
-      <Filter>src\zombification</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\ryoji\math\vector.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -21,6 +18,9 @@
     </ClInclude>
     <ClInclude Include="..\..\ryoji\math\utils.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\math\zawarudo\constants.h">
+      <Filter>src\zawarudo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

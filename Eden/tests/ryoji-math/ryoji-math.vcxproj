@@ -149,7 +149,7 @@
     <ClInclude Include="..\..\ryoji\math\matrix.h" />
     <ClInclude Include="..\..\ryoji\math\utils.h" />
     <ClInclude Include="..\..\ryoji\math\vector.h" />
-    <ClInclude Include="..\..\ryoji\math\zombification\constants.h" />
+    <ClInclude Include="..\..\ryoji\math\zawarudo\constants.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

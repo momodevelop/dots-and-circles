@@ -8,8 +8,8 @@
 #include <utility>
 #include "blk.h"
 
-#include "zombification/pointer.h"
-#include "zombification/predef_freelist_strategies.h"
+#include "zawarudo/pointer.h"
+#include "zawarudo/predef_freelist_strategies.h"
 #include "local_allocator.h"
 #include "heap_allocator.h"
 
@@ -96,7 +96,7 @@ namespace ryoji::allocators {
 
 			// Calculate the size of the header + object rounded to alignment.
 			// All our objects and headers will be aligned to the maximum alignment size. 
-			size_t roundObjectSize = zombification::pointer::roundToAlignment(size, alignof(max_align_t));
+			size_t roundObjectSize = zawarudo::pointer::roundToAlignment(size, alignof(max_align_t));
 			size_t totalSize = sizeof(Header) + roundObjectSize;
 
 
@@ -134,7 +134,7 @@ namespace ryoji::allocators {
 
 			else {
 				// Otherwise, create a new FreeBlock after the current block
-				nextBlock = reinterpret_cast<FreeBlock*>(zombification::pointer::add((*itr), totalSize));
+				nextBlock = reinterpret_cast<FreeBlock*>(zawarudo::pointer::add((*itr), totalSize));
 				nextBlock->size = remainingSize;
 				nextBlock->next = (*itr)->next;
 
@@ -156,7 +156,7 @@ namespace ryoji::allocators {
 			header->size = totalSize;
 
 			// Get the object to return to the user
-			void* ret = zombification::pointer::add(*itr, sizeof(Header));
+			void* ret = zawarudo::pointer::add(*itr, sizeof(Header));
 			return { ret, size };
 		}
 
@@ -178,8 +178,8 @@ namespace ryoji::allocators {
 
 			assert(owns(blk));
 
-			Header* header = reinterpret_cast<Header*>(zombification::pointer::sub(blk.ptr, sizeof(Header)));
-			uintptr_t blockEnd = reinterpret_cast<uintptr_t>(zombification::pointer::add(header, header->size));
+			Header* header = reinterpret_cast<Header*>(zawarudo::pointer::sub(blk.ptr, sizeof(Header)));
+			uintptr_t blockEnd = reinterpret_cast<uintptr_t>(zawarudo::pointer::add(header, header->size));
 
 			// Look for a FreeBlock which we can combine
 			FreeBlock* itr = freeList;
@@ -234,16 +234,16 @@ namespace ryoji::allocators {
 
 
 	template<size_t Capacity>
-	using LocalFirstFitFreeListAllocator = FreeListAllocator<Capacity, LocalAllocator<Capacity>, zombification::FirstFitStrategy>;
+	using LocalFirstFitFreeListAllocator = FreeListAllocator<Capacity, LocalAllocator<Capacity>, zawarudo::FirstFitStrategy>;
 
 	template<size_t Capacity>
-	using HeapFirstFitFreeListAllocator = FreeListAllocator<Capacity, HeapAllocator, zombification::FirstFitStrategy>;
+	using HeapFirstFitFreeListAllocator = FreeListAllocator<Capacity, HeapAllocator, zawarudo::FirstFitStrategy>;
 
 	template<size_t Capacity>
-	using LocalBestFitFreeListAllocator = FreeListAllocator<Capacity, LocalAllocator<Capacity>, zombification::BestFitStrategy>;
+	using LocalBestFitFreeListAllocator = FreeListAllocator<Capacity, LocalAllocator<Capacity>, zawarudo::BestFitStrategy>;
 
 	template<size_t Capacity>
-	using HeapBestFitFreeListAllocator = FreeListAllocator<Capacity, HeapAllocator, zombification::BestFitStrategy>;
+	using HeapBestFitFreeListAllocator = FreeListAllocator<Capacity, HeapAllocator, zawarudo::BestFitStrategy>;
 }
 
 #endif 

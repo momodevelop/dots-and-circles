@@ -1,10 +1,10 @@
-#ifndef __RYOJI_ALLOCATORS_DETAIL_PREDEF_FREELIST_STRATEGIES_H__
-#define __RYOJI_ALLOCATORS_DETAIL_PREDEF_FREELIST_STRATEGIES_H__
+#ifndef __RYOJI_ALLOCATORS_ZAWARUDO_PREDEF_FREELIST_STRATEGIES_H__
+#define __RYOJI_ALLOCATORS_ZAWARUDO_PREDEF_FREELIST_STRATEGIES_H__
 
 #include <utility>
 
 namespace ryoji::allocators {
-	namespace zombification {
+	namespace zawarudo {
 
 		class FirstFitStrategy {
 		public:

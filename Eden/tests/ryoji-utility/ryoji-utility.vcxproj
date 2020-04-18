@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{E87FF7D4-097E-44F4-9C8E-EF6C9B62A7FE}</ProjectGuid>
-    <RootNamespace>ryojiallocators</RootNamespace>
+    <ProjectGuid>{B173FF89-5556-4ADA-AC93-173C21FC699E}</ProjectGuid>
+    <RootNamespace>ryojiutility</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,24 +70,24 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>../../ryoji/allocators;$(IncludePath)</IncludePath>
     <OutDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</OutDir>
     <IntDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../../ryoji/utility</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>../../ryoji/allocators;$(IncludePath)</IncludePath>
     <OutDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</OutDir>
     <IntDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../../ryoji/utility</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>../../ryoji/allocators;$(IncludePath)</IncludePath>
     <OutDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</OutDir>
     <IntDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../../ryoji/utility</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>../../ryoji/allocators;$(IncludePath)</IncludePath>
     <OutDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</OutDir>
     <IntDir>$(ProjectDir)out\$(Configuration)\$(PlatformTarget)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../../ryoji/utility</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -146,23 +146,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="test\main.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\ryoji\allocators\blk.h" />
-    <ClInclude Include="..\..\ryoji\allocators\fallback_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\freelist_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\heap_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\linear_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\local_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\log_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\null_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\segregator_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\slab_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\stack_allocator.h" />
-    <ClInclude Include="..\..\ryoji\allocators\stl_adapter.h" />
-    <ClInclude Include="..\..\ryoji\allocators\zawarudo\pointer.h" />
-    <ClInclude Include="..\..\ryoji\allocators\zawarudo\predef_freelist_strategies.h" />
+    <ClInclude Include="..\..\ryoji\utility\defer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

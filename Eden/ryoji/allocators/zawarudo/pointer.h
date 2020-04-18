@@ -1,5 +1,5 @@
-#ifndef __RYOJI_ALLOCATORS_DETAIL_POINTER_H__
-#define __RYOJI_ALLOCATORS_DETAIL_POINTER_H__
+#ifndef __RYOJI_ALLOCATORS_ZAWARUDO_POINTER_H__
+#define __RYOJI_ALLOCATORS_ZAWARUDO_POINTER_H__
 
 #include <cstdint>
 #include <cstddef>
@@ -8,7 +8,7 @@
 // Why aligned memory? -> https://www.ibm.com/developerworks/library/pa-dalign/
 
 namespace ryoji::allocators {
-	namespace zombification {
+	namespace zawarudo {
 		namespace pointer {
 			// Note that all alignment operations is catered to only power of 2!
 			// Reference: https://stackoverflow.com/questions/227897/how-to-alloc-aligned-memory-only-using-the-standard-library

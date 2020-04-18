@@ -5,7 +5,7 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="src\zombification">
+    <Filter Include="src\zawarudo">
       <UniqueIdentifier>{f06fdd38-8ce7-47ee-bb10-e4dc189fa3b8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -49,11 +49,11 @@
     <ClInclude Include="..\..\ryoji\allocators\segregator_allocator.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\ryoji\allocators\zombification\pointer.h">
-      <Filter>src\zombification</Filter>
+    <ClInclude Include="..\..\ryoji\allocators\zawarudo\pointer.h">
+      <Filter>src\zawarudo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\ryoji\allocators\zombification\predef_freelist_strategies.h">
-      <Filter>src\zombification</Filter>
+    <ClInclude Include="..\..\ryoji\allocators\zawarudo\predef_freelist_strategies.h">
+      <Filter>src\zawarudo</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

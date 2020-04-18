@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ryoji-allocators", "ryoji-a
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ryoji-math", "ryoji-math\ryoji-math.vcxproj", "{C71E57DD-0742-4BFB-A794-564C0ED5816E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ryoji-utility", "ryoji-utility\ryoji-utility.vcxproj", "{B173FF89-5556-4ADA-AC93-173C21FC699E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{C71E57DD-0742-4BFB-A794-564C0ED5816E}.Release|x64.Build.0 = Release|x64
 		{C71E57DD-0742-4BFB-A794-564C0ED5816E}.Release|x86.ActiveCfg = Release|Win32
 		{C71E57DD-0742-4BFB-A794-564C0ED5816E}.Release|x86.Build.0 = Release|Win32
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Debug|x64.ActiveCfg = Debug|x64
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Debug|x64.Build.0 = Debug|x64
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Debug|x86.ActiveCfg = Debug|Win32
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Debug|x86.Build.0 = Debug|Win32
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Release|x64.ActiveCfg = Release|x64
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Release|x64.Build.0 = Release|x64
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Release|x86.ActiveCfg = Release|Win32
+		{B173FF89-5556-4ADA-AC93-173C21FC699E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

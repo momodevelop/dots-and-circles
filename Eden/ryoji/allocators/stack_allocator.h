@@ -4,7 +4,7 @@
 
 #include <cassert>
 #include "blk.h"
-#include "zombification/pointer.h"
+#include "zawarudo/pointer.h"
 
 #include "local_allocator.h"
 #include "heap_allocator.h"
@@ -53,7 +53,7 @@ namespace ryoji::allocators {
 			assert(size != 0);
 			assert(alignment != 0);
 
-			uint8_t adjustment = zombification::pointer::getAlignForwardDiff(current, alignment);
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(current, alignment);
 
 			// Make sure that there is space to alloc 
 			if (current + adjustment + size > metadataCurrent - sizeof(Header)) {
@@ -97,7 +97,7 @@ namespace ryoji::allocators {
 
 			// Make sure the metadata starts at an piece of memory that it aligns to.
 			// From here on, our Headers will be contiguously lined up :)
-			this->metadataCurrent = zombification::pointer::getAlignBackward(start + Capacity, alignof(Header));
+			this->metadataCurrent = zawarudo::pointer::getAlignBackward(start + Capacity, alignof(Header));
 		}
 
 

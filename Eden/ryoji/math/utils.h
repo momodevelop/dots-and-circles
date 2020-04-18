@@ -5,13 +5,13 @@
 #include <type_traits>
 #include <cmath>
 
-#include "zombification/constants.h"
+#include "zawarudo/constants.h"
 
 namespace ryoji::math {
     namespace utils {
         
         template<typename T>
-        constexpr static auto pi = zombification::pi<T>;
+        constexpr static auto pi = zawarudo::pi<T>;
 
         template<typename T>
         bool isFloatEqualEnough(T lhs, T rhs) {
@@ -22,13 +22,13 @@ namespace ryoji::math {
         template<typename T>
         T degreesToRadians(T degrees) {
             static_assert(std::is_floating_point_v<T>, "T must be a floating point type");
-            return degrees * pi<T> / zombification::_180p0<T>;
+            return degrees * pi<T> / zawarudo::_180p0<T>;
         }
 
         template<typename T>
         T radiansToDegrees(T radians) {
             static_assert(std::is_floating_point_v<T>, "T must be a floating point type");
-            return radians * zombification::_180p0<T> / pi<T>;
+            return radians * zawarudo::_180p0<T> / pi<T>;
         };
     }
         
