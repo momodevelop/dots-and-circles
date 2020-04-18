@@ -1,49 +1,49 @@
-#ifndef __RYOJI_DISPLAY_WINDOW_H__
-#define __RYOJI_DISPLAY_WINDOW_H__
+#ifndef __YUU_SDL2_OPENGL_WINDOW_H__
+#define __YUU_SDL2_OPENGL_WINDOW_H__
 
 #include <iostream>
-#include "SDL.h"
-#include "glew.h"
+#include "../../ryoji/utility/defer.h"
+#include "../../deps/sdl2/include/SDL.h"
+#include "../../deps/glew/include/glew.h"
 
-namespace ryoji::display {
-
+namespace yuu::utility {
 
 	// A simple window with an OpenGL context
-	struct StdWin
+	struct SDL2OpenGLWindow
 	{
 		SDL_Window* window{};
-		SDL_GLContext* context{};
+		SDL_GLContext context{};
 
 		bool init(
-			const char* title,
-			int screenWidth,
-			int screenHeight,
-			int screenX = SDL_WINDOWPOS_UNDEFINED,
-			int screenY = SDL_WINDOWPOS_UNDEFINED,
-			int oglMajorVersion = 3,
-			int oglMinorVersion = 0
-		) {
+			const char* title = "Test Project",
+			int screenWidth = 1600,
+			int screenHeight = 900,
+			int screenX = SDL_WINDOWPOS_CENTERED,
+			int screenY = SDL_WINDOWPOS_CENTERED,
+			int openglMajorVersion = 3,
+			int openglMinorVersion = 0
 
+		) {
 
 			//Initialize SDL
 			if (SDL_Init(SDL_INIT_VIDEO) < 0)
 			{
 				std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-				return {};
+				return false;
 			}
 
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglMajorVersion);
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglMinorVersion);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, openglMajorVersion);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, openglMinorVersion);
 
 			this->window = SDL_CreateWindow(title, screenX, screenY, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-			if (window == NULL)
+			if (this->window == NULL)
 			{
 				std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 				return false;
 			}
 
-			auto context = SDL_GL_CreateContext(window);
-			if (context == NULL)
+			this->context = SDL_GL_CreateContext(window);
+			if (this->context == NULL)
 			{
 				std::cout << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 				return false;
@@ -63,6 +63,12 @@ namespace ryoji::display {
 			glClearColor(0.f, 0.f, 0.f, 0.f);
 
 			return true;
+		}
+
+		void free() {
+			SDL_GL_DeleteContext(this->context);
+			SDL_DestroyWindow(this->window);
+			SDL_Quit();
 		}
 	};
 

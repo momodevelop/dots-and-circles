@@ -50,6 +50,8 @@ void TestDeferSub() {
 	defer{
 		foo.memberFunction();
 	};
+
+
 	if (true) {
 		return;
 	}
