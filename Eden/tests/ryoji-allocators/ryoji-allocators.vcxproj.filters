@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="src\zombification">
+      <UniqueIdentifier>{f06fdd38-8ce7-47ee-bb10-e4dc189fa3b8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="test\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ryoji\allocators\slab_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\stack_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\stl_adapter.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\blk.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\fallback_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\freelist_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\heap_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\linear_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\local_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\log_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\null_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\segregator_allocator.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\zombification\pointer.h">
+      <Filter>src\zombification</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\ryoji\allocators\zombification\predef_freelist_strategies.h">
+      <Filter>src\zombification</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
