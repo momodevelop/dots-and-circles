@@ -314,6 +314,19 @@ namespace ryoji::math {
 	using Vec2d = Vector<double, 2>;
 	using Vec3d = Vector<double, 3>;
 	using Vec4d = Vector<double, 4>;
+	
+	// To be explicitly instantiated in lib file
+	extern template struct Vector<float,2>;
+	extern template struct Vector<float,3>;
+	extern template struct Vector<float,4>;
+	
+	extern template struct Vector<int,2>;
+	extern template struct Vector<int,3>;
+	extern template struct Vector<int,4>;
+	
+	extern template struct Vector<double,2>;
+	extern template struct Vector<double,3>;
+	extern template struct Vector<double,4>;
 }
 
 #undef CREATE_SUBSCRIPT_OPERATORS

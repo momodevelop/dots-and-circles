@@ -2,4 +2,4 @@ obj/
 bin/
 lib/
 .vs/
-build/
+__build/

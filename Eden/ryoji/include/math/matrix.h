@@ -87,6 +87,16 @@ namespace ryoji::math {
 	using Mat22d = Matrix<double, 2, 2>;
 	using Mat33d = Matrix<double, 3, 3>;
 	using Mat44d = Matrix<double, 4, 4>;
+
+	extern template struct Matrix<float, 2, 2>;
+	extern template struct Matrix<float, 3, 3>;
+	extern template struct Matrix<float, 4, 4>;
+	extern template struct Matrix<int, 2, 2>;
+	extern template struct Matrix<int, 3, 3>;
+	extern template struct Matrix<int, 4, 4>;
+	extern template struct Matrix<double, 2, 2>;
+	extern template struct Matrix<double, 3, 3>;
+	extern template struct Matrix<double, 4, 4>;
 	
 }
 
