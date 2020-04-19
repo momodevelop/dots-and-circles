@@ -5,8 +5,8 @@ BUILD_DIR=__build
 
 BUILD_DIR_DEBUG_X64=$(BUILD_DIR)/Debug/x64
 BUILD_DIR_DEBUG_WIN32=$(BUILD_DIR)/Debug/Win32
-BUILD_DIR_RELEASAE_X64=$(BUILD_DIR)/Release/x64
-BUILD_DIR_RELEASAE_WIN32=$(BUILD_DIR)/Release/Win32
+BUILD_DIR_RELEASE_X64=$(BUILD_DIR)/Release/x64
+BUILD_DIR_RELEASE_WIN32=$(BUILD_DIR)/Release/Win32
 
 
 
@@ -23,13 +23,13 @@ init-win32: init-debug-win32 init-release-win32
 init-debug: init-debug-x64 init-debug-win32
 init-release: init-release-x64 init-release-win32
 init-debug-x64:
-	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_X64) && cd $(BUILD_DIR_X64) && cmake -DCMAKE_TOOLCHAIN_FILE=../../$(TOOLCHAIN_DEBUG_X64) -S ../..
+	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_DEBUG_X64) && cd $(BUILD_DIR_DEBUG_X64) && cmake -DCMAKE_TOOLCHAIN_FILE=../../../$(TOOLCHAIN_DEBUG_X64) -S ../../..
 init-debug-win32:	
-	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_WIN32) && cd $(BUILD_DIR_WIN32) && cmake -DCMAKE_TOOLCHAIN_FILE=../../$(TOOLCHAIN_DEBUG_WIN32) -S ../..
+	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_DEBUG_WIN32) && cd $(BUILD_DIR_DEBUG_WIN32) && cmake -DCMAKE_TOOLCHAIN_FILE=../../../$(TOOLCHAIN_DEBUG_WIN32) -S ../../..
 init-release-x64:
-	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_X64) && cd $(BUILD_DIR_X64) && cmake -DCMAKE_TOOLCHAIN_FILE=../../$(TOOLCHAIN_RELEASE_X64) -S ../..
+	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_RELEASE_X64) && cd $(BUILD_DIR_RELEASE_X64) && cmake -DCMAKE_TOOLCHAIN_FILE=../../../$(TOOLCHAIN_RELEASE_X64) -S ../../..
 init-release-win32:	
-	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_WIN32) && cd $(BUILD_DIR_WIN32) && cmake -DCMAKE_TOOLCHAIN_FILE=../../$(TOOLCHAIN_RELEASE_WIN32) -S ../..
+	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_RELEASE_WIN32) && cd $(BUILD_DIR_RELEASE_WIN32) && cmake -DCMAKE_TOOLCHAIN_FILE=../../../$(TOOLCHAIN_RELEASE_WIN32) -S ../../..
 
 
 build: build-x64 build-win32
