@@ -1,43 +1,40 @@
 #For now we cater only for VS x64 and x32
 
-BUILD_DIR_BASE=__build
-VS_PLATFORM_X86=Win32
-VS_PLATFORM_X64=x64
-VS_BUILD_DIR_X64=$(BUILD_DIR_BASE)/vs_x64
-VS_BUILD_DIR_X86=$(BUILD_DIR_BASE)/vs_x86
-VS_GENERATOR="Visual Studio 16 2019"
-VS_DEBUG_CONFIG=Debug
-VS_RELEASE_CONFIG=Release
+BUILD_DIR=__build
+
+BUILD_DIR_X64=$(BUILD_DIR)/x64
+BUILD_DIR_WIN32=$(BUILD_DIR)/Win32
+
+CONFIG_DEBUG=Debug
+CONFIG_RELEASE=Release
+
+TOOLCHAIN_X64=cmake/toolchain_x64.cmake
+TOOLCHAIN_WIN32=cmake/toolchain_win32.cmake
+
 LIB_DIR=lib
 
 init: init-vs
-init-vs: init-vs-x64 init-vs-x86
-init-vs-x64:
-	mkdir -p $(BUILD_DIR_BASE) && mkdir -p $(VS_BUILD_DIR_X64) && cd $(VS_BUILD_DIR_X64) && cmake -G $(VS_GENERATOR) -A $(VS_PLATFORM_X64) -S ../..
-init-vs-x86:	
-	mkdir -p $(BUILD_DIR_BASE) && mkdir -p $(VS_BUILD_DIR_X86) && cd $(VS_BUILD_DIR_X86) && cmake -G $(VS_GENERATOR) -A $(VS_PLATFORM_X86) -S ../..
+init-vs: init-x64 init-x86
+init-x64:
+	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_X64) && cd $(BUILD_DIR_X64) && cmake -DCMAKE_TOOLCHAIN_FILE=../../$(TOOLCHAIN_WIN32) -S ../..
+init-x86:	
+	mkdir -p $(BUILD_DIR) && mkdir -p $(BUILD_DIR_WIN32) && cd $(BUILD_DIR_WIN32) && cmake -DCMAKE_TOOLCHAIN_FILE=../../$(TOOLCHAIN_X64) -S ../..
 
-build: build-vs-debug build-vs-release
-build-vs-debug: build-vs-debug-x86 build-vs-debug-x64
-build-vs-release: build-vs-release-x86 build-vs-release-x64
-build-vs-debug-x86:
-	rm -rf ${LIB_DIR}/${VS_PLATFORM_X86}/${VS_DEBUG_CONFIG} 2> /dev/null
-	cd $(VS_BUILD_DIR_X86) && cmake --build . --config $(VS_DEBUG_CONFIG)	
-build-vs-debug-x64:
-	rm -rf ${LIB_DIR}/${VS_PLATFORM_X64}/${VS_DEBUG_CONFIG} 2> /dev/null
-	cd $(VS_BUILD_DIR_X64) && cmake --build . --config $(VS_DEBUG_CONFIG)
-build-vs-release-x86:
-	rm -rf ${LIB_DIR}/${VS_PLATFORM_X86}/${VS_RELEASE_CONFIG} 2> /dev/null
-	cd $(VS_BUILD_DIR_X86) && cmake --build . --config $(VS_RELEASE_CONFIG)	
-build-vs-release-x64:
-	rm -rf ${LIB_DIR}/${VS_PLATFORM_X64}/${VS_RELEASE_CONFIG} 2> /dev/null
-	cd $(VS_BUILD_DIR_X64) && cmake --build . --config $(VS_RELEASE_CONFIG)
-
-
+build: build-debug build-release
+build-debug: build-debug-x86 build-debug-x64
+build-release: build-release-x86 build-release-x64
+build-debug-x86:
+	cd $(BUILD_DIR_WIN32) && cmake --build . --config $(CONFIG_DEBUG)	
+build-debug-x64:
+	cd $(BUILD_DIR_X64) && cmake --build . --config $(CONFIG_DEBUG)
+build-release-x86:
+	cd $(BUILD_DIR_WIN32) && cmake --build . --config $(CONFIG_RELEASE)	
+build-release-x64:
+	cd $(BUILD_DIR_X64) && cmake --build . --config $(CONFIG_RELEASE)
 
 clean: clean-vs
-clean-vs: clean-vs-x86 clean-vs-x64
-clean-vs-x86:
-	rm -rf ${VS_BUILD_DIR_X86}/*
-clean-vs-x64:
-	rm -rf ${VS_BUILD_DIR_X64}/*
+clean-vs: clean-x86 clean-x64
+clean-x86:
+	rm -rf ${BUILD_DIR_WIN32}/*
+clean-x64:
+	rm -rf ${BUILD_DIR_X64}/*
