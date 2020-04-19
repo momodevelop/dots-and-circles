@@ -8,6 +8,7 @@ VS_BUILD_DIR_X86=$(BUILD_DIR_BASE)/vs_x86
 VS_GENERATOR="Visual Studio 16 2019"
 VS_DEBUG_CONFIG=Debug
 VS_RELEASE_CONFIG=Release
+LIB_DIR=lib
 
 init: init-vs
 init-vs: init-vs-x64 init-vs-x86
@@ -20,13 +21,18 @@ build: build-vs-debug build-vs-release
 build-vs-debug: build-vs-debug-x86 build-vs-debug-x64
 build-vs-release: build-vs-release-x86 build-vs-release-x64
 build-vs-debug-x86:
+	rm -rf ${LIB_DIR}/${VS_PLATFORM_X86}/${VS_DEBUG_CONFIG} 2> /dev/null
 	cd $(VS_BUILD_DIR_X86) && cmake --build . --config $(VS_DEBUG_CONFIG)	
 build-vs-debug-x64:
+	rm -rf ${LIB_DIR}/${VS_PLATFORM_X64}/${VS_DEBUG_CONFIG} 2> /dev/null
 	cd $(VS_BUILD_DIR_X64) && cmake --build . --config $(VS_DEBUG_CONFIG)
 build-vs-release-x86:
+	rm -rf ${LIB_DIR}/${VS_PLATFORM_X86}/${VS_RELEASE_CONFIG} 2> /dev/null
 	cd $(VS_BUILD_DIR_X86) && cmake --build . --config $(VS_RELEASE_CONFIG)	
 build-vs-release-x64:
+	rm -rf ${LIB_DIR}/${VS_PLATFORM_X64}/${VS_RELEASE_CONFIG} 2> /dev/null
 	cd $(VS_BUILD_DIR_X64) && cmake --build . --config $(VS_RELEASE_CONFIG)
+
 
 
 clean: clean-vs
