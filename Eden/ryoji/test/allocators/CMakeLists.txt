@@ -19,4 +19,6 @@ add_executable(allocators-test
     ../../include/allocators/zawarudo/pointer.h
     ../../include/allocators/zawarudo/predef_freelist_strategies.h
 )
-target_include_directories(allocators-test PUBLIC INTERFACE ../../include/allocators)
+
+include_directories(../../include/allocators)
+#target_include_directories(allocators-test PRIVATE ../../include/allocators)

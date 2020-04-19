@@ -11,3 +11,4 @@ add_executable(math-test
     ../../include/math/zawarudo/constants.h    
 )
 target_include_directories(math-test PRIVATE ../../include/math)
+target_link_libraries(math-test ../../lib/${CMAKE_BUILD_TYPE}/${CMAKE_GENERATOR_PLATFORM}/math)
