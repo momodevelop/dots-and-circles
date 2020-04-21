@@ -1,5 +1,5 @@
-#ifndef __RYOJI_UTILITY_DEFER_H__
-#define __RYOJI_UTILITY_DEFER_H__
+#ifndef __RYOJI_UTILS_DEFER_H__
+#define __RYOJI_UTILS_DEFER_H__
 
 
 namespace zawarudo {
