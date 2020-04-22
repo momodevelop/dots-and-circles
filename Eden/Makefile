@@ -1,5 +1,7 @@
 init: 
 	cmake -S . -B __build/
+init-all:
+	cmake -S . -B __build/
 build:
 	cmake --build __build
 clean:
