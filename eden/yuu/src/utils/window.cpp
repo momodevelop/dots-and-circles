@@ -1,9 +1,7 @@
-
-
 #include <iostream>
 #include "window.h"
 
-namespace yuu::utility {
+namespace yuu::utils {
 	bool Window::init(
 		const char* title,
 		int screenWidth,
