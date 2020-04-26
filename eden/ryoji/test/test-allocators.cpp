@@ -3,17 +3,17 @@
 #include <list>
 
 
-#include "fallback-allocator.h"
-#include "freelist-allocator.h"
-#include "heap-allocator.h"
-#include "linear-allocator.h"
-#include "local-allocator.h"
-#include "log-allocator.h"
-#include "null-allocator.h"
-#include "segregator-allocator.h"
-#include "slab-allocator.h"
-#include "stack-allocator.h"
-#include "stl-adapter.h"
+#include "ryoji/allocators/fallback-allocator.h"
+#include "ryoji/allocators/freelist-allocator.h"
+#include "ryoji/allocators/heap-allocator.h"
+#include "ryoji/allocators/linear-allocator.h"
+#include "ryoji/allocators/local-allocator.h"
+#include "ryoji/allocators/log-allocator.h"
+#include "ryoji/allocators/null-allocator.h"
+#include "ryoji/allocators/segregator-allocator.h"
+#include "ryoji/allocators/slab-allocator.h"
+#include "ryoji/allocators/stack-allocator.h"
+#include "ryoji/allocators/stl-adapter.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"

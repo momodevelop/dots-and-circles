@@ -1,3 +1,8 @@
 #include <iostream>
+#include "yuu/utils/window.h"
 
-#include
+
+int main() {
+
+	return 0;
+}

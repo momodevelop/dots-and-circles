@@ -11,7 +11,7 @@
 #include "utils.h"
 
 
-namespace ryoji::math {
+namespace ryoji::maths {
 	
 	template<typename T, size_t Row, size_t Col>
 	struct Matrix {

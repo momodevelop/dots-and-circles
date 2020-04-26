@@ -7,7 +7,7 @@
 
 #include "zawarudo/constants.h"
 
-namespace ryoji::math {
+namespace ryoji::maths {
     namespace utils {
         
         template<typename T>

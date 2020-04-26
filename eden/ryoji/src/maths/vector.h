@@ -14,7 +14,7 @@
 inline T& operator[](size_t index) { return value[index]; }\
 inline const T& operator[](size_t index) const { return value[index]; }\
 
-namespace ryoji::math {
+namespace ryoji::maths {
 	
 	template<typename T = float, size_t N = 2>
 	struct Vector {

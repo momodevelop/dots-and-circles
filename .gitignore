@@ -2,4 +2,6 @@ obj/
 bin/
 lib/
 .vs/
-__build/
+Debug/
+Release/
+x64/*

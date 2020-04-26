@@ -2,8 +2,8 @@
 #define __YUU_SDL2_OPENGL_WINDOW_H__
 
 
-#include "SDL.h"
-#include "glew.h"
+#include "sdl2/SDL.h"
+#include "glew/glew.h"
 
 namespace yuu::utility {
 

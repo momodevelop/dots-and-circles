@@ -1,9 +1,9 @@
 #include <iostream>
-#include "matrix.h"
-#include "vector.h"
+#include "ryoji/maths/matrix.h"
+#include "ryoji/maths/vector.h"
 
 using namespace std;
-using namespace ryoji::math;
+using namespace ryoji::maths;
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"

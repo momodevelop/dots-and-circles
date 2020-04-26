@@ -1,6 +1,6 @@
 #include "vector.h"
 
-namespace ryoji::math {
+namespace ryoji::maths {
     template struct Vector<float,2>;
     template struct Vector<float,3>;
     template struct Vector<float,4>;

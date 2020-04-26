@@ -25,7 +25,7 @@ template<typename T> constexpr static auto name = _##name<T>();
 #endif
 
 
-namespace ryoji::math {
+namespace ryoji::maths {
 	namespace zawarudo {
 		template<class T> struct always_false : std::false_type {};
 		template<class T> struct always_true : std::true_type {};
