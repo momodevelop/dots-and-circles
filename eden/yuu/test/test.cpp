@@ -9,9 +9,5 @@ int main(int argc, char* args[]){
 	window.init("Yuu Test");
 	defer{ window.free(); };
 
-
-
-
-
 	return 0;
 }
