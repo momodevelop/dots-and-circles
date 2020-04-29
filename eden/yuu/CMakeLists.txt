@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 
-# find_package(ryoji REQUIRED)
+find_package(ryoji REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(glew REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -81,7 +81,7 @@ project(yuu)
             TARGET 
                 yuu-test 
             POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sdl2-libs-dir}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sdl2-libs-dir}/SDL2.dll $<TARGET_FILE_DIR:yuu-test>
         )
 
     endif()
