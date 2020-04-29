@@ -83,6 +83,12 @@ project(yuu)
             POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sdl2-libs-dir}/SDL2.dll $<TARGET_FILE_DIR:yuu-test>
         )
+        add_custom_command(
+            TARGET 
+                yuu-test 
+            POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${glew-libs-dir}/glew32.dll $<TARGET_FILE_DIR:yuu-test>
+        )
 
     endif()
 
