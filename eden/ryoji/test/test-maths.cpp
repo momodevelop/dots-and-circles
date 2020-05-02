@@ -1,8 +1,8 @@
 #include <iostream>
 #include "ryoji/maths/matrix.h"
 #include "ryoji/maths/vector.h"
+#include "ryoji/maths/bitwise.h"
 
-using namespace std;
 using namespace ryoji::maths;
 
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -10,6 +10,7 @@ using namespace ryoji::maths;
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 void PrintGoodOrBad(bool good) {
+	using namespace std;
 	if (good)
 		cout << "[" << ANSI_COLOR_GREEN << "O" << ANSI_COLOR_RESET << "] ";
 	else
@@ -18,13 +19,18 @@ void PrintGoodOrBad(bool good) {
 
 template<typename T>
 bool SimpleEqualityTest(const char* title, T lhs, T rhs) {
+	using namespace std;
 	PrintGoodOrBad(lhs == rhs);
 	cout << title << endl;
 	return lhs == rhs;
 }
 
 void TestMatrix() {
+	using namespace std;
+	using namespace matrix;
+	cout << "===== Testing Matrix =====" << endl;
 	{
+		
 		cout << "=== Testing arithmetic assignment operators" << endl;
 		SimpleEqualityTest("Addition", Mat33i{ 1,2,3,4,5,6,7,8,9 } +Mat33i{ 9,8,7,6,5,4,3,2,1 }, Mat33i{ 10,10,10,10,10,10,10,10,10 });
 		SimpleEqualityTest("Subtraction", Mat33i{ 1,2,3,4,5,6,7,8,9 } -Mat33i{ 1,2,3,4,5,6,7,8,9 }, Mat33i{ 0,0,0,0,0,0,0,0,0 });
@@ -33,12 +39,25 @@ void TestMatrix() {
 	}
 
 	{
-		using namespace matrix;
 		cout << "=== Testing functions" << endl;
 		SimpleEqualityTest("Identity", identity<int, 3, 3>(), Mat33i{ 1,0,0,0,1,0,0,0,1 });
+		cout << endl;
 	}
+
+	cout << endl;
 }
 void TestVector() {
+	using namespace vector;
+	using namespace std;
+	cout << "===== Testing Vector =====" << endl;
+	/*{
+		cout << "=== Testing create" << endl;
+		auto vec4i = create<int, 4>(1,2,3,4 );
+		SimpleEqualityTest("Creation", vec4i, Vec4i{ 1,2,3,4 });
+		cout << endl;
+	}*/
+
+
 	{
 		cout << "=== Testing arithmetic operators" << endl;
 		Vec4i vec4{ 1, 2, 3, 4 };
@@ -87,7 +106,26 @@ void TestVector() {
 		SimpleEqualityTest("Projection", normalize(project(Vec4f{ 1,2,3,4 }, Vec4f{ 1,1,1,1 })), normalize(Vec4f{ 1,1,1,1 }));
 
 	}
+	cout << endl;
 
+}
+
+void TestBitwise() {
+	using namespace bitwise;
+	std::cout << "===== Testing Bitwise =====" << std::endl;
+	SimpleEqualityTest("bitfield", bitfield<int, 0, 1, 2, 3, 4, 5, 6, 7>, 0b11111111);
+
+	SimpleEqualityTest("mask", mask(0b001, 0b010), 3);
+	SimpleEqualityTest("unmask", unmask(0b101, 0b001), 4);
+	SimpleEqualityTest("any (true)", any(0b101, 0b011), true);
+	SimpleEqualityTest("any (false)", any(0b101, 0b010), false);
+	SimpleEqualityTest("all (true)", all(0b101, 0b101), true);
+	SimpleEqualityTest("all (false)", all(0b101, 0b111), false);
+	SimpleEqualityTest("get (true)", get(0b101, 2), true);
+	SimpleEqualityTest("get (false)", get(0b101, 1), false);
+	SimpleEqualityTest("set (turn on)", set(0b101, 1, true), 0b111);
+	SimpleEqualityTest("set (turn off)", set(0b111, 1, false), 0b101);
+	
 }
 
 int main() {
@@ -97,6 +135,10 @@ int main() {
 
 #if 1
 	TestMatrix();
+#endif
+
+#if 1
+	TestBitwise();
 #endif
 
 	return 0;

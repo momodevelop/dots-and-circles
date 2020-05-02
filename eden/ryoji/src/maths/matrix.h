@@ -11,7 +11,7 @@
 #include "utils.h"
 
 
-namespace ryoji::maths {
+namespace ryoji::maths::matrix {
 	
 	template<typename T, size_t Row, size_t Col>
 	struct Matrix {
@@ -65,16 +65,16 @@ namespace ryoji::maths {
 		return !(lhs == rhs);
 	}
 
-	namespace matrix {
-		template<typename T, size_t Row, size_t Col>
-		Matrix<T, Row, Col> identity() {
-			static_assert(Row == Col, "identity matrices only works for square matrices!");
-			Matrix<T, Row, Col> ret {};
-			for (size_t i = 0; i < Row; ++i ) 
-				ret[i][i] = 1;
-			return ret;
-		}
+
+	template<typename T, size_t Row, size_t Col>
+	Matrix<T, Row, Col> identity() {
+		static_assert(Row == Col, "identity matrices only works for square matrices!");
+		Matrix<T, Row, Col> ret {};
+		for (size_t i = 0; i < Row; ++i ) 
+			ret[i][i] = 1;
+		return ret;
 	}
+	
 	// typedefs
 	using Mat22f = Matrix<float, 2, 2>;
 	using Mat33f = Matrix<float, 3, 3>;

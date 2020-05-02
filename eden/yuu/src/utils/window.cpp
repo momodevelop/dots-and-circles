@@ -1,8 +1,9 @@
 #include <iostream>
 #include "window.h"
 
-namespace yuu::utils {
-	bool Window::init(
+namespace yuu::utils::window {
+	bool init(
+		Window& w,
 		const char* title,
 		int screenWidth,
 		int screenHeight,
@@ -23,15 +24,15 @@ namespace yuu::utils {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, openglMajorVersion);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, openglMinorVersion);
 
-		this->window = SDL_CreateWindow(title, screenX, screenY, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-		if (this->window == NULL)
+		w.window = SDL_CreateWindow(title, screenX, screenY, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+		if (w.window == NULL)
 		{
 			std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 			return false;
 		}
 
-		this->context = SDL_GL_CreateContext(window);
-		if (this->context == NULL)
+		w.context = SDL_GL_CreateContext(w.window);
+		if (w.context == NULL)
 		{
 			std::cout << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 			return false;
@@ -53,9 +54,9 @@ namespace yuu::utils {
 		return true;
 	}
 
-	void Window::free() {
-		SDL_GL_DeleteContext(this->context);
-		SDL_DestroyWindow(this->window);
+	void free(Window& w) {
+		SDL_GL_DeleteContext(w.context);
+		SDL_DestroyWindow(w.window);
 		SDL_Quit();
 	}
 }

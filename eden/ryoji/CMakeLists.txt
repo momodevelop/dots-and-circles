@@ -18,7 +18,9 @@ set(include-maths
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/matrix.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/vector.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitwise.h
 )
+
 
 set(include-utils 
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/defer.h
@@ -42,10 +44,13 @@ set(src-allocators
 )
 set(src-maths 
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrix.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/vector.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/bitwise.h
+
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/vector.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/zawarudo/constants.h
 )
 
@@ -53,8 +58,34 @@ set(src-utils
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/defer.h
 )
 
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/ PREFIX "include" FILES ${include-allocators} ${include-maths} ${include-utils})
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-allocators} ${src-maths} ${src-utils})
+
+set(src-tests 
+    ${CMAKE_CURRENT_LIST_DIR}/test/test-utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/test-allocators.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/test-maths.cpp
+)
+
+source_group(
+    TREE 
+        ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/ 
+    PREFIX 
+        "include" 
+    FILES 
+        ${include-allocators} 
+        ${include-maths} 
+        ${include-utils}
+)
+source_group(
+    TREE 
+        ${CMAKE_CURRENT_LIST_DIR}/src/ 
+    PREFIX 
+        "src" 
+    FILES 
+        ${src-allocators} 
+        ${src-maths} 
+        ${src-utils}
+)
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "test" FILES ${src-tests})
 
 
 project(ryoji)
@@ -68,6 +99,7 @@ project(ryoji)
             ${include-allocators}
             ${include-utils}
             ${include-maths}
+            ${include-containers}
             ${src-allocators}
             ${src-utils}
             ${src-maths}
@@ -91,5 +123,10 @@ project(ryoji)
     set_target_properties(ryoji-test-utils PROPERTIES CXX_STANDARD 17)
     target_include_directories(ryoji-test-utils PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
     target_sources(ryoji-test-utils PRIVATE  ${CMAKE_CURRENT_LIST_DIR}/test/test-utils.cpp)
+
+    #add_executable(ryoji-test-containers)
+    #set_target_properties(ryoji-test-containers PROPERTIES CXX_STANDARD 17)
+    #target_include_directories(ryoji-test-containers PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
+    #target_sources(ryoji-test-containers PRIVATE  ${CMAKE_CURRENT_LIST_DIR}/test/test-containers.cpp)
 
 ### TEST END
