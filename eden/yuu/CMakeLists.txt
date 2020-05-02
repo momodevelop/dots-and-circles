@@ -9,13 +9,23 @@ set(include-utils
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/utils/window.h
 )
 
+set(include-input
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/input/keyboard.h
+)
+
+
+set(src-input
+    ${CMAKE_CURRENT_LIST_DIR}/src/input/keyboard.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/input/keyboard.cpp
+
+)
 set(src-utils 
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/window.h
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/window.cpp
 )
 
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES ${include-utils})
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-utils})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES ${include-utils} ${include-input})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-utils} ${src-input})
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "test" FILES 
     ${CMAKE_CURRENT_LIST_DIR}/test/test.cpp
 )
@@ -37,7 +47,10 @@ project(yuu)
             yuu
         PRIVATE
             ${include-utils}
+            ${include-input}
+
             ${src-utils}
+            ${src-input}
     )
 
 ### YUU END
