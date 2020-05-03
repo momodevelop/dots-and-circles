@@ -5,7 +5,7 @@
 #include <cassert>
 namespace ryoji::maths::bitwise {
 	
-	namespace zawarudo {
+	/*namespace zawarudo {
 		template<typename T, size_t... Indices>
 		struct bitfield;
 
@@ -26,6 +26,16 @@ namespace ryoji::maths::bitwise {
 
 	template<typename T, size_t... Indices> 
 	constexpr static T bitfield = zawarudo::bitfield<T, Indices...>::value;
+	*/
+
+
+	template<typename T, typename... Args>
+	T bitfield(Args... args)
+	{
+		using namespace std;
+		static_assert(conjunction_v<is_integral<T>, is_integral<Args>...>, "All types must be integral types");
+		return ((1 << args) | ...);
+	}
 
 
 	template<typename T, typename U>

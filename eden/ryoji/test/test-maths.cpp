@@ -113,8 +113,7 @@ void TestVector() {
 void TestBitwise() {
 	using namespace bitwise;
 	std::cout << "===== Testing Bitwise =====" << std::endl;
-	SimpleEqualityTest("bitfield", bitfield<int, 0, 1, 2, 3, 4, 5, 6, 7>, 0b11111111);
-
+	SimpleEqualityTest("bitfield", bitfield<int>(0, 1, 2, 3, 4, 5, 6, 7), 0b11111111);
 	SimpleEqualityTest("mask", mask(0b001, 0b010), 3);
 	SimpleEqualityTest("unmask", unmask(0b101, 0b001), 4);
 	SimpleEqualityTest("any (true)", any(0b101, 0b011), true);
@@ -125,7 +124,6 @@ void TestBitwise() {
 	SimpleEqualityTest("get (false)", get(0b101, 1), false);
 	SimpleEqualityTest("set (turn on)", set(0b101, 1, true), 0b111);
 	SimpleEqualityTest("set (turn off)", set(0b111, 1, false), 0b101);
-	
 }
 
 int main() {
