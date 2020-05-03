@@ -24,11 +24,16 @@ set(src-utils
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/window.cpp
 )
 
+set(src-test
+    ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/scene.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/input-test-scene.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/input-test-scene.cpp
+)
+
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES ${include-utils} ${include-input})
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-utils} ${src-input})
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "test" FILES 
-    ${CMAKE_CURRENT_LIST_DIR}/test/test.cpp
-)
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "src" FILES ${src-test})
 
 project(yuu)
 
@@ -86,7 +91,7 @@ project(yuu)
             glew32
             glew32s
     )
-    target_sources(yuu-test PRIVATE  ${CMAKE_CURRENT_LIST_DIR}/test/test.cpp)
+    target_sources(yuu-test PRIVATE  ${src-test})
 
     if(WIN32)
         # Copy DLL files to output directory
