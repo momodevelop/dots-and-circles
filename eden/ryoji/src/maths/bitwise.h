@@ -41,14 +41,14 @@ namespace ryoji::maths::bitwise {
 	template<typename T, typename U>
 	T mask(T flag, U mask) {
 		static_assert(std::is_integral_v<T>);
-		return flag |= mask;
+		return flag | mask;
 	}
 
 
 	template<typename T, typename U>
 	T unmask(T flag, U mask) {
 		static_assert(std::is_integral_v<T>);
-		return flag &= ~mask;
+		return flag & ~mask;
 	}
 
 	template<typename T>
