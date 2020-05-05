@@ -2,7 +2,7 @@
 #include <vector>
 #include <list>
 
-
+#include "ryoji/allocators/accountant-allocator.h"
 #include "ryoji/allocators/fallback-allocator.h"
 #include "ryoji/allocators/freelist-allocator.h"
 #include "ryoji/allocators/heap-allocator.h"
@@ -224,7 +224,7 @@ void TestLinearAllocator() {
 
 	PrintGoodOrBad(!expectNullBlk && allocatesSuccess);
 	cout << "Allocation integrity is okay" << endl;
-	allocator.deallocateAll();
+	allocator.reset();
 
 	allocatesSuccess = true;
 	for (int i = 0; i < 25; ++i) {
@@ -350,9 +350,6 @@ void TestSlabAllocator() {
 }
 void TestMiddlewareAllocator() {
 	cout << "=== Testing MiddlewareAllocator" << endl;
-
-
-
 	
 	{
 		cout << "= Full Test" << endl;
@@ -381,7 +378,7 @@ void TestMiddlewareAllocator() {
 		auto ret = allocator.allocate(10, 4);
 		allocator.deallocate(ret);
 		ret = allocator.allocate(10, 4);
-		allocator.deallocateAll();
+		allocator.reset();
 
 		
 		PrintGoodOrBad(middleware.preAllocated);
@@ -422,7 +419,7 @@ void TestMiddlewareAllocator() {
 		auto ret = allocator.allocate(10, 4);
 		allocator.deallocate(ret);
 		ret = allocator.allocate(10, 4);
-		allocator.deallocateAll();
+		allocator.reset();
 
 		PrintGoodOrBad(middleware.postAllocated);
 		cout << "preAllocate called" << endl;
@@ -441,8 +438,22 @@ void TestMiddlewareAllocator() {
 
 
 }
+
+void TestMiddlewareAllocator() 
+{
+	using Allocator = Accountant
+
+	Allocator" << endl;
+
+	
+
+	cout << endl;
+
+
+}
 int main() {
 	TestMiddlewareAllocator();
+	TestAccountantAllocator();
 	TestSTLOnVector();
 	TestSTLOnList();
 	TestFallbackLocalHeap();

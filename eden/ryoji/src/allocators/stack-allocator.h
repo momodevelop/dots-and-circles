@@ -29,11 +29,9 @@ namespace ryoji::allocators {
 		struct Header {
 			uint8_t adjustment;
 		};
+	public:
 		Allocator allocator;
-		Blk memoryBlock = {};
-		char* start = nullptr;
-		char* current = nullptr;
-		char* metadataCurrent = nullptr; // Pointer to the start of metadata of headers
+
 	public:
 		StackAllocator()
 		{
@@ -78,11 +76,9 @@ namespace ryoji::allocators {
 		}
 
 
-		void deallocate(Blk blk)  noexcept
+		void deallocate(Blk blk) noexcept
 		{
-			if (!blk)
-				return;
-
+			assert(blk);
 			assert(owns(blk));
 
 			// When you free, get the adjustment from the current Header to know how much to fall back 
@@ -100,6 +96,11 @@ namespace ryoji::allocators {
 			this->metadataCurrent = zawarudo::pointer::getAlignBackward(start + Capacity, alignof(Header));
 		}
 
+	private:
+		Blk memoryBlock = {};
+		char* start = nullptr;
+		char* current = nullptr;
+		char* metadataCurrent = nullptr; // Pointer to the start of metadata of headers
 
 	};
 

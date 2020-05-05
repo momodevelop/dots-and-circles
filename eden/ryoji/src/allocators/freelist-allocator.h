@@ -18,7 +18,7 @@ namespace ryoji::allocators {
 	template<size_t Capacity, class Allocator, class FitStrategy>
 	class FreeListAllocator {
 		static_assert(Capacity != 0);
-	protected:
+	private:
 		union FreeBlock {
 			struct {
 				size_t size;
@@ -33,12 +33,6 @@ namespace ryoji::allocators {
 		protected:
 			max_align_t Align;
 		};
-
-		Blk memory = {};
-		char* start = nullptr;
-		FreeBlock* freeList = nullptr;
-		Allocator allocator;
-		FitStrategy fitStrategy;
 
 		class iterator {
 			FreeBlock* current;
@@ -69,7 +63,9 @@ namespace ryoji::allocators {
 		};
 
 		constexpr static size_t minBlockSize = sizeof(Header) > sizeof(FreeBlock) ? sizeof(Header) : sizeof(FreeBlock);
-		
+
+	public:
+		Allocator allocator;
 
 	public:
 		FreeListAllocator()
@@ -78,18 +74,16 @@ namespace ryoji::allocators {
 			assert(memory);
 			start = static_cast<char*>(memory.ptr);
 
-			deallocateAll();
+			reset();
 
 			// The whole allocator must be able to contain at least a minimum block size
 			assert(freeList->size > minBlockSize);
 		}
 
-
 		~FreeListAllocator()
 		{
 			allocator.deallocate(memory);
 		}
-
 
 		Blk allocate(size_t size, uint8_t alignment) {
 			assert(size && alignment);
@@ -103,7 +97,7 @@ namespace ryoji::allocators {
 			// result->first is previous node.
 			// result->second is the node that fits.
 			auto [prev, itr] = fitStrategy.find(iterator(freeList), iterator(nullptr), totalSize);
-			
+
 
 			if ((*itr) == nullptr)
 				return {};
@@ -111,7 +105,7 @@ namespace ryoji::allocators {
 
 
 			// Could not find a block that fits
-			
+
 			// Here, we have found a block that fits and update our freeList.
 			// Check if the block can be split after allocation.
 			// It can be split if after allocation, it can store more than sizeof(Header)
@@ -160,12 +154,12 @@ namespace ryoji::allocators {
 			return { ret, size };
 		}
 
-		bool owns(Blk blk) const noexcept {
+		bool owns(Blk blk) const {
 			return reinterpret_cast<char*>(blk.ptr) >= start && reinterpret_cast<char*>(blk.ptr) < start + Capacity;
 		}
 
 		// Reset all variables to start
-		void deallocateAll() noexcept {
+		void reset() noexcept {
 			this->freeList = reinterpret_cast<FreeBlock*>(start);
 			this->freeList->size = Capacity;
 			this->freeList->next = nullptr;
@@ -173,9 +167,7 @@ namespace ryoji::allocators {
 
 		void deallocate(Blk blk)
 		{
-			if (!blk)
-				return;
-
+			assert(blk);
 			assert(owns(blk));
 
 			Header* header = reinterpret_cast<Header*>(zawarudo::pointer::sub(blk.ptr, sizeof(Header)));
@@ -230,6 +222,15 @@ namespace ryoji::allocators {
 				prev->next = itr->next;
 			}
 		}
+
+	private:
+		Blk memory = {};
+		char* start = nullptr;
+		FreeBlock* freeList = nullptr;
+
+		FitStrategy fitStrategy;
+
+
 	};
 
 

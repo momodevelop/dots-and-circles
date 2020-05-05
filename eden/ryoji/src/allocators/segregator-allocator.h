@@ -9,9 +9,10 @@ namespace ryoji::allocators {
 	template <size_t Threshhold, class SmallAllocator, class BigAllocator>
 	class SegregatorAllocator 
 	{
+	public:
 		SmallAllocator smallAllocator;
 		BigAllocator bigAllocator;
-	public:
+
 		Blk allocate(size_t size, uint8_t alignment)
 		{
 			assert(size && alignment);
@@ -24,10 +25,9 @@ namespace ryoji::allocators {
 			}
 		}
 
-		void deallocate(Blk blk) noexcept  // Use pointer if pointer is not a value_type*
+		void deallocate(Blk blk) 
 		{
-			if (!blk)
-				return;
+			assert(blk);
 
 			if (smallAllocator.owns(blk))
 				smallAllocator.deallocate(blk);
@@ -37,9 +37,11 @@ namespace ryoji::allocators {
 				assert(false);
 		}
 
-		bool owns(const Blk& blk) const {
+		bool owns(const Blk& blk) const noexcept {
 			return smallAllocator.owns(blk) || bigAllocator.owns(blk);
 		}
+
+		void reset() noexcept {}
 
 
 

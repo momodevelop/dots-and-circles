@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.17)
 
 set(include-allocators 
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/blk.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/accountant-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/fallback-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/freelist-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/heap-allocator.h
@@ -28,6 +29,7 @@ set(include-utils
 
 set(src-allocators 
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/blk.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/allocators/accountant-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/fallback-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/freelist-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/heap-allocator.h

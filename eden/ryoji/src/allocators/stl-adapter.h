@@ -7,9 +7,10 @@
 
 namespace ryoji::allocators {
 	template<typename T, class Allocator>
-	class STLAdapter : private Allocator
+	class STLAdapter
 	{
 	public:
+		Allocator allocator;
 		using value_type = T;
 		STLAdapter() = default;
 		template <class U> STLAdapter(STLAdapter<U, Allocator> const&) noexcept {}
@@ -17,12 +18,12 @@ namespace ryoji::allocators {
 	public:
 		value_type* allocate(size_t size)
 		{
-			return static_cast<value_type*>(Allocator::allocate(size * sizeof(value_type), alignof(value_type)).ptr);
+			return static_cast<value_type*>(allocator.allocate(size * sizeof(value_type), alignof(value_type)).ptr);
 		}
 
 		void deallocate(value_type* p, size_t size) noexcept 
 		{
-			Allocator::deallocate({ p, size });
+			allocator.deallocate({ p, size });
 		}
 
 	};

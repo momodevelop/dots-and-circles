@@ -87,16 +87,16 @@ namespace ryoji::allocators {
 
 
 			template<typename T>
-			static T* add(T* lhs, uintptr_t rhs) {
+			static T* add(T* lhs, uintptr_t rhs) noexcept {
 				return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(lhs) + rhs);
 			}
 
 			template<typename T>
-			static T* sub(T* lhs, uintptr_t rhs) {
+			static T* sub(T* lhs, uintptr_t rhs) noexcept {
 				return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(lhs) - rhs);
 			}
 
-			static size_t roundToAlignment(size_t size, uint8_t alignment)
+			static size_t roundToAlignment(size_t size, uint8_t alignment) noexcept
 			{
 				size_t ret = size / alignment * alignment;
 				return (ret == size) ? ret : ret + alignment;

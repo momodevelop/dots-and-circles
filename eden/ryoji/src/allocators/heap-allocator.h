@@ -26,6 +26,7 @@ namespace ryoji::allocators {
 			return true;
 		}
 
+		void reset() {}
 
 	};
 

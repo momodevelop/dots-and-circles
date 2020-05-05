@@ -10,36 +10,42 @@ namespace ryoji::allocators {
 	template <class Primary, class Fallback>
 	class FallbackAllocator
 	{
-		Primary primary = {};
-		Fallback fallback = {};
+	public:
+		Primary primaryAllocator = {};
+		Fallback fallbackAllocator = {};
+
 	public:
 		Blk allocate(size_t size, uint8_t alignment)
 		{
 			assert(size && alignment);
 
-			Blk blk = primary.allocate(size, alignment);
+			Blk blk = primaryAllocator.allocate(size, alignment);
 			if (!blk) {
-				return fallback.allocate(size, alignment);
+				return fallbackAllocator.allocate(size, alignment);
 			}
 	
 			return blk;
 		}
 
-		void deallocate(Blk blk) noexcept  // Use pointer if pointer is not a value_type*
+		void deallocate(Blk blk)
 		{
-			if (!blk)
-				return;
+			assert(blk);
 
 			if (primary.owns(blk))
-				primary.deallocate(blk);
+				primaryAllocator.deallocate(blk);
 			else if (fallback.owns(blk))
-				fallback.deallocate(blk);
+				fallbackAllocator.deallocate(blk);
 			else
 				assert(false);
 		}
 
-		bool owns(const Blk& blk) const {
-			return primary.owns(blk) || fallback.owns(blk);
+		bool owns(const Blk& blk) {
+			return primaryAllocator.owns(blk) || fallbackAllocator.owns(blk);
+		}
+
+		void reset() {
+			primaryAllocator.reset();
+			fallbackAllocator.reset();
 		}
 
 

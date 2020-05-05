@@ -16,10 +16,9 @@ namespace ryoji::allocators {
 	class SlabAllocator
 	{
 		static_assert(Capacity != 0);
+	public:
 		Allocator allocator;
-		Blk memory = {};
-		void** freeList = nullptr;
-		char* start = nullptr;
+
 	public:
 		SlabAllocator() {
 			static_assert(ObjectSize > 0, "ObjectSize is 0");
@@ -31,7 +30,7 @@ namespace ryoji::allocators {
 			assert(memory.ptr != nullptr);
 			start = reinterpret_cast<char*>(memory.ptr);
 
-			deallocateAll();
+			reset();
 
 		}
 
@@ -59,8 +58,7 @@ namespace ryoji::allocators {
 
 		void deallocate(Blk blk)
 		{
-			assert(blk.ptr != nullptr);
-			assert(owns(blk.ptr));
+			assert(owns(blk));
 			assert(reinterpret_cast<uintptr_t>(blk.ptr) % ObjectAlignment == 0);
 
 			// set the value of p to free list's current value
@@ -73,10 +71,10 @@ namespace ryoji::allocators {
 		}
 
 		bool owns(Blk blk) const noexcept {
-			return blk.ptr >= start && blk.ptr < start + Capacity;
+			return blk && blk.ptr >= start && blk.ptr < start + Capacity;
 		}
 
-		void deallocateAll() {
+		void reset() {
 			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start, ObjectAlignment);
 
 			// save it as (void**)
@@ -97,6 +95,10 @@ namespace ryoji::allocators {
 			//allocated = 0;
 		}
 
+	private:
+		Blk memory = {};
+		void** freeList = nullptr;
+		char* start = nullptr;
 
 	};
 

@@ -15,8 +15,6 @@ namespace ryoji::allocators {
 	template<size_t Capacity>
 	class LocalAllocator
 	{
-		char arr[Capacity] = {0};
-		bool allocated = false;
 	public:
 		Blk allocate(size_t size, uint8_t alignment)
 		{
@@ -40,11 +38,14 @@ namespace ryoji::allocators {
 			return blk.ptr == arr;
 		}
 
-		void deallocateAll()
+		void reset()
 		{
 			assert(allocated);
 			allocated = false;
 		}
+	private:
+		char arr[Capacity] = { 0 };
+		bool allocated = false;
 	};
 
 }

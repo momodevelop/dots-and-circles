@@ -18,7 +18,7 @@ namespace ryoji::allocators {
 			return false;
 		}
 
-		void deallocateAll() noexcept {}
+		void reset() noexcept {}
 	};
 
 }

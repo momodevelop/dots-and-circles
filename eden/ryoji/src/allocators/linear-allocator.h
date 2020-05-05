@@ -16,11 +16,8 @@ namespace ryoji::allocators {
 	class LinearAllocator
 	{
 		static_assert(Capacity != 0);
-
+	public:
 		Allocator allocator;
-		Blk memoryBlk = {};
-		char* start = nullptr;
-		char* current = nullptr;
 	public:
 		LinearAllocator() {
 			memoryBlk = allocator.allocate(Capacity, alignof(max_align_t));
@@ -51,7 +48,7 @@ namespace ryoji::allocators {
 			return { alignedAddress, size };
 		}
 
-		void deallocate(Blk blk) 
+		void deallocate(Blk blk)
 		{
 			// does nothing
 		}
@@ -60,10 +57,14 @@ namespace ryoji::allocators {
 			return blk.ptr >= start && blk.ptr < start + Capacity;
 		}
 
-		void deallocateAll() {
+		void reset() {
 			current = start;
 		}
 
+	private:
+		Blk memoryBlk = {};
+		char* start = nullptr;
+		char* current = nullptr;
 
 	};
 
