@@ -8,7 +8,7 @@
 #include "ryoji/allocators/heap-allocator.h"
 #include "ryoji/allocators/linear-allocator.h"
 #include "ryoji/allocators/local-allocator.h"
-#include "ryoji/allocators/log-allocator.h"
+#include "ryoji/allocators/middleware-allocator.h"
 #include "ryoji/allocators/null-allocator.h"
 #include "ryoji/allocators/segregator-allocator.h"
 #include "ryoji/allocators/slab-allocator.h"
@@ -91,8 +91,8 @@ private:
 		}
 	}
 public:
-
-	void printAllocate(Blk blk) {
+	void preAllocate(size_t, uint8_t) {}
+	void postAllocate(Blk blk) {
 		if (IsFallback != isFallingback) {
 			PrintGoodOrBad(!blk);
 			prefixPrint();
@@ -122,10 +122,14 @@ public:
 		
 
 	}
-	void printDeallocate(Blk blk) {
+	void preDeallocate(Blk blk) {
 		PrintGoodOrBad(!isFallingback);
 		cout << "Stack called to deallocate 4 bytes" << endl;
 	}
+	void postDeallocate() {}
+	void preDeallocateAll() {}
+	void postDeallocateAll() {}
+	
 };
 
 void TestFallbackLocalHeap() {
@@ -136,8 +140,8 @@ void TestFallbackLocalHeap() {
 
 
 	using Allocator = FallbackAllocator<
-		LogAllocator<LocalStackAllocator<50>, StackLogStrategy<false>>,
-		LogAllocator<LocalStackAllocator<50>, StackLogStrategy<true>>>;
+		MiddlewareAllocator<LocalStackAllocator<50>, StackLogStrategy<false>>,
+		MiddlewareAllocator<LocalStackAllocator<50>, StackLogStrategy<true>>>;
 		
 
 	Allocator allocator;
@@ -344,8 +348,101 @@ void TestSlabAllocator() {
 	/// TODO
 
 }
+void TestMiddlewareAllocator() {
+	cout << "=== Testing MiddlewareAllocator" << endl;
 
+
+
+	
+	{
+		cout << "= Full Test" << endl;
+
+		struct Middleware {
+			bool preAllocated = false;
+			bool postAllocated = false;
+			bool preDeallocated = false;
+			bool postDeallocated = false;
+			bool preDeallocatedAll = false;
+			bool postDeallocatedAll = false;
+
+			void preAllocate(size_t, uint8_t) { preAllocated = true; }
+			void postAllocate(Blk) { postAllocated = true; }
+			void preDeallocate(Blk) { preDeallocated = true; }
+			void postDeallocate(Blk) { postDeallocated = true; }
+			void preDeallocateAll() { preDeallocatedAll = true; }
+			void postDeallocateAll() { postDeallocatedAll = true; }
+		};
+
+
+		using Allocator = MiddlewareAllocator<LocalAllocator<1000>, Middleware>;
+		Allocator allocator;
+
+		Middleware& middleware = allocator.middleware;
+		auto ret = allocator.allocate(10, 4);
+		allocator.deallocate(ret);
+		ret = allocator.allocate(10, 4);
+		allocator.deallocateAll();
+
+		
+		PrintGoodOrBad(middleware.preAllocated);
+		cout << "preAllocated called" << endl;
+
+		PrintGoodOrBad(middleware.postAllocated);
+		cout << "preAllocate called" << endl;
+
+		PrintGoodOrBad(middleware.preDeallocated);
+		cout << "preDeallocate called" << endl;
+
+		PrintGoodOrBad(middleware.postDeallocated);
+		cout << "postDeallocate called" << endl;
+
+		PrintGoodOrBad(middleware.preDeallocatedAll);
+		cout << "preDeallocateAll called" << endl;
+
+		PrintGoodOrBad(middleware.postDeallocatedAll);
+		cout << "postDeallocateAll called" << endl;
+	}
+
+	{
+		cout << "= Partial Test" << endl;
+		struct Middleware {
+			bool postAllocated = false;
+			bool postDeallocated = false;
+			bool postDeallocatedAll = false;
+
+			void postAllocate(Blk) { postAllocated = true; }
+			void postDeallocate(Blk) { postDeallocated = true; }
+			void postDeallocateAll() { postDeallocatedAll = true; }
+		};
+
+		using Allocator = MiddlewareAllocator<LocalAllocator<1000>, Middleware>;
+		Allocator allocator;
+
+		Middleware& middleware = allocator.middleware;
+		auto ret = allocator.allocate(10, 4);
+		allocator.deallocate(ret);
+		ret = allocator.allocate(10, 4);
+		allocator.deallocateAll();
+
+		PrintGoodOrBad(middleware.postAllocated);
+		cout << "preAllocate called" << endl;
+
+
+		PrintGoodOrBad(middleware.postDeallocated);
+		cout << "postDeallocate called" << endl;
+
+
+		PrintGoodOrBad(middleware.postDeallocatedAll);
+		cout << "postDeallocateAll called" << endl;
+	}
+
+
+	cout << endl;
+
+
+}
 int main() {
+	TestMiddlewareAllocator();
 	TestSTLOnVector();
 	TestSTLOnList();
 	TestFallbackLocalHeap();

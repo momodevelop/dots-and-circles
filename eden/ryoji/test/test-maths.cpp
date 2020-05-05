@@ -9,19 +9,18 @@ using namespace ryoji::maths;
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-void PrintGoodOrBad(bool good) {
+void PrintGoodOrBad(bool good, const char * str) {
 	using namespace std;
 	if (good)
 		cout << "[" << ANSI_COLOR_GREEN << "O" << ANSI_COLOR_RESET << "] ";
 	else
 		cout << "[" << ANSI_COLOR_RED << "X" << ANSI_COLOR_RESET << "] ";
+	cout << str << endl;
 }
 
 template<typename T>
 bool SimpleEqualityTest(const char* title, T lhs, T rhs) {
-	using namespace std;
-	PrintGoodOrBad(lhs == rhs);
-	cout << title << endl;
+	PrintGoodOrBad(lhs == rhs, title);
 	return lhs == rhs;
 }
 

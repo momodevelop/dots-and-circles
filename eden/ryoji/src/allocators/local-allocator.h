@@ -42,7 +42,8 @@ namespace ryoji::allocators {
 
 		void deallocateAll()
 		{
-			deallocate();
+			assert(allocated);
+			allocated = false;
 		}
 	};
 

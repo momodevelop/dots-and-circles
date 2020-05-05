@@ -7,7 +7,7 @@ set(include-allocators
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/heap-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/linear-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/local-allocator.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/log-allocator.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/middleware-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/null-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/segregator-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/slab-allocator.h
@@ -33,7 +33,7 @@ set(src-allocators
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/heap-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/linear-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/local-allocator.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/allocators/log-allocator.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/allocators/middleware-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/null-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/segregator-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/slab-allocator.h
