@@ -25,9 +25,6 @@ namespace ryoji::allocators {
 		bool owns(Blk blk) const noexcept {
 			return true;
 		}
-
-		void reset() {}
-
 	};
 
 }

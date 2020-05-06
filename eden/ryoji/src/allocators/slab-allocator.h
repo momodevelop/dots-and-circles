@@ -16,14 +16,14 @@ namespace ryoji::allocators {
 	class SlabAllocator
 	{
 		static_assert(Capacity != 0);
+		static_assert(ObjectSize > 0, "ObjectSize is 0");
+		static_assert(ObjectAlignment > 0, "ObjectAlignment is 0");
+		static_assert(ObjectSize > sizeof(void**), "ObjectSize is too small to be contained by void**");
 	public:
 		Allocator allocator;
 
 	public:
 		SlabAllocator() {
-			static_assert(ObjectSize > 0, "ObjectSize is 0");
-			static_assert(ObjectAlignment > 0, "ObjectAlignment is 0");
-			static_assert(ObjectSize > sizeof(void**), "ObjectSize is too small to be contained by void**");
 
 			memory = allocator.allocate(Capacity, ObjectAlignment);
 

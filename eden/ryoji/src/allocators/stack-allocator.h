@@ -38,7 +38,7 @@ namespace ryoji::allocators {
 			memoryBlock = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memoryBlock);
 			start = reinterpret_cast<char*>(memoryBlock.ptr);
-			deallocateAll();
+			reset();
 		}
 
 		~StackAllocator()
@@ -88,7 +88,7 @@ namespace ryoji::allocators {
 			this->metadataCurrent += sizeof(Header);
 		}
 
-		void deallocateAll() noexcept {
+		void reset() noexcept {
 			current = start;
 
 			// Make sure the metadata starts at an piece of memory that it aligns to.

@@ -2,7 +2,6 @@
 #include <vector>
 #include <list>
 
-#include "ryoji/allocators/accountant-allocator.h"
 #include "ryoji/allocators/fallback-allocator.h"
 #include "ryoji/allocators/freelist-allocator.h"
 #include "ryoji/allocators/heap-allocator.h"
@@ -198,7 +197,7 @@ void TestStackAllocator() {
 	for (int i = 0; i < 20; ++i) {
 		blkList[i] = allocator.allocate(4, 4);
 	}
-	allocator.deallocateAll();
+	allocator.reset();
 	tmpBlk = allocator.allocate(4, 4);
 	allocator.deallocate(tmpBlk);
 
@@ -439,21 +438,8 @@ void TestMiddlewareAllocator() {
 
 }
 
-void TestMiddlewareAllocator() 
-{
-	using Allocator = Accountant
-
-	Allocator" << endl;
-
-	
-
-	cout << endl;
-
-
-}
 int main() {
 	TestMiddlewareAllocator();
-	TestAccountantAllocator();
 	TestSTLOnVector();
 	TestSTLOnList();
 	TestFallbackLocalHeap();
