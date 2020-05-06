@@ -41,13 +41,6 @@ namespace ryoji::allocators {
 			return smallAllocator.owns(blk) || bigAllocator.owns(blk);
 		}
 
-		void reset() {
-			smallAllocator.reset();
-			bigAllocator.reset();
-		}
-
-
-
 	};
 }
 #endif

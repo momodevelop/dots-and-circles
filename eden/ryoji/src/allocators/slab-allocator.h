@@ -30,7 +30,24 @@ namespace ryoji::allocators {
 			assert(memory.ptr != nullptr);
 			start = reinterpret_cast<char*>(memory.ptr);
 
-			reset();
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start, ObjectAlignment);
+
+			// save it as (void**)
+			freeList = reinterpret_cast<void**>(start + adjustment);
+
+			// Calculate the number of objects.
+			size_t objectNum = (reinterpret_cast<uintptr_t>(start + Capacity) - reinterpret_cast<uintptr_t>(this->start) + adjustment) / ObjectSize;
+
+
+			void** itr = freeList;
+			for (size_t i = 0; i < objectNum - 1; ++i) {
+				// calculate and store the address of the next item
+				*itr = zawarudo::pointer::add(itr, ObjectSize);
+				itr = reinterpret_cast<void**>(*itr);
+			}
+
+			*itr = nullptr;
+			//allocated = 0;
 
 		}
 
@@ -72,27 +89,6 @@ namespace ryoji::allocators {
 
 		bool owns(Blk blk) const noexcept {
 			return blk && blk.ptr >= start && blk.ptr < start + Capacity;
-		}
-
-		void reset() {
-			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start, ObjectAlignment);
-
-			// save it as (void**)
-			freeList = reinterpret_cast<void**>(start + adjustment);
-
-			// Calculate the number of objects.
-			size_t objectNum = (reinterpret_cast<uintptr_t>(start + Capacity) - reinterpret_cast<uintptr_t>(this->start) + adjustment) / ObjectSize;
-
-
-			void** itr = freeList;
-			for (size_t i = 0; i < objectNum - 1; ++i) {
-				// calculate and store the address of the next item
-				*itr = zawarudo::pointer::add(itr, ObjectSize);
-				itr = reinterpret_cast<void**>(*itr);
-			}
-
-			*itr = nullptr;
-			//allocated = 0;
 		}
 
 	private:

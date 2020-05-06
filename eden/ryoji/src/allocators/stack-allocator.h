@@ -37,8 +37,11 @@ namespace ryoji::allocators {
 		{
 			memoryBlock = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memoryBlock);
-			start = reinterpret_cast<char*>(memoryBlock.ptr);
-			reset();
+			start = current = reinterpret_cast<char*>(memoryBlock.ptr);
+
+			// Make sure the metadata starts at an piece of memory that it aligns to.
+			// From here on, our Headers will be contiguously lined up :)
+			this->metadataCurrent = zawarudo::pointer::getAlignBackward(start + Capacity, alignof(Header));
 		}
 
 		~StackAllocator()
@@ -88,13 +91,6 @@ namespace ryoji::allocators {
 			this->metadataCurrent += sizeof(Header);
 		}
 
-		void reset() noexcept {
-			current = start;
-
-			// Make sure the metadata starts at an piece of memory that it aligns to.
-			// From here on, our Headers will be contiguously lined up :)
-			this->metadataCurrent = zawarudo::pointer::getAlignBackward(start + Capacity, alignof(Header));
-		}
 
 	private:
 		Blk memoryBlock = {};

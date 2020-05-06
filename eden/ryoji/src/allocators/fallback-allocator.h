@@ -43,11 +43,6 @@ namespace ryoji::allocators {
 			return primaryAllocator.owns(blk) || fallbackAllocator.owns(blk);
 		}
 
-		void reset() {
-			primaryAllocator.reset();
-			fallbackAllocator.reset();
-		}
-
 
 
 	};

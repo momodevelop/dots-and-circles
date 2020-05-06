@@ -18,7 +18,6 @@ namespace ryoji::allocators {
 			return false;
 		}
 
-		void reset() noexcept {}
 	};
 
 }

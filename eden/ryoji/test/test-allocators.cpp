@@ -197,7 +197,7 @@ void TestStackAllocator() {
 	for (int i = 0; i < 20; ++i) {
 		blkList[i] = allocator.allocate(4, 4);
 	}
-	allocator.reset();
+	allocator = Allocator();
 	tmpBlk = allocator.allocate(4, 4);
 	allocator.deallocate(tmpBlk);
 
@@ -223,7 +223,7 @@ void TestLinearAllocator() {
 
 	PrintGoodOrBad(!expectNullBlk && allocatesSuccess);
 	cout << "Allocation integrity is okay" << endl;
-	allocator.reset();
+	allocator = Allocator();
 
 	allocatesSuccess = true;
 	for (int i = 0; i < 25; ++i) {
@@ -358,15 +358,11 @@ void TestMiddlewareAllocator() {
 			bool postAllocated = false;
 			bool preDeallocated = false;
 			bool postDeallocated = false;
-			bool preDeallocatedAll = false;
-			bool postDeallocatedAll = false;
 
 			void preAllocate(size_t, uint8_t) { preAllocated = true; }
 			void postAllocate(Blk) { postAllocated = true; }
 			void preDeallocate(Blk) { preDeallocated = true; }
 			void postDeallocate(Blk) { postDeallocated = true; }
-			void preDeallocateAll() { preDeallocatedAll = true; }
-			void postDeallocateAll() { postDeallocatedAll = true; }
 		};
 
 
@@ -376,9 +372,6 @@ void TestMiddlewareAllocator() {
 		Middleware& middleware = allocator.middleware;
 		auto ret = allocator.allocate(10, 4);
 		allocator.deallocate(ret);
-		ret = allocator.allocate(10, 4);
-		allocator.reset();
-
 		
 		PrintGoodOrBad(middleware.preAllocated);
 		cout << "preAllocated called" << endl;
@@ -392,11 +385,6 @@ void TestMiddlewareAllocator() {
 		PrintGoodOrBad(middleware.postDeallocated);
 		cout << "postDeallocate called" << endl;
 
-		PrintGoodOrBad(middleware.preDeallocatedAll);
-		cout << "preDeallocateAll called" << endl;
-
-		PrintGoodOrBad(middleware.postDeallocatedAll);
-		cout << "postDeallocateAll called" << endl;
 	}
 
 	{
@@ -408,7 +396,6 @@ void TestMiddlewareAllocator() {
 
 			void postAllocate(Blk) { postAllocated = true; }
 			void postDeallocate(Blk) { postDeallocated = true; }
-			void postDeallocateAll() { postDeallocatedAll = true; }
 		};
 
 		using Allocator = MiddlewareAllocator<LocalAllocator<1000>, Middleware>;
@@ -417,8 +404,6 @@ void TestMiddlewareAllocator() {
 		Middleware& middleware = allocator.middleware;
 		auto ret = allocator.allocate(10, 4);
 		allocator.deallocate(ret);
-		ret = allocator.allocate(10, 4);
-		allocator.reset();
 
 		PrintGoodOrBad(middleware.postAllocated);
 		cout << "preAllocate called" << endl;
@@ -428,8 +413,6 @@ void TestMiddlewareAllocator() {
 		cout << "postDeallocate called" << endl;
 
 
-		PrintGoodOrBad(middleware.postDeallocatedAll);
-		cout << "postDeallocateAll called" << endl;
 	}
 
 

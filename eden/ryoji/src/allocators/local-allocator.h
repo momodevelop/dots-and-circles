@@ -38,11 +38,6 @@ namespace ryoji::allocators {
 			return blk.ptr == arr;
 		}
 
-		void reset()
-		{
-			assert(allocated);
-			allocated = false;
-		}
 	private:
 		char arr[Capacity] = { 0 };
 		bool allocated = false;

@@ -20,8 +20,7 @@ namespace ryoji::allocators {
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocate, void, (Blk));
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocate, void, (Blk));
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocate, void, (Blk));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preReset, void, (void));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postReset, void, (void));
+
 
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preAllocateR, void, (size_t&, uint8_t&));
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocateR, void, (Blk&));
@@ -37,8 +36,6 @@ namespace ryoji::allocators {
 		template<typename T> static constexpr bool has_any_postAllocate_v =		has_postAllocate_v<T> || has_postAllocateCR_v<T> || has_postAllocateR_v<T>;
 		template<typename T> static constexpr bool has_any_preDeallocate_v =	has_preDeallocate_v<T> || has_preDeallocateCR_v<T> || has_preDeallocateR_v<T>;
 		template<typename T> static constexpr bool has_any_postDeallocate_v =	has_postDeallocate_v<T> || has_postDeallocateCR_v<T> || has_postDeallocateR_v<T>;
-		template<typename T> static constexpr bool has_any_preReset_v =			has_preReset_v<T>;
-		template<typename T> static constexpr bool has_any_postReset_v =		has_postReset_v<T>;
 
 		// should I care about volatile?
 		#undef GENERATE_HAS_MEMBER_FUNCTION_CHECKER
@@ -87,18 +84,6 @@ namespace ryoji::allocators {
 
 		bool owns(Blk blk) const noexcept {
 			return allocator.owns(blk);
-		}
-
-		void reset() {
-			using namespace zawarudo;
-			if constexpr (has_any_preReset_v<Middleware>)
-				middleware.preReset();
-
-
-			allocator.reset();
-
-			if constexpr (has_any_postReset_v<Middleware>)
-				middleware.postReset();
 		}
 
 		

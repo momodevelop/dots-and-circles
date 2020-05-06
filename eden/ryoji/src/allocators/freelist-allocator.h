@@ -74,7 +74,9 @@ namespace ryoji::allocators {
 			assert(memory);
 			start = static_cast<char*>(memory.ptr);
 
-			reset();
+			this->freeList = reinterpret_cast<FreeBlock*>(start);
+			this->freeList->size = Capacity;
+			this->freeList->next = nullptr;
 
 			// The whole allocator must be able to contain at least a minimum block size
 			assert(freeList->size > minBlockSize);
@@ -158,12 +160,7 @@ namespace ryoji::allocators {
 			return reinterpret_cast<char*>(blk.ptr) >= start && reinterpret_cast<char*>(blk.ptr) < start + Capacity;
 		}
 
-		// Reset all variables to start
-		void reset() noexcept {
-			this->freeList = reinterpret_cast<FreeBlock*>(start);
-			this->freeList->size = Capacity;
-			this->freeList->next = nullptr;
-		}
+
 
 		void deallocate(Blk blk)
 		{

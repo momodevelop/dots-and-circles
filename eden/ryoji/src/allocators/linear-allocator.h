@@ -57,10 +57,6 @@ namespace ryoji::allocators {
 			return blk.ptr >= start && blk.ptr < start + Capacity;
 		}
 
-		void reset() {
-			current = start;
-		}
-
 	private:
 		Blk memoryBlk = {};
 		char* start = nullptr;
