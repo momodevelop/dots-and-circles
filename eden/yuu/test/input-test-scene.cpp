@@ -54,7 +54,7 @@ void InputTestScene::update() {
 	checkKeyPressed(kb, SDLK_s, "S");
 	checkKeyPressed(kb, SDLK_d, "D");
 }
-void InputTestScene::cleanup() {}
+void InputTestScene::uninit() {}
 
 bool InputTestScene::done() {
 	return isDone;

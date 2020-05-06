@@ -15,7 +15,7 @@ int main(int argc, char* args[]){
 	using namespace yuu::utils;
 	using namespace yuu;
 	using namespace std;
-
+	using namespace scenes;
 	auto win = window::Window();
 	if (!window::init(win, "Yuu Test")) {
 		cout << "Cannot initialize window" << endl;
@@ -23,14 +23,16 @@ int main(int argc, char* args[]){
 	}
 	defer{ window::free(win); };
 
-	auto scene = new scenes::InputTestScene();
-	defer{ delete scene; };
+	
+	SceneManager<int> sceneMgr;
+	sceneMgr.registerScene<InputTestScene>(0);
 
-	scene->init();
-	while (!scene->done()) {
-		scene->update();
-	}
-	scene->cleanup();
+	
+	
+	if (!sceneMgr.isDone())
+		sceneMgr.update();
+
+	
 
 
 
