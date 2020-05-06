@@ -5,3 +5,4 @@ bin/
 Debug/
 Release/
 !*.lib
+!*.dll
