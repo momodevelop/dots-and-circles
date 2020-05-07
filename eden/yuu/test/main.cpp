@@ -24,18 +24,9 @@ int main(int argc, char* args[]){
 	defer{ window::free(win); };
 
 	
-	SceneManager<int> sceneMgr;
-	sceneMgr.registerScene<InputTestScene>(0);
-
-	
-	
-	if (!sceneMgr.isDone())
-		sceneMgr.update();
-
-	
-
-
-
+	auto sceneMgr = SceneManager();
+	sceneMgr.setNextScene(InputTestScene::I());
+	sceneMgr.run();
 
 	return 0;
 }

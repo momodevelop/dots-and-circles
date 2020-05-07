@@ -38,12 +38,12 @@ void InputTestScene::init() {
 	keyboard::registerKey(kb, SDLK_a);
 	keyboard::registerKey(kb, SDLK_d);
 }
-void InputTestScene::update() {
+IScene* InputTestScene::update() {
 	using namespace yuu::input;
 	keyboard::update(kb);
 	while (auto e = pollEvent()) {
 		if (e->type == SDL_QUIT)
-			isDone = true;
+			return nullptr;
 		else {
 			keyboard::processEvent(kb, e.value());
 		}
@@ -53,10 +53,10 @@ void InputTestScene::update() {
 	checkKeyPressed(kb, SDLK_a, "A");
 	checkKeyPressed(kb, SDLK_s, "S");
 	checkKeyPressed(kb, SDLK_d, "D");
+
+	return this;
 }
 void InputTestScene::uninit() {}
 
-bool InputTestScene::done() {
-	return isDone;
-}
+
 

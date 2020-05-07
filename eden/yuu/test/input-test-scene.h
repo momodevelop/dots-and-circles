@@ -5,14 +5,18 @@
 #include "yuu/input/keyboard.h"
 
 namespace scenes {
-	class InputTestScene {
+	class InputTestScene : public IScene {
 		yuu::input::keyboard::Keyboard kb{};
 		bool isDone = false;
 	public:
 		void init();
-		void update();
+		IScene* update();
 		void uninit();
-		bool done();
+
+		static InputTestScene* I() {
+			static InputTestScene instance;
+			return &instance;
+		}
 	};
 }
 
