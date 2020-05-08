@@ -25,10 +25,15 @@ namespace ryoji::allocators {
 	template <size_t Capacity, class Allocator>
 	class StackAllocator {
 		static_assert(Capacity != 0);
-		// The adjustment value should not be bigger than uint8_t 
+		struct null_deleter { template<typename T> void operator()(T*) {} };
+		template<typename T> using move_ptr = std::unique_ptr<T, null_deleter>;
+
 		struct Header {
-			uint8_t adjustment;
+			uint8_t adjustment; // The adjustment value should not be bigger than uint8_t 
 		};
+		StackAllocator& operator=(const StackAllocator&) = delete;
+		StackAllocator(const StackAllocator&) = delete;
+		StackAllocator& operator=(StackAllocator&&) = delete;
 	public:
 		Allocator allocator;
 
@@ -37,11 +42,12 @@ namespace ryoji::allocators {
 		{
 			memoryBlock = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memoryBlock);
-			start = current = reinterpret_cast<char*>(memoryBlock.ptr);
+			start.reset(reinterpret_cast<char*>(memoryBlock.ptr));
+			current.reset(reinterpret_cast<char*>(memoryBlock.ptr));
 
 			// Make sure the metadata starts at an piece of memory that it aligns to.
 			// From here on, our Headers will be contiguously lined up :)
-			this->metadataCurrent = zawarudo::pointer::getAlignBackward(start + Capacity, alignof(Header));
+			metadataCurrent = move_ptr<char>(zawarudo::pointer::getAlignBackward(start.get() + Capacity, alignof(Header)));
 		}
 
 		~StackAllocator()
@@ -49,25 +55,27 @@ namespace ryoji::allocators {
 			allocator.deallocate(memoryBlock);
 		}
 
+		StackAllocator(StackAllocator&&) = default;
+
 		Blk allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size != 0);
 			assert(alignment != 0);
 
-			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(current, alignment);
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(current.get(), alignment);
 
 			// Make sure that there is space to alloc 
-			if (current + adjustment + size > metadataCurrent - sizeof(Header)) {
+			if (current.get() + adjustment + size > metadataCurrent.get() - sizeof(Header)) {
 				return {};
 			}
 
 			// alloc for header
-			this->metadataCurrent -= sizeof(Header);
-			reinterpret_cast<Header*>(this->metadataCurrent)->adjustment = adjustment;
+			metadataCurrent.reset(metadataCurrent.get() - sizeof(Header));
+			reinterpret_cast<Header*>(metadataCurrent.get())->adjustment = adjustment;
 
 			// alloc for data, just like linear allocation
-			char* alignedAddress = this->current + adjustment;
-			this->current = alignedAddress + size;
+			char* alignedAddress = current.get() + adjustment;
+			current.reset(alignedAddress + size);
 
 			// returns the address for the user
 			return { alignedAddress, size };
@@ -75,28 +83,27 @@ namespace ryoji::allocators {
 
 
 		bool owns(Blk blk) const noexcept {
-			return blk.ptr >= start && blk.ptr < start + Capacity;
+			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
 
 		void deallocate(Blk blk) noexcept
 		{
-			assert(blk);
 			assert(owns(blk));
 
 			// When you free, get the adjustment from the current Header to know how much to fall back 
-			this->current = reinterpret_cast<char*>(blk.ptr) - reinterpret_cast<Header*>(this->metadataCurrent)->adjustment;
+			current.reset(reinterpret_cast<char*>(blk.ptr) - reinterpret_cast<Header*>(metadataCurrent.get())->adjustment);
 
 			// And move the metadataCurrent forward
-			this->metadataCurrent += sizeof(Header);
+			metadataCurrent.reset(metadataCurrent.get() + sizeof(Header));
 		}
 
 
 	private:
 		Blk memoryBlock = {};
-		char* start = nullptr;
-		char* current = nullptr;
-		char* metadataCurrent = nullptr; // Pointer to the start of metadata of headers
+		move_ptr<char> start{ nullptr };
+		move_ptr<char> current{ nullptr };
+		move_ptr<char> metadataCurrent{ nullptr }; // Pointer to the start of metadata of headers
 
 	};
 

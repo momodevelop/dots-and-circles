@@ -193,16 +193,7 @@ void TestStackAllocator() {
 
 	allocator.deallocate(tmpBlk);
 
-	//deallocate all test
-	for (int i = 0; i < 20; ++i) {
-		blkList[i] = allocator.allocate(4, 4);
-	}
-	allocator = Allocator();
-	tmpBlk = allocator.allocate(4, 4);
-	allocator.deallocate(tmpBlk);
 
-	PrintGoodOrBad(tmpBlk == startBlk);
-	cout << "DeallocateAll integrity is okay" << endl;
 
 
 	cout << endl;
@@ -223,17 +214,6 @@ void TestLinearAllocator() {
 
 	PrintGoodOrBad(!expectNullBlk && allocatesSuccess);
 	cout << "Allocation integrity is okay" << endl;
-	allocator = Allocator();
-
-	allocatesSuccess = true;
-	for (int i = 0; i < 25; ++i) {
-		auto blk = allocator.allocate(4, 4);
-		if (!blk)
-			allocatesSuccess = false;
-	}
-	PrintGoodOrBad(!expectNullBlk && allocatesSuccess);
-	cout << "Deallocation integrity is okay" << endl;
-	cout << endl;
 }
 void TestSegregatorAllocator() {
 	cout << "=== Testing SegregatorAllocator" << endl;
@@ -292,6 +272,8 @@ void TestFreeListAllocator() {
 
 	PrintGoodOrBad((char*)blk.ptr == firstAllocationPtr);
 	cout << "Allocation integrity is okay" << endl;
+
+	
 	cout << endl;
 }
 

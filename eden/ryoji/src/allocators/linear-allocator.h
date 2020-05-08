@@ -5,6 +5,7 @@
 // Sometimes called the Mallocator.
 
 #include <cassert>
+#include <functional>
 #include "blk.h"
 
 #include "zawarudo/pointer.h"
@@ -12,55 +13,66 @@
 #include "heap-allocator.h"
 
 namespace ryoji::allocators {
+
 	template<size_t Capacity, class Allocator>
 	class LinearAllocator
 	{
 		static_assert(Capacity != 0);
+		struct null_deleter { template<typename T> void operator()(T*){} };
+		template<typename T> using move_ptr = std::unique_ptr<T, null_deleter>;
+
+		LinearAllocator& operator=(const LinearAllocator&) = delete;
+		LinearAllocator(const LinearAllocator&) = delete;
+		LinearAllocator& operator=(LinearAllocator&&) = delete;
 	public:
 		Allocator allocator;
 	public:
 		LinearAllocator() {
 			memoryBlk = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memoryBlk);
-			start = current = reinterpret_cast<char*>(memoryBlk.ptr);
-
+			start.reset(reinterpret_cast<char*>(memoryBlk.ptr));
+			current.reset(reinterpret_cast<char*>(memoryBlk.ptr));
 		}
 
 		~LinearAllocator() {
 			allocator.deallocate(memoryBlk);
 		}
 
-		Blk allocate(size_t size, uint8_t alignment)
+		LinearAllocator(LinearAllocator&&) = default;
+
+		Blk allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size && alignment);
 
-			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(current, alignment);
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(current.get(), alignment);
 
 			// if not enough space, return nullptr
-			if (current + adjustment + size > start + Capacity) {
-				return nullptr;
+			if (current.get() + adjustment + size > start.get() + Capacity) {
+				return {};
 			}
 
 			// otherwise, get the aligned address
-			char* alignedAddress = current + adjustment;
-			current = alignedAddress + size;
+			char* alignedAddress = current.get() + adjustment;
+			current.reset(alignedAddress + size);
 
 			return { alignedAddress, size };
 		}
 
-		void deallocate(Blk blk)
+		void deallocate(Blk blk) noexcept
 		{
 			// does nothing
 		}
 
 		bool owns(Blk blk) const noexcept {
-			return blk.ptr >= start && blk.ptr < start + Capacity;
+			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
+	
+
 	private:
-		Blk memoryBlk = {};
-		char* start = nullptr;
-		char* current = nullptr;
+		Blk memoryBlk{};
+		move_ptr<char> start{ nullptr };
+		move_ptr<char> current{ nullptr };
 
 	};
 

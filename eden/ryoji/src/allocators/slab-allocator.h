@@ -19,6 +19,14 @@ namespace ryoji::allocators {
 		static_assert(ObjectSize > 0, "ObjectSize is 0");
 		static_assert(ObjectAlignment > 0, "ObjectAlignment is 0");
 		static_assert(ObjectSize > sizeof(void**), "ObjectSize is too small to be contained by void**");
+		
+		struct null_deleter { template<typename T> void operator()(T*) {} };
+		template<typename T> using move_ptr = std::unique_ptr<T, null_deleter>;
+
+
+		SlabAllocator& operator=(const SlabAllocator&) = delete;
+		SlabAllocator(const SlabAllocator&) = delete;
+		SlabAllocator& operator=(SlabAllocator&&) = delete;
 	public:
 		Allocator allocator;
 
@@ -28,18 +36,18 @@ namespace ryoji::allocators {
 			memory = allocator.allocate(Capacity, ObjectAlignment);
 
 			assert(memory.ptr != nullptr);
-			start = reinterpret_cast<char*>(memory.ptr);
+			start.reset(reinterpret_cast<char*>(memory.ptr));
 
-			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start, ObjectAlignment);
+			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start.get(), ObjectAlignment);
 
 			// save it as (void**)
-			freeList = reinterpret_cast<void**>(start + adjustment);
+			freeList.reset(reinterpret_cast<void**>(start.get() + adjustment));
 
 			// Calculate the number of objects.
-			size_t objectNum = (reinterpret_cast<uintptr_t>(start + Capacity) - reinterpret_cast<uintptr_t>(this->start) + adjustment) / ObjectSize;
+			size_t objectNum = (reinterpret_cast<uintptr_t>(start.get() + Capacity) - reinterpret_cast<uintptr_t>(start.get()) + adjustment) / ObjectSize;
 
 
-			void** itr = freeList;
+			void** itr = freeList.get();
 			for (size_t i = 0; i < objectNum - 1; ++i) {
 				// calculate and store the address of the next item
 				*itr = zawarudo::pointer::add(itr, ObjectSize);
@@ -47,15 +55,15 @@ namespace ryoji::allocators {
 			}
 
 			*itr = nullptr;
-			//allocated = 0;
-
 		}
 
 		~SlabAllocator() {
 			allocator.deallocate(memory);
 		}
 
-		Blk allocate(size_t size, uint8_t alignment)
+		SlabAllocator(SlabAllocator&&) = default;
+
+		Blk allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size == ObjectSize);
 			assert(alignment == ObjectAlignment);
@@ -73,7 +81,7 @@ namespace ryoji::allocators {
 			return { ret, size };
 		}
 
-		void deallocate(Blk blk)
+		void deallocate(Blk blk) noexcept
 		{
 			assert(owns(blk));
 			assert(reinterpret_cast<uintptr_t>(blk.ptr) % ObjectAlignment == 0);
@@ -88,13 +96,13 @@ namespace ryoji::allocators {
 		}
 
 		bool owns(Blk blk) const noexcept {
-			return blk && blk.ptr >= start && blk.ptr < start + Capacity;
+			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
 	private:
 		Blk memory = {};
-		void** freeList = nullptr;
-		char* start = nullptr;
+		move_ptr<void*> freeList = nullptr;
+		move_ptr<char> start = nullptr;
 
 	};
 

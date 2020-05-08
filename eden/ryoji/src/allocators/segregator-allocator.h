@@ -17,12 +17,10 @@ namespace ryoji::allocators {
 		{
 			assert(size && alignment);
 
-			if (size > Threshhold) {
+			if (size > Threshhold) 
 				return bigAllocator.allocate(size, alignment);
-			}
-			else {
+			else
 				return smallAllocator.allocate(size, alignment);
-			}
 		}
 
 		void deallocate(Blk blk) 

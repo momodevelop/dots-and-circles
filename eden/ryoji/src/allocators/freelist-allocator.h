@@ -18,6 +18,14 @@ namespace ryoji::allocators {
 	template<size_t Capacity, class Allocator, class FitStrategy>
 	class FreeListAllocator {
 		static_assert(Capacity != 0);
+		
+		struct null_deleter { template<typename T> void operator()(T*) {} };
+		template<typename T> using move_ptr = std::unique_ptr<T, null_deleter>;
+
+		FreeListAllocator& operator=(const FreeListAllocator&) = delete;
+		FreeListAllocator(const FreeListAllocator&) = delete;
+		FreeListAllocator& operator=(FreeListAllocator&&) = delete;
+
 	private:
 		union FreeBlock {
 			struct {
@@ -72,9 +80,9 @@ namespace ryoji::allocators {
 		{
 			memory = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memory);
-			start = static_cast<char*>(memory.ptr);
+			start.reset(reinterpret_cast<char*>(memory.ptr));
 
-			this->freeList = reinterpret_cast<FreeBlock*>(start);
+			this->freeList.reset(reinterpret_cast<FreeBlock*>(start.get()));
 			this->freeList->size = Capacity;
 			this->freeList->next = nullptr;
 
@@ -87,6 +95,8 @@ namespace ryoji::allocators {
 			allocator.deallocate(memory);
 		}
 
+		FreeListAllocator(FreeListAllocator&&) = default;
+
 		Blk allocate(size_t size, uint8_t alignment) {
 			assert(size && alignment);
 
@@ -98,9 +108,7 @@ namespace ryoji::allocators {
 
 			// result->first is previous node.
 			// result->second is the node that fits.
-			auto [prev, itr] = fitStrategy.find(iterator(freeList), iterator(nullptr), totalSize);
-
-
+			auto [prev, itr] = fitStrategy.find(iterator(freeList.get()), iterator(nullptr), totalSize);
 			if ((*itr) == nullptr)
 				return {};
 
@@ -144,7 +152,7 @@ namespace ryoji::allocators {
 			// If there is no previous block, it means that itr is the head.
 			// Set the head to the next block
 			else {
-				this->freeList = nextBlock;
+				this->freeList.reset(nextBlock);
 			}
 
 			// Get and Update the header
@@ -157,7 +165,7 @@ namespace ryoji::allocators {
 		}
 
 		bool owns(Blk blk) const {
-			return reinterpret_cast<char*>(blk.ptr) >= start && reinterpret_cast<char*>(blk.ptr) < start + Capacity;
+			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
 
@@ -171,7 +179,7 @@ namespace ryoji::allocators {
 			uintptr_t blockEnd = reinterpret_cast<uintptr_t>(zawarudo::pointer::add(header, header->size));
 
 			// Look for a FreeBlock which we can combine
-			FreeBlock* itr = freeList;
+			FreeBlock* itr = freeList.get();
 			FreeBlock* prev = nullptr;
 			while (itr != nullptr) {
 				// search until we are past the current block
@@ -187,8 +195,8 @@ namespace ryoji::allocators {
 				// use prev for the next step of combining with the next block
 				prev = reinterpret_cast<FreeBlock*>(header);
 				prev->size = header->size;
-				prev->next = freeList;
-				freeList = prev;
+				prev->next = freeList.get();
+				freeList.reset(prev);
 			}
 
 			else if (reinterpret_cast<uintptr_t>(prev) + prev->size == reinterpret_cast<uintptr_t>(header)) {
@@ -222,8 +230,8 @@ namespace ryoji::allocators {
 
 	private:
 		Blk memory = {};
-		char* start = nullptr;
-		FreeBlock* freeList = nullptr;
+		move_ptr<char> start{ nullptr };
+		move_ptr<FreeBlock> freeList{ nullptr };
 
 		FitStrategy fitStrategy;
 
