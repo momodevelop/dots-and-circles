@@ -1,11 +1,11 @@
-#ifndef __YUU_UTILS_WINDOW_H__
-#define __YUU_UTILS_WINDOW_H__
+#ifndef __YUU_GRAPHICS_WINDOW_H__
+#define __YUU_GRAPHICS_WINDOW_H__
 
 
 #include "sdl2/SDL.h"
 #include "glew/glew.h"
 
-namespace yuu::utils::window {
+namespace yuu::graphics::window {
 
 	// A simple window with an OpenGL context
 	struct Window

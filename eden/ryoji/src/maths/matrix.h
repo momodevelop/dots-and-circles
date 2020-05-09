@@ -10,6 +10,12 @@
 #include "zawarudo/constants.h"
 #include "utils.h"
 
+namespace ryoji::maths::create {
+	template<typename ...Args>
+	auto matrix(Args... args) {
+		return ryoji::maths::matrix::Matrix{ std::forward<Args>(args) ... };
+	}
+}
 
 namespace ryoji::maths::matrix {
 	

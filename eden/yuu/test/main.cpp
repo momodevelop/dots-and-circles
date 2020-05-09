@@ -12,7 +12,7 @@ using namespace yuu::input;
 
 
 int main(int argc, char* args[]){
-	using namespace yuu::utils;
+	using namespace yuu::graphics;
 	using namespace yuu;
 	using namespace std;
 	using namespace scenes;

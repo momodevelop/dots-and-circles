@@ -5,8 +5,9 @@ find_package(sdl2 REQUIRED)
 find_package(glew REQUIRED)
 find_package(OpenGL REQUIRED)
 
-set(include-utils 
-    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/utils/window.h
+set(include-graphics 
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/window.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/renderer.h
 )
 
 set(include-input
@@ -19,9 +20,11 @@ set(src-input
     ${CMAKE_CURRENT_LIST_DIR}/src/input/keyboard.cpp
 
 )
-set(src-utils 
-    ${CMAKE_CURRENT_LIST_DIR}/src/utils/window.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/utils/window.cpp
+set(src-graphics 
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/renderer.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/renderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.cpp
 )
 
 set(src-test
@@ -51,10 +54,10 @@ project(yuu)
     target_sources(
             yuu
         PRIVATE
-            ${include-utils}
+            ${include-graphics}
             ${include-input}
 
-            ${src-utils}
+            ${src-graphics}
             ${src-input}
     )
 

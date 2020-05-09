@@ -1,7 +1,7 @@
 #include <iostream>
 #include "window.h"
 
-namespace yuu::utils::window {
+namespace yuu::graphics::window {
 	bool init(
 		Window& w,
 		const char* title,

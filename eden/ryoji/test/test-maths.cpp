@@ -56,8 +56,8 @@ void TestVector() {
 		cout << endl;
 	}*/
 
-
 	{
+
 		cout << "=== Testing arithmetic operators" << endl;
 		Vec4i vec4{ 1, 2, 3, 4 };
 		SimpleEqualityTest("Addition", vec4 + Vec4i{ 1,1,1,1 }, Vec4i{ 2,3,4,5 });
