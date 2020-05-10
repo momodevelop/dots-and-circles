@@ -1,6 +1,6 @@
 #include <iostream>
-#include "ryoji/maths/matrix.h"
-#include "ryoji/maths/vector.h"
+#include "ryoji/maths/matrices.h"
+#include "ryoji/maths/vectors.h"
 #include "ryoji/maths/bitwise.h"
 
 using namespace ryoji::maths;
@@ -24,29 +24,29 @@ bool SimpleEqualityTest(const char* title, T lhs, T rhs) {
 	return lhs == rhs;
 }
 
-void TestMatrix() {
+void TestMtxrix() {
 	using namespace std;
-	using namespace matrix;
-	cout << "===== Testing Matrix =====" << endl;
+	using namespace matrices;
+	cout << "===== Testing Mtxrix =====" << endl;
 	{
 		
 		cout << "=== Testing arithmetic assignment operators" << endl;
-		SimpleEqualityTest("Addition", Mat33i{ 1,2,3,4,5,6,7,8,9 } +Mat33i{ 9,8,7,6,5,4,3,2,1 }, Mat33i{ 10,10,10,10,10,10,10,10,10 });
-		SimpleEqualityTest("Subtraction", Mat33i{ 1,2,3,4,5,6,7,8,9 } -Mat33i{ 1,2,3,4,5,6,7,8,9 }, Mat33i{ 0,0,0,0,0,0,0,0,0 });
-		SimpleEqualityTest("Multiplication", Mat33i{ 1,0,1,0,1,1,0,0,1 } *Mat33i{ 2,0,0,0,2,0,0,0,1 }, Mat33i{ 2,0,1,0,2,1,0,0,1 });
+		SimpleEqualityTest("Addition", Mtx33i{ 1,2,3,4,5,6,7,8,9 } +Mtx33i{ 9,8,7,6,5,4,3,2,1 }, Mtx33i{ 10,10,10,10,10,10,10,10,10 });
+		SimpleEqualityTest("Subtraction", Mtx33i{ 1,2,3,4,5,6,7,8,9 } -Mtx33i{ 1,2,3,4,5,6,7,8,9 }, Mtx33i{ 0,0,0,0,0,0,0,0,0 });
+		SimpleEqualityTest("Multiplication", Mtx33i{ 1,0,1,0,1,1,0,0,1 } *Mtx33i{ 2,0,0,0,2,0,0,0,1 }, Mtx33i{ 2,0,1,0,2,1,0,0,1 });
 		cout << endl;
 	}
 
 	{
 		cout << "=== Testing functions" << endl;
-		SimpleEqualityTest("Identity", identity<int, 3, 3>(), Mat33i{ 1,0,0,0,1,0,0,0,1 });
+		SimpleEqualityTest("Identity", identity<int, 3, 3>(), Mtx33i{ 1,0,0,0,1,0,0,0,1 });
 		cout << endl;
 	}
 
 	cout << endl;
 }
 void TestVector() {
-	using namespace vector;
+	using namespace vectors;
 	using namespace std;
 	cout << "===== Testing Vector =====" << endl;
 	/*{
@@ -86,7 +86,7 @@ void TestVector() {
 	}
 
 	{
-		using namespace vector;
+		using namespace vectors;
 		cout << "=== Testing functions" << endl;
 		SimpleEqualityTest("Dot Product", dot(Vec4f{ 1,2,3,4 }, Vec4f{ 1,2,3,4 }), 30.0f);
 		SimpleEqualityTest("Midpoint", midpoint(Vec4f{ 3,3,3,3 }, Vec4f{ 1,1,1,1 }), Vec4f{ 2,2,2,2 });
@@ -110,7 +110,7 @@ void TestVector() {
 }
 
 void TestBitwise() {
-	using namespace bitwise;
+	using namespace bitfields;
 	std::cout << "===== Testing Bitwise =====" << std::endl;
 	SimpleEqualityTest("bitfield", bitfield<int>(0, 1, 2, 3, 4, 5, 6, 7), 0b11111111);
 	SimpleEqualityTest("mask", mask(0b001, 0b010), 3);
@@ -131,7 +131,7 @@ int main() {
 #endif
 
 #if 1
-	TestMatrix();
+	TestMtxrix();
 #endif
 
 #if 1

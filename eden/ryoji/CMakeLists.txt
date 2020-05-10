@@ -15,9 +15,9 @@ set(include-allocators
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/stl-adapter.h
 )
 set(include-maths 
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/matrix.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/matrices.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/utils.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/vector.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/vectors.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitwise.h
 )
 
@@ -43,13 +43,13 @@ set(src-allocators
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/zawarudo/predef-freelist-strategies.h
 )
 set(src-maths 
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrix.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/vector.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/bitwise.h
 
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrix.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/vector.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/zawarudo/constants.h
 )
