@@ -26,7 +26,6 @@ namespace ryoji::allocators {
 		FreeListAllocator(const FreeListAllocator&) = delete;
 		FreeListAllocator& operator=(FreeListAllocator&&) = delete;
 
-	private:
 		union FreeBlock {
 			struct {
 				size_t size;
@@ -70,9 +69,13 @@ namespace ryoji::allocators {
 
 		};
 
-		constexpr static size_t minBlockSize = sizeof(Header) > sizeof(FreeBlock) ? sizeof(Header) : sizeof(FreeBlock);
+		Blk memory{};
+		move_ptr<char> start{ nullptr };
+		move_ptr<FreeBlock> freeList{ nullptr };
 
-	public:
+		FitStrategy fitStrategy;
+
+		constexpr static size_t minBlockSize = sizeof(Header) > sizeof(FreeBlock) ? sizeof(Header) : sizeof(FreeBlock);
 		Allocator allocator;
 
 	public:
@@ -168,8 +171,6 @@ namespace ryoji::allocators {
 			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
-
-
 		void deallocate(Blk blk)
 		{
 			assert(blk);
@@ -228,13 +229,13 @@ namespace ryoji::allocators {
 			}
 		}
 
-	private:
-		Blk memory = {};
-		move_ptr<char> start{ nullptr };
-		move_ptr<FreeBlock> freeList{ nullptr };
+		Allocator& getAllocator() {
+			return allocator;
+		}
 
-		FitStrategy fitStrategy;
-
+		FitStrategy& getFitStrategy() {
+			return fitStrategy;
+		}
 
 	};
 

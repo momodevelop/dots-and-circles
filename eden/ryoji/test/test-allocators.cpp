@@ -351,7 +351,7 @@ void TestMiddlewareAllocator() {
 		using Allocator = MiddlewareAllocator<LocalAllocator<1000>, Middleware>;
 		Allocator allocator;
 
-		Middleware& middleware = allocator.middleware;
+		auto middleware = allocator.getMiddleware();
 		auto ret = allocator.allocate(10, 4);
 		allocator.deallocate(ret);
 		
@@ -383,7 +383,7 @@ void TestMiddlewareAllocator() {
 		using Allocator = MiddlewareAllocator<LocalAllocator<1000>, Middleware>;
 		Allocator allocator;
 
-		Middleware& middleware = allocator.middleware;
+		auto middleware = allocator.getMiddleware();
 		auto ret = allocator.allocate(10, 4);
 		allocator.deallocate(ret);
 

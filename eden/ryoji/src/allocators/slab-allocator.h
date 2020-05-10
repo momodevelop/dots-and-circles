@@ -27,8 +27,11 @@ namespace ryoji::allocators {
 		SlabAllocator& operator=(const SlabAllocator&) = delete;
 		SlabAllocator(const SlabAllocator&) = delete;
 		SlabAllocator& operator=(SlabAllocator&&) = delete;
-	public:
+
 		Allocator allocator;
+		Blk memory = {};
+		move_ptr<void*> freeList = nullptr;
+		move_ptr<char> start = nullptr;
 
 	public:
 		SlabAllocator() {
@@ -99,10 +102,11 @@ namespace ryoji::allocators {
 			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
-	private:
-		Blk memory = {};
-		move_ptr<void*> freeList = nullptr;
-		move_ptr<char> start = nullptr;
+		Allocator& getAllocator() {
+			return allocator;
+		}
+
+
 
 	};
 

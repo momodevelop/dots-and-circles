@@ -18,8 +18,12 @@ namespace ryoji::allocators {
 		// I don't think it makes sense to allow copy or move since this is supposed to be local to scope...
 		LocalAllocator& operator=(const LocalAllocator&) = delete;
 		LocalAllocator(const LocalAllocator&) = delete;
-		LocalAllocator& operator=(LocalAllocator&&) = default;
-		LocalAllocator(LocalAllocator&&) = default;
+		LocalAllocator& operator=(LocalAllocator&&) = delete;
+		LocalAllocator(LocalAllocator&&) = delete;
+
+		std::array<char, Capacity> arr = { 0 };
+		bool allocated = false;
+
 	public:
 		LocalAllocator() = default;
 
@@ -47,8 +51,7 @@ namespace ryoji::allocators {
 		}
 
 	private:
-		std::array<char, Capacity> arr = { 0 };
-		bool allocated = false;
+
 	};
 
 }

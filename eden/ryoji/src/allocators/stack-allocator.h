@@ -34,8 +34,12 @@ namespace ryoji::allocators {
 		StackAllocator& operator=(const StackAllocator&) = delete;
 		StackAllocator(const StackAllocator&) = delete;
 		StackAllocator& operator=(StackAllocator&&) = delete;
-	public:
+
 		Allocator allocator;
+		Blk memoryBlock = {};
+		move_ptr<char> start{ nullptr };
+		move_ptr<char> current{ nullptr };
+		move_ptr<char> metadataCurrent{ nullptr }; // Pointer to the start of metadata of headers
 
 	public:
 		StackAllocator()
@@ -98,12 +102,9 @@ namespace ryoji::allocators {
 			metadataCurrent.reset(metadataCurrent.get() + sizeof(Header));
 		}
 
-
-	private:
-		Blk memoryBlock = {};
-		move_ptr<char> start{ nullptr };
-		move_ptr<char> current{ nullptr };
-		move_ptr<char> metadataCurrent{ nullptr }; // Pointer to the start of metadata of headers
+		Allocator& getAllocator() {
+			return allocator;
+		}
 
 	};
 

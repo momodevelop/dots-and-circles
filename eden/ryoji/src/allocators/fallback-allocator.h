@@ -10,7 +10,7 @@ namespace ryoji::allocators {
 	template <class Primary, class Fallback>
 	class FallbackAllocator
 	{
-	public:
+	private:
 		Primary primaryAllocator = {};
 		Fallback fallbackAllocator = {};
 
@@ -43,6 +43,8 @@ namespace ryoji::allocators {
 			return primaryAllocator.owns(blk) || fallbackAllocator.owns(blk);
 		}
 
+		Primary& getPrimaryAllocator() { return primaryAllocator; }
+		Fallback& getFallbackAllocator() { return fallbackAllocator; }
 
 
 	};

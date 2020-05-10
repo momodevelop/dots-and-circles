@@ -24,7 +24,11 @@ namespace ryoji::allocators {
 		LinearAllocator& operator=(const LinearAllocator&) = delete;
 		LinearAllocator(const LinearAllocator&) = delete;
 		LinearAllocator& operator=(LinearAllocator&&) = delete;
-	public:
+
+		Blk memoryBlk{};
+		move_ptr<char> start{ nullptr };
+		move_ptr<char> current{ nullptr };
+
 		Allocator allocator;
 	public:
 		LinearAllocator() {
@@ -67,12 +71,9 @@ namespace ryoji::allocators {
 			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
 		}
 
-	
-
-	private:
-		Blk memoryBlk{};
-		move_ptr<char> start{ nullptr };
-		move_ptr<char> current{ nullptr };
+		Allocator& getAllocator() {
+			return allocator;
+		}
 
 	};
 

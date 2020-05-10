@@ -44,7 +44,6 @@ namespace ryoji::allocators {
 	template<class Allocator, class Middleware>
 	class MiddlewareAllocator
 	{
-	public:
 		Allocator allocator;
 		Middleware middleware;
 	public:
@@ -84,6 +83,14 @@ namespace ryoji::allocators {
 
 		bool owns(Blk blk) const noexcept {
 			return allocator.owns(blk);
+		}
+
+		Allocator& getAllocator() {
+			return allocator;
+		}
+
+		Middleware& getMiddleware() {
+			return middleware;
 		}
 
 		
