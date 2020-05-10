@@ -1,5 +1,5 @@
-#ifndef __RYOJI_MATH_VECTOR_H__
-#define __RYOJI_MATH_VECTOR_H__
+#ifndef __RYOJI_MATH_VECTORS_H__
+#define __RYOJI_MATH_VECTORS_H__
 
 //http://www.reedbeta.com/blog/on-vector-math-libraries/#operations
 
@@ -16,6 +16,12 @@ inline const T& operator[](size_t index) const { return value[index]; }\
 
 namespace ryoji::maths {
 	namespace vectors {
+		namespace zawarudo {
+			template<typename T> static constexpr auto one = (T)1;
+			template<typename T> static constexpr auto zero = (T)1;
+		}
+
+
 		template<typename T = float, size_t N = 2>
 		struct Vector {
 			T value[N] = {};
@@ -240,7 +246,7 @@ namespace ryoji::maths {
 			Vector<T, N> ret = lhs;
 			T len = length(lhs);
 
-			if (isFloatEqualEnough(len, zawarudo::_1p0<T>))
+			if (isFloatEqualEnough(len, zawarudo::one<T>))
 				return ret;
 
 			for (size_t i = 0; i < N; ++i) {
@@ -290,8 +296,8 @@ namespace ryoji::maths {
 			template<typename T, size_t N>
 			T angleBetween(const Vector<T, N>& lhs, const Vector<T, N>& rhs) {
 				static_assert(std::is_floating_point_v<T>, "T must be floating point type");
-				assert(isFloatEqualEnough(lengthSq(lhs), zawarudo::_1p0<T>));
-				assert(isFloatEqualEnough(lengthSq(rhs), zawarudo::_1p0<T>));
+				assert(isFloatEqualEnough(lengthSq(lhs), kOne<T>));
+				assert(isFloatEqualEnough(lengthSq(rhs), kOne<T>));
 				return acos(dot(lhs, rhs));
 			}
 		}

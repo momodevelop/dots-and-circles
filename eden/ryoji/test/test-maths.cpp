@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ryoji/maths/matrices.h"
 #include "ryoji/maths/vectors.h"
-#include "ryoji/maths/bitwise.h"
+#include "ryoji/maths/bitfields.h"
 
 using namespace ryoji::maths;
 

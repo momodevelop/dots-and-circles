@@ -1,5 +1,4 @@
 #include <cassert>
-#include "ryoji/maths/bitwise.h"
 #include "keyboard.h"
 
 namespace yuu::input::keyboard {
@@ -21,8 +20,6 @@ namespace yuu::input::keyboard {
 	}
 
 	void processEvent(Keyboard& keyboard, const SDL_Event& e) {
-		using namespace ryoji::maths;
-
 
 		// Process the event
 		if (e.type == SDL_KEYDOWN) {
@@ -43,7 +40,6 @@ namespace yuu::input::keyboard {
 
 	// WAS_PRESSED: 0, PRESSED: 1
 	bool isJustPressed(const Keyboard& keyboard, SDL_KeyCode key) {
-		using namespace ryoji::maths;
 		auto&& itr = keyboard.keys.find(key);
 		assert(itr != keyboard.keys.end());
 		return !itr->second.wasPressed && itr->second.pressed;
@@ -51,7 +47,6 @@ namespace yuu::input::keyboard {
 
 	// WAS_PRESSED: 1, PRESSED: 0
 	bool isJustReleased(const Keyboard& keyboard, SDL_KeyCode key) {
-		using namespace ryoji::maths;
 		auto&& itr = keyboard.keys.find(key);
 		assert(itr != keyboard.keys.end());
 		return itr->second.wasPressed && !itr->second.pressed;
@@ -61,7 +56,6 @@ namespace yuu::input::keyboard {
 
 	// WAS_PRESSED: X, PRESSED: 1
 	bool isDown(const Keyboard& keyboard, SDL_KeyCode key) {
-		using namespace ryoji::maths;
 		auto&& itr = keyboard.keys.find(key);
 		assert(itr != keyboard.keys.end());
 		return itr->second.pressed;
@@ -69,7 +63,6 @@ namespace yuu::input::keyboard {
 
 	// WAS_PRESSED: 1, PRESSED: 1
 	bool isHeld(const Keyboard& keyboard, SDL_KeyCode key) {
-		using namespace ryoji::maths;
 		auto&& itr = keyboard.keys.find(key);
 		assert(itr != keyboard.keys.end());
 		return itr->second.wasPressed && itr->second.pressed;

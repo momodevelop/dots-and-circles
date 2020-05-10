@@ -1,5 +1,5 @@
-#ifndef __RYOJI_MATH_MATRIX_H__
-#define __RYOJI_MATH_MATRIX_H__
+#ifndef __RYOJI_MATH_MATRICES_H__
+#define __RYOJI_MATH_MATRICES_H__
 
 //http://www.reedbeta.com/blog/on-vector-math-libraries/#operations
 

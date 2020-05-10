@@ -18,7 +18,8 @@ set(include-maths
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/matrices.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/vectors.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitwise.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitfields.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/constants.h
 )
 
 
@@ -46,7 +47,8 @@ set(src-maths
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/bitwise.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/bitfields.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/constants.h
 
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.cpp
