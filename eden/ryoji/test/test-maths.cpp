@@ -98,8 +98,8 @@ void TestVector() {
 		SimpleEqualityTest("IsPerpendicular", isPerpendicular(Vec4f{ -1,1,0,0 }, Vec4f{ 1,1,0,0 }), true);
 		SimpleEqualityTest("IsOppositeDirection", isOppositeDirection(Vec4f{ -1.5f,-1.5f,0,0 }, Vec4f{ 1,1,0,0 }), true);
 		SimpleEqualityTest("IsSimilarDirection", isSimilarDirection(Vec4f{ 1.5f,1.5f,0,0 }, Vec4f{ 1,1,0,0 }), true);
-		SimpleEqualityTest("AngleBetween", utils::radiansToDegrees(angleBetween(Vec4f{ 1,0,0,0 }, Vec4f{ 1,1,0,0 })), 45.0f);
-		SimpleEqualityTest("NormalizedVectorsAngleBetween", utils::radiansToDegrees(normalized::angleBetween(Vec4f{ 1,0,0,0 }, Vec4f{ 0,1,0,0 })), 90.0f);
+		SimpleEqualityTest("AngleBetween", radiansToDegrees(angleBetween(Vec4f{ 1,0,0,0 }, Vec4f{ 1,1,0,0 })), 45.0f);
+		SimpleEqualityTest("NormalizedVectorsAngleBetween", radiansToDegrees(normalized::angleBetween(Vec4f{ 1,0,0,0 }, Vec4f{ 0,1,0,0 })), 90.0f);
 		SimpleEqualityTest("Convert (to int)", convert<int>(Vec4f{ 1,2,3,4 }), Vec4i{ 1,2,3,4 });
 		SimpleEqualityTest("Convert (to float)", convert<float>(Vec4i{ 1,2,3,4 }), Vec4f{ 1,2,3,4 });
 		SimpleEqualityTest("Projection", normalize(project(Vec4f{ 1,2,3,4 }, Vec4f{ 1,1,1,1 })), normalize(Vec4f{ 1,1,1,1 }));

@@ -153,7 +153,7 @@ namespace ryoji::maths {
 		{
 			for (size_t i = 0; i < N; ++i) {
 				if constexpr (std::is_floating_point_v<T>) {
-					if (!utils::isFloatEqualEnough(lhs[i], rhs[i]))
+					if (!isFloatEqualEnough(lhs[i], rhs[i]))
 						return false;
 				}
 				else {
@@ -240,7 +240,7 @@ namespace ryoji::maths {
 			Vector<T, N> ret = lhs;
 			T len = length(lhs);
 
-			if (utils::isFloatEqualEnough(len, zawarudo::_1p0<T>))
+			if (isFloatEqualEnough(len, zawarudo::_1p0<T>))
 				return ret;
 
 			for (size_t i = 0; i < N; ++i) {
@@ -256,7 +256,7 @@ namespace ryoji::maths {
 
 		template<typename T, size_t N>
 		bool isPerpendicular(const Vector<T, N>& lhs, const Vector<T, N>& rhs) {
-			return utils::isFloatEqualEnough(dot(lhs, rhs), zawarudo::zero<T>);
+			return isFloatEqualEnough(dot(lhs, rhs), zawarudo::zero<T>);
 		}
 
 
@@ -290,8 +290,8 @@ namespace ryoji::maths {
 			template<typename T, size_t N>
 			T angleBetween(const Vector<T, N>& lhs, const Vector<T, N>& rhs) {
 				static_assert(std::is_floating_point_v<T>, "T must be floating point type");
-				assert(utils::isFloatEqualEnough(lengthSq(lhs), zawarudo::_1p0<T>));
-				assert(utils::isFloatEqualEnough(lengthSq(rhs), zawarudo::_1p0<T>));
+				assert(isFloatEqualEnough(lengthSq(lhs), zawarudo::_1p0<T>));
+				assert(isFloatEqualEnough(lengthSq(rhs), zawarudo::_1p0<T>));
 				return acos(dot(lhs, rhs));
 			}
 		}
