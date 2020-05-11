@@ -53,7 +53,6 @@ set(src-maths
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.cpp
 
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/zawarudo/constants.h
 )
 
 set(src-utils 

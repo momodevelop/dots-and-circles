@@ -24,7 +24,7 @@ bool SimpleEqualityTest(const char* title, T lhs, T rhs) {
 	return lhs == rhs;
 }
 
-void TestMtxrix() {
+void TestMatrix() {
 	using namespace std;
 	using namespace matrices;
 	cout << "===== Testing Mtxrix =====" << endl;
@@ -80,8 +80,10 @@ void TestVector() {
 		SimpleEqualityTest("Subtraction", vec4 -= Vec4i{ 1,1,1,1 }, Vec4i{ 1,2,3,4 });
 		SimpleEqualityTest("Multiplication", vec4 *= Vec4i{ 2,2,2,2 }, Vec4i{ 2,4,6,8 });
 		SimpleEqualityTest("Division", vec4 /= Vec4i{ 2,2,2,2 }, Vec4i{ 1,2,3,4 });
-		SimpleEqualityTest("Scalar Multiplication", vec4 *= 2, Vec4i{ 2,4,6,8 });
-		SimpleEqualityTest("Scalar Division", vec4 /= 2, Vec4i{ 1,2,3,4 });
+		SimpleEqualityTest("Modulo", vec4 %= Vec4i{ 4,4,4,4 }, Vec4i{ 1,2,3,0 });
+		SimpleEqualityTest("Scalar Multiplication", vec4 *= 2, Vec4i{ 2,4,6,0 });
+		SimpleEqualityTest("Scalar Division", vec4 /= 2, Vec4i{ 1,2,3,0 });
+		SimpleEqualityTest("Scalar Modulo", vec4 %= 2, Vec4i{ 1,0,1,0 });
 		cout << endl;
 	}
 
@@ -131,7 +133,7 @@ int main() {
 #endif
 
 #if 1
-	TestMtxrix();
+	TestMatrix();
 #endif
 
 #if 1
