@@ -73,7 +73,7 @@ namespace ryoji::maths {
 			return Matrix<T, Row, Col>(lhs) /= rhs;
 		}
 
-
+		// Hmm: Do we need to optimize this by letting this function be a friend of matrix class?
 		template<typename T, size_t LhsRow, size_t LhsCol, size_t RhsRow, size_t RhsCol>
 		auto operator*(const Matrix<T, LhsRow, LhsCol>& lhs, const Matrix<T, RhsRow, RhsCol>& rhs) {
 			static_assert(LhsCol == RhsRow, "LHS column != RHS row");

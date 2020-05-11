@@ -3,68 +3,69 @@
 
 namespace yuu::input::keyboard {
 	// Returns false if key is already registered.
-	bool registerKey(Keyboard& keyboard, SDL_Keycode key) {
-		auto result = keyboard.keys.try_emplace(key);
+	bool Keyboard::registerKey(SDL_Keycode key) {
+		auto result = this->keys.try_emplace(key);
 		return result.second;
 	}
 
-	bool unregisterKey(Keyboard& keyboard, SDL_Keycode key) {
-		auto result = keyboard.keys.erase(key);
+	bool Keyboard::unregisterKey(SDL_Keycode key) {
+		auto result = this->keys.erase(key);
 		return result > 0;
 	}
 
-	void update(Keyboard& keyboard) {
-		for (auto&& itr : keyboard.keys) {
-			itr.second.wasPressed = itr.second.pressed;
+	void Keyboard::update() {
+		for (auto&& itr : this->keys) {
+			itr.second.before = itr.second.now;
 		}
 	}
 
-	void processEvent(Keyboard& keyboard, const SDL_Event& e) {
+	void Keyboard::processEvent(const SDL_Event& e) {
 
 		// Process the event
 		if (e.type == SDL_KEYDOWN) {
-			auto&& itr = keyboard.keys.find(e.key.keysym.sym);
-			if (itr != keyboard.keys.end()) {
-				itr->second.pressed = true;
+			auto&& itr = this->keys.find(e.key.keysym.sym);
+			if (itr != this->keys.end()) {
+				itr->second.now = true;
 			}
 
 		}
 		else if (e.type == SDL_KEYUP) {
-			auto&& itr = keyboard.keys.find(e.key.keysym.sym);
-			if (itr != keyboard.keys.end()) {
-				itr->second.pressed = false;
+			auto&& itr = this->keys.find(e.key.keysym.sym);
+			if (itr != this->keys.end()) {
+				itr->second.now = false;
 			}
 		}
 	}
 
-
-	// WAS_PRESSED: 0, PRESSED: 1
-	bool isJustPressed(const Keyboard& keyboard, SDL_KeyCode key) {
-		auto&& itr = keyboard.keys.find(key);
-		assert(itr != keyboard.keys.end());
-		return !itr->second.wasPressed && itr->second.pressed;
-	}
-
-	// WAS_PRESSED: 1, PRESSED: 0
-	bool isJustReleased(const Keyboard& keyboard, SDL_KeyCode key) {
-		auto&& itr = keyboard.keys.find(key);
-		assert(itr != keyboard.keys.end());
-		return itr->second.wasPressed && !itr->second.pressed;
-
+	inline const Keyboard::KeyStatus& Keyboard::getKeyStatus(SDL_Keycode key) const
+	{
+		auto&& itr = this->keys.find(key);
+		assert(itr != this->keys.end());
+		return itr->second;
 	}
 
 
-	// WAS_PRESSED: X, PRESSED: 1
+	// before: 0, now: 1
+	bool isPoked(const Keyboard& keyboard, SDL_KeyCode key) {
+		auto keyStatus = keyboard.getKeyStatus(key);
+		return !keyStatus.before && keyStatus.now;
+	}
+
+	// before: 1, now: 0
+	bool isReleased(const Keyboard& keyboard, SDL_KeyCode key) {
+		auto keyStatus = keyboard.getKeyStatus(key);
+		return keyStatus.before && !keyStatus.now;
+	}
+
+
+	// before: X, now: 1
 	bool isDown(const Keyboard& keyboard, SDL_KeyCode key) {
-		auto&& itr = keyboard.keys.find(key);
-		assert(itr != keyboard.keys.end());
-		return itr->second.pressed;
+		return keyboard.getKeyStatus(key).now;
 	}
 
-	// WAS_PRESSED: 1, PRESSED: 1
+	// before: 1, now: 1
 	bool isHeld(const Keyboard& keyboard, SDL_KeyCode key) {
-		auto&& itr = keyboard.keys.find(key);
-		assert(itr != keyboard.keys.end());
-		return itr->second.wasPressed && itr->second.pressed;
+		auto keyStatus = keyboard.getKeyStatus(key);
+		return keyStatus.before && keyStatus.now;
 	}
 }
