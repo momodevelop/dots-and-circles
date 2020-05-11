@@ -27,13 +27,32 @@ bool SimpleEqualityTest(const char* title, T lhs, T rhs) {
 void TestMatrix() {
 	using namespace std;
 	using namespace matrices;
-	cout << "===== Testing Mtxrix =====" << endl;
+	cout << "===== Testing Matrix =====" << endl;
 	{
 		
+		cout << "=== Testing arithmetic operators" << endl;
+
 		cout << "=== Testing arithmetic assignment operators" << endl;
 		SimpleEqualityTest("Addition", Mtx33i{ 1,2,3,4,5,6,7,8,9 } +Mtx33i{ 9,8,7,6,5,4,3,2,1 }, Mtx33i{ 10,10,10,10,10,10,10,10,10 });
 		SimpleEqualityTest("Subtraction", Mtx33i{ 1,2,3,4,5,6,7,8,9 } -Mtx33i{ 1,2,3,4,5,6,7,8,9 }, Mtx33i{ 0,0,0,0,0,0,0,0,0 });
-		SimpleEqualityTest("Multiplication", Mtx33i{ 1,0,1,0,1,1,0,0,1 } *Mtx33i{ 2,0,0,0,2,0,0,0,1 }, Mtx33i{ 2,0,1,0,2,1,0,0,1 });
+		SimpleEqualityTest("Scalar Multiplication", Mtx33i{ 1,2,3,4,5,6,7,8,9 } * 2, Mtx33i{ 2,4,6,8,10,12,14,16,18 });
+		SimpleEqualityTest("Scalar Division", Mtx33i{ 2,4,6,8,10,12,14,16,18 } / 2, Mtx33i{ 1,2,3,4,5,6,7,8,9 });
+		SimpleEqualityTest("Matrix Multiplication", 
+			Mtx33i{ 
+				1,0,1,
+				0,1,1,
+				0,0,1 
+			} *
+			Mtx33i{ 
+				2,0,0,
+				0,2,0,
+				0,0,1 
+			}, 
+			Mtx33i{ 
+				2,0,1,
+				0,2,1,
+				0,0,1 
+			});
 		cout << endl;
 	}
 
@@ -49,25 +68,15 @@ void TestVector() {
 	using namespace vectors;
 	using namespace std;
 	cout << "===== Testing Vector =====" << endl;
-	/*{
-		cout << "=== Testing create" << endl;
-		auto vec4i = create<int, 4>(1,2,3,4 );
-		SimpleEqualityTest("Creation", vec4i, Vec4i{ 1,2,3,4 });
-		cout << endl;
-	}*/
-
 	{
-
 		cout << "=== Testing arithmetic operators" << endl;
 		Vec4i vec4{ 1, 2, 3, 4 };
 		SimpleEqualityTest("Addition", vec4 + Vec4i{ 1,1,1,1 }, Vec4i{ 2,3,4,5 });
 		SimpleEqualityTest("Subtraction", vec4 - Vec4i{ 1,1,1,1 }, Vec4i{ 0,1,2,3 });
 		SimpleEqualityTest("Multiplication", vec4 * Vec4i{ 2,2,2,2 }, Vec4i{ 2,4,6,8 });
 		SimpleEqualityTest("Division", vec4 / Vec4i{ 4,4,4,4 }, Vec4i{ 0,0,0,1 });
-		SimpleEqualityTest("Modulo", vec4 % Vec4i{ 4,4,4,4 }, Vec4i{ 1,2,3,0 });
 		SimpleEqualityTest("Scalar Multiplication", vec4 * 2, Vec4i{ 2,4,6,8 });
 		SimpleEqualityTest("Scalar Division", vec4 / 4, Vec4i{ 0,0,0,1 });
-		SimpleEqualityTest("Scalar Modulo", vec4 % 4, Vec4i{ 1,2,3,0 });
 		SimpleEqualityTest("Reverse Scalar Multiplication", 2 * vec4, Vec4i{ 2,4,6,8 });
 		SimpleEqualityTest("Negation", -vec4, Vec4i{ -1,-2,-3,-4 });
 		cout << endl;
@@ -80,31 +89,29 @@ void TestVector() {
 		SimpleEqualityTest("Subtraction", vec4 -= Vec4i{ 1,1,1,1 }, Vec4i{ 1,2,3,4 });
 		SimpleEqualityTest("Multiplication", vec4 *= Vec4i{ 2,2,2,2 }, Vec4i{ 2,4,6,8 });
 		SimpleEqualityTest("Division", vec4 /= Vec4i{ 2,2,2,2 }, Vec4i{ 1,2,3,4 });
-		SimpleEqualityTest("Modulo", vec4 %= Vec4i{ 4,4,4,4 }, Vec4i{ 1,2,3,0 });
-		SimpleEqualityTest("Scalar Multiplication", vec4 *= 2, Vec4i{ 2,4,6,0 });
-		SimpleEqualityTest("Scalar Division", vec4 /= 2, Vec4i{ 1,2,3,0 });
-		SimpleEqualityTest("Scalar Modulo", vec4 %= 2, Vec4i{ 1,0,1,0 });
+		SimpleEqualityTest("Scalar Multiplication", vec4 *= 2, Vec4i{ 2,4,6,8 });
+		SimpleEqualityTest("Scalar Division", vec4 /= 2, Vec4i{ 1,2,3,4 });
 		cout << endl;
 	}
 
 	{
 		using namespace vectors;
 		cout << "=== Testing functions" << endl;
-		SimpleEqualityTest("Dot Product", dot(Vec4f{ 1,2,3,4 }, Vec4f{ 1,2,3,4 }), 30.0f);
-		SimpleEqualityTest("Midpoint", midpoint(Vec4f{ 3,3,3,3 }, Vec4f{ 1,1,1,1 }), Vec4f{ 2,2,2,2 });
-		SimpleEqualityTest("DistanceSq", distanceSq(Vec4f{ 2,2,2,2 }, Vec4f{ 4,4,4,4 }), 16.0f);
-		SimpleEqualityTest("Distance", distance(Vec4f{ 2,2,2,2 }, Vec4f{ 4,4,4,4 }), 4.0f);
-		SimpleEqualityTest("LengthSq", lengthSq(Vec4f{ 2,2,2,2 }), 16.0f);
-		SimpleEqualityTest("Length", length(Vec4f{ 2,2,2,2 }), 4.0f);
-		SimpleEqualityTest("Normalize", length(normalize(Vec4f{ 1,1,1,1 })), 1.0f);
-		SimpleEqualityTest("IsPerpendicular", isPerpendicular(Vec4f{ -1,1,0,0 }, Vec4f{ 1,1,0,0 }), true);
-		SimpleEqualityTest("IsOppositeDirection", isOppositeDirection(Vec4f{ -1.5f,-1.5f,0,0 }, Vec4f{ 1,1,0,0 }), true);
-		SimpleEqualityTest("IsSimilarDirection", isSimilarDirection(Vec4f{ 1.5f,1.5f,0,0 }, Vec4f{ 1,1,0,0 }), true);
-		SimpleEqualityTest("AngleBetween", radiansToDegrees(angleBetween(Vec4f{ 1,0,0,0 }, Vec4f{ 1,1,0,0 })), 45.0f);
-		SimpleEqualityTest("NormalizedVectorsAngleBetween", radiansToDegrees(normalized::angleBetween(Vec4f{ 1,0,0,0 }, Vec4f{ 0,1,0,0 })), 90.0f);
-		SimpleEqualityTest("Convert (to int)", convert<int>(Vec4f{ 1,2,3,4 }), Vec4i{ 1,2,3,4 });
-		SimpleEqualityTest("Convert (to float)", convert<float>(Vec4i{ 1,2,3,4 }), Vec4f{ 1,2,3,4 });
-		SimpleEqualityTest("Projection", normalize(project(Vec4f{ 1,2,3,4 }, Vec4f{ 1,1,1,1 })), normalize(Vec4f{ 1,1,1,1 }));
+		SimpleEqualityTest("Dot Product", dot(Vec4f{ 1.f, 2.f, 3.f, 4.f }, Vec4f{ 1.f, 2.f, 3.f, 4.f }), 30.0f);
+		SimpleEqualityTest("Midpoint", midpoint(Vec4f{ 3.f, 3.f, 3.f, 3.f }, Vec4f{ 1.f, 1.f, 1.f, 1.f }), Vec4f{ 2.f, 2.f, 2.f, 2.f });
+		SimpleEqualityTest("DistanceSq", distanceSq(Vec4f{ 2.f, 2.f, 2.f, 2.f }, Vec4f{ 4.f, 4.f, 4.f, 4.f }), 16.0f);
+		SimpleEqualityTest("Distance", distance(Vec4f{ 2.f, 2.f, 2.f, 2.f }, Vec4f{ 4.f, 4.f, 4.f, 4.f }), 4.0f);
+		SimpleEqualityTest("LengthSq", lengthSq(Vec4f{ 2.f, 2.f, 2.f, 2.f }), 16.0f);
+		SimpleEqualityTest("Length", length(Vec4f{ 2.f, 2.f, 2.f, 2.f }), 4.0f);
+		SimpleEqualityTest("Normalize", length(normalize(Vec4f{ 1.f, 1.f, 1.f, 1.f })), 1.0f);
+		SimpleEqualityTest("IsPerpendicular", isPerpendicular(Vec4f{ -1.f, 1.f, 0.f, 0.f }, Vec4f{ 1.f, 1.f, 0.f, 0.f }), true);
+		SimpleEqualityTest("IsOppositeDirection", isOppositeDirection(Vec4f{ -1.5f, -1.5f, 0.f, 0.f }, Vec4f{ 1.f, 1.f, 0.f, 0.f }), true);
+		SimpleEqualityTest("IsSimilarDirection", isSimilarDirection(Vec4f{ 1.5f, 1.5f, 0.f, 0.f }, Vec4f{ 1.f, 1.f, 0.f, 0.f }), true);
+		SimpleEqualityTest("AngleBetween", radiansToDegrees(angleBetween(Vec4f{ 1.f, 0.f, 0.f, 0.f }, Vec4f{ 1.f, 1.f, 0.f, 0.f })), 45.0f);
+		SimpleEqualityTest("NormalizedVectorsAngleBetween", radiansToDegrees(normalized::angleBetween(Vec4f{ 1.f ,0.f ,0.f , 0.f }, Vec4f{ 0.f, 1.f, 0.f, 0.f })), 90.0f);
+		SimpleEqualityTest("Convert (to int)", convert<int>(Vec4f{ 1.f, 2.f, 3.f, 4.f }), Vec4i{ 1, 2, 3, 4 });
+		SimpleEqualityTest("Convert (to float)", convert<float>(Vec4i{ 1, 2, 3, 4 }), Vec4f{ 1.f, 2.f, 3.f, 4.f });
+		SimpleEqualityTest("Projection", normalize(project(Vec4f{ 1.f, 2.f, 3.f, 4.f }, Vec4f{ 1.f, 1.f, 1.f, 1.f })), normalize(Vec4f{ 1.f, 1.f, 1.f, 1.f }));
 
 	}
 	cout << endl;

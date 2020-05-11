@@ -17,8 +17,11 @@ namespace ryoji::maths {
 
 		template<typename T = float, size_t N = 2>
 		class Vector {
+			std::array<T, N> arr{ 0 };
 		public:
-			std::array<T, N> arr;
+			template<typename ... Args, typename E = std::enable_if_t<(std::is_same_v<Args, T>&& ...)>>
+			Vector(Args... args) : arr{ std::forward<Args>(args)... } {}
+			Vector() = default;
 
 			inline const T& get(size_t index) const noexcept { return this->arr[index]; } 
 			inline const void set(size_t index, const T& value) noexcept { this->arr[index] = value; }
@@ -45,12 +48,6 @@ namespace ryoji::maths {
 				return *this;
 			}
 
-			template<typename U>
-			Vector<T, N>& operator%=(const Vector<U, N>& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] %= rhs.arr[i];
-				return *this;
-			}
 
 			Vector<T, N>& operator*=(const T& rhs) noexcept {
 				for (size_t i = 0; i < N; ++i)
@@ -63,18 +60,7 @@ namespace ryoji::maths {
 				return *this;
 			}
 
-			template<typename U>
-			Vector<T, N>& operator%=(const U& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] %= rhs;
-				return *this;
-			}
 		};
-
-
-
-
-
 		
 		template<typename T, size_t N>
 		Vector<T, N> operator+(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
@@ -118,17 +104,6 @@ namespace ryoji::maths {
 			return Vector<T, N>(lhs) /= rhs;
 		}
 
-		template<typename T, size_t N>
-		Vector<T, N> operator%(const Vector<T, N>& lhs, const T& rhs) noexcept
-		{
-			return Vector<T, N>(lhs) %= rhs;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N> operator%(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
-		{
-			return Vector<T, N>(lhs) %= rhs;
-		}
 
 		template<typename T, size_t N>
 		bool operator==(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
