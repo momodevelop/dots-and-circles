@@ -5,12 +5,13 @@
 #include "sdl2/SDL.h"
 #include "glew/glew.h"
 
-namespace yuu::graphics {
+namespace yuu::graphics::window {
 
 	// A simple window with an OpenGL context
 	struct Window
 	{
 		SDL_Window* window{};
+		SDL_GLContext context{};
 	};
 
 	bool init(
@@ -20,7 +21,7 @@ namespace yuu::graphics {
 		int screenHeight = 900,
 		int screenX = SDL_WINDOWPOS_CENTERED,
 		int screenY = SDL_WINDOWPOS_CENTERED,
-		int openglMajorVersion = 3,
+		int openglMajorVersion = 4,
 		int openglMinorVersion = 0
 	);
 

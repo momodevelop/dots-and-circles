@@ -1,6 +1,6 @@
 #include <iostream>
 #include <optional>
-#include "yuu/utils/window.h"
+#include "yuu/graphics/window.h"
 #include "yuu/input/keyboard.h"
 #include "ryoji/utils/defer.h"
 
@@ -16,12 +16,12 @@ int main(int argc, char* args[]){
 	using namespace yuu;
 	using namespace std;
 	using namespace scenes;
-	auto win = window::Window();
+	auto win = graphics::window::Window();
 	if (!window::init(win, "Yuu Test")) {
 		cout << "Cannot initialize window" << endl;
 		return 1;
 	}
-	defer{ window::free(win); };
+	defer{ free(win); };
 
 	
 	auto sceneMgr = SceneManager();
