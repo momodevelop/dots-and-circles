@@ -50,20 +50,20 @@ void checkKeyPressed(Keyboard& kb, SDL_KeyCode key, const char* keyName) {
 	using namespace std;
 	if (isDown(kb, key))
 		cout << keyName << " is down" << endl;
-	if (isJustPressed(kb, key))
+	if (isPoked(kb, key))
 		cout << keyName << " is just pressed" << endl;
 	if (isHeld(kb, key))
 		cout << keyName << " is held" << endl;
-	if (isJustReleased(kb, key))
+	if (isReleased(kb, key))
 		cout << keyName << " is just released" << endl;
 }
 
 void InputTestScene::init() {
 	using namespace yuu::input;
-	keyboard::registerKey(kb, SDLK_w);
-	keyboard::registerKey(kb, SDLK_s);
-	keyboard::registerKey(kb, SDLK_a);
-	keyboard::registerKey(kb, SDLK_d);
+	kb.registerKey(SDLK_w);
+	kb.registerKey(SDLK_s);
+	kb.registerKey(SDLK_a);
+	kb.registerKey(SDLK_d);
 
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -103,12 +103,12 @@ void InputTestScene::init() {
 }
 IScene* InputTestScene::update() {
 	using namespace yuu::input;
-	keyboard::update(kb);
+	kb.update();
 	while (auto e = pollEvent()) {
 		if (e->type == SDL_QUIT)
 			return nullptr;
 		else {
-			keyboard::processEvent(kb, e.value());
+			kb.processEvent(e.value());
 		}
 
 	}

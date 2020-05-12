@@ -5,8 +5,11 @@
 
 
 namespace ryoji::maths {
-	template<typename T> constexpr static auto kOne = (T)1;
+
+	
 	template<typename T> constexpr static auto kZero = (T)0;
+	template<typename T> constexpr static auto kOne = (T)1;
+	template<typename T> constexpr static auto kTwo = (T)2;
 
 	template<typename T> constexpr static auto kPi = (T)3.14159265358979323846;
 

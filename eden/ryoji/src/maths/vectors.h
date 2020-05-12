@@ -7,163 +7,114 @@
 #include <array>
 #include <type_traits>
 #include <cassert>
-#include "zawarudo/constants.h"
+#include "constants.h"
 #include "utils.h"
 
-#define DEFINE_SUBSCRIPT_OPS_AND_CONSTRUCTOR \
-inline T& operator[](size_t index) { return value[index]; }\
-inline const T& operator[](size_t index) const { return value[index]; }\
+
 
 namespace ryoji::maths {
 	namespace vectors {
-		namespace zawarudo {
-			template<typename T> static constexpr auto one = (T)1;
-			template<typename T> static constexpr auto zero = (T)1;
-		}
-
 
 		template<typename T = float, size_t N = 2>
-		struct Vector {
-			T value[N] = {};
-			DEFINE_SUBSCRIPT_OPS_AND_CONSTRUCTOR
+		class Vector {
+			std::array<T, N> arr{ 0 };
+		public:
+			template<typename ... Args, typename E = std::enable_if_t<(std::is_same_v<Args, T>&& ...)>>
+			Vector(Args... args) : arr{ std::forward<Args>(args)... } {}
+			Vector() = default;
+
+			inline const T& get(size_t index) const noexcept { return this->arr[index]; } 
+			inline const void set(size_t index, const T& value) noexcept { this->arr[index] = value; }
+
+			Vector<T, N>& operator+=(const Vector<T, N>& rhs) noexcept {
+				for (size_t i = 0; i < N; ++i)
+					this->arr[i] += rhs.arr[i];
+				return *this;
+			}
+			Vector<T, N>& operator-=(const Vector<T, N>& rhs) noexcept {
+				for (size_t i = 0; i < N; ++i)
+					this->arr[i] -= rhs.arr[i];
+				return *this;
+			}
+			Vector<T, N>& operator*=(const Vector<T, N>& rhs) noexcept
+			{
+				for (size_t i = 0; i < N; ++i)
+					this->arr[i] *= rhs.arr[i];
+				return *this;
+			}
+			Vector<T, N>& operator/=(const Vector<T, N>& rhs) noexcept {
+				for (size_t i = 0; i < N; ++i)
+					this->arr[i] /= rhs.arr[i];
+				return *this;
+			}
+
+
+			Vector<T, N>& operator*=(const T& rhs) noexcept {
+				for (size_t i = 0; i < N; ++i)
+					this->arr[i] *= rhs;
+				return *this;
+			}
+			Vector<T, N>& operator/=(const T& rhs) noexcept {
+				for (size_t i = 0; i < N; ++i)
+					this->arr[i] /= rhs;
+				return *this;
+			}
+
 		};
-
-		template<typename T, size_t N>
-		Vector<T, N>& operator+=(Vector<T, N>& dis, const Vector<T, N>& rhs) noexcept {
-			for (size_t i = 0; i < N; ++i)
-				dis[i] += rhs[i];
-			return dis;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N>& operator-=(Vector<T, N>& dis, const Vector<T, N>& rhs) noexcept {
-			for (size_t i = 0; i < N; ++i)
-				dis[i] -= rhs[i];
-			return dis;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N>& operator*=(Vector<T, N>& dis, const T& rhs) noexcept {
-			for (size_t i = 0; i < N; ++i)
-				dis[i] *= rhs;
-			return dis;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N>& operator/=(Vector<T, N>& dis, const T& rhs) noexcept {
-			for (size_t i = 0; i < N; ++i)
-				dis[i] /= rhs;
-			return dis;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N>& operator*=(Vector<T, N>& dis, const Vector<T, N>& rhs) noexcept {
-			for (size_t i = 0; i < N; ++i)
-				dis[i] *= rhs[i];
-			return dis;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N>& operator/=(Vector<T, N>& dis, const Vector<T, N>& rhs) noexcept {
-			for (size_t i = 0; i < N; ++i)
-				dis[i] /= rhs[i];
-			return dis;
-		}
-
-
+		
 		template<typename T, size_t N>
 		Vector<T, N> operator+(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] + rhs[i];
-			return temp;
+			return Vector<T, N>(lhs) += rhs;
 		}
 
 		template<typename T, size_t N>
 		Vector<T, N> operator-(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] - rhs[i];
-			return temp;
+			return Vector<T, N>(lhs) -= rhs;
 		}
 
 		template<typename T, size_t N>
 		Vector<T, N> operator*(const Vector<T, N>& lhs, const T& rhs) noexcept
 		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] * rhs;
-			return temp;
-		}
-
-		template<typename T, size_t N>
-		Vector<T, N> operator/(const Vector<T, N>& lhs, const T& rhs) noexcept
-		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] / rhs;
-			return temp;
-		}
-
-
-		template<typename T, size_t N>
-		Vector<T, N> operator%(const Vector<T, N>& lhs, const T& rhs) noexcept
-		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] % rhs;
-			return temp;
+			return Vector<T, N>(lhs) *= rhs;
 		}
 
 		template<typename T, size_t N>
 		Vector<T, N> operator*(const T& lhs, const Vector<T, N>& rhs) noexcept
 		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs * rhs[i];
-			return temp;
+			return Vector<T, N>(rhs) *= lhs;
 		}
-
 
 		template<typename T, size_t N>
 		Vector<T, N> operator*(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] * rhs[i];
-			return temp;
+			return Vector<T, N>(lhs) *= rhs;
+		}
+
+		template<typename T, size_t N>
+		Vector<T, N> operator/(const Vector<T, N>& lhs, const T& rhs) noexcept
+		{
+			return Vector<T, N>(lhs) /= rhs;
 		}
 
 		template<typename T, size_t N>
 		Vector<T, N> operator/(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] / rhs[i];
-			return temp;
+			return Vector<T, N>(lhs) /= rhs;
 		}
 
-		template<typename T, size_t N>
-		Vector<T, N> operator%(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
-		{
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = lhs[i] % rhs[i];
-			return temp;
-		}
 
 		template<typename T, size_t N>
 		bool operator==(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
 			for (size_t i = 0; i < N; ++i) {
 				if constexpr (std::is_floating_point_v<T>) {
-					if (!isFloatEqualEnough(lhs[i], rhs[i]))
+					if (!isFloatEqualEnough(lhs.get(i), rhs.get(i)))
 						return false;
 				}
 				else {
-					if (lhs[i] != rhs[i])
+					if (lhs.get(i) != rhs.get(i))
 						return false;
 				}
 			}
@@ -175,7 +126,7 @@ namespace ryoji::maths {
 		{
 			Vector<T, N> temp;
 			for (size_t i = 0; i < N; ++i)
-				temp[i] = -lhs[i];
+				temp.set(i, -lhs.get(i));
 			return temp;
 		}
 
@@ -186,32 +137,26 @@ namespace ryoji::maths {
 			return !(lhs == rhs);
 		}
 
-
 		template<typename T, size_t N>
 		T dot(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
 			T ret{};
-			for (size_t i = 0; i < N; ++i) {
-				ret += lhs[i] * rhs[i];
-			}
+			for (size_t i = 0; i < N; ++i) 
+				ret += lhs.get(i) * rhs.get(i);
 			return ret;
 		}
 
 		template<typename T, size_t N>
 		Vector<T, N> midpoint(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
-			Vector<T, N> temp;
-			for (size_t i = 0; i < N; ++i)
-				temp[i] = (lhs[i] + rhs[i]) / 2;
-			return temp;
+			return (lhs + rhs)/ kTwo<T>;
 		}
 
 		template<typename T, size_t N>
 		T distanceSq(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 		{
 			T ret{};
-			for (size_t i = 0; i < N; ++i) {
-				ret += (rhs[i] - lhs[i]) * (rhs[i] - lhs[i]);
-			}
+			for (size_t i = 0; i < N; ++i) 
+				ret += (rhs.get(i) - lhs.get(i)) * (rhs.get(i) - lhs.get(i));
 			return ret;
 		}
 
@@ -220,11 +165,7 @@ namespace ryoji::maths {
 		template<typename T, size_t N>
 		T lengthSq(const Vector<T, N>& lhs) noexcept
 		{
-			T ret{};
-			for (size_t i = 0; i < N; ++i) {
-				ret += lhs[i] * lhs[i];
-			}
-			return ret;
+			return dot(lhs, lhs);
 		}
 
 		template<typename T, size_t N, typename TRet = T>
@@ -246,12 +187,10 @@ namespace ryoji::maths {
 			Vector<T, N> ret = lhs;
 			T len = length(lhs);
 
-			if (isFloatEqualEnough(len, zawarudo::one<T>))
+			if (isFloatEqualEnough(len, kOne<T>))
 				return ret;
 
-			for (size_t i = 0; i < N; ++i) {
-				ret[i] /= len;
-			}
+			ret /= len;
 			return ret;
 		}
 
@@ -262,18 +201,18 @@ namespace ryoji::maths {
 
 		template<typename T, size_t N>
 		bool isPerpendicular(const Vector<T, N>& lhs, const Vector<T, N>& rhs) {
-			return isFloatEqualEnough(dot(lhs, rhs), zawarudo::zero<T>);
+			return isFloatEqualEnough(dot(lhs, rhs), kZero<T>);
 		}
 
 
 		template<typename T, size_t N>
 		bool isSimilarDirection(const Vector<T, N>& lhs, const Vector<T, N>& rhs) {
-			return dot(lhs, rhs) > zawarudo::zero<T>;
+			return dot(lhs, rhs) > kZero<T>;
 		}
 
 		template<typename T, size_t N>
 		bool isOppositeDirection(const Vector<T, N>& lhs, const Vector<T, N>& rhs) {
-			return dot(lhs, rhs) < zawarudo::zero<T>;
+			return dot(lhs, rhs) < kZero<T>;
 		}
 
 		template<typename T, size_t N>
@@ -285,7 +224,7 @@ namespace ryoji::maths {
 		Vector<TTo, N> convert(const Vector<TFrom, N>& from) {
 			Vector<TTo, N> ret{};
 			for (size_t i = 0; i < N; ++i) {
-				ret[i] = static_cast<TTo>(from[i]);
+				ret.set(i, static_cast<TTo>(from.get(i)));
 			}
 			return ret;
 		}
@@ -302,9 +241,7 @@ namespace ryoji::maths {
 			}
 		}
 
-		template <typename T> struct Vector<T, 2> { union { std::array<T, 2> value; struct { T x, y; }; }; DEFINE_SUBSCRIPT_OPS_AND_CONSTRUCTOR };
-		template <typename T> struct Vector<T, 3> { union { std::array<T, 3> value; struct { T x, y, z; }; }; DEFINE_SUBSCRIPT_OPS_AND_CONSTRUCTOR };
-		template <typename T> struct Vector<T, 4> { union { std::array<T, 4> value; struct { T x, y, z, w; }; }; DEFINE_SUBSCRIPT_OPS_AND_CONSTRUCTOR };
+
 	}
 
 
