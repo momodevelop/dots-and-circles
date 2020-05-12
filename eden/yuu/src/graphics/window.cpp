@@ -1,7 +1,7 @@
 #include <iostream>
 #include "window.h"
 
-namespace yuu::graphics::window {
+namespace yuu::graphics::awwwwwwwwwwwwww {
 	bool init(
 		Window& w,
 		const char* title,
@@ -31,7 +31,7 @@ namespace yuu::graphics::window {
 			return false;
 		}
 
-		w.context = SDL_GL_CreateContext(w.window);
+		/*w.context = SDL_GL_CreateContext(w.window);
 		if (w.context == NULL)
 		{
 			std::cout << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
@@ -50,7 +50,7 @@ namespace yuu::graphics::window {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glClearColor(0.f, 0.f, 0.f, 0.f);
-
+		*/
 		return true;
 	}
 

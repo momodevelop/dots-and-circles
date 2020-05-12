@@ -34,8 +34,8 @@ set(src-test
     ${CMAKE_CURRENT_LIST_DIR}/test/input-test-scene.cpp
 )
 
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES ${include-utils} ${include-input})
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-utils} ${src-input})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES  ${include-graphics} ${include-input})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-graphics} ${src-input})
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "src" FILES ${src-test})
 
 project(yuu)
@@ -49,6 +49,7 @@ project(yuu)
             ${CMAKE_CURRENT_LIST_DIR}/include/
             ${ryoji-include-dir}
             ${glew-include-dir}
+            
             ${sdl2-include-dir}
     )
     target_sources(

@@ -5,13 +5,12 @@
 #include "sdl2/SDL.h"
 #include "glew/glew.h"
 
-namespace yuu::graphics::window {
+namespace yuu::graphics {
 
 	// A simple window with an OpenGL context
 	struct Window
 	{
 		SDL_Window* window{};
-		SDL_GLContext context{};
 	};
 
 	bool init(

@@ -8,7 +8,7 @@
 #include "sdl2/SDL.h"
 
 // A keyboard component
-namespace yuu::input::keyboard {
+namespace yuu::input {
 	// We want to represent 4 states of button pressing:
 	// 1. Not pressed at all
 	// 2. Just been pressed.
@@ -33,26 +33,27 @@ namespace yuu::input::keyboard {
 	//						|
 	//						---> processEvent() -> key checking functions -> update()
 
+	namespace keyboard {
+		struct KeyStatus {
+			bool pressed : 1;
+			bool wasPressed : 1;
+		};
 
-	struct KeyStatus {
-		bool pressed : 1;
-		bool wasPressed : 1;
-	};
+		struct Keyboard {
+			std::unordered_map<SDL_Keycode, KeyStatus> keys{};
+		};
 
-	struct Keyboard {
-		std::unordered_map<SDL_Keycode, KeyStatus> keys{};
-	};
+		bool registerKey(Keyboard& keyboard, SDL_Keycode key);
+		bool unregisterKey(Keyboard& keyboard, SDL_Keycode key);
+		void update(Keyboard& keyboard);
+		void processEvent(Keyboard& keyboard, const SDL_Event& e);
 
-	bool registerKey(Keyboard& keyboard, SDL_Keycode key);
-	bool unregisterKey(Keyboard& keyboard, SDL_Keycode key);
-	void update(Keyboard& keyboard);
-	void processEvent(Keyboard& keyboard, const SDL_Event& e);
-	
-	// checks
-	bool isJustPressed(const Keyboard& keyboard, SDL_KeyCode key);
-	bool isJustReleased(const Keyboard& keyboard, SDL_KeyCode key);
-	bool isDown(const Keyboard& keyboard, SDL_KeyCode key);
-	bool isHeld(const Keyboard& keyboard, SDL_KeyCode key);
+		// checks
+		bool isJustPressed(const Keyboard& keyboard, SDL_KeyCode key);
+		bool isJustReleased(const Keyboard& keyboard, SDL_KeyCode key);
+		bool isDown(const Keyboard& keyboard, SDL_KeyCode key);
+		bool isHeld(const Keyboard& keyboard, SDL_KeyCode key);
+	}
 }
 
 
