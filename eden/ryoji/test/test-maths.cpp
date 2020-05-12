@@ -134,7 +134,7 @@ void TestBitwise() {
 	SimpleEqualityTest("set (turn off)", set(0b111, 1, false), 0b101);
 }
 
-int main() {
+int TestMaths() {
 #if 1
 	TestVector();
 #endif

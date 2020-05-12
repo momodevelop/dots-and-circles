@@ -173,7 +173,6 @@ namespace ryoji::allocators {
 
 		void deallocate(Blk blk)
 		{
-			assert(blk);
 			assert(owns(blk));
 
 			Header* header = reinterpret_cast<Header*>(zawarudo::pointer::sub(blk.ptr, sizeof(Header)));

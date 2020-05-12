@@ -61,9 +61,11 @@ set(src-utils
 
 
 set(src-tests 
-    ${CMAKE_CURRENT_LIST_DIR}/test/test-utils.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/test/test-allocators.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/test/test-maths.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/units/test-utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/units/test-allocators.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/units/test-maths.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/headers.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
 )
 
 source_group(
@@ -86,7 +88,14 @@ source_group(
         ${src-maths} 
         ${src-utils}
 )
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "test" FILES ${src-tests})
+source_group(
+    TREE 
+        ${CMAKE_CURRENT_LIST_DIR}/test/ 
+    PREFIX 
+        "src" 
+    FILES 
+        ${src-tests}
+)
 
 
 project(ryoji)
@@ -109,21 +118,13 @@ project(ryoji)
 
 ### TEST START
 
-    add_executable(ryoji-test-allocators)
-    set_target_properties(ryoji-test-allocators PROPERTIES CXX_STANDARD 17)
-    target_include_directories(ryoji-test-allocators PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
-    target_sources(ryoji-test-allocators PRIVATE  ${CMAKE_CURRENT_LIST_DIR}/test/test-allocators.cpp)
+    add_executable(ryoji-test)
+    set_target_properties(ryoji-test PROPERTIES CXX_STANDARD 17)
+    target_include_directories(ryoji-test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
+    target_link_libraries(ryoji-test PRIVATE ryoji)
+    target_sources(ryoji-test PRIVATE  ${src-tests})
 
-    add_executable(ryoji-test-maths)
-    set_target_properties(ryoji-test-maths PROPERTIES CXX_STANDARD 17)
-    target_include_directories(ryoji-test-maths PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
-    target_link_libraries(ryoji-test-maths PRIVATE ryoji)
-    target_sources(ryoji-test-maths PRIVATE  ${CMAKE_CURRENT_LIST_DIR}/test/test-maths.cpp)
 
-    add_executable(ryoji-test-utils)
-    set_target_properties(ryoji-test-utils PROPERTIES CXX_STANDARD 17)
-    target_include_directories(ryoji-test-utils PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
-    target_sources(ryoji-test-utils PRIVATE  ${CMAKE_CURRENT_LIST_DIR}/test/test-utils.cpp)
 
     #add_executable(ryoji-test-containers)
     #set_target_properties(ryoji-test-containers PROPERTIES CXX_STANDARD 17)
