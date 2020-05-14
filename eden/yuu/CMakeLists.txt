@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.17)
 
 find_package(ryoji REQUIRED)
 find_package(sdl2 REQUIRED)
-find_package(glew REQUIRED)
 find_package(OpenGL REQUIRED)
 
 set(include-graphics 
@@ -25,6 +24,8 @@ set(src-graphics
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/renderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.h
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/glad.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/glad.c
 )
 
 set(src-test
@@ -48,8 +49,6 @@ project(yuu)
         PRIVATE 
             ${CMAKE_CURRENT_LIST_DIR}/include/
             ${ryoji-include-dir}
-            ${glew-include-dir}
-            
             ${sdl2-include-dir}
     )
     target_sources(
@@ -73,27 +72,24 @@ project(yuu)
         PRIVATE 
             ${CMAKE_CURRENT_LIST_DIR}/include/
             ${ryoji-include-dir}
-            ${glew-include-dir}
             ${sdl2-include-dir}
     )
 
     target_link_directories(
             yuu-test 
         PRIVATE 
-            ${glew-libs-dir}
             ${sdl2-libs-dir}
     )
     target_link_libraries(
             yuu-test 
         PRIVATE 
             ryoji
+            glad
             yuu
             opengl32
             SDL2
             SDL2main
             SDL2test
-            glew32
-            glew32s
     )
     target_sources(yuu-test PRIVATE  ${src-test})
 
@@ -104,12 +100,6 @@ project(yuu)
                 yuu-test 
             POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sdl2-libs-dir}/SDL2.dll $<TARGET_FILE_DIR:yuu-test>
-        )
-        add_custom_command(
-            TARGET 
-                yuu-test 
-            POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${glew-libs-dir}/glew32.dll $<TARGET_FILE_DIR:yuu-test>
         )
 
     endif()

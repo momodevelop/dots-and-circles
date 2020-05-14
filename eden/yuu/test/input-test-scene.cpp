@@ -1,12 +1,14 @@
 #include "input-test-scene.h"
 #include "yuu/input/keyboard.h"
-#include "glew/glew.h"
+
 #include <optional>
 #include <iostream>
 
 using namespace scenes;
 using namespace std;
 using namespace yuu::input::keyboard;
+
+
 
 // Wrapper to change the awkward way SDL_PollEvent is being called.
 static std::optional<SDL_Event> pollEvent() {
@@ -37,9 +39,8 @@ void InputTestScene::init() {
 	kb.registerKey(SDLK_s);
 	kb.registerKey(SDLK_a);
 	kb.registerKey(SDLK_d);
-
-
 }
+
 IScene* InputTestScene::update() {
 	using namespace yuu::input;
 	kb.update();
@@ -55,6 +56,9 @@ IScene* InputTestScene::update() {
 	checkKeyPressed(kb, SDLK_a, "A");
 	checkKeyPressed(kb, SDLK_s, "S");
 	checkKeyPressed(kb, SDLK_d, "D");
+
+
+
 
 	return this;
 }

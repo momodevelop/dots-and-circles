@@ -3,7 +3,7 @@
 
 
 #include "sdl2/SDL.h"
-#include "glew/glew.h"
+
 
 namespace yuu::graphics::window {
 
@@ -22,7 +22,7 @@ namespace yuu::graphics::window {
 		int screenX = SDL_WINDOWPOS_CENTERED,
 		int screenY = SDL_WINDOWPOS_CENTERED,
 		int openglMajorVersion = 4,
-		int openglMinorVersion = 0
+		int openglMinorVersion = 5
 	);
 
 	void free(Window& win);
