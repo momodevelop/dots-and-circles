@@ -24,8 +24,6 @@ set(src-graphics
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/renderer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.h
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/glad.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/glad.c
 )
 
 set(src-test
