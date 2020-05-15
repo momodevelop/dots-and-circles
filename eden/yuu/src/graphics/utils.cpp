@@ -1,7 +1,32 @@
 #include <iostream>
 #include <iomanip>
-#include "window.h"
+#include "utils.h"
 #include "glad.h"
+
+namespace yuu::graphics {
+
+	bool init() {
+		if (SDL_Init(SDL_INIT_VIDEO) > 0) {
+			std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+			return false;
+		}
+		SDL_GL_LoadLibrary(NULL);
+		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+
+		//SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+		return true;
+	};
+
+	SDL_Window* createWindow() {
+
+	}
+
+
+}
 
 namespace yuu::graphics::window {
 
@@ -24,8 +49,7 @@ namespace yuu::graphics::window {
 			return false;
 		}
 
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+
 
 		w.window = SDL_CreateWindow(title, screenX, screenY, screenWidth, screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 		if (w.window == NULL)
@@ -43,6 +67,7 @@ namespace yuu::graphics::window {
 			std::cout << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
 			return false;
 		}
+	
 		SDL_GL_MakeCurrent(w.window, w.context);
 
 

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <optional>
-#include "yuu/graphics/window.h"
+#include "yuu/graphics/utils.h"
 #include "yuu/input/keyboard.h"
 #include "ryoji/utils/defer.h"
 

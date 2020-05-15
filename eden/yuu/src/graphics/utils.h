@@ -1,9 +1,12 @@
-#ifndef __YUU_GRAPHICS_WINDOW_H__
-#define __YUU_GRAPHICS_WINDOW_H__
+#ifndef __YUU_GRAPHICS_UTILS_H__
+#define __YUU_GRAPHICS_UTILS_H__
 
 
 #include "sdl2/SDL.h"
 
+namespace yuu::graphics {
+	bool init();
+}
 
 namespace yuu::graphics::window {
 
