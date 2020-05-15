@@ -7,6 +7,7 @@ find_package(OpenGL REQUIRED)
 set(include-graphics 
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/renderer.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/window.h
 )
 
 set(include-input
@@ -22,6 +23,8 @@ set(src-input
 set(src-graphics 
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/renderer.h
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/renderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/utils.cpp
 )
@@ -71,6 +74,7 @@ project(yuu)
             ${CMAKE_CURRENT_LIST_DIR}/include/
             ${ryoji-include-dir}
             ${sdl2-include-dir}
+            ${glad-include-dir}
     )
 
     target_link_directories(

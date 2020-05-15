@@ -10,4 +10,4 @@ else()
     
 endif()
 
-find_package_handle_standard_args(sdl2 REQUIRED_VARS sdl2-include-dir sdl2-include-dir )
+find_package_handle_standard_args(sdl2 REQUIRED_VARS sdl2-include-dir sdl2-libs-dir )
