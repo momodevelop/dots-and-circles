@@ -1,7 +1,7 @@
-#ifndef __RYOJI_UTILS_REFLECTION_H__
-#define __RYOJI_UTILS_REFLECTION_H__
+#ifndef __RYOJI_REFLECTION_H__
+#define __RYOJI_REFLECTION_H__
 
-namespace ryoji::utils::reflection {
+namespace ryoji::reflection {
 	// Generates a member function checker called 'prefix_memberFuncName'
 	#define GENERATE_MEMBER_FUNCTION_PRODDER(prefix, memberFuncName, returnType, args) \
 	template<typename T> \

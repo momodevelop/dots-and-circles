@@ -24,8 +24,9 @@ int main(int argc, char* args[]){
 	defer{ graphics::free(); };
 
 	auto win = graphics::Window();
-	if (!win.init("Yuu Test", 1600, 900)) {
-		std::cerr << "Cannot initialize window" << std::endl;
+	
+	if (auto ok = win.init("Yuu Test", 1600, 900); !ok ) {
+		std::cerr << ok.getError().getValue() << std::endl;
 		return 1;
 	}
 	defer{ win.free(); };

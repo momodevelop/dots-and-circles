@@ -25,6 +25,9 @@ set(include-maths
 
 set(include-utils 
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/defer.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/expected.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/reflection.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/fmt.h
 )
 
 set(src-allocators 
@@ -57,6 +60,10 @@ set(src-maths
 
 set(src-utils 
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/defer.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/utils/expected.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/utils/reflection.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/utils/fmt.h
+
 )
 
 

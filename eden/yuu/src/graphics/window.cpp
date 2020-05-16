@@ -1,39 +1,43 @@
 #include <iostream>
 #include "window.h"
-
+#include "ryoji/utils/expected.h"
+#include "ryoji/utils/fmt.h"
 
 namespace  yuu::graphics {
 	namespace window {
+		using namespace ryoji;
+		using namespace std;
+
 		Window::Window()
 		{
 		}
 
 		Window::~Window() {
-			SDL_DestroyWindow(window);
+			free();
 		}
 
-		// TODO return expected?
-		bool Window::init(const char* title, unsigned width, unsigned height)
+		Window::MaybeError Window::init(const char* title, unsigned width, unsigned height)
 		{
 			if (this->window) {
-				
+				return { fmt::format<256>("[yuu][Window][init] Window already created! Please free() first!") };
 			}
 
 			this->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 			if (this->window == NULL) {
-				std::cerr << "[yuu][createWindow] Cannot create window! SDL_Error: " << SDL_GetError() << std::endl;
-				return false;
+				return { fmt::format<256>("[yuu][Window][init] Cannot create window. Reason: %s", SDL_GetError()) };
 			}
+			return{};
 		}
 
-		bool Window::free()
+		Window::MaybeError Window::free()
 		{
 			if (window) {
 				SDL_DestroyWindow(this->window);
-				return true;
+				return {};
 			}
-			return false;
+			return { string("[yuu][Window][free] Window was not created! Please init() first!") };
 		}
+
 
 	}
 

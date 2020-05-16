@@ -1,8 +1,9 @@
 #include <iostream>
 #include "ryoji/utils/defer.h"
 #include "ryoji/utils/reflection.h"
+#include "ryoji/utils/expected.h"
 using namespace std;
-
+using namespace ryoji;
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
@@ -77,17 +78,67 @@ namespace {
 		struct Sui {
 			void foo(int);
 		};
-		GENERATE_MEMBER_FUNCTION_PRODDER(has_, foo, void, (int))
+		GENERATE_MEMBER_FUNCTION_PRODDER(has_, foo, void, (int));
 
-			void Test() {
-				{
-					cout << "=== Testing member function prodder" << endl;
-					PrintGoodOrBad(has_foo_v<Karu> == false);
-					cout << "Struct should not have member function" << endl;
-					PrintGoodOrBad(has_foo_v<Sui> == true);
-					cout << "Struct should have member function" << endl;
-				}
-				cout << endl;
+		void Test() {
+			{
+				cout << "=== Testing member function prodder" << endl;
+				PrintGoodOrBad(has_foo_v<Karu> == false);
+				cout << "Struct should not have member function" << endl;
+				PrintGoodOrBad(has_foo_v<Sui> == true);
+				cout << "Struct should have member function" << endl;
+			}
+			cout << endl;
+		}
+	}
+
+	namespace test_expected {
+
+		enum struct FailReasons {
+			TILTED
+		};
+
+		Expected<int, Unexpected<FailReasons>> expectedTest(bool tilt) {
+			if (tilt)
+				return { FailReasons::TILTED };
+			return 10;
+		}
+
+		Expected<void, Unexpected<FailReasons>> expectedVoidTest(bool tilt) {
+			if (tilt)
+				return { FailReasons::TILTED };
+			return {};
+		}
+
+		void Test() {
+			cout << "=== Testing Expected" << endl;
+			{
+				auto ok = expectedTest(true);
+				PrintGoodOrBad(!ok);
+				cout << "Expected should be unexpected" << endl;
+				PrintGoodOrBad(ok.getError().getValue() == FailReasons::TILTED);
+				cout << "Expected error value is correct" << endl;
+			}
+			{
+				auto ok = expectedTest(false);
+				PrintGoodOrBad(ok);
+				cout << "Expected should be expected" << endl;
+				PrintGoodOrBad(ok.getValue() == 10);
+				cout << "Expected value is correct" << endl;
+			}
+			{
+				auto ok = expectedVoidTest(true);
+				PrintGoodOrBad(!ok);
+				cout << "Expected<void> should be unexpected" << endl;
+				PrintGoodOrBad(ok.getError().getValue() == FailReasons::TILTED);
+				cout << "Expected<void> error value is correct" << endl;
+			}
+			{
+				auto ok = expectedVoidTest(false);
+				PrintGoodOrBad(ok);
+				cout << "Expected<void> should be expected" << endl;
+			}
+
 		}
 	}
 }
@@ -96,6 +147,7 @@ namespace {
 int TestUtils() {
 	test_defer::Test();
 	test_reflection::Test();
+	test_expected::Test();
 	return 0;
 }
 
