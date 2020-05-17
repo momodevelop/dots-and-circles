@@ -2,40 +2,57 @@
 #include "window.h"
 #include "ryoji/utils/expected.h"
 #include "ryoji/utils/fmt.h"
+#include "canvas.h"
 
 namespace  yuu::graphics {
 	namespace window {
 		using namespace ryoji;
 		using namespace std;
 
-		Window::Window()
+
+		Window::Window(const Canvas& cv) : depCanvas(cv)
 		{
+			lastError.reserve(256);
 		}
 
 		Window::~Window() {
-			free();
+			assert(!this->window && "Please call free()");
 		}
 
-		Window::MaybeError Window::init(const char* title, unsigned width, unsigned height)
+		Window::Expect<void> Window::init(const char* title, unsigned width, unsigned height)
 		{
+			if (!depCanvas.isInitialized()) {
+				this->lastError = "[yuu][Window][init] Canvas not yet initialized!";
+				return { Error() };
+			}
+
 			if (this->window) {
-				return { fmt::format<256>("[yuu][Window][init] Window already created! Please free() first!") };
+				this->lastError = "[yuu][Window][init] Window already created! Please free() first!";
+				return { Error() };
 			}
 
 			this->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 			if (this->window == NULL) {
-				return { fmt::format<256>("[yuu][Window][init] Cannot create window. Reason: %s", SDL_GetError()) };
+				this->lastError = fmt::staticFormat<256>("[yuu][Window][init] Cannot create window. Reason: %s", SDL_GetError());
+				return { Error() };
 			}
 			return{};
 		}
 
-		Window::MaybeError Window::free()
+		Window::Expect<void> Window::free()
 		{
 			if (window) {
 				SDL_DestroyWindow(this->window);
+				this->window = nullptr;
 				return {};
 			}
-			return { string("[yuu][Window][free] Window was not created! Please init() first!") };
+			this->lastError = "[yuu][Window][free] Window was not created! Please init() first!";
+			return { Error() };
+		}
+
+		const char* Window::getLastError() const
+		{
+			return this->lastError.c_str();
 		}
 
 

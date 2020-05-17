@@ -98,16 +98,20 @@ namespace {
 			TILTED
 		};
 
-		Expected<int, Unexpected<FailReasons>> expectedTest(bool tilt) {
+		struct Value {
+			int value = 10;
+		};
+
+		Expected<Value, Unexpected<FailReasons>> expectedTest(bool tilt) {
 			if (tilt)
-				return { FailReasons::TILTED };
-			return 10;
+				return FailReasons::TILTED ;
+			return Value();
 		}
 
-		Expected<void, Unexpected<FailReasons>> expectedVoidTest(bool tilt) {
+		Expected<Value, Unexpected<FailReasons>> expectedVoidTest(bool tilt) {
 			if (tilt)
-				return { FailReasons::TILTED };
-			return {};
+				return FailReasons::TILTED ;
+			return Value();
 		}
 
 		void Test() {
@@ -123,8 +127,12 @@ namespace {
 				auto ok = expectedTest(false);
 				PrintGoodOrBad(ok);
 				cout << "Expected should be expected" << endl;
-				PrintGoodOrBad(ok.getValue() == 10);
-				cout << "Expected value is correct" << endl;
+				PrintGoodOrBad(ok.getValue().value == 10);
+				cout << "Expected value from getValue() is correct" << endl;
+				PrintGoodOrBad((*ok).value == 10);
+				cout << "Expected value from operator* is correct " << endl;
+				PrintGoodOrBad(ok->value == 10);
+				cout << "Expected value from operator* is correct " << endl;
 			}
 			{
 				auto ok = expectedVoidTest(true);

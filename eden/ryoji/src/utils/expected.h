@@ -17,7 +17,7 @@ namespace ryoji {
 			Expected(const Value& rhs) : ham(rhs), gotHam(true) {}
 			Expected(Value&& rhs) : ham(std::move(rhs)), gotHam(true) {}
 			Expected(const Error& rhs) : spam(rhs) {}
-			Expected(Error&& rhs) : spam(move(rhs)) {}
+			Expected(Error&& rhs) : spam(std::move(rhs)) {}
 			Expected(const Expected& rhs) : gotHam(rhs.gotHam) {
 				if (gotHam)
 					new(&ham) Value(rhs.ham);
@@ -61,7 +61,28 @@ namespace ryoji {
 				assert(!gotHam);
 				return spam;
 			}
+
+			inline Value* operator->() noexcept {
+				assert(gotHam);
+				return &ham;
+			}
+
+			inline const Value* operator->() const noexcept {
+				assert(gotHam);
+				return &ham;
+			}
 		};
+
+		template<typename Value, typename Error>
+		inline Value& operator*(Expected<Value, Error>& expected) noexcept {
+			return expected.getValue();
+		}
+
+		template<typename Value, typename Error>
+		inline const Value& operator*(const Expected<Value, Error>& expected) noexcept {
+			return expected.getValue();
+		}
+
 
 
 		template<typename Error>
