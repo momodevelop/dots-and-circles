@@ -1,7 +1,7 @@
 #include <iostream>
 #include <optional>
-#include "yuu/graphics/canvas.h"
-#include "yuu/graphics/window.h"
+#include "yuu/graphics/canvases.h"
+#include "yuu/graphics/windows.h"
 #include "yuu/input/keyboard.h"
 #include "ryoji/utils/defer.h"
 
@@ -26,11 +26,14 @@ int main(int argc, char* args[]){
 	}
 	defer{ win.free(); };
 
+	SceneDatabase sceneDB;
 
+	InputTestScene inputTestScene(sceneDB, canvas);
 
+	sceneDB.add("input", &inputTestScene);
 	
 	auto sceneMgr = SceneManager();
-	sceneMgr.setNextScene(InputTestScene::I());
+	sceneMgr.setNextScene(sceneDB.get("input"));
 	sceneMgr.run();
 
 	return 0;

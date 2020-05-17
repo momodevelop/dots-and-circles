@@ -5,8 +5,8 @@ find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
 
 set(include-graphics 
-    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/canvas.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/window.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/canvases.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/windows.h
 )
 
 set(include-input
@@ -20,10 +20,10 @@ set(src-input
 
 )
 set(src-graphics 
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvas.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvas.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/window.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvases.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvases.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/windows.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/windows.cpp
 )
 
 set(src-test

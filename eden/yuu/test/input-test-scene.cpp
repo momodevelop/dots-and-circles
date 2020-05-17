@@ -1,5 +1,6 @@
 #include "input-test-scene.h"
 #include "yuu/input/keyboard.h"
+#include "yuu/graphics/canvases.h"
 
 #include <optional>
 #include <iostream>
@@ -7,18 +8,8 @@
 using namespace scenes;
 using namespace std;
 using namespace yuu::input::keyboard;
+using namespace yuu::graphics;
 
-
-
-// Wrapper to change the awkward way SDL_PollEvent is being called.
-static std::optional<SDL_Event> pollEvent() {
-	SDL_Event e;
-	bool success = SDL_PollEvent(&e);
-	if (success) {
-		return e;
-	}
-	return std::nullopt;
-}
 
 void checkKeyPressed(Keyboard& kb, SDL_KeyCode key, const char* keyName) {
 	using namespace yuu;
@@ -33,6 +24,11 @@ void checkKeyPressed(Keyboard& kb, SDL_KeyCode key, const char* keyName) {
 		cout << keyName << " is just released" << endl;
 }
 
+InputTestScene::InputTestScene(SceneDatabase& sceneDB, yuu::graphics::canvases::Canvas& canvas)
+	: sceneDB(sceneDB), canvas(canvas)
+{
+}
+
 void InputTestScene::init() {
 	using namespace yuu::input;
 	kb.registerKey(SDLK_w);
@@ -44,13 +40,12 @@ void InputTestScene::init() {
 IScene* InputTestScene::update() {
 	using namespace yuu::input;
 	kb.update();
-	while (auto e = pollEvent()) {
+	while (auto e = canvas.pollEvent()) {
 		if (e->type == SDL_QUIT)
 			return nullptr;
 		else {
 			kb.processEvent(e.value());
 		}
-
 	}
 	checkKeyPressed(kb, SDLK_w, "W");
 	checkKeyPressed(kb, SDLK_a, "A");

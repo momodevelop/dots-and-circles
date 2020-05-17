@@ -1,27 +1,25 @@
 
 #include <sdl2/SDL.h>
-#include "canvas.h"
+#include "canvases.h"
 #include "ryoji/utils/fmt.h"
 
 namespace yuu::graphics {
 	using namespace ryoji;
 
-	namespace canvas {
+	namespace canvases {
 		Canvas::Canvas() {
 			lastError.reserve(256);
 		}
 
 		Canvas::~Canvas()
 		{
-			assert(this->initialized && "Please call free()");
+			assert(isInitialized());
 		}
 
 		Canvas::Expect<void> Canvas::init()
 		{
-			if (this->initialized) {
-				lastError = fmt::staticFormat<256>("[yuu][Canvas][init] Already Initialized! Please call free()");
-				return Error();
-			}
+			assert(!isInitialized());
+
 			if (SDL_Init(SDL_INIT_VIDEO) > 0) {
 				lastError = fmt::staticFormat<256>("[yuu][Canvas][init] SDL cannot initialize: %s", SDL_GetError());
 				return Error();
@@ -35,31 +33,40 @@ namespace yuu::graphics {
 			//SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 			//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-
-			this->initialized = true;
+			#ifdef _DEBUG
+				this->initialized = true;
+			#endif
 
 			return {};
 		}
-		Canvas::Expect<void> Canvas::free()
+		void Canvas::free()
 		{
-			if (!this->initialized) {
-				lastError = fmt::staticFormat<256>("[yuu][Canvas][free] Did not initialize before free()");
-				return Error();
-			}
+			assert(isInitialized());
 			SDL_Quit();
+#ifdef _DEBUG
 			this->initialized = false;
-			return {};
+#endif
 		}
 
 		const char* Canvas::getLastError() const
 		{
 			return lastError.c_str();
 		}
-
+#ifdef _DEBUG
 		bool Canvas::isInitialized() const
 		{
 			return initialized;
 		}
+#endif
+		std::optional<SDL_Event> Canvas::pollEvent()
+		{
+			assert(isInitialized());
+			if (SDL_Event e; SDL_PollEvent(&e)) {
+				return e;
+			}
+			return std::nullopt;
+		}
+	
 
 	}
 

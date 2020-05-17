@@ -6,17 +6,19 @@
 #include "ryoji/utils/expected.h"
 
 namespace yuu::graphics {
-	namespace canvas { class Canvas; } // forward declaration
-	namespace window {
+	namespace canvases { class Canvas; } // forward declaration
+	namespace windows {
 		// Is only in charge of wrapping an SDL_Window object.
 		
 		class Window
 		{
 			struct Error {};
 			template<typename T> using Expect = ryoji::Expected<T, Error>;
+			using Canvas = canvases::Canvas;
 
-			using Canvas = canvas::Canvas;
-			const Canvas& depCanvas;
+			// dependencies
+			const Canvas& canvas;
+
 			SDL_Window* window{ nullptr };
 			std::string lastError{};
 		public:
@@ -24,16 +26,19 @@ namespace yuu::graphics {
 			~Window();
 			 
 			Expect<void> init(const char* title, unsigned width, unsigned height);
-			Expect<void> free();
+			void free();
 
 			const char* getLastError() const;
+			bool isInitialized() const;
+
+			// Other gettors like window width, height etc...
 		};
 
 
 		
 	}
 
-	using window::Window;
+	using windows::Window;
 }
 
 
