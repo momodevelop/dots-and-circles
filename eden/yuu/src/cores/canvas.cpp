@@ -19,6 +19,7 @@ namespace yuu::cores {
 			assert(!isValid());
 			assert(this->constructed);
 			this->constructed = false;
+
 		}
 
 		Canvas::Expect<void> Canvas::init()
