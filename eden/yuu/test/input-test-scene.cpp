@@ -11,7 +11,7 @@ using namespace yuu::input::keyboard;
 using namespace yuu::cores;
 
 
-void checkKeyPressed(Keyboard& kb, SDL_KeyCode key, const char* keyName) {
+void checkKeyPressed(Keyboard& kb, Keycode key, const char* keyName) {
 	using namespace yuu;
 	using namespace std;
 	if (isDown(kb, key))
@@ -31,10 +31,10 @@ InputTestScene::InputTestScene(SceneDatabase& sceneDB, Canvas& canvas)
 
 void InputTestScene::init() {
 	using namespace yuu::input;
-	kb.registerKey(SDLK_w);
-	kb.registerKey(SDLK_s);
-	kb.registerKey(SDLK_a);
-	kb.registerKey(SDLK_d);
+	kb.registerKey(Keycode::W);
+	kb.registerKey(Keycode::S);
+	kb.registerKey(Keycode::A);
+	kb.registerKey(Keycode::D);
 }
 
 IScene* InputTestScene::update() {
@@ -47,10 +47,10 @@ IScene* InputTestScene::update() {
 			kb.processEvent(e.value());
 		}
 	}
-	checkKeyPressed(kb, SDLK_w, "W");
-	checkKeyPressed(kb, SDLK_a, "A");
-	checkKeyPressed(kb, SDLK_s, "S");
-	checkKeyPressed(kb, SDLK_d, "D");
+	checkKeyPressed(kb, Keycode::W, "W");
+	checkKeyPressed(kb, Keycode::S, "A");
+	checkKeyPressed(kb, Keycode::A, "S");
+	checkKeyPressed(kb, Keycode::D, "D");
 
 
 

@@ -23,14 +23,14 @@ namespace yuu::input::keyboard {
 
 		// Process the event
 		if (e.type == SDL_KEYDOWN) {
-			auto&& itr = this->keys.find(e.key.keysym.sym);
+			auto&& itr = this->keys.find((Keycode)e.key.keysym.sym);
 			if (itr != this->keys.end()) {
 				itr->second.now = true;
 			}
 
 		}
 		else if (e.type == SDL_KEYUP) {
-			auto&& itr = this->keys.find(e.key.keysym.sym);
+			auto&& itr = this->keys.find((Keycode)e.key.keysym.sym);
 			if (itr != this->keys.end()) {
 				itr->second.now = false;
 			}
