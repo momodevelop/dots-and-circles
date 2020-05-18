@@ -14,38 +14,32 @@ namespace  yuu::cores {
 
 		Window::Window(const Canvas& cv) : canvas(cv)
 		{
-			assert(cv.isInitialized());
+			assert(cv.isValid());
 			lastError.reserve(256);
 		}
 
 		Window::~Window() {
-			assert(!isInitialized());
+			assert(!isValid());
 		}
 
 		Window::Expect<void> Window::init(const char* title, unsigned width, unsigned height)
 		{
-			assert(!isInitialized() );
+			assert(!isValid() );
 			this->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 			if (this->window == NULL) {
-				this->lastError = fmt::staticFormat<256>("[yuu][Window][init] Cannot create window. Reason: %s", SDL_GetError());
-				return { Error() };
+				return SDL_GetError() ;
 			}
 			return{};
 		}
 
 		void Window::free()
 		{
-			assert(isInitialized());
+			assert(isValid());
 			SDL_DestroyWindow(this->window);
 			this->window = nullptr;
 		}
 
-		const char* Window::getLastError() const
-		{
-			return this->lastError.c_str();
-		}
-
-		bool Window::isInitialized() const
+		bool Window::isValid() const
 		{
 			return window != nullptr;
 		}

@@ -14,14 +14,14 @@ int main(int argc, char* args[]){
 
 	auto canvas = cores::Canvas();
 	if (auto ok = canvas.init(); !ok) {
-		std::cerr << canvas.getLastError() << std::endl;
+		std::cerr << ok.getError() << std::endl;
 		return 1;
 	}
 	defer{ canvas.free(); };
 
 	auto win = cores::Window(canvas);
 	if (auto ok = win.init("Yuu Test", 1600, 900); !ok ) {
-		std::cerr << win.getLastError() << std::endl;
+		std::cerr << ok.getError() << std::endl;
 		return 1;
 	}
 	defer{ win.free(); };

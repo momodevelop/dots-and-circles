@@ -12,16 +12,16 @@ namespace yuu::cores {
 	namespace canvases {
 		
 		// Only responsible of wrapping SDL2 settings
+		// Sadly, should be a singleton
 		class Canvas {
-			struct Error {};
+			using Error = const char*;
 			template<typename T> using Expect = ryoji::Expected<T, Error>;
+			inline static bool initialized = false;
+			inline static bool constructed = false;
 
+			Canvas(const Canvas&) = delete;
+			Canvas& operator=(const Canvas&) = delete;
 
-			std::string lastError{};
-
-			#ifdef _DEBUG
-				inline static bool initialized = false;
-			#endif
 		public:
 			Canvas();
 			~Canvas();
@@ -29,12 +29,9 @@ namespace yuu::cores {
 			Expect<void> init();
 			void free();
 
-			const char* getLastError() const;
 			std::optional<SDL_Event> pollEvent();
 
-			#ifdef _DEBUG
-				bool isInitialized() const;
-			#endif
+			bool isValid() const;
 
 		};
 

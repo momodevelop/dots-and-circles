@@ -12,7 +12,7 @@ namespace yuu::cores {
 		
 		class Window
 		{
-			struct Error {};
+			using Error = const char*;
 			template<typename T> using Expect = ryoji::Expected<T, Error>;
 			using Canvas = canvases::Canvas;
 
@@ -28,17 +28,19 @@ namespace yuu::cores {
 			Expect<void> init(const char* title, unsigned width, unsigned height);
 			void free();
 
-			const char* getLastError() const;
-			bool isInitialized() const;
+
+			bool isValid() const;
 
 			// Other gettors like window width, height etc...
 		};
-
-
-		
 	}
 
 	using windows::Window;
+
+
+	namespace renderers {
+
+	}
 }
 
 
