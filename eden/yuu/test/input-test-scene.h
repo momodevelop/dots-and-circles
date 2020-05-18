@@ -7,15 +7,13 @@
 namespace yuu::cores::canvases { class Canvas; }
 namespace scenes {
 	class InputTestScene : public IScene {
-		using Canvas = yuu::cores::canvases::Canvas;
 		using Keyboard = yuu::input::keyboard::Keyboard;
 
 		Keyboard kb{};
-		Canvas& canvas;
 		SceneDatabase& sceneDB;
 		bool isDone = false;
 	public:
-		InputTestScene(SceneDatabase& sceneDB, Canvas& canvas);
+		InputTestScene(SceneDatabase& sceneDB);
 		void init();
 		IScene* update();
 		void uninit();

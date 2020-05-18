@@ -1,7 +1,8 @@
 #include <iostream>
-#include "ryoji/utils/defer.h"
-#include "ryoji/utils/reflection.h"
-#include "ryoji/utils/expected.h"
+#include "ryoji/defer.h"
+#include "ryoji/reflection.h"
+#include "ryoji/expected.h"
+
 using namespace std;
 using namespace ryoji;
 #define ANSI_COLOR_RED     "\x1b[31m"

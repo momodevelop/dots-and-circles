@@ -50,10 +50,10 @@ set(srcs
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/constants.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
     
-    ${CMAKE_CURRENT_LIST_DIR}/src/utils/defer.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/utils/expected.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/utils/reflection.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/utils/fmt.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/defer.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/expected.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/reflection.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/fmt.h
 )
 
 set(src-tests 
