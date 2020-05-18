@@ -4,27 +4,22 @@ find_package(ryoji REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-set(include-graphics 
+
+set(includes 
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/canvases.h
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/windows.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/inputs/keyboard.h
 )
 
-set(include-input
-    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/input/keyboard.h
-)
-
-
-set(src-input
-    ${CMAKE_CURRENT_LIST_DIR}/src/input/keyboard.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/input/keyboard.cpp
-
-)
-set(src-graphics 
+set(srcs
+    ${CMAKE_CURRENT_LIST_DIR}/src/inputs/keyboard.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/inputs/keyboard.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvases.h
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvases.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/windows.h
     ${CMAKE_CURRENT_LIST_DIR}/src/graphics/windows.cpp
 )
+
 
 set(src-test
     ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
@@ -33,8 +28,8 @@ set(src-test
     ${CMAKE_CURRENT_LIST_DIR}/test/input-test-scene.cpp
 )
 
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES  ${include-graphics} ${include-input})
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${src-graphics} ${src-input})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES  ${includes})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/src/ PREFIX "src" FILES ${srcs})
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/test/ PREFIX "src" FILES ${src-test})
 
 project(yuu)
@@ -42,6 +37,7 @@ project(yuu)
 ### YUU START
     add_library(yuu STATIC)
     set_target_properties(yuu PROPERTIES CXX_STANDARD 17)
+    set_target_properties(yuu PROPERTIES LINKER_LANGUAGE CXX)
     target_include_directories(
             yuu 
         PRIVATE 
@@ -52,11 +48,8 @@ project(yuu)
     target_sources(
             yuu
         PRIVATE
-            ${include-graphics}
-            ${include-input}
-
-            ${src-graphics}
-            ${src-input}
+            ${includes}
+            ${srcs}
     )
 
 ### YUU END
@@ -65,6 +58,7 @@ project(yuu)
 
     add_executable(yuu-test)
     set_target_properties(yuu-test PROPERTIES CXX_STANDARD 17)
+    set_target_properties(yuu-test PROPERTIES LINKER_LANGUAGE CXX)
     target_include_directories(
             yuu-test 
         PRIVATE 

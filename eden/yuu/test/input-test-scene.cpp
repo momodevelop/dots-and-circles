@@ -1,5 +1,5 @@
 #include "input-test-scene.h"
-#include "yuu/input/keyboard.h"
+#include "yuu/inputs/keyboard.h"
 #include "yuu/graphics/canvases.h"
 
 #include <optional>

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 
-set(include-allocators 
+set(includes
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/blk.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/fallback-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/freelist-allocator.h
@@ -13,24 +13,20 @@ set(include-allocators
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/slab-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/stack-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/stl-adapter.h
-)
-set(include-maths 
+
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/matrices.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/vectors.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitfields.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/constants.h
-)
-
-
-set(include-utils 
+        
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/defer.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/expected.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/reflection.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/fmt.h
 )
 
-set(src-allocators 
+set(srcs 
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/blk.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/fallback-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/freelist-allocator.h
@@ -45,27 +41,20 @@ set(src-allocators
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/stl-adapter.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/zawarudo/pointer.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/zawarudo/predef-freelist-strategies.h
-)
-set(src-maths 
+
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/bitfields.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/constants.h
-
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/matrices.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/maths/vectors.cpp
-
-)
-
-set(src-utils 
+    ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
+    
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/defer.h
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/expected.h
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/reflection.h
     ${CMAKE_CURRENT_LIST_DIR}/src/utils/fmt.h
-
 )
-
 
 set(src-tests 
     ${CMAKE_CURRENT_LIST_DIR}/test/units/test-utils.cpp
@@ -81,9 +70,7 @@ source_group(
     PREFIX 
         "include" 
     FILES 
-        ${include-allocators} 
-        ${include-maths} 
-        ${include-utils}
+        ${includes}
 )
 source_group(
     TREE 
@@ -91,9 +78,7 @@ source_group(
     PREFIX 
         "src" 
     FILES 
-        ${src-allocators} 
-        ${src-maths} 
-        ${src-utils}
+        ${srcs}
 )
 source_group(
     TREE 
@@ -110,16 +95,12 @@ project(ryoji)
 ### RYOJI START
     add_library(ryoji STATIC)
     set_target_properties(ryoji PROPERTIES CXX_STANDARD 17)
+    set_target_properties(ryoji PROPERTIES LINKER_LANGUAGE CXX)
     target_sources(
             ryoji
         PRIVATE
-            ${include-allocators}
-            ${include-utils}
-            ${include-maths}
-            ${include-containers}
-            ${src-allocators}
-            ${src-utils}
-            ${src-maths}
+            ${includes}
+            ${srcs}
     )
 ### RYOJI END
 
@@ -127,6 +108,7 @@ project(ryoji)
 
     add_executable(ryoji-test)
     set_target_properties(ryoji-test PROPERTIES CXX_STANDARD 17)
+    set_target_properties(ryoji-test PROPERTIES LINKER_LANGUAGE CXX)
     target_include_directories(ryoji-test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/)
     target_link_libraries(ryoji-test PRIVATE ryoji)
     target_sources(ryoji-test PRIVATE  ${src-tests})

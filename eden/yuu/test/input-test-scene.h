@@ -2,7 +2,7 @@
 #define __TEST_SCENE_INPUT_H__
 
 #include "scene.h"
-#include "yuu/input/keyboard.h"
+#include "yuu/inputs/keyboard.h"
 
 namespace yuu::graphics::canvases { class Canvas; }
 namespace scenes {

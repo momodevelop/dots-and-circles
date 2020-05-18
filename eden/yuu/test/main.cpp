@@ -2,7 +2,7 @@
 #include <optional>
 #include "yuu/graphics/canvases.h"
 #include "yuu/graphics/windows.h"
-#include "yuu/input/keyboard.h"
+#include "yuu/inputs/keyboard.h"
 #include "ryoji/utils/defer.h"
 
 #include "scene.h"
