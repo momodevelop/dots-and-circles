@@ -1,6 +1,7 @@
 
-#include <sdl2/SDL.h>
+#include "sdl2/SDL.h"
 #include "canvas.h"
+#include "glad/glad.h"
 #include "ryoji/utils/fmt.h"
 
 namespace yuu::cores {
@@ -8,17 +9,16 @@ namespace yuu::cores {
 
 	namespace canvases {
 		Canvas::Canvas() {
-			assert(isValid());
+			assert(!isValid());
 			assert(!this->constructed);
 			this->constructed = true;
 		}
 
 		Canvas::~Canvas()
 		{
-			assert(this->constructed);
 			assert(!isValid());
+			assert(this->constructed);
 			this->constructed = false;
-			
 		}
 
 		Canvas::Expect<void> Canvas::init()
@@ -36,6 +36,8 @@ namespace yuu::cores {
 
 			//SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 			//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+			gladLoadGLLoader(SDL_GL_GetProcAddress);
 
 			this->initialized = true;
 

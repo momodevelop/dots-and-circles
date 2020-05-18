@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.17)
 find_package(ryoji REQUIRED)
 find_package(sdl2 REQUIRED)
 find_package(OpenGL REQUIRED)
-
+find_package(glad REQUIRED)
 
 set(includes 
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/cores/canvas.h
@@ -44,6 +44,7 @@ project(yuu)
             ${CMAKE_CURRENT_LIST_DIR}/include/
             ${ryoji-include-dir}
             ${sdl2-include-dir}
+            ${glad-include-dir}
     )
     target_sources(
             yuu

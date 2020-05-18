@@ -19,6 +19,8 @@ namespace yuu::cores {
 			inline static bool initialized = false;
 			inline static bool constructed = false;
 
+			std::string lastError{};
+
 			Canvas(const Canvas&) = delete;
 			Canvas& operator=(const Canvas&) = delete;
 

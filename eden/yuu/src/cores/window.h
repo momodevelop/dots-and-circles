@@ -28,10 +28,8 @@ namespace yuu::cores {
 			Expect<void> init(const char* title, unsigned width, unsigned height);
 			void free();
 
-
 			bool isValid() const;
 
-			// Other gettors like window width, height etc...
 		};
 	}
 
@@ -39,7 +37,15 @@ namespace yuu::cores {
 
 
 	namespace renderers {
+		class Renderer {
+			using Window = windows::Window;
 
+			// dependencies
+			const Window& window;
+		public:
+			Renderer(const Window& window);
+
+		};
 	}
 }
 
