@@ -1,7 +1,7 @@
 #include <iostream>
 #include <optional>
-#include "yuu/graphics/canvases.h"
-#include "yuu/graphics/windows.h"
+#include "yuu/cores/canvas.h"
+#include "yuu/cores/window.h"
 #include "yuu/inputs/keyboard.h"
 #include "ryoji/utils/defer.h"
 
@@ -12,14 +12,14 @@ int main(int argc, char* args[]){
 	using namespace yuu;
 	using namespace scenes;
 
-	auto canvas = graphics::Canvas();
+	auto canvas = cores::Canvas();
 	if (auto ok = canvas.init(); !ok) {
 		std::cerr << canvas.getLastError() << std::endl;
 		return 1;
 	}
 	defer{ canvas.free(); };
 
-	auto win = graphics::Window(canvas);
+	auto win = cores::Window(canvas);
 	if (auto ok = win.init("Yuu Test", 1600, 900); !ok ) {
 		std::cerr << win.getLastError() << std::endl;
 		return 1;

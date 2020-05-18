@@ -1,11 +1,11 @@
-#ifndef __YUU_GRAPHICS_WINDOW_H__
-#define __YUU_GRAPHICS_WINDOW_H__
+#ifndef __YUU_CORE_WINDOW_H__
+#define __YUU_CORE_WINDOW_H__
 
 #include <string>
 #include "sdl2/SDL.h"
 #include "ryoji/utils/expected.h"
 
-namespace yuu::graphics {
+namespace yuu::cores {
 	namespace canvases { class Canvas; } // forward declaration
 	namespace windows {
 		// Is only in charge of wrapping an SDL_Window object.

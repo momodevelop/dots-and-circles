@@ -6,18 +6,18 @@ find_package(OpenGL REQUIRED)
 
 
 set(includes 
-    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/canvases.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/graphics/windows.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/cores/canvas.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/cores/window.h
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/inputs/keyboard.h
 )
 
 set(srcs
     ${CMAKE_CURRENT_LIST_DIR}/src/inputs/keyboard.h
     ${CMAKE_CURRENT_LIST_DIR}/src/inputs/keyboard.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvases.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/canvases.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/windows.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/graphics/windows.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/cores/canvas.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/cores/canvas.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/cores/window.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/cores/window.cpp
 )
 
 

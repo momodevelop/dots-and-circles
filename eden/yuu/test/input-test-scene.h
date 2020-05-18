@@ -4,15 +4,18 @@
 #include "scene.h"
 #include "yuu/inputs/keyboard.h"
 
-namespace yuu::graphics::canvases { class Canvas; }
+namespace yuu::cores::canvases { class Canvas; }
 namespace scenes {
 	class InputTestScene : public IScene {
-		yuu::input::keyboard::Keyboard kb{};
-		yuu::graphics::canvases::Canvas& canvas;
+		using Canvas = yuu::cores::canvases::Canvas;
+		using Keyboard = yuu::input::keyboard::Keyboard;
+
+		Keyboard kb{};
+		Canvas& canvas;
 		SceneDatabase& sceneDB;
 		bool isDone = false;
 	public:
-		InputTestScene(SceneDatabase& sceneDB, yuu::graphics::canvases::Canvas& canvas);
+		InputTestScene(SceneDatabase& sceneDB, Canvas& canvas);
 		void init();
 		IScene* update();
 		void uninit();

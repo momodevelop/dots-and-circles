@@ -1,6 +1,6 @@
 #include "input-test-scene.h"
 #include "yuu/inputs/keyboard.h"
-#include "yuu/graphics/canvases.h"
+#include "yuu/cores/canvas.h"
 
 #include <optional>
 #include <iostream>
@@ -8,7 +8,7 @@
 using namespace scenes;
 using namespace std;
 using namespace yuu::input::keyboard;
-using namespace yuu::graphics;
+using namespace yuu::cores;
 
 
 void checkKeyPressed(Keyboard& kb, SDL_KeyCode key, const char* keyName) {
@@ -24,7 +24,7 @@ void checkKeyPressed(Keyboard& kb, SDL_KeyCode key, const char* keyName) {
 		cout << keyName << " is just released" << endl;
 }
 
-InputTestScene::InputTestScene(SceneDatabase& sceneDB, yuu::graphics::canvases::Canvas& canvas)
+InputTestScene::InputTestScene(SceneDatabase& sceneDB, Canvas& canvas)
 	: sceneDB(sceneDB), canvas(canvas)
 {
 }
