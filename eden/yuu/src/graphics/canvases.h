@@ -30,8 +30,6 @@ namespace yuu::graphics {
 			void free();
 
 			const char* getLastError() const;
-
-			// Wrapper to change the awkward way SDL_PollEvent is being called.
 			std::optional<SDL_Event> pollEvent();
 
 			#ifdef _DEBUG

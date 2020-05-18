@@ -3,12 +3,12 @@
 
 namespace yuu::input::keyboard {
 	// Returns false if key is already registered.
-	bool Keyboard::registerKey(SDL_Keycode key) {
+	bool Keyboard::registerKey(Keycode key) {
 		auto result = this->keys.try_emplace(key);
 		return result.second;
 	}
 
-	bool Keyboard::unregisterKey(SDL_Keycode key) {
+	bool Keyboard::unregisterKey(Keycode key) {
 		auto result = this->keys.erase(key);
 		return result > 0;
 	}
@@ -37,7 +37,7 @@ namespace yuu::input::keyboard {
 		}
 	}
 
-	inline const Keyboard::KeyStatus& Keyboard::getKeyStatus(SDL_Keycode key) const
+	inline const Keyboard::KeyStatus& Keyboard::getKeyStatus(Keycode key) const
 	{
 		auto&& itr = this->keys.find(key);
 		assert(itr != this->keys.end());
@@ -46,25 +46,25 @@ namespace yuu::input::keyboard {
 
 
 	// before: 0, now: 1
-	bool isPoked(const Keyboard& keyboard, SDL_KeyCode key) {
+	bool isPoked(const Keyboard& keyboard, Keycode key) {
 		auto keyStatus = keyboard.getKeyStatus(key);
 		return !keyStatus.before && keyStatus.now;
 	}
 
 	// before: 1, now: 0
-	bool isReleased(const Keyboard& keyboard, SDL_KeyCode key) {
+	bool isReleased(const Keyboard& keyboard, Keycode key) {
 		auto keyStatus = keyboard.getKeyStatus(key);
 		return keyStatus.before && !keyStatus.now;
 	}
 
 
 	// before: X, now: 1
-	bool isDown(const Keyboard& keyboard, SDL_KeyCode key) {
+	bool isDown(const Keyboard& keyboard, Keycode key) {
 		return keyboard.getKeyStatus(key).now;
 	}
 
 	// before: 1, now: 1
-	bool isHeld(const Keyboard& keyboard, SDL_KeyCode key) {
+	bool isHeld(const Keyboard& keyboard, Keycode key) {
 		auto keyStatus = keyboard.getKeyStatus(key);
 		return keyStatus.before && keyStatus.now;
 	}
