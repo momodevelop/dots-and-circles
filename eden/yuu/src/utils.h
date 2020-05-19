@@ -5,6 +5,9 @@
 #include "sdl2/SDL.h"
 
 namespace yuu {
+
+
+
 	std::optional<SDL_Event> pollEvent();
 
 }

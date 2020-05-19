@@ -18,12 +18,12 @@ namespace ryoji::allocators {
 	public:
 		value_type* allocate(size_t size)
 		{
-			return static_cast<value_type*>(allocator.allocate(size * sizeof(value_type), alignof(value_type)).ptr);
+			return static_cast<value_type*>(allocator.allocate(size * sizeof(value_type), alignof(value_type)));
 		}
 
 		void deallocate(value_type* p, size_t size) noexcept 
 		{
-			allocator.deallocate({ p, size });
+			allocator.deallocate(p);
 		}
 
 	};

@@ -3,7 +3,7 @@
 
 
 #include <cassert>
-#include "blk.h"
+
 #include "zawarudo/pointer.h"
 
 #include "local-allocator.h"
@@ -36,7 +36,7 @@ namespace ryoji::allocators {
 		StackAllocator& operator=(StackAllocator&&) = delete;
 
 		Allocator allocator;
-		Blk memoryBlock = {};
+		void* memoryBlock = {};
 		move_ptr<char> start{ nullptr };
 		move_ptr<char> current{ nullptr };
 		move_ptr<char> metadataCurrent{ nullptr }; // Pointer to the start of metadata of headers
@@ -46,8 +46,8 @@ namespace ryoji::allocators {
 		{
 			memoryBlock = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memoryBlock);
-			start.reset(reinterpret_cast<char*>(memoryBlock.ptr));
-			current.reset(reinterpret_cast<char*>(memoryBlock.ptr));
+			start.reset(reinterpret_cast<char*>(memoryBlock));
+			current.reset(reinterpret_cast<char*>(memoryBlock));
 
 			// Make sure the metadata starts at an piece of memory that it aligns to.
 			// From here on, our Headers will be contiguously lined up :)
@@ -61,7 +61,7 @@ namespace ryoji::allocators {
 
 		StackAllocator(StackAllocator&&) = default;
 
-		Blk allocate(size_t size, uint8_t alignment) noexcept
+		void* allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size != 0);
 			assert(alignment != 0);
@@ -70,7 +70,7 @@ namespace ryoji::allocators {
 
 			// Make sure that there is space to alloc 
 			if (current.get() + adjustment + size > metadataCurrent.get() - sizeof(Header)) {
-				return {};
+				return nullptr;
 			}
 
 			// alloc for header
@@ -82,21 +82,21 @@ namespace ryoji::allocators {
 			current.reset(alignedAddress + size);
 
 			// returns the address for the user
-			return { alignedAddress, size };
+			return alignedAddress;
 		}
 
 
-		bool owns(Blk blk) const noexcept {
-			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
+		bool owns(void* blk) const noexcept {
+			return blk && blk >= start.get() && blk < start.get() + Capacity;
 		}
 
 
-		void deallocate(Blk blk) noexcept
+		void deallocate(void* blk) noexcept
 		{
 			assert(owns(blk));
 
 			// When you free, get the adjustment from the current Header to know how much to fall back 
-			current.reset(reinterpret_cast<char*>(blk.ptr) - reinterpret_cast<Header*>(metadataCurrent.get())->adjustment);
+			current.reset(reinterpret_cast<char*>(blk) - reinterpret_cast<Header*>(metadataCurrent.get())->adjustment);
 
 			// And move the metadataCurrent forward
 			metadataCurrent.reset(metadataCurrent.get() + sizeof(Header));

@@ -91,7 +91,7 @@ namespace {
 		}
 	public:
 		void preAllocate(size_t, uint8_t) {}
-		void postAllocate(Blk blk) {
+		void postAllocate(void* blk) {
 			if (IsFallback != isFallingback) {
 				PrintGoodOrBad(!blk);
 				prefixPrint();
@@ -105,23 +105,23 @@ namespace {
 
 			if (currentPtr) {
 				cout << "> ";
-				PrintGoodOrBad(blk.ptr == currentPtr + 4);
+				PrintGoodOrBad(blk == currentPtr + 4);
 				prefixPrint();
-				cout << "The block of memory is 4 bytes away from the previous one @ " << blk.ptr << endl;
+				cout << "The block of memory is 4 bytes away from the previous one @ " << blk << endl;
 			}
 			else {
 				cout << "> ";
 				PrintGoodOrBad(blk);
 				prefixPrint();
-				cout << "The first block of memory is not null @ " << blk.ptr << endl;
+				cout << "The first block of memory is not null @ " << blk << endl;
 			}
-			currentPtr = reinterpret_cast<char*>(blk.ptr);
+			currentPtr = reinterpret_cast<char*>(blk);
 
 
 
 
 		}
-		void preDeallocate(Blk blk) {
+		void preDeallocate(void* blk) {
 			PrintGoodOrBad(!isFallingback);
 			cout << "Stack called to deallocate 4 bytes" << endl;
 		}
@@ -169,7 +169,7 @@ namespace {
 		auto startBlk = allocator.allocate(4, 4); // store the memory address of first item's allocation
 		allocator.deallocate(startBlk);
 
-		vector<Blk> blkList;
+		vector<void*> blkList;
 		bool allocatesSuccess = true;
 		for (int i = 0; i < 20; ++i) {
 			auto blk = allocator.allocate(4, 4);
@@ -231,7 +231,7 @@ namespace {
 		auto small = allocator.allocate(4, 4);
 		auto large = allocator.allocate(8, 4);
 
-		PrintGoodOrBad(((char*)large.ptr - (char*)small.ptr) >= 100);
+		PrintGoodOrBad(((char*)large - (char*)small) >= 100);
 		cout << "Allocation integrity is okay" << endl;
 		cout << endl;
 
@@ -246,10 +246,10 @@ namespace {
 		// Once everything is deallocated, next allocation should be same as first allocation.
 		Allocator allocator;
 		auto blk = allocator.allocate(4, 4);
-		const char* const firstAllocationPtr = reinterpret_cast<char*>(blk.ptr);
+		const char* const firstAllocationPtr = reinterpret_cast<char*>(blk);
 		allocator.deallocate(blk);
 
-		Blk blks[20];
+		void* blks[20];
 		for (size_t i = 0; i < 20; ++i) {
 			blks[i] = allocator.allocate(i + 1, (uint8_t)(pow(2.0, (double)(i % 4))));
 			if (!blks[i]) {
@@ -257,7 +257,7 @@ namespace {
 				return;
 			}
 
-			(*(char*)((blks[i]).ptr)) = 'A';
+			(*(char*)((blks[i]))) = 'A';
 
 			if (i % 4 == 0) {
 				allocator.deallocate(blks[i / 2]);
@@ -271,7 +271,7 @@ namespace {
 		}
 		blk = allocator.allocate(4, 4);
 
-		PrintGoodOrBad((char*)blk.ptr == firstAllocationPtr);
+		PrintGoodOrBad((char*)blk == firstAllocationPtr);
 		cout << "Allocation integrity is okay" << endl;
 
 
@@ -294,7 +294,7 @@ namespace {
 		allocator.deallocate(blk2);
 		auto blk5 = allocator.allocate(4, 4);
 
-		PrintGoodOrBad((blk5.ptr < blk4.ptr&& blk5.ptr > blk1.ptr));
+		PrintGoodOrBad((blk5 < blk4&& blk5 > blk1));
 		cout << "First Fit integrity is okay" << endl;
 		cout << endl;
 	}
@@ -315,7 +315,7 @@ namespace {
 		allocator.deallocate(blk2);
 		allocator.deallocate(blk4);
 		auto blk6 = allocator.allocate(4, 4);
-		PrintGoodOrBad((blk6.ptr > blk3.ptr && blk6.ptr < blk5.ptr));
+		PrintGoodOrBad((blk6 > blk3 && blk6 < blk5));
 		cout << "Best Fit integrity is okay" << endl;
 		cout << endl;
 
@@ -343,9 +343,9 @@ namespace {
 				bool postDeallocated = false;
 
 				void preAllocate(size_t, uint8_t) { preAllocated = true; }
-				void postAllocate(Blk) { postAllocated = true; }
-				void preDeallocate(Blk) { preDeallocated = true; }
-				void postDeallocate(Blk) { postDeallocated = true; }
+				void postAllocate(void*) { postAllocated = true; }
+				void preDeallocate(void*) { preDeallocated = true; }
+				void postDeallocate(void*) { postDeallocated = true; }
 			};
 
 
@@ -377,8 +377,8 @@ namespace {
 				bool postDeallocated = false;
 				bool postDeallocatedAll = false;
 
-				void postAllocate(Blk) { postAllocated = true; }
-				void postDeallocate(Blk) { postDeallocated = true; }
+				void postAllocate(void*) { postAllocated = true; }
+				void postDeallocate(void*) { postDeallocated = true; }
 			};
 
 			using Allocator = MiddlewareAllocator<LocalAllocator<1000>, Middleware>;

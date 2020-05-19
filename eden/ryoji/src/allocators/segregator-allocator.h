@@ -2,7 +2,7 @@
 #define __RYOJI_ALLOCATORS_SEGREGATOR_ALLOCATOR_H_
 
 #include <cassert>
-#include "blk.h"
+
 
 
 namespace ryoji::allocators {
@@ -12,7 +12,7 @@ namespace ryoji::allocators {
 		SmallAllocator smallAllocator;
 		BigAllocator bigAllocator;
 	public:
-		Blk allocate(size_t size, uint8_t alignment)
+		void* allocate(size_t size, uint8_t alignment)
 		{
 			assert(size && alignment);
 
@@ -22,7 +22,7 @@ namespace ryoji::allocators {
 				return smallAllocator.allocate(size, alignment);
 		}
 
-		void deallocate(Blk blk) 
+		void deallocate(void* blk) 
 		{
 			assert(blk);
 
@@ -34,7 +34,7 @@ namespace ryoji::allocators {
 				assert(false);
 		}
 
-		bool owns(const Blk& blk) const noexcept {
+		bool owns(const void*& blk) const noexcept {
 			return smallAllocator.owns(blk) || bigAllocator.owns(blk);
 		}
 

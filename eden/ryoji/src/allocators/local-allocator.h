@@ -8,7 +8,7 @@
 // This is useful if you do not want to reserve memory in the heap using the HeapAllocator
 
 #include <array>
-#include "blk.h"
+
 
 
 namespace ryoji::allocators {
@@ -28,7 +28,7 @@ namespace ryoji::allocators {
 		LocalAllocator() = default;
 
 
-		Blk allocate(size_t size, uint8_t alignment) noexcept
+		void* allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size && alignment);
 
@@ -36,18 +36,18 @@ namespace ryoji::allocators {
 				return {};
 			else {
 				allocated = true;
-				return { &arr.front(), size };
+				return &arr.front() ;
 			}
 		}
 
-		void deallocate(Blk blk)   noexcept
+		void deallocate(void* blk)   noexcept
 		{
 			assert(blk && owns(blk) && allocated);
 			allocated = false;
 		}
 
-		bool owns(Blk blk) const noexcept {
-			return blk && blk.ptr == &arr.front();
+		bool owns(void* blk) const noexcept {
+			return blk && blk == &arr.front();
 		}
 
 	private:

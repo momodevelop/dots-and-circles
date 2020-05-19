@@ -5,7 +5,7 @@
 // Sometimes called the Mallocator.
 
 #include <cassert>
-#include "blk.h"
+
 
 #include "zawarudo/pointer.h"
 #include "local-allocator.h"
@@ -29,7 +29,7 @@ namespace ryoji::allocators {
 		SlabAllocator& operator=(SlabAllocator&&) = delete;
 
 		Allocator allocator;
-		Blk memory = {};
+		void* memory = {};
 		move_ptr<void*> freeList = nullptr;
 		move_ptr<char> start = nullptr;
 
@@ -38,8 +38,8 @@ namespace ryoji::allocators {
 
 			memory = allocator.allocate(Capacity, ObjectAlignment);
 
-			assert(memory.ptr != nullptr);
-			start.reset(reinterpret_cast<char*>(memory.ptr));
+			assert(memory != nullptr);
+			start.reset(reinterpret_cast<char*>(memory));
 
 			uint8_t adjustment = zawarudo::pointer::getAlignForwardDiff(start.get(), ObjectAlignment);
 
@@ -66,7 +66,7 @@ namespace ryoji::allocators {
 
 		SlabAllocator(SlabAllocator&&) = default;
 
-		Blk allocate(size_t size, uint8_t alignment) noexcept
+		void* allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size == ObjectSize);
 			assert(alignment == ObjectAlignment);
@@ -81,25 +81,25 @@ namespace ryoji::allocators {
 
 			//++allocated;
 
-			return { ret, size };
+			return ret;
 		}
 
-		void deallocate(Blk blk) noexcept
+		void deallocate(void* blk) noexcept
 		{
 			assert(owns(blk));
-			assert(reinterpret_cast<uintptr_t>(blk.ptr) % ObjectAlignment == 0);
+			assert(reinterpret_cast<uintptr_t>(blk) % ObjectAlignment == 0);
 
 			// set the value of p to free list's current value
 			// We have to cast to void** because we can't dereference p into a void type, which makes no sense
-			*(reinterpret_cast<void**>(blk.ptr)) = freeList;
-			freeList = reinterpret_cast<void**>(blk.ptr);
+			*(reinterpret_cast<void**>(blk)) = freeList;
+			freeList = reinterpret_cast<void**>(blk);
 
 			//--allocated;
 
 		}
 
-		bool owns(Blk blk) const noexcept {
-			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
+		bool owns(void* blk) const noexcept {
+			return blk && blk >= start.get() && blk < start.get() + Capacity;
 		}
 
 		Allocator& getAllocator() {

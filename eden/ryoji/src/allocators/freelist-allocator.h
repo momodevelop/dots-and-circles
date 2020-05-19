@@ -6,7 +6,7 @@
 
 #include <cassert>
 #include <utility>
-#include "blk.h"
+
 
 #include "zawarudo/pointer.h"
 #include "zawarudo/predef-freelist-strategies.h"
@@ -69,7 +69,7 @@ namespace ryoji::allocators {
 
 		};
 
-		Blk memory{};
+		void* memory{};
 		move_ptr<char> start{ nullptr };
 		move_ptr<FreeBlock> freeList{ nullptr };
 
@@ -83,7 +83,7 @@ namespace ryoji::allocators {
 		{
 			memory = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memory);
-			start.reset(reinterpret_cast<char*>(memory.ptr));
+			start.reset(reinterpret_cast<char*>(memory));
 
 			this->freeList.reset(reinterpret_cast<FreeBlock*>(start.get()));
 			this->freeList->size = Capacity;
@@ -100,7 +100,7 @@ namespace ryoji::allocators {
 
 		FreeListAllocator(FreeListAllocator&&) = default;
 
-		Blk allocate(size_t size, uint8_t alignment) {
+		void* allocate(size_t size, uint8_t alignment) {
 			assert(size && alignment);
 
 			// Calculate the size of the header + object rounded to alignment.
@@ -164,18 +164,18 @@ namespace ryoji::allocators {
 
 			// Get the object to return to the user
 			void* ret = zawarudo::pointer::add(*itr, sizeof(Header));
-			return { ret, size };
+			return ret;
 		}
 
-		bool owns(Blk blk) const {
-			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
+		bool owns(void* blk) const {
+			return blk && blk >= start.get() && blk < start.get() + Capacity;
 		}
 
-		void deallocate(Blk blk)
+		void deallocate(void* blk)
 		{
 			assert(owns(blk));
 
-			Header* header = reinterpret_cast<Header*>(zawarudo::pointer::sub(blk.ptr, sizeof(Header)));
+			Header* header = reinterpret_cast<Header*>(zawarudo::pointer::sub(blk, sizeof(Header)));
 			uintptr_t blockEnd = reinterpret_cast<uintptr_t>(zawarudo::pointer::add(header, header->size));
 
 			// Look for a FreeBlock which we can combine

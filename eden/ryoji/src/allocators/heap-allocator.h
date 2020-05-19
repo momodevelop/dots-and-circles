@@ -4,25 +4,25 @@
 // Simple allocator that reserves memory on the heap.
 // Sometimes called the Mallocator.
 #include <cassert>
-#include "blk.h"
+
 
 
 namespace ryoji::allocators {
 	class HeapAllocator
 	{
 	public:
-		Blk allocate(size_t size, uint8_t alignment)
+		void* allocate(size_t size, uint8_t alignment)
 		{
 			assert(size && alignment);
-			return { ::operator new(size),	size };
+			return { ::operator new(size) };
 		}
 
-		void deallocate(Blk blk)  
+		void deallocate(void* blk)  
 		{
-			::operator delete(blk.ptr);
+			::operator delete(blk);
 		}
 
-		bool owns(Blk blk) const noexcept {
+		bool owns(void* blk) const noexcept {
 			return true;
 		}
 	};

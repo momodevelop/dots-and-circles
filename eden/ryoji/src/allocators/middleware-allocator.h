@@ -1,7 +1,7 @@
 #ifndef __RYOJI_ALLOCATORS_MIDDLEWARE_ALLOCATOR_H__
 #define __RYOJI_ALLOCATORS_MIDDLEWARE_ALLOCATOR_H__
 
-#include "blk.h"
+
 namespace ryoji::allocators {
 
 	namespace zawarudo {
@@ -17,20 +17,20 @@ namespace ryoji::allocators {
 		static constexpr bool prefix##memberFuncName##_v = prefix##memberFuncName##<T>::value;
 
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preAllocate, void, (size_t, uint8_t));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocate, void, (Blk));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocate, void, (Blk));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocate, void, (Blk));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocate, void, (void*));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocate, void, (void*));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocate, void, (void*));
 
 
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preAllocateR, void, (size_t&, uint8_t&));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocateR, void, (Blk&));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocateR, void, (Blk&));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocateR, void, (Blk&));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocateR, void, (void*&));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocateR, void, (void*&));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocateR, void, (void*&));
 
 		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preAllocateCR, void, (const size_t&, const uint8_t&));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocateCR, void, (const Blk&));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocateCR, void, (const Blk&));
-		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocateCR, void, (const Blk&));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postAllocateCR, void, (const void*&));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, preDeallocateCR, void, (const void*&));
+		GENERATE_HAS_MEMBER_FUNCTION_CHECKER(has_, postDeallocateCR, void, (const void*&));
 
 		template<typename T> static constexpr bool has_any_preAllocate_v =		has_preAllocate_v<T> || has_preAllocateCR_v<T> || has_preAllocateR_v<T>; 
 		template<typename T> static constexpr bool has_any_postAllocate_v =		has_postAllocate_v<T> || has_postAllocateCR_v<T> || has_postAllocateR_v<T>;
@@ -47,7 +47,7 @@ namespace ryoji::allocators {
 		Allocator allocator;
 		Middleware middleware;
 	public:
-		Blk allocate(size_t size, uint8_t alignment)
+		void* allocate(size_t size, uint8_t alignment)
 		{
 			using namespace zawarudo;
 			assert(size && alignment);
@@ -55,7 +55,7 @@ namespace ryoji::allocators {
 			if constexpr (has_any_preAllocate_v<Middleware>) 
 				middleware.preAllocate(size, alignment);
 
-			Blk ret = allocator.allocate(size, alignment);
+			void* ret = allocator.allocate(size, alignment);
 
 			if constexpr (has_any_postAllocate_v<Middleware>)
 				middleware.postAllocate(ret);
@@ -63,7 +63,7 @@ namespace ryoji::allocators {
 			return ret;
 		}
 
-		void deallocate(Blk blk)
+		void deallocate(void* blk)
 		{
 			using namespace zawarudo;
 			if (!blk)
@@ -81,7 +81,7 @@ namespace ryoji::allocators {
 				middleware.postDeallocate(blk);
 		}
 
-		bool owns(Blk blk) const noexcept {
+		bool owns(void* blk) const noexcept {
 			return allocator.owns(blk);
 		}
 

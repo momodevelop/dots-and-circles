@@ -3,7 +3,7 @@
 
 // If the Primary allocator fails, the Fallback allocator will allocate.
 #include <cassert>
-#include "blk.h"
+
 
 
 namespace ryoji::allocators {
@@ -15,11 +15,11 @@ namespace ryoji::allocators {
 		Fallback fallbackAllocator = {};
 
 	public:
-		Blk allocate(size_t size, uint8_t alignment)
+		void* allocate(size_t size, uint8_t alignment)
 		{
 			assert(size && alignment);
 
-			Blk blk = primaryAllocator.allocate(size, alignment);
+			void* blk = primaryAllocator.allocate(size, alignment);
 			if (!blk) {
 				return fallbackAllocator.allocate(size, alignment);
 			}
@@ -27,7 +27,7 @@ namespace ryoji::allocators {
 			return blk;
 		}
 
-		void deallocate(Blk blk)
+		void deallocate(void* blk)
 		{
 			assert(blk);
 
@@ -39,7 +39,7 @@ namespace ryoji::allocators {
 				assert(false);
 		}
 
-		bool owns(const Blk& blk) {
+		bool owns(const void*& blk) {
 			return primaryAllocator.owns(blk) || fallbackAllocator.owns(blk);
 		}
 

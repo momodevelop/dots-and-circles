@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
 
 set(includes
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/blk.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/fallback-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/freelist-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/allocators/heap-allocator.h
@@ -20,14 +20,14 @@ set(includes
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitfields.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/constants.h
         
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/defer.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/expected.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/reflection.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/utils/fmt.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/defer.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/expected.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/reflection.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/fmt.h
 )
 
 set(srcs 
-    ${CMAKE_CURRENT_LIST_DIR}/src/allocators/blk.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/allocators/utils.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/fallback-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/freelist-allocator.h
     ${CMAKE_CURRENT_LIST_DIR}/src/allocators/heap-allocator.h

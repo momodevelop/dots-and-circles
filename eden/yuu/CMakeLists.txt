@@ -6,11 +6,15 @@ find_package(OpenGL REQUIRED)
 find_package(glad REQUIRED)
 
 set(includes 
+    ${CMAKE_CURRENT_LIST_DIR}/include/yuu/cores/window.h
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/inputs/keyboard.h
     ${CMAKE_CURRENT_LIST_DIR}/include/yuu/utils.h
 )
 
 set(srcs
+    ${CMAKE_CURRENT_LIST_DIR}/src/cores/window.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/cores/window.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/src/inputs/keyboard.h
     ${CMAKE_CURRENT_LIST_DIR}/src/inputs/keyboard.cpp
     
@@ -21,6 +25,8 @@ set(srcs
 
 set(src-test
     ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/app.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/app.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test/scene.h
     ${CMAKE_CURRENT_LIST_DIR}/test/input-test-scene.h
     ${CMAKE_CURRENT_LIST_DIR}/test/input-test-scene.cpp

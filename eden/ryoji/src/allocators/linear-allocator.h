@@ -6,7 +6,7 @@
 
 #include <cassert>
 #include <functional>
-#include "blk.h"
+
 
 #include "zawarudo/pointer.h"
 #include "local-allocator.h"
@@ -25,7 +25,7 @@ namespace ryoji::allocators {
 		LinearAllocator(const LinearAllocator&) = delete;
 		LinearAllocator& operator=(LinearAllocator&&) = delete;
 
-		Blk memoryBlk{};
+		void* memoryBlk{};
 		move_ptr<char> start{ nullptr };
 		move_ptr<char> current{ nullptr };
 
@@ -34,8 +34,8 @@ namespace ryoji::allocators {
 		LinearAllocator() {
 			memoryBlk = allocator.allocate(Capacity, alignof(max_align_t));
 			assert(memoryBlk);
-			start.reset(reinterpret_cast<char*>(memoryBlk.ptr));
-			current.reset(reinterpret_cast<char*>(memoryBlk.ptr));
+			start.reset(reinterpret_cast<char*>(memoryBlk));
+			current.reset(reinterpret_cast<char*>(memoryBlk));
 		}
 
 		~LinearAllocator() {
@@ -44,7 +44,7 @@ namespace ryoji::allocators {
 
 		LinearAllocator(LinearAllocator&&) = default;
 
-		Blk allocate(size_t size, uint8_t alignment) noexcept
+		void* allocate(size_t size, uint8_t alignment) noexcept
 		{
 			assert(size && alignment);
 
@@ -59,16 +59,16 @@ namespace ryoji::allocators {
 			char* alignedAddress = current.get() + adjustment;
 			current.reset(alignedAddress + size);
 
-			return { alignedAddress, size };
+			return alignedAddress;
 		}
 
-		void deallocate(Blk blk) noexcept
+		void deallocate(void* blk) noexcept
 		{
 			// does nothing
 		}
 
-		bool owns(Blk blk) const noexcept {
-			return blk && blk.ptr >= start.get() && blk.ptr < start.get() + Capacity;
+		bool owns(void* blk) const noexcept {
+			return blk && blk >= start.get() && blk < start.get() + Capacity;
 		}
 
 		Allocator& getAllocator() {
