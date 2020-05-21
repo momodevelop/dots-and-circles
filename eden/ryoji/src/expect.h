@@ -5,10 +5,13 @@
 
 namespace ryoji {
 	namespace expect {
-		// Note: The reason why we use constructors for this case
-		// is because there is a valid/invalid state for this struct on creation...
-		// If only we can create constructors outside the the struct though...
-		// I guess this is a bit of a special case because I'm dealing with unions.
+		// TODO: What is Value and Error are same type...?
+		// - Do we expect users to wrap one of the type with another type?
+
+		// Note: Why we use constructors/destructors
+		// - There exist a valid/invalid state for this struct on creation.
+		// - Special case because we are dealing with union
+		// - There are type conversations that I want to be implicit
 		//
 		template<typename Value, typename Error>
 		struct Expect {
@@ -64,15 +67,8 @@ namespace ryoji {
 			inline operator bool() const noexcept{ return !isError; }
 		};
 
-		template<typename UnexpectedType>
-		class Unexpected {
-			UnexpectedType value;
-			Unexpected() = default;
-			Unexpected(const UnexpectedType& value) noexcept : value(value) {}
-		};
 	}
 	using expect::Expect;
-	using expect::Unexpected;
 
 
 }

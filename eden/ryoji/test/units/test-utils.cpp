@@ -116,32 +116,32 @@ namespace {
 		}
 
 		void Test() {
-			cout << "=== Testing Expected" << endl;
+			cout << "=== Testing Expect" << endl;
 			{
 				auto ok = expectedTest(true);
 				PrintGoodOrBad(ok == false);
-				cout << "Expected should be unexpected" << endl;
+				cout << "Expect should be unexpected" << endl;
 				PrintGoodOrBad(ok.error == FailReasons::TILTED);
-				cout << "Expected error value is correct" << endl;
+				cout << "Expect error value is correct" << endl;
 			}
 			{
 				auto ok = expectedTest(false);
 				PrintGoodOrBad(ok == true);
-				cout << "Expected should be expected" << endl;
+				cout << "Expect should be expected" << endl;
 				PrintGoodOrBad(ok.value.value == 10);
-				cout << "Expected value from getValue() is correct" << endl;
+				cout << "Expect value is correct" << endl;
 			}
 			{
 				auto ok = expectedVoidTest(true);
 				PrintGoodOrBad(ok == false);
-				cout << "Expected<void> should be unexpected" << endl;
+				cout << "Expect<void> should be unexpected" << endl;
 				PrintGoodOrBad(ok.error == FailReasons::TILTED);
-				cout << "Expected<void> error value is correct" << endl;
+				cout << "Expect<void> error value is correct" << endl;
 			}
 			{
 				auto ok = expectedVoidTest(false);
 				PrintGoodOrBad(ok == true);
-				cout << "Expected<void> should be expected" << endl;
+				cout << "Expect<void> should be expected" << endl;
 			}
 
 		}
