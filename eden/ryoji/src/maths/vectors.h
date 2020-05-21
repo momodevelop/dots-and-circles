@@ -16,51 +16,56 @@ namespace ryoji::maths {
 	namespace vectors {
 
 		template<typename T = float, size_t N = 2>
-		class Vector {
-			std::array<T, N> arr{ 0 };
-		public:
-			template<typename ... Args, typename E = std::enable_if_t<(std::is_same_v<Args, T>&& ...)>>
-			Vector(Args... args) : arr{ std::forward<Args>(args)... } {}
-			Vector() = default;
+		struct Vector {
+			T arr[N]{ 0 };
 
-			inline const T& get(size_t index) const noexcept { return this->arr[index]; } 
-			inline const void set(size_t index, const T& value) noexcept { this->arr[index] = value; }
-
-			Vector<T, N>& operator+=(const Vector<T, N>& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] += rhs.arr[i];
-				return *this;
-			}
-			Vector<T, N>& operator-=(const Vector<T, N>& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] -= rhs.arr[i];
-				return *this;
-			}
-			Vector<T, N>& operator*=(const Vector<T, N>& rhs) noexcept
-			{
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] *= rhs.arr[i];
-				return *this;
-			}
-			Vector<T, N>& operator/=(const Vector<T, N>& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] /= rhs.arr[i];
-				return *this;
-			}
-
-
-			Vector<T, N>& operator*=(const T& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] *= rhs;
-				return *this;
-			}
-			Vector<T, N>& operator/=(const T& rhs) noexcept {
-				for (size_t i = 0; i < N; ++i)
-					this->arr[i] /= rhs;
-				return *this;
-			}
-
+			inline const T& operator[](size_t index) const noexcept { return arr[index]; } 
+			inline T& operator[](size_t index) noexcept { return arr[index]; }
 		};
+
+		template<typename T, size_t N>
+		Vector<T, N>& operator+=(Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
+			for (size_t i = 0; i < N; ++i)
+				lhs[i] += rhs[i];
+			return lhs;
+		}
+
+		template<typename T, size_t N>
+		Vector<T, N>& operator-=(Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
+			for (size_t i = 0; i < N; ++i)
+				lhs[i] -= rhs[i];
+			return lhs;
+		}
+
+		template<typename T, size_t N>
+		Vector<T, N>& operator*=(Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
+		{
+			for (size_t i = 0; i < N; ++i)
+				lhs[i] *= rhs[i];
+			return lhs;
+		}
+
+		template<typename T, size_t N>
+		Vector<T, N>& operator/=(Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept {
+			for (size_t i = 0; i < N; ++i)
+				lhs[i] /= rhs[i];
+			return lhs;
+		}
+
+		template<typename T, size_t N>
+		Vector<T, N>& operator*=(Vector<T, N>& lhs, const T& rhs) noexcept {
+			for (size_t i = 0; i < N; ++i)
+				lhs[i] *= rhs;
+			return lhs;
+		}
+
+		template<typename T, size_t N>
+		Vector<T, N>& operator/=(Vector<T, N>& lhs, const T& rhs) noexcept {
+			for (size_t i = 0; i < N; ++i)
+				lhs[i] /= rhs;
+			return lhs;
+		}
+
 		
 		template<typename T, size_t N>
 		Vector<T, N> operator+(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
@@ -110,11 +115,11 @@ namespace ryoji::maths {
 		{
 			for (size_t i = 0; i < N; ++i) {
 				if constexpr (std::is_floating_point_v<T>) {
-					if (!isFloatEqualEnough(lhs.get(i), rhs.get(i)))
+					if (!isFloatEqualEnough(lhs[i], rhs[i]))
 						return false;
 				}
 				else {
-					if (lhs.get(i) != rhs.get(i))
+					if (lhs[i] != rhs[i])
 						return false;
 				}
 			}
@@ -126,7 +131,7 @@ namespace ryoji::maths {
 		{
 			Vector<T, N> temp;
 			for (size_t i = 0; i < N; ++i)
-				temp.set(i, -lhs.get(i));
+				temp[i] =  -lhs[i];
 			return temp;
 		}
 
@@ -142,7 +147,7 @@ namespace ryoji::maths {
 		{
 			T ret{};
 			for (size_t i = 0; i < N; ++i) 
-				ret += lhs.get(i) * rhs.get(i);
+				ret += lhs[i] * rhs[i];
 			return ret;
 		}
 
@@ -156,7 +161,7 @@ namespace ryoji::maths {
 		{
 			T ret{};
 			for (size_t i = 0; i < N; ++i) 
-				ret += (rhs.get(i) - lhs.get(i)) * (rhs.get(i) - lhs.get(i));
+				ret += (rhs[i] - lhs[i]) * (rhs[i] - lhs[i]);
 			return ret;
 		}
 
@@ -224,7 +229,7 @@ namespace ryoji::maths {
 		Vector<TTo, N> convert(const Vector<TFrom, N>& from) {
 			Vector<TTo, N> ret{};
 			for (size_t i = 0; i < N; ++i) {
-				ret.set(i, static_cast<TTo>(from.get(i)));
+				ret[i] = static_cast<TTo>(from[i]);
 			}
 			return ret;
 		}
@@ -269,5 +274,5 @@ namespace ryoji::maths {
 	extern template struct Vector<double,4>;
 }
 
-#undef CREATE_SUBSCRIPT_OPERATORS
+
 #endif

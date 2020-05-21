@@ -14,44 +14,47 @@ namespace ryoji::maths {
 	
 	namespace matrices {
 		template<typename T, size_t Row, size_t Col>
-		class Matrix {
-			T arr[Row][Col] = { {} };
-		public:
-			template<typename ... Args, typename E = std::enable_if_t<(std::is_same_v<Args, T>&& ...)>>
-			Matrix(Args... args) : arr{ std::forward<Args>(args)... } {}
-			Matrix() = default;
-
-			inline const T& get(size_t row, size_t col) const noexcept { return this->arr[row][col]; }
-			inline const void set(size_t row, size_t col, const T& value) noexcept { this->arr[row][col] = value; }
-
-			Matrix<T, Row, Col>& operator+=(const Matrix<T, Row, Col>& rhs) {
-				for (size_t i = 0; i < Row; ++i)
-					for (size_t j = 0; j < Col; ++j)
-						this->arr[i][j] += rhs.arr[i][j];
-				return *this;
+		struct Matrix {
+			T arr[Row][Col] = { {0} };
+			inline auto& operator[](size_t index) noexcept {
+				return arr[index];
 			}
-
-			Matrix<T, Row, Col>& operator-=(const Matrix<T, Row, Col>& rhs) {
-				for (size_t i = 0; i < Row; ++i)
-					for (size_t j = 0; j < Col; ++j)
-						this->arr[i][j] -= rhs.arr[i][j];
-				return *this;
-			}
-
-			Matrix<T, Row, Col>& operator*=(const T& rhs) {
-				for (size_t i = 0; i < Row; ++i)
-					for (size_t j = 0; j < Col; ++j)
-						this->arr[i][j] *= rhs;
-				return *this;
-			}
-
-			Matrix<T, Row, Col>& operator/=(const T& rhs) {
-				for (size_t i = 0; i < Row; ++i)
-					for (size_t j = 0; j < Col; ++j)
-						this->arr[i][j] /= rhs;
-				return *this;
+			inline const auto& operator[](size_t index) const noexcept {
+				return arr[index];
 			}
 		};
+
+		template<typename T, size_t Row, size_t Col>
+		Matrix<T, Row, Col>& operator+=(Matrix<T, Row, Col>& lhs, const Matrix<T, Row, Col>& rhs) {
+			for (size_t i = 0; i < Row; ++i)
+				for (size_t j = 0; j < Col; ++j)
+					lhs[i][j] += rhs[i][j];
+			return lhs;
+		}
+
+		template<typename T, size_t Row, size_t Col>
+		Matrix<T, Row, Col>& operator-=(Matrix<T, Row, Col>& lhs, const Matrix<T, Row, Col>& rhs) {
+			for (size_t i = 0; i < Row; ++i)
+				for (size_t j = 0; j < Col; ++j)
+					lhs[i][j] -= rhs[i][j];
+			return lhs;
+		}
+
+		template<typename T, size_t Row, size_t Col>
+		Matrix<T, Row, Col>& operator*=(Matrix<T, Row, Col>& lhs, const T& rhs) {
+			for (size_t i = 0; i < Row; ++i)
+				for (size_t j = 0; j < Col; ++j)
+					lhs[i][j] *= rhs;
+			return lhs;
+		}
+
+		template<typename T, size_t Row, size_t Col>
+		Matrix<T, Row, Col>& operator/=(Matrix<T, Row, Col>& lhs, const T& rhs) {
+			for (size_t i = 0; i < Row; ++i)
+				for (size_t j = 0; j < Col; ++j)
+					lhs[i][j] /= rhs;
+			return lhs;
+		}
 
 		template<typename T, size_t Row, size_t Col>
 		Matrix<T, Row, Col> operator+(const Matrix<T, Row, Col>& lhs, const Matrix<T, Row, Col>& rhs) {
@@ -81,7 +84,7 @@ namespace ryoji::maths {
 			for (size_t i = 0; i < LhsRow; ++i)
 				for (size_t j = 0; j < RhsCol; ++j)
 					for (size_t k = 0; k < LhsCol; ++k)
-						ret.set(i,j, ret.get(i,j) + lhs.get(i, k) * rhs.get(k, j));
+						ret[i][j] += lhs[i][k] * rhs[k][j];
 			return ret;
 		}
 
@@ -90,7 +93,7 @@ namespace ryoji::maths {
 			Matrix<T, Row, Col> mat;
 			for (size_t i = 0; i < Row; ++i)
 				for (size_t j = 0; j < Col; ++j)
-					if (lhs.get(i,j) != rhs.get(i,j))
+					if (lhs[i][j]!= rhs[i][j])
 						return false;
 			return true;
 		}
@@ -106,7 +109,7 @@ namespace ryoji::maths {
 			static_assert(Row == Col, "identity matrices only works for square matrices!");
 			Matrix<T, Row, Col> ret{};
 			for (size_t i = 0; i < Row; ++i)
-				ret.set(i, i, 1);
+				ret[i][i] = 1;
 			return ret;
 		}
 	}
