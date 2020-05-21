@@ -14,28 +14,19 @@ namespace scenes
 		virtual ~IScene() = default;
 	};
 
-	class SceneDatabase {
-		std::unordered_map<std::string, IScene*> database;
-	public:
-		void add(const std::string& key, IScene* value) {
-			database.emplace(key, value);
-		}
-
-		IScene* get(const std::string& key) {
-			if (auto itr = database.find(key); itr != database.end()) {
-				return itr->second;
-			}
-			return nullptr;
-		}
-	};
 
 	class SceneManager {
-		IScene* currentScene{ nullptr };
-		IScene* nextScene{ nullptr };
+		std::unordered_map<std::string, IScene*> database;
+		IScene* currentScene;
+		IScene* nextScene;
 	public:
+		template<typename SceneType>
+		void add(const std::string& key) {
+			database.emplace(key, std::make_unique<SceneType>());
+		}
 
 		void run() {
-			while (currentScene != nullptr || nextScene != nullptr) {
+			while (currentScene || nextScene ) {
 				if (nextScene != currentScene) {
 					if (currentScene) {
 						currentScene->uninit();

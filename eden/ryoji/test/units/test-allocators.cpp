@@ -54,6 +54,7 @@ namespace {
 		cout << "Working on std::vector" << endl;
 		cout << endl;
 	}
+
 	void TestSTLOnList() {
 		using Allocator = STLAdapter<int, HeapAllocator>;
 		cout << "==== TestSTLOnList()" << endl;
