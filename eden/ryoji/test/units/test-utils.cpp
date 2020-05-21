@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ryoji/defer.h"
 #include "ryoji/reflection.h"
-#include "ryoji/expected.h"
+#include "ryoji/expect.h"
 
 using namespace std;
 using namespace ryoji;
@@ -103,13 +103,13 @@ namespace {
 			int value = 10;
 		};
 
-		Expected<Value, Unexpected<FailReasons>> expectedTest(bool tilt) {
+		Expect<Value, FailReasons> expectedTest(bool tilt) {
 			if (tilt)
 				return FailReasons::TILTED ;
 			return Value();
 		}
 
-		Expected<Value, Unexpected<FailReasons>> expectedVoidTest(bool tilt) {
+		Expect<Value, FailReasons> expectedVoidTest(bool tilt) {
 			if (tilt)
 				return FailReasons::TILTED ;
 			return Value();
@@ -119,32 +119,28 @@ namespace {
 			cout << "=== Testing Expected" << endl;
 			{
 				auto ok = expectedTest(true);
-				PrintGoodOrBad(!ok);
+				PrintGoodOrBad(ok == false);
 				cout << "Expected should be unexpected" << endl;
-				PrintGoodOrBad(ok.getError().getValue() == FailReasons::TILTED);
+				PrintGoodOrBad(ok.error == FailReasons::TILTED);
 				cout << "Expected error value is correct" << endl;
 			}
 			{
 				auto ok = expectedTest(false);
-				PrintGoodOrBad(ok);
+				PrintGoodOrBad(ok == true);
 				cout << "Expected should be expected" << endl;
-				PrintGoodOrBad(ok.getValue().value == 10);
+				PrintGoodOrBad(ok.value.value == 10);
 				cout << "Expected value from getValue() is correct" << endl;
-				PrintGoodOrBad((*ok).value == 10);
-				cout << "Expected value from operator* is correct " << endl;
-				PrintGoodOrBad(ok->value == 10);
-				cout << "Expected value from operator* is correct " << endl;
 			}
 			{
 				auto ok = expectedVoidTest(true);
-				PrintGoodOrBad(!ok);
+				PrintGoodOrBad(ok == false);
 				cout << "Expected<void> should be unexpected" << endl;
-				PrintGoodOrBad(ok.getError().getValue() == FailReasons::TILTED);
+				PrintGoodOrBad(ok.error == FailReasons::TILTED);
 				cout << "Expected<void> error value is correct" << endl;
 			}
 			{
 				auto ok = expectedVoidTest(false);
-				PrintGoodOrBad(ok);
+				PrintGoodOrBad(ok == true);
 				cout << "Expected<void> should be expected" << endl;
 			}
 

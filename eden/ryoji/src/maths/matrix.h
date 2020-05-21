@@ -12,7 +12,7 @@
 
 namespace ryoji::maths {
 	
-	namespace matrices {
+	namespace matrix {
 		template<typename T, size_t Row, size_t Col>
 		struct Matrix {
 			T arr[Row][Col] = { {0} };
@@ -114,26 +114,26 @@ namespace ryoji::maths {
 		}
 	}
 	
-	using matrices::Matrix;
-	using Mtx22f = matrices::Matrix<float, 2, 2>;
-	using Mtx33f = matrices::Matrix<float, 3, 3>;
-	using Mtx44f = matrices::Matrix<float, 4, 4>;
-	using Mtx22i = matrices::Matrix<int, 2, 2>;
-	using Mtx33i = matrices::Matrix<int, 3, 3>;
-	using Mtx44i = matrices::Matrix<int, 4, 4>;
-	using Mtx22d = matrices::Matrix<double, 2, 2>;
-	using Mtx33d = matrices::Matrix<double, 3, 3>;
-	using Mtx44d = matrices::Matrix<double, 4, 4>;
+	using matrix::Matrix;
+	using Mtx22f = matrix::Matrix<float, 2, 2>;
+	using Mtx33f = matrix::Matrix<float, 3, 3>;
+	using Mtx44f = matrix::Matrix<float, 4, 4>;
+	using Mtx22i = matrix::Matrix<int, 2, 2>;
+	using Mtx33i = matrix::Matrix<int, 3, 3>;
+	using Mtx44i = matrix::Matrix<int, 4, 4>;
+	using Mtx22d = matrix::Matrix<double, 2, 2>;
+	using Mtx33d = matrix::Matrix<double, 3, 3>;
+	using Mtx44d = matrix::Matrix<double, 4, 4>;
 
-	extern template struct matrices::Matrix<float, 2, 2>;
-	extern template struct matrices::Matrix<float, 3, 3>;
-	extern template struct matrices::Matrix<float, 4, 4>;
-	extern template struct matrices::Matrix<int, 2, 2>;
-	extern template struct matrices::Matrix<int, 3, 3>;
-	extern template struct matrices::Matrix<int, 4, 4>;
-	extern template struct matrices::Matrix<double, 2, 2>;
-	extern template struct matrices::Matrix<double, 3, 3>;
-	extern template struct matrices::Matrix<double, 4, 4>;
+	extern template struct matrix::Matrix<float, 2, 2>;
+	extern template struct matrix::Matrix<float, 3, 3>;
+	extern template struct matrix::Matrix<float, 4, 4>;
+	extern template struct matrix::Matrix<int, 2, 2>;
+	extern template struct matrix::Matrix<int, 3, 3>;
+	extern template struct matrix::Matrix<int, 4, 4>;
+	extern template struct matrix::Matrix<double, 2, 2>;
+	extern template struct matrix::Matrix<double, 3, 3>;
+	extern template struct matrix::Matrix<double, 4, 4>;
 	
 }
 

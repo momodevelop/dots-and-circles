@@ -31,10 +31,10 @@ namespace ryoji::maths {
 
 
 
-	namespace bitfields {
+	namespace bitfield {
 
 		template<typename T, typename... Args>
-		T bitfield(Args... args)
+		T make(Args... args)
 		{
 			using namespace std;
 			static_assert(conjunction_v<is_integral<T>, is_integral<Args>...>, "All types must be integral types");
@@ -79,13 +79,6 @@ namespace ryoji::maths {
 			return flag == mask;
 		}
 	}
-
-	using bitfields::bitfield;
-
-
-
-
-
 }
 
 #endif

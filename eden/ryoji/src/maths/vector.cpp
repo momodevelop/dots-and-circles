@@ -1,4 +1,4 @@
-#include "vectors.h"
+#include "vector.h"
 
 namespace ryoji::maths {
     template struct Vector<float,2>;

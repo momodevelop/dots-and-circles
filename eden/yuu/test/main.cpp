@@ -52,7 +52,7 @@ int main(int argc, char* args[]){
 	auto [w, h] = yuu::getWindowSize(window);
 	glViewport(0, 0, w, h);
 	glClearColor(0.0f, 0.5f, 1.0f, 0.0f);
-	std::cout << sizeof(std::optional<uint8_t>) << " vs " << sizeof(SDL_Event)<< std::endl;
+	std::cout << sizeof(std::optional<SDL_Event>) << " vs " << sizeof(SDL_Event)<< std::endl;
 	// now we poll
 	bool isRunning = true;
 	while (isRunning) {

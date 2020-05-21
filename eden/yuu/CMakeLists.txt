@@ -34,7 +34,7 @@ project(yuu)
 
 ### YUU START
     add_library(yuu STATIC)
-    set_target_properties(yuu PROPERTIES CXX_STANDARD 17)
+    set_target_properties(yuu PROPERTIES CXX_STANDARD 20)
     set_target_properties(yuu PROPERTIES LINKER_LANGUAGE CXX)
     target_include_directories(
             yuu 
@@ -56,7 +56,7 @@ project(yuu)
 ### TEST START
 
     add_executable(yuu-test)
-    set_target_properties(yuu-test PROPERTIES CXX_STANDARD 17)
+    set_target_properties(yuu-test PROPERTIES CXX_STANDARD 20)
     set_target_properties(yuu-test PROPERTIES LINKER_LANGUAGE CXX)
     target_include_directories(
             yuu-test 

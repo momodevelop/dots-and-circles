@@ -1,7 +1,7 @@
 #include <iostream>
-#include "ryoji/maths/matrices.h"
-#include "ryoji/maths/vectors.h"
-#include "ryoji/maths/bitfields.h"
+#include "ryoji/maths/matrix.h"
+#include "ryoji/maths/vector.h"
+#include "ryoji/maths/bitfield.h"
 
 using namespace ryoji::maths;
 
@@ -27,7 +27,7 @@ namespace {
 
 	void TestMatrix() {
 		using namespace std;
-		using namespace matrices;
+		using namespace matrix;
 		cout << "===== Testing Matrix =====" << endl;
 		{
 
@@ -66,7 +66,7 @@ namespace {
 		cout << endl;
 	}
 	void TestVector() {
-		using namespace vectors;
+		using namespace vector;
 		using namespace std;
 		cout << "===== Testing Vector =====" << endl;
 		{
@@ -96,7 +96,7 @@ namespace {
 		}
 
 		{
-			using namespace vectors;
+			using namespace vector;
 			cout << "=== Testing functions" << endl;
 			SimpleEqualityTest("Dot Product", dot(Vec4f{ 1.f, 2.f, 3.f, 4.f }, Vec4f{ 1.f, 2.f, 3.f, 4.f }), 30.0f);
 			SimpleEqualityTest("Midpoint", midpoint(Vec4f{ 3.f, 3.f, 3.f, 3.f }, Vec4f{ 1.f, 1.f, 1.f, 1.f }), Vec4f{ 2.f, 2.f, 2.f, 2.f });
@@ -120,9 +120,9 @@ namespace {
 	}
 
 	void TestBitwise() {
-		using namespace bitfields;
+		using namespace bitfield;
 		std::cout << "===== Testing Bitwise =====" << std::endl;
-		SimpleEqualityTest("bitfield", bitfield<int>(0, 1, 2, 3, 4, 5, 6, 7), 0b11111111);
+		SimpleEqualityTest("bitfield", make<int>(0, 1, 2, 3, 4, 5, 6, 7), 0b11111111);
 		SimpleEqualityTest("mask", mask(0b001, 0b010), 3);
 		SimpleEqualityTest("unmask", unmask(0b101, 0b001), 4);
 		SimpleEqualityTest("any (true)", any(0b101, 0b011), true);
