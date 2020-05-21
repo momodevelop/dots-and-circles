@@ -7,8 +7,8 @@
 namespace yuu {
 
 
-
-	std::optional<SDL_Event> pollEvent();
+	std::pair<int, int> getWindowSize(SDL_Window* window);
+	SDL_Event* pollEvent();
 
 }
 
