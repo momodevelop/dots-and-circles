@@ -22,7 +22,7 @@ set(includes
         
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/defer.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maybe.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/expect.h
+    ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/either.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/reflection.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/fmt.h
 )
@@ -52,8 +52,8 @@ set(srcs
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
     
     ${CMAKE_CURRENT_LIST_DIR}/src/defer.h
-    ${CMAKE_CURRENT_LIST_DIR}/src/expect.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maybe.h
+    ${CMAKE_CURRENT_LIST_DIR}/src/either.h
     ${CMAKE_CURRENT_LIST_DIR}/src/reflection.h
     ${CMAKE_CURRENT_LIST_DIR}/src/fmt.h
 )

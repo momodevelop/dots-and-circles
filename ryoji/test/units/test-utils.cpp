@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ryoji/defer.h"
 #include "ryoji/reflection.h"
-#include "ryoji/expect.h"
+#include "ryoji/either.h"
 
 using namespace std;
 using namespace ryoji;
@@ -93,8 +93,8 @@ namespace {
 		}
 	}
 
-	namespace test_expected {
-
+	namespace test_either {
+		
 		enum struct FailReasons {
 			TILTED
 		};
@@ -102,46 +102,53 @@ namespace {
 		struct Value {
 			int value = 10;
 		};
+		#define RetType Value,FailReasons
 
-		Expect<Value, FailReasons> expectedTest(bool tilt) {
+
+		Either<RetType> eitherTest(bool tilt) {
+			using namespace either;
 			if (tilt)
-				return FailReasons::TILTED ;
-			return Value();
+				return make<RetType>(FailReasons::TILTED) ;
+			return make<RetType>(Value());
 		}
 
-		Expect<Value, FailReasons> expectedVoidTest(bool tilt) {
+		Either<RetType> eitherVoidTest(bool tilt) {
+			using namespace either;
 			if (tilt)
-				return FailReasons::TILTED ;
-			return Value();
+				return make<RetType>(FailReasons::TILTED);
+			return make<RetType>(Value());
 		}
 
 		void Test() {
-			cout << "=== Testing Expect" << endl;
+			using namespace either;
+			cout << "=== Testing Either" << endl;
 			{
-				auto ok = expectedTest(true);
-				PrintGoodOrBad(ok == false);
-				cout << "Expect should be unexpected" << endl;
-				PrintGoodOrBad(ok.error == FailReasons::TILTED);
-				cout << "Expect error value is correct" << endl;
+				auto ok = eitherTest(true);
+				PrintGoodOrBad(isRight(ok));
+				cout << "Either should be right" << endl;
+				PrintGoodOrBad(ok.right == FailReasons::TILTED);
+				cout << "Either error value is correct" << endl;
+				PrintGoodOrBad(getRight(ok) == FailReasons::TILTED);
+				cout << "Either error value from get is correct" << endl;
 			}
 			{
-				auto ok = expectedTest(false);
-				PrintGoodOrBad(ok == true);
-				cout << "Expect should be expected" << endl;
-				PrintGoodOrBad(ok.value.value == 10);
+				auto ok = eitherTest(false);
+				PrintGoodOrBad(isLeft(ok));
+				cout << "Either should be either" << endl;
+				PrintGoodOrBad(ok.left.value == 10);
 				cout << "Expect value is correct" << endl;
 			}
 			{
-				auto ok = expectedVoidTest(true);
-				PrintGoodOrBad(ok == false);
-				cout << "Expect<void> should be unexpected" << endl;
-				PrintGoodOrBad(ok.error == FailReasons::TILTED);
+				auto ok = eitherVoidTest(true);
+				PrintGoodOrBad(isRight(ok));
+				cout << "Expect<void> should be uneither" << endl;
+				PrintGoodOrBad(ok.right == FailReasons::TILTED);
 				cout << "Expect<void> error value is correct" << endl;
 			}
 			{
-				auto ok = expectedVoidTest(false);
-				PrintGoodOrBad(ok == true);
-				cout << "Expect<void> should be expected" << endl;
+				auto ok = eitherVoidTest(false);
+				PrintGoodOrBad(isLeft(ok));
+				cout << "Expect<void> should be either" << endl;
 			}
 
 		}
@@ -152,7 +159,7 @@ namespace {
 int TestUtils() {
 	test_defer::Test();
 	test_reflection::Test();
-	test_expected::Test();
+	test_either::Test();
 	return 0;
 }
 
