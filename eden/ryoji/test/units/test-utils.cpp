@@ -1,7 +1,7 @@
 #include <iostream>
 #include "ryoji/defer.h"
 #include "ryoji/reflection.h"
-#include "ryoji/expect.h"
+#include "ryoji/either.h"
 
 using namespace std;
 using namespace ryoji;
@@ -103,13 +103,13 @@ namespace {
 			int value = 10;
 		};
 
-		Expect<Value, FailReasons> expectedTest(bool tilt) {
+		Either<Value, FailReasons> expectedTest(bool tilt) {
 			if (tilt)
 				return FailReasons::TILTED ;
 			return Value();
 		}
 
-		Expect<Value, FailReasons> expectedVoidTest(bool tilt) {
+		Either<Value, FailReasons> expectedVoidTest(bool tilt) {
 			if (tilt)
 				return FailReasons::TILTED ;
 			return Value();
@@ -119,28 +119,28 @@ namespace {
 			cout << "=== Testing Expect" << endl;
 			{
 				auto ok = expectedTest(true);
-				PrintGoodOrBad(ok == false);
+				PrintGoodOrBad(ok ? true : false == false);
 				cout << "Expect should be unexpected" << endl;
-				PrintGoodOrBad(ok.error == FailReasons::TILTED);
+				PrintGoodOrBad(ok.right == FailReasons::TILTED);
 				cout << "Expect error value is correct" << endl;
 			}
 			{
 				auto ok = expectedTest(false);
-				PrintGoodOrBad(ok == true);
+				PrintGoodOrBad(ok ? true : false);
 				cout << "Expect should be expected" << endl;
-				PrintGoodOrBad(ok.value.value == 10);
+				PrintGoodOrBad(ok.left.value == 10);
 				cout << "Expect value is correct" << endl;
 			}
 			{
 				auto ok = expectedVoidTest(true);
-				PrintGoodOrBad(ok == false);
+				PrintGoodOrBad(ok ? true : false == false);
 				cout << "Expect<void> should be unexpected" << endl;
-				PrintGoodOrBad(ok.error == FailReasons::TILTED);
+				PrintGoodOrBad(ok.right == FailReasons::TILTED);
 				cout << "Expect<void> error value is correct" << endl;
 			}
 			{
 				auto ok = expectedVoidTest(false);
-				PrintGoodOrBad(ok == true);
+				PrintGoodOrBad(ok ? true : false);
 				cout << "Expect<void> should be expected" << endl;
 			}
 
