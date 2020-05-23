@@ -23,7 +23,10 @@ set(src-test
     ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test/app.h
     ${CMAKE_CURRENT_LIST_DIR}/test/app.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/test/scene.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/states.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/states/input.h
+    ${CMAKE_CURRENT_LIST_DIR}/test/states/input.cpp
+
 )
 
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR}/include/yuu/ PREFIX "include" FILES  ${includes})
