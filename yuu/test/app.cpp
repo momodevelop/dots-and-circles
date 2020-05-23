@@ -58,7 +58,7 @@ namespace app {
 		while (app.state != State::NONE) {
 			switch (app.state) {
 				case State::KEYBOARD:
-				{
+				{					
 					app.state = input::run(app.inputState);
 				} break;
 				default:

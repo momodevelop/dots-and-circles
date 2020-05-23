@@ -12,7 +12,9 @@ namespace app {
 		struct InputState {
 			yuu::input::Keyboard keyboard;
 		};
+		void init(InputState& state);
 		State run(InputState& state);
+		void free(InputState& state);
 	}
 
 }

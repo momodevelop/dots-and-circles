@@ -5,8 +5,14 @@
 #include "../states.h"
 
 
-namespace app::states::input {	
+namespace app::states::input {
+	void init(InputState& state)
+	{
+	}
+
 	State run(InputState& state) {
+		init(state);
+
 		bool isRunning = true;
 		while (isRunning) {
 			using namespace ryoji::maybe;
@@ -20,6 +26,11 @@ namespace app::states::input {
 		}
 
 
+
+		free(state);
 		return State::NONE;
+	}
+	void free(InputState& state)
+	{
 	}
 }
