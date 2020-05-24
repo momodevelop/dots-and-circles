@@ -6,7 +6,7 @@
 
 namespace ryoji::fmt {
     template<size_t BufferSize, typename ... Args>
-    std::string staticFormat(const std::string& format, Args ... args)
+    std::string fixedFormat(const std::string& format, Args ... args)
     {
         char buffer[BufferSize];
         int count = snprintf(buffer, BufferSize, format.c_str(), args ...);
