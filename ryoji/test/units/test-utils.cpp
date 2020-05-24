@@ -2,6 +2,7 @@
 #include "ryoji/defer.h"
 #include "ryoji/reflection.h"
 #include "ryoji/either.h"
+#include "ryoji/maybe.h"
 
 using namespace std;
 using namespace ryoji;
@@ -156,10 +157,45 @@ namespace {
 }
 
 
+namespace test_maybe {
+
+	using namespace maybe;
+
+	struct Item {
+		int value = 0;
+	};
+
+	Maybe<Item> maybeTest(bool yes) {
+		if (yes)
+			return make(Item{ 10 });
+		return {};
+	}
+
+	void Test() {
+
+		cout << "=== Testing Maybe" << endl;
+		{
+			auto ok = maybeTest(true);
+			PrintGoodOrBad(isYes(ok));
+			cout << "Maybe should be yes" << endl;
+			PrintGoodOrBad(get(ok).value == 10);
+		}
+		{
+			auto ok = maybeTest(false);
+			PrintGoodOrBad(isNo(ok));
+			cout << "Maybe should be no" << endl;
+		}
+
+
+	}
+}
+
+
 int TestUtils() {
 	test_defer::Test();
 	test_reflection::Test();
 	test_either::Test();
+	test_maybe::Test();
 	return 0;
 }
 

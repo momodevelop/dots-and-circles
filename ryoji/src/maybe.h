@@ -8,13 +8,8 @@ namespace ryoji {
 		template<typename T>
 		struct Maybe {
 			T item;
-			bool isNothing;
+			bool isNothing = true;
 		};
-
-		template<typename T>
-		inline Maybe<T> make() {
-			return { T(), true };
-		}
 
 		template<typename T>
 		inline Maybe<T> make(const T& item) {

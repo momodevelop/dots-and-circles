@@ -19,6 +19,6 @@ namespace yuu {
 
 			return maybe::make(ret);
 		}
-		return maybe::make<SDL_Event>();
+		return {};
 	}
 }
