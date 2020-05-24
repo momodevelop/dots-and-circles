@@ -59,7 +59,7 @@ namespace app {
 			switch (app.state) {
 				case State::KEYBOARD:
 				{					
-					app.state = input::run(app.inputState);
+					app.state = input::run(app.inputState, app.window);
 				} break;
 				default:
 				{
