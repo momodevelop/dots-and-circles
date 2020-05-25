@@ -19,6 +19,8 @@ set(includes
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/vector.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/bitfield.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maths/constants.h
+	
+	${CMAKE_CURRENT_LIST_DIR}/include/ryoji/ds/sstring.h
         
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/defer.h
     ${CMAKE_CURRENT_LIST_DIR}/include/ryoji/maybe.h
@@ -51,6 +53,10 @@ set(srcs
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/constants.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maths/utils.h
     
+	${CMAKE_CURRENT_LIST_DIR}/src/ds/sstring.h
+	${CMAKE_CURRENT_LIST_DIR}/src/ds/sstring.cpp
+	
+	
     ${CMAKE_CURRENT_LIST_DIR}/src/defer.h
     ${CMAKE_CURRENT_LIST_DIR}/src/maybe.h
     ${CMAKE_CURRENT_LIST_DIR}/src/either.h
@@ -62,6 +68,7 @@ set(src-tests
     ${CMAKE_CURRENT_LIST_DIR}/test/units/test-utils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test/units/test-allocators.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test/units/test-maths.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/test/units/test-ds.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test/headers.h
     ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
 )

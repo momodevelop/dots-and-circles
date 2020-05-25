@@ -6,5 +6,6 @@
 int TestAllocators();
 int TestMaths();
 int TestUtils();
+int TestDS();
 
 #endif
