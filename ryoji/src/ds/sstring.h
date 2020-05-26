@@ -8,15 +8,18 @@ namespace ryoji::ds {
 	namespace sstring {
 		template<size_t Capacity>
 		struct SString {
-			char buffer[Capacity] = { 0 };
 			static constexpr size_t capacity = Capacity;
 			size_t length = 0;
 
-			// Sadly, we can't overload this as non-member :(
+			char buffer[Capacity] = { 0 };
+
 			inline SString& operator=(const char* rhs);
 
 			template<size_t RCapacity>
 			inline SString<Capacity>& operator=(const SString<RCapacity>& rhs);
+
+			inline char& operator[](size_t index);
+			inline const char& operator[](size_t index) const;
 
 		};
 
@@ -25,10 +28,9 @@ namespace ryoji::ds {
 			memset(&lhs, 0, sizeof(SString<Capacity>)); // also sets length to zero :)
 		}
 
-		// assumes const char is cstring
 		template<size_t Capacity>
 		SString<Capacity>& set(SString<Capacity>& lhs, const char* rhs) {
-			if (rhs == nullptr) 
+			if (rhs == nullptr)
 				return lhs;
 
 			for (lhs.length = 0; lhs.length < Capacity - 1 && rhs[lhs.length] != 0; ++lhs.length) {
@@ -38,22 +40,21 @@ namespace ryoji::ds {
 			return lhs;
 		}
 
-		template<size_t LCapacity, size_t RCapacity>
-		inline SString<LCapacity>& set(SString<LCapacity>& lhs, const SString<RCapacity>& rhs) {
-			return set(lhs, rhs.buffer);
-		}
-
-		// optimized for same capacity
 		template<size_t Capacity>
 		inline SString<Capacity>& set(SString<Capacity>& lhs, const SString<Capacity>& rhs) {
 			memcpy(&lhs, &rhs, sizeof(SString<Capacity>));
 			return lhs;
 		}
 
+		template<size_t LCapacity, size_t RCapacity>
+		inline SString<LCapacity>& set(SString<LCapacity>& lhs, const SString<RCapacity>& rhs) {
+			return set(lhs, rhs.buffer);
+		}
+
 
 		template<size_t Capacity>
 		SString<Capacity>& concat(SString<Capacity>& lhs, const char* rhs) {
-			if (rhs == nullptr) 
+			if (rhs == nullptr)
 				return lhs;
 
 			for (size_t i = 0; lhs.length < Capacity - 1 && rhs[i] != 0; ++lhs.length, ++i) {
@@ -72,11 +73,29 @@ namespace ryoji::ds {
 			lhs.buffer[lhs.length] = 0;
 			return lhs;
 		}
+		template<size_t Capacity>
+		inline SString<Capacity> join(const SString<Capacity>& lhs, const char* rhs) {
+			SString<Capacity> ret = lhs;
+			return concat(ret, rhs);
+		}
 
 		template<size_t Capacity>
-		inline const char* get(const SString<Capacity>& lhs) {
-			return lhs.buffer;
+		inline SString<Capacity> join(const SString<Capacity>& lhs, const SString<Capacity>& rhs) {
+			return join(lhs, rhs.buffer);
 		}
+
+
+		template<size_t FinalCapacity, size_t LCapacity>
+		inline SString<FinalCapacity> join(const SString<LCapacity>& lhs, const char * rhs) {
+			SString<FinalCapacity> ret;
+			return concat(set(ret, lhs), rhs);
+		}
+
+		template<size_t FinalCapacity, size_t LCapacity, size_t RCapacity>
+		inline SString<FinalCapacity> join(const SString<LCapacity>& lhs, const SString<RCapacity>& rhs) {
+			return join<FinalCapacity>(lhs, rhs.buffer);
+		}
+
 
 		template<size_t Capacity>
 		bool isEqual(const SString<Capacity>& lhs, const char* rhs) {
@@ -89,7 +108,7 @@ namespace ryoji::ds {
 
 		template<size_t LCapacity, size_t RCapacity>
 		bool isEqual(const SString<LCapacity>& lhs, const SString<RCapacity>& rhs) {
-			if (lhs.length != rhs.length) 
+			if (lhs.length != rhs.length)
 				return false;
 
 			for (size_t i = 0; i < lhs.length; ++i) {
@@ -104,6 +123,11 @@ namespace ryoji::ds {
 			return lhs.length == 0;
 		}
 
+		template<size_t Capacity>
+		inline const char* get(const SString<Capacity>& lhs) {
+			return lhs.buffer;
+		}
+		
 
 		// operator overloads //
 		template<size_t Capacity>
@@ -131,10 +155,38 @@ namespace ryoji::ds {
 			return set(*this, rhs);
 		}
 
-		template<size_t LCapacity, size_t RCapacity>
-		inline SString<LCapacity>& operator<<=(SString<LCapacity>& lhs, const SString<RCapacity>& rhs) {
-			return set(lhs, rhs);
+
+		template<size_t Capacity> template<size_t RCapacity>
+		inline SString<Capacity>& SString<Capacity>::operator=(const SString<RCapacity>& rhs) {
+			return (*this) = rhs.buffer;
 		}
+
+		template<size_t Capacity>
+		inline const char* operator*(const SString<Capacity>& lhs)
+		{
+			return lhs.buffer;
+		}
+
+		template<size_t Capacity>
+		inline char* operator*(SString<Capacity>& lhs)
+		{
+			return lhs.buffer;
+		}
+
+		template<size_t Capacity>
+		inline char& SString<Capacity>::operator[](size_t index)
+		{ 
+			assert(index < Capacity);
+			return buffer[index];
+		}
+
+		template<size_t Capacity>
+		inline const char& SString<Capacity>::operator[](size_t index) const
+		{
+			assert(index < Capacity);
+			return buffer[index];
+		}
+
 
 		template<size_t Capacity>
 		inline SString<Capacity>& operator+=(SString<Capacity>& lhs, const char* rhs) {
@@ -146,8 +198,9 @@ namespace ryoji::ds {
 			return concat(lhs, rhs);
 		}
 
-		template<size_t LCapacity>
-		inline SString<LCapacity>& operator<<(SString<LCapacity>& lhs, const char* rhs) {
+
+		template<size_t Capacity>
+		inline SString<Capacity>& operator<<(SString<Capacity>& lhs, const char* rhs) {
 			return concat(lhs, rhs);
 		}
 
@@ -156,14 +209,20 @@ namespace ryoji::ds {
 			return concat(lhs, rhs);
 		}
 
-		template<size_t Capacity> template<size_t RCapacity>
-		inline SString<Capacity>& SString<Capacity>::operator=(const SString<RCapacity>& rhs)
-		{
-			return set(*this, rhs);
+	
+		template<size_t Capacity> 
+		inline SString<Capacity> operator+(const SString<Capacity>& lhs, const char* rhs) {
+			return join(lhs, rhs);
 		}
 
+		template<size_t Capacity>
+		inline SString<Capacity> operator+(const SString<Capacity>& lhs, const SString<Capacity>& rhs) {
+			return lhs + rhs.buffer;
+		}
 
-}
+		// Note: No operator+ for SString of different capacity because there is no way to specify output's Capacity.
+		//       Use the join<>() function instead.
+	}
 
 	using sstring::SString;
 }

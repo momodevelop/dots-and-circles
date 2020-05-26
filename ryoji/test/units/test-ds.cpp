@@ -114,6 +114,33 @@ namespace {
 				sstring::set(str2, "Hello Worlx");
 				PrintGoodOrBad(!sstring::isEqual(str1, str2));
 				std::cout << "isEqual on sstring is correctly false (based on same length but diff content)" << std::endl;
+
+				// join
+				sstring::set(str1, "Hello ");
+				str2 = sstring::join(str1, "World");
+				PrintGoodOrBad(sstring::isEqual(str2, "Hello World"));
+				std::cout << "join on cstring is correct" << std::endl;
+
+				sstring::set(str1, "Hello ");
+				sstring::set(str2, "World");
+				SString str3 = sstring::join(str1, str2);
+				PrintGoodOrBad(sstring::isEqual(str3, "Hello World"));
+				std::cout << "join on sstring (same capacity) is correct" << std::endl;
+
+
+				sstring::set(str1, "Hello ");
+				SString<5> str4 = sstring::join<5>(str1, " World");
+				PrintGoodOrBad(sstring::isEqual(str4, "Hell"));
+				std::cout << "join on cstring (different capacity output) is correct" << std::endl;
+
+				sstring::set(str1, "Hello ");
+				sstring::set(longstr, "World");
+				SString str5 = sstring::join<5>(str1, longstr);
+				PrintGoodOrBad(sstring::isEqual(str5, "Hell"));
+				std::cout << "join on sstring (different capacity input/output) is correct" << std::endl;
+
+
+
 			}
 			std::cout << std::endl;
 			{
@@ -245,6 +272,28 @@ namespace {
 				str2 = "Hello W";
 				PrintGoodOrBad(str1 != str2);
 				std::cout << "operator!= on sstring is correct" << std::endl;
+
+				PrintGoodOrBad(str1[0] == 'H');
+				std::cout << "operator[] is correct" << std::endl;
+
+				const auto& constStr1  = str1;
+				PrintGoodOrBad(constStr1[0] == 'H');
+				std::cout << "operator[] (const) is correct" << std::endl;
+
+				PrintGoodOrBad(!strcmp((*str1), "Hello World"));
+				std::cout << "operator* is correct" << std::endl;
+
+				PrintGoodOrBad(!strcmp((*constStr1), "Hello World"));
+				std::cout << "operator* (const) is correct" << std::endl;
+
+				// operator+
+				str1 = "Hello";
+				PrintGoodOrBad(!strcmp(*(str1 + " World"), "Hello World"));
+				std::cout << "operator+ for cstring is correct" << std::endl;
+
+				str2 = " World";
+				PrintGoodOrBad(!strcmp(*(str1 + str2), "Hello World"));
+				std::cout << "operator+ for sstring is correct" << std::endl;
 			}
 		}
 	}
