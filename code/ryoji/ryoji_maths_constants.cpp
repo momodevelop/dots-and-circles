@@ -1,0 +1,7 @@
+#ifndef __RYOJI_MATH_CONSTANTS__
+#define __RYOJI_MATH_CONSTANTS__
+
+
+static constexpr f32 PIf = 3.14159265358979323846264338327950288f;
+
+#endif 
