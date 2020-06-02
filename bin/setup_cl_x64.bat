@@ -6,3 +6,4 @@ IF %ERRORLEVEL% == 0 (EXIT /b)
 
 SET SCRIPTS_PATH=%~dp0
 call "%VC_PATH%\VC\Auxiliary\Build\vcvarsall.bat" x64
+

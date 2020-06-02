@@ -26,7 +26,6 @@ using uptr = uintptr_t;
 #define pure static inline
 
 
-
 // Assertion
 // TODO(Momo): make macros purple
 #if ASSERT 

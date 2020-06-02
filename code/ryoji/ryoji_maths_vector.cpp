@@ -1,7 +1,7 @@
 #ifndef __RYOJI_MATH_VECTOR__
 #define __RYOJI_MATH_VECTOR__
 
-struct Vec3f {
+struct vf32 {
     union {
         f32 arr[3];
         struct {
@@ -20,14 +20,14 @@ struct Vec3f {
     }
     
     
-    inline Vec3f& operator+=(Vec3f rhs)  {
+    inline vf32& operator+=(vf32 rhs)  {
         x += rhs.x;
         y += rhs.y;
         z += rhs.z;
         return *this;
     }
     
-    inline Vec3f& operator-=(Vec3f rhs)  {
+    inline vf32& operator-=(vf32 rhs)  {
         x -= rhs.x;
         y -= rhs.y;
         z -= rhs.z;
@@ -35,28 +35,28 @@ struct Vec3f {
     }
     
     
-    inline Vec3f& operator*=(Vec3f rhs)  {
+    inline vf32& operator*=(vf32 rhs)  {
         x *= rhs.x;
         y *= rhs.y;
         z *= rhs.z;
         return *this;
     }
     
-    inline Vec3f& operator/=(Vec3f rhs)  {
+    inline vf32& operator/=(vf32 rhs)  {
         x /= rhs.x;
         y /= rhs.y;
         z /= rhs.z;
         return *this;
     }
     
-    inline Vec3f& operator*=(float rhs)  {
+    inline vf32& operator*=(float rhs)  {
         x *= rhs;
         y *= rhs;
         z *= rhs;
         return *this;
     }
     
-    inline Vec3f& operator/=(float rhs)  {
+    inline vf32& operator/=(float rhs)  {
         x /= rhs;
         y /= rhs;
         z /= rhs;
@@ -66,69 +66,69 @@ struct Vec3f {
 };
 
 
-pure Vec3f operator+(Vec3f lhs, Vec3f rhs)  { 
-    return Vec3f(lhs) += rhs; 
+pure vf32 operator+(vf32 lhs, vf32 rhs)  { 
+    return vf32(lhs) += rhs; 
 }
 
-pure Vec3f operator-(Vec3f lhs, Vec3f rhs)  { 
-    return Vec3f(lhs) -= rhs;
+pure vf32 operator-(vf32 lhs, vf32 rhs)  { 
+    return vf32(lhs) -= rhs;
 }
 
-pure Vec3f operator*(Vec3f lhs, float rhs)  { 
-    return Vec3f(lhs) *= rhs; 
+pure vf32 operator*(vf32 lhs, float rhs)  { 
+    return vf32(lhs) *= rhs; 
 }
 
-pure Vec3f operator*(float lhs, Vec3f rhs)  { 
-    return Vec3f(rhs) *= lhs; 
+pure vf32 operator*(float lhs, vf32 rhs)  { 
+    return vf32(rhs) *= lhs; 
 }
 
-pure Vec3f operator/(Vec3f lhs, float rhs)  { 
-    return Vec3f(lhs) /= rhs; 
+pure vf32 operator/(vf32 lhs, float rhs)  { 
+    return vf32(lhs) /= rhs; 
 }
 
 //NOTE(Momo): Dot product
-pure float operator*(Vec3f lhs, Vec3f rhs) { 
+pure float operator*(vf32 lhs, vf32 rhs) { 
     return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; 
 }
 
 
-pure bool operator==(Vec3f lhs, Vec3f rhs)  { 
+pure bool operator==(vf32 lhs, vf32 rhs)  { 
     return 
         IsFloatEq(lhs.x, rhs.x) && 
         IsFloatEq(lhs.y, rhs.y) && 
         IsFloatEq(lhs.z, rhs.z);
 }
 
-pure bool operator!=(Vec3f lhs, Vec3f rhs) { 
+pure bool operator!=(vf32 lhs, vf32 rhs) { 
     return !(lhs == rhs); 
 }
 
-pure Vec3f operator-(Vec3f lhs)  {  
+pure vf32 operator-(vf32 lhs)  {  
     return { -lhs.x, -lhs.y, -lhs.z }; 
 }
 
-pure Vec3f Midpoint(Vec3f lhs, Vec3f rhs)  { 
+pure vf32 Midpoint(vf32 lhs, vf32 rhs)  { 
     return (lhs + rhs)/2.f; 
 }
 
-pure float DistanceSq(Vec3f lhs, Vec3f rhs) { 
+pure float DistanceSq(vf32 lhs, vf32 rhs) { 
     return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
 }
 
-pure float LengthSq(Vec3f lhs) { 
+pure float LengthSq(vf32 lhs) { 
     return lhs * lhs;	
 }
 
-pure float Distance(Vec3f lhs, Vec3f rhs)  { 
+pure float Distance(vf32 lhs, vf32 rhs)  { 
     return sqrt(DistanceSq(lhs, rhs)); 
 }
 
-pure float Length(Vec3f lhs)  { 
+pure float Length(vf32 lhs)  { 
     return sqrt(LengthSq(lhs));
 };
 
-pure Vec3f Normalize(Vec3f lhs)  {
-    Vec3f ret = lhs;
+pure vf32 Normalize(vf32 lhs)  {
+    vf32 ret = lhs;
     f32 len = Length(lhs);
     if (IsFloatEq(len, 1.f))
         return ret;
@@ -136,30 +136,30 @@ pure Vec3f Normalize(Vec3f lhs)  {
     return ret;
 }
 
-pure float AngleBetween(Vec3f lhs, Vec3f rhs) {
+pure float AngleBetween(vf32 lhs, vf32 rhs) {
     return acos((lhs * rhs) / (Length(lhs) * Length(rhs)));
 }
 
-pure float AngleBetweenNormalized(Vec3f lhs, Vec3f rhs) {
+pure float AngleBetweenNormalized(vf32 lhs, vf32 rhs) {
     Assert(IsFloatEqual(LengthSq(lhs), 1.f));
     Assert(IsFloatEqual(LengthSq(rhs), 1.f));
     return acos(lhs * rhs);
 }
 
-pure bool IsPerpendicular(Vec3f lhs, Vec3f rhs) 
+pure bool IsPerpendicular(vf32 lhs, vf32 rhs) 
 { 
     return IsFloatEq((lhs * rhs), 0.f); 
 }
 
-pure bool IsSameDirection(Vec3f lhs, Vec3f rhs) { 
+pure bool IsSameDirection(vf32 lhs, vf32 rhs) { 
     return (lhs * rhs) > 0.f; 
 }
 
-pure bool IsOppositeDirection(Vec3f lhs, Vec3f rhs) { 
+pure bool IsOppositeDirection(vf32 lhs, vf32 rhs) { 
     return (lhs * rhs) < 0.f;
 }
 
-pure Vec3f Project(Vec3f from, Vec3f to) { 
+pure vf32 Project(vf32 from, vf32 to) { 
     return (to * from) / LengthSq(to) * to;
 }
 
