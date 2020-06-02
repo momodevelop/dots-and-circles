@@ -21,9 +21,10 @@ using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
 
-
-// Shortern terms
 #define pure static inline
+#define Abs(x) ((x < 0) ? -x : x)
+#define Max(x, y) ((x > y) x : y)
+#define Min(x, y) ((x < y) x : y)
 
 
 // Assertion

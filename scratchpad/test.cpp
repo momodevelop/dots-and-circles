@@ -1,56 +1,127 @@
-#include <iostream>
+// Includes
+#include <cstdint>
+
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+using f32 = float;
+using f64 = double;
+using usize = size_t;
+using uptr = uintptr_t;
+
+static constexpr f32 PI_f32 = 3.14159265358979323846264338327950288f;
+
+
+#define pure static inline
+#define Abs(x) ((x < 0) ? -x : x)
+#define Max(x, y) ((x > y) x : y)
+#define Min(x, y) ((x < y) x : y)
+
+
+#include <stdio.h>
 using namespace std;
 
+#include <math.h>
 
-#ifdef PRECISE
-#define PRECISION_TYPE        double
-#else
-#define PRECISION_TYPE        float
-#endif
-PRECISION_TYPE hollyConstant = 0.017453292519943295769236907684886;
-//First of all sine and cosine tables
-
-PRECISION_TYPE sinTable[] = {
-    0.0,                                    //sin(0)
-    0.17364817766693034885171662676931 ,    //sin(10)
-    0.34202014332566873304409961468226 ,    //sin(20)
-    0.5 ,                                    //sin(30)
-    0.64278760968653932632264340990726 ,    //sin(40)
-    0.76604444311897803520239265055542 ,    //sin(50)
-    0.86602540378443864676372317075294 ,    //sin(60)
-    0.93969262078590838405410927732473 ,    //sin(70)
-    0.98480775301220805936674302458952 ,    //sin(80)
-    1.0                                     //sin(90)
-};
-
-PRECISION_TYPE cosTable[] = {
-    1.0 ,                                    //cos(0)
-    0.99984769515639123915701155881391 ,    //cos(1)
-    0.99939082701909573000624344004393 ,    //cos(2)
-    0.99862953475457387378449205843944 ,    //cos(3)
-    0.99756405025982424761316268064426 ,    //cos(4)
-    0.99619469809174553229501040247389 ,    //cos(5)
-    0.99452189536827333692269194498057 ,    //cos(6)
-    0.99254615164132203498006158933058 ,    //cos(7)
-    0.99026806874157031508377486734485 ,    //cos(8)
-    0.98768834059513772619004024769344         //cos(9)
-};
-// sin (a+b) = sin(a)*cos(b) + sin(b)*cos(a)
-// a = 10*m where m is a natural number and 0<= m <= 90
-// i.e. lets a+b = 18.22
-// then a = 10, b = 8.22
-
-PRECISION_TYPE myFastSin ( PRECISION_TYPE angle )
-{
-    int a = angle * 0.1f;
-    PRECISION_TYPE b = angle - 10 * a;
+// NOTE(Momo): [-PI,PI]
+pure f32 Sin(f32 x) {
+    constexpr float B = 4.0f / PI_f32;
+    constexpr float C = -4.0f / (PI_f32 * PI_f32);
+    constexpr float P = 0.225f;
     
-    return sinTable[a] * cosTable[int(b)] + b * hollyConstant * sinTable[9-a];
+    float y = B * x + C * x * Abs(x);
+    return P * (y * Abs(y) - y) + y;
+}
+
+// NOTE(Momo): [-PI, PI]
+pure f32 Cos(f32 x) {
+    constexpr float B = 4.0f / PI_f32;
+    constexpr float C = -4.0f / (PI_f32 * PI_f32);
+    constexpr float P = 0.225f;
+    
+    x = (x > 0) ? -x : x;
+    x += PI_f32/2;
+    
+    return Sin(x);
+}
+
+// NOTE(Momo): [-PI, PI]
+pure f32 Tan(f32 x) {
+    return Sin(x)/Cos(x);
+}
+
+
+pure f32 InvSqrt(f32 number)
+{
+    u32 i;
+	f32 x2, y;
+	f32 threehalfs = 1.5f;
+    
+	x2 = number * 0.5F;
+	y  = number;
+	i  = *(u32*) &y;                       // evil floating point bit level hacking
+	i  = 0x5f3759df - ( i >> 1 );               // what the fuck? 
+	y  = *(f32*) &i;
+	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+    
+	return y;
+}
+
+pure f32 Sqrt(f32 number) {
+    return 1.f/InvSqrt(number);
+}
+
+// NOTE(Momo): [-1, 1]
+f32 ASin(f32 x) {
+    f32 negate = f32(x < 0);
+    x = Abs(x);
+    f32 ret = -0.0187293;
+    ret *= x;
+    ret += 0.0742610;
+    ret *= x;
+    ret -= 0.2121144;
+    ret *= x;
+    ret += 1.5707288;
+    ret = PI_f32 *0.5 - Sqrt(1.0f - x)*ret;
+    return ret - 2 * negate * ret;
+}
+
+// NOTE(Momo): [-1, 1]
+pure f32 ACos(f32 x) {
+    f32 negate = f32(x < 0);
+    x = Abs(x);
+    f32 ret = -0.0187293f;
+    ret = ret * x;
+    ret = ret + 0.0742610f;
+    ret = ret * x;
+    ret = ret - 0.2121144f;
+    ret = ret * x;
+    ret = ret + 1.5707288f;
+    ret = ret * Sqrt(1.0-x);
+    ret = ret - 2.f * negate * ret;
+    return negate * PI_f32 + ret;
+}
+
+// NOTE(Momo): [-1, 1]
+pure f32 ATan(f32 x) {
+    constexpr f32 A = 0.0776509570923569f;
+    constexpr f32 B = -0.287434475393028f;
+    constexpr f32 C = PI_f32 / 4 - A - B;
+    f32 xx = x * x;
+    return ((A*xx + B)*xx + C)*x;
 }
 
 
 int main() {
-    printf("%f", myFastSin(45));
+    printf("%f\nvs\n%f\n\n", Cos(1.57), cos(1.57));
+    printf("%f\nvs\n%f\n\n", Sin(1.141), sin(1.141));
+    printf("%f\nvs\n%f\n\n", Tan(1.141), tan(1.141));
+    printf("%f\nvs\n%f\n\n", ASin(2), asin(2));
+    printf("%f\nvs\n%f\n\n", ACos(2), acos(2));
+    printf("%f\nvs\n%f\n\n", ATan(.41), atan(0.41));
+    printf("%f\nvs\n%f\n\n", Sqrt(9), sqrt(9));
 }
 
 
