@@ -1,10 +1,11 @@
 #ifndef __RYOJI_MATH_UTILS__
 #define __RYOJI_MATH_UTILS__
 
-static constexpr f32 PI_f32 = 3.14159265358979323846264338327950288f;
+global constexpr f32 PI_f32 = 3.14159265358979323846264338327950288f;
+global EPSILON_f32 = 1.19209290E-07f;
 
 pure bool IsFloatEq(f32 lhs, f32 rhs) {
-    return fabs(lhs - rhs) <= std::numeric_limits<f32>::epsilon();
+    return Abs(lhs - rhs) <= EPSILON_f32;
 }
 
 // Degrees and Radians

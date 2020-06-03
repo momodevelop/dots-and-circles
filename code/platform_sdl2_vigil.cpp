@@ -1,8 +1,15 @@
+#include <stdio.h>
 #include "SDL.h"
 #include "ryoji_common.cpp"
+//#include "vigil_interface.h"
+
+global bool gIsRunning = true;
+
+
 
 int main(int argc, char* argv[]) {
     
+    // NOTE(Momo):  Initialization
     (void)argc;
     (void)argv;
     printf("SDL initializing\n");
@@ -28,9 +35,53 @@ int main(int argc, char* argv[]) {
     };
     
     if (window == nullptr) {
-        printf("Window could not be create! SDL_Error: %s\n", SDL_GetError());
+        printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
+    
+    
+    
+    u64 prevCounter = SDL_GetPerformanceCounter();
+    u64 countFrequency = SDL_GetPerformanceFrequency();
+    
+    while(gIsRunning) {
+        
+        
+        
+        
+        
+        // TODO(Momo): Poll Event
+        
+        
+        
+        
+        // TODO(Momo): Update + Render
+        
+        
+        u64 endCounter = SDL_GetPerformanceCounter();
+        u64 countsElapsed = endCounter - prevCounter;
+        
+        
+        // NOTE(Momo): Quick tip 
+        // PerformanceCounter(C) gives how many count has elapsed.
+        // PerformanceFrequency(F) gives how many counts/second.
+        // Thus: seconds = C / F, and milliseconds = seconds * 1000
+        u64 msElapsed = (1000 * countsElapsed) / countFrequency;
+        printf("%lld  ms\n", msElapsed);
+        // TODO(Momo): Display the value?
+        prevCounter = endCounter; 
+        
+        SDL_Delay(2000);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     SDL_Delay(2000);
     

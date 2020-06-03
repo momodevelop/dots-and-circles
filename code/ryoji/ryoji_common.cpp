@@ -4,10 +4,6 @@
 // Includes
 #include <cstdint>
 
-
-// TODO(Momo): write our own epsilon?
-#include <limits>
-
 // Types
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -19,6 +15,7 @@ using usize = size_t;
 using uptr = uintptr_t;
 
 #define pure static inline
+#define global static
 #define Abs(x) ((x < 0) ? -x : x)
 #define Max(x, y) ((x > y) x : y)
 #define Min(x, y) ((x < y) x : y)
