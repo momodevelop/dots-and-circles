@@ -111,22 +111,23 @@ pure vf32 Midpoint(vf32 lhs, vf32 rhs)  {
     return (lhs + rhs)/2.f; 
 }
 
-pure float DistanceSq(vf32 lhs, vf32 rhs) { 
+pure f32 DistanceSq(vf32 lhs, vf32 rhs) { 
     return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
 }
 
-pure float LengthSq(vf32 lhs) { 
+pure f32 LengthSq(vf32 lhs) { 
     return lhs * lhs;	
 }
 
-pure float Distance(vf32 lhs, vf32 rhs)  { 
-    return sqrt(DistanceSq(lhs, rhs)); 
+pure f32 Distance(vf32 lhs, vf32 rhs)  { 
+    return Sqrt(DistanceSq(lhs, rhs)); 
 }
 
-pure float Length(vf32 lhs)  { 
-    return sqrt(LengthSq(lhs));
+pure f32 Length(vf32 lhs)  { 
+    return Sqrt(LengthSq(lhs));
 };
 
+// TODO(Momo): Inverse Square root?
 pure vf32 Normalize(vf32 lhs)  {
     vf32 ret = lhs;
     f32 len = Length(lhs);
@@ -136,14 +137,14 @@ pure vf32 Normalize(vf32 lhs)  {
     return ret;
 }
 
-pure float AngleBetween(vf32 lhs, vf32 rhs) {
-    return acos((lhs * rhs) / (Length(lhs) * Length(rhs)));
+pure f32 AngleBetween(vf32 lhs, vf32 rhs) {
+    return ACos((lhs * rhs) / (Length(lhs) * Length(rhs)));
 }
 
-pure float AngleBetweenNormalized(vf32 lhs, vf32 rhs) {
+pure f32 AngleBetweenNormalized(vf32 lhs, vf32 rhs) {
     Assert(IsFloatEqual(LengthSq(lhs), 1.f));
     Assert(IsFloatEqual(LengthSq(rhs), 1.f));
-    return acos(lhs * rhs);
+    return ACos(lhs * rhs);
 }
 
 pure bool IsPerpendicular(vf32 lhs, vf32 rhs) 

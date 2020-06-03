@@ -1,101 +1,101 @@
 #ifndef __RYOJI_MATHS_BITFIELDS__
 #define __RYOJI_MATHS_BITFIELDS__
 
-pure u8 mask(u8 flag, u8 mask) { 
+pure u8 MaskBits(u8 flag, u8 mask) { 
     return flag | mask; 
 }
 
-pure u16 mask(u16 flag, u16 mask) { 
+pure u16 MaskBits(u16 flag, u16 mask) { 
     return flag | mask;
 }
 
-pure u32 mask(u32 flag, u32 mask) { 
+pure u32 MaskBits(u32 flag, u32 mask) { 
     return flag | mask; 
 }
 
-pure u64 mask(u64 flag, u64 mask) {
+pure u64 MaskBits(u64 flag, u64 mask) {
     return flag | mask; 
 }
 
-pure u8 unmask(u8 flag, u8 mask) 	{ 
+pure u8 UnmaskBits(u8 flag, u8 mask) 	{ 
     return flag & ~mask; 
 }
 
-pure u16 unmask(u16 flag, u16 mask)  { 
+pure u16 UnmaskBits(u16 flag, u16 mask)  { 
     return flag & ~mask; 
 }
 
-pure u32 unmask(u32 flag, u32 mask)  {
+pure u32 UnmaskBits(u32 flag, u32 mask)  {
     return flag & ~mask; 
 }
 
-pure u64 unmask(u64 flag, u64 mask)  {
+pure u64 UnmaskBits(u64 flag, u64 mask)  {
     return flag & ~mask; 
 }
 
-pure u8 set(u8 flag, usize index, bool val)  {
+pure u8 SetBits(u8 flag, usize index, bool val)  {
     Assert((sizeof(u8) * 8) > (index - 1));
     return (flag & ~(1U << index)) | (val << index);
 }
-pure u16 set(u16 flag, usize index, bool val)  {
+pure u16 SetBits(u16 flag, usize index, bool val)  {
     Assert((sizeof(u16) * 8) > (index - 1));
     return (flag & ~(1U << index)) | (val << index);
 }
-pure u32 set(u32 flag, usize index, bool val)  {
+pure u32 SetBits(u32 flag, usize index, bool val)  {
     Assert((sizeof(u32) * 8) > (index - 1));
     return (flag & ~(1U << index)) | (val << index);
 }
-pure u64 set(u64 flag, usize index, bool val)  {
+pure u64 SetBits(u64 flag, usize index, bool val)  {
     Assert((sizeof(u64) * 8) > (index - 1));
     return (flag & ~(1ULL << index)) | (val << index);
 }
 
-pure u8 get(u8 flag, usize index, bool val)  {
+pure u8 GetBits(u8 flag, usize index, bool val)  {
     Assert((sizeof(u8) * 8) > (index - 1));
     return (flag & (1U << index)) > 0;
 }
-pure u16 get(u16 flag, usize index, bool val)  {
+pure u16 GetBits(u16 flag, usize index, bool val)  {
     Assert((sizeof(u16) * 8) > (index - 1));
     return (flag & (1U << index)) > 0;
 }
-pure u32 get(u32 flag, usize index, bool val)  {
+pure u32 GetBits(u32 flag, usize index, bool val)  {
     Assert((sizeof(u32) * 8) > (index - 1));
     return (flag & (1U << index)) > 0;
 }
-pure u64 get(u64 flag, usize index, bool val)  {
+pure u64 GetBits(u64 flag, usize index, bool val)  {
     Assert((sizeof(u64) * 8) > (index - 1));
     return (flag & (1UL << index)) > 0;
 }
 
-pure bool any(u8  flag, u8 mask) { 
+pure bool AreAnyBitsOn(u8  flag, u8 mask) { 
     return (flag & mask) > 0; 
 }
 
-pure bool any(u16 flag, u16 mask) { 
+pure bool AreAnyBitsOn(u16 flag, u16 mask) { 
     return (flag & mask) > 0; 
 }
 
-pure bool any(u32 flag, u32 mask) {
+pure bool AreAnyBitsOn(u32 flag, u32 mask) {
     return (flag & mask) > 0; 
 }
 
-pure bool any(u64 flag, u64 mask) { 
+pure bool AreAnyBitsOn(u64 flag, u64 mask) { 
     return (flag & mask) > 0;
 }
 
-pure bool all(u8 flag, u8 mask) {
+pure bool AreAllBitsOn(u8 flag, u8 mask) {
     return flag == mask; 
 }
 
-pure bool all(u16 flag, u16 mask) { 
+pure bool AreAllBitsOn(u16 flag, u16 mask) { 
     return flag == mask;
 }
 
-pure bool all(u32 flag, u32 mask) { 
+pure bool AreAllBitsOn(u32 flag, u32 mask) { 
     return flag == mask;
 }
 
-pure bool all(u64 flag, u64 mask) { 
+pure bool AreAllBitsOn(u64 flag, u64 mask) { 
     return flag == mask; 
 }
 

@@ -1,4 +1,3 @@
-
 #include "SDL.h"
 #include "ryoji_common.cpp"
 
@@ -33,12 +32,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    
-    
-    
-    
-    
-    
+    SDL_Delay(2000);
     
     return 0;
     

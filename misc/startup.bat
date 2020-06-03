@@ -14,4 +14,4 @@ popd
 
 call setup_cl_x64.bat
 
-pu %build_dir%
+

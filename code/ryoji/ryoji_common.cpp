@@ -5,9 +5,6 @@
 #include <cstdint>
 
 
-// TODO(Momo): Write our own cos/sin?
-#include <cmath>
-
 // TODO(Momo): write our own epsilon?
 #include <limits>
 
