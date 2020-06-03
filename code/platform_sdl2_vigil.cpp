@@ -5,7 +5,7 @@
 
 global bool gIsRunning = true;
 
-
+// TODO(Momo): Timer struct for SDL.
 
 int main(int argc, char* argv[]) {
     
@@ -68,6 +68,8 @@ int main(int argc, char* argv[]) {
         // Thus: seconds = C / F, and milliseconds = seconds * 1000
         u64 msElapsed = (1000 * countsElapsed) / countFrequency;
         printf("%lld  ms\n", msElapsed);
+        
+        
         // TODO(Momo): Display the value?
         prevCounter = endCounter; 
         
