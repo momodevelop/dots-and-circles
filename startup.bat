@@ -1,7 +1,5 @@
 @echo off
 
-cd ..
-
 set Path=%cd%\bin\;%Path%
 set build_dir=%cd%\_build\
 

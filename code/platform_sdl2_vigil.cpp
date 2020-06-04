@@ -5,7 +5,35 @@
 
 global bool gIsRunning = true;
 
-// TODO(Momo): Timer struct for SDL.
+
+struct SDLTimer {
+    u64 countFrequency;
+    u64 prevFrameCounter;
+    u64 endFrameCounter;
+    u64 countsElapsed;
+};
+void SDLTimerStart(SDLTimer* timer) {
+    timer->countFrequency = SDL_GetPerformanceFrequency();
+    timer->prevFrameCounter = SDL_GetPerformanceCounter();
+    timer->endFrameCounter = 0;
+    timer->countsElapsed = 0;
+}
+void SDLTimerTick(SDLTimer * timer) {
+    timer->endFrameCounter = SDL_GetPerformanceCounter();
+    timer->countsElapsed = timer->endFrameCounter - timer->prevFrameCounter;
+    timer->prevFrameCounter = timer->endFrameCounter; 
+    
+}
+u64 SDLTimerGetTimeElapsed(SDLTimer * timer) {
+    // NOTE(Momo): Quick tip 
+    // PerformanceCounter(C) gives how many count has elapsed.
+    // PerformanceFrequency(F) gives how many counts/second.
+    // Thus: seconds = C / F, and milliseconds = seconds * 1000
+    return (1000 * timer->countsElapsed) / timer->countFrequency;
+}
+
+
+
 
 int main(int argc, char* argv[]) {
     
@@ -21,7 +49,6 @@ int main(int argc, char* argv[]) {
         printf("SDL shutting down\n");
         SDL_Quit();
     };
-    
     printf("SDL creating Window\n");
     auto* window = SDL_CreateWindow("Vigil", 
                                     SDL_WINDOWPOS_UNDEFINED, 
@@ -40,38 +67,20 @@ int main(int argc, char* argv[]) {
     }
     
     
-    
-    u64 prevCounter = SDL_GetPerformanceCounter();
-    u64 countFrequency = SDL_GetPerformanceFrequency();
+    SDLTimer timer;
+    SDLTimerStart(&timer);
     
     while(gIsRunning) {
-        
-        
-        
-        
-        
         // TODO(Momo): Poll Event
-        
-        
-        
-        
         // TODO(Momo): Update + Render
         
         
-        u64 endCounter = SDL_GetPerformanceCounter();
-        u64 countsElapsed = endCounter - prevCounter;
+        
+        SDLTimerTick(&timer);
+        printf("%lld  ms\n", SDLTimerGetTimeElapsed(&timer));
         
         
-        // NOTE(Momo): Quick tip 
-        // PerformanceCounter(C) gives how many count has elapsed.
-        // PerformanceFrequency(F) gives how many counts/second.
-        // Thus: seconds = C / F, and milliseconds = seconds * 1000
-        u64 msElapsed = (1000 * countsElapsed) / countFrequency;
-        printf("%lld  ms\n", msElapsed);
         
-        
-        // TODO(Momo): Display the value?
-        prevCounter = endCounter; 
         
         SDL_Delay(2000);
     }
