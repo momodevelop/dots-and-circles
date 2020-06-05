@@ -1,35 +1,18 @@
 #include <stdio.h>
-#include "SDL.h"
 #include "ryoji_common.cpp"
+#include "yuu_include_glad.cpp"
+#include "yuu_include_sdl2.cpp"
+
 //#include "vigil_interface.h"
 
 global bool gIsRunning = true;
 
-// SDLTimer
-struct SDLTimer {
-    u64 countFrequency;
-    u64 prevFrameCounter;
-    u64 endFrameCounter;
-    u64 countsElapsed;
-};
-void SDLTimerStart(SDLTimer* timer) {
-    timer->countFrequency = SDL_GetPerformanceFrequency();
-    timer->prevFrameCounter = SDL_GetPerformanceCounter();
-    timer->endFrameCounter = 0;
-    timer->countsElapsed = 0;
-}
-void SDLTimerTick(SDLTimer * timer) {
-    timer->endFrameCounter = SDL_GetPerformanceCounter();
-    timer->countsElapsed = timer->endFrameCounter - timer->prevFrameCounter;
-    timer->prevFrameCounter = timer->endFrameCounter; 
-}
 
-u64 SDLTimerGetTimeElapsed(SDLTimer * timer) {
-    // NOTE(Momo): Quick tip 
-    // PerformanceCounter(C) gives how many count has elapsed.
-    // PerformanceFrequency(F) gives how many counts/second.
-    // Thus: seconds = C / F, and milliseconds = seconds * 1000
-    return (1000 * timer->countsElapsed) / timer->countFrequency;
+void GameLog(const char * str, ...) {
+    va_list va;
+    va_start(va, str);
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE, str, va);
+    va_end(va);
 }
 
 
@@ -65,6 +48,22 @@ int main(int argc, char* argv[]) {
     }
     
     
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    
+    
+    // Request an OpenGL 4.5 context (should be core)
+    SDL_GLContext context = SDL_GL_CreateContext(window);
+    if (context == nullptr) { 
+        SDL_Log("Failed to create OpenGL context");
+    }
+    
+    
+    // TODO(Momo): Game state init here
+    
     SDLTimer timer;
     SDLTimerStart(&timer);
     
@@ -88,4 +87,4 @@ int main(int argc, char* argv[]) {
     
     return 0;
     
-} 
+}
