@@ -23,7 +23,7 @@ pure f32 Sin(f32 x) {
     constexpr float C = -4.0f / (PI_f32 * PI_f32);
     constexpr float P = 0.225f;
     
-    float y = B * x + C * x * Abs(x);
+    float y  B * x + C * x * Abs(x);
     return P * (y * Abs(y) - y) + y;
 }
 

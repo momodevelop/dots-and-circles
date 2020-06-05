@@ -1,14 +1,10 @@
 @echo off
 
 set Path=%cd%\bin\;%Path%
-set build_dir=%cd%\_build\
+set build_dir=%cd%\build\
 
-mkdir %build_dir%
-
-REM Open 4coder at code directory
-pushd ..\code
+REM Open 4coder
 start 4ed.exe
-popd
 
 call setup_cl_x64.bat
 
