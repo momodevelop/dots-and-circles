@@ -9,6 +9,10 @@ using u8 = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
+using i8 = int8_t;
+using i16 = int16_t;
+using i32 = int32_t;
+using i64 = int64_t;
 using f32 = float;
 using f64 = double;
 using usize = size_t;
@@ -19,11 +23,11 @@ using uptr = uintptr_t;
 #define Abs(x) ((x < 0) ? -x : x)
 #define Max(x, y) ((x > y) x : y)
 #define Min(x, y) ((x < y) x : y)
-
+#define KILOBYTE 1 << 10
+#define MEGABYTE 1 << 20
 
 // Assertion
-// TODO(Momo): make macros purple
-#if ASSERT 
+#ifdef ASSERT 
 #include <assert.h>
 #define Assert(x) assert(x)
 #else
@@ -47,7 +51,7 @@ namespace zawarudo {
 
 #define zawarudo_VARANON_IMPL(LINE) zawarudo_ryojianon##LINE
 #define zawarudo_VARANON(line) zawarudo_VARANON_IMPL(line)
-#define defer auto zawarudo_VARANON(__LINE__) = zawarudo::defer_dummy{} + [&]()
+#define Defer auto zawarudo_VARANON(__LINE__) = zawarudo::defer_dummy{} + [&]()
 
 
 #endif
