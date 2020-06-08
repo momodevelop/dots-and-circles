@@ -69,6 +69,8 @@ int main(int argc, char* argv[]) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     
+    // TODO(Momo): Debug flag?
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     
     // Request an OpenGL 4.5 context (should be core)
     SDL_Log("SDL creating context\n");
@@ -82,9 +84,13 @@ int main(int argc, char* argv[]) {
         SDL_GL_DeleteContext(context);
     };
     
-    
-    // TODO(Momo): Everything here is test code
+    // NOTE(Momo): OpenGL can start here
     gladLoadGLLoader(SDL_GL_GetProcAddress);
+    
+    
+    GLDebug glDebugObj;
+    GLDebugInit(&glDebugObj);
+    
     auto [w,h] = SDLGetWindowSize(window);
     glViewport(0,0,w,h);
     
@@ -160,12 +166,12 @@ int main(int argc, char* argv[]) {
         
         
         // TODO(Momo): Update + Render
-        //glUseProgram(program);
+        glUseProgram(program);
         //glBindImageTexture(0, texture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
         //glUniform1i(0, 0);
-        //glBindVertexArray(VAO);
+        glBindVertexArray(VAO);
         //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         
         
         

@@ -14,8 +14,8 @@ SET include_dir=
 SET opts=-MT -WX -W4 -wd4201 -Zi -Oi -GR- -EHa -Gm- -std:c++17
 SET linker_opts=-subsystem:console -libpath:%base%\thirdparty\sdl2\lib\x64
 SET libs=SDL2main.lib SDL2.lib shell32.lib opengl32.lib
-
-SET common_flags=%opts% %entry_point% %include_dir% -link %libs% %linker_opts% 
+SET additional=-DDEBUG_OGL
+SET common_flags=%opts% %additional% %entry_point% %include_dir% -link %libs% %linker_opts% 
 
 copy %base%\thirdparty\sdl2\lib\x64\SDL2.dll %cd%
 

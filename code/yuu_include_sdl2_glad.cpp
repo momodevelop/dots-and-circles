@@ -97,3 +97,39 @@ pure SDLError SDLReadFileToString(char* dest, Sint64 destSize, const char * path
     itr[readTotal] = 0;
     return SDLError::NONE;
 }
+
+// NOTE(Momo): GL-related
+
+struct GLDebug {
+    typedef void (*LoggerType)(const char* fmt, ...);
+    LoggerType logger;
+};
+
+pure GLDebugInit(GLDebug * debugObj, GLDebug::LoggerType logger) {
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    
+    loggerWrapper { logger };
+    
+    auto callback = [](GLenum source,
+                       GLenum type,
+                       GLuint id,
+                       GLenum severity,
+                       GLsizei length,
+                       const GLchar* msg,
+                       const void* userParam){
+        
+        (void)severity;
+        (void)id;
+        (void)type;
+        (void)source;
+        (void)length; 
+        (void)userParam;
+        //printf("%s\n", msg);
+        reinterpret_cast<const GLDebug*>(userParam)->logger("%s\n", msg);;
+        
+    };
+    
+    glDebugMessageCallback(callback, debugObj);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
+}
