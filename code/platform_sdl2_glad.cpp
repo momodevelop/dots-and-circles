@@ -87,9 +87,10 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): OpenGL can start here
     gladLoadGLLoader(SDL_GL_GetProcAddress);
     
-    
+#ifdef DEBUG_OGL
     GLDebug glDebugObj;
-    GLDebugInit(&glDebugObj);
+    GLDebugInit(&glDebugObj, SDL_Log);
+#endif
     
     auto [w,h] = SDLGetWindowSize(window);
     glViewport(0,0,w,h);
