@@ -209,7 +209,7 @@ pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
             break;
         }
         //printf("%s\n", msg);
-        reinterpret_cast<const GLDebug*>(userParam)->logger("%d: %s of %s severity, raised from %s: %s\n",
+        reinterpret_cast<const GLDebug*>(userParam)->logger("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
                                                             id, _type, _severity, _source, msg);
         
     };

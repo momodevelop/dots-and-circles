@@ -17,7 +17,11 @@ void GameLog(const char * str, ...) {
 
 // NOTE(Momo): Temp code!
 // Need to think of how to manage these
-GLfloat data[8] = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f};
+GLfloat data[] = {
+    -0.5f, -0.5f, 0.f,
+    -0.5f, 0.5f, 0.f,
+    0.5f, -0.5f, 0.f,
+    0.5f, 0.5f, 0.f};
 GLuint VBO; 
 i32 bufferIndex = 0;
 GLuint VAO;
@@ -84,8 +88,16 @@ int main(int argc, char* argv[]) {
         SDL_GL_DeleteContext(context);
     };
     
-    // NOTE(Momo): OpenGL can start here
+    // NOTE(Momo): Check open GL properties
     gladLoadGLLoader(SDL_GL_GetProcAddress);
+    // Check OpenGL properties
+    SDL_Log("OpenGL loaded!\n");
+    SDL_Log("[OpenGL] Vendor:   %s\n", glGetString(GL_VENDOR));
+    SDL_Log("[OpenGL] Renderer: %s\n", glGetString(GL_RENDERER));
+    SDL_Log("[OpenGL] Version:  %s\n", glGetString(GL_VERSION));
+    
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
     
 #ifdef DEBUG_OGL
     GLDebug glDebugObj;
@@ -94,6 +106,7 @@ int main(int argc, char* argv[]) {
     
     auto [w,h] = SDLGetWindowSize(window);
     glViewport(0,0,w,h);
+    glClearColor(0.0f, 0.3f, 0.3f, 0.0f);
     
     
     
@@ -103,17 +116,14 @@ int main(int argc, char* argv[]) {
     
     // TODO(Momo):  Test code, remove later
     glCreateBuffers(1, &VBO);
-    
-    // NOTE(Momo): Sets the buffer as immutable. For mutable data: glNamedBufferData()
-    glNamedBufferStorage(VBO, sizeof(data), data, 0); 
-    
     glCreateVertexArrays(1, &VAO);
-    glVertexArrayVertexBuffer(VAO, bufferIndex, VBO, 0, sizeof(GLfloat)*2);
+    glNamedBufferStorage(VBO, sizeof(data), data, 0);
     
-    int attributeIndex = 0;
+    i32 attributeIndex = 0;
     glEnableVertexArrayAttrib(VAO, attributeIndex);
-    glVertexArrayAttribFormat(VAO, attributeIndex, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(VAO, attributeIndex, VBO);
+    glVertexArrayVertexBuffer(VAO, bufferIndex, VBO, 0, sizeof(GLfloat)*3);
+    glVertexArrayAttribFormat(VAO, attributeIndex, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(VAO, attributeIndex, bufferIndex);
     
     
     GLuint program = glCreateProgram();
@@ -129,6 +139,7 @@ int main(int argc, char* argv[]) {
     GLAttachShader(program, GL_VERTEX_SHADER, buffer);
     memset(buffer, 0, KILOBYTE);
     
+    
     if (auto err = SDLReadFileToString(buffer, KILOBYTE, "shader/simple.fms", false);
         err != SDLError::NONE) {
         SDL_Log("Loading simple.fms failed: %s", SDLErrorGetMsg(err));
@@ -136,20 +147,15 @@ int main(int argc, char* argv[]) {
     }
     GLAttachShader(program, GL_FRAGMENT_SHADER, buffer);
     
-    
-    
     glLinkProgram(program);
     GLint result;
     glGetProgramiv(program, GL_LINK_STATUS, &result);
     if (result != GL_TRUE) {
-        char msg[1024];
-        glGetProgramInfoLog(program, 1024, nullptr, msg);
+        char msg[KILOBYTE];
+        glGetProgramInfoLog(program, KILOBYTE, nullptr, msg);
         SDL_Log("Linking program failed:\n %s\n", msg);
         return 1;
     }
-    
-    
-    
     
     SDLTimer timer;
     SDLTimerStart(&timer);
@@ -167,22 +173,23 @@ int main(int argc, char* argv[]) {
         
         
         // TODO(Momo): Update + Render
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
         glUseProgram(program);
         //glBindImageTexture(0, texture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
         //glUniform1i(0, 0);
         glBindVertexArray(VAO);
-        //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        
-        
-        
         
         // NOTE(Momo): Timer update
         SDLTimerTick(&timer);
         SDL_Log("%lld  ms\n", SDLTimerGetTimeElapsed(&timer));
-        glClearColor(1.0f, 0.5f, 0.5f, 0.5f);
+        
         
         SDL_GL_SwapWindow(window);
+        
+        
     }
     
     

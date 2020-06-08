@@ -25,6 +25,7 @@ using uptr = uintptr_t;
 #define Min(x, y) ((x < y) x : y)
 #define KILOBYTE 1 << 10
 #define MEGABYTE 1 << 20
+#define ArrayCount(arr) (sizeof(arr)/sizeof(*array))
 
 // Assertion
 #ifdef ASSERT 
