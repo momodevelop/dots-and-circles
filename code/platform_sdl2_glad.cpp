@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include "ryoji_common.cpp"
+#include "ryoji_maths.cpp"
+
 //#include "ryoji_arenas.cpp"
 #include "yuu_include_sdl2_glad.cpp"
+
 //#include "vigil_interface.h"
 
 global bool gIsRunning = true;
@@ -33,6 +36,7 @@ pure void GLAttachShader(GLuint program, GLenum type, const char* code) {
     glAttachShader(program, shader);
     glDeleteShader(shader);
 }
+
 
 
 int main(int argc, char* argv[]) {
@@ -157,6 +161,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
+    GLint transformLoc = glGetUniformLocation(program, "transform");
+    
+    //autotranslation = M44F32Trans();
+    
+    
+    
+    
     SDLTimer timer;
     SDLTimerStart(&timer);
     
@@ -178,6 +189,7 @@ int main(int argc, char* argv[]) {
         glUseProgram(program);
         //glBindImageTexture(0, texture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
         //glUniform1i(0, 0);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, translation);
         glBindVertexArray(VAO);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
