@@ -314,27 +314,27 @@ pure Vec3f operator-(Vec3f lhs)  {
     return { -lhs.x, -lhs.y, -lhs.z }; 
 }
 
-pure Vec3f Midpoint(Vec3f lhs, Vec3f rhs)  { 
+pure Vec3f Vec3fMidpoint(Vec3f lhs, Vec3f rhs)  { 
     return (lhs + rhs)/2.f; 
 }
 
-pure f32 DistanceSq(Vec3f lhs, Vec3f rhs) { 
+pure f32 Vec3fDistanceSq(Vec3f lhs, Vec3f rhs) { 
     return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
 }
 
-pure f32 LengthSq(Vec3f lhs) { 
+pure f32 Vec3fLengthSq(Vec3f lhs) { 
     return lhs * lhs;	
 }
 
-pure f32 Distance(Vec3f lhs, Vec3f rhs)  { 
+pure f32 Vec3fDistance(Vec3f lhs, Vec3f rhs)  { 
     return Sqrt(DistanceSq(lhs, rhs)); 
 }
 
-pure f32 Length(Vec3f lhs)  { 
+pure f32 Vec3fLength(Vec3f lhs)  { 
     return Sqrt(LengthSq(lhs));
 };
 
-pure Vec3f Normalize(Vec3f lhs)  {
+pure Vec3f Vec3fNormalize(Vec3f lhs)  {
     Vec3f ret = lhs;
     f32 len = Length(lhs);
     if (IsFloatEq(len, 1.f))
@@ -376,7 +376,7 @@ struct Mat4f {
     f32 arr[16];
 };
 
-pure m4f32 Mat4fTranslation(f32 x, f32 y, f32 z) {
+pure m4f32 Mat4fMakeTranslation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
