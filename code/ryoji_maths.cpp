@@ -2,7 +2,7 @@
 #define __RYOJI_MATH__
 
 global constexpr f32 PIf = 3.14159265358979323846264338327950288f;
-global EPSILONf = 1.19209290E-07f;
+global constexpr f32 EPSILONf = 1.19209290E-07f;
 
 pure bool IsFloatEq(f32 lhs, f32 rhs) {
     return Abs(lhs - rhs) <= EPSILONf;
@@ -72,14 +72,14 @@ pure f32 Sqrt(f32 number) {
 pure f32 ASin(f32 x) {
     f32 negate = f32(x < 0);
     x = Abs(x);
-    f32 ret = -0.0187293;
+    f32 ret = -0.0187293f;
     ret *= x;
-    ret += 0.0742610;
+    ret += 0.0742610f;
     ret *= x;
-    ret -= 0.2121144;
+    ret -= 0.2121144f;
     ret *= x;
-    ret += 1.5707288;
-    ret = PIf *0.5 - Sqrt(1.0f - x)*ret;
+    ret += 1.5707288f;
+    ret = PIf *0.5f - Sqrt(1.0f - x)*ret;
     return ret - 2 * negate * ret;
 }
 
@@ -96,7 +96,7 @@ pure f32 ACos(f32 x) {
     ret = ret - 0.2121144f;
     ret = ret * x;
     ret = ret + 1.5707288f;
-    ret = ret * Sqrt(1.0-x);
+    ret = ret * Sqrt(1.f-x);
     ret = ret - 2.f * negate * ret;
     return negate * PIf + ret;
 }
@@ -111,104 +111,6 @@ pure f32 ATan(f32 x) {
 }
 
 
-// NOTE(Momo): Bitfields
-pure u8 MaskBits(u8 flag, u8 mask) { 
-    return flag | mask; 
-}
-
-pure u16 MaskBits(u16 flag, u16 mask) { 
-    return flag | mask;
-}
-
-pure u32 MaskBits(u32 flag, u32 mask) { 
-    return flag | mask; 
-}
-
-pure u64 MaskBits(u64 flag, u64 mask) {
-    return flag | mask; 
-}
-
-pure u8 UnmaskBits(u8 flag, u8 mask) 	{ 
-    return flag & ~mask; 
-}
-
-pure u16 UnmaskBits(u16 flag, u16 mask)  { 
-    return flag & ~mask; 
-}
-
-pure u32 UnmaskBits(u32 flag, u32 mask)  {
-    return flag & ~mask; 
-}
-
-pure u64 UnmaskBits(u64 flag, u64 mask)  {
-    return flag & ~mask; 
-}
-
-pure u8 SetBits(u8 flag, usize index, bool val)  {
-    Assert((sizeof(u8) * 8) > (index - 1));
-    return (flag & ~(1U << index)) | (val << index);
-}
-pure u16 SetBits(u16 flag, usize index, bool val)  {
-    Assert((sizeof(u16) * 8) > (index - 1));
-    return (flag & ~(1U << index)) | (val << index);
-}
-pure u32 SetBits(u32 flag, usize index, bool val)  {
-    Assert((sizeof(u32) * 8) > (index - 1));
-    return (flag & ~(1U << index)) | (val << index);
-}
-pure u64 SetBits(u64 flag, usize index, bool val)  {
-    Assert((sizeof(u64) * 8) > (index - 1));
-    return (flag & ~(1ULL << index)) | (val << index);
-}
-
-pure u8 GetBits(u8 flag, usize index, bool val)  {
-    Assert((sizeof(u8) * 8) > (index - 1));
-    return (flag & (1U << index)) > 0;
-}
-pure u16 GetBits(u16 flag, usize index, bool val)  {
-    Assert((sizeof(u16) * 8) > (index - 1));
-    return (flag & (1U << index)) > 0;
-}
-pure u32 GetBits(u32 flag, usize index, bool val)  {
-    Assert((sizeof(u32) * 8) > (index - 1));
-    return (flag & (1U << index)) > 0;
-}
-pure u64 GetBits(u64 flag, usize index, bool val)  {
-    Assert((sizeof(u64) * 8) > (index - 1));
-    return (flag & (1UL << index)) > 0;
-}
-
-pure bool AreAnyBitsOn(u8  flag, u8 mask) { 
-    return (flag & mask) > 0; 
-}
-
-pure bool AreAnyBitsOn(u16 flag, u16 mask) { 
-    return (flag & mask) > 0; 
-}
-
-pure bool AreAnyBitsOn(u32 flag, u32 mask) {
-    return (flag & mask) > 0; 
-}
-
-pure bool AreAnyBitsOn(u64 flag, u64 mask) { 
-    return (flag & mask) > 0;
-}
-
-pure bool AreAllBitsOn(u8 flag, u8 mask) {
-    return flag == mask; 
-}
-
-pure bool AreAllBitsOn(u16 flag, u16 mask) { 
-    return flag == mask;
-}
-
-pure bool AreAllBitsOn(u32 flag, u32 mask) { 
-    return flag == mask;
-}
-
-pure bool AreAllBitsOn(u64 flag, u64 mask) { 
-    return flag == mask; 
-}
 
 // NOTE(Momo): Vectors
 struct v3f {
@@ -224,61 +126,40 @@ struct v3f {
     inline f32 operator[](usize index) const { 
         return arr[index]; 
     } 
-}
-
-
-pure v3f& operator+=(v3f rhs)  {
-    x += rhs.x;
-    y += rhs.y;
-    z += rhs.z;
-    return *this;
-}
-
-pure v3f& operator-=(v3f rhs)  {
-    x -= rhs.x;
-    y -= rhs.y;
-    z -= rhs.z;
-    return *this;
-}
-
-
-pure v3f& operator*=(v3f rhs)  {
-    x *= rhs.x;
-    y *= rhs.y;
-    z *= rhs.z;
-    return *this;
-}
-
-pure v3f& operator/=(v3f rhs)  {
-    x /= rhs.x;
-    y /= rhs.y;
-    z /= rhs.z;
-    return *this;
-}
-
-pure v3f& operator*=(float rhs)  {
-    x *= rhs;
-    y *= rhs;
-    z *= rhs;
-    return *this;
-}
-
-pure v3f& operator/=(float rhs)  {
-    x /= rhs;
-    y /= rhs;
-    z /= rhs;
-    return *this;
-}
-
 };
 
+pure v3f Add(v3f lhs, v3f rhs) {
+    v3f result;
+    result.x = lhs.x + rhs.x;
+    result.y = lhs.y + rhs.y;
+    result.z = lhs.z + rhs.z;
+    return result;
+}
+pure v3f Sub(v3f lhs, v3f rhs) {
+    v3f result;
+    result.x = lhs.x - rhs.x;
+    result.y = lhs.y - rhs.y;
+    result.z = lhs.z - rhs.z;
+    return result;
+}
+
+pure bool IsEqual(v3f lhs, v3f rhs) {
+    return 
+        IsFloatEq(lhs.x, rhs.x) && 
+        IsFloatEq(lhs.y, rhs.y) && 
+        IsFloatEq(lhs.z, rhs.z);
+}
+
+pure v3f Dot(v3f lhs, f32 rhs) {
+    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
+}
 
 pure v3f operator+(v3f lhs, v3f rhs)  { 
-    return v3f(lhs) += rhs; 
+    return Add(lhs, rhs); 
 }
 
 pure v3f operator-(v3f lhs, v3f rhs)  { 
-    return v3f(lhs) -= rhs;
+    return Sub(lhs, rhs);
 }
 
 pure v3f operator*(v3f lhs, float rhs)  { 
@@ -300,10 +181,7 @@ pure float operator*(v3f lhs, v3f rhs) {
 
 
 pure bool operator==(v3f lhs, v3f rhs)  { 
-    return 
-        IsFloatEq(lhs.x, rhs.x) && 
-        IsFloatEq(lhs.y, rhs.y) && 
-        IsFloatEq(lhs.z, rhs.z);
+    return IsEqual(lhs, rhs);
 }
 
 pure bool operator!=(v3f lhs, v3f rhs) { 
