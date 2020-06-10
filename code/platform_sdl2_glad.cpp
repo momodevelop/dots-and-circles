@@ -163,10 +163,8 @@ int main(int argc, char* argv[]) {
     
     GLint transformLoc = glGetUniformLocation(program, "transform");
     
-    //autotranslation = M44F32Trans();
-    
-    
-    
+    auto translation = GetRotationZ(1.1f);
+    //auto translation = GetTranslation(0.5f, 0.5f, 0.5f);
     
     SDLTimer timer;
     SDLTimerStart(&timer);
@@ -189,7 +187,7 @@ int main(int argc, char* argv[]) {
         glUseProgram(program);
         //glBindImageTexture(0, texture, 0, false, 0, GL_READ_ONLY, GL_RGBA8);
         //glUniform1i(0, 0);
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, translation);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, translation.arr);
         glBindVertexArray(VAO);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

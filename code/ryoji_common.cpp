@@ -26,6 +26,7 @@ using uptr = uintptr_t;
 #define KILOBYTE 1 << 10
 #define MEGABYTE 1 << 20
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*array))
+#define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 // Assertion
 #ifdef ASSERT 

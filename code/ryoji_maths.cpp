@@ -4,7 +4,7 @@
 global constexpr f32 PIf = 3.14159265358979323846264338327950288f;
 global constexpr f32 EPSILONf = 1.19209290E-07f;
 
-pure bool IsFloatEq(f32 lhs, f32 rhs) {
+pure bool IsEqual(f32 lhs, f32 rhs) {
     return Abs(lhs - rhs) <= EPSILONf;
 }
 
@@ -129,28 +129,35 @@ struct v3f {
 };
 
 pure v3f Add(v3f lhs, v3f rhs) {
-    v3f result;
-    result.x = lhs.x + rhs.x;
-    result.y = lhs.y + rhs.y;
-    result.z = lhs.z + rhs.z;
-    return result;
-}
-pure v3f Sub(v3f lhs, v3f rhs) {
-    v3f result;
-    result.x = lhs.x - rhs.x;
-    result.y = lhs.y - rhs.y;
-    result.z = lhs.z - rhs.z;
-    return result;
+    return { lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z };
+    
 }
 
+pure v3f Sub(v3f lhs, v3f rhs) {
+    return { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z };
+}
+
+pure v3f Mul(v3f lhs, f32 rhs) {
+    return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs };
+}
+
+pure v3f Div(v3f lhs, f32 rhs) {
+    Assert(IsEqual(rhs, 0.f));
+    return { lhs.x / rhs, lhs.y / rhs, lhs.z / rhs };
+}
+
+pure v3f Negate(v3f lhs){
+    return {-lhs.x, -lhs.y, -lhs.z};
+    
+}
 pure bool IsEqual(v3f lhs, v3f rhs) {
     return 
-        IsFloatEq(lhs.x, rhs.x) && 
-        IsFloatEq(lhs.y, rhs.y) && 
-        IsFloatEq(lhs.z, rhs.z);
+        IsEqual(lhs.x, rhs.x) && 
+        IsEqual(lhs.y, rhs.y) && 
+        IsEqual(lhs.z, rhs.z);
 }
 
-pure v3f Dot(v3f lhs, f32 rhs) {
+pure f32 Dot(v3f lhs, v3f rhs) {
     return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
 
@@ -162,23 +169,37 @@ pure v3f operator-(v3f lhs, v3f rhs)  {
     return Sub(lhs, rhs);
 }
 
-pure v3f operator*(v3f lhs, float rhs)  { 
-    return v3f(lhs) *= rhs; 
+pure v3f operator*(v3f lhs, f32 rhs)  { 
+    return Mul(lhs, rhs);
 }
 
 pure v3f operator*(float lhs, v3f rhs)  { 
-    return v3f(rhs) *= lhs; 
+    return Mul(rhs, lhs);
 }
 
-pure v3f operator/(v3f lhs, float rhs)  { 
-    return v3f(lhs) /= rhs; 
+pure f32 operator*(v3f lhs, v3f rhs) {
+    return Dot(lhs, rhs); 
 }
 
-//NOTE(Momo): Dot product
-pure float operator*(v3f lhs, v3f rhs) { 
-    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; 
+pure v3f operator/(v3f lhs, f32 rhs)  { 
+    return Div(lhs, rhs); 
 }
 
+pure v3f& operator+=(v3f& lhs, v3f rhs) {
+    return lhs = lhs + rhs;
+}
+
+v3f& operator-=(v3f& lhs, v3f rhs) {
+    return lhs = lhs - rhs;
+}
+
+v3f& operator*=(v3f& lhs, f32 rhs) {
+    return lhs = lhs * rhs;
+}
+
+v3f& operator/=(v3f& lhs, f32 rhs) {
+    return lhs = lhs / rhs;
+}
 
 pure bool operator==(v3f lhs, v3f rhs)  { 
     return IsEqual(lhs, rhs);
@@ -196,56 +217,50 @@ pure v3f Midpoint(v3f lhs, v3f rhs)  {
     return (lhs + rhs)/2.f; 
 }
 
-pure f32 DistanceSq(v3f lhs, v3f rhs) { 
+pure f32 DistSq(v3f lhs, v3f rhs) { 
     return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
 }
 
-pure f32 LengthSq(v3f lhs) { 
+pure f32 LenSq(v3f lhs) { 
     return lhs * lhs;	
 }
 
-pure f32 Distance(v3f lhs, v3f rhs)  { 
-    return Sqrt(DistanceSq(lhs, rhs)); 
+pure f32 Dist(v3f lhs, v3f rhs)  { 
+    return Sqrt(DistSq(lhs, rhs)); 
 }
 
-pure f32 Length(v3f lhs)  { 
-    return Sqrt(LengthSq(lhs));
+pure f32 Len(v3f lhs)  { 
+    return Sqrt(LenSq(lhs));
 };
 
 pure v3f Normalize(v3f lhs)  {
     v3f ret = lhs;
-    f32 len = Length(lhs);
-    if (IsFloatEq(len, 1.f))
+    f32 len = Len(lhs);
+    if (IsEqual(len, 1.f))
         return ret;
     ret /= len;
     return ret;
 }
 
 pure f32 AngleBetween(v3f lhs, v3f rhs) {
-    return ACos((lhs * rhs) / (Length(lhs) * Length(rhs)));
-}
-
-pure f32 AngleBetweenNormalized(v3f lhs, v3f rhs) {
-    Assert(IsFloatEqual(LengthSq(lhs), 1.f));
-    Assert(IsFloatEqual(LengthSq(rhs), 1.f));
-    return ACos(lhs * rhs);
+    return ACos((lhs * rhs) / (Len(lhs) * Len(rhs)));
 }
 
 pure bool IsPerpendicular(v3f lhs, v3f rhs) 
 { 
-    return IsFloatEq((lhs * rhs), 0.f); 
+    return IsEqual((lhs * rhs), 0.f); 
 }
 
-pure bool IsSameDirection(v3f lhs, v3f rhs) { 
+pure bool IsSameDir(v3f lhs, v3f rhs) { 
     return (lhs * rhs) > 0.f; 
 }
 
-pure bool IsOppositeDirection(v3f lhs, v3f rhs) { 
+pure bool IsOppDir(v3f lhs, v3f rhs) { 
     return (lhs * rhs) < 0.f;
 }
 
 pure v3f Project(v3f from, v3f to) { 
-    return (to * from) / LengthSq(to) * to;
+    return (to * from) / LenSq(to) * to;
 }
 
 // NOTE(Momo): Column Major Matrices
@@ -253,7 +268,7 @@ struct m4f {
     f32 arr[16];
 };
 
-pure m4f MakeTranslation(f32 x, f32 y, f32 z) {
+pure m4f GetTranslation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -262,16 +277,20 @@ pure m4f MakeTranslation(f32 x, f32 y, f32 z) {
     };
 }
 
-
-#if 0
-m4f Rotate3(f32 radians) {
-    return {
-        1.f, 0.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        Cos(radians), 0.f, 0.f, 1.f
-    }
+pure m4f GetTranslation(v3f vec) {
+    return GetTranslation(vec.x, vec.y, vec.z);
 }
-#endif
+
+
+
+pure m4f GetRotationZ(f32 rad) {
+    return {
+        Cos(rad),  Sin(rad), 0.f, 0.f,
+        -Sin(rad), Cos(rad), 0.f, 0.f,
+        0.f,       0.f,      1.f, 0.f,
+        0.f,       0.f,      0.f, 1.f
+    };
+}
+
 
 #endif 
