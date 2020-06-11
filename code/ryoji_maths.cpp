@@ -326,8 +326,10 @@ pure m4f OrthoProjection(f32 wmin, f32 wmax,
     return {
         2.f/(wmax-wmin), 0.f, 0.f, 0.f,
         0.f, 2.f/(hmax-hmin), 0.f, 0.f,
-        0.f, 0.f, 2.f/(dmax-dmin), 0.f,
-        0.f, 0.f, 0.f, 1.f
+        0.f, 0.f, -2.f/(dmax-dmin), 0.f,
+        -(wmin+wmax)/(wmax-wmin), 
+        -(hmin+hmax)/(hmax-hmin), 
+        -(dmin+dmax)/(dmax-dmin), 1.f
     };
 }
 

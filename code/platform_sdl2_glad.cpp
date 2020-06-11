@@ -185,7 +185,9 @@ int main(int argc, char* argv[]) {
         u64 timeElapsed = TimeElapsed(&timer);
         //float delta = (f32)timeElapsed/1000.f;
         
-        auto translation = OrthoProjection(0.f, 1600.f, 0.f, 900.f, 0.f, 100.f);
+        //auto translation = OrthoProjection(0.f, 1600.f, 0.f, 900.f, 0.f, 100.f);
+        auto translation = OrthoProjection(-800.f, 800.f, -450.f, 450.f, 0.f, 100.f);
+        
         Wrap(ticker, 0.f, 2.f);
         
         
