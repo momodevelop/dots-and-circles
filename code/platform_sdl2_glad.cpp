@@ -163,12 +163,13 @@ int main(int argc, char* argv[]) {
     
     GLint transformLoc = glGetUniformLocation(program, "transform");
     
-    auto translation = GetRotationZ(1.1f);
+    
     //auto translation = GetTranslation(0.5f, 0.5f, 0.5f);
     
     SDLTimer timer;
-    SDLTimerStart(&timer);
+    Start(&timer);
     
+    f32 ticker = 0.f;
     while(gIsRunning) {
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
@@ -179,6 +180,14 @@ int main(int argc, char* argv[]) {
                 } break; 
             }
         }
+        
+        
+        u64 timeElapsed = TimeElapsed(&timer);
+        float delta = (f32)timeElapsed/1000.f;
+        
+        auto translation = Scale(ticker, ticker,);
+        ticker += delta;
+        Wrap(ticker, 0.f, 2.f);
         
         
         // TODO(Momo): Update + Render
@@ -193,9 +202,8 @@ int main(int argc, char* argv[]) {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         
         // NOTE(Momo): Timer update
-        SDLTimerTick(&timer);
-        SDL_Log("%lld  ms\n", SDLTimerGetTimeElapsed(&timer));
-        
+        Tick(&timer);
+        SDL_Log("%lld  ms\n", timeElapsed);
         
         SDL_GL_SwapWindow(window);
         

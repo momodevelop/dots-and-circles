@@ -27,6 +27,11 @@ using uptr = uintptr_t;
 #define MEGABYTE 1 << 20
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*array))
 #define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#define WrapHigh(x, high) while (x > high) x -= high;
+#define WrapLow(x, low) while(x < low) x += low;
+#define Wrap(x, low, high) WrapHigh(x, high) WrapLow(x, low)
+
+
 
 // Assertion
 #ifdef ASSERT 

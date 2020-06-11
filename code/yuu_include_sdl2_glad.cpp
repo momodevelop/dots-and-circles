@@ -30,26 +30,25 @@ struct SDLTimer {
     u64 endFrameCounter;
     u64 countsElapsed;
 };
-pure void SDLTimerStart(SDLTimer* timer) {
+pure void Start(SDLTimer* timer) {
     timer->countFrequency = SDL_GetPerformanceFrequency();
     timer->prevFrameCounter = SDL_GetPerformanceCounter();
     timer->endFrameCounter = 0;
     timer->countsElapsed = 0;
 }
-pure void SDLTimerTick(SDLTimer * timer) {
+pure void Tick(SDLTimer * timer) {
     timer->endFrameCounter = SDL_GetPerformanceCounter();
     timer->countsElapsed = timer->endFrameCounter - timer->prevFrameCounter;
     timer->prevFrameCounter = timer->endFrameCounter; 
 }
 
-pure u64 SDLTimerGetTimeElapsed(SDLTimer * timer) {
-    // NOTE(Momo): Quick tip 
+pure u64 TimeElapsed(SDLTimer * timer) {
+    // NOTE(Momo): 
     // PerformanceCounter(C) gives how many count has elapsed.
     // PerformanceFrequency(F) gives how many counts/second.
     // Thus: seconds = C / F, and milliseconds = seconds * 1000
     return (1000 * timer->countsElapsed) / timer->countFrequency;
 }
-
 
 // NOTE(Momo): Helpers
 struct SDLWindowSize{ i32 w, h; } SDLGetWindowSize(SDL_Window* window) {

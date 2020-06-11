@@ -268,7 +268,7 @@ struct m4f {
     f32 arr[16];
 };
 
-pure m4f GetTranslation(f32 x, f32 y, f32 z) {
+pure m4f Translation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -277,13 +277,31 @@ pure m4f GetTranslation(f32 x, f32 y, f32 z) {
     };
 }
 
-pure m4f GetTranslation(v3f vec) {
-    return GetTranslation(vec.x, vec.y, vec.z);
+pure m4f Translation(v3f vec) {
+    return Translation(vec.x, vec.y, vec.z);
+}
+
+pure m4f RotationX(f32 rad) {
+    return {
+        1.f,  0.f,      0.f,      0.f,
+        0.f,  Cos(rad), Sin(rad), 0.f,  
+        0.f, -Sin(rad), Cos(rad), 0.f,
+        0.f,  0.f,      0.f,      1.f
+    };
+}
+
+pure m4f RotationY(f32 rad) {
+    return {
+        Cos(rad),  0.f, -Sin(rad), 0.f,
+        0.f,       1.f, 0.f,       0.f,
+        Sin(rad),  0.f, Cos(rad),  0.f,
+        0.f,       0.f, 0.f,       1.f
+    };
+    
 }
 
 
-
-pure m4f GetRotationZ(f32 rad) {
+pure m4f RotationZ(f32 rad) {
     return {
         Cos(rad),  Sin(rad), 0.f, 0.f,
         -Sin(rad), Cos(rad), 0.f, 0.f,
@@ -292,5 +310,17 @@ pure m4f GetRotationZ(f32 rad) {
     };
 }
 
+pure m4f Scale(f32 x, f32 y, f32 z) {
+    return {
+        x, 0.f, 0.f, 0.f,
+        0.f, y, 0.f, 0.f,
+        0.f, 0.f, z, 0.f,
+        0.f, 0.f, 0.f, 1.f
+    };
+}
+
+pure m4f Scale(v3f vec) {
+    return Scale(vec.x, vec.y, vec.z);
+}
 
 #endif 
