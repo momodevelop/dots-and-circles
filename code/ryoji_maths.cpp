@@ -277,9 +277,6 @@ pure m4f Translation(f32 x, f32 y, f32 z) {
     };
 }
 
-pure m4f Translation(v3f vec) {
-    return Translation(vec.x, vec.y, vec.z);
-}
 
 pure m4f RotationX(f32 rad) {
     return {
@@ -319,8 +316,20 @@ pure m4f Scale(f32 x, f32 y, f32 z) {
     };
 }
 
-pure m4f Scale(v3f vec) {
-    return Scale(vec.x, vec.y, vec.z);
+
+pure m4f OrthoProjection(f32 wmin, f32 wmax, 
+                         f32 hmin, f32 hmax,
+                         f32 dmin, f32 dmax) {
+    
+    
+    
+    return {
+        2.f/(wmax-wmin), 0.f, 0.f, 0.f,
+        0.f, 2.f/(hmax-hmin), 0.f, 0.f,
+        0.f, 0.f, 2.f/(dmax-dmin), 0.f,
+        0.f, 0.f, 0.f, 1.f
+    };
 }
+
 
 #endif 

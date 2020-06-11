@@ -21,10 +21,10 @@ void GameLog(const char * str, ...) {
 // NOTE(Momo): Temp code!
 // Need to think of how to manage these
 GLfloat data[] = {
-    -0.5f, -0.5f, 0.f,
-    -0.5f, 0.5f, 0.f,
-    0.5f, -0.5f, 0.f,
-    0.5f, 0.5f, 0.f};
+    -100.0f, -100.0f, 0.f,
+    -100.f, 100.0f, 0.f,
+    100.f, -100.f, 0.f,
+    100.f, 100.f, 0.f};
 GLuint VBO; 
 i32 bufferIndex = 0;
 GLuint VAO;
@@ -183,10 +183,9 @@ int main(int argc, char* argv[]) {
         
         
         u64 timeElapsed = TimeElapsed(&timer);
-        float delta = (f32)timeElapsed/1000.f;
+        //float delta = (f32)timeElapsed/1000.f;
         
-        auto translation = Scale(ticker, ticker,);
-        ticker += delta;
+        auto translation = OrthoProjection(0.f, 1600.f, 0.f, 900.f, 0.f, 100.f);
         Wrap(ticker, 0.f, 2.f);
         
         
