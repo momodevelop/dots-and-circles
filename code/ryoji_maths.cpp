@@ -268,7 +268,7 @@ struct m4f {
     f32 arr[16];
 };
 
-pure m4f Translation(f32 x, f32 y, f32 z) {
+pure m4f CreateTranslation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -278,7 +278,7 @@ pure m4f Translation(f32 x, f32 y, f32 z) {
 }
 
 
-pure m4f RotationX(f32 rad) {
+pure m4f CreateRotationX(f32 rad) {
     return {
         1.f,  0.f,      0.f,      0.f,
         0.f,  Cos(rad), Sin(rad), 0.f,  
@@ -287,7 +287,7 @@ pure m4f RotationX(f32 rad) {
     };
 }
 
-pure m4f RotationY(f32 rad) {
+pure m4f CreateRotationY(f32 rad) {
     return {
         Cos(rad),  0.f, -Sin(rad), 0.f,
         0.f,       1.f, 0.f,       0.f,
@@ -298,7 +298,7 @@ pure m4f RotationY(f32 rad) {
 }
 
 
-pure m4f RotationZ(f32 rad) {
+pure m4f CreateRotationZ(f32 rad) {
     return {
         Cos(rad),  Sin(rad), 0.f, 0.f,
         -Sin(rad), Cos(rad), 0.f, 0.f,
@@ -307,7 +307,7 @@ pure m4f RotationZ(f32 rad) {
     };
 }
 
-pure m4f Scale(f32 x, f32 y, f32 z) {
+pure m4f CreateScale(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f, 0.f,
         0.f, y, 0.f, 0.f,
@@ -317,21 +317,35 @@ pure m4f Scale(f32 x, f32 y, f32 z) {
 }
 
 
-pure m4f OrthoProjection(f32 wmin, f32 wmax, 
-                         f32 hmin, f32 hmax,
-                         f32 dmin, f32 dmax) {
-    
-    
+// 
+pure m4f CreateOrthoProjection(f32 ndcLeft, f32 ndcRight,
+                               f32 ndcBottom, f32 ndcTop,
+                               f32 ndcNear, f32 ndcFar,
+                               f32 left, f32 right, 
+                               f32 bottom, f32 top,
+                               f32 near, f32 far,
+                               bool flipZ) {
     
     return {
-        2.f/(wmax-wmin), 0.f, 0.f, 0.f,
-        0.f, 2.f/(hmax-hmin), 0.f, 0.f,
-        0.f, 0.f, -2.f/(dmax-dmin), 0.f,
-        -(wmin+wmax)/(wmax-wmin), 
-        -(hmin+hmax)/(hmax-hmin), 
-        -(dmin+dmax)/(dmax-dmin), 1.f
+        
+        
+        (ndcRight-ndcLeft)/(right-left), 0.f, 0.f, 0.f,
+        0.f, (ndcTop-ndcBottom)/(top-bottom), 0.f, 0.f,
+        0.f, 0.f, (flipZ ? -1.f : 1.f) * (ndcFar-ndcNear)/(far-near), 0.f,
+        -(right+left)/(right-left), 
+        -(top+bottom)/(top-bottom), 
+        -(far+near)/(far-near), 1.f
     };
 }
 
+
+pure m4f CreateIdentity() {
+    return {
+        1.f, 0.f, 0.f, 0.f,
+        0.f, 1.f, 0.f, 0.f,
+        0.f, 0.f, 1.f, 0.f,
+        0.f, 0.f, 0.f, 1.f,
+    };
+}
 
 #endif 

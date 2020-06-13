@@ -98,6 +98,7 @@ pure SDLError SDLReadFileToString(char* dest, Sint64 destSize, const char * path
 }
 
 // NOTE(Momo): GL-related
+#ifdef DEBUG_OGL
 struct GLDebug {
     typedef void (*LoggerType)(const char* fmt, ...);
     LoggerType logger;
@@ -117,6 +118,11 @@ pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
                        const GLchar* msg,
                        const void* userParam)
     {
+        
+        // Ignore NOTIFICATION severity
+        if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) 
+            return;
+        
         (void)length; 
         (void)userParam;
         char* _source;
@@ -199,15 +205,16 @@ pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
             _severity = "LOW";
             break;
             
-            case GL_DEBUG_SEVERITY_NOTIFICATION:
-            _severity = "NOTIFICATION";
-            break;
+            //case GL_DEBUG_SEVERITY_NOTIFICATION:
+            //_severity = "NOTIFICATION";
+            //break;
             
             default:
             _severity = "UNKNOWN";
             break;
         }
-        //printf("%s\n", msg);
+        
+        
         reinterpret_cast<const GLDebug*>(userParam)->logger("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
                                                             id, _type, _severity, _source, msg);
         
@@ -215,4 +222,14 @@ pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
     
     glDebugMessageCallback(callback, debugObj);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
+}
+#endif // DEBUG_OGL
+
+
+pure void GLAttachShader(GLuint program, GLenum type, const char* code) {
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &code, NULL);
+    glCompileShader(shader);
+    glAttachShader(program, shader);
+    glDeleteShader(shader);
 }
