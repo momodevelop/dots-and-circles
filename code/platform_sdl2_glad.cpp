@@ -1,13 +1,27 @@
 #include <stdio.h>
-#include "ryoji_common.cpp"
+#include <stdlib.h>
+#include "ryoji.cpp"
 #include "ryoji_maths.cpp"
 
 //#include "ryoji_arenas.cpp"
-#include "yuu_include_sdl2_glad.cpp"
+#include "yuu_sdl2.cpp"
+#include "yuu_gl.cpp"
+//#include "yuu_glad_simple_modelmgr.cpp"
 
 //#include "vigil_interface.h"
 
 global bool gIsRunning = true;
+
+
+void PrintMatrix(m4f mat) {
+    SDL_Log("=== Checking Matrix=== \n");
+    for (u8 i = 0; i < 4; ++i) {
+        for (u8 j = 0; j < 4; ++j) {
+            SDL_Log("%.2f ", mat[j+i*4]);
+        }
+        SDL_Log("\n");
+    }
+}
 
 
 // NOTE(Momo): Game interface implementation
@@ -100,15 +114,14 @@ int main(int argc, char* argv[]) {
     
     // TODO(Momo): Game state init here?
     
-    // TODO(Momo):  Test code, remove later
-    
     f32 quadModel[] = {
         // position   
-        0.05f,  0.05f, 0.0f,  // top right
-        0.05f, -0.05f, 0.0f,  // bottom right
-        -0.05f, -0.05f, 0.0f,  // bottom left
-        -0.05f,  0.05f, 0.0f   // top left 
+        1.f,  1.f, 0.0f,  // top right
+        1.f, -1.f, 0.0f,  // bottom right
+        -1.f, -1.f, 0.0f,  // bottom left
+        -1.f,  1.f, 0.0f   // top left 
     };
+    
     
     f32 quadColorful[] = {
         1.f, 0.f, 0.f, 0.f,
@@ -149,6 +162,21 @@ int main(int argc, char* argv[]) {
         VAO_BIND_INSTANCE_TRANSFORM,
     };
     
+    // Setup Textures
+    //GLuint texture;
+    //glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    //glTextureStorage2D(texture, 1, GL_RGBA8, 500, 500);
+    
+    
+    /*GLuint testTexture[500*500];
+    for(int i = 0; i < 500*500; ++i) {
+        testTexture[i] = rand();
+    }
+    glTextureSubImage2D(texture, 0, 0, 0, 500, 500, GL_RGBA, GL_UNSIGNED_BYTE, testTexture);
+    */
+    
+    
+    
     // Setup VBO
     GLuint vbos[VBO_MAX]; 
     glCreateBuffers(VBO_MAX, vbos);
@@ -156,6 +184,7 @@ int main(int argc, char* argv[]) {
     glNamedBufferStorage(vbos[VBO_INDICES], sizeof(quadIndices), quadIndices, 0);
     glNamedBufferStorage(vbos[VBO_COLORS], sizeof(quadColorful), quadColorful, 0);
     glNamedBufferStorage(vbos[VBO_INSTANCE_TRANSFORM], sizeof(m4f) * kMaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    
     
     // Setup VAO
     GLuint vaos;
@@ -187,7 +216,6 @@ int main(int argc, char* argv[]) {
     glVertexArrayAttribFormat(vaos, ATTRIB_INSTANCE_TRANSFORM4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
     
     // Also must bind 4 times???
-    // NOTE(Momo): PLEASEPELASEPLEASE PLEASE WORK JFC THERE IS ALMOST NO DOCUMENTATION ON THIS LOL
     glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM1, VAO_BIND_INSTANCE_TRANSFORM);
     glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM2, VAO_BIND_INSTANCE_TRANSFORM);
     glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM3, VAO_BIND_INSTANCE_TRANSFORM);
@@ -200,59 +228,32 @@ int main(int argc, char* argv[]) {
     glVertexArrayElementBuffer(vaos, vbos[VBO_INDICES]);
     
     // Set up instance transforms for our entities (for now set to identity)
-    m4f instanceTransforms[kMaxEntities];
-#if 1
-    f32 startX = -0.9f;
-    f32 startY = -0.9f;
-    f32 xOffset = 0.1f;
-    f32 yOffset = 0.1f;
-    f32 currentXOffset = 0.f;
-    f32 currentYOffset = 0.f;
-    
-    for (int i = 0; i < kMaxEntities; ++i) {
-        instanceTransforms[i] = CreateTranslation(startX + currentXOffset, startY + currentYOffset, 0.f); 
-        
-        glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], i * sizeof(m4f), sizeof(m4f), &instanceTransforms[i]);
-        
-        currentXOffset += xOffset;
-        printf("%f\n", currentXOffset);
-        if (currentXOffset > 1.9f) {
-            currentXOffset = 0.f;
-            currentYOffset += yOffset;
-        }
-    }
-    
-#else 
-    instanceTransforms[0] = CreateTranslation(-0.25, -0.25f, 0.f); 
-    glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], 0, sizeof(m4f), &instanceTransforms[0]);
-    
-    instanceTransforms[1] = CreateTranslation(0.25, 0.25f, 0.f); 
-    glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], 1 * sizeof(m4f), sizeof(m4f), &instanceTransforms[1]);
-    
-#endif
     
     
-    // Shader
+    
+    
+    
+    // Setup Shader Program
     GLuint program = glCreateProgram();
-    //glObjectLabel(GL_PROGRAM, program, -1, "TextureCopy");
     
-    // Read in shader code
+    // Setup Vertex Shader
     char buffer[KILOBYTE] = {};
-    if (auto err = SDLReadFileToString(buffer, KILOBYTE, "shader/simple.vts", false);
-        err != SDLError::NONE) {
+    if (auto err = SDLReadFile(buffer, KILOBYTE, "shader/simple.vts", false);
+        err != SDLERR_NONE) {
         SDL_Log("Loading simple.vts failed: %s", SDLErrorGetMsg(err));
         return 1;
     }
     GLAttachShader(program, GL_VERTEX_SHADER, buffer);
     memset(buffer, 0, KILOBYTE);
     
-    
-    if (auto err = SDLReadFileToString(buffer, KILOBYTE, "shader/simple.fms", false);
-        err != SDLError::NONE) {
+    // Setup Fragment Shader
+    if (auto err = SDLReadFile(buffer, KILOBYTE, "shader/simple.fms", false);
+        err != SDLERR_NONE) {
         SDL_Log("Loading simple.fms failed: %s", SDLErrorGetMsg(err));
         return 1;
     }
     GLAttachShader(program, GL_FRAGMENT_SHADER, buffer);
+    
     
     // Link Shaders
     glLinkProgram(program);
@@ -265,22 +266,25 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    //GLint transformLoc = glGetUniformLocation(program, "transform");
-    //auto translation = GetTranslation(0.5f, 0.5f, 0.5f);
+    // Setup uniform variables
+    GLint uProjectionLoc = glGetUniformLocation(program, "uProjection");
+    auto uProjection  = CreateOrthoProjection(-1.f, 1.f,
+                                              -1.f, 1.f,
+                                              -1.f, 1.f,
+                                              -windowWidth * 0.5f,  windowWidth * 0.5f, 
+                                              -windowHeight * 0.5f, windowHeight * 0.5f,
+                                              -100.f, 100.f,
+                                              true);
     
-#if 0
-    auto translation = CreateOrthoProjection(-1.f, 1.f,
-                                             -1.f, 1.f,
-                                             -1.f, 1.f,
-                                             -windowWidth * 0.5f,  windowWidth * 0.5f, 
-                                             -windowHeight * 0.5f, windowHeight * 0.5f,
-                                             0.1f, 100.f,
-                                             true);
-#endif
+    glProgramUniformMatrix4fv(program, uProjectionLoc, 1, GL_FALSE, &uProjection[0]);
+    
     
     SDLTimer timer;
     Start(&timer);
     
+    
+    
+    f32 rotation = 0.f;
     while(gIsRunning) {
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
@@ -291,12 +295,44 @@ int main(int argc, char* argv[]) {
                 } break; 
             }
         }
-        //u64 timeElapsed = TimeElapsed(&timer);
+        u64 timeElapsed = TimeElapsed(&timer);
+        f32 deltaTime = timeElapsed / 1000.f;
         
         
         // TODO(Momo): Update + Render
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        // NOTE(Momo): Test Update Code
+        m4f instanceTransforms[kMaxEntities];
+        f32 startX = -windowWidth/2.f;
+        f32 startY = -windowHeight/2.f;
+        f32 xOffset = 200.f;
+        f32 yOffset = 200.f;
+        f32 currentXOffset = 0.f;
+        f32 currentYOffset = 0.f;
+        for (int i = 0; i < kMaxEntities; ++i) {
+            instanceTransforms[i] = 
+                CreateTranslation(startX + currentXOffset, startY + currentYOffset, 0.f) *
+                CreateRotationZ(rotation) *
+                CreateScale(100.f, 100.f, 1.f);
+            
+            glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], i * sizeof(m4f), sizeof(m4f), &instanceTransforms[i]);
+            
+            currentXOffset += xOffset;
+            if (currentXOffset > windowWidth) {
+                currentXOffset = 0.f;
+                currentYOffset += yOffset;
+            }
+        }
+        rotation += deltaTime;
+        SDL_Log("%f vs %f\n", rotation, PIf);
+        if (rotation > PIf ){
+            f32 diff = rotation - PIf;
+            rotation = -PIf + diff;
+        }
+        
+        // Update End
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program);
         glBindVertexArray(vaos);
         glDrawElementsInstanced(GL_TRIANGLES, ArrayCount(quadIndices), GL_UNSIGNED_BYTE, nullptr, kMaxEntities);

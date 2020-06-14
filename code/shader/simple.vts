@@ -1,13 +1,13 @@
 #version 450 core 
 layout(location=0) in vec3 aModelVtx; 
 layout(location=1) in vec4 aColor;
-layout(location=) in mat4 aInstanceTf;
+layout(location=2) in mat4 aTransform;
 
 out vec4 mColor;
 
-void main(void) {
-	//gl_Position = projectionTF * viewTF * instanceTF * vec4(aModelVtx, 1.0);
-	gl_Position = aInstanceTf * vec4(aModelVtx, 1.0);
+uniform mat4 uProjection;
 
+void main(void) {
+	gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);
 	mColor = aColor;
 }

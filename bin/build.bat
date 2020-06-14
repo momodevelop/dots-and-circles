@@ -23,6 +23,9 @@ rmdir %cd%\shader
 mkdir %cd%\shader
 copy %base%\shader\* %cd%\shader
 
+rmdir %cd%\assets
+mkdir %cd%\assets
+copy %base%\assets\* %cd%\assets
 
 REM Make Debug
 

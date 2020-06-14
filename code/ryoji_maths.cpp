@@ -112,6 +112,7 @@ pure f32 ATan(f32 x) {
 
 
 
+
 // NOTE(Momo): Vectors
 struct v3f {
     union {
@@ -266,6 +267,9 @@ pure v3f Project(v3f from, v3f to) {
 // NOTE(Momo): Column Major Matrices
 struct m4f {
     f32 arr[16];
+    
+    inline const f32& operator[](usize index) const { return arr[index]; }
+    inline f32& operator[](usize index) { return arr[index];}
 };
 
 pure m4f CreateTranslation(f32 x, f32 y, f32 z) {
@@ -324,11 +328,9 @@ pure m4f CreateOrthoProjection(f32 ndcLeft, f32 ndcRight,
                                f32 left, f32 right, 
                                f32 bottom, f32 top,
                                f32 near, f32 far,
-                               bool flipZ) {
-    
+                               bool flipZ) 
+{
     return {
-        
-        
         (ndcRight-ndcLeft)/(right-left), 0.f, 0.f, 0.f,
         0.f, (ndcTop-ndcBottom)/(top-bottom), 0.f, 0.f,
         0.f, 0.f, (flipZ ? -1.f : 1.f) * (ndcFar-ndcNear)/(far-near), 0.f,
@@ -346,6 +348,20 @@ pure m4f CreateIdentity() {
         0.f, 0.f, 1.f, 0.f,
         0.f, 0.f, 0.f, 1.f,
     };
+}
+
+
+pure m4f operator*(m4f lhs, m4f rhs) {
+    m4f res = {0};
+    
+    for (u8 i = 0; i < 4; i++) { 
+        for (u8 j = 0; j < 4; j++) { 
+            u8 index = j+i*4;
+            for (u8 k = 0; k < 4; k++) 
+                res[index] += lhs[j+k*4] *  rhs[i+k*4]; 
+        } 
+    } 
+    return res;
 }
 
 #endif 
