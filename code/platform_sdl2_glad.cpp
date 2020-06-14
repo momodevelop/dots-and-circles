@@ -112,7 +112,6 @@ int main(int argc, char* argv[]) {
     glViewport(0,0,windowWidth,windowHeight);
     glClearColor(0.0f, 0.3f, 0.3f, 0.0f);
     
-    // TODO(Momo): Game state init here?
     
     f32 quadModel[] = {
         // position   
@@ -121,7 +120,6 @@ int main(int argc, char* argv[]) {
         -1.f, -1.f, 0.0f,  // bottom left
         -1.f,  1.f, 0.0f   // top left 
     };
-    
     
     f32 quadColorful[] = {
         1.f, 0.f, 0.f, 0.f,
@@ -135,6 +133,12 @@ int main(int argc, char* argv[]) {
         1, 2, 3,
     };
     
+    f32 quadTexCoords[] = {
+        0.f, 0.f, // bottom left
+        1.f, 0.f, // bottom right
+        1.f, 1.f, // top right
+        0.f, 1.f  // top left
+    };
     
     constexpr u32 kMaxEntities = 361;
     
@@ -143,6 +147,7 @@ int main(int argc, char* argv[]) {
         VBO_MODEL,
         VBO_INDICES,
         VBO_COLORS,
+        VBO_TEX_COORDS,
         VBO_INSTANCE_TRANSFORM,
         VBO_MAX
     };
@@ -150,6 +155,7 @@ int main(int argc, char* argv[]) {
     enum {
         ATTRIB_MODEL,
         ATTRIB_COLORS,
+        ATTRIB_TEX_COORDS,
         ATTRIB_INSTANCE_TRANSFORM1,
         ATTRIB_INSTANCE_TRANSFORM2,
         ATTRIB_INSTANCE_TRANSFORM3,
@@ -159,21 +165,32 @@ int main(int argc, char* argv[]) {
     enum {
         VAO_BIND_MODEL,
         VAO_BIND_COLORS,
+        VAO_BIND_TEX_COORDS,
         VAO_BIND_INSTANCE_TRANSFORM,
     };
     
     // Setup Textures
-    //GLuint texture;
-    //glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    //glTextureStorage2D(texture, 1, GL_RGBA8, 500, 500);
+    GLuint texture;
+    constexpr u32 textureW = 11;
+    constexpr u32 textureH = 11;
     
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    glTextureStorage2D(texture, 1, GL_RGBA8, textureW, textureH);
     
-    /*GLuint testTexture[500*500];
-    for(int i = 0; i < 500*500; ++i) {
-        testTexture[i] = rand();
+    u32 colorA = 255 << 8 | 255 << 16 | 255;
+    
+    // Test texture 
+    u32 imageData[textureW * textureH];
+    for (u32 i = 0; i < textureW * textureH; ++i) {
+        if (i%2)
+            imageData[i] = colorA;
+        else
+            imageData[i] = 0;
+        
     }
-    glTextureSubImage2D(texture, 0, 0, 0, 500, 500, GL_RGBA, GL_UNSIGNED_BYTE, testTexture);
-    */
+    glTextureSubImage2D(texture, 0, 0, 0, textureW, textureH, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+    
+    
     
     
     
@@ -183,6 +200,7 @@ int main(int argc, char* argv[]) {
     glNamedBufferStorage(vbos[VBO_MODEL], sizeof(quadModel), quadModel, 0);
     glNamedBufferStorage(vbos[VBO_INDICES], sizeof(quadIndices), quadIndices, 0);
     glNamedBufferStorage(vbos[VBO_COLORS], sizeof(quadColorful), quadColorful, 0);
+    glNamedBufferStorage(vbos[VBO_TEX_COORDS], sizeof(quadTexCoords), quadTexCoords, 0);
     glNamedBufferStorage(vbos[VBO_INSTANCE_TRANSFORM], sizeof(m4f) * kMaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
@@ -191,19 +209,26 @@ int main(int argc, char* argv[]) {
     glCreateVertexArrays(1, &vaos);
     glVertexArrayVertexBuffer(vaos, VAO_BIND_MODEL,  vbos[VBO_MODEL],   0, sizeof(f32)*3);
     glVertexArrayVertexBuffer(vaos, VAO_BIND_COLORS,  vbos[VBO_COLORS],  0, sizeof(f32)*4);
+    glVertexArrayVertexBuffer(vaos, VAO_BIND_TEX_COORDS, vbos[VBO_TEX_COORDS], 0, sizeof(f32) * 2);
     glVertexArrayVertexBuffer(vaos, VAO_BIND_INSTANCE_TRANSFORM, vbos[VBO_INSTANCE_TRANSFORM], 0, sizeof(m4f));
     
     
     // Setup Attributes
     // aModelVtx
-    glEnableVertexArrayAttrib(vaos, ATTRIB_MODEL); // aModelVtx
+    glEnableVertexArrayAttrib(vaos, ATTRIB_MODEL); 
     glVertexArrayAttribFormat(vaos, ATTRIB_MODEL, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(vaos, ATTRIB_MODEL, VAO_BIND_MODEL);
     
     // aColor
-    glEnableVertexArrayAttrib(vaos, ATTRIB_COLORS); // aColor
+    glEnableVertexArrayAttrib(vaos, ATTRIB_COLORS); 
     glVertexArrayAttribFormat(vaos, ATTRIB_COLORS, 4, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribBinding(vaos, ATTRIB_COLORS, VAO_BIND_COLORS);
+    
+    // aTexCoord
+    glEnableVertexArrayAttrib(vaos, ATTRIB_TEX_COORDS); 
+    glVertexArrayAttribFormat(vaos, ATTRIB_TEX_COORDS, 2, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(vaos, ATTRIB_TEX_COORDS, VAO_BIND_TEX_COORDS);
+    
     
     // aInstanceTf
     glEnableVertexArrayAttrib(vaos, ATTRIB_INSTANCE_TRANSFORM1); // aInstanceTf
@@ -215,7 +240,6 @@ int main(int argc, char* argv[]) {
     glEnableVertexArrayAttrib(vaos, ATTRIB_INSTANCE_TRANSFORM4); 
     glVertexArrayAttribFormat(vaos, ATTRIB_INSTANCE_TRANSFORM4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
     
-    // Also must bind 4 times???
     glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM1, VAO_BIND_INSTANCE_TRANSFORM);
     glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM2, VAO_BIND_INSTANCE_TRANSFORM);
     glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM3, VAO_BIND_INSTANCE_TRANSFORM);
@@ -324,7 +348,6 @@ int main(int argc, char* argv[]) {
             }
         }
         rotation += deltaTime;
-        SDL_Log("%f vs %f\n", rotation, PIf);
         if (rotation > PIf ){
             f32 diff = rotation - PIf;
             rotation = -PIf + diff;
@@ -334,6 +357,7 @@ int main(int argc, char* argv[]) {
         
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program);
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(vaos);
         glDrawElementsInstanced(GL_TRIANGLES, ArrayCount(quadIndices), GL_UNSIGNED_BYTE, nullptr, kMaxEntities);
         
