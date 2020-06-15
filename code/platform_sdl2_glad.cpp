@@ -34,8 +34,6 @@ void GameLog(const char * str, ...) {
 
 
 
-
-
 int main(int argc, char* argv[]) {
     
     
@@ -262,7 +260,7 @@ int main(int argc, char* argv[]) {
     
     // Setup Vertex Shader
     char buffer[KILOBYTE] = {};
-    if (auto err = SDLReadFile(buffer, KILOBYTE, "shader/simple.vts", false);
+    if (auto err = SDLReadFileStr(buffer, KILOBYTE, "shader/simple.vts");
         err != SDLERR_NONE) {
         SDL_Log("Loading simple.vts failed: %s", SDLErrorGetMsg(err));
         return 1;
@@ -271,7 +269,7 @@ int main(int argc, char* argv[]) {
     memset(buffer, 0, KILOBYTE);
     
     // Setup Fragment Shader
-    if (auto err = SDLReadFile(buffer, KILOBYTE, "shader/simple.fms", false);
+    if (auto err = SDLReadFileStr(buffer, KILOBYTE, "shader/simple.fms");
         err != SDLERR_NONE) {
         SDL_Log("Loading simple.fms failed: %s", SDLErrorGetMsg(err));
         return 1;

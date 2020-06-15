@@ -133,7 +133,7 @@ pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
 #endif // DEBUG_OGL
 
 
-pure void GLAttachShader(GLuint program, GLenum type, const char* code) {
+pure void GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &code, NULL);
     glCompileShader(shader);

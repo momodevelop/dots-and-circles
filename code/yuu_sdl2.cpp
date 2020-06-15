@@ -6,8 +6,7 @@
 enum SDLError {
     SDLERR_NONE,
     SDLERR_FILE_CANNOT_OPEN,
-    SDLERR_FILESIZE_BIGGER_THAN_BUFFER,
-    SDLERR_FILESIZE_AND_READSIZE_DUN_MATCH,
+    SDLERR_DEST_TOO_SMOL,
 };
 
 pure const char* SDLErrorGetMsg(SDLError error) {
@@ -15,12 +14,10 @@ pure const char* SDLErrorGetMsg(SDLError error) {
         case SDLERR_FILE_CANNOT_OPEN: {
             return "Cannot open file";
         }
-        case SDLERR_FILESIZE_BIGGER_THAN_BUFFER: {
-            return "Filesize is bigger than buffer";
+        case SDLERR_DEST_TOO_SMOL: {
+            return "Destination too smol";
         }
-        case SDLERR_FILESIZE_AND_READSIZE_DUN_MATCH: {
-            return "Filesize and readsize don't match";
-        }
+        
     }
     return nullptr;
 }
@@ -59,10 +56,8 @@ struct SDLWindowSize{ i32 w, h; } SDLGetWindowSize(SDL_Window* window) {
     return { w, h };
 }
 
-
-// NOTE(Momo): File IO
-pure SDLError SDLReadFile(char* dest, Sint64 destSize, const char * path, bool binary) {
-    SDL_RWops * file = SDL_RWFromFile(path, binary ? "rb" : "r");
+pure SDLError SDLReadFileStr(char* dest, Sint64 destSize, const char * path) {
+    SDL_RWops * file = SDL_RWFromFile(path, "r");
     if (file == nullptr) {
         return SDLERR_FILE_CANNOT_OPEN;
     }
@@ -71,31 +66,34 @@ pure SDLError SDLReadFile(char* dest, Sint64 destSize, const char * path, bool b
     };
     
     // Get file size
-    Sint64 filesize = SDL_RWsize(file);
+    Sint64 filesize = SDL_RWsize(file); // Does not include EOF
     if ((filesize + 1) > destSize) {
-        return SDLERR_FILESIZE_BIGGER_THAN_BUFFER;
+        return SDLERR_DEST_TOO_SMOL;
     }
     
-    // Read into the buffer
-    char* itr = dest;
-    Sint64 readTotal = 0;
-    
-    
-    while(readTotal < filesize) {
-        size_t readAmount = SDL_RWread(file, itr, sizeof(char), 1);
-        readTotal += readAmount;
-        itr += readAmount;
-        
-    }
-    
-    // If the total amount of bytes read is not the filesize, 
-    // something went wrong although honestly, the damage was done lol
-    if (readTotal < filesize) {
-        return SDLERR_FILESIZE_AND_READSIZE_DUN_MATCH;
-    }
+    SDL_RWread(file, dest, sizeof(char), filesize);
     
     // Don't forget null terminating value
-    itr[readTotal] = 0;
+    dest[filesize] = 0;
+    
+    return SDLERR_NONE;
+}
+
+pure SDLError SDLReadFileBin(void* dest, Sint64 destSize, const char * path) {
+    SDL_RWops * file = SDL_RWFromFile(path, "rb");
+    if (file == nullptr) {
+        return SDLERR_FILE_CANNOT_OPEN;
+    }
+    Defer{
+        SDL_RWclose(file);
+    };
+    
+    // Get file size
+    Sint64 filesize = SDL_RWsize(file); // Does not include EOF
+    if (filesize > destSize) {
+        return SDLERR_DEST_TOO_SMOL;
+    }
+    SDL_RWread(file, dest, sizeof(char), filesize);
     return SDLERR_NONE;
 }
 

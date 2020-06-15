@@ -25,8 +25,6 @@ using uptr = uintptr_t;
 #define Min(x, y) ((x < y) x : y)
 
 
-// Assertion
-// TODO(Momo): make macros purple
 #if ASSERT 
 #include <assert.h>
 #define Assert(x) assert(x)

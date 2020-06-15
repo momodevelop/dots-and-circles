@@ -4,3 +4,4 @@ build/
 !SDL2test.lib
 !SDL2.dll
 *.exe
+*.obj
