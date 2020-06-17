@@ -47,9 +47,9 @@ namespace zawarudo {
     }
 }
 
-#define zawarudo_VARANON_IMPL(LINE) zawarudo_ryojianon##LINE
-#define zawarudo_VARANON(line) zawarudo_VARANON_IMPL(line)
-#define Defer auto zawarudo_VARANON(__LINE__) = zawarudo::defer_dummy{} + [&]()
+#define zawarudo_VARANON_IMPL(COUNTER) zawarudo_ryojianon##COUNTER
+#define zawarudo_VARANON(counter) zawarudo_VARANON_IMPL(counter)
+#define Defer auto zawarudo_VARANON(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
 
 #endif

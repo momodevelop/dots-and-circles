@@ -11,7 +11,9 @@ struct GLDebug {
     LoggerType logger;
 };
 
-pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
+pure 
+void 
+GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     
@@ -133,7 +135,9 @@ pure void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
 #endif // DEBUG_OGL
 
 
-pure void GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
+pure 
+void 
+GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &code, NULL);
     glCompileShader(shader);

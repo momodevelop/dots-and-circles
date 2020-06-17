@@ -11,7 +11,7 @@ call %me%\..\bin\setup_cl_x64.bat
 
 SET entry_point=%base%\platform_sdl2_glad.cpp
 SET include_dir=
-SET opts=-MT -WX -W4 -wd4201 -Zi -Oi -GR- -EHa -Gm- -std:c++17
+SET opts=-MT -WX -W4 -wd4201 -wd4996 -Zi -Oi -GR- -EHa -Gm- -std:c++17
 SET linker_opts=-subsystem:console -libpath:%base%\thirdparty\sdl2\lib\x64
 SET libs=SDL2main.lib SDL2.lib shell32.lib opengl32.lib
 SET additional=-DDEBUG_OGL

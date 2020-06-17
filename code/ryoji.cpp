@@ -28,6 +28,7 @@ using uptr = uintptr_t;
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 #define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define TwoToOne(row, col, width) (col + row * width) 
+#define Complement(x, low, high) (high - x + low)
 
 // Assertion
 #ifdef ASSERT 
@@ -43,6 +44,7 @@ template<class F> struct ScopeGuard {
     F f;
     ~ScopeGuard() { f(); }
 };
+
 namespace zawarudo {
     struct defer_dummy {
     };
@@ -52,9 +54,22 @@ namespace zawarudo {
     }
 }
 
-#define zawarudo_VARANON_IMPL(LINE) zawarudo_ryojianon##LINE
-#define zawarudo_VARANON(line) zawarudo_VARANON_IMPL(line)
-#define Defer auto zawarudo_VARANON(__LINE__) = zawarudo::defer_dummy{} + [&]()
+#define zawarudo_VARANON_IMPL(COUNTER) zawarudo_ryojianon##COUNTER
+#define zawarudo_VARANON(counter) zawarudo_VARANON_IMPL(counter)
+#define Defer auto zawarudo_VARANON(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
+// Enum string generator
+#define zawarudo_GENERATE_ENUM_PART(ENUM) ENUM,
+#define zawarudo_GENERATE_SWITCH_CASE_PART(STR) case STR: return #STR;
+#define GenerateEnumStrings(ENUM_NAME, FUNC_NAME, FOREACH) \
+enum ENUM_NAME { \
+FOREACH(zawarudo_GENERATE_ENUM_PART) \
+};\
+pure const char* FUNC_NAME(ENUM_NAME e) { \
+switch(e) { \
+FOREACH(zawarudo_GENERATE_SWITCH_CASE_PART) \
+default: return ""; \
+} \
+}\
 
 #endif

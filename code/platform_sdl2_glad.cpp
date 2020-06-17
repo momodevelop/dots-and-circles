@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "ryoji.cpp"
 #include "ryoji_maths.cpp"
-
+#include "ryoji_fileio.cpp"
 //#include "ryoji_arenas.cpp"
 #include "yuu_sdl2.cpp"
 #include "yuu_gl.cpp"
@@ -11,17 +11,6 @@
 //#include "vigil_interface.h"
 
 global bool gIsRunning = true;
-
-
-void PrintMatrix(m4f mat) {
-    SDL_Log("=== Checking Matrix=== \n");
-    for (u8 i = 0; i < 4; ++i) {
-        for (u8 j = 0; j < 4; ++j) {
-            SDL_Log("%.2f ", mat[j+i*4]);
-        }
-        SDL_Log("\n");
-    }
-}
 
 
 // NOTE(Momo): Game interface implementation
@@ -39,16 +28,16 @@ int main(int argc, char* argv[]) {
     
     (void)argc;
     (void)argv;
-    SDL_Log("SDL initializing\n");
+    puts("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
-        SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+        printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
     Defer{
-        SDL_Log("SDL shutting down\n");
+        puts("SDL shutting down\n");
         SDL_Quit();
     };
-    SDL_Log("SDL creating Window\n");
+    puts("SDL creating Window\n");
     SDL_Window* window = SDL_CreateWindow("Vigil", 
                                           SDL_WINDOWPOS_UNDEFINED, 
                                           SDL_WINDOWPOS_UNDEFINED, 
@@ -56,12 +45,12 @@ int main(int argc, char* argv[]) {
                                           900, 
                                           SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     Defer{
-        SDL_Log("SDL destroying window\n");
+        puts("SDL destroying window\n");
         SDL_DestroyWindow(window);
     };
     
     if (window == nullptr) {
-        SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+        printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
     
@@ -78,23 +67,23 @@ int main(int argc, char* argv[]) {
     
     
     // Request an OpenGL 4.5 context (should be core)
-    SDL_Log("SDL creating context\n");
+    puts("SDL creating context\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     if (context == nullptr) { 
-        SDL_Log("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
+        printf("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
     Defer {
-        SDL_Log("SDL deleting context\b", SDL_GetError());
+        printf("SDL deleting context\b");
         SDL_GL_DeleteContext(context);
     };
     
     gladLoadGLLoader(SDL_GL_GetProcAddress);
     
-    SDL_Log("OpenGL loaded!\n");
-    SDL_Log("[OpenGL] Vendor:   %s\n", glGetString(GL_VENDOR));
-    SDL_Log("[OpenGL] Renderer: %s\n", glGetString(GL_RENDERER));
-    SDL_Log("[OpenGL] Version:  %s\n", glGetString(GL_VERSION));
+    puts("OpenGL loaded!\n");
+    printf("[OpenGL] Vendor:   %s\n", glGetString(GL_VENDOR));
+    printf("[OpenGL] Renderer: %s\n", glGetString(GL_RENDERER));
+    printf("[OpenGL] Version:  %s\n", glGetString(GL_VERSION));
     
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -199,7 +188,7 @@ int main(int argc, char* argv[]) {
     glNamedBufferStorage(vbos[VBO_INDICES], sizeof(quadIndices), quadIndices, 0);
     glNamedBufferStorage(vbos[VBO_COLORS], sizeof(quadColorful), quadColorful, 0);
     glNamedBufferStorage(vbos[VBO_TEX_COORDS], sizeof(quadTexCoords), quadTexCoords, 0);
-    glNamedBufferStorage(vbos[VBO_INSTANCE_TRANSFORM], sizeof(m4f) * kMaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(vbos[VBO_INSTANCE_TRANSFORM], sizeof(Mat44f) * kMaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
     // Setup VAO
@@ -208,7 +197,7 @@ int main(int argc, char* argv[]) {
     glVertexArrayVertexBuffer(vaos, VAO_BIND_MODEL,  vbos[VBO_MODEL],   0, sizeof(f32)*3);
     glVertexArrayVertexBuffer(vaos, VAO_BIND_COLORS,  vbos[VBO_COLORS],  0, sizeof(f32)*4);
     glVertexArrayVertexBuffer(vaos, VAO_BIND_TEX_COORDS, vbos[VBO_TEX_COORDS], 0, sizeof(f32) * 2);
-    glVertexArrayVertexBuffer(vaos, VAO_BIND_INSTANCE_TRANSFORM, vbos[VBO_INSTANCE_TRANSFORM], 0, sizeof(m4f));
+    glVertexArrayVertexBuffer(vaos, VAO_BIND_INSTANCE_TRANSFORM, vbos[VBO_INSTANCE_TRANSFORM], 0, sizeof(Mat44f));
     
     
     // Setup Attributes
@@ -260,18 +249,16 @@ int main(int argc, char* argv[]) {
     
     // Setup Vertex Shader
     char buffer[KILOBYTE] = {};
-    if (auto err = SDLReadFileStr(buffer, KILOBYTE, "shader/simple.vts");
-        err != SDLERR_NONE) {
-        SDL_Log("Loading simple.vts failed: %s", SDLErrorGetMsg(err));
+    if (auto err = ReadFileStr(buffer, KILOBYTE, "shader/simple.vts"); err > 0) {
+        printf("Loading simple.vts failed: %s", ErrFileIOStr(err));
         return 1;
     }
     GLAttachShader(program, GL_VERTEX_SHADER, buffer);
     memset(buffer, 0, KILOBYTE);
     
     // Setup Fragment Shader
-    if (auto err = SDLReadFileStr(buffer, KILOBYTE, "shader/simple.fms");
-        err != SDLERR_NONE) {
-        SDL_Log("Loading simple.fms failed: %s", SDLErrorGetMsg(err));
+    if (auto err = ReadFileStr(buffer, KILOBYTE, "shader/simple.fms"); err > 0) {
+        printf("Loading simple.fms failed: %s", ErrFileIOStr(err));
         return 1;
     }
     GLAttachShader(program, GL_FRAGMENT_SHADER, buffer);
@@ -284,7 +271,7 @@ int main(int argc, char* argv[]) {
     if (result != GL_TRUE) {
         char msg[KILOBYTE];
         glGetProgramInfoLog(program, KILOBYTE, nullptr, msg);
-        SDL_Log("Linking program failed:\n %s\n", msg);
+        printf("Linking program failed:\n %s\n", msg);
         return 1;
     }
     
@@ -305,7 +292,6 @@ int main(int argc, char* argv[]) {
     Start(&timer);
     
     
-    
     f32 rotation = 0.f;
     while(gIsRunning) {
         SDL_Event e;
@@ -313,7 +299,7 @@ int main(int argc, char* argv[]) {
             switch(e.type) {
                 case SDL_QUIT: {
                     gIsRunning = false;
-                    SDL_Log("Quit triggered\n");
+                    puts("Quit triggered\n");
                 } break; 
             }
         }
@@ -324,7 +310,7 @@ int main(int argc, char* argv[]) {
         // TODO(Momo): Update + Render
         
         // NOTE(Momo): Test Update Code
-        m4f instanceTransforms[kMaxEntities];
+        Mat44f instanceTransforms[kMaxEntities];
         f32 startX = -windowWidth/2.f;
         f32 startY = -windowHeight/2.f;
         f32 xOffset = 200.f;
@@ -337,7 +323,7 @@ int main(int argc, char* argv[]) {
                 CreateRotationZ(rotation) *
                 CreateScale(100.f, 100.f, 1.f);
             
-            glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], i * sizeof(m4f), sizeof(m4f), &instanceTransforms[i]);
+            glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], i * sizeof(Mat44f), sizeof(Mat44f), &instanceTransforms[i]);
             
             currentXOffset += xOffset;
             if (currentXOffset > windowWidth) {

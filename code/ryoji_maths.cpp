@@ -114,7 +114,7 @@ pure f32 ATan(f32 x) {
 
 
 // NOTE(Momo): Vectors
-struct v3f {
+struct Vec3f {
     union {
         f32 arr[3];
         struct {
@@ -129,113 +129,113 @@ struct v3f {
     } 
 };
 
-pure v3f Add(v3f lhs, v3f rhs) {
+pure Vec3f Add(Vec3f lhs, Vec3f rhs) {
     return { lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z };
     
 }
 
-pure v3f Sub(v3f lhs, v3f rhs) {
+pure Vec3f Sub(Vec3f lhs, Vec3f rhs) {
     return { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z };
 }
 
-pure v3f Mul(v3f lhs, f32 rhs) {
+pure Vec3f Mul(Vec3f lhs, f32 rhs) {
     return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs };
 }
 
-pure v3f Div(v3f lhs, f32 rhs) {
+pure Vec3f Div(Vec3f lhs, f32 rhs) {
     Assert(IsEqual(rhs, 0.f));
     return { lhs.x / rhs, lhs.y / rhs, lhs.z / rhs };
 }
 
-pure v3f Negate(v3f lhs){
+pure Vec3f Negate(Vec3f lhs){
     return {-lhs.x, -lhs.y, -lhs.z};
     
 }
-pure bool IsEqual(v3f lhs, v3f rhs) {
+pure bool IsEqual(Vec3f lhs, Vec3f rhs) {
     return 
         IsEqual(lhs.x, rhs.x) && 
         IsEqual(lhs.y, rhs.y) && 
         IsEqual(lhs.z, rhs.z);
 }
 
-pure f32 Dot(v3f lhs, v3f rhs) {
+pure f32 Dot(Vec3f lhs, Vec3f rhs) {
     return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
 }
 
-pure v3f operator+(v3f lhs, v3f rhs)  { 
+pure Vec3f operator+(Vec3f lhs, Vec3f rhs)  { 
     return Add(lhs, rhs); 
 }
 
-pure v3f operator-(v3f lhs, v3f rhs)  { 
+pure Vec3f operator-(Vec3f lhs, Vec3f rhs)  { 
     return Sub(lhs, rhs);
 }
 
-pure v3f operator*(v3f lhs, f32 rhs)  { 
+pure Vec3f operator*(Vec3f lhs, f32 rhs)  { 
     return Mul(lhs, rhs);
 }
 
-pure v3f operator*(float lhs, v3f rhs)  { 
+pure Vec3f operator*(float lhs, Vec3f rhs)  { 
     return Mul(rhs, lhs);
 }
 
-pure f32 operator*(v3f lhs, v3f rhs) {
+pure f32 operator*(Vec3f lhs, Vec3f rhs) {
     return Dot(lhs, rhs); 
 }
 
-pure v3f operator/(v3f lhs, f32 rhs)  { 
+pure Vec3f operator/(Vec3f lhs, f32 rhs)  { 
     return Div(lhs, rhs); 
 }
 
-pure v3f& operator+=(v3f& lhs, v3f rhs) {
+pure Vec3f& operator+=(Vec3f& lhs, Vec3f rhs) {
     return lhs = lhs + rhs;
 }
 
-v3f& operator-=(v3f& lhs, v3f rhs) {
+Vec3f& operator-=(Vec3f& lhs, Vec3f rhs) {
     return lhs = lhs - rhs;
 }
 
-v3f& operator*=(v3f& lhs, f32 rhs) {
+Vec3f& operator*=(Vec3f& lhs, f32 rhs) {
     return lhs = lhs * rhs;
 }
 
-v3f& operator/=(v3f& lhs, f32 rhs) {
+Vec3f& operator/=(Vec3f& lhs, f32 rhs) {
     return lhs = lhs / rhs;
 }
 
-pure bool operator==(v3f lhs, v3f rhs)  { 
+pure bool operator==(Vec3f lhs, Vec3f rhs)  { 
     return IsEqual(lhs, rhs);
 }
 
-pure bool operator!=(v3f lhs, v3f rhs) { 
+pure bool operator!=(Vec3f lhs, Vec3f rhs) { 
     return !(lhs == rhs); 
 }
 
-pure v3f operator-(v3f lhs)  {  
+pure Vec3f operator-(Vec3f lhs)  {  
     return { -lhs.x, -lhs.y, -lhs.z }; 
 }
 
-pure v3f Midpoint(v3f lhs, v3f rhs)  { 
+pure Vec3f Midpoint(Vec3f lhs, Vec3f rhs)  { 
     return (lhs + rhs)/2.f; 
 }
 
-pure f32 DistSq(v3f lhs, v3f rhs) { 
+pure f32 DistSq(Vec3f lhs, Vec3f rhs) { 
     return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
 }
 
-pure f32 LenSq(v3f lhs) { 
+pure f32 LenSq(Vec3f lhs) { 
     return lhs * lhs;	
 }
 
-pure f32 Dist(v3f lhs, v3f rhs)  { 
+pure f32 Dist(Vec3f lhs, Vec3f rhs)  { 
     return Sqrt(DistSq(lhs, rhs)); 
 }
 
-pure f32 Len(v3f lhs)  { 
+pure f32 Len(Vec3f lhs)  { 
     return Sqrt(LenSq(lhs));
 };
 
-pure v3f Normalize(v3f lhs)  {
-    v3f ret = lhs;
+pure Vec3f Normalize(Vec3f lhs)  {
+    Vec3f ret = lhs;
     f32 len = Len(lhs);
     if (IsEqual(len, 1.f))
         return ret;
@@ -243,36 +243,36 @@ pure v3f Normalize(v3f lhs)  {
     return ret;
 }
 
-pure f32 AngleBetween(v3f lhs, v3f rhs) {
+pure f32 AngleBetween(Vec3f lhs, Vec3f rhs) {
     return ACos((lhs * rhs) / (Len(lhs) * Len(rhs)));
 }
 
-pure bool IsPerpendicular(v3f lhs, v3f rhs) 
+pure bool IsPerpendicular(Vec3f lhs, Vec3f rhs) 
 { 
     return IsEqual((lhs * rhs), 0.f); 
 }
 
-pure bool IsSameDir(v3f lhs, v3f rhs) { 
+pure bool IsSameDir(Vec3f lhs, Vec3f rhs) { 
     return (lhs * rhs) > 0.f; 
 }
 
-pure bool IsOppDir(v3f lhs, v3f rhs) { 
+pure bool IsOppDir(Vec3f lhs, Vec3f rhs) { 
     return (lhs * rhs) < 0.f;
 }
 
-pure v3f Project(v3f from, v3f to) { 
+pure Vec3f Project(Vec3f from, Vec3f to) { 
     return (to * from) / LenSq(to) * to;
 }
 
 // NOTE(Momo): Column Major Matrices
-struct m4f {
+struct Mat44f {
     f32 arr[16];
     
     inline const f32& operator[](usize index) const { return arr[index]; }
     inline f32& operator[](usize index) { return arr[index];}
 };
 
-pure m4f CreateTranslation(f32 x, f32 y, f32 z) {
+pure Mat44f CreateTranslation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -282,7 +282,7 @@ pure m4f CreateTranslation(f32 x, f32 y, f32 z) {
 }
 
 
-pure m4f CreateRotationX(f32 rad) {
+pure Mat44f CreateRotationX(f32 rad) {
     return {
         1.f,  0.f,      0.f,      0.f,
         0.f,  Cos(rad), Sin(rad), 0.f,  
@@ -291,7 +291,7 @@ pure m4f CreateRotationX(f32 rad) {
     };
 }
 
-pure m4f CreateRotationY(f32 rad) {
+pure Mat44f CreateRotationY(f32 rad) {
     return {
         Cos(rad),  0.f, -Sin(rad), 0.f,
         0.f,       1.f, 0.f,       0.f,
@@ -302,7 +302,7 @@ pure m4f CreateRotationY(f32 rad) {
 }
 
 
-pure m4f CreateRotationZ(f32 rad) {
+pure Mat44f CreateRotationZ(f32 rad) {
     return {
         Cos(rad),  Sin(rad), 0.f, 0.f,
         -Sin(rad), Cos(rad), 0.f, 0.f,
@@ -311,7 +311,7 @@ pure m4f CreateRotationZ(f32 rad) {
     };
 }
 
-pure m4f CreateScale(f32 x, f32 y, f32 z) {
+pure Mat44f CreateScale(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f, 0.f,
         0.f, y, 0.f, 0.f,
@@ -322,13 +322,13 @@ pure m4f CreateScale(f32 x, f32 y, f32 z) {
 
 
 // 
-pure m4f CreateOrthoProjection(f32 ndcLeft, f32 ndcRight,
-                               f32 ndcBottom, f32 ndcTop,
-                               f32 ndcNear, f32 ndcFar,
-                               f32 left, f32 right, 
-                               f32 bottom, f32 top,
-                               f32 near, f32 far,
-                               bool flipZ) 
+pure Mat44f CreateOrthoProjection(f32 ndcLeft, f32 ndcRight,
+                                  f32 ndcBottom, f32 ndcTop,
+                                  f32 ndcNear, f32 ndcFar,
+                                  f32 left, f32 right, 
+                                  f32 bottom, f32 top,
+                                  f32 near, f32 far,
+                                  bool flipZ) 
 {
     return {
         (ndcRight-ndcLeft)/(right-left), 0.f, 0.f, 0.f,
@@ -341,7 +341,7 @@ pure m4f CreateOrthoProjection(f32 ndcLeft, f32 ndcRight,
 }
 
 
-pure m4f CreateIdentity() {
+pure Mat44f CreateIdentity() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -351,8 +351,8 @@ pure m4f CreateIdentity() {
 }
 
 
-pure m4f operator*(m4f lhs, m4f rhs) {
-    m4f res = {0};
+pure Mat44f operator*(Mat44f lhs, Mat44f rhs) {
+    Mat44f res = {0};
     
     for (u8 i = 0; i < 4; i++) { 
         for (u8 j = 0; j < 4; j++) { 
