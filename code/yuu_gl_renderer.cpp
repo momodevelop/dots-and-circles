@@ -1,7 +1,7 @@
 #ifndef __YUU_GLAD_RENDERER__
 #define __YUU_GLAD_RENDERER__
 
-
+#include "yuu_gl.cpp"
 // NOTE(Momo): For now, we are only a sprite manager
 
 

@@ -1,7 +1,9 @@
 #ifndef __RYOJI_FILEIO__
 #define __RYOJI_FILEIO__
 
+#include "ryoji.cpp"
 #include <cstdio>
+
 
 #define FOREACH_ERRORS(ERR) \
 ERR(ERR_FILEIO_NONE)   \
@@ -40,6 +42,11 @@ ReadFileStr(char* dest, u64 destSize, const char * path) {
     return ERR_FILEIO_NONE;
 }
 
+
+
+
+
+#if UNUSED
 pure 
 ErrFileIO
 ReadFileBin(void* dest, u64 destSize, const char * path) {
@@ -62,6 +69,7 @@ ReadFileBin(void* dest, u64 destSize, const char * path) {
     fread(dest, sizeof(char), filesize, file);
     return ERR_FILEIO_NONE;
 }
+#endif
 
 
 

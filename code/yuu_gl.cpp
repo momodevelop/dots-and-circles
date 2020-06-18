@@ -7,8 +7,7 @@
 
 #ifdef DEBUG_OGL
 struct GLDebug {
-    typedef void (*LoggerType)(const char* fmt, ...);
-    LoggerType logger;
+    void (*Logger)(const char* fmt, ...);
 };
 
 pure 
@@ -123,9 +122,9 @@ GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
             break;
         }
         
-        
-        reinterpret_cast<const GLDebug*>(userParam)->logger("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
-                                                            id, _type, _severity, _source, msg);
+        const GLDebug* db = (const GLDebug*)userParam;
+        db->Logger("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
+                   id, _type, _severity, _source, msg);
         
     };
     

@@ -1,6 +1,8 @@
 #ifndef __RYOJI_MATH__
 #define __RYOJI_MATH__
 
+#include "ryoji.cpp"
+
 global constexpr f32 PIf = 3.14159265358979323846264338327950288f;
 global constexpr f32 EPSILONf = 1.19209290E-07f;
 
@@ -116,50 +118,50 @@ pure f32 ATan(f32 x) {
 // NOTE(Momo): Vectors
 struct Vec3f {
     union {
-        f32 arr[3];
+        f32 Arr[3];
         struct {
-            f32 x;
+            f32 X;
             f32 y;
-            f32 z;
+            f32 Z;
         };	
     };
     
     inline f32 operator[](usize index) const { 
-        return arr[index]; 
+        return Arr[index]; 
     } 
 };
 
 pure Vec3f Add(Vec3f lhs, Vec3f rhs) {
-    return { lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z };
+    return { lhs.X + rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z };
     
 }
 
 pure Vec3f Sub(Vec3f lhs, Vec3f rhs) {
-    return { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z };
+    return { lhs.X - rhs.X, lhs.Y - rhs.Y, lhs.Z - rhs.Z };
 }
 
 pure Vec3f Mul(Vec3f lhs, f32 rhs) {
-    return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs };
+    return { lhs.X * rhs, lhs.Y * rhs, lhs.Z * rhs };
 }
 
 pure Vec3f Div(Vec3f lhs, f32 rhs) {
     Assert(IsEqual(rhs, 0.f));
-    return { lhs.x / rhs, lhs.y / rhs, lhs.z / rhs };
+    return { lhs.X / rhs, lhs.Y / rhs, lhs.Z / rhs };
 }
 
 pure Vec3f Negate(Vec3f lhs){
-    return {-lhs.x, -lhs.y, -lhs.z};
+    return {-lhs.X, -lhs.Y, -lhs.Z};
     
 }
 pure bool IsEqual(Vec3f lhs, Vec3f rhs) {
     return 
-        IsEqual(lhs.x, rhs.x) && 
-        IsEqual(lhs.y, rhs.y) && 
-        IsEqual(lhs.z, rhs.z);
+        IsEqual(lhs.X, rhs.X) && 
+        IsEqual(lhs.Y, rhs.Y) && 
+        IsEqual(lhs.Z, rhs.Z);
 }
 
 pure f32 Dot(Vec3f lhs, Vec3f rhs) {
-    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
+    return lhs.X * rhs.X + lhs.Y * rhs.Y + lhs.Z * rhs.Z;
 }
 
 pure Vec3f operator+(Vec3f lhs, Vec3f rhs)  { 
@@ -211,7 +213,7 @@ pure bool operator!=(Vec3f lhs, Vec3f rhs) {
 }
 
 pure Vec3f operator-(Vec3f lhs)  {  
-    return { -lhs.x, -lhs.y, -lhs.z }; 
+    return { -lhs.X, -lhs.Y, -lhs.Z }; 
 }
 
 pure Vec3f Midpoint(Vec3f lhs, Vec3f rhs)  { 
@@ -219,7 +221,7 @@ pure Vec3f Midpoint(Vec3f lhs, Vec3f rhs)  {
 }
 
 pure f32 DistSq(Vec3f lhs, Vec3f rhs) { 
-    return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
+    return (rhs.X - lhs.X) * (rhs.Y - lhs.Y) * (rhs.Z - lhs.Z);
 }
 
 pure f32 LenSq(Vec3f lhs) { 
@@ -266,10 +268,10 @@ pure Vec3f Project(Vec3f from, Vec3f to) {
 
 // NOTE(Momo): Column Major Matrices
 struct Mat44f {
-    f32 arr[16];
+    f32 Arr[16];
     
-    inline const f32& operator[](usize index) const { return arr[index]; }
-    inline f32& operator[](usize index) { return arr[index];}
+    inline const f32& operator[](usize index) const { return Arr[index]; }
+    inline f32& operator[](usize index) { return Arr[index];}
 };
 
 pure Mat44f CreateTranslation(f32 x, f32 y, f32 z) {

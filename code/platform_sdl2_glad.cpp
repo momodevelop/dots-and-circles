@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "ryoji.cpp"
+
 #include "ryoji_maths.cpp"
 #include "ryoji_fileio.cpp"
 //#include "ryoji_arenas.cpp"

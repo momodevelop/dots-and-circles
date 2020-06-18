@@ -1,5 +1,5 @@
-#ifndef __RYOJI_HEADERS__
-#define __RYOJI_HEADERS__
+#ifndef __RYOJI__
+#define __RYOJI__
 
 // Includes
 #include <cstdint>
@@ -11,7 +11,7 @@ using u32 = uint32_t;
 using u64 = uint64_t;
 using i8 = int8_t;
 using i16 = int16_t;
-using i32 = int32_t;
+using i32 = int32_wt;
 using i64 = int64_t;
 using f32 = float;
 using f64 = double;
@@ -20,18 +20,28 @@ using uptr = uintptr_t;
 
 #define pure static inline
 #define global static
+
+#define KILOBYTE (1 << 10)
+#define MEGABYTE (1 << 20)
+#define GIGABYTE (1 << 30)
+
 #define Abs(x) ((x < 0) ? -x : x)
 #define Max(x, y) ((x > y) x : y)
 #define Min(x, y) ((x < y) x : y)
-#define KILOBYTE 1 << 10
-#define MEGABYTE 1 << 20
+#define Kilobytes(num) (KILOBYTE * num)
+#define Megabytes(num) (MEGABYTE * num)
+#define Gigabytes(num) (GIGABYTE * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 #define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define TwoToOne(row, col, width) (col + row * width) 
 #define Complement(x, low, high) (high - x + low)
+#define Wrap(x, low, high) while(x > high)x-=(high)-(low); while(x < low) x+=(high)-(low);
+#define Mask(flag, mask) (flag | mask)
+#define Unmask(flag, mask) (flag & ~mask)
+#define IsMasked(flag, mask) (flag & mask) > 0))
 
 // Assertion
-#ifdef ASSERT 
+#ifdef ASSERT
 #include <assert.h>
 #define Assert(x) assert(x)
 #else
