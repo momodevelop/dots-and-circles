@@ -3,8 +3,8 @@
 
 #include "ryoji.cpp"
 
-global constexpr f32 PIf = 3.14159265358979323846264338327950288f;
-global constexpr f32 EPSILONf = 1.19209290E-07f;
+static constexpr f32 PIf = 3.14159265358979323846264338327950288f;
+static constexpr f32 EPSILONf = 1.19209290E-07f;
 
 pure bool IsEqual(f32 lhs, f32 rhs) {
     return Abs(lhs - rhs) <= EPSILONf;
@@ -121,7 +121,7 @@ struct Vec3f {
         f32 Arr[3];
         struct {
             f32 X;
-            f32 y;
+            f32 Y;
             f32 Z;
         };	
     };

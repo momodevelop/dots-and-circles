@@ -11,7 +11,7 @@ using u32 = uint32_t;
 using u64 = uint64_t;
 using i8 = int8_t;
 using i16 = int16_t;
-using i32 = int32_wt;
+using i32 = int32_t;
 using i64 = int64_t;
 using f32 = float;
 using f64 = double;
@@ -19,7 +19,7 @@ using usize = size_t;
 using uptr = uintptr_t;
 
 #define pure static inline
-#define global static
+
 
 #define KILOBYTE (1 << 10)
 #define MEGABYTE (1 << 20)
@@ -38,7 +38,7 @@ using uptr = uintptr_t;
 #define Wrap(x, low, high) while(x > high)x-=(high)-(low); while(x < low) x+=(high)-(low);
 #define Mask(flag, mask) (flag | mask)
 #define Unmask(flag, mask) (flag & ~mask)
-#define IsMasked(flag, mask) (flag & mask) > 0))
+#define IsMasked(flag, mask) ((flag & mask) > 0)
 
 // Assertion
 #ifdef ASSERT
