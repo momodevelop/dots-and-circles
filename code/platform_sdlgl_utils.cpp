@@ -1,8 +1,5 @@
-#ifndef __PLATFORM_SDLGL_HELPERS__
-#define __PLATFORM_SDLGL_HELPERS__
-
-#include "thirdparty/sdl2/include/SDL.h"
-#include "thirdparty/glad/glad.c"
+#ifndef __PLATFORM_SDLGL_UTILS__
+#define __PLATFORM_SDLGL_UTILS__
 
 // NOTE(Momo): SDL Timer
 struct SDLTimer {
@@ -12,7 +9,7 @@ struct SDLTimer {
     u64 CountsElapsed;
 };
 
-pure 
+internal 
 void 
 Start(SDLTimer* timer) {
     timer->CountFrequency = SDL_GetPerformanceFrequency();
@@ -22,7 +19,7 @@ Start(SDLTimer* timer) {
 }
 
 
-pure 
+internal 
 void 
 Tick(SDLTimer * timer) {
     timer->EndFrameCounter = SDL_GetPerformanceCounter();
@@ -31,7 +28,7 @@ Tick(SDLTimer * timer) {
     timer->PrevFrameCounter = timer->EndFrameCounter; 
 }
 
-pure 
+internal 
 u64 
 TimeElapsed(SDLTimer * timer) {
     // NOTE(Momo): 
@@ -46,7 +43,7 @@ struct SDLWindowSize {
     i32 Width, Height; 
 };
 
-pure 
+internal 
 SDLWindowSize 
 SDLGetWindowSize(SDL_Window* window) {
     i32 w, h;
@@ -60,7 +57,7 @@ struct GLDebug {
     void (*Logger)(const char* fmt, ...);
 };
 
-pure 
+internal 
 void 
 GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
     glEnable(GL_DEBUG_OUTPUT);
@@ -185,7 +182,7 @@ GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
 
 
 
-pure 
+internal 
 void 
 GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
     GLuint shader = glCreateShader(type);

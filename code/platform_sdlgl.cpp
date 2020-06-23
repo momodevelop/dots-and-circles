@@ -1,62 +1,101 @@
 #include <stdlib.h>
 
+
+#include "shared_header.h"
+
 #include "ryoji_maths.cpp"
-#include "platform_sdlgl_helpers.cpp"
+#include "thirdparty/sdl2/include/SDL.h"
+#include "thirdparty/glad/glad.c"
+#include "platform_sdlgl_utils.cpp"
+
+#include "game_bmp.cpp"
+
 
 static bool gIsRunning = true;
 
-// NOTE(Momo): Game interface implementation
-void PlaformLog(const char * str, ...) {
+
+// NOTE(Momo): Platform
+#if 0
+global
+void
+PlatformLog(const char * str, ...) {
     va_list va;
     va_start(va, str);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE, str, va);
     va_end(va);
 }
 
-
-
-// NOTE(Momo): FileIO
-#define FOREACH_ERRORS(ERR) \
-ERR(ERR_FILEIO_NONE)   \
-ERR(ERR_FILEIO_FILE_CANNOT_OPEN) \
-ERR(ERR_FILEIO_DESTINATION_TOO_SMOL) \
-
-
-GenerateEnumStrings(ErrFileIO, ErrFileIOStr, FOREACH_ERRORS)
-#undef FOREACH_ERRORS
-
-pure
-ErrFileIO 
-ReadFileStr(char* dest, u64 destSize, const char * path) {
-    FILE* file = fopen(path, "r");
+global
+PlatformGetFileSizeRes
+PlatformGetFileSize(const char* path) {
+    SDL_RWops * file = SDL_RWFromFile(path, "r");
     if (file == nullptr) {
-        return ERR_FILEIO_FILE_CANNOT_OPEN;
+        return { false, 0 };
+    }
+    Defer {
+        SDL_RWclose(file);
+    };
+    
+    Sint64 filesize = SDL_RWsize(file);
+    if(filesize < 0) {
+        return { false, 0 };
+    }
+    u64 ret = (u64)filesize; 
+    
+    return { true, ret };
+}
+
+global
+bool
+PlatformReadBinaryFileToMemory(void * dest, u64 destSize, const char * path) {
+    SDL_RWops * file = SDL_RWFromFile(path, "rb");
+    if (file == nullptr) {
+        return false;
     }
     Defer{
-        fclose(file);
+        SDL_RWclose(file);
     };
     
     // Get file size
-    fseek(file, 0, SEEK_END);
-    u64 filesize = ftell(file); // Does not include EOF
-    fseek(file, 0, SEEK_SET);
+    u64 filesize = SDL_RWsize(file); // Does not include EOF
     
-    if ((filesize + 1) > destSize) {
-        return ERR_FILEIO_DESTINATION_TOO_SMOL;
+    if (filesize > destSize) {
+        return false;
     }
     
-    fread(dest, sizeof(char), filesize, file);
+    SDL_RWread(file, dest, 1, filesize);
+    
+    return true;
+}
+#endif
+
+
+
+internal
+bool
+ReadFileStr(char* dest, u64 destSize, const char * path) {
+    SDL_RWops* file = SDL_RWFromFile(path, "r");
+    if (file == nullptr) {
+        return false;
+    }
+    Defer{
+        SDL_RWclose(file);
+    };
+    
+    // Get file size
+    u64 filesize = SDL_RWsize(file); // Does not include EOF
+    
+    if ((filesize + 1) > destSize) {
+        return false;
+    }
+    
+    SDL_RWread(file, dest, sizeof(char), filesize);
     
     // Don't forget null terminating value
     dest[filesize] = 0;
     
-    return ERR_FILEIO_NONE;
+    return true;
 }
-
-
-// TODO(Momo): Read BMP
-
-
 
 int main(int argc, char* argv[]) {
     (void)argc;
@@ -190,29 +229,23 @@ int main(int argc, char* argv[]) {
     };
     
     // Setup Textures
-    GLuint texture;
-    constexpr u32 textureW = 11;
-    constexpr u32 textureH = 11;
-    
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    glTextureStorage2D(texture, 1, GL_RGBA8, textureW, textureH);
-    
-    u32 colorA = 255 << 8 | 255 << 16 | 255;
-    
-    // Test texture 
-    u32 imageData[textureW * textureH];
-    for (u32 i = 0; i < textureW * textureH; ++i) {
-        if (i%2)
-            imageData[i] = colorA;
-        else
-            imageData[i] = 0;
-        
+    Bmp bmp;
+    if (auto err = Load(&bmp, "assets/ryoji.bmp"); err > 0) {
+        SDL_Log("%s", BmpErrorStr(err));
+        return 1;
     }
-    glTextureSubImage2D(texture, 0, 0, 0, textureW, textureH, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+    Defer{ Unload(&bmp); };
+    
+    
+    GLuint texture;
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    glTextureStorage2D(texture, 1, GL_RGBA8, bmp.InfoHeader.Width, bmp.InfoHeader.Height);
     
     
     
     
+    glTextureSubImage2D(texture, 0, 0, 0, bmp.InfoHeader.Width, bmp.InfoHeader.Height, GL_RGBA, GL_UNSIGNED_BYTE, 
+                        bmp.Pixels);
     
     // Setup VBO
     GLuint vbos[VBO_MAX]; 
@@ -271,27 +304,22 @@ int main(int argc, char* argv[]) {
     // Indices
     glVertexArrayElementBuffer(vaos, vbos[VBO_INDICES]);
     
-    // Set up instance transforms for our entities (for now set to identity)
-    
-    
-    
-    
     
     // Setup Shader Program
     GLuint program = glCreateProgram();
     
     // Setup Vertex Shader
     char buffer[KILOBYTE] = {};
-    if (auto err = ReadFileStr(buffer, KILOBYTE, "shader/simple.vts"); err > 0) {
-        SDL_Log("Loading simple.vts failed: %s", ErrFileIOStr(err));
+    if (!ReadFileStr(buffer, KILOBYTE, "shader/simple.vts")) {
+        SDL_Log("Loading simple.vts failed");
         return 1;
     }
     GLAttachShader(program, GL_VERTEX_SHADER, buffer);
     memset(buffer, 0, KILOBYTE);
     
     // Setup Fragment Shader
-    if (auto err = ReadFileStr(buffer, KILOBYTE, "shader/simple.fms"); err > 0) {
-        SDL_Log("Loading simple.fms failed: %s", ErrFileIOStr(err));
+    if (!ReadFileStr(buffer, KILOBYTE, "shader/simple.fms")) {
+        SDL_Log("Loading simple.fms failed");
         return 1;
     }
     GLAttachShader(program, GL_FRAGMENT_SHADER, buffer);
@@ -371,7 +399,6 @@ int main(int argc, char* argv[]) {
         }
         
         // Update End
-        
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program);
         glBindTexture(GL_TEXTURE_2D, texture);
