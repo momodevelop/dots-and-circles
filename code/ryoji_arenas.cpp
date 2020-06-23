@@ -6,9 +6,9 @@
 
 
 struct LinearArena {
-    u8* Memory;
-    usize Used;
-    usize Capacity;
+    u8* memory;
+    usize used;
+    usize capacity;
 };
 
 
@@ -16,9 +16,9 @@ internal
 bool 
 Init(LinearArena* a, void* memory, usize capacity) {
     Assert(capacity);
-    a->Memory = memory;
-    a->Capacity = capacity;
-    a->Used = 0;
+    a->memory = memory;
+    a->capacity = capacity;
+    a->used = 0;
 }
 
 // NOTE(Momo): Linear allocation
@@ -26,16 +26,16 @@ internal
 void* 
 Allocate(LinearArena* a, usize size, u8 alignment) {
     Assert(size && alignment);
-    u8 adjust = AlignForwardDiff(a->Memory, alignment);
+    u8 adjust = AlignForwardDiff(a->memory, alignment);
     
     // if not enough space, return 
-    if ((u8*)a->Memory + a->Used + adjust + size > (u8*)a->Memory + a->Capacity ) {
+    if ((u8*)a->memory + a->used + adjust + size > (u8*)a->memory + a->capacity ) {
         return nullptr;
     }
     
-    void* ret = (u8*)a->Memory + a->Used + adjust;
+    void* ret = (u8*)a->memory + a->used + adjust;
     
-    a->Used += adjust + size;
+    a->used += adjust + size;
     return ret;
 }
 

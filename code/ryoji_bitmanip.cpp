@@ -26,7 +26,8 @@
 // e.g.  4 bytes -> ~(0100 - 1) = ~0011 = 1100
 // e.g.  8 bytes -> ~(1000 - 1) = ~0111 = 1000
 // And thus, the forumla for backward alignment is: A & ~(N-1)
-pure void* AlignBackward(void* ptr, u8 align) {
+internal
+void* AlignBackward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(uptr(ptr) & ~(align - 1));
 }
@@ -36,16 +37,19 @@ pure void* AlignBackward(void* ptr, u8 align) {
 // If the forward alignment formula is: (A & ~(N-1))
 // Then the formula for the difference is the the original address minus the result: 
 // A - (A & ~(N-1))
-pure void* AlignForward(void* ptr, u8 align) {
+internal
+void* AlignForward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
 }
 
-pure u8 AlignBackwardDiff(void* ptr, u8 align)  {
+internal
+u8 AlignBackwardDiff(void* ptr, u8 align)  {
     return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
 }
 
-pure u8 AlignForwardDiff(void* ptr, u8 align)  {
+internal
+u8 AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 

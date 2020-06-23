@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
-
-#include "shared_header.h"
-
+#include "game.cpp"
 #include "ryoji_maths.cpp"
+
+
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 #include "platform_sdlgl_utils.cpp"
@@ -15,16 +15,18 @@ static bool gIsRunning = true;
 
 
 // NOTE(Momo): Platform
-#if 0
+
 global
 void
 PlatformLog(const char * str, ...) {
     va_list va;
     va_start(va, str);
-    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE, str, va);
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, str, va);
     va_end(va);
+    
 }
 
+#if 0
 global
 PlatformGetFileSizeRes
 PlatformGetFileSize(const char* path) {
@@ -349,11 +351,15 @@ int main(int argc, char* argv[]) {
     glProgramUniformMatrix4fv(program, uProjectionLoc, 1, GL_FALSE, &uProjection[0]);
     
     
+    // NOTE(Momo): Game Init
+    GameMemory gameMemory;
+    Init(&gameMemory, malloc(Gigabytes(1)), Gigabytes(1));
+    
     SDLTimer timer;
     Start(&timer);
-    
-    
     f32 rotation = 0.f;
+    
+    // NOTE(Momo): Game Loop
     while(gIsRunning) {
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
@@ -368,7 +374,6 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        // TODO(Momo): Update + Render
         
         // NOTE(Momo): Test Update Code
         Mat44f instanceTransforms[kMaxEntities];
@@ -397,6 +402,10 @@ int main(int argc, char* argv[]) {
             f32 diff = rotation - PIf;
             rotation = -PIf + diff;
         }
+        
+        
+        GameUpdate(&gameMemory, deltaTime);
+        
         
         // Update End
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

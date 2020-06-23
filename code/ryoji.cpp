@@ -18,8 +18,8 @@ using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
 
-#define pure static inline
-
+#define internal static inline
+#define global static
 
 #define KILOBYTE (1 << 10)
 #define MEGABYTE (1 << 20)
@@ -40,10 +40,10 @@ using uptr = uintptr_t;
 #define Unmask(flag, mask) (flag & ~mask)
 #define IsMasked(flag, mask) ((flag & mask) > 0)
 
+
 // Assertion
 #ifdef ASSERT
-#include <assert.h>
-#define Assert(x) assert(x)
+#define Assert(x) if(!(x)) {*(int *)0 = 0;}
 #else
 #define Assert(x) 
 #endif
@@ -56,8 +56,7 @@ template<class F> struct ScopeGuard {
 };
 
 namespace zawarudo {
-    struct defer_dummy {
-    };
+    struct defer_dummy {};
     
     template<class F> ScopeGuard<F> operator+(defer_dummy, F f) {
         return { f };
@@ -75,11 +74,25 @@ namespace zawarudo {
 enum ENUM_NAME { \
 FOREACH(zawarudo_GENERATE_ENUM_PART) \
 };\
-pure const char* FUNC_NAME(ENUM_NAME e) { \
+internal const char* FUNC_NAME(ENUM_NAME e) { \
 switch(e) { \
 FOREACH(zawarudo_GENERATE_SWITCH_CASE_PART) \
-default: return ""; \
+default: return "Unknown Error :("; \
 } \
 }\
+
+
+// Useful functions
+internal 
+void
+ZeroBlock(void *mem, u64 size) {
+    for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
+        *p = 0;
+    }
+}
+#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
+#define ZeroArray(a) ZeroBlock((a), sizeof((a)))
+#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
+
 
 #endif
