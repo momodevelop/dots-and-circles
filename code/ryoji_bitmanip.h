@@ -1,7 +1,7 @@
 #ifndef __RYOJI_BITMANIP__
 #define __RYOJI_BITMANIP__
 
-#include "ryoji.cpp"
+#include "ryoji.h"
 
 
 // Note that all alignment operations is catered to only power of 2!
@@ -26,8 +26,8 @@
 // e.g.  4 bytes -> ~(0100 - 1) = ~0011 = 1100
 // e.g.  8 bytes -> ~(1000 - 1) = ~0111 = 1000
 // And thus, the forumla for backward alignment is: A & ~(N-1)
-internal
-void* AlignBackward(void* ptr, u8 align) {
+static inline void* 
+AlignBackward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(uptr(ptr) & ~(align - 1));
 }
@@ -37,19 +37,19 @@ void* AlignBackward(void* ptr, u8 align) {
 // If the forward alignment formula is: (A & ~(N-1))
 // Then the formula for the difference is the the original address minus the result: 
 // A - (A & ~(N-1))
-internal
-void* AlignForward(void* ptr, u8 align) {
+static inline void* 
+AlignForward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
 }
 
-internal
-u8 AlignBackwardDiff(void* ptr, u8 align)  {
+static inline u8 
+AlignBackwardDiff(void* ptr, u8 align)  {
     return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
 }
 
-internal
-u8 AlignForwardDiff(void* ptr, u8 align)  {
+static inline u8 
+AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 

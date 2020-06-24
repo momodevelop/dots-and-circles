@@ -5,37 +5,35 @@
 #include "ryoji_bitmanip.cpp"
 
 
-struct LinearArena {
-    u8* memory;
-    usize used;
+struct linear_arena {
+    u8* Memory;
+    usize Used;
     usize capacity;
 };
 
 
-internal
-bool 
-Init(LinearArena* a, void* memory, usize capacity) {
+static inline bool 
+Init(linear_arena* a, void* Memory, usize Capacity) {
     Assert(capacity);
-    a->memory = memory;
+    a->Memory = Memory;
     a->capacity = capacity;
-    a->used = 0;
+    a->Used = 0;
 }
 
 // NOTE(Momo): Linear allocation
-internal
-void* 
-Allocate(LinearArena* a, usize size, u8 alignment) {
+static inline void* 
+Allocate(linear_arena* a, usize size, u8 alignment) {
     Assert(size && alignment);
-    u8 adjust = AlignForwardDiff(a->memory, alignment);
+    u8 adjust = AlignForwardDiff(a->Memory, alignment);
     
     // if not enough space, return 
-    if ((u8*)a->memory + a->used + adjust + size > (u8*)a->memory + a->capacity ) {
+    if ((u8*)a->Memory + a->Used + adjust + size > (u8*)a->Memory + a->capacity ) {
         return nullptr;
     }
     
-    void* ret = (u8*)a->memory + a->used + adjust;
+    void* ret = (u8*)a->Memory + a->Used + adjust;
     
-    a->used += adjust + size;
+    a->Used += adjust + size;
     return ret;
 }
 

@@ -1,5 +1,5 @@
-#ifndef __RYOJI__
-#define __RYOJI__
+#ifndef __RYOJI_H__
+#define __RYOJI_H__
 
 // Includes
 #include <cstdint>
@@ -17,9 +17,6 @@ using f32 = float;
 using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
-
-#define internal static inline
-#define global static
 
 #define KILOBYTE (1 << 10)
 #define MEGABYTE (1 << 20)
@@ -42,7 +39,7 @@ using uptr = uintptr_t;
 
 
 // Assertion
-#ifdef ASSERT
+#ifdef SLOW_MODE
 #define Assert(x) if(!(x)) {*(int *)0 = 0;}
 #else
 #define Assert(x) 
@@ -83,8 +80,7 @@ default: return "Unknown Error :("; \
 
 
 // Useful functions
-internal 
-void
+static inline void 
 ZeroBlock(void *mem, u64 size) {
     for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
         *p = 0;
