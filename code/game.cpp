@@ -1,7 +1,7 @@
 #include "game.h"
 
 
-GAME_UPDATE(GameUpdate) {
+extern "C" GAME_UPDATE(GameUpdate) {
     game_state* state = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
         GameMemory->IsInitialized = true;
