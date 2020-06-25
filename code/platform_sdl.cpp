@@ -250,7 +250,7 @@ int main(int argc, char* argv[]) {
     
     constexpr u32 kMaxEntities = 361;
     
-    
+    // TODO(Momo): Shift this to game code?
     enum  {
         VBO_MODEL,
         VBO_INDICES,
@@ -289,9 +289,6 @@ int main(int argc, char* argv[]) {
     GLuint texture;
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
     glTextureStorage2D(texture, 1, GL_RGBA8, bmp.InfoHeader.Width, bmp.InfoHeader.Height);
-    
-    
-    
     
     glTextureSubImage2D(texture, 0, 0, 0, bmp.InfoHeader.Width, bmp.InfoHeader.Height, GL_RGBA, GL_UNSIGNED_BYTE, 
                         bmp.Pixels);
@@ -387,15 +384,16 @@ int main(int argc, char* argv[]) {
     
     // Setup uniform variables
     GLint uProjectionLoc = glGetUniformLocation(program, "uProjection");
-    auto uProjection  = CreateOrthoProjection(-1.f, 1.f,
-                                              -1.f, 1.f,
-                                              -1.f, 1.f,
-                                              -windowWidth * 0.5f,  windowWidth * 0.5f, 
-                                              -windowHeight * 0.5f, windowHeight * 0.5f,
-                                              -100.f, 100.f,
-                                              true);
+    auto uProjection  = Orthographic(-1.f, 1.f,
+                                     -1.f, 1.f,
+                                     -1.f, 1.f,
+                                     -windowWidth * 0.5f,  windowWidth * 0.5f, 
+                                     -windowHeight * 0.5f, windowHeight * 0.5f,
+                                     -100.f, 100.f,
+                                     true);
+    uProjection = Transpose(uProjection);
     
-    glProgramUniformMatrix4fv(program, uProjectionLoc, 1, GL_FALSE, &uProjection[0]);
+    glProgramUniformMatrix4fv(program, uProjectionLoc, 1, GL_FALSE, *uProjection.Arr);
     
     
     // NOTE(Momo): Game Init
@@ -435,7 +433,6 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        
         // NOTE(Momo): Test Update Code
         m44f instanceTransforms[kMaxEntities];
         f32 startX = -windowWidth/2.f;
@@ -446,9 +443,10 @@ int main(int argc, char* argv[]) {
         f32 currentYOffset = 0.f;
         for (int i = 0; i < kMaxEntities; ++i) {
             instanceTransforms[i] = 
-                CreateTranslation(startX + currentXOffset, startY + currentYOffset, 0.f) *
-                CreateRotationZ(rotation) *
-                CreateScale(100.f, 100.f, 1.f);
+                Translation(startX + currentXOffset, startY + currentYOffset, 0.f) *
+                RotationZ(rotation) *
+                Scale(100.f, 100.f, 1.f);
+            instanceTransforms[i] = Transpose(instanceTransforms[i]);
             
             glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], i * sizeof(m44f), sizeof(m44f), &instanceTransforms[i]);
             

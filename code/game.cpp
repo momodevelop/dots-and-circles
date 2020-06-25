@@ -1,10 +1,6 @@
 #include "game.h"
 
 
-static inline void
-Initialize() {
-    
-}
 
 
 // NOTE(Momo):  Exported Functions

@@ -308,63 +308,95 @@ Project(v3f from, v3f to) {
     return (to * from) / LenSq(to) * to;
 }
 
-// NOTE(Momo): Column Major Matrices
+// NOTE(Momo): I chose row major because it's easier to work on and OpenGL 
 struct m44f {
-    f32 arr[16];
+    f32 Arr[4][4];
     
-    inline const f32& operator[](usize index) const { return arr[index]; }
-    inline f32& operator[](usize index) { return arr[index];}
+    inline const auto& operator[](usize index) const { return Arr[index]; }
+    inline auto& operator[](usize index) { return Arr[index];}
 };
 
 static inline m44f 
-CreateTranslation(f32 x, f32 y, f32 z) {
+operator*(m44f lhs, m44f rhs) {
+    m44f res = {};
+    
+    for (u8 r = 0; r < 4; r++) { 
+        for (u8 c = 0; c < 4; c++) { 
+            for (u8 i = 0; i < 4; i++) 
+                res[r][c] += lhs[r][i] *  rhs[i][c]; 
+        } 
+    } 
+    return res;
+}
+
+
+static inline m44f 
+Transpose(m44f M) {
+    m44f Ret = {};
+    for (int i = 0; i < 4; ++i ) {
+        for (int j = 0; j < 4; ++j) {
+            Ret[i][j] = M[j][i];
+        }
+    }
+    
+    return Ret;
+}
+
+static inline m44f 
+Translation(f32 x, f32 y, f32 z) {
     return {
-        1.f, 0.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        x, y, z, 1.f
+        1.f, 0.f, 0.f, x,
+        0.f, 1.f, 0.f, y,
+        0.f, 0.f, 1.f, z,
+        0.f, 0.f, 0.f, 1.f
     };
 }
 
 
 static inline m44f 
-CreateRotationX(f32 rad) {
+RotationX(f32 rad) {
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     return {
-        1.f,  0.f,      0.f,      0.f,
-        0.f,  Cos(rad), Sin(rad), 0.f,  
-        0.f, -Sin(rad), Cos(rad), 0.f,
-        0.f,  0.f,      0.f,      1.f
+        1.f,  0.f,   0.f, 0.f,
+        0.f,  c,    -s,   0.f,  
+        0.f,  s,     c,   0.f,
+        0.f,  0.f,   0.f,  1.f
     };
 }
 
 static inline m44f 
-CreateRotationY(f32 rad) {
+RotationY(f32 rad) {
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     return {
-        Cos(rad),  0.f, -Sin(rad), 0.f,
-        0.f,       1.f, 0.f,       0.f,
-        Sin(rad),  0.f, Cos(rad),  0.f,
-        0.f,       0.f, 0.f,       1.f
+        c,   0.f, s,    0.f,
+        0.f, 1.f, 0.f,  0.f,
+        -s,  0.f, c,    0.f,
+        0.f, 0.f, 0.f,  1.f
     };
     
 }
 
 
 static inline m44f 
-CreateRotationZ(f32 rad) {
+RotationZ(f32 rad) {
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     return {
-        Cos(rad),  Sin(rad), 0.f, 0.f,
-        -Sin(rad), Cos(rad), 0.f, 0.f,
-        0.f,       0.f,      1.f, 0.f,
-        0.f,       0.f,      0.f, 1.f
+        c,  -s,   0.f, 0.f,
+        s,   c,   0.f, 0.f,
+        0.f, 0.f, 1.f, 0.f,
+        0.f, 0.f, 0.f, 1.f
     };
 }
 
 static inline m44f
-CreateScale(f32 x, f32 y, f32 z) {
+Scale(f32 x, f32 y, f32 z) {
     return {
-        x, 0.f, 0.f, 0.f,
-        0.f, y, 0.f, 0.f,
-        0.f, 0.f, z, 0.f,
+        x, 0.f, 0.f,   0.f,
+        0.f, y, 0.f,   0.f,
+        0.f, 0.f, z,   0.f,
         0.f, 0.f, 0.f, 1.f
     };
 }
@@ -372,28 +404,30 @@ CreateScale(f32 x, f32 y, f32 z) {
 
 // 
 static inline m44f 
-CreateOrthoProjection(f32 ndcLeft, f32 ndcRight,
-                      f32 ndcBottom, f32 ndcTop,
-                      f32 ndcNear, f32 ndcFar,
-                      f32 left, f32 right, 
-                      f32 bottom, f32 top,
-                      f32 near, f32 far,
-                      bool flipz) 
+Orthographic(f32 ndcLeft, f32 ndcRight,
+             f32 ndcBottom, f32 ndcTop,
+             f32 ndcNear, f32 ndcFar,
+             f32 left, f32 right, 
+             f32 bottom, f32 top,
+             f32 near, f32 far,
+             bool flipz) 
 {
-    return {
-        (ndcRight-ndcLeft)/(right-left), 0.f, 0.f, 0.f,
-        0.f, (ndcTop-ndcBottom)/(top-bottom), 0.f, 0.f,
-        0.f, 0.f, (flipz ? -1.f : 1.f) * (ndcFar-ndcNear)/(far-near), 
-        0.f,
-        -(right+left)/(right-left), 
-        -(top+bottom)/(top-bottom), 
-        -(far+near)/(far-near), 1.f
-    };
+    m44f Ret = {};
+    Ret[0][0] = (ndcRight-ndcLeft)/(right-left);
+    Ret[1][1] = (ndcTop-ndcBottom)/(top-bottom);
+    Ret[2][2] = (flipz ? -1.f : 1.f) * (ndcFar-ndcNear)/(far-near);
+    Ret[3][3] = 1.f;
+    Ret[0][3] = -(right+left)/(right-left);
+    Ret[1][3] = -(top+bottom)/(top-bottom);
+    Ret[2][3] =  -(far+near)/(far-near);
+    Ret[3][3] = 1.f;
+    
+    return Ret;
 }
 
 
 static inline m44f 
-CreateIdentity() {
+Identity() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -403,18 +437,6 @@ CreateIdentity() {
 }
 
 
-static inline m44f 
-operator*(m44f lhs, m44f rhs) {
-    m44f res = {0};
-    
-    for (u8 i = 0; i < 4; i++) { 
-        for (u8 j = 0; j < 4; j++) { 
-            u8 index = j+i*4;
-            for (u8 k = 0; k < 4; k++) 
-                res[index] += lhs[j+k*4] *  rhs[i+k*4]; 
-        } 
-    } 
-    return res;
-}
+
 
 #endif 
