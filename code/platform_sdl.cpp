@@ -8,49 +8,10 @@
 
 #include "bmp.cpp"
 
-
-
+#include "platform_sdl_timer.cpp"
+#include "platform_sdl_gldebug.cpp"
 
 static bool gIsRunning = true;
-
-struct sdl_timer {
-    u64 CountFrequency;
-    u64 PrevFrameCounter;
-    u64 EndFrameCounter;
-    u64 CountsElapsed;
-};
-
-struct sdl_window_size { 
-    i32 Width, Height; 
-};
-
-
-static inline 
-void Start(sdl_timer* Timer) {
-    Timer->CountFrequency = SDL_GetPerformanceFrequency();
-    Timer->PrevFrameCounter = SDL_GetPerformanceCounter();
-    Timer->EndFrameCounter = 0;
-    Timer->CountsElapsed = 0;
-}
-
-
-static inline 
-void Tick(sdl_timer * Timer) {
-    Timer->EndFrameCounter = SDL_GetPerformanceCounter();
-    Timer->CountsElapsed = Timer->EndFrameCounter - Timer->PrevFrameCounter;
-    
-    Timer->PrevFrameCounter = Timer->EndFrameCounter; 
-}
-
-static inline 
-u64 TimeElapsed(sdl_timer* Timer) {
-    // NOTE(Momo): 
-    // PerformanceCounter(C) gives how many count has elapsed.
-    // PerformanceFrequency(F) gives how many counts/second.
-    // Thus: seconds = C / F, and milliseconds = seconds * 1000
-    return (1000 * Timer->CountsElapsed) / Timer->CountFrequency;
-}
-
 
 static inline 
 sdl_window_size SDLGetWindowSize(SDL_Window* Window) {
@@ -60,132 +21,7 @@ sdl_window_size SDLGetWindowSize(SDL_Window* Window) {
 }
 
 
-#ifdef SLOW_MODE
-struct GLDebug {
-    void (*Logger)(const char* fmt, ...);
-};
 
-static inline 
-void GLDebugInit(GLDebug* debugObj, void (*logger)(const char*,...)) {
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    
-    debugObj->Logger = logger;
-    
-    auto callback = [](GLenum source,
-                       GLenum type,
-                       GLuint id,
-                       GLenum severity,
-                       GLsizei length,
-                       const GLchar* msg,
-                       const void* userParam)
-    {
-        
-        // Ignore NOTIFICATION severity
-        if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) 
-            return;
-        
-        (void)length; 
-        (void)userParam;
-        char* _source;
-        char* _type;
-        char* _severity;
-        switch (source) {
-            case GL_DEBUG_SOURCE_API:
-            _source = "API";
-            break;
-            
-            case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-            _source = "WINDOW SYSTEM";
-            break;
-            
-            case GL_DEBUG_SOURCE_SHADER_COMPILER:
-            _source = "SHADER COMPILER";
-            break;
-            
-            case GL_DEBUG_SOURCE_THIRD_PARTY:
-            _source = "THIRD PARTY";
-            break;
-            
-            case GL_DEBUG_SOURCE_APPLICATION:
-            _source = "APPLICATION";
-            break;
-            
-            case GL_DEBUG_SOURCE_OTHER:
-            _source = "UNKNOWN";
-            break;
-            
-            default:
-            _source = "UNKNOWN";
-            break;
-        }
-        
-        switch (type) {
-            case GL_DEBUG_TYPE_ERROR:
-            _type = "ERROR";
-            break;
-            
-            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-            _type = "DEPRECATED BEHAVIOR";
-            break;
-            
-            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-            _type = "UDEFINED BEHAVIOR";
-            break;
-            
-            case GL_DEBUG_TYPE_PORTABILITY:
-            _type = "PORTABILITY";
-            break;
-            
-            case GL_DEBUG_TYPE_PERFORMANCE:
-            _type = "PERFORMANCE";
-            break;
-            
-            case GL_DEBUG_TYPE_OTHER:
-            _type = "OTHER";
-            break;
-            
-            case GL_DEBUG_TYPE_MARKER:
-            _type = "MARKER";
-            break;
-            
-            default:
-            _type = "UNKNOWN";
-            break;
-        }
-        
-        switch (severity) {
-            case GL_DEBUG_SEVERITY_HIGH:
-            _severity = "HIGH";
-            break;
-            
-            case GL_DEBUG_SEVERITY_MEDIUM:
-            _severity = "MEDIUM";
-            break;
-            
-            case GL_DEBUG_SEVERITY_LOW:
-            _severity = "LOW";
-            break;
-            
-            //case GL_DEBUG_SEVERITY_NOTIFICATION:
-            //_severity = "NOTIFICATION";
-            //break;
-            
-            default:
-            _severity = "UNKNOWN";
-            break;
-        }
-        
-        const GLDebug* db = (const GLDebug*)userParam;
-        db->Logger("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
-                   id, _type, _severity, _source, msg);
-        
-    };
-    
-    glDebugMessageCallback(callback, debugObj);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
-}
-#endif // DEBUG_OGL
 
 static inline void 
 GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
@@ -197,9 +33,8 @@ GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
 }
 
 
-// NOTE(Momo): Platform
-void 
-PlatformLog(const char * str, ...) {
+// TODO(Momo): export as function pointer to game code
+void PlatformLog(const char * str, ...) {
     va_list va;
     va_start(va, str);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, str, va);
@@ -278,14 +113,36 @@ bool ReadFileStr(char* dest, u64 destSize, const char * path) {
     return true;
 }
 
+// NOTE(Momo): sdl_game_code
 struct sdl_game_code {
     game_update* Update;
 };
 
+static inline void
+Unload(sdl_game_code* GameCode) {
+    GameCode->Update = nullptr;
+}
 
+static inline bool
+Load(sdl_game_code* GameCode)
+{
+    Unload(GameCode);
+    
+    void* GameCodeDLL = SDL_LoadObject("game.dll");
+    if (!GameCodeDLL) {
+        SDL_Log("Failed to open game.dll");
+        return false;
+    }
+    
+    if (auto fn =  (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate")) 
+        GameCode->Update = fn;
+    
+    return true;
+}
+
+
+// NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
         SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -325,22 +182,8 @@ int main(int argc, char* argv[]) {
 #endif  
     
     
-    
-    // Load game functions
-    sdl_game_code GameCode = {};
-    GameCode.Update = GameUpdateStub;
-    
-    
-    void* GameCodeDLL = SDL_LoadObject("game.dll");
-    if (!GameCodeDLL) {
-        SDL_Log("Failed to log game.dll");
-        return 1;
-    }
-    
-    GameCode.Update = (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate");
-    
-    
-    
+    sdl_game_code GameCode;
+    Load(&GameCode);
     
     // Request an OpenGL 4.5 context (should be core)
     SDL_Log("SDL creating context\n");
@@ -367,8 +210,10 @@ int main(int argc, char* argv[]) {
     //glDisable(GL_CULL_FACE);
     
 #ifdef SLOW_MODE
-    GLDebug glDebugObj;
-    GLDebugInit(&glDebugObj, SDL_Log);
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(SdlGlDebugCallback, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
 #endif
     
     auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
@@ -557,6 +402,7 @@ int main(int argc, char* argv[]) {
     game_memory GameMemory = {};
     GameMemory.IsInitialized = false;
     GameMemory.PermanentStore = malloc(Megabytes(64));
+    
     if ( !GameMemory.PermanentStore ) {
         SDL_Log("Cannot allocate for PermanentStore");
         return 1;
@@ -564,6 +410,10 @@ int main(int argc, char* argv[]) {
     Defer { free(GameMemory.PermanentStore); };
     
     GameMemory.PermanentStoreSize = Megabytes(64);
+    
+    // NOTE(Momo): PlatformAPI
+    platform_api PlatformAPI = {};
+    PlatformAPI.Log = PlatformLog;
     
     
     sdl_timer timer;
@@ -615,7 +465,7 @@ int main(int argc, char* argv[]) {
         }
         
         
-        GameCode.Update(&GameMemory, deltaTime);
+        GameCode.Update(&GameMemory, &PlatformAPI, deltaTime);
         
         
         // Update End

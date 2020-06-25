@@ -1,13 +1,21 @@
 #include "game.h"
 
 
-extern "C" GAME_UPDATE(GameUpdate) {
+static inline void
+Initialize() {
+    
+}
+
+
+// NOTE(Momo):  Exported Functions
+extern "C" void
+GameUpdate(game_memory* GameMemory, platform_api* PlatformApi, f32 DeltaTime) {
     game_state* state = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
         GameMemory->IsInitialized = true;
     }
     
     state->TimeElapsed += DeltaTime;
-    //PlatformLog("Updating: %f", state->TimeElapsed);
+    PlatformApi->Log("Updating: %f", state->TimeElapsed);
     
 }
