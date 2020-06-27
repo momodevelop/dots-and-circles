@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include "game.h"
 #include "ryoji_maths.h"
 
 #include "thirdparty/sdl2/include/SDL.h"
@@ -8,10 +7,10 @@
 
 #include "bmp.cpp"
 
+#include "interface.h"
 #include "platform_sdl_timer.cpp"
 #include "platform_sdl_gldebug.cpp"
 #include "platform_sdl_game_code.cpp"
-
 #include "platform_sdl_renderer_gl.cpp"
 
 static bool gIsRunning = true;
@@ -23,7 +22,6 @@ sdl_window_size SDLGetWindowSize(SDL_Window* Window) {
     return { w, h };
 }
 
-#define TEST_RENDERER 1
 
 
 // TODO(Momo): export as function pointer to game code
@@ -106,7 +104,11 @@ bool ReadFileStr(char* dest, u64 destSize, const char * path) {
 }
 
 
-
+// TODO(Momo): Complete this function
+static inline void
+PlatformRenderOpenGL() {
+    //Render(&GlRenderer);
+}
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
@@ -176,7 +178,6 @@ int main(int argc, char* argv[]) {
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glDisable(GL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
     
 #ifdef SLOW_MODE
     glEnable(GL_DEBUG_OUTPUT);
@@ -197,183 +198,11 @@ int main(int argc, char* argv[]) {
         SDL_Log("%s", BmpErrorStr(err));
         return 1;
     }
+    SDL_Log("Bmp loaded");
     Defer{ Unload(&bmp); };
     
-#if !TEST_RENDERER
-    f32 quadModel[] = {
-        // position   
-        1.f,  1.f, 0.0f,  // top right
-        1.f, -1.f, 0.0f,  // bottom right
-        -1.f, -1.f, 0.0f,  // bottom left
-        -1.f,  1.f, 0.0f   // top left 
-    };
-    
-    f32 quadColorful[] = {
-        1.f, 0.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.0f,
-        1.f, 1.f, 1.f, 0.0f,
-    };
-    
-    u8 quadIndices[] = {
-        0, 1, 3,
-        1, 2, 3,
-    };
-    
-    f32 quadTexCoords[] = {
-        0.f, 0.f, // bottom left
-        1.f, 0.f, // bottom right
-        1.f, 1.f, // top right
-        0.f, 1.f  // top left
-    };
-    
-    constexpr u32 kMaxEntities = 361;
-    
-    // TODO(Momo): Shift this to game code?
-    enum  {
-        VBO_MODEL,
-        VBO_INDICES,
-        VBO_COLORS,
-        VBO_TEX_COORDS,
-        VBO_INSTANCE_TRANSFORM,
-        VBO_MAX
-    };
-    
-    enum {
-        ATTRIB_MODEL,
-        ATTRIB_COLORS,
-        ATTRIB_TEX_COORDS,
-        ATTRIB_INSTANCE_TRANSFORM1,
-        ATTRIB_INSTANCE_TRANSFORM2,
-        ATTRIB_INSTANCE_TRANSFORM3,
-        ATTRIB_INSTANCE_TRANSFORM4
-    };
-    
-    enum {
-        VAO_BIND_MODEL,
-        VAO_BIND_COLORS,
-        VAO_BIND_TEX_COORDS,
-        VAO_BIND_INSTANCE_TRANSFORM,
-    };
-    
-    
-    // TODO(Momo): ???
-    
-    
-    // Setup VBO
-    GLuint vbos[VBO_MAX]; 
-    glCreateBuffers(VBO_MAX, vbos);
-    glNamedBufferStorage(vbos[VBO_MODEL], sizeof(quadModel), quadModel, 0);
-    glNamedBufferStorage(vbos[VBO_INDICES], sizeof(quadIndices), quadIndices, 0);
-    glNamedBufferStorage(vbos[VBO_COLORS], sizeof(quadColorful), quadColorful, 0);
-    glNamedBufferStorage(vbos[VBO_TEX_COORDS], sizeof(quadTexCoords), quadTexCoords, 0);
-    glNamedBufferStorage(vbos[VBO_INSTANCE_TRANSFORM], sizeof(m44f) * kMaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    
-    
-    // Setup VAO
-    GLuint vaos;
-    glCreateVertexArrays(1, &vaos);
-    glVertexArrayVertexBuffer(vaos, VAO_BIND_MODEL,  vbos[VBO_MODEL],   0, sizeof(f32)*3);
-    glVertexArrayVertexBuffer(vaos, VAO_BIND_COLORS,  vbos[VBO_COLORS],  0, sizeof(f32)*4);
-    glVertexArrayVertexBuffer(vaos, VAO_BIND_TEX_COORDS, vbos[VBO_TEX_COORDS], 0, sizeof(f32) * 2);
-    glVertexArrayVertexBuffer(vaos, VAO_BIND_INSTANCE_TRANSFORM, vbos[VBO_INSTANCE_TRANSFORM], 0, sizeof(m44f));
-    
-    
-    // Setup Attributes
-    // aModelVtx
-    glEnableVertexArrayAttrib(vaos, ATTRIB_MODEL); 
-    glVertexArrayAttribFormat(vaos, ATTRIB_MODEL, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(vaos, ATTRIB_MODEL, VAO_BIND_MODEL);
-    
-    // aColor
-    glEnableVertexArrayAttrib(vaos, ATTRIB_COLORS); 
-    glVertexArrayAttribFormat(vaos, ATTRIB_COLORS, 4, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(vaos, ATTRIB_COLORS, VAO_BIND_COLORS);
-    
-    // aTexCoord
-    glEnableVertexArrayAttrib(vaos, ATTRIB_TEX_COORDS); 
-    glVertexArrayAttribFormat(vaos, ATTRIB_TEX_COORDS, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(vaos, ATTRIB_TEX_COORDS, VAO_BIND_TEX_COORDS);
-    
-    
-    // aInstanceTf
-    glEnableVertexArrayAttrib(vaos, ATTRIB_INSTANCE_TRANSFORM1); // aInstanceTf
-    glVertexArrayAttribFormat(vaos, ATTRIB_INSTANCE_TRANSFORM1, 4, GL_FLOAT, GL_FALSE, 0);
-    glEnableVertexArrayAttrib(vaos, ATTRIB_INSTANCE_TRANSFORM2);
-    glVertexArrayAttribFormat(vaos, ATTRIB_INSTANCE_TRANSFORM2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
-    glEnableVertexArrayAttrib(vaos, ATTRIB_INSTANCE_TRANSFORM3); 
-    glVertexArrayAttribFormat(vaos, ATTRIB_INSTANCE_TRANSFORM3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
-    glEnableVertexArrayAttrib(vaos, ATTRIB_INSTANCE_TRANSFORM4); 
-    glVertexArrayAttribFormat(vaos, ATTRIB_INSTANCE_TRANSFORM4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
-    
-    glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM1, VAO_BIND_INSTANCE_TRANSFORM);
-    glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM2, VAO_BIND_INSTANCE_TRANSFORM);
-    glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM3, VAO_BIND_INSTANCE_TRANSFORM);
-    glVertexArrayAttribBinding(vaos, ATTRIB_INSTANCE_TRANSFORM4, VAO_BIND_INSTANCE_TRANSFORM);
-    
-    // And this one 1 time, not 4 times? Makes sense I think??
-    glVertexArrayBindingDivisor(vaos, VAO_BIND_INSTANCE_TRANSFORM, 1); 
-    
-    // Indices
-    glVertexArrayElementBuffer(vaos, vbos[VBO_INDICES]);
-    
-    
-    // Setup Shader Program
-    GLuint program = glCreateProgram();
-    
-    // Setup Vertex Shader
-    char buffer[KILOBYTE] = {};
-    if (!ReadFileStr(buffer, KILOBYTE, "shader/simple.vts")) {
-        SDL_Log("Loading simple.vts failed");
-        return 1;
-    }
-    GLAttachShader(program, GL_VERTEX_SHADER, buffer);
-    memset(buffer, 0, KILOBYTE);
-    
-    // Setup Fragment Shader
-    if (!ReadFileStr(buffer, KILOBYTE, "shader/simple.fms")) {
-        SDL_Log("Loading simple.fms failed");
-        return 1;
-    }
-    GLAttachShader(program, GL_FRAGMENT_SHADER, buffer);
-    
-    
-    // Link Shaders
-    glLinkProgram(program);
-    GLint result;
-    glGetProgramiv(program, GL_LINK_STATUS, &result);
-    if (result != GL_TRUE) {
-        char msg[KILOBYTE];
-        glGetProgramInfoLog(program, KILOBYTE, nullptr, msg);
-        SDL_Log("Linking program failed:\n %s\n", msg);
-        return 1;
-    }
-    
-    // Setup Textures
-    GLuint texture;
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    glTextureStorage2D(texture, 1, GL_RGBA8, bmp.InfoHeader.Width, bmp.InfoHeader.Height);
-    
-    glTextureSubImage2D(texture, 0, 0, 0, bmp.InfoHeader.Width, bmp.InfoHeader.Height, GL_RGBA, GL_UNSIGNED_BYTE, 
-                        bmp.Pixels);
-    
-    
-    // Setup uniform variables
-    GLint uProjectionLoc = glGetUniformLocation(program, "uProjection");
-    auto uProjection  = Orthographic(-1.f, 1.f,
-                                     -1.f, 1.f,
-                                     -1.f, 1.f,
-                                     -windowWidth * 0.5f,  windowWidth * 0.5f, 
-                                     -windowHeight * 0.5f, windowHeight * 0.5f,
-                                     -100.f, 100.f,
-                                     true);
-    uProjection = Transpose(uProjection);
-    
-    glProgramUniformMatrix4fv(program, uProjectionLoc, 1, GL_FALSE, *uProjection.Arr);
-#else
     gl_renderer GlRenderer;
     Init(&GlRenderer, (f32)windowWidth, (f32)windowHeight,  1024, &bmp);
-#endif
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
@@ -391,14 +220,11 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): PlatformAPI
     platform_api PlatformAPI = {};
     PlatformAPI.Log = PlatformLog;
+    //PlatformAPI.Render = PlatformRenderOpenGL;
     
     
     sdl_timer timer;
     Start(&timer);
-    
-#if !TEST_RENDERER
-    f32 rotation = 0.f;
-#endif
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -415,52 +241,9 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        // NOTE(Momo): Test Update Code
-#if !TEST_RENDERER
-        m44f instanceTransforms[kMaxEntities];
-        f32 startX = -windowWidth/2.f;
-        f32 startY = -windowHeight/2.f;
-        f32 xOffset = 200.f;
-        f32 yOffset = 200.f;
-        f32 currentXOffset = 0.f;
-        f32 currentYOffset = 0.f;
-        for (int i = 0; i < kMaxEntities; ++i) {
-            instanceTransforms[i] = 
-                Translation(startX + currentXOffset, startY + currentYOffset, 0.f) *
-                RotationZ(rotation) *
-                Scale(100.f, 100.f, 1.f);
-            instanceTransforms[i] = Transpose(instanceTransforms[i]);
-            
-            glNamedBufferSubData(vbos[VBO_INSTANCE_TRANSFORM], i * sizeof(m44f), sizeof(m44f), &instanceTransforms[i]);
-            
-            currentXOffset += xOffset;
-            if (currentXOffset > windowWidth) {
-                currentXOffset = 0.f;
-                currentYOffset += yOffset;
-            }
-        }
-        rotation += deltaTime;
-        if (rotation > Pi32 ){
-            f32 diff = rotation - Pi32;
-            rotation = -Pi32 + diff;
-        }
-        
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(program);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(vaos);
-        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr, kMaxEntities);
-        
-#else
-        // Update End
-        Render(&GlRenderer);
-#endif
-        
         GameCode.Update(&GameMemory, &PlatformAPI, deltaTime);
         
-        
-        
-        
+        Render(&GlRenderer);
         
         // NOTE(Momo): Timer update
         Tick(&timer);

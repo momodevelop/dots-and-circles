@@ -32,7 +32,7 @@ using uptr = uintptr_t;
 #define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define TwoToOne(row, col, width) (col + row * width) 
 #define Complement(x, low, high) (high - x + low)
-#define Wrap(x, low, high) while(x > high)x-=(high)-(low); while(x < low) x+=(high)-(low);
+#define Wrap(x, low, high) while(x > high)x-=(high)-(low); while(x < low)x+=(high)-(low);
 #define Mask(flag, mask) (flag | mask)
 #define Unmask(flag, mask) (flag & ~mask)
 #define IsMasked(flag, mask) ((flag & mask) > 0)
@@ -87,8 +87,8 @@ ZeroBlock(void *mem, u64 size) {
     }
 }
 #define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
-#define ZeroArray(a) ZeroBlock((a), sizeof((a)))
-#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
+#define ZeroStackArray(a) ZeroBlock((a), sizeof((a)))
+#define ZeroArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
 
 
 #endif

@@ -22,8 +22,7 @@ Load(sdl_game_code* GameCode)
         return false;
     }
     
-    if (auto fn =  (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate")) 
-        GameCode->Update = fn;
+    GameCode->Update = (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate");
     
     return true;
 }
