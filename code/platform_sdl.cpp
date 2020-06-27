@@ -10,6 +10,9 @@
 
 #include "platform_sdl_timer.cpp"
 #include "platform_sdl_gldebug.cpp"
+#include "platform_sdl_game_code.cpp"
+
+#include "platform_sdl_renderer_gl.cpp"
 
 static bool gIsRunning = true;
 
@@ -20,17 +23,7 @@ sdl_window_size SDLGetWindowSize(SDL_Window* Window) {
     return { w, h };
 }
 
-
-
-
-static inline void 
-GLAttachShader(GLuint program, GLenum type, const GLchar* code) {
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &code, NULL);
-    glCompileShader(shader);
-    glAttachShader(program, shader);
-    glDeleteShader(shader);
-}
+#define TEST_RENDERER 1
 
 
 // TODO(Momo): export as function pointer to game code
@@ -39,7 +32,6 @@ void PlatformLog(const char * str, ...) {
     va_start(va, str);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, str, va);
     va_end(va);
-    
 }
 
 #if 0
@@ -113,32 +105,7 @@ bool ReadFileStr(char* dest, u64 destSize, const char * path) {
     return true;
 }
 
-// NOTE(Momo): sdl_game_code
-struct sdl_game_code {
-    game_update* Update;
-};
 
-static inline void
-Unload(sdl_game_code* GameCode) {
-    GameCode->Update = nullptr;
-}
-
-static inline bool
-Load(sdl_game_code* GameCode)
-{
-    Unload(GameCode);
-    
-    void* GameCodeDLL = SDL_LoadObject("game.dll");
-    if (!GameCodeDLL) {
-        SDL_Log("Failed to open game.dll");
-        return false;
-    }
-    
-    if (auto fn =  (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate")) 
-        GameCode->Update = fn;
-    
-    return true;
-}
 
 
 // NOTE(Momo): entry point
@@ -152,6 +119,8 @@ int main(int argc, char* argv[]) {
         SDL_Log("SDL shutting down\n");
         SDL_Quit();
     };
+    
+    // NOTE(Momo): Create Window
     SDL_Log("SDL creating Window\n");
     SDL_Window* window = SDL_CreateWindow("Vigil", 
                                           SDL_WINDOWPOS_UNDEFINED, 
@@ -159,17 +128,16 @@ int main(int argc, char* argv[]) {
                                           1600, 
                                           900, 
                                           SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+    if (window == nullptr) {
+        SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+        return 1;
+    }
     Defer{
         SDL_Log("SDL destroying window\n");
         SDL_DestroyWindow(window);
     };
     
-    if (window == nullptr) {
-        SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-        return 1;
-    }
-    
-    
+    // NOTE(Momo): Set OpenGL attributes
     SDL_GL_LoadLibrary(nullptr);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -182,10 +150,11 @@ int main(int argc, char* argv[]) {
 #endif  
     
     
+    // NOTE(Momo): Load game code
     sdl_game_code GameCode;
     Load(&GameCode);
     
-    // Request an OpenGL 4.5 context (should be core)
+    // NOTE(Momo) Initialize OpenGL context  core)
     SDL_Log("SDL creating context\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     if (context == nullptr) { 
@@ -221,6 +190,16 @@ int main(int argc, char* argv[]) {
     glClearColor(0.0f, 0.3f, 0.3f, 0.0f);
     
     
+    // Setup Textures
+    // TODO(Momo): Probably move this to game code asset loading?
+    Bmp bmp;
+    if (auto err = Load(&bmp, "assets/ryoji.bmp"); err > 0) {
+        SDL_Log("%s", BmpErrorStr(err));
+        return 1;
+    }
+    Defer{ Unload(&bmp); };
+    
+#if !TEST_RENDERER
     f32 quadModel[] = {
         // position   
         1.f,  1.f, 0.0f,  // top right
@@ -277,21 +256,9 @@ int main(int argc, char* argv[]) {
         VAO_BIND_INSTANCE_TRANSFORM,
     };
     
-    // Setup Textures
-    Bmp bmp;
-    if (auto err = Load(&bmp, "assets/ryoji.bmp"); err > 0) {
-        SDL_Log("%s", BmpErrorStr(err));
-        return 1;
-    }
-    Defer{ Unload(&bmp); };
     
+    // TODO(Momo): ???
     
-    GLuint texture;
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    glTextureStorage2D(texture, 1, GL_RGBA8, bmp.InfoHeader.Width, bmp.InfoHeader.Height);
-    
-    glTextureSubImage2D(texture, 0, 0, 0, bmp.InfoHeader.Width, bmp.InfoHeader.Height, GL_RGBA, GL_UNSIGNED_BYTE, 
-                        bmp.Pixels);
     
     // Setup VBO
     GLuint vbos[VBO_MAX]; 
@@ -382,6 +349,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
+    // Setup Textures
+    GLuint texture;
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    glTextureStorage2D(texture, 1, GL_RGBA8, bmp.InfoHeader.Width, bmp.InfoHeader.Height);
+    
+    glTextureSubImage2D(texture, 0, 0, 0, bmp.InfoHeader.Width, bmp.InfoHeader.Height, GL_RGBA, GL_UNSIGNED_BYTE, 
+                        bmp.Pixels);
+    
+    
     // Setup uniform variables
     GLint uProjectionLoc = glGetUniformLocation(program, "uProjection");
     auto uProjection  = Orthographic(-1.f, 1.f,
@@ -394,7 +370,10 @@ int main(int argc, char* argv[]) {
     uProjection = Transpose(uProjection);
     
     glProgramUniformMatrix4fv(program, uProjectionLoc, 1, GL_FALSE, *uProjection.Arr);
-    
+#else
+    gl_renderer GlRenderer;
+    Init(&GlRenderer, (f32)windowWidth, (f32)windowHeight,  1024, &bmp);
+#endif
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
@@ -416,7 +395,10 @@ int main(int argc, char* argv[]) {
     
     sdl_timer timer;
     Start(&timer);
+    
+#if !TEST_RENDERER
     f32 rotation = 0.f;
+#endif
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -434,6 +416,7 @@ int main(int argc, char* argv[]) {
         
         
         // NOTE(Momo): Test Update Code
+#if !TEST_RENDERER
         m44f instanceTransforms[kMaxEntities];
         f32 startX = -windowWidth/2.f;
         f32 startY = -windowHeight/2.f;
@@ -457,21 +440,27 @@ int main(int argc, char* argv[]) {
             }
         }
         rotation += deltaTime;
-        if (rotation > PIf ){
-            f32 diff = rotation - PIf;
-            rotation = -PIf + diff;
+        if (rotation > Pi32 ){
+            f32 diff = rotation - Pi32;
+            rotation = -Pi32 + diff;
         }
         
-        
-        GameCode.Update(&GameMemory, &PlatformAPI, deltaTime);
-        
-        
-        // Update End
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(program);
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(vaos);
-        glDrawElementsInstanced(GL_TRIANGLES, ArrayCount(quadIndices), GL_UNSIGNED_BYTE, nullptr, kMaxEntities);
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr, kMaxEntities);
+        
+#else
+        // Update End
+        Render(&GlRenderer);
+#endif
+        
+        GameCode.Update(&GameMemory, &PlatformAPI, deltaTime);
+        
+        
+        
+        
         
         // NOTE(Momo): Timer update
         Tick(&timer);

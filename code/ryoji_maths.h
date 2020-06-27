@@ -3,30 +3,31 @@
 
 #include "ryoji.h"
 
-static constexpr f32 PIf = 3.14159265358979323846264338327950288f;
-static constexpr f32 EPSILONf = 1.19209290E-07f;
+static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
+static constexpr f32 Epsilon32  = 1.19209290E-07f;
+static constexpr f32 Tau32  = Pi32 * 2.f;
 
 static inline bool 
 IsEqual(f32 lhs, f32 rhs) {
-    return Abs(lhs - rhs) <= EPSILONf;
+    return Abs(lhs - rhs) <= Epsilon32;
 }
 
 // Degrees and Radians
 static inline f32 
 DegToRad(f32 degrees) {
-    return degrees * PIf / 180.f;
+    return degrees * Pi32 / 180.f;
 }
 
 static inline f32 
 RadToDeg(f32 radians) {
-    return radians * 180.f / PIf;
+    return radians * 180.f / Pi32;
 }
 
 // NOTE(Momo): [-PI,PI]
 static inline f32 
 Sin(f32 x) {
-    constexpr float B = 4.0f / PIf;
-    constexpr float C = -4.0f / (PIf * PIf);
+    constexpr float B = 4.0f / Pi32;
+    constexpr float C = -4.0f / (Pi32 * Pi32);
     constexpr float P = 0.225f;
     
     float y = B * x + C * x * Abs(x);
@@ -36,12 +37,12 @@ Sin(f32 x) {
 // NOTE(Momo): [-PI, PI]
 static inline 
 f32 Cos(f32 x) {
-    constexpr float B = 4.0f / PIf;
-    constexpr float C = -4.0f / (PIf * PIf);
+    constexpr float B = 4.0f / Pi32;
+    constexpr float C = -4.0f / (Pi32 * Pi32);
     constexpr float P = 0.225f;
     
     x = (x > 0) ? -x : x;
-    x += PIf/2;
+    x += Pi32/2;
     
     return Sin(x);
 }
@@ -90,7 +91,7 @@ ASin(f32 x) {
     ret -= 0.2121144f;
     ret *= x;
     ret += 1.5707288f;
-    ret = PIf *0.5f - Sqrt(1.0f - x)*ret;
+    ret = Pi32 *0.5f - Sqrt(1.0f - x)*ret;
     return ret - 2 * negate * ret;
 }
 
@@ -110,7 +111,7 @@ ACos(f32 x) {
     ret = ret + 1.5707288f;
     ret = ret * Sqrt(1.f-x);
     ret = ret - 2.f * negate * ret;
-    return negate * PIf + ret;
+    return negate * Pi32 + ret;
 }
 
 // NOTE(Momo): [-1, 1]
@@ -118,7 +119,7 @@ static inline f32
 ATan(f32 x) {
     constexpr f32 A = 0.0776509570923569f;
     constexpr f32 B = -0.287434475393028f;
-    constexpr f32 C = PIf / 4 - A - B;
+    constexpr f32 C = Pi32 / 4 - A - B;
     f32 xx = x * x;
     return ((A*xx + B)*xx + C)*x;
 }
