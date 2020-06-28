@@ -5,7 +5,7 @@
 
 
 struct game_state {
-    render_group RenderGroup;
+    render_cmd RenderCmds;
     f32 TimeElapsed;
 };
 

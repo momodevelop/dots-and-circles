@@ -6,16 +6,23 @@
 
 // NOTE(Momo): simple entity system
 // Nothing weird, just simple TRS transform
-// TODO(Momo): Maybe move to ryoji??
-struct render_group_entry {
+// TODO(Momo): Maybe move to ryoji?? Since it's gonna be generic
+enum struct render_cmd_type {
+    Clear,
+    RenderBitmap,
+};
+
+
+struct render_cmd_entry {
+    render_cmd_type RenderCmdType;
     m44f Transform;
     m44f Color;
     // TODO(Momo): Texture?
     u32 TextureHandle;
 };
 
-struct render_group {
-    render_group_entry Entries;
+struct render_cmd {
+    render_cmd_entry Entries;
 };
 
 struct platform_api {

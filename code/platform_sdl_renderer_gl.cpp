@@ -11,37 +11,37 @@
 
 // NOTE(Momo): VBO types
 enum {
-    VBO_MODEL,
-    VBO_INDICES,
-    VBO_COLORS,
-    VBO_TEXTURE,
-    VBO_TRANSFORM,
-    VBO_MAX
+    GlRendererVbo_Model,
+    GlRendererVbo_Indices,
+    GlRendererVbo_Colors,
+    GlRendererVbo_Texture,
+    GlRendererVbo_Transform,
+    GlRendererVbo_Max
 };
 
 // NOTE(Momo): Attributes
 enum {
-    ATB_MODEL,
-    ATB_COLORS,
-    ATB_TEXTURE, 
+    GlRendererAtb_Model,
+    GlRendererAtb_Colors,
+    GlRendererAtb_Texture, 
     
     // NOTE(Momo): Because it's matrix4x4, so need 4x vec4's
-    ATB_TRANSFORM1, 
-    ATB_TRANSFORM2,
-    ATB_TRANSFORM3,
-    ATB_TRANSFORM4
+    GlRendererAtb_Transform1, 
+    GlRendererAtb_Transform2,
+    GlRendererAtb_Transform3,
+    GlRendererAtb_Transform4
 };
 
 // NOTE(Momo): VAO bindings
 enum {
-    VAO_MODEL_BIND,
-    VAO_COLORS_BIND,
-    VAO_TEXTURE_BIND,
-    VAO_TRANSFORM_BIND,
+    GlRendererVaoBind_Model,
+    GlRendererVaoBind_Colors,
+    GlRendererVaoBind_Texture,
+    GlRendererVaoBind_Transform,
 };
 
 struct gl_renderer {
-    GLuint Buffers[VBO_MAX]; 
+    GLuint Buffers[GlRendererVbo_Max]; 
     GLuint Shader;
     
     // NOTE(Momo): We only need one blueprint which is a 1x1 square.
@@ -96,96 +96,96 @@ Init(gl_renderer* r, f32 viewportWidth, f32 viewportHeight, GLsizei maxEntities,
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
     constexpr static const char* vertexShader = "\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            #version 450 core \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            layout(location=0) in vec3 aModelVtx; \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout(location=1) in vec4 aColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout(location=2) in vec2 aTexCoord;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout(location=3) in mat4 aTransform;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        out vec4 mColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        out vec2 mTexCoord;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        uniform mat4 uProjection;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        void main(void) {\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            mColor = aColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            mTexCoord = aTexCoord;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            #version 450 core \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            layout(location=0) in vec3 aModelVtx; \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout(location=1) in vec4 aColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout(location=2) in vec2 aTexCoord;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        layout(location=3) in mat4 aTransform;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        out vec4 mColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        out vec2 mTexCoord;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        uniform mat4 uProjection;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        void main(void) {\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            mColor = aColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            mTexCoord = aTexCoord;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }";
     
     constexpr static const char* fragmentShader = "\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                #version 450 core\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    out vec4 fragColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    in vec4 mColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    in vec2 mTexCoord;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    uniform sampler2D uTexture;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        fragColor = texture(uTexture, mTexCoord) * mColor; \n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                #version 450 core\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    out vec4 fragColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    in vec4 mColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    in vec2 mTexCoord;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    uniform sampler2D uTexture;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        fragColor = texture(uTexture, mTexCoord) * mColor; \n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }";
     
     
     // NOTE(Momo): Setup VBO
-    glCreateBuffers(VBO_MAX, r->Buffers);
-    glNamedBufferStorage(r->Buffers[VBO_MODEL], sizeof(quadModel), quadModel, 0);
-    glNamedBufferStorage(r->Buffers[VBO_INDICES], sizeof(quadIndices), quadIndices, 0);
-    glNamedBufferStorage(r->Buffers[VBO_TEXTURE], sizeof(quadTexCoords), quadTexCoords, 0);
+    glCreateBuffers(GlRendererVbo_Max, r->Buffers);
+    glNamedBufferStorage(r->Buffers[GlRendererVbo_Model], sizeof(quadModel), quadModel, 0);
+    glNamedBufferStorage(r->Buffers[GlRendererVbo_Indices], sizeof(quadIndices), quadIndices, 0);
+    glNamedBufferStorage(r->Buffers[GlRendererVbo_Texture], sizeof(quadTexCoords), quadTexCoords, 0);
     
     
     // NOTE(Momo): colors are 4x vec4, one for each side
-    glNamedBufferStorage(r->Buffers[VBO_COLORS], sizeof(f32)*16 * maxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(r->Buffers[GlRendererVbo_Colors], sizeof(f32)*16 * maxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
-    glNamedBufferStorage(r->Buffers[VBO_TRANSFORM], sizeof(f32)*16 * maxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(r->Buffers[GlRendererVbo_Transform], sizeof(f32)*16 * maxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
     glCreateVertexArrays(1, &r->Blueprint);
-    glVertexArrayVertexBuffer(r->Blueprint, VAO_MODEL_BIND, r->Buffers[VBO_MODEL],   0, sizeof(f32)*3);
-    glVertexArrayVertexBuffer(r->Blueprint, VAO_TEXTURE_BIND, r->Buffers[VBO_TEXTURE], 0, sizeof(f32)*2);
-    glVertexArrayVertexBuffer(r->Blueprint, VAO_COLORS_BIND, r->Buffers[VBO_COLORS],  0, sizeof(f32)*4);
-    glVertexArrayVertexBuffer(r->Blueprint, VAO_TRANSFORM_BIND, r->Buffers[VBO_TRANSFORM], 0, sizeof(m44f));
+    glVertexArrayVertexBuffer(r->Blueprint, GlRendererVaoBind_Model, r->Buffers[GlRendererVbo_Model],   0, sizeof(f32)*3);
+    glVertexArrayVertexBuffer(r->Blueprint, GlRendererVaoBind_Texture, r->Buffers[GlRendererVbo_Texture], 0, sizeof(f32)*2);
+    glVertexArrayVertexBuffer(r->Blueprint, GlRendererVaoBind_Colors, r->Buffers[GlRendererVbo_Colors],  0, sizeof(f32)*4);
+    glVertexArrayVertexBuffer(r->Blueprint, GlRendererVaoBind_Transform, r->Buffers[GlRendererVbo_Transform], 0, sizeof(m44f));
     
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_MODEL); 
-    glVertexArrayAttribFormat(r->Blueprint, ATB_MODEL, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(r->Blueprint, ATB_MODEL, VAO_MODEL_BIND);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Model); 
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Model, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Model, GlRendererVaoBind_Model);
     
     // aColor
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_COLORS); 
-    glVertexArrayAttribFormat(r->Blueprint, ATB_COLORS, 4, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(r->Blueprint, ATB_COLORS, VAO_COLORS_BIND);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Colors); 
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Colors, 4, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Colors, GlRendererVaoBind_Colors);
     
     // NOTE(Momo): If binding divisor is zero, advance once per vertex
-    glVertexArrayBindingDivisor(r->Blueprint, VAO_COLORS_BIND, 0); 
+    glVertexArrayBindingDivisor(r->Blueprint, GlRendererVaoBind_Colors, 0); 
     
     // aTexCoord
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_TEXTURE); 
-    glVertexArrayAttribFormat(r->Blueprint, ATB_TEXTURE, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(r->Blueprint, ATB_TEXTURE, VAO_TEXTURE_BIND);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Texture); 
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Texture, 2, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Texture, GlRendererVaoBind_Texture);
     
     
     // aTransform
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_TRANSFORM1); 
-    glVertexArrayAttribFormat(r->Blueprint, ATB_TRANSFORM1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_TRANSFORM2);
-    glVertexArrayAttribFormat(r->Blueprint, ATB_TRANSFORM2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_TRANSFORM3); 
-    glVertexArrayAttribFormat(r->Blueprint, ATB_TRANSFORM3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
-    glEnableVertexArrayAttrib(r->Blueprint, ATB_TRANSFORM4); 
-    glVertexArrayAttribFormat(r->Blueprint, ATB_TRANSFORM4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Transform1); 
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Transform1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Transform2);
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Transform2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Transform3); 
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Transform3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
+    glEnableVertexArrayAttrib(r->Blueprint, GlRendererAtb_Transform4); 
+    glVertexArrayAttribFormat(r->Blueprint, GlRendererAtb_Transform4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
     
-    glVertexArrayAttribBinding(r->Blueprint, ATB_TRANSFORM1, VAO_TRANSFORM_BIND);
-    glVertexArrayAttribBinding(r->Blueprint, ATB_TRANSFORM2, VAO_TRANSFORM_BIND);
-    glVertexArrayAttribBinding(r->Blueprint, ATB_TRANSFORM3, VAO_TRANSFORM_BIND);
-    glVertexArrayAttribBinding(r->Blueprint, ATB_TRANSFORM4, VAO_TRANSFORM_BIND);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Transform1, GlRendererVaoBind_Transform);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Transform2, GlRendererVaoBind_Transform);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Transform3, GlRendererVaoBind_Transform);
+    glVertexArrayAttribBinding(r->Blueprint, GlRendererAtb_Transform4, GlRendererVaoBind_Transform);
     
     // NOTE(Momo): If binding divisor is N, advance N per instance
-    glVertexArrayBindingDivisor(r->Blueprint, VAO_TRANSFORM_BIND, 1); 
+    glVertexArrayBindingDivisor(r->Blueprint, GlRendererVaoBind_Transform, 1); 
     
     
     // NOTE(Momo): Setup indices
-    glVertexArrayElementBuffer(r->Blueprint, r->Buffers[VBO_INDICES]);
+    glVertexArrayElementBuffer(r->Blueprint, r->Buffers[GlRendererVbo_Indices]);
     
     // Setup Shader Program
     r->Shader = glCreateProgram();
@@ -256,8 +256,8 @@ Render(gl_renderer* r) {
             Scale(100.f, 100.f, 1.f);
         instanceTransforms[i] = Transpose(instanceTransforms[i]);
         
-        glNamedBufferSubData(r->Buffers[VBO_COLORS], i * sizeof(m44f), sizeof(m44f), quadColorful);
-        glNamedBufferSubData(r->Buffers[VBO_TRANSFORM], i * sizeof(m44f), sizeof(m44f), &instanceTransforms[i]);
+        glNamedBufferSubData(r->Buffers[GlRendererVbo_Colors], i * sizeof(m44f), sizeof(m44f), quadColorful);
+        glNamedBufferSubData(r->Buffers[GlRendererVbo_Transform], i * sizeof(m44f), sizeof(m44f), &instanceTransforms[i]);
         
         currentXOffset += xOffset;
         if (currentXOffset > r->ViewportWidth) {
