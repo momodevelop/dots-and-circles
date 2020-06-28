@@ -201,8 +201,7 @@ int main(int argc, char* argv[]) {
     SDL_Log("Bmp loaded");
     Defer{ Unload(&bmp); };
     
-    gl_renderer GlRenderer;
-    Init(&GlRenderer, (f32)windowWidth, (f32)windowHeight,  1024, &bmp);
+    GlRendererInit((f32)windowWidth, (f32)windowHeight,  1024, &bmp);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
@@ -218,10 +217,8 @@ int main(int argc, char* argv[]) {
     GameMemory.PermanentStoreSize = Megabytes(64);
     
     // NOTE(Momo): PlatformAPI
-    platform_api PlatformAPI = {};
-    PlatformAPI.Log = PlatformLog;
-    //PlatformAPI.Render = PlatformRenderOpenGL;
-    
+    gPlatformAPI.Log = PlatformLog;
+    gPlatformAPI.GlProcessRenderGroup = GlProcessRenderGroup;
     
     sdl_timer timer;
     Start(&timer);
@@ -241,9 +238,7 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        GameCode.Update(&GameMemory, &PlatformAPI, deltaTime);
-        
-        Render(&GlRenderer);
+        GameCode.Update(&GameMemory, &gPlatformAPI, deltaTime);
         
         // NOTE(Momo): Timer update
         Tick(&timer);

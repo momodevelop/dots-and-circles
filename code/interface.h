@@ -7,34 +7,44 @@
 // NOTE(Momo): simple entity system
 // Nothing weird, just simple TRS transform
 // TODO(Momo): Maybe move to ryoji?? Since it's gonna be generic
+#if 0 
 enum struct render_cmd_type {
     Clear,
-    RenderBitmap,
+    Bitmap,
+    // TODO(Momo):  Colored Rectangle?
 };
 
 
-struct render_cmd_entry {
-    render_cmd_type RenderCmdType;
+struct render_cmd_data_bitmap {
     m44f Transform;
     m44f Color;
-    // TODO(Momo): Texture?
     u32 TextureHandle;
 };
 
 struct render_cmd {
-    render_cmd_entry Entries;
+    render_cmd_type RenderCmdType;
+    void* Data;
 };
+
+struct render_cmd_list {
+    render_cmd* Commands; 
+    usize Size;
+};
+#endif
+
+struct render_group {
+    m44f Transforms[1024];
+    m44f Colors[1024];
+};
+
 
 struct platform_api {
     void (*Log)(const char* str, ...);
     
-    u32 (*LoadTexture)(const char* path);
+    //u32 (*LoadTexture)(const char* path);
+    void (*GlProcessRenderGroup)(render_group*); 
     
-    
-    // TODO(Momo): Change to render_group
-    void (*PassRenderGroup)(); 
-    
-};
+} gPlatformAPI;
 
 struct game_memory {
     void* PermanentStore;
