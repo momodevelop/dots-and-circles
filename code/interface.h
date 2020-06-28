@@ -45,17 +45,19 @@ struct platform_api {
     //u32 (*LoadTexture)(const char* path);
     void (*GlProcessRenderGroup)(render_group*); 
     
-} gPlatformAPI;
+};
 
 struct game_memory {
     void* PermanentStore;
     u64 PermanentStoreSize;
     bool IsInitialized;
+    
+    platform_api PlatformApi;
 };
 
 
 // NOTE(Momo): game functions from DLL
-typedef void game_update(game_memory* GameMemory, platform_api* PlatformApi, f32 DeltaTime);
+typedef void game_update(game_memory* GameMemory,  f32 DeltaTime);
 
 
 struct platform_get_file_size_res {

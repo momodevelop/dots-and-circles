@@ -49,7 +49,7 @@ GameInit(game_state * GameState) {
 
 // NOTE(Momo):  Exported Functions
 extern "C" void
-GameUpdate(game_memory* GameMemory, platform_api* PlatformApi, f32 DeltaTime) {
+GameUpdate(game_memory* GameMemory, f32 DeltaTime) {
     game_state* GameState = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
         GameInit(GameState);
@@ -92,6 +92,6 @@ GameUpdate(game_memory* GameMemory, platform_api* PlatformApi, f32 DeltaTime) {
     
     //PlatformApi->Log("Updating: %f", GameState->TimeElapsed);
     
-    PlatformApi->GlProcessRenderGroup(&GameState->RenderGroup);
+    GameMemory->PlatformApi.GlProcessRenderGroup(&GameState->RenderGroup);
     
 }

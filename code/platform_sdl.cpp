@@ -217,8 +217,8 @@ int main(int argc, char* argv[]) {
     GameMemory.PermanentStoreSize = Megabytes(64);
     
     // NOTE(Momo): PlatformAPI
-    gPlatformAPI.Log = PlatformLog;
-    gPlatformAPI.GlProcessRenderGroup = GlProcessRenderGroup;
+    GameMemory.PlatformApi.Log = PlatformLog;
+    GameMemory.PlatformApi.GlProcessRenderGroup = GlProcessRenderGroup;
     
     sdl_timer timer;
     Start(&timer);
@@ -238,7 +238,7 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        GameCode.Update(&GameMemory, &gPlatformAPI, deltaTime);
+        GameCode.Update(&GameMemory, deltaTime);
         
         // NOTE(Momo): Timer update
         Tick(&timer);
