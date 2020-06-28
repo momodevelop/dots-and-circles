@@ -3,6 +3,16 @@
 #include "game.h"
 #include "ryoji_maths.h"
 
+// TODO(Momo): remove this after use
+#include <stdlib.h>
+
+static inline render_group* 
+ConstructRenderGroup(/**/usize Size) {
+    // TODO(Momo): Change to memory arena
+    render_group* Ret = (render_group*)malloc(Size);
+    return Ret;
+}
+
 
 // TODO(Momo): Complete this function
 #if 0
@@ -31,6 +41,7 @@ GameInit(game_state * GameState) {
     for (u32 i = 0 ; i < 1024; ++i ) {
         GameState->RenderGroup.Transforms[i] = Identity();
     }
+    GameState->RenderGroup.Count = 1024;
     GameState->Rotation = 0.f;
 }
 
@@ -54,11 +65,20 @@ GameUpdate(game_memory* GameMemory, platform_api* PlatformApi, f32 DeltaTime) {
     f32 currentXOffset = 0.f;
     f32 currentYOffset = 0.f;
     
+    m44f quadColorful = {
+        1.f, 1.f, 0.f, 0.f,
+        0.f, 1.f, 0.f, 0.f,
+        0.f, 0.f, 1.f, 0.0f,
+        1.f, 1.f, 1.f, 0.0f,
+    };
+    
     for (u32 i = 0 ; i < 1024; ++i ) {
         GameState->RenderGroup.Transforms[i] =
             Transpose(Translation(startX + currentXOffset, startY + currentYOffset, 0.f) *
                       RotationZ(GameState->Rotation) *
                       Scale(100.f, 100.f, 1.f));
+        GameState->RenderGroup.Colors[i] = quadColorful;
+        
         
         currentXOffset += xOffset;
         if (currentXOffset > 1600) {

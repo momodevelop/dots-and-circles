@@ -35,6 +35,7 @@ struct render_cmd_list {
 struct render_group {
     m44f Transforms[1024];
     m44f Colors[1024];
+    usize Count;
 };
 
 

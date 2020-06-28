@@ -37,6 +37,17 @@ using uptr = uintptr_t;
 #define Unmask(flag, mask) (flag & ~mask)
 #define IsMasked(flag, mask) ((flag & mask) > 0)
 
+static inline void 
+ZeroBlock(void *mem, usize size) {
+    for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
+        *p = 0;
+    }
+}
+#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
+#define ZeroArray(a) ZeroBlock((a), sizeof((a)))
+#define ZeroDynArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
+
+
 
 // Assertion
 #ifdef SLOW_MODE
@@ -79,16 +90,7 @@ default: return "Unknown Error :("; \
 }\
 
 
-// Useful functions
-static inline void 
-ZeroBlock(void *mem, u64 size) {
-    for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
-        *p = 0;
-    }
-}
-#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
-#define ZeroStackArray(a) ZeroBlock((a), sizeof((a)))
-#define ZeroArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
+
 
 
 #endif
