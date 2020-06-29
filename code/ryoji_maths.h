@@ -405,22 +405,22 @@ Scale(f32 x, f32 y, f32 z) {
 
 // 
 static inline m44f 
-Orthographic(f32 ndcLeft, f32 ndcRight,
-             f32 ndcBottom, f32 ndcTop,
-             f32 ndcNear, f32 ndcFar,
-             f32 left, f32 right, 
-             f32 bottom, f32 top,
-             f32 near, f32 far,
-             bool flipz) 
+Orthographic(f32 NdcLeft, f32 NdcRight,
+             f32 NdcBottom, f32 NdcTop,
+             f32 NdcNear, f32 NdcFar,
+             f32 Left, f32 Right, 
+             f32 Bottom, f32 Top,
+             f32 Near, f32 Far,
+             bool FlipZ) 
 {
     m44f Ret = {};
-    Ret[0][0] = (ndcRight-ndcLeft)/(right-left);
-    Ret[1][1] = (ndcTop-ndcBottom)/(top-bottom);
-    Ret[2][2] = (flipz ? -1.f : 1.f) * (ndcFar-ndcNear)/(far-near);
+    Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
+    Ret[1][1] = (NdcTop-NdcBottom)/(Top-Bottom);
+    Ret[2][2] = (FlipZ ? -1.f : 1.f) * (NdcFar-NdcNear)/(Far-Near);
     Ret[3][3] = 1.f;
-    Ret[0][3] = -(right+left)/(right-left);
-    Ret[1][3] = -(top+bottom)/(top-bottom);
-    Ret[2][3] =  -(far+near)/(far-near);
+    Ret[0][3] = -(Right+Left)/(Right-Left);
+    Ret[1][3] = -(Top+Bottom)/(Top-Bottom);
+    Ret[2][3] =  -(Far+Near)/(Far-Near);
     Ret[3][3] = 1.f;
     
     return Ret;

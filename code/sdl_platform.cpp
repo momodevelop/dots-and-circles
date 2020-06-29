@@ -1,25 +1,18 @@
 #include <stdlib.h>
 
+#include "ryoji_maths.h"
+
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
+#include "bmp.cpp"
 
-#include "ryoji_maths.h"
+#include "interface.h"
+#include "platform_sdl_timer.cpp"
+#include "platform_sdl_gldebug.cpp"
+#include "platform_sdl_game_code.cpp"
 
-#include "game_platform.h"
-#include "bmp.cpp" // TODO(Momo): put into render group?
-#include "game_render_gl.h"
-
-
-
-
-
-#include "sdl_platform_timer.cpp"
-#include "sdl_platform_gldebug.cpp"
-#include "sdl_platform_game_code.cpp"
-
-
-
+#include "yuu_renderer_gl.h"
 
 static bool gIsRunning = true;
 

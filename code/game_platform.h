@@ -1,8 +1,9 @@
-#ifndef __INTERFACE__
-#define __INTERFACE__
+#ifndef __GAME_PLATFORM__
+#define __GAME_PLATFORM__
 
 #include "ryoji.h"
 #include "ryoji_maths.h"
+
 
 // NOTE(Momo): simple entity system
 // Nothing weird, just simple TRS transform
@@ -47,11 +48,17 @@ struct platform_api {
     
 };
 
+enum struct renderer_type {
+    SOFTWARE,
+    OPENGL,
+    DIRECTX
+};
+
 struct game_memory {
     void* PermanentStore;
     u64 PermanentStoreSize;
     bool IsInitialized;
-    
+    renderer_type RendererType; 
     platform_api PlatformApi;
 };
 

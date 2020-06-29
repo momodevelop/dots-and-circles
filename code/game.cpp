@@ -1,7 +1,5 @@
-#include "interface.h"
+#include "game_platform.h"
 
-#include "game.h"
-#include "ryoji_maths.h"
 
 // TODO(Momo): remove this after use
 #include <stdlib.h>
