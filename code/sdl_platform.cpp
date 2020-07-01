@@ -5,14 +5,16 @@
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
-#include "bmp.cpp"
 
-#include "interface.h"
-#include "platform_sdl_timer.cpp"
-#include "platform_sdl_gldebug.cpp"
-#include "platform_sdl_game_code.cpp"
+#include "game_platform.h"
+#include "game_asset_loader.h"
+#include "game_render_gl.h"
 
-#include "yuu_renderer_gl.h"
+#include "sdl_platform_timer.cpp"
+#include "sdl_platform_gldebug.cpp"
+#include "sdl_platform_game_code.cpp"
+
+
 
 static bool gIsRunning = true;
 
@@ -54,27 +56,7 @@ PlatformGetFileSize(const char* path) {
     return { true, ret };
 }
 
-static
-bool PlatformReadBinaryFileToMemory(void * dest, u64 destSize, const char * path) {
-    SDL_RWops * file = SDL_RWFromFile(path, "rb");
-    if (file == nullptr) {
-        return false;
-    }
-    Defer{
-        SDL_RWclose(file);
-    };
-    
-    // Get file size
-    u64 filesize = SDL_RWsize(file); // Does not include EOF
-    
-    if (filesize > destSize) {
-        return false;
-    }
-    
-    SDL_RWread(file, dest, 1, filesize);
-    
-    return true;
-}
+
 #endif
 
 
@@ -105,14 +87,59 @@ bool ReadFileStr(char* dest, u64 destSize, const char * path) {
 }
 
 
-// TODO(Momo): Complete this function
-static inline void
-PlatformRenderOpenGL() {
-    //Render(&GlRenderer);
+
+// TODO(Momo): Test Thread Code
+struct work_queue_entry {
+    char * StringToPrint;
+};
+
+struct thread_context {
+    u32 Index;
+};
+
+static u32 NextEntryToDo;
+static u32 EntryCount;
+work_queue_entry Entries[256];
+
+
+static inline int 
+TestThread(void *ptr) {
+    thread_context* Info = (thread_context*)ptr;
+    
+    for (;;) {
+        if ( NextEntryToDo < EntryCount) {
+            work_queue_entry* Entry = Entries + NextEntryToDo++;
+            SDL_Log("Thread %d: %s", Info->Index, Entry->StringToPrint);
+        }
+    }
 }
+
+static inline void
+PushString(char* String) {
+    Assert(EntryCount < ArrayCount(Entries));
+    work_queue_entry* Entry = Entries + EntryCount++;
+    Entry->StringToPrint = String;
+}
+
+
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
+    // TODO(Momo): Test Thread Code
+    /*thread_context ThreadContext[15];
+    for (int i = 0; i < ArrayCount(ThreadContext); ++i) {
+        thread_context * Context = ThreadContext + i;
+        Context->Index = i;
+        
+        auto Thread = SDL_CreateThread(TestThread, "TestThread", Context);
+        SDL_Log("Thread %d created", i);
+        SDL_DetachThread(Thread);
+    }
+    
+    PushString("1");*/
+    
+    
+    
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
         SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -192,17 +219,11 @@ int main(int argc, char* argv[]) {
     glClearColor(0.0f, 0.3f, 0.3f, 0.0f);
     
     
-    // Setup Textures
-    // TODO(Momo): Probably move this to game code asset loading?
-    Bmp bmp;
-    if (auto err = Load(&bmp, "assets/ryoji.bmp"); err > 0) {
-        SDL_Log("%s", BmpErrorStr(err));
-        return 1;
-    }
-    SDL_Log("Bmp loaded");
-    Defer{ Unload(&bmp); };
     
-    GlRendererInit((f32)windowWidth, (f32)windowHeight,  1024, &bmp);
+    loaded_bitmap TestBitmap = DebugMakeBitmapFromBmp("assets/ryoji.bmp");
+    Defer{ free(TestBitmap.Pixels); };
+    
+    GlRendererInit((f32)windowWidth, (f32)windowHeight,  1024, &TestBitmap);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
@@ -239,7 +260,7 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        GameCode.Update(&GameMemory, deltaTime);
+        GameCode.Update(&GameMemory, deltaTime); 
         
         // NOTE(Momo): Timer update
         Tick(&timer);

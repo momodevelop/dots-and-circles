@@ -71,10 +71,10 @@ GameUpdate(game_memory* GameMemory, f32 DeltaTime) {
     };
     
     for (u32 i = 0 ; i < 1024; ++i ) {
-        GameState->RenderGroup.Transforms[i] =
-            Transpose(Translation(startX + currentXOffset, startY + currentYOffset, 0.f) *
-                      RotationZ(GameState->Rotation) *
-                      Scale(100.f, 100.f, 1.f));
+        auto T = MakeTranslationMatrix(startX + currentXOffset, startY + currentYOffset, 0.f);
+        auto R = MakeRotationZMatrix(GameState->Rotation);
+        auto S = MakeScaleMatrix(100.f, 100.f, 1.f);
+        GameState->RenderGroup.Transforms[i] = Transpose(T*R*S);
         GameState->RenderGroup.Colors[i] = quadColorful;
         
         

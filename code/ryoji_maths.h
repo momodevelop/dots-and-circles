@@ -344,7 +344,7 @@ Transpose(m44f M) {
 }
 
 static inline m44f 
-Translation(f32 x, f32 y, f32 z) {
+MakeTranslationMatrix(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, x,
         0.f, 1.f, 0.f, y,
@@ -355,7 +355,7 @@ Translation(f32 x, f32 y, f32 z) {
 
 
 static inline m44f 
-RotationX(f32 rad) {
+MakeRotationXMatrix(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -367,7 +367,7 @@ RotationX(f32 rad) {
 }
 
 static inline m44f 
-RotationY(f32 rad) {
+MakeRotationYMatrix(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -381,7 +381,7 @@ RotationY(f32 rad) {
 
 
 static inline m44f 
-RotationZ(f32 rad) {
+MakeRotationZMatrix(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -393,7 +393,7 @@ RotationZ(f32 rad) {
 }
 
 static inline m44f
-Scale(f32 x, f32 y, f32 z) {
+MakeScaleMatrix(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f,   0.f,
         0.f, y, 0.f,   0.f,
@@ -405,13 +405,13 @@ Scale(f32 x, f32 y, f32 z) {
 
 // 
 static inline m44f 
-Orthographic(f32 NdcLeft, f32 NdcRight,
-             f32 NdcBottom, f32 NdcTop,
-             f32 NdcNear, f32 NdcFar,
-             f32 Left, f32 Right, 
-             f32 Bottom, f32 Top,
-             f32 Near, f32 Far,
-             bool FlipZ) 
+MakeOrthographicMatrix(f32 NdcLeft, f32 NdcRight,
+                       f32 NdcBottom, f32 NdcTop,
+                       f32 NdcNear, f32 NdcFar,
+                       f32 Left, f32 Right, 
+                       f32 Bottom, f32 Top,
+                       f32 Near, f32 Far,
+                       bool FlipZ) 
 {
     m44f Ret = {};
     Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);

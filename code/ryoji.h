@@ -44,8 +44,8 @@ ZeroBlock(void *mem, usize size) {
     }
 }
 #define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
-#define ZeroArray(a) ZeroBlock((a), sizeof((a)))
-#define ZeroDynArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
+#define ZeroStaticArray(a) ZeroBlock((a), sizeof((a)))
+#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
 
 
 
