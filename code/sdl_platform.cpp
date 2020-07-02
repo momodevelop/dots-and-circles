@@ -97,21 +97,27 @@ struct thread_context {
     u32 Index;
 };
 
+static u32 EntryCompleteCount;
 static u32 NextEntryToDo;
 static u32 EntryCount;
-work_queue_entry Entries[256];
+work_queue_entry  Entries[256];
 
+SDL_sem *sem;
 
 static inline int 
 TestThread(void *ptr) {
     thread_context* Info = (thread_context*)ptr;
     
-    for (;;) {
+    for(;;) {
+        SDL_SemWait(sem);
         if ( NextEntryToDo < EntryCount) {
-            work_queue_entry* Entry = Entries + NextEntryToDo++;
+            u32 EntryIndex = NextEntryToDo++;
+            work_queue_entry* Entry = Entries + EntryIndex++;
             SDL_Log("Thread %d: %s", Info->Index, Entry->StringToPrint);
         }
     }
+    
+    //return 0;
 }
 
 static inline void
@@ -119,14 +125,17 @@ PushString(char* String) {
     Assert(EntryCount < ArrayCount(Entries));
     work_queue_entry* Entry = Entries + EntryCount++;
     Entry->StringToPrint = String;
+    SDL_SemPost(sem);
 }
 
 
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
+    sem = SDL_CreateSemaphore(0);
+    
     // TODO(Momo): Test Thread Code
-    /*thread_context ThreadContext[15];
+    thread_context ThreadContext[2];
     for (int i = 0; i < ArrayCount(ThreadContext); ++i) {
         thread_context * Context = ThreadContext + i;
         Context->Index = i;
@@ -136,7 +145,17 @@ int main(int argc, char* argv[]) {
         SDL_DetachThread(Thread);
     }
     
-    PushString("1");*/
+    PushString("String 1");
+    PushString("String 2");
+    PushString("String 3");
+    PushString("String 4");
+    PushString("String 5");
+    PushString("String 6");
+    PushString("String 7");
+    PushString("String 8");
+    PushString("String 9");
+    PushString("String 10");
+    
     
     
     

@@ -82,7 +82,7 @@ namespace zawarudo {
 enum ENUM_NAME { \
 FOREACH(zawarudo_GENERATE_ENUM_PART) \
 };\
-internal const char* FUNC_NAME(ENUM_NAME e) { \
+static inline const char* FUNC_NAME(ENUM_NAME e) { \
 switch(e) { \
 FOREACH(zawarudo_GENERATE_SWITCH_CASE_PART) \
 default: return "Unknown Error :("; \
