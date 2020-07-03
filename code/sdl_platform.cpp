@@ -88,31 +88,46 @@ bool ReadFileStr(char* dest, u64 destSize, const char * path) {
 
 
 
-// TODO(Momo): Test Thread Code
 struct work_queue_entry {
     char * StringToPrint;
 };
 
-struct thread_context {
-    u32 Index;
+struct work_queue {
+    SDL_sem* Semaphore;
+    
+    // TODO(Momo): implement free list system?
+    u32 EntryCompleteCount;
+    u32 NextEntryToDo;
+    u32 EntryCount;
+    work_queue_entry  Entries[256];
 };
 
-static u32 EntryCompleteCount;
-static u32 NextEntryToDo;
-static u32 EntryCount;
-work_queue_entry  Entries[256];
+static inline void
+Init(work_queue* WorkQueue) {
+    WorkQueue->Semaphore = SDL_CreateSemaphore(0);
+    WorkQueue->EntryCount = 0;
+    WorkQueue->NextEntryToDo = 0;
+    WorkQueue->EntryCompleteCount = 0;
+}
 
-SDL_sem *sem;
+struct thread_context {
+    u32 Index;
+    work_queue* WorkQueue;
+};
+
+
 
 static inline int 
 TestThread(void *ptr) {
     thread_context* Info = (thread_context*)ptr;
-    
+    work_queue* WorkQueue = Info->WorkQueue;
+    // TODO(Momo): Maybe it will be good to have a way to control the loop
+    // and let the thread end elegantly?
     for(;;) {
-        SDL_SemWait(sem);
-        if ( NextEntryToDo < EntryCount) {
-            u32 EntryIndex = NextEntryToDo++;
-            work_queue_entry* Entry = Entries + EntryIndex++;
+        SDL_SemWait(WorkQueue->Semaphore);
+        if ( WorkQueue->NextEntryToDo < WorkQueue->EntryCount) {
+            u32 EntryIndex = WorkQueue->NextEntryToDo++;
+            work_queue_entry* Entry = WorkQueue->Entries + EntryIndex++;
             SDL_Log("Thread %d: %s", Info->Index, Entry->StringToPrint);
         }
     }
@@ -121,43 +136,43 @@ TestThread(void *ptr) {
 }
 
 static inline void
-PushString(char* String) {
-    Assert(EntryCount < ArrayCount(Entries));
-    work_queue_entry* Entry = Entries + EntryCount++;
+Enqueue(work_queue* WorkQueue, char* String) {
+    Assert(WorkQueue->EntryCount < ArrayCount(WorkQueue->Entries));
+    work_queue_entry* Entry = WorkQueue->Entries + WorkQueue->EntryCount++;
     Entry->StringToPrint = String;
-    SDL_SemPost(sem);
+    SDL_SemPost(WorkQueue->Semaphore);
 }
+
 
 
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
-    sem = SDL_CreateSemaphore(0);
+    work_queue WorkQueue = {};
+    Init(&WorkQueue);
     
     // TODO(Momo): Test Thread Code
     thread_context ThreadContext[2];
     for (int i = 0; i < ArrayCount(ThreadContext); ++i) {
         thread_context * Context = ThreadContext + i;
         Context->Index = i;
+        Context->WorkQueue = &WorkQueue;
         
         auto Thread = SDL_CreateThread(TestThread, "TestThread", Context);
         SDL_Log("Thread %d created", i);
         SDL_DetachThread(Thread);
     }
     
-    PushString("String 1");
-    PushString("String 2");
-    PushString("String 3");
-    PushString("String 4");
-    PushString("String 5");
-    PushString("String 6");
-    PushString("String 7");
-    PushString("String 8");
-    PushString("String 9");
-    PushString("String 10");
-    
-    
-    
+    Enqueue(&WorkQueue, "String 01");
+    Enqueue(&WorkQueue, "String 02");
+    Enqueue(&WorkQueue, "String 03");
+    Enqueue(&WorkQueue, "String 04");
+    Enqueue(&WorkQueue, "String 05");
+    Enqueue(&WorkQueue, "String 06");
+    Enqueue(&WorkQueue, "String 07");
+    Enqueue(&WorkQueue, "String 08");
+    Enqueue(&WorkQueue, "String 09");
+    Enqueue(&WorkQueue, "String 10");
     
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
