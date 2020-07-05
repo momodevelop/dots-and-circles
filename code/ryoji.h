@@ -50,8 +50,10 @@ ZeroBlock(void *mem, usize size) {
 
 
 // Assertion
-#ifdef SLOW_MODE
-#define Assert(x) if(!(x)) {*(int *)0 = 0;}
+#if SLOW_MODE
+#include <assert.h>
+#define Assert(x) assert(x)
+//#define Assert(x) {if(!(x)) {*(volatile int *)0 = 0;}}
 #else
 #define Assert(x) 
 #endif

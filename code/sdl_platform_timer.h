@@ -9,9 +9,6 @@ struct sdl_timer {
     u64 CountsElapsed;
 };
 
-struct sdl_window_size { 
-    i32 Width, Height; 
-};
 
 
 static inline 

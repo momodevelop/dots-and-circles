@@ -46,8 +46,8 @@ GameInit(game_state * GameState) {
 
 
 // NOTE(Momo):  Exported Functions
-extern "C" void
-GameUpdate(game_memory* GameMemory, f32 DeltaTime) {
+extern "C" 
+GAME_UPDATE(GameUpdate) {
     game_state* GameState = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
         GameInit(GameState);

@@ -10,28 +10,43 @@
 #include "game_asset_loader.h"
 #include "game_render_gl.h"
 
-#include "sdl_platform_timer.cpp"
-#include "sdl_platform_gldebug.cpp"
-#include "sdl_platform_game_code.cpp"
+#include "sdl_platform_timer.h"
+#include "sdl_platform_gldebug.h"
+#include "sdl_platform_utils.h"
 
+// NOTE(Momo): sdl_game_code
+struct sdl_game_code {
+    game_update* Update;
+};
 
+static inline void
+Unload(sdl_game_code* GameCode) {
+    GameCode->Update = nullptr;
+}
+
+static inline bool
+Load(sdl_game_code* GameCode)
+{
+    Unload(GameCode);
+    
+    void* GameCodeDLL = SDL_LoadObject("game.dll");
+    if (!GameCodeDLL) {
+        SDL_Log("Failed to open game.dll");
+        return false;
+    }
+    
+    GameCode->Update = (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate");
+    
+    return true;
+}
 
 static bool gIsRunning = true;
 
-static inline 
-sdl_window_size SDLGetWindowSize(SDL_Window* Window) {
-    i32 w, h;
-    SDL_GetWindowSize(Window, &w, &h);
-    return { w, h };
-}
-
-
-
-// TODO(Momo): export as function pointer to game code
-void PlatformLog(const char * str, ...) {
+static inline
+PLATFORM_LOG(PlatformLog) {
     va_list va;
-    va_start(va, str);
-    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, str, va);
+    va_start(va, Format);
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, Format, va);
     va_end(va);
 }
 
@@ -56,18 +71,13 @@ PlatformGetFileSize(const char* path) {
     return { true, ret };
 }
 
-
-#endif
-
-
-
 static inline
 bool ReadFileStr(char* dest, u64 destSize, const char * path) {
     SDL_RWops* file = SDL_RWFromFile(path, "r");
     if (file == nullptr) {
         return false;
     }
-    Defer{
+    wDefer{
         SDL_RWclose(file);
     };
     
@@ -85,94 +95,165 @@ bool ReadFileStr(char* dest, u64 destSize, const char * path) {
     
     return true;
 }
+#endif
 
-
-
-struct work_queue_entry {
-    char * StringToPrint;
+// NOTE(Momo): Threading
+struct platform_work_queue_entry {
+    void* Data;
+    platform_work_queue_entry_callback* Callback;
 };
 
-struct work_queue {
+struct thread_work_dequeue_result {
+    platform_work_queue_entry Work;
+    bool IsValid;
+};
+
+struct platform_work_queue {
+    // TODO(Momo): Let user define max entries?
+    constexpr static int MaxEntries = 256;
     SDL_sem* Semaphore;
+    SDL_mutex* Lock;
     
-    // TODO(Momo): implement free list system?
-    u32 EntryCompleteCount;
-    u32 NextEntryToDo;
-    u32 EntryCount;
-    work_queue_entry  Entries[256];
+    SDL_atomic_t EntriesCompleted;
+    SDL_atomic_t EntriesTotal;
+    
+    SDL_atomic_t NextEntryToRead;
+    SDL_atomic_t NextEntryToWrite;
+    
+    platform_work_queue_entry Entries[MaxEntries];
 };
 
 static inline void
-Init(work_queue* WorkQueue) {
-    WorkQueue->Semaphore = SDL_CreateSemaphore(0);
-    WorkQueue->EntryCount = 0;
-    WorkQueue->NextEntryToDo = 0;
-    WorkQueue->EntryCompleteCount = 0;
+Init(platform_work_queue* Queue) {
+    Queue->Semaphore = SDL_CreateSemaphore(0);
+    Queue->Lock = SDL_CreateMutex(0);
+    
+    SDL_AtomicSet(&Queue->EntriesCompleted, 0);
+    SDL_AtomicSet(&Queue->EntriesTotal, 0);
+    SDL_AtomicSet(&Queue->NextEntryToRead, 0);
+    SDL_AtomicSet(&Queue->NextEntryToWrite, 0);
 }
 
-struct thread_context {
+static inline void
+Free(platform_work_queue * Queue) {
+    SDL_DestroySemaphore(Queue->Semaphore);
+}
+
+struct thread_info {
     u32 Index;
-    work_queue* WorkQueue;
+    platform_work_queue* Queue;
 };
 
 
 
-static inline int 
-TestThread(void *ptr) {
-    thread_context* Info = (thread_context*)ptr;
-    work_queue* WorkQueue = Info->WorkQueue;
-    // TODO(Momo): Maybe it will be good to have a way to control the loop
-    // and let the thread end elegantly?
+static inline 
+PLATFORM_ADD_WORK(PlatformAddWork) {
     for(;;) {
-        SDL_SemWait(WorkQueue->Semaphore);
-        if ( WorkQueue->NextEntryToDo < WorkQueue->EntryCount) {
-            u32 EntryIndex = WorkQueue->NextEntryToDo++;
-            work_queue_entry* Entry = WorkQueue->Entries + EntryIndex++;
-            SDL_Log("Thread %d: %s", Info->Index, Entry->StringToPrint);
+        // NOTE(Momo): Crtical Section.
+        
+        int OriginNextEntryToWrite = SDL_AtomicGet(&Queue->NextEntryToWrite);
+        int NewNextEntryToWrite = (OriginNextEntryToWrite + 1) % ArrayCount(Queue->Entries);
+        
+        if (NewNextEntryToWrite != SDL_AtomicGet(&Queue->NextEntryToRead)) {
+            if (SDL_AtomicCAS(&Queue->NextEntryToWrite, OriginNextEntryToWrite, NewNextEntryToWrite)) {
+                platform_work_queue_entry* Entry = &Queue->Entries[OriginNextEntryToWrite];
+                Entry->Data = Data;
+                Entry->Callback = Callback;
+                SDL_AtomicIncRef(&Queue->EntriesTotal);
+                SDL_SemPost(Queue->Semaphore);
+                break;
+            }
         }
     }
+}
+
+
+// NOTE(Momo): Returns whether we successfully took up the job
+static inline bool
+DoNextWork(platform_work_queue* Queue) {
+    int OriginNextEntryToRead = SDL_AtomicGet(&Queue->NextEntryToRead);
     
-    //return 0;
+    // Modding will make the array 'circular'
+    int NewNextEntryToRead = (OriginNextEntryToRead + 1) % ArrayCount(Queue->Entries);
+    if(OriginNextEntryToRead != SDL_AtomicGet(&Queue->NextEntryToWrite)) {
+        // Attempt to exhcange the number
+        if (SDL_AtomicCAS(&Queue->NextEntryToRead, OriginNextEntryToRead, NewNextEntryToRead)) {
+            //if exchange is successful, do work
+            platform_work_queue_entry Entry = Queue->Entries[OriginNextEntryToRead];
+            Entry.Callback(Queue, Entry.Data);
+            SDL_AtomicIncRef(&Queue->EntriesCompleted);
+            SDL_Log("Working on: %d", OriginNextEntryToRead);
+        }
+        return true;
+    }
+    
+    return false;
 }
 
-static inline void
-Enqueue(work_queue* WorkQueue, char* String) {
-    Assert(WorkQueue->EntryCount < ArrayCount(WorkQueue->Entries));
-    work_queue_entry* Entry = WorkQueue->Entries + WorkQueue->EntryCount++;
-    Entry->StringToPrint = String;
-    SDL_SemPost(WorkQueue->Semaphore);
+
+
+static inline 
+PLATFORM_WORK_QUEUE_ENTRY_CALLBACK(WorkCallbackBoliao) {
+    SDL_Delay(1000); // Simulate difficult task
+    SDL_Log((char*)Data);
+}
+
+static inline int 
+ThreadProc(void *ptr) {
+    thread_info* Info = (thread_info*)ptr;
+    
+    for(;;) {
+        if(!DoNextWork(Info->Queue)) {
+            SDL_SemWait(Info->Queue->Semaphore);
+        }
+    }
 }
 
 
+
+static inline 
+PLATFORM_WAIT_FOR_ALL_WORK_TO_COMPLETE(PlatformWaitForAllWorkToComplete) {
+    while (SDL_AtomicGet(&Queue->EntriesCompleted) != SDL_AtomicGet(&Queue->EntriesTotal)) {
+        DoNextWork(Queue);
+    }
+    
+    SDL_AtomicSet(&Queue->EntriesCompleted, 0);
+    SDL_AtomicSet(&Queue->EntriesTotal, 0);
+}
 
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
-    work_queue WorkQueue = {};
-    Init(&WorkQueue);
+    platform_work_queue Queue = {};
+    Init(&Queue);
+    Defer{ Free(&Queue); };
     
     // TODO(Momo): Test Thread Code
-    thread_context ThreadContext[2];
+    thread_info ThreadContext[15];
     for (int i = 0; i < ArrayCount(ThreadContext); ++i) {
-        thread_context * Context = ThreadContext + i;
+        thread_info * Context = ThreadContext + i;
         Context->Index = i;
-        Context->WorkQueue = &WorkQueue;
+        Context->Queue = &Queue;
         
-        auto Thread = SDL_CreateThread(TestThread, "TestThread", Context);
+        auto Thread = SDL_CreateThread(ThreadProc, "ThreadProc", Context);
         SDL_Log("Thread %d created", i);
         SDL_DetachThread(Thread);
     }
     
-    Enqueue(&WorkQueue, "String 01");
-    Enqueue(&WorkQueue, "String 02");
-    Enqueue(&WorkQueue, "String 03");
-    Enqueue(&WorkQueue, "String 04");
-    Enqueue(&WorkQueue, "String 05");
-    Enqueue(&WorkQueue, "String 06");
-    Enqueue(&WorkQueue, "String 07");
-    Enqueue(&WorkQueue, "String 08");
-    Enqueue(&WorkQueue, "String 09");
-    Enqueue(&WorkQueue, "String 10");
+    
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 01");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 02");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 03");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 04");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 05");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 06");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 07");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 08");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 09");
+    PlatformAddWork(&Queue, WorkCallbackBoliao, "String 10");
+    
+    PlatformWaitForAllWorkToComplete(&Queue); 
+    
     
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
