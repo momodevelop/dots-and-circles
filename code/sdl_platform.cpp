@@ -110,15 +110,15 @@ struct thread_work_dequeue_result {
 
 struct platform_work_queue {
     // TODO(Momo): Let user define max entries?
-    constexpr static int MaxEntries = 256;
+    constexpr static int MaxEntries = 2;
     SDL_sem* Semaphore;
     SDL_mutex* Lock;
     
-    SDL_atomic_t EntriesCompleted;
-    SDL_atomic_t EntriesTotal;
+    u32 volatile EntriesCompleted;
+    u32 volatile EntriesTotal;
     
-    SDL_atomic_t NextEntryToRead;
-    SDL_atomic_t NextEntryToWrite;
+    u32 volatile NextEntryToRead;
+    u32 volatile NextEntryToWrite;
     
     platform_work_queue_entry Entries[MaxEntries];
 };
@@ -126,17 +126,18 @@ struct platform_work_queue {
 static inline void
 Init(platform_work_queue* Queue) {
     Queue->Semaphore = SDL_CreateSemaphore(0);
-    Queue->Lock = SDL_CreateMutex(0);
+    Queue->Lock = SDL_CreateMutex();
     
-    SDL_AtomicSet(&Queue->EntriesCompleted, 0);
-    SDL_AtomicSet(&Queue->EntriesTotal, 0);
-    SDL_AtomicSet(&Queue->NextEntryToRead, 0);
-    SDL_AtomicSet(&Queue->NextEntryToWrite, 0);
+    Queue->EntriesCompleted = 0;
+    Queue->EntriesTotal = 0;
+    Queue->NextEntryToRead = 0;
+    Queue->NextEntryToWrite = 0;
 }
 
 static inline void
 Free(platform_work_queue * Queue) {
     SDL_DestroySemaphore(Queue->Semaphore);
+    SDL_DestroyMutex(Queue->Lock);
 }
 
 struct thread_info {
@@ -148,47 +149,64 @@ struct thread_info {
 
 static inline 
 PLATFORM_ADD_WORK(PlatformAddWork) {
+    // Start Critical Section 
     for(;;) {
-        // NOTE(Momo): Crtical Section.
+        SDL_LockMutex(Queue->Lock);
+        u32 volatile OldNextEntryToWrite = Queue->NextEntryToWrite;
+        u32 volatile NewNextEntryToWrite =  (OldNextEntryToWrite + 1) % ArrayCount(Queue->Entries);
         
-        int OriginNextEntryToWrite = SDL_AtomicGet(&Queue->NextEntryToWrite);
-        int NewNextEntryToWrite = (OriginNextEntryToWrite + 1) % ArrayCount(Queue->Entries);
         
-        if (NewNextEntryToWrite != SDL_AtomicGet(&Queue->NextEntryToRead)) {
-            if (SDL_AtomicCAS(&Queue->NextEntryToWrite, OriginNextEntryToWrite, NewNextEntryToWrite)) {
-                platform_work_queue_entry* Entry = &Queue->Entries[OriginNextEntryToWrite];
-                Entry->Data = Data;
-                Entry->Callback = Callback;
-                SDL_AtomicIncRef(&Queue->EntriesTotal);
-                SDL_SemPost(Queue->Semaphore);
-                break;
-            }
+        if (NewNextEntryToWrite == Queue->NextEntryToRead) {
+            SDL_UnlockMutex(Queue->Lock);
+            continue;
         }
+        
+        Queue->NextEntryToWrite = NewNextEntryToWrite;
+        
+        ++Queue->EntriesTotal;
+        SDL_UnlockMutex(Queue->Lock);
+        // End Critical Section
+        
+        SDL_Log("Adding: %s", (char*)Data);
+        platform_work_queue_entry* Entry = &Queue->Entries[OldNextEntryToWrite];
+        Entry->Data = Data;
+        Entry->Callback = Callback;
+        
+        SDL_SemPost(Queue->Semaphore);
+        break;
     }
 }
 
 
 // NOTE(Momo): Returns whether we successfully took up the job
 static inline bool
-DoNextWork(platform_work_queue* Queue) {
-    int OriginNextEntryToRead = SDL_AtomicGet(&Queue->NextEntryToRead);
-    
-    // Modding will make the array 'circular'
-    int NewNextEntryToRead = (OriginNextEntryToRead + 1) % ArrayCount(Queue->Entries);
-    if(OriginNextEntryToRead != SDL_AtomicGet(&Queue->NextEntryToWrite)) {
-        // Attempt to exhcange the number
-        if (SDL_AtomicCAS(&Queue->NextEntryToRead, OriginNextEntryToRead, NewNextEntryToRead)) {
-            //if exchange is successful, do work
-            platform_work_queue_entry Entry = Queue->Entries[OriginNextEntryToRead];
-            Entry.Callback(Queue, Entry.Data);
-            SDL_AtomicIncRef(&Queue->EntriesCompleted);
-            SDL_Log("Working on: %d", OriginNextEntryToRead);
-        }
-        return true;
+DoNextWork(platform_work_queue* Queue, u32 Index) {
+    // Start Critical Section
+    SDL_LockMutex(Queue->Lock);
+    u32 OriginNextEntryToRead = Queue->NextEntryToRead;
+    u32 NewNextEntryToRead = (OriginNextEntryToRead + 1) % ArrayCount(Queue->Entries);
+    if (OriginNextEntryToRead == Queue->NextEntryToWrite) {
+        // Here, we realize someone already took the job, so we are done.
+        SDL_UnlockMutex(Queue->Lock);
+        return false;
     }
+    Queue->NextEntryToRead = NewNextEntryToRead;
+    SDL_UnlockMutex(Queue->Lock);
+    // End Critical Section
     
-    return false;
+    platform_work_queue_entry Entry = Queue->Entries[OriginNextEntryToRead];
+    SDL_Log("Thread %d: Working on: %s", Index,(char*)Entry.Data );
+    Entry.Callback(Queue, Entry.Data);
+    
+    // Start Critical Section 
+    SDL_LockMutex(Queue->Lock);
+    ++Queue->EntriesCompleted;
+    SDL_UnlockMutex(Queue->Lock);
+    // End Critical Section
+    
+    return true;
 }
+
 
 
 
@@ -203,7 +221,7 @@ ThreadProc(void *ptr) {
     thread_info* Info = (thread_info*)ptr;
     
     for(;;) {
-        if(!DoNextWork(Info->Queue)) {
+        if(!DoNextWork(Info->Queue, Info->Index)) {
             SDL_SemWait(Info->Queue->Semaphore);
         }
     }
@@ -213,12 +231,13 @@ ThreadProc(void *ptr) {
 
 static inline 
 PLATFORM_WAIT_FOR_ALL_WORK_TO_COMPLETE(PlatformWaitForAllWorkToComplete) {
-    while (SDL_AtomicGet(&Queue->EntriesCompleted) != SDL_AtomicGet(&Queue->EntriesTotal)) {
-        DoNextWork(Queue);
+    // NOTE(Momo): I don't think I need to mutex this? It shouldn't matter.
+    while (Queue->EntriesCompleted != Queue->EntriesTotal) {
+        DoNextWork(Queue, 1337);
     }
     
-    SDL_AtomicSet(&Queue->EntriesCompleted, 0);
-    SDL_AtomicSet(&Queue->EntriesTotal, 0);
+    Queue->EntriesCompleted = 0;
+    Queue->EntriesTotal = 0;
 }
 
 
@@ -229,7 +248,7 @@ int main(int argc, char* argv[]) {
     Defer{ Free(&Queue); };
     
     // TODO(Momo): Test Thread Code
-    thread_info ThreadContext[15];
+    thread_info ThreadContext[3];
     for (int i = 0; i < ArrayCount(ThreadContext); ++i) {
         thread_info * Context = ThreadContext + i;
         Context->Index = i;
