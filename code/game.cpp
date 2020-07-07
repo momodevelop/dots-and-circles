@@ -1,19 +1,15 @@
 #include "game_platform.h"
 
 
-// TODO(Momo): remove this after use
-#include <stdlib.h>
-
-static inline render_group* 
-ConstructRenderGroup(/**/usize Size) {
+// TODO(Momo): Complete this function
+#if 0
+static inline render_info* 
+ConstructRenderInfo(/**/usize Size) {
     // TODO(Momo): Change to memory arena
-    render_group* Ret = (render_group*)malloc(Size);
+    render_info* Ret = (render_info*)malloc(Size);
     return Ret;
 }
 
-
-// TODO(Momo): Complete this function
-#if 0
 static inline void
 Push(render_cmd_list* RenderCmdList,  render_cmd_type Type, void* Data) {
 }
@@ -27,7 +23,7 @@ Clear(render_cmd_list* RenderCmdList) {
 #endif
 
 struct game_state {
-    render_group RenderGroup;
+    render_info RenderInfo;
     f32 TimeElapsed;
     f32 Rotation;
 };
@@ -37,13 +33,11 @@ static inline void
 GameInit(game_state * GameState) {
     GameState->TimeElapsed = 0.f;
     for (u32 i = 0 ; i < 1024; ++i ) {
-        GameState->RenderGroup.Transforms[i] = Identity();
+        GameState->RenderInfo.Transforms[i] = Identity();
     }
-    GameState->RenderGroup.Count = 1024;
+    GameState->RenderInfo.Count = 1024;
     GameState->Rotation = 0.f;
 }
-
-
 
 // NOTE(Momo):  Exported Functions
 extern "C" 
@@ -74,8 +68,8 @@ GAME_UPDATE(GameUpdate) {
         auto T = MakeTranslationMatrix(startX + currentXOffset, startY + currentYOffset, 0.f);
         auto R = MakeRotationZMatrix(GameState->Rotation);
         auto S = MakeScaleMatrix(100.f, 100.f, 1.f);
-        GameState->RenderGroup.Transforms[i] = Transpose(T*R*S);
-        GameState->RenderGroup.Colors[i] = quadColorful;
+        GameState->RenderInfo.Transforms[i] = Transpose(T*R*S);
+        GameState->RenderInfo.Colors[i] = quadColorful;
         
         
         currentXOffset += xOffset;
@@ -90,6 +84,6 @@ GAME_UPDATE(GameUpdate) {
     
     //PlatformApi->Log("Updating: %f", GameState->TimeElapsed);
     
-    GameMemory->PlatformApi.GlProcessRenderGroup(&GameState->RenderGroup);
+    GameMemory->PlatformApi.SetRenderInfo(&GameState->RenderInfo);
     
 }

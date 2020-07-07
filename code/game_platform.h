@@ -34,7 +34,7 @@ struct render_cmd_list {
 #endif
 
 // NOTE(Momo): Forward declarations 
-struct render_group;
+struct render_info;
 struct game_memory;
 struct platform_api;
 
@@ -43,8 +43,8 @@ struct platform_api;
 typedef GAME_UPDATE(game_update);
 #define PLATFORM_LOG(name) void name(const char* Format, ...)
 typedef PLATFORM_LOG(platform_log);
-#define PLATFORM_GL_PROCESS_RENDER_GROUP(name) void name(render_group* RenderGroup)
-typedef PLATFORM_GL_PROCESS_RENDER_GROUP(platform_gl_process_render_group);
+#define PLATFORM_SET_RENDER_INFO(name) void name(render_info* RenderInfo)
+typedef PLATFORM_SET_RENDER_INFO(platform_set_render_info);
 
 
 
@@ -55,7 +55,7 @@ enum struct renderer_type {
 };
 
 
-struct render_group {
+struct render_info {
     m44f Transforms[1024];
     m44f Colors[1024];
     usize Count;
@@ -63,7 +63,7 @@ struct render_group {
 
 struct platform_api {
     platform_log* Log;
-    platform_gl_process_render_group* GlProcessRenderGroup;
+    platform_set_render_info* SetRenderInfo;
 };
 
 struct game_memory {

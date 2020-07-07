@@ -8,7 +8,7 @@
 
 #include "game_platform.h"
 #include "game_asset_loader.h"
-#include "game_render_gl.h"
+#include "game_renderer_opengl.h"
 
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
@@ -41,6 +41,7 @@ Load(sdl_game_code* GameCode)
 }
 
 static bool gIsRunning = true;
+static render_info* gRenderInfo = nullptr;
 
 static inline
 PLATFORM_LOG(PlatformLog) {
@@ -50,6 +51,10 @@ PLATFORM_LOG(PlatformLog) {
     va_end(va);
 }
 
+static inline void
+PlatformSetRenderInfo(render_info* RenderInfo) {
+    gRenderInfo = RenderInfo;
+}
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
@@ -122,22 +127,16 @@ int main(int argc, char* argv[]) {
     //glDisable(GL_DEPTH_TEST);
     
 #ifdef SLOW_MODE
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(SdlGlDebugCallback, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
 #endif
     
-    auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
-    glViewport(0,0,windowWidth,windowHeight);
-    glClearColor(0.0f, 0.3f, 0.3f, 0.0f);
-    
-    
-    
     loaded_bitmap TestBitmap = DebugMakeBitmapFromBmp("assets/ryoji.bmp");
     Defer{ free(TestBitmap.Pixels); };
     
-    GlRendererInit((f32)windowWidth, (f32)windowHeight,  1024, &TestBitmap);
+    renderer_opengl RendererOpenGL = {};
+    auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
+    Init(&RendererOpenGL, windowWidth, windowHeight,  1024, &TestBitmap);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
@@ -154,7 +153,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): PlatformAPI
     GameMemory.PlatformApi.Log = PlatformLog;
-    GameMemory.PlatformApi.GlProcessRenderGroup = GlProcessRenderGroup;
+    GameMemory.PlatformApi.SetRenderInfo = PlatformSetRenderInfo;
     
     sdl_timer timer;
     Start(&timer);
@@ -175,6 +174,8 @@ int main(int argc, char* argv[]) {
         
         
         GameCode.Update(&GameMemory, deltaTime); 
+        Render(&RendererOpenGL, gRenderInfo); 
+        
         
         // NOTE(Momo): Timer update
         Tick(&timer);
