@@ -41,7 +41,6 @@ Load(sdl_game_code* GameCode)
 }
 
 static bool gIsRunning = true;
-static render_info* gRenderInfo = nullptr;
 
 static inline
 PLATFORM_LOG(PlatformLog) {
@@ -51,10 +50,6 @@ PLATFORM_LOG(PlatformLog) {
     va_end(va);
 }
 
-static inline void
-PlatformSetRenderInfo(render_info* RenderInfo) {
-    gRenderInfo = RenderInfo;
-}
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
@@ -153,10 +148,11 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): PlatformAPI
     GameMemory.PlatformApi.Log = PlatformLog;
-    GameMemory.PlatformApi.SetRenderInfo = PlatformSetRenderInfo;
     
     sdl_timer timer;
     Start(&timer);
+    
+    render_info RenderInfo = {};
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -173,8 +169,9 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        GameCode.Update(&GameMemory, deltaTime); 
-        Render(&RendererOpenGL, gRenderInfo); 
+        // TODO(Momo): Input?
+        GameCode.Update(&GameMemory, &RenderInfo, deltaTime); 
+        Render(&RendererOpenGL, &RenderInfo); 
         
         
         // NOTE(Momo): Timer update
