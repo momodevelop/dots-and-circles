@@ -129,9 +129,12 @@ int main(int argc, char* argv[]) {
     loaded_bitmap TestBitmap = DebugMakeBitmapFromBmp("assets/ryoji.bmp");
     Defer{ free(TestBitmap.Pixels); };
     
+    loaded_bitmap TestBitmap2 = DebugMakeBitmapFromBmp("assets/yuu.bmp");
+    Defer{ free(TestBitmap2.Pixels); };
+    
     renderer_opengl RendererOpenGL = {};
     auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
-    Init(&RendererOpenGL, windowWidth, windowHeight,  1024, &TestBitmap);
+    Init(&RendererOpenGL, windowWidth, windowHeight,  1024, &TestBitmap, &TestBitmap2);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
@@ -152,7 +155,7 @@ int main(int argc, char* argv[]) {
     sdl_timer timer;
     Start(&timer);
     
-    render_info RenderInfo = {};
+    
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -168,6 +171,9 @@ int main(int argc, char* argv[]) {
         u64 timeElapsed = TimeElapsed(&timer);
         f32 deltaTime = timeElapsed / 1000.f;
         
+        
+        
+        render_info RenderInfo = {};
         
         // TODO(Momo): Input?
         GameCode.Update(&GameMemory, &RenderInfo, deltaTime); 

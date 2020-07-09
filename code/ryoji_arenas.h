@@ -1,22 +1,22 @@
 #ifndef __RYOJI_ARENAS__
 #define __RYOJI_ARENAS__
 
-#include "ryoji.cpp"
-#include "ryoji_bitmanip.cpp"
+#include "ryoji.h"
+#include "ryoji_bitmanip.h"
 
 
 struct memory_arena {
     u8* Memory;
     usize Used;
-    usize capacity;
+    usize Capacity;
 };
 
 
 static inline bool 
 Init(memory_arena* a, void* Memory, usize Capacity) {
-    Assert(capacity);
+    Assert(Capacity);
     a->Memory = Memory;
-    a->capacity = capacity;
+    a->Capacity = Capacity;
     a->Used = 0;
 }
 
@@ -27,7 +27,7 @@ Allocate(memory_arena* a, usize size, u8 alignment) {
     u8 adjust = AlignForwardDiff(a->Memory, alignment);
     
     // if not enough space, return 
-    if ((u8*)a->Memory + a->Used + adjust + size > (u8*)a->Memory + a->capacity ) {
+    if ((u8*)a->Memory + a->Used + adjust + size > (u8*)a->Memory + a->Capacity ) {
         return nullptr;
     }
     

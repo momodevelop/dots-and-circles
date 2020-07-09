@@ -1,11 +1,12 @@
 #ifndef __GAME_RENDERER_OPENGL__
 #define __GAME_RENDERER_OPENGL__
 
-// NOTE(Momo): Opengl code for renderering the game to be used by platform
+// NOTE(Momo): Renderer code for renderering the game to be used by platform
 // We will only have 1 model (a rectangle), which will have the 
 // capabilities have having 1 texture, 1 color, and 1 transform.
 
 #include "ryoji_maths.h"
+#include "game_renderer.h"
 
 // NOTE(Momo): Buffers
 #define Vbo_Model 0 
@@ -30,6 +31,7 @@
 #define VaoBind_Texture 2
 #define VaoBind_Transform 3
 
+
 struct renderer_opengl {
     GLuint Buffers[Vbo_Max]; 
     GLuint Shader;
@@ -38,10 +40,11 @@ struct renderer_opengl {
     GLuint Blueprint; 
     GLsizei MaxEntities;
     
+    GLuint BlankTexture;
+    
     // TODO(Momo): Proper texture management
-    GLuint texture;
+    GLuint Texture[2];
 };
-
 
 static inline void 
 GlAttachShader(GLuint program, GLenum type, const GLchar* code) {
@@ -53,9 +56,9 @@ GlAttachShader(GLuint program, GLenum type, const GLchar* code) {
 }
 
 static inline bool
-Init(renderer_opengl* Opengl, GLuint Width, GLuint Height, GLsizei MaxEntities, loaded_bitmap* Bmp) 
+Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities, loaded_bitmap* Bmp, loaded_bitmap* Bmp2) 
 {
-    Opengl->MaxEntities = MaxEntities;
+    Renderer->MaxEntities = MaxEntities;
     
     constexpr static f32 quadModel[] = {
         // position   
@@ -77,35 +80,39 @@ Init(renderer_opengl* Opengl, GLuint Width, GLuint Height, GLsizei MaxEntities, 
         0.f, 1.f,  // top left
     };
     
+    constexpr static const u8  whiteBmp[] {
+        255, 255, 255, 255
+    };
+    
     
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
     constexpr static const char* vertexShader = "\n\
-#version 450 core \n\
-layout(location=0) in vec3 aModelVtx; \n\
-layout(location=1) in vec4 aColor;\n\
-layout(location=2) in vec2 aTexCoord;\n\
-layout(location=3) in mat4 aTransform;\n\
-out vec4 mColor;\n\
-out vec2 mTexCoord;\n\
-uniform mat4 uProjection;\n\
-\n\
-void main(void) {\n\
-gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\n\
-mColor = aColor;\n\
-mTexCoord = aTexCoord;\n\
-}";
+                                                                                                                                                                                                                                                                                            #version 450 core \n\
+                                                                                                                                                                                                                                                                                            layout(location=0) in vec3 aModelVtx; \n\
+                                                                                                                                                                                                                                                                                            layout(location=1) in vec4 aColor;\n\
+                                                                                                                                                                                                                                                                                            layout(location=2) in vec2 aTexCoord;\n\
+                                                                                                                                                                                                                                                                                            layout(location=3) in mat4 aTransform;\n\
+                                                                                                                                                                                                                                                                                            out vec4 mColor;\n\
+                                                                                                                                                                                                                                                                                            out vec2 mTexCoord;\n\
+                                                                                                                                                                                                                                                                                            uniform mat4 uProjection;\n\
+                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                            void main(void) {\n\
+                                                                                                                                                                                                                                                                                            gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\n\
+                                                                                                                                                                                                                                                                                            mColor = aColor;\n\
+                                                                                                                                                                                                                                                                                            mTexCoord = aTexCoord;\n\
+                                                                                                                                                                                                                                                                                            }";
     
     constexpr static const char* fragmentShader = "\
-#version 450 core\n\
-out vec4 fragColor;\n\
-in vec4 mColor;\n\
-in vec2 mTexCoord;\n\
-uniform sampler2D uTexture;\n\
-\n\
-void main(void) {\n\
-fragColor = texture(uTexture, mTexCoord) * mColor; \n\
-}";
+                                                                                                                                                                                                                                                                                            #version 450 core\n\
+                                                                                                                                                                                                                                                                                            out vec4 fragColor;\n\
+                                                                                                                                                                                                                                                                                            in vec4 mColor;\n\
+                                                                                                                                                                                                                                                                                            in vec2 mTexCoord;\n\
+                                                                                                                                                                                                                                                                                            uniform sampler2D uTexture;\n\
+                                                                                                                                                                                                                                                                                            \n\
+                                                                                                                                                                                                                                                                                            void main(void) {\n\
+                                                                                                                                                                                                                                                                                            fragColor = texture(uTexture, mTexCoord) * mColor; \n\
+                                                                                                                                                                                                                                                                                            }";
     
 #if SLOW_MODE
     glEnable(GL_DEBUG_OUTPUT);
@@ -117,85 +124,85 @@ fragColor = texture(uTexture, mTexCoord) * mColor; \n\
     glClearColor(0.0f, 0.3f, 0.3f, 0.0f);
     
     // NOTE(Momo): Setup VBO
-    glCreateBuffers(Vbo_Max, Opengl->Buffers);
-    glNamedBufferStorage(Opengl->Buffers[Vbo_Model], sizeof(quadModel), quadModel, 0);
-    glNamedBufferStorage(Opengl->Buffers[Vbo_Indices], sizeof(quadIndices), quadIndices, 0);
-    glNamedBufferStorage(Opengl->Buffers[Vbo_Texture], sizeof(quadTexCoords), quadTexCoords, 0);
+    glCreateBuffers(Vbo_Max, Renderer->Buffers);
+    glNamedBufferStorage(Renderer->Buffers[Vbo_Model], sizeof(quadModel), quadModel, 0);
+    glNamedBufferStorage(Renderer->Buffers[Vbo_Indices], sizeof(quadIndices), quadIndices, 0);
+    glNamedBufferStorage(Renderer->Buffers[Vbo_Texture], sizeof(quadTexCoords), quadTexCoords, 0);
     
     
     // NOTE(Momo): colors are 4x vec4, one for each side
-    glNamedBufferStorage(Opengl->Buffers[Vbo_Colors], sizeof(f32)*16 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[Vbo_Colors], sizeof(f32)*16 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
-    glNamedBufferStorage(Opengl->Buffers[Vbo_Transform], sizeof(f32)*16 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[Vbo_Transform], sizeof(f32)*16 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
-    glCreateVertexArrays(1, &Opengl->Blueprint);
-    glVertexArrayVertexBuffer(Opengl->Blueprint, VaoBind_Model, Opengl->Buffers[Vbo_Model],   0, sizeof(f32)*3);
-    glVertexArrayVertexBuffer(Opengl->Blueprint, VaoBind_Texture, Opengl->Buffers[Vbo_Texture], 0, sizeof(f32)*2);
-    glVertexArrayVertexBuffer(Opengl->Blueprint, VaoBind_Colors, Opengl->Buffers[Vbo_Colors],  0, sizeof(f32)*4);
-    glVertexArrayVertexBuffer(Opengl->Blueprint, VaoBind_Transform, Opengl->Buffers[Vbo_Transform], 0, sizeof(m44f));
+    glCreateVertexArrays(1, &Renderer->Blueprint);
+    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Model, Renderer->Buffers[Vbo_Model],   0, sizeof(f32)*3);
+    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Texture, Renderer->Buffers[Vbo_Texture], 0, sizeof(f32)*2);
+    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Colors, Renderer->Buffers[Vbo_Colors],  0, sizeof(f32)*4);
+    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Transform, Renderer->Buffers[Vbo_Transform], 0, sizeof(m44f));
     
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Model); 
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Model, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Model, VaoBind_Model);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Model); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Model, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Model, VaoBind_Model);
     
     // aColor
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Colors); 
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Colors, 4, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Colors, VaoBind_Colors);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Colors); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Colors, 4, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Colors, VaoBind_Colors);
     
     // NOTE(Momo): If binding divisor is zero, advance once per vertex
-    glVertexArrayBindingDivisor(Opengl->Blueprint, VaoBind_Colors, 0); 
+    glVertexArrayBindingDivisor(Renderer->Blueprint, VaoBind_Colors, 0); 
     
     // aTexCoord
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Texture); 
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Texture, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Texture, VaoBind_Texture);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Texture); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Texture, 2, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Texture, VaoBind_Texture);
     
     
     // aTransform
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Transform1); 
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Transform1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Transform2);
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Transform2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Transform3); 
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Transform3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
-    glEnableVertexArrayAttrib(Opengl->Blueprint, Atb_Transform4); 
-    glVertexArrayAttribFormat(Opengl->Blueprint, Atb_Transform4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform1); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform2);
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform3); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform4); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
     
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Transform1, VaoBind_Transform);
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Transform2, VaoBind_Transform);
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Transform3, VaoBind_Transform);
-    glVertexArrayAttribBinding(Opengl->Blueprint, Atb_Transform4, VaoBind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform1, VaoBind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform2, VaoBind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform3, VaoBind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform4, VaoBind_Transform);
     
     // NOTE(Momo): If binding divisor is N, advance N per instance
-    glVertexArrayBindingDivisor(Opengl->Blueprint, VaoBind_Transform, 1); 
+    glVertexArrayBindingDivisor(Renderer->Blueprint, VaoBind_Transform, 1); 
     
     
     // NOTE(Momo): Setup indices
-    glVertexArrayElementBuffer(Opengl->Blueprint, Opengl->Buffers[Vbo_Indices]);
+    glVertexArrayElementBuffer(Renderer->Blueprint, Renderer->Buffers[Vbo_Indices]);
     
     // Setup Shader Program
-    Opengl->Shader = glCreateProgram();
-    GlAttachShader(Opengl->Shader, GL_VERTEX_SHADER, vertexShader);
-    GlAttachShader(Opengl->Shader, GL_FRAGMENT_SHADER, fragmentShader);
-    glLinkProgram(Opengl->Shader);
+    Renderer->Shader = glCreateProgram();
+    GlAttachShader(Renderer->Shader, GL_VERTEX_SHADER, vertexShader);
+    GlAttachShader(Renderer->Shader, GL_FRAGMENT_SHADER, fragmentShader);
+    glLinkProgram(Renderer->Shader);
     GLint result;
-    glGetProgramiv(Opengl->Shader, GL_LINK_STATUS, &result);
+    glGetProgramiv(Renderer->Shader, GL_LINK_STATUS, &result);
     if (result != GL_TRUE) {
         char msg[KILOBYTE];
-        glGetProgramInfoLog(Opengl->Shader, KILOBYTE, nullptr, msg);
+        glGetProgramInfoLog(Renderer->Shader, KILOBYTE, nullptr, msg);
         SDL_Log("Linking program failed:\n %s\n", msg);
         return false;
     }
     
     // NOTE(Momo): Setup Orthographic Projection
-    GLint uProjectionLoc = glGetUniformLocation(Opengl->Shader, "uProjection");
+    GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
     auto uProjection  = MakeOrthographicMatrix(-1.f, 1.f,
                                                -1.f, 1.f,
                                                -1.f, 1.f,
@@ -206,33 +213,45 @@ fragColor = texture(uTexture, mTexCoord) * mColor; \n\
                                                -100.f, 100.f,
                                                true);
     uProjection = Transpose(uProjection);
-    glProgramUniformMatrix4fv(Opengl->Shader, uProjectionLoc, 1, GL_FALSE, *uProjection.Arr);
+    glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, *uProjection.Arr);
     
+    
+    // NOTE(Momo): Create Blank Texture for rendering textureless quads
+    glCreateTextures(GL_TEXTURE_2D, 1, &Renderer->BlankTexture);
+    glTextureStorage2D(Renderer->BlankTexture, 1, GL_RGBA8, 1, 1);
+    glTextureSubImage2D(Renderer->BlankTexture, 0, 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, whiteBmp);
     
     // TODO(Momo): Do proper texture management?
-    glCreateTextures(GL_TEXTURE_2D, 1, &Opengl->texture);
-    glTextureStorage2D(Opengl->texture, 1, GL_RGBA8, Bmp->Width, Bmp->Height);
+    glCreateTextures(GL_TEXTURE_2D, 2, Renderer->Texture);
     
-    glTextureSubImage2D(Opengl->texture, 0, 0, 0, Bmp->Width, Bmp->Height, GL_RGBA, GL_UNSIGNED_BYTE, Bmp->Pixels);
+    glTextureStorage2D(Renderer->Texture[0], 1, GL_RGBA8, Bmp->Width, Bmp->Height);
+    glTextureSubImage2D(Renderer->Texture[0], 0, 0, 0, Bmp->Width, Bmp->Height, GL_RGBA, GL_UNSIGNED_BYTE, Bmp->Pixels);
     
-    Bmp->Pixels = nullptr;
+    
+    glTextureStorage2D(Renderer->Texture[1], 1, GL_RGBA8, Bmp2->Width, Bmp2->Height);
+    glTextureSubImage2D(Renderer->Texture[1], 0, 0, 0, Bmp2->Width, Bmp2->Height, 
+                        GL_RGBA, GL_UNSIGNED_BYTE, Bmp2->Pixels);
+    
     
     return 0;
 }
 
 static inline void
-Render(renderer_opengl* Opengl, render_info* RenderInfo) {
+Render(renderer_opengl* Renderer, render_info* RenderInfo) {
+    // TODO(Momo): For each rennder command, do 
     for (int i = 0; i < RenderInfo->Count; ++i) {
-        glNamedBufferSubData(Opengl->Buffers[Vbo_Colors], i * sizeof(m44f), sizeof(m44f), &RenderInfo->Colors[i]);
-        glNamedBufferSubData(Opengl->Buffers[Vbo_Transform], i * sizeof(m44f), sizeof(m44f), &RenderInfo->Transforms[i]);
+        glNamedBufferSubData(Renderer->Buffers[Vbo_Colors], i * sizeof(m44f), sizeof(m44f), &RenderInfo->Colors[i]);
+        glNamedBufferSubData(Renderer->Buffers[Vbo_Transform], i * sizeof(m44f), sizeof(m44f), &RenderInfo->Transforms[i]);
         
     }
     
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(Opengl->Shader);
-    glBindTexture(GL_TEXTURE_2D, Opengl->texture);
-    glBindVertexArray(Opengl->Blueprint);
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr, Opengl->MaxEntities);
+    glUseProgram(Renderer->Shader);
+    glBindTexture(GL_TEXTURE_2D, Renderer->BlankTexture);
+    glBindVertexArray(Renderer->Blueprint);
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr, Renderer->MaxEntities);
+    
     
 }
 

@@ -1,81 +1,150 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ryoji_common.cpp"
+#include "ryoji_bitmanip.h"
 
-pure void* AlignForward(void* ptr, u8 align) {
-    Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
-    return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
-}
+#define Assert(x)
 
-pure void* AlignBackward(void* ptr, u8 align) {
-    Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
-    return (void*)(uptr(ptr) & ~(align - 1));
-}
 
-pure u8 AlignBackwardDiff(void* ptr, u8 align)  {
-    return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
-}
-
-pure u8 AlignForwardDiff(void* ptr, u8 align)  {
-    return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
-}
-
-struct LinearArena {
-    void* Memory;
-    usize Used;
-    usize Capacity;
+// TODO(Momo): Consider shifting this part to Ryoji?
+struct render_command_header {
+    u32 Type;
+    render_command_header* Next;
+    void* Entry;
 };
 
-void Init(LinearArena* a, void* memory, usize capacity) {
-    Assert(capacity);
-    a->Memory = memory;
-    a->Capacity = capacity;
-    a->Used = 0;
+struct render_commands {
+    // NOTE(Momo): Linked List of commands
+    render_command_header* Head;
+    render_command_header* Tail ;
+    
+    // NOTE(Momo): Memory for linked list above
+    u8* Memory;
+    u8* MemoryCurrent;
+    u32 MemorySize;
+    
+    // TODO(Momo): Camera transforms?
+    // TODO(Momo): Sorting?
+};
+
+static inline void
+Init(render_commands* Commands, void* Memory, u32 MemorySize) {
+    Commands->Head = nullptr;
+    Commands->Tail = nullptr;
+    Commands->Memory = (u8*)Memory;
+    Commands->MemorySize = MemorySize;
+    Commands->MemoryCurrent = (u8*)Memory;
 }
 
-// NOTE(Momo): Linear allocation
-void* Allocate(LinearArena* a, usize size, u8 alignment) {
-    Assert(size && alignment);
-    u8 adjust = AlignForwardDiff(a->Memory, alignment);
+static inline void*
+Allocate(render_commands* Commands, u32 Size, u8 Alignment) {
+    Assert(Size && Alignment);
+    u8 Adjust = AlignForwardDiff(Commands->Memory, Alignment);
     
-    // if not enough space, return 
-    if ((u8*)a->Memory + a->Used + adjust + size > (u8*)a->Memory + a->Capacity ) {
-        return nullptr;
+    u8* End = Commands->Memory + Commands->MemorySize;
+    if (Commands->MemoryCurrent + Size + Adjust > End) {
+        return nullptr; 
+    }
+    u8* Result = Commands->MemoryCurrent;
+    Commands->MemoryCurrent += Size;
+    
+    return Result;
+}
+
+
+static inline void*
+Push(render_commands* Commands, u32 Type, u32 Size, u8 Alignment) 
+{
+    // NOTE(Momo): Allocate header first
+    render_command_header* Header = (render_command_header*)Allocate(Commands, 
+                                                                     sizeof(render_command_header), 
+                                                                     alignof(render_command_header));
+    Assert(Header);
+    Header->Type = Type;
+    Header->Next = nullptr;
+    
+    if( Commands->Tail != nullptr ) {
+        render_command_header* PrevHeader = (render_command_header*)Commands->Tail;
+        PrevHeader->Next = Header;
+    }
+    Commands->Tail = Header;
+    
+    if (Commands->Head == nullptr) {
+        Commands->Head = Commands->Tail;
     }
     
-    void* ret = (u8*)a->Memory + a->Used + adjust;
-    
-    a->Used += adjust + size;
-    return ret;
+    // NOTE(Momo): Then allocate 
+    Header->Entry = (u8*)Allocate(Commands, Size, Alignment);
+    Assert(Header->Entry);
+    return Header->Entry;
 }
 
 
-struct StackArena {
-    void* Memory;
-    usize Used;
-    usize Capacity;
+// NOTE(Momo): From here it's game related
+enum  render_command_type {
+    RenderCommandType_render_command_entry_clear,
+    RenderCommandType_render_command_entry_textured_quad,
+    RenderCommandType_render_command_entry_colored_quad,
 };
 
-#define New(T, arena) (T*)Allocate(arena, sizeof(T), alignof(T))
-
-
-struct Vector3 {
-    float x, y, z;
+struct render_command_entry_clear {
+    u8 A, R, G, B;
 };
+
+struct render_command_entry_textured_quad {
+    u32 TextureHandle; 
+};
+
+struct render_command_entry_colored_quad {
+    u8 Alpha, Red, Green, Blue;
+};
+
+#define PushCommand(Commands, Type) (Type*)Push(Commands, RenderCommandType_##Type, sizeof(Type), alignof(Type))
 
 int main() {
-    void * mem = malloc(1024);
-    LinearArena arena;
-    Init(&arena, mem, 13);
+    void* Memory = malloc(1024);
     
-    Vector3* test1 = New(Vector3, &arena);
+    render_commands Commands;
+    Init(&Commands, Memory, 1024);
     
-    printf("Capacity: %lld\n", arena.Capacity);
-    printf("Used: %lld\n", arena.Used);
     
-    printf("test1: %p\n", test1);
-    free(mem);
+    auto foo1 = PushCommand(&Commands, render_command_entry_clear);
+    foo1->A = foo1->R = foo1->B = foo1->G = 125;
     
+    auto foo2 = PushCommand(&Commands, render_command_entry_colored_quad);
+    foo2->Alpha = foo2->Red = foo2->Blue = foo2->Green = 255;
+    
+    auto foo3 = PushCommand(&Commands, render_command_entry_textured_quad);
+    foo3->TextureHandle = 1337;
+    
+    auto foo4 = PushCommand(&Commands, render_command_entry_textured_quad);
+    foo4->TextureHandle = 1024;
+    
+    auto foo5 = PushCommand(&Commands, render_command_entry_clear);
+    foo5->A = foo5->B = 123;
+    
+    for (render_command_header* Itr = (render_command_header*)Commands.Head; 
+         Itr != nullptr; 
+         Itr = Itr->Next) {
+        
+        render_command_header* Header = (render_command_header*)Itr;
+        switch(Header->Type) {
+            case RenderCommandType_render_command_entry_clear: {
+                auto Entry = (render_command_entry_clear*)Header->Entry;
+                printf("Clear! %d %d %d %d\n", Entry->A, Entry->R, Entry->G, Entry->B);
+            } break;
+            case RenderCommandType_render_command_entry_textured_quad: {
+                auto Entry = (render_command_entry_textured_quad*)Header->Entry;
+                printf("Quads! %d\n", Entry->TextureHandle);
+            } break;
+            case RenderCommandType_render_command_entry_colored_quad: {
+                auto Entry = (render_command_entry_colored_quad*)Header->Entry;
+                printf("Color Quads!  %d %d %d %d\n", Entry->Alpha, Entry->Red, Entry->Green, Entry->Blue);
+            } break;
+        }
+        
+    }
+    free(Memory);
+    return 0;
 }
-
 

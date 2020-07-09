@@ -17,12 +17,12 @@ typedef GAME_UPDATE(game_update);
 typedef PLATFORM_LOG(platform_log);
 
 
-
 struct render_info {
     m44f Transforms[1024];
     m44f Colors[1024];
     usize Count;
 };
+
 
 struct platform_api {
     platform_log* Log;
