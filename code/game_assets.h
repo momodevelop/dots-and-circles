@@ -2,7 +2,9 @@
 #define __BMP5_32BPP_H__
 
 #include "ryoji.h"
+#include "ryoji_colors.h"
 
+// TODO(Momo): Remove stdlib and stdio 
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -14,6 +16,7 @@ struct color_rgba {
     u8 Red, Green, Blue, Alpha;
 };
 
+
 struct loaded_bitmap {
     u32 Width;
     u32 Height;
@@ -22,6 +25,16 @@ struct loaded_bitmap {
     color_rgba* Pixels; 
     
 };
+
+struct game_texture {
+    loaded_bitmap Bitmap;
+    u32 Handle;
+};
+
+struct game_assets {
+    game_texture Textures[2];
+};
+
 
 struct debug_read_file_result {
     void * Content;
@@ -106,7 +119,7 @@ DebugMakeBitmapFromBmp(const char* filepath) {
         const u8* PixelLocation = ReadFileContent + Offset + i * sizeof(color_rgba);
         u32 Pixel = *(u32*)(PixelLocation);
         
-        
+        // TODO(Momo): Fill in pixels as if it's an array
         u32 mask = RedMask;
         if (mask > 0) {
             u32 color = Pixel & mask;

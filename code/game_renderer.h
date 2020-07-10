@@ -3,8 +3,9 @@
 
 #include "ryoji_maths.h"
 #include "ryoji_bitmanip.h"
+#include "ryoji_colors.h"
 
-
+#include "game_assets.h"
 
 // TODO(Momo): Consider shifting this part to Ryoji?
 struct render_command_header {
@@ -91,8 +92,12 @@ struct render_command_entry_clear {
     c4f Colors;
 };
 
+
+
 struct render_command_entry_textured_quad {
-    u32 TextureHandle; 
+    game_texture Texture;
+    c4f Colors;
+    m44f Transform;
 };
 
 struct render_command_entry_colored_quad {
@@ -119,6 +124,21 @@ PushCommandColoredQuad(render_commands* Commands, c4f Colors, m44f Transform) {
     
     Entry->Colors = Colors;
     Entry->Transform = Transform;
+}
+
+
+
+// TODO(Momo): Change TextureHandle and TextureData to use game_texture
+static inline void
+PushCommandTexturedQuad(render_commands* Commands, c4f Colors, m44f Transform, game_texture Texture) 
+{
+    auto Entry = (render_command_entry_textured_quad*)Push(Commands,
+                                                           RenderCommandType_TexturedQuad,
+                                                           sizeof(render_command_entry_textured_quad),
+                                                           alignof(render_command_entry_textured_quad));
+    Entry->Colors = Colors;
+    Entry->Transform = Transform;
+    Entry->Texture = Texture;
 }
 
 #endif //GAME_RENDERER_H

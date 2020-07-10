@@ -1,9 +1,9 @@
-[] Clean up rendering code
-[] Textured Quads
-[] Alpha Blending?
+[] Clean up bitmap loading code
+[] Multiple Textured Quads
 [] Input
-
 [] Easing Functions
+[] Alpha Blending?
+
 [] Game Coordinates
 [] Camera
 [] User Interface

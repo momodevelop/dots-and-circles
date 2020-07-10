@@ -8,7 +8,6 @@
 
 
 #include "game_platform.h"
-#include "game_asset_loader.h"
 #include "game_renderer_opengl.h"
 
 #include "sdl_platform_timer.h"
@@ -141,15 +140,9 @@ int main(int argc, char* argv[]) {
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
 #endif
     
-    loaded_bitmap TestBitmap = DebugMakeBitmapFromBmp("assets/ryoji.bmp");
-    Defer{ free(TestBitmap.Pixels); };
-    
-    loaded_bitmap TestBitmap2 = DebugMakeBitmapFromBmp("assets/yuu.bmp");
-    Defer{ free(TestBitmap2.Pixels); };
-    
     renderer_opengl RendererOpenGL = {};
     auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
-    Init(&RendererOpenGL, windowWidth, windowHeight,  1024, &TestBitmap, &TestBitmap2);
+    Init(&RendererOpenGL, windowWidth, windowHeight,  1024);
     
     void* Memory = malloc(gTotalMemorySize);
     if (Memory == nullptr ){
@@ -183,7 +176,6 @@ int main(int argc, char* argv[]) {
     
     void* RenderCommandsMemory = Allocate(&MainMemory, gRenderCommandsMemorySize, alignof(void*));
     
-    
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
         SDL_Event e;
@@ -198,17 +190,20 @@ int main(int argc, char* argv[]) {
         u64 timeElapsed = TimeElapsed(&timer);
         f32 deltaTime = timeElapsed / 1000.f;
         
+        
+        
         render_commands Commands;
         Init(&Commands, RenderCommandsMemory, gRenderCommandsMemorySize);
         
         // TODO(Momo): Input?
         GameCode.Update(&GameMemory, &Commands, deltaTime); 
+        SDL_Log("Hello");
         Render(&RendererOpenGL, &Commands); 
         
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        SDL_Log("%lld  ms\n", timeElapsed);
+        //SDL_Log("%lld  ms\n", timeElapsed);
         SDL_GL_SwapWindow(window);
         
         
