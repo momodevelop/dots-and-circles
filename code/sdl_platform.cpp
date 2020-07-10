@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "ryoji_maths.h"
+#include "ryoji_arenas.h"
 
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
@@ -13,6 +14,12 @@
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
 #include "sdl_platform_utils.h"
+
+// NOTE(Momo): Settings
+#define gGameMemorySize Megabytes(64)
+#define gRenderCommandsMemorySize Megabytes(64)
+#define gTotalMemorySize Gigabytes(1)
+
 
 // NOTE(Momo): sdl_game_code
 struct sdl_game_code {
@@ -50,6 +57,15 @@ PLATFORM_LOG(PlatformLog) {
     va_end(va);
 }
 
+static inline void 
+DebugPrintMatrix(m44f M) {
+    SDL_Log("%02f %02f %02f %02f\n%02f %02f %02f %02f\n%02f %02f %02f %02f\n%02f %02f %02f %02f", 
+            M[0], M[1], M[2], M[3],
+            M[4], M[5], M[6], M[7],
+            M[8], M[9], M[10], M[11],
+            M[12], M[13], M[14], M[15]
+            );
+}
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
@@ -119,7 +135,6 @@ int main(int argc, char* argv[]) {
     
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //glDisable(GL_DEPTH_TEST);
     
 #ifdef SLOW_MODE
     glDebugMessageCallback(SdlGlDebugCallback, nullptr);
@@ -136,18 +151,27 @@ int main(int argc, char* argv[]) {
     auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
     Init(&RendererOpenGL, windowWidth, windowHeight,  1024, &TestBitmap, &TestBitmap2);
     
+    void* Memory = malloc(gTotalMemorySize);
+    if (Memory == nullptr ){
+        SDL_Log("Cannot allocate memory");
+        return 1;
+    }
+    Defer { free(Memory); };
+    
+    memory_arena MainMemory = {};
+    Init(&MainMemory, Memory, gTotalMemorySize);
+    
+    
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
     GameMemory.IsInitialized = false;
-    GameMemory.PermanentStore = malloc(Megabytes(64));
+    GameMemory.PermanentStore = Allocate(&MainMemory, gGameMemorySize, alignof(void*));
+    GameMemory.PermanentStoreSize = gGameMemorySize;
     
     if ( !GameMemory.PermanentStore ) {
         SDL_Log("Cannot allocate for PermanentStore");
         return 1;
     }
-    Defer { free(GameMemory.PermanentStore); };
-    
-    GameMemory.PermanentStoreSize = Megabytes(64);
     
     // NOTE(Momo): PlatformAPI
     GameMemory.PlatformApi.Log = PlatformLog;
@@ -155,6 +179,9 @@ int main(int argc, char* argv[]) {
     sdl_timer timer;
     Start(&timer);
     
+    // TODO(Momo): temporary code
+    
+    void* RenderCommandsMemory = Allocate(&MainMemory, gRenderCommandsMemorySize, alignof(void*));
     
     
     // NOTE(Momo): Game Loop
@@ -171,18 +198,17 @@ int main(int argc, char* argv[]) {
         u64 timeElapsed = TimeElapsed(&timer);
         f32 deltaTime = timeElapsed / 1000.f;
         
-        
-        
-        render_info RenderInfo = {};
+        render_commands Commands;
+        Init(&Commands, RenderCommandsMemory, gRenderCommandsMemorySize);
         
         // TODO(Momo): Input?
-        GameCode.Update(&GameMemory, &RenderInfo, deltaTime); 
-        Render(&RendererOpenGL, &RenderInfo); 
+        GameCode.Update(&GameMemory, &Commands, deltaTime); 
+        Render(&RendererOpenGL, &Commands); 
         
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        //SDL_Log("%lld  ms\n", timeElapsed);
+        SDL_Log("%lld  ms\n", timeElapsed);
         SDL_GL_SwapWindow(window);
         
         

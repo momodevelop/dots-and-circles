@@ -343,6 +343,7 @@ Transpose(m44f M) {
     return Ret;
 }
 
+
 static inline m44f 
 MakeTranslationMatrix(f32 x, f32 y, f32 z) {
     return {
@@ -351,6 +352,11 @@ MakeTranslationMatrix(f32 x, f32 y, f32 z) {
         0.f, 0.f, 1.f, z,
         0.f, 0.f, 0.f, 1.f
     };
+}
+
+static inline m44f 
+MakeTranslationMatrix(v3f Vec) {
+    return MakeTranslationMatrix(Vec[0], Vec[1], Vec[2]);
 }
 
 
@@ -402,6 +408,12 @@ MakeScaleMatrix(f32 x, f32 y, f32 z) {
     };
 }
 
+
+
+static inline m44f
+MakeScaleMatrix(v3f Vec) {
+    return MakeScaleMatrix(Vec[0], Vec[1], Vec[2]);
+}
 
 // 
 static inline m44f 

@@ -1,15 +1,62 @@
 #include "game_platform.h"
+#include "game_renderer.h"
 
+struct entity {
+    f32 Rotation;
+    v3f Scale;
+    v3f Position;
+    c4f Colors;
+    
+    f32 RotationSpeed;
+    
+};
+
+
+
+static inline void
+UpdateAndRender(entity* Entity, render_commands * RenderCommands, f32 DeltaTime) {
+    // NOTE(Momo): Update
+    Entity->Rotation += Entity->RotationSpeed * DeltaTime;
+    Wrap(Entity->Rotation, -Pi32, Pi32);
+    
+    // NOTE(Momo): Render
+    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    m44f T = MakeTranslationMatrix(Entity->Position);
+    m44f R = MakeRotationZMatrix(Entity->Rotation);
+    m44f S = MakeScaleMatrix(Entity->Scale);
+    
+    // TODO(Momo): This part should be done by renderer?
+    PushCommandColoredQuad(RenderCommands, 
+                           Entity->Colors, 
+                           T*R*S);
+}
 
 struct game_state {
-    f32 Rotation;
+    entity Entities[3];
 };
 
 
 static inline void 
 Init(game_state * GameState) {
+    GameState->Entities[0].Position = {0, 0, 0};
+    GameState->Entities[0].Rotation = 0.f;
+    GameState->Entities[0].Scale = {100, 100 , 100};
+    GameState->Entities[0].Colors = {1, 0, 0, 0};
+    GameState->Entities[0].RotationSpeed = 1.0f;
     
-    GameState->Rotation = 0.f;
+    GameState->Entities[1].Position = {100, 100, 1};
+    GameState->Entities[1].Rotation = 0.f;
+    GameState->Entities[1].Scale = {100, 100 , 100};
+    GameState->Entities[1].Colors  = { 0, 1, 0, 0 };
+    GameState->Entities[1].RotationSpeed = -1.0f;
+    
+    
+    GameState->Entities[2].Position = {-100, -100, 2};
+    GameState->Entities[2].Rotation = 0.f;
+    GameState->Entities[2].Scale = {100, 100 , 100 };
+    GameState->Entities[2].Colors  = { 0, 0, 1, 0 };
+    GameState->Entities[2].RotationSpeed = 10.0f;
+    
 }
 
 // NOTE(Momo):  Exported Functions
@@ -19,43 +66,10 @@ GAME_UPDATE(GameUpdate) {
     game_state* GameState = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
         Init(GameState);
-        for (u32 i = 0 ; i < 1024; ++i ) {
-            RenderInfo->Transforms[i] = Identity();
-        }
-        RenderInfo->Count = 1024;
         GameMemory->IsInitialized = true;
     }
     
-    f32 startX = -1600.f/2.f;
-    f32 startY = -900.f/2.f;
-    f32 xOffset = 200.f;
-    f32 yOffset = 200.f;
-    f32 currentXOffset = 0.f;
-    f32 currentYOffset = 0.f;
-    
-    m44f quadColorful = {
-        1.f, 1.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.0f,
-        1.f, 1.f, 1.f, 0.0f,
-    };
-    
-    for (u32 i = 0 ; i < 1024; ++i ) {
-        auto T = MakeTranslationMatrix(startX + currentXOffset, startY + currentYOffset, 0.f);
-        auto R = MakeRotationZMatrix(GameState->Rotation);
-        auto S = MakeScaleMatrix(100.f, 100.f, 1.f);
-        RenderInfo->Transforms[i] = Transpose(T*R*S);
-        RenderInfo->Colors[i] = quadColorful;
-        
-        
-        currentXOffset += xOffset;
-        if (currentXOffset > 1600) {
-            currentXOffset = 0.f;
-            currentYOffset += yOffset;
-        }
+    for (u32 i = 0; i < 3; ++i) {
+        UpdateAndRender(&GameState->Entities[i], RenderCommands, DeltaTime );
     }
-    
-    GameState->Rotation += DeltaTime;
-    Wrap(GameState->Rotation, -Pi32, Pi32);
-    
 }

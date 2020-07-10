@@ -1,0 +1,15 @@
+[] Clean up rendering code
+[] Textured Quads
+[] Alpha Blending?
+[] Input
+
+[] Easing Functions
+[] Game Coordinates
+[] Camera
+[] User Interface
+[] Lines? Debug Lines?
+
+
+[] Profiling? 
+[] Introspection?
+  

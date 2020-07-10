@@ -12,12 +12,12 @@ struct memory_arena {
 };
 
 
-static inline bool 
-Init(memory_arena* a, void* Memory, usize Capacity) {
+static inline void
+Init(memory_arena* Arena, void* Memory, usize Capacity) {
     Assert(Capacity);
-    a->Memory = Memory;
-    a->Capacity = Capacity;
-    a->Used = 0;
+    Arena->Memory = (u8*)Memory;
+    Arena->Capacity = Capacity;
+    Arena->Used = 0;
 }
 
 // NOTE(Momo): Linear allocation
