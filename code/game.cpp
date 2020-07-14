@@ -2,6 +2,7 @@
 #include "game_renderer.h"
 #include "game_assets.h"
 
+
 struct entity {
     f32 Rotation;
     v3f Scale;
@@ -33,40 +34,48 @@ UpdateAndRender(game_assets* Assets,
                             Assets->Textures[Entity->TextureHandle]);
 }
 
+#define MAX_ENTITIES  128
 struct game_state {
     game_assets Assets;
-    entity Entities[3];
+    entity Entities[MAX_ENTITIES];
 };
 
+// TODO(Momo): Shift to ryoji_easing.h
+static inline f32 
+Lerp(f32 Start, f32 End, f32 Fraction) {
+    return (1.f - Fraction) * Start + Fraction * End;
+}
 
 
 static inline void 
-Init(game_state * GameState) {
-    GameState->Assets.Textures[0].Bitmap = DebugMakeBitmapFromBmp("assets/ryoji.bmp"); 
-    GameState->Assets.Textures[0].Handle = 0; 
-    GameState->Assets.Textures[1].Bitmap = DebugMakeBitmapFromBmp("assets/yuu.bmp");
-    GameState->Assets.Textures[1].Handle = 1;
+Init(game_state * GameState, platform_api* Platform) {
+    LoadTexture(&GameState->Assets, GameTextureType_ryoji, Platform->ReadFile("assets/ryoji.bmp").Content);
+    LoadTexture(&GameState->Assets, GameTextureType_yuu,  Platform->ReadFile("assets/yuu.bmp").Content);
+    LoadTexture(&GameState->Assets, GameTextureType_blank,  Platform->ReadFile("assets/blank.bmp").Content);
     
-    GameState->Entities[0].Position = {0, 0, 0};
-    GameState->Entities[0].Rotation = 0.f;
-    GameState->Entities[0].Scale = {100, 100 , 100};
-    GameState->Entities[0].Colors = {1, 1, 1, 0};
-    GameState->Entities[0].RotationSpeed = 1.0f;
-    GameState->Entities[0].TextureHandle = 0;
     
-    GameState->Entities[1].Position = {100, 100, 1};
-    GameState->Entities[1].Rotation = 0.f;
-    GameState->Entities[1].Scale = {100, 100 , 100};
-    GameState->Entities[1].Colors  = { 0, 1, 0, 0 };
-    GameState->Entities[1].RotationSpeed = -1.0f;
-    GameState->Entities[1].TextureHandle = 0;
+    // NOTE(Momo): Initialize the entities
+    f32 currentPositionX = -800.f;
+    f32 currentPositionY = -400.f;
     
-    GameState->Entities[2].Position = {-100, -100, 2};
-    GameState->Entities[2].Rotation = 0.f;
-    GameState->Entities[2].Scale = {100, 100 , 100 };
-    GameState->Entities[2].Colors  = { 0, 0, 1, 0 };
-    GameState->Entities[2].RotationSpeed = 10.0f;
-    GameState->Entities[2].TextureHandle = 1;
+    for ( u32 i = 0; i < MAX_ENTITIES; ++i) {
+        f32 currentColor = Lerp(0.f, 1.f, (f32)i/MAX_ENTITIES);
+        GameState->Entities[i].Position = { currentPositionX, currentPositionY, 0 };
+        GameState->Entities[i].Rotation = 0.f;
+        GameState->Entities[i].Scale = { 1.f * i , 1.f * i , 1.f };
+        GameState->Entities[i].Colors = { currentColor, currentColor, currentColor, currentColor };
+        GameState->Entities[i].RotationSpeed = 0.01f * i;
+        GameState->Entities[i].TextureHandle = i % GameTextureType_max;
+        
+        currentPositionX += 1.f * i * 2.f;
+        
+        if (currentPositionX > 800.f) {
+            currentPositionX = -800.f;
+            currentPositionY += 1.f * i * 2.f;
+        }
+    }
+    
+    
 }
 
 // NOTE(Momo):  Exported Functions
@@ -75,12 +84,12 @@ GAME_UPDATE(GameUpdate) {
     
     game_state* GameState = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
-        Init(GameState);
+        Init(GameState, &GameMemory->PlatformApi);
         GameMemory->IsInitialized = true;
     }
     
     PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    for (u32 i = 0; i < 3; ++i) {
-        UpdateAndRender(&GameState->Assets, &GameState->Entities[i], RenderCommands, DeltaTime );
+    for (u32 i = 0; i < MAX_ENTITIES; ++i) {
+        UpdateAndRender(&GameState->Assets, &GameState->Entities[i], RenderCommands, DeltaTime);
     }
 }

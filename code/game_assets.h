@@ -1,23 +1,15 @@
-#ifndef __BMP5_32BPP_H__
-#define __BMP5_32BPP_H__
+#ifndef __GAME_ASSETS__
+#define __GAME_ASSETS__
 
 #include "ryoji.h"
 #include "ryoji_colors.h"
+#include "ryoji_arenas.h"
 
 // TODO(Momo): Remove stdlib and stdio 
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MapTo16(buffer, index) (buffer[index] | (buffer[index+1] << 8))
-#define MapTo32(buffer, index) (buffer[index] | (buffer[index+1] << 8) |  (buffer[index+2] << 16) | (buffer[index+3] << 24)) 
-
-// TODO(Momo): Shift this to ryoji_color.h?
-struct color_rgba {
-    u8 Red, Green, Blue, Alpha;
-};
-
-
-struct loaded_bitmap {
+struct bitmap {
     u32 Width;
     u32 Height;
     
@@ -26,97 +18,80 @@ struct loaded_bitmap {
     
 };
 
-struct game_texture {
-    loaded_bitmap Bitmap;
-    u32 Handle;
+enum game_texture_type {
+    GameTextureType_blank,
+    GameTextureType_ryoji,
+    GameTextureType_yuu,
+    GameTextureType_max,
 };
+
+struct game_texture {
+    bitmap Bitmap;
+    game_texture_type Handle;
+};
+
+
 
 struct game_assets {
-    game_texture Textures[2];
+    game_texture Textures[1024];
+    u32 TextureCount;
 };
 
 
-struct debug_read_file_result {
-    void * Content;
-    i32 ContentSize;
-};
+#define MapTo16(buffer, index) (buffer[index] | (buffer[index+1] << 8))
+#define MapTo32(buffer, index) (buffer[index] | (buffer[index+1] << 8) |  (buffer[index+2] << 16) | (buffer[index+3] << 24)) 
 
-static inline debug_read_file_result
-DebugReadFileToMemory(const char * path) {
-    FILE* file = fopen(path, "rb");
-    if (file == nullptr) {
-        return {};
-    }
-    debug_read_file_result Ret = {};
-    Defer{
-        fclose(file);
-    };
-    
-    // Get file size
-    fseek(file, 0, SEEK_END);
-    Ret.ContentSize = ftell(file); 
-    fseek(file, 0, SEEK_SET);
-    
-    Ret.Content = malloc(Ret.ContentSize);
-    
-    fread(Ret.Content, 1, Ret.ContentSize, file);
-    
-    return Ret;
-}
 
-// TODO(Momo): Replace malloc with arena. 
-static inline loaded_bitmap 
+#include <stdlib.h>
+// TODO(Momo): Replace malloc with arena? Or platform memory code 
+static inline bitmap 
 DebugMakeEmptyBitmap(u32 Width, u32 Height) {
-    loaded_bitmap Ret = {};
+    bitmap Ret = {};
     Ret.Width = Width;
     Ret.Height = Height;
     
-    usize MemorySize = Width * Height * sizeof(color_rgba);
-    Ret.Pixels = (color_rgba*)malloc(MemorySize);
-    ZeroBlock(Ret.Pixels, MemorySize);
+    usize Size = Width * Height * sizeof(color_rgba);
+    //Ret.Pixels = New(color_rgba, Arena);
+    Ret.Pixels = (color_rgba*)malloc(Size);
+    
+    ZeroBlock(Ret.Pixels, Size);
     return Ret;
 }
 
+
+// F
 
 // NOTE(Momo): Only loads 32-bit BMP files
 // TODO(Momo): Replace with asset loading system?
 // TODO(Momo): Replace malloc with arena
-static inline loaded_bitmap
-DebugMakeBitmapFromBmp(const char* filepath) {
+static inline bitmap
+DebugMakeBitmapFromBmp(void* BmpMemory) {
     constexpr u8 kFileHeaderSize = 14;
     constexpr u8 kInfoHeaderSize = 124;
     constexpr u8 kCompression = 3;
     constexpr u8 kBitsPerPixel = 32;
     constexpr u16 kSignature = 0x4D42;
     
-    auto ReadFileResult  = DebugReadFileToMemory(filepath);
-    Defer { free(ReadFileResult.Content); };
+    const u8* const Memory = (const u8*)BmpMemory;
     
-    const u8* const ReadFileContent = (const u8*)ReadFileResult.Content;
-    
-    Assert(MapTo16(ReadFileContent, 0) == kSignature);
-    Assert(MapTo16(ReadFileContent, kFileHeaderSize + 14) == kBitsPerPixel);
-    Assert(MapTo32(ReadFileContent, kFileHeaderSize + 16) == kCompression);
+    Assert(MapTo16(Memory, 0) == kSignature);
+    Assert(MapTo16(Memory, kFileHeaderSize + 14) == kBitsPerPixel);
+    Assert(MapTo32(Memory, kFileHeaderSize + 16) == kCompression);
     
     
-    u32 Width = MapTo32(ReadFileContent,  kFileHeaderSize + 4);
-    u32 Height = MapTo32(ReadFileContent,  kFileHeaderSize + 8);
-    loaded_bitmap Ret = DebugMakeEmptyBitmap(Width, Height);
+    u32 Width = MapTo32(Memory,  kFileHeaderSize + 4);
+    u32 Height = MapTo32(Memory,  kFileHeaderSize + 8);
+    bitmap Ret = DebugMakeEmptyBitmap(Width, Height);
     
-    usize MemorySize = Ret.Width * Ret.Height * sizeof(color_rgba);
-    Ret.Pixels = (color_rgba*)malloc(MemorySize);
-    if (Ret.Pixels == nullptr) {
-        return {};
-    }
     
-    u32 Offset = MapTo32(ReadFileContent, 10);
-    u32 RedMask = MapTo32(ReadFileContent, kFileHeaderSize + 40);
-    u32 GreenMask = MapTo32(ReadFileContent, kFileHeaderSize + 44);
-    u32 BlueMask = MapTo32(ReadFileContent, kFileHeaderSize + 48);
-    u32 AlphaMask = MapTo32(ReadFileContent, kFileHeaderSize + 52);
+    u32 Offset = MapTo32(Memory, 10);
+    u32 RedMask = MapTo32(Memory, kFileHeaderSize + 40);
+    u32 GreenMask = MapTo32(Memory, kFileHeaderSize + 44);
+    u32 BlueMask = MapTo32(Memory, kFileHeaderSize + 48);
+    u32 AlphaMask = MapTo32(Memory, kFileHeaderSize + 52);
     
     for (u32 i = 0; i < Ret.Width * Ret.Height; ++i) {
-        const u8* PixelLocation = ReadFileContent + Offset + i * sizeof(color_rgba);
+        const u8* PixelLocation = Memory + Offset + i * sizeof(color_rgba);
         u32 Pixel = *(u32*)(PixelLocation);
         
         // TODO(Momo): Fill in pixels as if it's an array
@@ -158,5 +133,17 @@ DebugMakeBitmapFromBmp(const char* filepath) {
 
 #undef MapTo16
 #undef MapTo32
+
+
+static inline void
+LoadTexture(game_assets *Assets, game_texture_type Type, void* BitmapMemory) {
+    Assert(Type < GameTextureType_max);
+    
+    // TODO(Momo): If type is already used, free the bitmap?
+    
+    Assets->Textures[Type].Bitmap = DebugMakeBitmapFromBmp(BitmapMemory);
+    Assets->Textures[Type].Handle = Type;
+}
+
 
 #endif // __BMP32_H__

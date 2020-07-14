@@ -17,5 +17,9 @@ union c4f {
 };
 
 
+struct color_rgba {
+    u8 Red, Green, Blue, Alpha;
+};
+
 
 #endif //RYOJI_COLORS_H

@@ -56,6 +56,25 @@ PLATFORM_LOG(PlatformLog) {
     va_end(va);
 }
 
+static inline 
+PLATFORM_READ_FILE(PlatformReadFile) {
+    SDL_RWops * File = SDL_RWFromFile(path, "rb");
+    if (File == nullptr) {
+        return {};
+    }
+    Defer{ SDL_RWclose(File); };
+    
+    platform_read_file_result Ret = {};
+    SDL_RWseek(File, 0, RW_SEEK_END);
+    Ret.ContentSize = (u32)SDL_RWtell(File);
+    SDL_RWseek(File, 0, RW_SEEK_SET);
+    
+    // TODO(Momo): Remove malloc
+    Ret.Content = malloc(Ret.ContentSize);
+    SDL_RWread(File, Ret.Content, 1, Ret.ContentSize);
+    return Ret;
+}
+
 static inline void 
 DebugPrintMatrix(m44f M) {
     SDL_Log("%02f %02f %02f %02f\n%02f %02f %02f %02f\n%02f %02f %02f %02f\n%02f %02f %02f %02f", 
@@ -168,6 +187,8 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): PlatformAPI
     GameMemory.PlatformApi.Log = PlatformLog;
+    GameMemory.PlatformApi.ReadFile = PlatformReadFile;
+    
     
     sdl_timer timer;
     Start(&timer);
@@ -197,13 +218,12 @@ int main(int argc, char* argv[]) {
         
         // TODO(Momo): Input?
         GameCode.Update(&GameMemory, &Commands, deltaTime); 
-        SDL_Log("Hello");
         Render(&RendererOpenGL, &Commands); 
         
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        //SDL_Log("%lld  ms\n", timeElapsed);
+        SDL_Log("%lld  ms\n", timeElapsed);
         SDL_GL_SwapWindow(window);
         
         

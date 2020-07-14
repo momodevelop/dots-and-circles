@@ -1,15 +1,14 @@
-[] Clean up bitmap loading code
-[] Multiple Textured Quads
-[] Input
-[] Easing Functions
-[] Alpha Blending?
 
+
+[] Easing Functions
+[] Clean up bitmap loading code
+[] Input
+[] Alpha Blending?
+[] Color Library?
 [] Game Coordinates
 [] Camera
 [] User Interface
 [] Lines? Debug Lines?
-
-
+[] PNG loading?
 [] Profiling? 
 [] Introspection?
-  

@@ -440,7 +440,7 @@ MakeOrthographicMatrix(f32 NdcLeft, f32 NdcRight,
 
 
 static inline m44f 
-Identity() {
+MakeIdentityMatrix() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,

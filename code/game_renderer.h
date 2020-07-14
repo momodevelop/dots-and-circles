@@ -84,7 +84,6 @@ Push(render_commands* Commands, u32 Type, u32 Size, u8 Alignment)
 // NOTE(Momo): From here it's game related code
 enum render_command_type {
     RenderCommandType_Clear,
-    RenderCommandType_ColoredQuad,
     RenderCommandType_TexturedQuad,
 };
 
@@ -114,18 +113,6 @@ PushCommandClear(render_commands* Commands, c4f Colors) {
                                                    alignof(render_command_entry_clear));
     Entry->Colors = Colors;
 }
-
-static inline void
-PushCommandColoredQuad(render_commands* Commands, c4f Colors, m44f Transform) {
-    auto Entry = (render_command_entry_colored_quad*)Push(Commands, 
-                                                          RenderCommandType_ColoredQuad, 
-                                                          sizeof(render_command_entry_colored_quad), 
-                                                          alignof(render_command_entry_colored_quad));
-    
-    Entry->Colors = Colors;
-    Entry->Transform = Transform;
-}
-
 
 
 // TODO(Momo): Change TextureHandle and TextureData to use game_texture

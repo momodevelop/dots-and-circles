@@ -21,8 +21,10 @@ Init(memory_arena* Arena, void* Memory, usize Capacity) {
 }
 
 // NOTE(Momo): Linear allocation
+
+
 static inline void* 
-Allocate(memory_arena* a, usize size, u8 alignment) {
+Allocate(memory_arena* a, usize size, u8 alignment = 4) {
     Assert(size && alignment);
     u8 adjust = AlignForwardDiff(a->Memory, alignment);
     
@@ -32,14 +34,11 @@ Allocate(memory_arena* a, usize size, u8 alignment) {
     }
     
     void* ret = (u8*)a->Memory + a->Used + adjust;
-    
     a->Used += adjust + size;
     return ret;
 }
-
-#define New(type, arena)   (T*)Allocate(arena, sizeof(T), alignof(T))
-#define NewArray(type, arena, count) (T*)Allocate(arena, sizeof(T)*count, alignof(T))
-
+#define AllocateStruct(Arena, Type) (Type*)Allocate(Arena, sizeof(Type), alignof(Type))
+#define AllocateArray(Arena, Count, Type) (T*)Allocate(Arena, sizeof(Type)*Count, alignof(Type))
 
 
 
