@@ -140,7 +140,6 @@ LoadTexture(game_assets *Assets, game_texture_type Type, void* BitmapMemory) {
     Assert(Type < GameTextureType_max);
     
     // TODO(Momo): If type is already used, free the bitmap?
-    
     Assets->Textures[Type].Bitmap = DebugMakeBitmapFromBmp(BitmapMemory);
     Assets->Textures[Type].Handle = Type;
 }

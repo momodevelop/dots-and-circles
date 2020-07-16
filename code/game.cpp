@@ -1,7 +1,8 @@
+
 #include "game_platform.h"
 #include "game_renderer.h"
 #include "game_assets.h"
-
+#include "ryoji_easing.h"
 
 struct entity {
     f32 Rotation;
@@ -49,9 +50,17 @@ Lerp(f32 Start, f32 End, f32 Fraction) {
 
 static inline void 
 Init(game_state * GameState, platform_api* Platform) {
-    LoadTexture(&GameState->Assets, GameTextureType_ryoji, Platform->ReadFile("assets/ryoji.bmp").Content);
-    LoadTexture(&GameState->Assets, GameTextureType_yuu,  Platform->ReadFile("assets/yuu.bmp").Content);
-    LoadTexture(&GameState->Assets, GameTextureType_blank,  Platform->ReadFile("assets/blank.bmp").Content);
+    auto Result = Platform->ReadFile("assets/ryoji.bmp");
+    LoadTexture(&GameState->Assets, GameTextureType_ryoji, Result.Content);
+    Platform->FreeFile(Result);
+    
+    Result = Platform->ReadFile("assets/yuu.bmp");
+    LoadTexture(&GameState->Assets, GameTextureType_yuu, Result.Content);
+    Platform->FreeFile(Result);
+    
+    Result = Platform->ReadFile("assets/yuu.bmp");
+    LoadTexture(&GameState->Assets, GameTextureType_blank, Result.Content);
+    Platform->FreeFile(Result);
     
     
     // NOTE(Momo): Initialize the entities
@@ -74,14 +83,11 @@ Init(game_state * GameState, platform_api* Platform) {
             currentPositionY += 1.f * i * 2.f;
         }
     }
-    
-    
 }
 
 // NOTE(Momo):  Exported Functions
 extern "C" 
 GAME_UPDATE(GameUpdate) {
-    
     game_state* GameState = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
         Init(GameState, &GameMemory->PlatformApi);

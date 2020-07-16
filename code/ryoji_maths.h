@@ -6,6 +6,8 @@
 static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
 static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
+static constexpr f32 HalfPi32 = Pi32 * 0.5f;
+
 
 static inline bool 
 IsEqual(f32 lhs, f32 rhs) {
@@ -125,6 +127,10 @@ ATan(f32 x) {
 }
 
 
+static inline 
+f32 Pow(f32 base, f32 exp) {
+    
+}
 
 
 // NOTE(Momo): Vectors

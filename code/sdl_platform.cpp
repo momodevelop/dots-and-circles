@@ -14,7 +14,7 @@
 #include "sdl_platform_gldebug.h"
 #include "sdl_platform_utils.h"
 
-// NOTE(Momo): Settings
+// TODO(Momo): Shift for game settings?
 #define gGameMemorySize Megabytes(64)
 #define gRenderCommandsMemorySize Megabytes(64)
 #define gTotalMemorySize Gigabytes(1)
@@ -56,6 +56,8 @@ PLATFORM_LOG(PlatformLog) {
     va_end(va);
 }
 
+
+
 static inline 
 PLATFORM_READ_FILE(PlatformReadFile) {
     SDL_RWops * File = SDL_RWFromFile(path, "rb");
@@ -69,10 +71,14 @@ PLATFORM_READ_FILE(PlatformReadFile) {
     Ret.ContentSize = (u32)SDL_RWtell(File);
     SDL_RWseek(File, 0, RW_SEEK_SET);
     
-    // TODO(Momo): Remove malloc
     Ret.Content = malloc(Ret.ContentSize);
     SDL_RWread(File, Ret.Content, 1, Ret.ContentSize);
     return Ret;
+}
+
+static inline 
+PLATFORM_FREE_FILE(PlatformFreeFile) {
+    free(File.Content);
 }
 
 static inline void 
@@ -170,6 +176,7 @@ int main(int argc, char* argv[]) {
     }
     Defer { free(Memory); };
     
+    
     memory_arena MainMemory = {};
     Init(&MainMemory, Memory, gTotalMemorySize);
     
@@ -188,13 +195,12 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): PlatformAPI
     GameMemory.PlatformApi.Log = PlatformLog;
     GameMemory.PlatformApi.ReadFile = PlatformReadFile;
-    
+    GameMemory.PlatformApi.FreeFile = PlatformFreeFile;
     
     sdl_timer timer;
     Start(&timer);
     
-    // TODO(Momo): temporary code
-    
+    // TODO(Momo): Maybe seperate this from game?
     void* RenderCommandsMemory = Allocate(&MainMemory, gRenderCommandsMemorySize, alignof(void*));
     
     // NOTE(Momo): Game Loop
@@ -225,8 +231,6 @@ int main(int argc, char* argv[]) {
         Tick(&timer);
         SDL_Log("%lld  ms\n", timeElapsed);
         SDL_GL_SwapWindow(window);
-        
-        
     }
     
     
