@@ -1,0 +1,16 @@
+#version 450 core 
+layout(location=0) in vec3 aModelVtx; 
+layout(location=1) in vec4 aColor;
+layout(location=2) in vec2 aTexCoord;
+layout(location=3) in mat4 aTransform;
+
+out vec4 mColor;
+out vec2 mTexCoord;
+
+uniform mat4 uProjection;
+
+void main(void) {
+	gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);
+	mColor = aColor;
+	mTexCoord = aTexCoord;
+}

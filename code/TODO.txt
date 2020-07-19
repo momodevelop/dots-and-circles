@@ -1,7 +1,4 @@
-
-
-[] Easing Functions
-[] Clean up bitmap loading code
+[] Power function for eaching
 [] Input
 [] Alpha Blending?
 [] Color Library?

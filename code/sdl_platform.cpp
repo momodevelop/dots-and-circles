@@ -193,37 +193,88 @@ int main(int argc, char* argv[]) {
     }
     
     // NOTE(Momo): PlatformAPI
-    GameMemory.PlatformApi.Log = PlatformLog;
-    GameMemory.PlatformApi.ReadFile = PlatformReadFile;
-    GameMemory.PlatformApi.FreeFile = PlatformFreeFile;
+    platform_api PlatformApi;
+    PlatformApi.Log = PlatformLog;
+    PlatformApi.ReadFile = PlatformReadFile;
+    PlatformApi.FreeFile = PlatformFreeFile;
     
+    // NOTE(Momo): Timer
     sdl_timer timer;
     Start(&timer);
     
-    // TODO(Momo): Maybe seperate this from game?
+    // NOTE(Momo): Render commands/queue
     void* RenderCommandsMemory = Allocate(&MainMemory, gRenderCommandsMemorySize, alignof(void*));
+    
+    // NOTE(Momo): Input
+    game_input GameInput = {};
+    
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
+        Update(&GameInput);
+        
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
+            
+            
             switch(e.type) {
                 case SDL_QUIT: {
                     gIsRunning = false;
                     SDL_Log("Quit triggered\n");
                 } break; 
+                
+                // NOTE(Momo): Handle keyboard
+                case SDL_KEYDOWN: {
+                    switch(e.key.keysym.sym) {
+                        case SDLK_w: {
+                            GameInput.ButtonUp.Now = true; 
+                        }break;
+                        case SDLK_a: {
+                            GameInput.ButtonLeft.Now = true;
+                        }break;
+                        case SDLK_s: {
+                            GameInput.ButtonDown.Now = true;
+                        }break;
+                        case SDLK_d: {
+                            GameInput.ButtonRight.Now = true;
+                        }break;
+                        case SDLK_RETURN: {
+                            GameInput.ButtonConfirm.Now = true;
+                        }break;
+                        
+                    }
+                } break;
+                case SDL_KEYUP: {
+                    switch(e.key.keysym.sym) {
+                        case SDLK_w: {
+                            GameInput.ButtonUp.Now = false;
+                        }break;
+                        case SDLK_a: {
+                            GameInput.ButtonLeft.Now = false;
+                        }break;
+                        case SDLK_s: {
+                            GameInput.ButtonDown.Now = false;
+                        }break;
+                        case SDLK_d: {
+                            GameInput.ButtonRight.Now = false;
+                        }break;
+                        case SDLK_RETURN: {
+                            GameInput.ButtonConfirm.Now = false;
+                        }break;
+                    } break;
+                }
             }
+            
         }
+        
         u64 timeElapsed = TimeElapsed(&timer);
         f32 deltaTime = timeElapsed / 1000.f;
-        
         
         
         render_commands Commands;
         Init(&Commands, RenderCommandsMemory, gRenderCommandsMemorySize);
         
-        // TODO(Momo): Input?
-        GameCode.Update(&GameMemory, &Commands, deltaTime); 
+        GameCode.Update(&PlatformApi, &GameMemory, &Commands, &GameInput, deltaTime); 
         Render(&RendererOpenGL, &Commands); 
         
         

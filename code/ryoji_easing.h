@@ -4,15 +4,16 @@
 #include "ryoji.h"
 #include "ryoji_maths.h"
 
+
 static inline
 f32 EaseInSine(f32 t)  {
-    return Sin(HalfPi32 * t);
+    return Sin(Pi32 * 0.5f * t);
 }
 
 
 static inline
 f32 EaseOutSine(f32 t) {
-    return 1.0f + Sin(HalfPi32 * (--t));
+    return 1.0f + Sin(Pi32 * 0.5f * (--t));
 }
 
 static inline
@@ -88,22 +89,7 @@ static inline f32 EaseInOutQuint(f32 t)  {
     }
 }
 
-static inline f32 EaseInExpo(f32 t)  {
-    return (Pow(2.f, 8.f * t) - 1.f) / 255.f;
-}
 
-static inline f32 EaseOutExpo(f32 t)  {
-    return 1.f -Pow(2.f, -8.f * t);
-}
-
-static inline f32 EaseInOutExpo(f32 t)  {
-    if (t < 0.5f) {
-        return (Pow(2.f, 16.f * t) - 1.f) / 510.f;
-    }
-    else {
-        return 1.f -0.5f * Pow(2.f, -16.f * (t - 0.5f));
-    }
-}
 
 static inline f32 EaseInCirc(f32 t)  {
     return 1.f -Sqrt(1.f -t);
@@ -169,14 +155,17 @@ f32 EaseInOutElastic(f32 t)  {
     }
 }
 
-static inline 
-f32 EaseInBounce(f32 t)  {
+
+
+// NOTE(Momo): These require power function. 
+static inline f32 
+EaseInBounce(f32 t)  {
     return Pow(2.f, 6.f * (t - 1.f)) * Abs(Sin(t * Pi32 * 3.5f));
 }
 
+
 static inline 
-f32 EaseOutBounce(f32 t) 
-{
+f32 EaseOutBounce(f32 t) {
     return 1.f -Pow(2.f, -6.f * t) * Abs(Cos(t * Pi32 * 3.5f));
 }
 
@@ -187,6 +176,23 @@ f32 EaseInOutBounce(f32 t) {
     }
     else {
         return 1.f -8.f * Pow(2.f, -8.f * t) * Abs(Sin(t * Pi32 * 7.f));
+    }
+}
+
+static inline f32 EaseInExpo(f32 t)  {
+    return (Pow(2.f, 8.f * t) - 1.f) / 255.f;
+}
+
+static inline f32 EaseOutExpo(f32 t)  {
+    return t == 1.f ? 1.f : 1.f -Pow(2.f, -10.f * t);
+}
+
+static inline f32 EaseInOutExpo(f32 t)  {
+    if (t < 0.5f) {
+        return (Pow(2.f, 16.f * t) - 1.f) / 510.f;
+    }
+    else {
+        return 1.f -0.5f * Pow(2.f, -16.f * (t - 0.5f));
     }
 }
 

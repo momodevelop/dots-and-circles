@@ -2,12 +2,18 @@
 #define __RYOJI_MATH__
 
 #include "ryoji.h"
+#include <math.h>
+
+// NOTE(Momo): To future self: We wrap the math functions IN CASE we 
+// want to have specialized versions for different systems (using SSE etc)
+//
+// I guess a good rule of thumb is that the GAME CODE should never directly
+// use standard library functions IN CASE we cannot use them!
+//
 
 static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
 static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
-static constexpr f32 HalfPi32 = Pi32 * 0.5f;
-
 
 static inline bool 
 IsEqual(f32 lhs, f32 rhs) {
@@ -25,168 +31,103 @@ RadToDeg(f32 radians) {
     return radians * 180.f / Pi32;
 }
 
-// NOTE(Momo): [-PI,PI]
+
 static inline f32 
 Sin(f32 x) {
-    constexpr float B = 4.0f / Pi32;
-    constexpr float C = -4.0f / (Pi32 * Pi32);
-    constexpr float P = 0.225f;
-    
-    float y = B * x + C * x * Abs(x);
-    return P * (y * Abs(y) - y) + y;
+    return sinf(x);
 }
 
-// NOTE(Momo): [-PI, PI]
-static inline 
-f32 Cos(f32 x) {
-    constexpr float B = 4.0f / Pi32;
-    constexpr float C = -4.0f / (Pi32 * Pi32);
-    constexpr float P = 0.225f;
-    
-    x = (x > 0) ? -x : x;
-    x += Pi32/2;
-    
-    return Sin(x);
+static inline f32 
+Cos(f32 x) {
+    return cosf(x);
 }
 
-// NOTE(Momo): [-PI, PI]
 static inline f32 
 Tan(f32 x) {
-    return Sin(x)/Cos(x);
+    return tanf(x);
 }
 
 
 static inline f32 
-InvSqrt(f32 number)
-{
-    u32 i;
-	f32 x2, y;
-	f32 threehalfs = 1.5f;
-    
-	x2 = number * 0.5F;
-	y  = number;
-	i  = *(u32*) &y;                       // evil floating point bit level hacking
-	i  = 0x5f3759df - ( i >> 1 );               // what the fuck? 
-	y  = *(f32*) &i;
-	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
-    //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
-    
-	return y;
+Sqrt(f32 x) {
+    return sqrtf(x);
 }
 
-static inline f32 
-Sqrt(f32 number) {
-    return 1.f/InvSqrt(number);
-}
-
-
-
-// NOTE(Momo): [-1, 1]
 static inline f32 
 ASin(f32 x) {
-    f32 negate = f32(x < 0);
-    x = Abs(x);
-    f32 ret = -0.0187293f;
-    ret *= x;
-    ret += 0.0742610f;
-    ret *= x;
-    ret -= 0.2121144f;
-    ret *= x;
-    ret += 1.5707288f;
-    ret = Pi32 *0.5f - Sqrt(1.0f - x)*ret;
-    return ret - 2 * negate * ret;
+    return asinf(x);
 }
 
-
-
-// NOTE(Momo): [-1, 1]
 static inline f32 
 ACos(f32 x) {
-    f32 negate = f32(x < 0);
-    x = Abs(x);
-    f32 ret = -0.0187293f;
-    ret = ret * x;
-    ret = ret + 0.0742610f;
-    ret = ret * x;
-    ret = ret - 0.2121144f;
-    ret = ret * x;
-    ret = ret + 1.5707288f;
-    ret = ret * Sqrt(1.f-x);
-    ret = ret - 2.f * negate * ret;
-    return negate * Pi32 + ret;
+    return acosf(x);
 }
 
-// NOTE(Momo): [-1, 1]
 static inline f32 
 ATan(f32 x) {
-    constexpr f32 A = 0.0776509570923569f;
-    constexpr f32 B = -0.287434475393028f;
-    constexpr f32 C = Pi32 / 4 - A - B;
-    f32 xx = x * x;
-    return ((A*xx + B)*xx + C)*x;
+    return atanf(x);
 }
 
-
-static inline 
-f32 Pow(f32 base, f32 exp) {
-    
+static inline f32
+Pow(f32 b, f32 e) {
+    return powf(b,e);
 }
 
 
 // NOTE(Momo): Vectors
 struct v3f {
     union {
-        f32 arr[3];
+        f32 E[3];
         struct {
-            f32 x;
-            f32 y;
-            f32 z;
+            f32 X;
+            f32 Y;
+            f32 Z;
         };	
     };
     
     inline f32 operator[](usize index) const { 
-        return arr[index]; 
+        return E[index]; 
     } 
 };
 
 static inline v3f 
 Add(v3f lhs, v3f rhs) {
-    return { lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z };
+    return { lhs.X+ rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z };
     
 }
 
 static inline v3f 
 Sub(v3f lhs, v3f rhs) {
-    return { lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z };
+    return { lhs.X- rhs.X, lhs.Y - rhs.Y, lhs.Z - rhs.Z };
 }
 
 static inline v3f 
 Mul(v3f lhs, f32 rhs) {
-    return { lhs.x * rhs, lhs.y * rhs, lhs.z * rhs };
+    return { lhs.X* rhs, lhs.Y * rhs, lhs.Z * rhs };
 }
 
 static inline v3f 
 Div(v3f lhs, f32 rhs) {
     Assert(IsEqual(rhs, 0.f));
-    return { lhs.x / rhs, lhs.y / rhs, lhs.z / rhs };
+    return { lhs.X/ rhs, lhs.Y / rhs, lhs.Z / rhs };
 }
 
 static inline v3f 
 Negate(v3f lhs){
-    return {-lhs.x, -lhs.y, -lhs.z};
+    return {-lhs.X, -lhs.Y, -lhs.Z};
     
 }
 static inline bool 
 IsEqual(v3f lhs, v3f rhs) {
     return 
-        IsEqual(lhs.x, rhs.x) && 
-        IsEqual(lhs.y, rhs.y) && 
-        IsEqual(lhs.z, rhs.z);
+        IsEqual(lhs.X, rhs.X) && 
+        IsEqual(lhs.Y, rhs.Y) && 
+        IsEqual(lhs.Z, rhs.Z);
 }
 
 static inline f32 
 Dot(v3f lhs, v3f rhs) {
-    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
+    return lhs.X* rhs.X+ lhs.Y * rhs.Y + lhs.Z * rhs.Z;
 }
 
 static inline v3f 
@@ -251,7 +192,7 @@ operator!=(v3f lhs, v3f rhs) {
 
 static inline v3f 
 operator-(v3f lhs)  {  
-    return { -lhs.x, -lhs.y, -lhs.z}; 
+    return { -lhs.X, -lhs.Y, -lhs.Z}; 
 }
 
 static inline v3f 
@@ -261,7 +202,7 @@ Midpoint(v3f lhs, v3f rhs)  {
 
 static inline f32 
 DistSq(v3f lhs, v3f rhs) { 
-    return (rhs.x - lhs.x) * (rhs.y - lhs.y) * (rhs.z - lhs.z);
+    return (rhs.X- lhs.X) * (rhs.Y - lhs.Y) * (rhs.Z - lhs.Z);
 }
 
 static inline f32 
@@ -317,10 +258,10 @@ Project(v3f from, v3f to) {
 
 // NOTE(Momo): I chose row major because it's easier to work on and OpenGL 
 struct m44f {
-    f32 Arr[4][4];
+    f32 E[4][4];
     
-    inline const auto& operator[](usize index) const { return Arr[index]; }
-    inline auto& operator[](usize index) { return Arr[index];}
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
 };
 
 static inline m44f 

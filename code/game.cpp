@@ -1,8 +1,8 @@
-
 #include "game_platform.h"
 #include "game_renderer.h"
 #include "game_assets.h"
 #include "ryoji_easing.h"
+
 
 struct entity {
     f32 Rotation;
@@ -10,23 +10,37 @@ struct entity {
     v3f Position;
     c4f Colors;
     u32 TextureHandle;
-    f32 RotationSpeed;
+    
+    f32 Timer;
+    f32 Duration;
+    f32 StartX;
+    f32 EndX;
 };
 
 static inline void
-UpdateAndRender(game_assets* Assets,
+UpdateAndRender(platform_api* Platform,
+                game_assets* Assets,
                 entity* Entity, 
                 render_commands * RenderCommands, 
                 f32 DeltaTime) {
+    Assert(Entity->Duration != 0.f);
+    
+    
     // NOTE(Momo): Update
-    Entity->Rotation += Entity->RotationSpeed * DeltaTime;
-    Wrap(Entity->Rotation, -Pi32, Pi32);
+    
+    f32 ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    
+    Entity->Position.X = Entity->StartX + (Entity->EndX - Entity->StartX) * ease; 
+    Entity->Timer += DeltaTime;
+    //Platform->Log("%f\n", Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    
+    //Entity->Rotation += Entity->RotationSpeed * DeltaTime;
+    //Wrap(Entity->Rotation, -Pi32, Pi32);
     
     // NOTE(Momo): Render
     m44f T = MakeTranslationMatrix(Entity->Position);
     m44f R = MakeRotationZMatrix(Entity->Rotation);
     m44f S = MakeScaleMatrix(Entity->Scale);
-    
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandTexturedQuad(RenderCommands, 
@@ -35,18 +49,11 @@ UpdateAndRender(game_assets* Assets,
                             Assets->Textures[Entity->TextureHandle]);
 }
 
-#define MAX_ENTITIES  128
+#define MAX_ENTITIES 128
 struct game_state {
     game_assets Assets;
     entity Entities[MAX_ENTITIES];
 };
-
-// TODO(Momo): Shift to ryoji_easing.h
-static inline f32 
-Lerp(f32 Start, f32 End, f32 Fraction) {
-    return (1.f - Fraction) * Start + Fraction * End;
-}
-
 
 static inline void 
 Init(game_state * GameState, platform_api* Platform) {
@@ -58,31 +65,30 @@ Init(game_state * GameState, platform_api* Platform) {
     LoadTexture(&GameState->Assets, GameTextureType_yuu, Result.Content);
     Platform->FreeFile(Result);
     
-    Result = Platform->ReadFile("assets/yuu.bmp");
+    Result = Platform->ReadFile("assets/blank.bmp");
     LoadTexture(&GameState->Assets, GameTextureType_blank, Result.Content);
     Platform->FreeFile(Result);
     
+    GameState->Entities[0].Position = { 0.f, 0.f, 0.f };
+    GameState->Entities[0].Rotation = 0.f;
+    GameState->Entities[0].Scale = { 100.f, 100.f };
+    GameState->Entities[0].Colors = { 1.f, 1.f, 1.f, 1.f };
+    GameState->Entities[0].TextureHandle = GameTextureType_ryoji;
+    GameState->Entities[0].Timer = 0.f;
+    GameState->Entities[0].Duration = 1.f;
+    GameState->Entities[0].StartX = -850.f;
+    GameState->Entities[0].EndX = -100.f;
     
-    // NOTE(Momo): Initialize the entities
-    f32 currentPositionX = -800.f;
-    f32 currentPositionY = -400.f;
+    GameState->Entities[1].Position = { 0.f, 0.f, 0.f };
+    GameState->Entities[1].Rotation = 0.f;
+    GameState->Entities[1].Scale = { 100.f, 100.f };
+    GameState->Entities[1].Colors = { 1.f, 1.f, 1.f, 1.f };
+    GameState->Entities[1].TextureHandle = GameTextureType_yuu;
+    GameState->Entities[1].Timer = 0.f;
+    GameState->Entities[1].Duration = 1.f;
+    GameState->Entities[1].StartX = 850.f;
+    GameState->Entities[1].EndX = 100.f;
     
-    for ( u32 i = 0; i < MAX_ENTITIES; ++i) {
-        f32 currentColor = Lerp(0.f, 1.f, (f32)i/MAX_ENTITIES);
-        GameState->Entities[i].Position = { currentPositionX, currentPositionY, 0 };
-        GameState->Entities[i].Rotation = 0.f;
-        GameState->Entities[i].Scale = { 1.f * i , 1.f * i , 1.f };
-        GameState->Entities[i].Colors = { currentColor, currentColor, currentColor, currentColor };
-        GameState->Entities[i].RotationSpeed = 0.01f * i;
-        GameState->Entities[i].TextureHandle = i % GameTextureType_max;
-        
-        currentPositionX += 1.f * i * 2.f;
-        
-        if (currentPositionX > 800.f) {
-            currentPositionX = -800.f;
-            currentPositionY += 1.f * i * 2.f;
-        }
-    }
 }
 
 // NOTE(Momo):  Exported Functions
@@ -90,12 +96,37 @@ extern "C"
 GAME_UPDATE(GameUpdate) {
     game_state* GameState = (game_state*)GameMemory->PermanentStore;
     if(!GameMemory->IsInitialized) {
-        Init(GameState, &GameMemory->PlatformApi);
+        Init(GameState, Platform);
         GameMemory->IsInitialized = true;
     }
     
-    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    for (u32 i = 0; i < MAX_ENTITIES; ++i) {
-        UpdateAndRender(&GameState->Assets, &GameState->Entities[i], RenderCommands, DeltaTime);
+    // NOTE(Momo): Test Input
+    
+    if (IsPoked(Input->ButtonUp)) {
+        Platform->Log("Button Up is Poked");
     }
+    if (IsDown(Input->ButtonUp)) {
+        Platform->Log("Button Up is Down");
+    }
+    if (IsReleased(Input->ButtonUp)) {
+        Platform->Log("Button Up is Released");
+    }
+    if (IsHeld(Input->ButtonUp)) {
+        Platform->Log("Button Up is Held");
+    }
+    
+    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    for (u32 i = 0; i < 2; ++i) {
+        UpdateAndRender(Platform,
+                        &GameState->Assets, 
+                        &GameState->Entities[i], 
+                        RenderCommands, 
+                        DeltaTime);
+    }
+    
+    
+    
+    
+    
+    
 }
