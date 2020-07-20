@@ -3,6 +3,7 @@
 SET me=%~dp0
 
 SET CodeDir=%me%..\code
+SET BuildDir=%me%..\build
 
 IF NOT "%Platform%" == "X64" IF NOT "%Platform%" == "x64" (EXIT /b)
 
@@ -16,16 +17,16 @@ SET CommonLinkerFlags=-incremental:no -subsystem:console -libpath:%CodeDir%\thir
 SET CommonLinkerFlags=SDL2main.lib SDL2.lib shell32.lib opengl32.lib %CommonLinkerFlags%
 
 SET common_flags=%opts% %additional% %entry_point% %include_dir% -link %libs% %linker_opts% 
-copy %CodeDir%\thirdparty\sdl2\lib\x64\SDL2.dll %cd%
 
-rmdir %cd%\shader
-mkdir %cd%\shader
-copy ..\shader\* %cd%\shader
+pushd %BuildDir%
+
+copy %CodeDir%\thirdparty\sdl2\lib\x64\SDL2.dll %cd%
 
 rmdir %cd%\assets
 mkdir %cd%\assets
-copy ..\assets\* %cd%\assets
-
+copy %cd%..\assets\* %cd%\assets
 
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
 cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp  -link %CommonLinkerFlags%
+
+popd
