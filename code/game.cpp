@@ -1,6 +1,9 @@
-#include "game_platform.h"
+#include "interface.h"
+#include "interface_input.h"
+
 #include "game_renderer.h"
 #include "game_assets.h"
+
 #include "ryoji_easing.h"
 
 
@@ -49,84 +52,116 @@ UpdateAndRender(platform_api* Platform,
                             Assets->Textures[Entity->TextureHandle]);
 }
 
-#define MAX_ENTITIES 128
-struct game_state {
-    game_assets Assets;
-    entity Entities[MAX_ENTITIES];
+
+enum struct game_state_type {
+    Splash,
+    Main
 };
 
-static inline void 
-Init(game_state * GameState, platform_api* Platform) {
-    auto Result = Platform->ReadFile("assets/ryoji.bmp");
-    LoadTexture(&GameState->Assets, GameTextureType_ryoji, Result.Content);
-    Platform->FreeFile(Result);
+#define MAX_ENTITIES 128
+struct game {
+    game_state_type CurrentState;
+    bool IsStateInitialized;
     
-    Result = Platform->ReadFile("assets/yuu.bmp");
-    LoadTexture(&GameState->Assets, GameTextureType_yuu, Result.Content);
-    Platform->FreeFile(Result);
-    
-    Result = Platform->ReadFile("assets/blank.bmp");
-    LoadTexture(&GameState->Assets, GameTextureType_blank, Result.Content);
-    Platform->FreeFile(Result);
-    
-    GameState->Entities[0].Position = { 0.f, 0.f, 0.f };
-    GameState->Entities[0].Rotation = 0.f;
-    GameState->Entities[0].Scale = { 100.f, 100.f };
-    GameState->Entities[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-    GameState->Entities[0].TextureHandle = GameTextureType_ryoji;
-    GameState->Entities[0].Timer = 0.f;
-    GameState->Entities[0].Duration = 1.f;
-    GameState->Entities[0].StartX = -850.f;
-    GameState->Entities[0].EndX = -100.f;
-    
-    GameState->Entities[1].Position = { 0.f, 0.f, 0.f };
-    GameState->Entities[1].Rotation = 0.f;
-    GameState->Entities[1].Scale = { 100.f, 100.f };
-    GameState->Entities[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-    GameState->Entities[1].TextureHandle = GameTextureType_yuu;
-    GameState->Entities[1].Timer = 0.f;
-    GameState->Entities[1].Duration = 1.f;
-    GameState->Entities[1].StartX = 850.f;
-    GameState->Entities[1].EndX = 100.f;
-    
-}
+    game_assets Assets;
+    entity Entities[MAX_ENTITIES];
+    memory_arena MainArena;
+};
 
-// NOTE(Momo):  Exported Functions
-extern "C" 
-GAME_UPDATE(GameUpdate) {
-    game_state* GameState = (game_state*)GameMemory->PermanentStore;
-    if(!GameMemory->IsInitialized) {
-        Init(GameState, Platform);
-        GameMemory->IsInitialized = true;
+struct game_state_splash {
+    entity Entities[MAX_ENTITIES];
+    
+};
+
+static inline void
+UpdateAndRenderSplashState(game* Game, platform_api* Platform, render_commands* RenderCommands, f32 DeltaTime) {
+    if(!Game->IsStateInitialized) {
+        // NOTE(Momo): Create entities
+        {
+            Game->Entities[0].Position = { 0.f, 0.f, 0.f };
+            Game->Entities[0].Rotation = 0.f;
+            Game->Entities[0].Scale = { 100.f, 100.f };
+            Game->Entities[0].Colors = { 1.f, 1.f, 1.f, 1.f };
+            Game->Entities[0].TextureHandle = GameTextureType_ryoji;
+            Game->Entities[0].Timer = 0.f;
+            Game->Entities[0].Duration = 1.f;
+            Game->Entities[0].StartX = -850.f;
+            Game->Entities[0].EndX = -100.f;
+            
+            Game->Entities[1].Position = { 0.f, 0.f, 0.f };
+            Game->Entities[1].Rotation = 0.f;
+            Game->Entities[1].Scale = { 100.f, 100.f };
+            Game->Entities[1].Colors = { 1.f, 1.f, 1.f, 1.f };
+            Game->Entities[1].TextureHandle = GameTextureType_yuu;
+            Game->Entities[1].Timer = 0.f;
+            Game->Entities[1].Duration = 1.f;
+            Game->Entities[1].StartX = 850.f;
+            Game->Entities[1].EndX = 100.f;
+        }
+        Game->IsStateInitialized = true;
+        Platform->Log("Splash state initialized!");
     }
     
-    // NOTE(Momo): Test Input
-    
-    if (IsPoked(Input->ButtonUp)) {
-        Platform->Log("Button Up is Poked");
-    }
-    if (IsDown(Input->ButtonUp)) {
-        Platform->Log("Button Up is Down");
-    }
-    if (IsReleased(Input->ButtonUp)) {
-        Platform->Log("Button Up is Released");
-    }
-    if (IsHeld(Input->ButtonUp)) {
-        Platform->Log("Button Up is Held");
-    }
     
     PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     for (u32 i = 0; i < 2; ++i) {
         UpdateAndRender(Platform,
-                        &GameState->Assets, 
-                        &GameState->Entities[i], 
+                        &Game->Assets, 
+                        &Game->Entities[i], 
                         RenderCommands, 
                         DeltaTime);
+    }
+    
+}
+
+
+
+
+// NOTE(Momo):  Exported Functions
+extern "C" 
+GAME_UPDATE(GameUpdate) {
+    game* Game = (game*)GameMemory->Memory;
+    
+    // NOTE(Momo): Initialization of the game
+    if(!GameMemory->IsInitialized) {
+        Game->CurrentState = game_state_type::Splash;
+        Game->IsStateInitialized = false;
+        
+        Game->MainArena = MakeMemoryArena((u8*)GameMemory->Memory + sizeof(game), GameMemory->MemorySize - sizeof(game));
+        
+        // NOTE(Momo): Init Assets
+        Init(&Game->Assets, &Game->MainArena);
+        {
+            auto Result = Platform->ReadFile("assets/ryoji.bmp");
+            Assert(Result.Content);
+            LoadTexture(&Game->Assets, GameTextureType_ryoji, Result.Content);
+            Platform->FreeFile(Result);
+        }
+        {
+            auto Result = Platform->ReadFile("assets/yuu.bmp");
+            Assert(Result.Content);
+            LoadTexture(&Game->Assets, GameTextureType_yuu, Result.Content);
+            Platform->FreeFile(Result);
+        }
+        {
+            auto Result = Platform->ReadFile("assets/blank.bmp");
+            Assert(Result.Content);
+            LoadTexture(&Game->Assets, GameTextureType_blank, Result.Content);
+            Platform->FreeFile(Result);
+        }
+        GameMemory->IsInitialized = true;
     }
     
     
     
     
-    
-    
+    switch(Game->CurrentState) {
+        case game_state_type::Splash: {
+            UpdateAndRenderSplashState(Game, Platform, RenderCommands, DeltaTime);
+        } break;
+        case game_state_type::Main: {
+            Platform->Log("Main!");
+        } break;
+        
+    }
 }

@@ -54,7 +54,7 @@ Allocate(render_commands* Commands, u32 Size, u8 Alignment) {
 
 
 static inline void*
-Push(render_commands* Commands, u32 Type, u32 Size, u8 Alignment) 
+PushBlock(render_commands* Commands, u32 Type, u32 Size, u8 Alignment) 
 {
     // NOTE(Momo): Allocate header first
     render_command_header* Header = (render_command_header*)Allocate(Commands, 
@@ -79,7 +79,6 @@ Push(render_commands* Commands, u32 Type, u32 Size, u8 Alignment)
     Assert(Header->Entry);
     return Header->Entry;
 }
-
 
 // NOTE(Momo): From here it's game related code
 enum render_command_type {
@@ -107,10 +106,10 @@ struct render_command_entry_colored_quad {
 
 static inline void
 PushCommandClear(render_commands* Commands, c4f Colors) {
-    auto Entry = (render_command_entry_clear*)Push(Commands, 
-                                                   RenderCommandType_Clear, 
-                                                   sizeof(render_command_entry_clear), 
-                                                   alignof(render_command_entry_clear));
+    auto Entry = (render_command_entry_clear*)PushBlock(Commands, 
+                                                        RenderCommandType_Clear, 
+                                                        sizeof(render_command_entry_clear), 
+                                                        alignof(render_command_entry_clear));
     Entry->Colors = Colors;
 }
 
@@ -119,10 +118,10 @@ PushCommandClear(render_commands* Commands, c4f Colors) {
 static inline void
 PushCommandTexturedQuad(render_commands* Commands, c4f Colors, m44f Transform, game_texture Texture) 
 {
-    auto Entry = (render_command_entry_textured_quad*)Push(Commands,
-                                                           RenderCommandType_TexturedQuad,
-                                                           sizeof(render_command_entry_textured_quad),
-                                                           alignof(render_command_entry_textured_quad));
+    auto Entry = (render_command_entry_textured_quad*)PushBlock(Commands,
+                                                                RenderCommandType_TexturedQuad,
+                                                                sizeof(render_command_entry_textured_quad),
+                                                                alignof(render_command_entry_textured_quad));
     Entry->Colors = Colors;
     Entry->Transform = Transform;
     Entry->Texture = Texture;

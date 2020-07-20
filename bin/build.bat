@@ -2,8 +2,9 @@
 
 SET me=%~dp0
 
-SET CodeDir=%me%..\code
-SET BuildDir=%me%..\build
+SET RootDir=%me%..
+SET CodeDir=%RootDir%\code
+SET BuildDir=%RootDir%\build
 
 IF NOT "%Platform%" == "X64" IF NOT "%Platform%" == "x64" (EXIT /b)
 
@@ -24,7 +25,7 @@ copy %CodeDir%\thirdparty\sdl2\lib\x64\SDL2.dll %cd%
 
 rmdir %cd%\assets
 mkdir %cd%\assets
-copy %cd%..\assets\* %cd%\assets
+copy %RootDir%\assets\* %cd%\assets
 
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
 cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp  -link %CommonLinkerFlags%

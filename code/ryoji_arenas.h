@@ -12,19 +12,16 @@ struct memory_arena {
 };
 
 
-static inline void
-Init(memory_arena* Arena, void* Memory, usize Capacity) {
+static inline memory_arena
+MakeMemoryArena(void* Memory, usize Capacity) {
     Assert(Capacity);
-    Arena->Memory = (u8*)Memory;
-    Arena->Capacity = Capacity;
-    Arena->Used = 0;
+    memory_arena Ret = { (u8*)Memory, 0, Capacity };
+    return Ret;
 }
-
-// NOTE(Momo): Linear allocation
 
 
 static inline void* 
-Allocate(memory_arena* a, usize size, u8 alignment = 4) {
+Push(memory_arena* a, usize size, u8 alignment = alignof(void*)) {
     Assert(size && alignment);
     u8 adjust = AlignForwardDiff(a->Memory, alignment);
     
@@ -37,9 +34,19 @@ Allocate(memory_arena* a, usize size, u8 alignment = 4) {
     a->Used += adjust + size;
     return ret;
 }
-#define AllocateStruct(Arena, Type) (Type*)Allocate(Arena, sizeof(Type), alignof(Type))
-#define AllocateArray(Arena, Count, Type) (T*)Allocate(Arena, sizeof(Type)*Count, alignof(Type))
 
+template<typename T>
+static inline T*
+Push(memory_arena* Arena) {
+    return (T*)Push(Arena, sizeof(T), alignof(T));
+}
+
+
+template<typename T>
+static inline T*
+Push(memory_arena* Arena, usize Count) {
+    return (T*)Push(Arena, sizeof(T) * Count, alignof(T));
+}
 
 
 #endif

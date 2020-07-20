@@ -6,18 +6,15 @@
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
-
-#include "game_platform.h"
-#include "game_renderer_opengl.h"
+#include "interface.h"
+#include "interface_renderer_opengl.h"
+#include "interface_input.h"
 
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
 #include "sdl_platform_utils.h"
 
-// TODO(Momo): Shift for game settings?
-#define gGameMemorySize Megabytes(64)
-#define gRenderCommandsMemorySize Megabytes(64)
-#define gTotalMemorySize Gigabytes(1)
+
 
 
 // NOTE(Momo): sdl_game_code
@@ -96,7 +93,7 @@ int main(int argc, char* argv[]) {
     
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
-        SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+        SDL_Log("SDL could not initialize! SDL_Errgor: %s\n", SDL_GetError());
         return 1;
     }
     Defer{
@@ -169,26 +166,24 @@ int main(int argc, char* argv[]) {
     auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
     Init(&RendererOpenGL, windowWidth, windowHeight,  1024);
     
-    void* Memory = malloc(gTotalMemorySize);
-    if (Memory == nullptr ){
+    void* ProgramMemory = malloc(TotalMemorySize);
+    if (ProgramMemory == nullptr){
         SDL_Log("Cannot allocate memory");
         return 1;
     }
-    Defer { free(Memory); };
+    Defer { free(ProgramMemory); };
     
     
-    memory_arena MainMemory = {};
-    Init(&MainMemory, Memory, gTotalMemorySize);
-    
+    memory_arena ProgramArena = MakeMemoryArena(ProgramMemory, TotalMemorySize);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
     GameMemory.IsInitialized = false;
-    GameMemory.PermanentStore = Allocate(&MainMemory, gGameMemorySize, alignof(void*));
-    GameMemory.PermanentStoreSize = gGameMemorySize;
+    GameMemory.Memory = Push(&ProgramArena, GameMemorySize);
+    GameMemory.MemorySize = GameMemorySize;
     
-    if ( !GameMemory.PermanentStore ) {
-        SDL_Log("Cannot allocate for PermanentStore");
+    if ( !GameMemory.Memory ) {
+        SDL_Log("Cannot allocate game memory");
         return 1;
     }
     
@@ -203,7 +198,7 @@ int main(int argc, char* argv[]) {
     Start(&timer);
     
     // NOTE(Momo): Render commands/queue
-    void* RenderCommandsMemory = Allocate(&MainMemory, gRenderCommandsMemorySize, alignof(void*));
+    void* RenderCommandsMemory = Push(&ProgramArena, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input GameInput = {};
@@ -272,7 +267,7 @@ int main(int argc, char* argv[]) {
         
         
         render_commands Commands;
-        Init(&Commands, RenderCommandsMemory, gRenderCommandsMemorySize);
+        Init(&Commands, RenderCommandsMemory, RenderCommandsMemorySize);
         
         GameCode.Update(&PlatformApi, &GameMemory, &Commands, &GameInput, deltaTime); 
         Render(&RendererOpenGL, &Commands); 
@@ -280,7 +275,7 @@ int main(int argc, char* argv[]) {
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        SDL_Log("%lld  ms\n", timeElapsed);
+        //SDL_Log("%lld  ms\n", timeElapsed);
         SDL_GL_SwapWindow(window);
     }
     

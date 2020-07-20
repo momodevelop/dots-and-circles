@@ -33,39 +33,44 @@ struct game_texture {
 
 
 struct game_assets {
+    memory_arena Arena;
     game_texture Textures[1024];
     u32 TextureCount;
 };
+
+static inline void
+Init(game_assets* Assets, memory_arena* MainArena) {
+    // TODO(Momo): Calculate the amount of memory we actually need
+    u32 RequiredMemory = Megabytes(10);
+    void* Memory = Push(MainArena, RequiredMemory);
+    Assert(Memory);
+    Assets->Arena = MakeMemoryArena(Memory, RequiredMemory);
+}
 
 
 #define MapTo16(buffer, index) (buffer[index] | (buffer[index+1] << 8))
 #define MapTo32(buffer, index) (buffer[index] | (buffer[index+1] << 8) |  (buffer[index+2] << 16) | (buffer[index+3] << 24)) 
 
 
-#include <stdlib.h>
 // TODO(Momo): Replace malloc with arena? Or platform memory code 
 static inline bitmap 
-DebugMakeEmptyBitmap(u32 Width, u32 Height) {
+DebugMakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
     bitmap Ret = {};
     Ret.Width = Width;
     Ret.Height = Height;
     
-    usize Size = Width * Height * sizeof(color_rgba);
-    //Ret.Pixels = New(color_rgba, Arena);
-    Ret.Pixels = (color_rgba*)malloc(Size);
-    
-    ZeroBlock(Ret.Pixels, Size);
+    usize Size = Width * Height;
+    Ret.Pixels = Push<color_rgba>(Arena, Size);
+    Assert(Ret.Pixels);
+    ZeroDynamicArray(Ret.Pixels, Size);
     return Ret;
 }
-
-
-// F
 
 // NOTE(Momo): Only loads 32-bit BMP files
 // TODO(Momo): Replace with asset loading system?
 // TODO(Momo): Replace malloc with arena
 static inline bitmap
-DebugMakeBitmapFromBmp(void* BmpMemory) {
+DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     constexpr u8 kFileHeaderSize = 14;
     constexpr u8 kInfoHeaderSize = 124;
     constexpr u8 kCompression = 3;
@@ -78,11 +83,9 @@ DebugMakeBitmapFromBmp(void* BmpMemory) {
     Assert(MapTo16(Memory, kFileHeaderSize + 14) == kBitsPerPixel);
     Assert(MapTo32(Memory, kFileHeaderSize + 16) == kCompression);
     
-    
     u32 Width = MapTo32(Memory,  kFileHeaderSize + 4);
     u32 Height = MapTo32(Memory,  kFileHeaderSize + 8);
-    bitmap Ret = DebugMakeEmptyBitmap(Width, Height);
-    
+    bitmap Ret = DebugMakeEmptyBitmap(Width, Height, Arena);
     
     u32 Offset = MapTo32(Memory, 10);
     u32 RedMask = MapTo32(Memory, kFileHeaderSize + 40);
@@ -140,9 +143,9 @@ LoadTexture(game_assets *Assets, game_texture_type Type, void* BitmapMemory) {
     Assert(Type < GameTextureType_max);
     
     // TODO(Momo): If type is already used, free the bitmap?
-    Assets->Textures[Type].Bitmap = DebugMakeBitmapFromBmp(BitmapMemory);
+    Assets->Textures[Type].Bitmap = DebugMakeBitmapFromBmp(BitmapMemory, &Assets->Arena);
     Assets->Textures[Type].Handle = Type;
 }
 
 
-#endif // __BMP32_H__
+#endif  
