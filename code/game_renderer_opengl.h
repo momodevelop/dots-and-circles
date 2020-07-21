@@ -1,12 +1,12 @@
-#ifndef __PLATFORM_RENDERER_OPENGL__
-#define __PLATFORM_RENDERER_OPENGL__
+#ifndef __GAME_RENDERER_OPENGL__
+#define __GAME_RENDERER_OPENGL__
 
 // NOTE(Momo): Renderer code for renderering the game to be used by platform
 // We will only have 1 model (a rectangle), which will have the 
 // capabilities have having 1 texture, 1 color, and 1 transform.
 
 #include "ryoji_maths.h"
-#include "game_renderer.h"
+#include "game_render_commands.h"
 
 // NOTE(Momo): Buffers
 #define Vbo_Model 0 

@@ -1,7 +1,7 @@
-#include "interface.h"
-#include "interface_input.h"
+#include "game_platform.h"
+#include "game_input.h"
 
-#include "game_renderer.h"
+#include "game_render_commands.h"
 #include "game_assets.h"
 
 #include "ryoji_easing.h"

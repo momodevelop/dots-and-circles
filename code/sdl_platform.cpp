@@ -6,9 +6,9 @@
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
-#include "interface.h"
-#include "interface_renderer_opengl.h"
-#include "interface_input.h"
+#include "game_platform.h"
+#include "game_renderer_opengl.h"
+#include "game_input.h"
 
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
@@ -266,8 +266,7 @@ int main(int argc, char* argv[]) {
         f32 deltaTime = timeElapsed / 1000.f;
         
         
-        render_commands Commands;
-        Init(&Commands, RenderCommandsMemory, RenderCommandsMemorySize);
+        render_commands Commands = MakeRenderCommands(RenderCommandsMemory, RenderCommandsMemorySize);
         
         GameCode.Update(&PlatformApi, &GameMemory, &Commands, &GameInput, deltaTime); 
         Render(&RendererOpenGL, &Commands); 

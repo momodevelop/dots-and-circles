@@ -1,5 +1,5 @@
-#ifndef __PLATFORM_INPUT__
-#define __PLATFORM_INPUT__
+#ifndef __GAME_INPUT__
+#define __GAME_INPUT__
 
 struct game_button {
     bool Before : 1;

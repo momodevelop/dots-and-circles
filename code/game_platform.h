@@ -1,5 +1,5 @@
-#ifndef __PLATFORM__
-#define __PLATFORM__
+#ifndef __GAME_PLATFORM__
+#define __GAME_PLATFORM__
 
 #include "ryoji.h"
 
