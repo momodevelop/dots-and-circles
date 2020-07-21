@@ -11,7 +11,6 @@ struct memory_arena {
     usize Capacity;
 };
 
-
 static inline memory_arena
 MakeMemoryArena(void* Memory, usize Capacity) {
     Assert(Capacity);
@@ -21,7 +20,7 @@ MakeMemoryArena(void* Memory, usize Capacity) {
 
 
 static inline void* 
-Push(memory_arena* a, usize size, u8 alignment = alignof(void*)) {
+PushBlock(memory_arena* a, usize size, u8 alignment = alignof(void*)) {
     Assert(size && alignment);
     u8 adjust = AlignForwardDiff(a->Memory, alignment);
     
@@ -37,15 +36,15 @@ Push(memory_arena* a, usize size, u8 alignment = alignof(void*)) {
 
 template<typename T>
 static inline T*
-Push(memory_arena* Arena) {
-    return (T*)Push(Arena, sizeof(T), alignof(T));
+PushStruct(memory_arena* Arena) {
+    return (T*)PushBlock(Arena, sizeof(T), alignof(T));
 }
 
 
 template<typename T>
 static inline T*
-Push(memory_arena* Arena, usize Count) {
-    return (T*)Push(Arena, sizeof(T) * Count, alignof(T));
+PushArray(memory_arena* Arena, usize Count) {
+    return (T*)PushBlock(Arena, sizeof(T) * Count, alignof(T));
 }
 
 

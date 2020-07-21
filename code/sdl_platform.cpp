@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
     GameMemory.IsInitialized = false;
-    GameMemory.Memory = Push(&ProgramArena, GameMemorySize);
+    GameMemory.Memory = PushBlock(&ProgramArena, GameMemorySize);
     GameMemory.MemorySize = GameMemorySize;
     
     if ( !GameMemory.Memory ) {
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
     Start(&timer);
     
     // NOTE(Momo): Render commands/queue
-    void* RenderCommandsMemory = Push(&ProgramArena, RenderCommandsMemorySize);
+    void* RenderCommandsMemory = PushBlock(&ProgramArena, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input GameInput = {};

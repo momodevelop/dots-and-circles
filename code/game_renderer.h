@@ -54,7 +54,7 @@ Allocate(render_commands* Commands, u32 Size, u8 Alignment) {
 
 
 static inline void*
-PushBlock(render_commands* Commands, u32 Type, u32 Size, u8 Alignment) 
+Push(render_commands* Commands, u32 Type, u32 Size, u8 Alignment) 
 {
     // NOTE(Momo): Allocate header first
     render_command_header* Header = (render_command_header*)Allocate(Commands, 
@@ -80,36 +80,31 @@ PushBlock(render_commands* Commands, u32 Type, u32 Size, u8 Alignment)
     return Header->Entry;
 }
 
-// NOTE(Momo): From here it's game related code
-enum render_command_type {
-    RenderCommandType_Clear,
-    RenderCommandType_TexturedQuad,
-};
+template<typename T>
+static inline T*
+PushStruct(render_commands* Commands) {
+    return (T*)Push(Commands, T::TypeId, sizeof(T), alignof(T));
+}
 
+
+
+// NOTE(Momo): From here it's game related code
 struct render_command_entry_clear {
+    static constexpr u32 TypeId = 0;
     c4f Colors;
 };
 
-
-
 struct render_command_entry_textured_quad {
+    static constexpr u32 TypeId = 1;
     game_texture Texture;
     c4f Colors;
     m44f Transform;
 };
 
-struct render_command_entry_colored_quad {
-    c4f Colors;
-    m44f Transform;
-};
-
-
 static inline void
 PushCommandClear(render_commands* Commands, c4f Colors) {
-    auto Entry = (render_command_entry_clear*)PushBlock(Commands, 
-                                                        RenderCommandType_Clear, 
-                                                        sizeof(render_command_entry_clear), 
-                                                        alignof(render_command_entry_clear));
+    using T = render_command_entry_clear;
+    auto Entry = PushStruct<T>(Commands);
     Entry->Colors = Colors;
 }
 
@@ -118,10 +113,9 @@ PushCommandClear(render_commands* Commands, c4f Colors) {
 static inline void
 PushCommandTexturedQuad(render_commands* Commands, c4f Colors, m44f Transform, game_texture Texture) 
 {
-    auto Entry = (render_command_entry_textured_quad*)PushBlock(Commands,
-                                                                RenderCommandType_TexturedQuad,
-                                                                sizeof(render_command_entry_textured_quad),
-                                                                alignof(render_command_entry_textured_quad));
+    using T = render_command_entry_textured_quad;
+    auto Entry = PushStruct<T>(Commands);
+    
     Entry->Colors = Colors;
     Entry->Transform = Transform;
     Entry->Texture = Texture;

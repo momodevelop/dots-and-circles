@@ -42,7 +42,7 @@ static inline void
 Init(game_assets* Assets, memory_arena* MainArena) {
     // TODO(Momo): Calculate the amount of memory we actually need
     u32 RequiredMemory = Megabytes(10);
-    void* Memory = Push(MainArena, RequiredMemory);
+    void* Memory = PushBlock(MainArena, RequiredMemory);
     Assert(Memory);
     Assets->Arena = MakeMemoryArena(Memory, RequiredMemory);
 }
@@ -59,10 +59,10 @@ DebugMakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
     Ret.Width = Width;
     Ret.Height = Height;
     
-    usize Size = Width * Height;
-    Ret.Pixels = Push<color_rgba>(Arena, Size);
+    usize Count = Width * Height;
+    Ret.Pixels = PushArray<color_rgba>(Arena, Count);
     Assert(Ret.Pixels);
-    ZeroDynamicArray(Ret.Pixels, Size);
+    ZeroDynamicArray(Ret.Pixels, Count);
     return Ret;
 }
 

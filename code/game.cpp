@@ -76,6 +76,7 @@ struct game_state_splash {
 static inline void
 UpdateAndRenderSplashState(game* Game, platform_api* Platform, render_commands* RenderCommands, f32 DeltaTime) {
     if(!Game->IsStateInitialized) {
+        
         // NOTE(Momo): Create entities
         {
             Game->Entities[0].Position = { 0.f, 0.f, 0.f };
