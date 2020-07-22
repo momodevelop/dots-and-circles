@@ -1,5 +1,0 @@
-#ifndef GAME_STATE_SPLASH_H
-#define GAME_STATE_SPLASH_H
-
-
-#endif //GAME_STATE_SPLASH_H
