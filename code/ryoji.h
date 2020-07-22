@@ -22,8 +22,6 @@ using uptr = uintptr_t;
 #define MEGABYTE (1 << 20)
 #define GIGABYTE (1 << 30)
 
-
-
 #define Abs(x) ((x < 0) ? -x : x)
 #define Max(x, y) ((x > y) x : y)
 #define Min(x, y) ((x < y) x : y)
@@ -52,7 +50,7 @@ ZeroBlock(void *mem, usize size) {
 
 
 // Assertion
-#if SLOW_MODE
+#if SLOW
 #include <assert.h>
 #define Assert(x) assert(x)
 //#define Assert(x) {if(!(x)) {*(volatile int *)0 = 0;}}
@@ -62,12 +60,6 @@ ZeroBlock(void *mem, usize size) {
 
 
 // Defer 
-template<class F> struct ScopeGuard {
-    F f;
-    ~ScopeGuard() { f(); }
-};
-
-
 namespace zawarudo {
     struct defer_dummy {};
     template<class F> ScopeGuard<F> operator+(defer_dummy, F f) {
