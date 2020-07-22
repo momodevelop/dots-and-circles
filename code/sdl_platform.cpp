@@ -6,15 +6,13 @@
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
-#include "game_platform.h"
-#include "game_renderer_opengl.h"
-#include "game_input.h"
+#include "yuu_platform.h"
+#include "yuu_renderer_opengl.h"
+#include "yuu_input.h"
 
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
 #include "sdl_platform_utils.h"
-
-
 
 
 // NOTE(Momo): sdl_game_code
@@ -45,8 +43,8 @@ Load(sdl_game_code* GameCode)
 
 static bool gIsRunning = true;
 
-static inline
-PLATFORM_LOG(PlatformLog) {
+static inline void
+PlatformLog(const char* Format, ...) {
     va_list va;
     va_start(va, Format);
     SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, Format, va);
@@ -55,8 +53,8 @@ PLATFORM_LOG(PlatformLog) {
 
 
 
-static inline 
-PLATFORM_READ_FILE(PlatformReadFile) {
+static inline platform_read_file_result
+PlatformReadFile(const char* path) {
     SDL_RWops * File = SDL_RWFromFile(path, "rb");
     if (File == nullptr) {
         return {};
@@ -73,8 +71,8 @@ PLATFORM_READ_FILE(PlatformReadFile) {
     return Ret;
 }
 
-static inline 
-PLATFORM_FREE_FILE(PlatformFreeFile) {
+static inline void
+PlatformFreeFile(platform_read_file_result File) {
     free(File.Content);
 }
 

@@ -1,11 +1,11 @@
-[] Power function for eaching
-[] Input
+[] Split game code and its states to files
 [] Alpha Blending?
 [] Color Library?
-[] Game Coordinates
 [] Camera
+[] Game Coordinates
 [] User Interface
 [] Lines? Debug Lines?
 [] PNG loading?
 [] Profiling? 
 [] Introspection?
+[] Asset loading??

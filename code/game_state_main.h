@@ -1,0 +1,6 @@
+#ifndef GAME_STATE_MAIN_H
+#define GAME_STATE_MAIN_H
+
+
+
+#endif //GAME_STATE_MAIN_H

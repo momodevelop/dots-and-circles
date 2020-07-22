@@ -17,18 +17,17 @@ struct platform_read_file_result;
 union game_input;
 
 // NOTE(Momo): Function typedefs and helpers
-#define GAME_UPDATE(name) void name(platform_api * Platform, game_memory* GameMemory,  render_commands* RenderCommands, game_input * Input, f32 DeltaTime)
-typedef GAME_UPDATE(game_update);
-#define PLATFORM_LOG(name) void name(const char* Format, ...)
-typedef PLATFORM_LOG(platform_log);
+typedef void game_update(platform_api* Platform, 
+                         game_memory* GameMemory,  
+                         render_commands* RenderCommands, 
+                         game_input* Input, 
+                         f32 DeltaTime);
+typedef void platform_log(const char* Format, ...);
 
 
 // TODO(Momo): This is just temp code! To be replaced by asset loading code
-#define PLATFORM_READ_FILE(name) platform_read_file_result name(const char* path)
-typedef PLATFORM_READ_FILE(platform_read_file);
-
-#define PLATFORM_FREE_FILE(name) void name(platform_read_file_result File)
-typedef PLATFORM_FREE_FILE(platform_free_file);
+typedef platform_read_file_result platform_read_file(const char* path);
+typedef void platform_free_file(platform_read_file_result File);
 
 
 struct platform_read_file_result {

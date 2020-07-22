@@ -2,12 +2,11 @@
 #define __GAME_RENDER_COMMANDS__
 
 #include "ryoji_maths.h"
-#include "ryoji_bitmanip.h"
 #include "ryoji_colors.h"
 #include "ryoji_arenas.h"
 
 
-#include "game_assets.h"
+#include "yuu_assets.h"
 
 // TODO(Momo): Consider shifting this part to Ryoji?
 struct render_command_header {
@@ -67,6 +66,8 @@ PushCommand(render_commands* Commands)
 }
 
 // NOTE(Momo): From here it's game related code
+
+
 struct render_command_entry_clear {
     static constexpr u32 TypeId = 0;
     c4f Colors;
@@ -78,6 +79,8 @@ struct render_command_entry_textured_quad {
     c4f Colors;
     m44f Transform;
 };
+
+
 
 static inline void
 PushCommandClear(render_commands* Commands, c4f Colors) {

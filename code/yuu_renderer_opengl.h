@@ -6,7 +6,7 @@
 // capabilities have having 1 texture, 1 color, and 1 transform.
 
 #include "ryoji_maths.h"
-#include "game_render_commands.h"
+#include "yuu_renderer.h"
 
 // NOTE(Momo): Buffers
 #define Vbo_Model 0 
@@ -87,8 +87,8 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
     constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\nlayout(location=2) in vec2 aTexCoord;\nlayout(location=3) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            mTexCoord = aTexCoord;\n}";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            mTexCoord = aTexCoord;\n}";
     
     constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\nfragColor = texture(uTexture, mTexCoord) * mColor; \n}";
     
@@ -196,16 +196,15 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
 
 static inline void
 Render(renderer_opengl* Renderer, render_commands* Commands) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    glBindVertexArray(Renderer->Blueprint);
-    glUseProgram(Renderer->Shader);
     
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
     u32 InstancesToDrawCount = 0;
     u32 LastDrawnInstanceIndex = 0;
     u32 CurrentInstanceIndex = 0;
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     
     using HeaderType = render_command_header;
     for (render_command_header* Itr = (HeaderType*)Commands->Head; 
@@ -220,6 +219,8 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
                 glClearColor(Entry->Colors.Red, Entry->Colors.Green, Entry->Colors.Blue, Entry->Colors.Alpha);
             } break;
             case render_command_entry_textured_quad::TypeId: {
+                
+                
                 // Get the entry
                 using EntryType = render_command_entry_textured_quad;
                 auto Entry = (EntryType*)CurrentHeader->Entry;
@@ -243,11 +244,12 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
                 }
                 RendererTextureHandle = Renderer->GameToRendererTextureTable[GameTextureHandle];
                 
-                // NOTE(Momo): If the currently set texture is not same as the currently processed texture, 
-                // batch draw all instances before the current instance.
+                // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.
                 if (CurrentTexture != RendererTextureHandle) {
                     if (InstancesToDrawCount != 0) {
                         glBindTexture(GL_TEXTURE_2D, CurrentTexture);
+                        glBindVertexArray(Renderer->Blueprint);
+                        glUseProgram(Renderer->Shader);
                         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
                                                             6, 
                                                             GL_UNSIGNED_BYTE, 
@@ -287,6 +289,8 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
     
     if (InstancesToDrawCount != 0) {
         glBindTexture(GL_TEXTURE_2D, CurrentTexture);
+        glBindVertexArray(Renderer->Blueprint);
+        glUseProgram(Renderer->Shader);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
                                             6, 
                                             GL_UNSIGNED_BYTE, 
