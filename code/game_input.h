@@ -1,6 +1,7 @@
-#ifndef __GAME_INPUT__
-#define __GAME_INPUT__
+#ifndef __YUU_INPUT__
+#define __YUU_INPUT__
 
+// TODO(Momo): Needs to be a bit more generic to be engine code...
 struct game_button {
     bool Before : 1;
     bool Now : 1;
@@ -16,6 +17,8 @@ union game_input {
         game_button ButtonConfirm;
     };
 };
+
+
 
 static inline void
 Update(game_input* Input) {
@@ -44,7 +47,6 @@ bool IsDown(game_button Button) {
 bool IsHeld(game_button Button) {
     return Button.Before && Button.Now;
 }
-
 
 
 #endif //PLATFORM_INPUT_H

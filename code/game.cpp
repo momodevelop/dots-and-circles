@@ -1,9 +1,61 @@
 #include "game.h"
 
+static inline void
+UpdateSandboxState(game* Game, 
+                   render_commands* RenderCommands, 
+                   f32 DeltaTime) {
+    
+    game_state_sandbox* State = &Game->GameState.Sandbox; 
+    if(!Game->IsStateInitialized) {
+        // NOTE(Momo): Create entities
+        
+        f32 offsetX = -700.f;
+        f32 offsetY = -440.f;
+        f32 offsetDeltaX = 5.f;
+        f32 offsetDeltaY = 5.f;
+        for (u32 i = 0; i < game_state_sandbox::TotalEntities; ++i)
+        {
+            State->Entities[i].Position = { offsetX, offsetY, 0.f };
+            State->Entities[i].Rotation = 0.f;
+            State->Entities[i].Scale = { 5.f, 5.f };
+            State->Entities[i].Colors = { 1.f, 1.f, 1.f, 0.5f };
+#if 0
+            if ( i < (game_state_sandbox::TotalEntities / 3))
+                State->Entities[i].TextureHandle = 1;
+            else if ( i < (game_state_sandbox::TotalEntities / 3 * 2))
+                State->Entities[i].TextureHandle = 2;
+            else if ( i < game_state_sandbox::TotalEntities)
+                State->Entities[i].TextureHandle = 0;
+#else
+            State->Entities[i].TextureHandle = i % 3;
+#endif
+            offsetX += offsetDeltaX;
+            if (offsetX >= 700.f) {
+                offsetX = -700.f;
+                offsetY += offsetDeltaY;
+            }
+            
+        }
+        Game->IsStateInitialized = true;
+        Log("Sandbox state initialized!");
+    }
+    
+    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    
+    for (u32 i = 0; i < game_state_sandbox::TotalEntities; ++i) {
+        Update(&State->Entities[i], 
+               &Game->Assets, 
+               RenderCommands, 
+               DeltaTime);
+    }
+}
+
+
+
+
 
 static inline void
 UpdateSplashState(game* Game, 
-                  platform_api* Platform, 
                   render_commands* RenderCommands, 
                   f32 DeltaTime) {
     game_state_splash* State = &Game->GameState.Splash; 
@@ -44,7 +96,7 @@ UpdateSplashState(game* Game,
             State->SplashBlackout.EndY = 0.f;
         }
         Game->IsStateInitialized = true;
-        Platform->Log("Splash state initialized!");
+        Log("Splash state initialized!");
     }
     
     PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
@@ -62,8 +114,6 @@ UpdateSplashState(game* Game,
 }
 
 
-
-
 // NOTE(Momo):  Exported Functions
 extern "C" void
 GameUpdate(platform_api* Platform, 
@@ -76,10 +126,11 @@ GameUpdate(platform_api* Platform,
     
     // NOTE(Momo): Initialization of the game
     if(!GameMemory->IsInitialized) {
-        Game->CurrentStateType = game_state_splash::TypeId;
+        Game->CurrentStateType = game_state_sandbox::TypeId;
         Game->IsStateInitialized = false;
         
-        Game->MainArena = MakeMemoryArena((u8*)GameMemory->Memory + sizeof(game), GameMemory->MemorySize - sizeof(game));
+        
+        Init(&Game->MainArena,(u8*)GameMemory->Memory + sizeof(game), GameMemory->MemorySize - sizeof(game));
         
         // NOTE(Momo): Init Assets
         Init(&Game->Assets, &Game->MainArena);
@@ -102,17 +153,21 @@ GameUpdate(platform_api* Platform,
             Platform->FreeFile(Result);
         }
         GameMemory->IsInitialized = true;
-        gPlatform = Platform;
+#if INTERNAL
+        gLog = Platform->Log;
+#endif
     }
-    
     
     // NOTE(Momo): State machine
     switch(Game->CurrentStateType) {
         case game_state_splash::TypeId: {
-            UpdateAndRenderSplashState(Game, Platform, RenderCommands, DeltaTime);
+            UpdateSplashState(Game, RenderCommands, DeltaTime);
+        } break;
+        case game_state_sandbox::TypeId: {
+            UpdateSandboxState(Game, RenderCommands, DeltaTime);
         } break;
         case game_state_main::TypeId: {
-            Platform->Log("Main!");
+            Log("Main!");
         } break;
         
     }

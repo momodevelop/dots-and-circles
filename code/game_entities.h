@@ -6,7 +6,38 @@
 #include "yuu_assets.h"
 
 
-// NOTE(Momo): Entities  ///////////////////////////////
+
+struct test_entity {
+    v3f Scale;
+    f32 Rotation;
+    v3f Position;
+    c4f Colors;
+    u32 TextureHandle;
+    f32 Timer;
+};
+
+static inline void
+Update(test_entity* Entity, 
+       game_assets* Assets,
+       render_commands * RenderCommands, 
+       f32 DeltaTime) {
+    
+    // NOTE(Momo): Update
+    
+    Entity->Rotation +=  DeltaTime;
+    
+    // NOTE(Momo): Render
+    m44f T = MakeTranslationMatrix(Entity->Position);
+    m44f R = MakeRotationZMatrix(Entity->Rotation);
+    m44f S = MakeScaleMatrix(Entity->Scale);
+    
+    // TODO(Momo): This part should be done by renderer?
+    PushCommandTexturedQuad(RenderCommands, 
+                            Entity->Colors, 
+                            T*R*S,
+                            Assets->Textures[Entity->TextureHandle]);
+}
+
 
 struct splash_image_entity {
     v3f Scale;

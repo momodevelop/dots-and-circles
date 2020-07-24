@@ -73,22 +73,71 @@ Pow(f32 b, f32 e) {
     return powf(b,e);
 }
 
+struct v2f {
+    union {
+        f32 E[2];
+        struct {
+            f32 X;
+            f32 Y;
+        };
+        struct {
+            f32 U;
+            f32 V;
+        };
+    };
+    
+    inline f32 operator[](usize index) const {
+        Assert(index < 2);
+        return E[index];
+    };
+};
 
-// NOTE(Momo): Vectors
 struct v3f {
     union {
         f32 E[3];
         struct {
-            f32 X;
-            f32 Y;
-            f32 Z;
-        };	
+            f32 X, Y, Z;
+        };
+        struct {
+            v2f XY;
+            f32 _;
+        };
+        struct {
+            f32 _;
+            v2f YZ;
+        };
+        struct {
+            f32 R, G, B;
+        };
     };
     
     inline f32 operator[](usize index) const { 
+        Assert(index < 3);
         return E[index]; 
-    } 
+    }
 };
+
+struct v4f {
+    union {
+        f32 E[4];
+        struct {
+            f32 X, Y, Z, W;
+        };
+        struct {
+            v3f XYZ;
+            f32 _;
+        };
+        struct {
+            f32 R, G, B, A;
+        };
+    };
+    
+    inline f32 operator[](usize index) const { 
+        Assert(index < 4);
+        return E[index]; 
+    }
+};
+
 
 static inline v3f 
 Add(v3f lhs, v3f rhs) {
@@ -197,7 +246,7 @@ operator-(v3f lhs)  {
 
 static inline v3f 
 Midpoint(v3f lhs, v3f rhs)  { 
-    return (lhs + rhs)/2.f; 
+    return (lhs + rhs) * 0.5f; 
 }
 
 static inline f32 

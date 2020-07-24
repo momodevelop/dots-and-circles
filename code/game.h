@@ -2,37 +2,52 @@
 #define GAME_H
 
 
-#include "yuu_platform.h"
-#include "yuu_input.h"
+#include "game_platform.h"
+#include "game_input.h"
 #include "yuu_renderer.h"
 #include "yuu_assets.h"
 
 #include "game_entities.h"
 
-static platform_api* gPlatform;
+#if  INTERNAL
+static platform_log* gLog;
+#define Log(fmt, ...) gLog(fmt, __VA_ARGS__);
+#else 
+#define Log(fmt, ...)
+#endif
+
 
 struct game_state_splash {
-    static constexpr u32 TypeId = 0;
+    static constexpr u8 TypeId = 0;
     splash_image_entity SplashImg[2];
     splash_blackout_entity SplashBlackout;
 };
 
 struct game_state_main {
-    static constexpr u32 TypeId = 1;
+    static constexpr u8 TypeId = 1;
 };
+
+struct game_state_sandbox {
+    static constexpr u8 TypeId = 2;
+    static constexpr u32 TotalEntities = 50000;
+    test_entity Entities[TotalEntities];
+};
+
 
 union game_state {
     game_state_splash Splash;
     game_state_main Main;
+    game_state_sandbox Sandbox;
 };
+
 struct game {
     game_state GameState;
     u32 CurrentStateType;
     bool IsStateInitialized;
     
     game_assets Assets;
-    
     memory_arena MainArena;
+    
 };
 
 

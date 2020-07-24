@@ -5,6 +5,7 @@
 #include <cstdint>
 
 // Types
+using b8 = bool;
 using u8 = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
@@ -61,6 +62,10 @@ ZeroBlock(void *mem, usize size) {
 
 // Defer 
 namespace zawarudo {
+    template<class F> struct ScopeGuard {
+        F f;
+        ~ScopeGuard() { f(); }
+    };
     struct defer_dummy {};
     template<class F> ScopeGuard<F> operator+(defer_dummy, F f) {
         return { f };
@@ -84,7 +89,6 @@ FOREACH(zawarudo_GENERATE_SWITCH_CASE_PART) \
 default: return "Unknown Error :("; \
 } \
 }\
-
 
 
 

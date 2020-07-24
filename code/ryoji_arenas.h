@@ -11,26 +11,30 @@ struct memory_arena {
     usize Capacity;
 };
 
-static inline memory_arena
-MakeMemoryArena(void* Memory, usize Capacity) {
+static inline void 
+Init(memory_arena* Arena, void* Memory, usize Capacity) {
     Assert(Capacity);
-    memory_arena Ret = { (u8*)Memory, 0, Capacity };
-    return Ret;
+    Arena->Memory = (u8*)Memory;
+    Arena->Capacity = Capacity;
 }
 
+static inline void 
+Clear(memory_arena* Arena) {
+    Arena->Used = 0;
+}
 
 static inline void* 
-PushBlock(memory_arena* a, usize size, u8 alignment = alignof(void*)) {
+PushBlock(memory_arena* Arena, usize size, u8 alignment = alignof(void*)) {
     Assert(size && alignment);
-    u8 adjust = AlignForwardDiff(a->Memory, alignment);
+    u8 adjust = AlignForwardDiff(Arena->Memory, alignment);
     
     // if not enough space, return 
-    if ((u8*)a->Memory + a->Used + adjust + size > (u8*)a->Memory + a->Capacity ) {
+    if ((u8*)Arena->Memory + Arena->Used + adjust + size > (u8*)Arena->Memory + Arena->Capacity ) {
         return nullptr;
     }
     
-    void* ret = (u8*)a->Memory + a->Used + adjust;
-    a->Used += adjust + size;
+    void* ret = (u8*)Arena->Memory + Arena->Used + adjust;
+    Arena->Used += adjust + size;
     return ret;
 }
 

@@ -6,9 +6,9 @@
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
-#include "yuu_platform.h"
+#include "game_platform.h"
 #include "yuu_renderer_opengl.h"
-#include "yuu_input.h"
+#include "game_input.h"
 
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
@@ -76,16 +76,6 @@ PlatformFreeFile(platform_read_file_result File) {
     free(File.Content);
 }
 
-static inline void 
-DebugPrintMatrix(m44f M) {
-    SDL_Log("%02f %02f %02f %02f\n%02f %02f %02f %02f\n%02f %02f %02f %02f\n%02f %02f %02f %02f", 
-            M[0], M[1], M[2], M[3],
-            M[4], M[5], M[6], M[7],
-            M[8], M[9], M[10], M[11],
-            M[12], M[13], M[14], M[15]
-            );
-}
-
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
     
@@ -124,7 +114,7 @@ int main(int argc, char* argv[]) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     
-#if SLOW_MODE
+#if INTERNAL
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif  
     
@@ -155,14 +145,15 @@ int main(int argc, char* argv[]) {
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-#ifdef SLOW_MODE
+#ifdef INTERNAL
     glDebugMessageCallback(SdlGlDebugCallback, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
 #endif
     
-    renderer_opengl RendererOpenGL = {};
+    // NOTE(Momo): Renderer Init
     auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
-    Init(&RendererOpenGL, windowWidth, windowHeight,  1024);
+    renderer_opengl RendererOpenGL = {};
+    Init(&RendererOpenGL, windowWidth, windowHeight, 1000000);
     
     void* ProgramMemory = malloc(TotalMemorySize);
     if (ProgramMemory == nullptr){
@@ -171,13 +162,14 @@ int main(int argc, char* argv[]) {
     }
     Defer { free(ProgramMemory); };
     
-    
-    memory_arena ProgramArena = MakeMemoryArena(ProgramMemory, TotalMemorySize);
+    // NOTE(Momo): Memory Arena for platform
+    memory_arena PlatformArena = {};
+    Init(&PlatformArena, ProgramMemory, TotalMemorySize);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
     GameMemory.IsInitialized = false;
-    GameMemory.Memory = PushBlock(&ProgramArena, GameMemorySize);
+    GameMemory.Memory = PushBlock(&PlatformArena, GameMemorySize);
     GameMemory.MemorySize = GameMemorySize;
     
     if ( !GameMemory.Memory ) {
@@ -196,10 +188,13 @@ int main(int argc, char* argv[]) {
     Start(&timer);
     
     // NOTE(Momo): Render commands/queue
-    void* RenderCommandsMemory = PushBlock(&ProgramArena, RenderCommandsMemorySize);
+    void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
+    render_commands RenderCommands = {}; 
+    Init(&RenderCommands, RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input GameInput = {};
+    
     
     
     // NOTE(Momo): Game Loop
@@ -260,19 +255,20 @@ int main(int argc, char* argv[]) {
             
         }
         
-        u64 timeElapsed = TimeElapsed(&timer);
-        f32 deltaTime = timeElapsed / 1000.f;
+        u64 TimeElapsed = GetTimeElapsed(&timer);
+        f32 DeltaTime = TimeElapsed / 1000.f;
         
         
-        render_commands Commands = MakeRenderCommands(RenderCommandsMemory, RenderCommandsMemorySize);
-        
-        GameCode.Update(&PlatformApi, &GameMemory, &Commands, &GameInput, deltaTime); 
-        Render(&RendererOpenGL, &Commands); 
+        if (GameCode.Update) {
+            GameCode.Update(&PlatformApi, &GameMemory, &RenderCommands, &GameInput, DeltaTime); 
+        }
+        Render(&RendererOpenGL, &RenderCommands); 
+        Clear(&RenderCommands);
         
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        //SDL_Log("%lld  ms\n", timeElapsed);
+        SDL_Log("%lld  ms\n", TimeElapsed);
         SDL_GL_SwapWindow(window);
     }
     

@@ -1,5 +1,5 @@
-#ifndef __GAME_PLATFORM__
-#define __GAME_PLATFORM__
+#ifndef __YUU_PLATFORM__
+#define __YUU_PLATFORM__
 
 #include "ryoji.h"
 
@@ -23,9 +23,6 @@ typedef void game_update(platform_api* Platform,
                          game_input* Input, 
                          f32 DeltaTime);
 typedef void platform_log(const char* Format, ...);
-
-
-// TODO(Momo): This is just temp code! To be replaced by asset loading code
 typedef platform_read_file_result platform_read_file(const char* path);
 typedef void platform_free_file(platform_read_file_result File);
 
@@ -37,11 +34,14 @@ struct platform_read_file_result {
 
 struct platform_api {
     platform_log* Log;
-    
-    // TODO(Momo): Maybe replace with proper asset management?
     platform_read_file* ReadFile;
     platform_free_file* FreeFile;
 };
+
+static inline b8
+IsValid(platform_api* Platform) {
+    return Platform->Log && Platform->ReadFile && Platform->FreeFile;
+}
 
 struct game_memory {
     void* Memory;

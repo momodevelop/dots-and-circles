@@ -1,4 +1,4 @@
-[] Split game code and its states to files
+[] Renderer Refactor
 [] Alpha Blending?
 [] Color Library?
 [] Camera

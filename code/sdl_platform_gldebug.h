@@ -2,8 +2,7 @@
 #define __PLATFORM_SDL_GLDEBUG__
 
 
-#ifdef SLOW_MODE
-
+#if INTERNAL
 static inline void
 SdlGlDebugCallback(GLenum source,
                    GLenum type,

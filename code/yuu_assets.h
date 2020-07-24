@@ -44,7 +44,7 @@ Init(game_assets* Assets, memory_arena* MainArena) {
     u32 RequiredMemory = Megabytes(10);
     void* Memory = PushBlock(MainArena, RequiredMemory);
     Assert(Memory);
-    Assets->Arena = MakeMemoryArena(Memory, RequiredMemory);
+    Init(&Assets->Arena, Memory, RequiredMemory);
 }
 
 

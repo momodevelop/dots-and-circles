@@ -29,7 +29,7 @@ void Tick(sdl_timer * Timer) {
 }
 
 static inline 
-u64 TimeElapsed(sdl_timer* Timer) {
+u64 GetTimeElapsed(sdl_timer* Timer) {
     // NOTE(Momo): 
     // PerformanceCounter(C) gives how many count has elapsed.
     // PerformanceFrequency(F) gives how many counts/second.

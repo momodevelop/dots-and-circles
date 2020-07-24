@@ -27,15 +27,20 @@ struct render_commands {
     // TODO(Momo): Sorting?
 };
 
-static inline render_commands
-MakeRenderCommands(void* Memory, usize MemorySize) {
-    render_commands Ret;
+
+static inline void
+Init(render_commands* Commands, void* Memory, usize MemorySize) {
+    Commands->Head = nullptr;
+    Commands->Tail = nullptr;
     
-    Ret.Head = nullptr;
-    Ret.Tail = nullptr;
-    
-    Ret.Arena = MakeMemoryArena(Memory, MemorySize);
-    return Ret;
+    Init(&Commands->Arena, Memory, MemorySize);
+}
+
+static inline void
+Clear(render_commands* Commands) {
+    Clear(&Commands->Arena);
+    Commands->Head = nullptr;
+    Commands->Tail = nullptr;
 }
 
 template<typename T>
@@ -65,9 +70,6 @@ PushCommand(render_commands* Commands)
     return Ret;
 }
 
-// NOTE(Momo): From here it's game related code
-
-
 struct render_command_entry_clear {
     static constexpr u32 TypeId = 0;
     c4f Colors;
@@ -79,7 +81,6 @@ struct render_command_entry_textured_quad {
     c4f Colors;
     m44f Transform;
 };
-
 
 
 static inline void
