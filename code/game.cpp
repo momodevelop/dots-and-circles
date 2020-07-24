@@ -40,7 +40,7 @@ UpdateSandboxState(game* Game,
         Log("Sandbox state initialized!");
     }
     
-    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushCommandClear(RenderCommands, { 0.0f, 0.0f, 0.0f, 0.f });
     
     for (u32 i = 0; i < game_state_sandbox::TotalEntities; ++i) {
         Update(&State->Entities[i], 
@@ -84,21 +84,18 @@ UpdateSplashState(game* Game,
             State->SplashImg[1].StartX = 1000.f;
             State->SplashImg[1].EndX = 200.f;
             
-            State->SplashBlackout.Position = { 0.f, 900.f, 1.0f };
+            State->SplashBlackout.Position = { 0.f, 0.f, 1.0f };
             State->SplashBlackout.Scale = { 800.f, 450.f };
-            State->SplashBlackout.Colors = { 0.f, 0.f, 0.f, 0.f };
+            State->SplashBlackout.Colors = { 0.f, 0.f, 0.f, 0.0f };
             State->SplashBlackout.TextureHandle = GameTextureType_blank;
             State->SplashBlackout.CountdownTimer = 0.f;
             State->SplashBlackout.CountdownDuration = 5.f;
             State->SplashBlackout.Timer = 0.f;
             State->SplashBlackout.Duration = 1.f;
-            State->SplashBlackout.StartY = 900.f;
-            State->SplashBlackout.EndY = 0.f;
         }
         Game->IsStateInitialized = true;
         Log("Splash state initialized!");
     }
-    
     PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     
     for (u32 i = 0; i < 2; ++i) {
@@ -111,6 +108,7 @@ UpdateSplashState(game* Game,
            &Game->Assets,
            RenderCommands,
            DeltaTime);
+    
 }
 
 
@@ -128,7 +126,6 @@ GameUpdate(platform_api* Platform,
     if(!GameMemory->IsInitialized) {
         Game->CurrentStateType = game_state_sandbox::TypeId;
         Game->IsStateInitialized = false;
-        
         
         Init(&Game->MainArena,(u8*)GameMemory->Memory + sizeof(game), GameMemory->MemorySize - sizeof(game));
         
@@ -169,6 +166,5 @@ GameUpdate(platform_api* Platform,
         case game_state_main::TypeId: {
             Log("Main!");
         } break;
-        
     }
 }

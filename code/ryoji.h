@@ -33,7 +33,6 @@ using uptr = uintptr_t;
 #define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define TwoToOne(row, col, width) (col + row * width) 
 #define Complement(x, low, high) (high - x + low)
-#define Wrap(x, low, high) while(x > high)x-=(high)-(low); while(x < low)x+=(high)-(low);
 #define Mask(flag, mask) (flag | mask)
 #define Unmask(flag, mask) (flag & ~mask)
 #define IsMasked(flag, mask) ((flag & mask) > 0)

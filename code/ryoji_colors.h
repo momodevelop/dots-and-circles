@@ -1,7 +1,5 @@
-
 #ifndef RYOJI_COLORS_H
 #define RYOJI_COLORS_H
-
 
 union c4f {
     struct {
@@ -13,9 +11,8 @@ union c4f {
     f32 Arr[4];
     
     inline const f32 operator[](usize index) const { return Arr[index]; }
-    inline f32 operator[](usize index) { return Arr[index];}
+    inline f32 operator[](usize index) { return Arr[index]; }
 };
-
 
 struct color_rgba {
     u8 Red, Green, Blue, Alpha;

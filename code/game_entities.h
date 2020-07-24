@@ -16,6 +16,7 @@ struct test_entity {
     f32 Timer;
 };
 
+
 static inline void
 Update(test_entity* Entity, 
        game_assets* Assets,
@@ -37,7 +38,6 @@ Update(test_entity* Entity,
                             T*R*S,
                             Assets->Textures[Entity->TextureHandle]);
 }
-
 
 struct splash_image_entity {
     v3f Scale;
@@ -91,8 +91,6 @@ struct splash_blackout_entity {
     
     f32 Timer;
     f32 Duration;
-    f32 StartY;
-    f32 EndY;
 };
 
 static inline void
@@ -105,8 +103,7 @@ Update(splash_blackout_entity* Entity,
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
-    f32 ease = EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
-    Entity->Position.Y = Entity->StartY + (Entity->EndY - Entity->StartY) * ease; 
+    Entity->Colors.Alpha= EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
@@ -120,6 +117,9 @@ Update(splash_blackout_entity* Entity,
                             Assets->Textures[Entity->TextureHandle]);
     
 }
+
+
+
 
 
 #endif //GAME_ENTITIES_H
