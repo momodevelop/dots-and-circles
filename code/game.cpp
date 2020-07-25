@@ -10,7 +10,7 @@ UpdateSandboxState(game* Game,
         // NOTE(Momo): Create entities
         
         f32 offsetX = -700.f;
-        f32 offsetY = -440.f;
+        f32 offsetY = -200.f;
         f32 offsetDeltaX = 5.f;
         f32 offsetDeltaY = 5.f;
         for (u32 i = 0; i < game_state_sandbox::TotalEntities; ++i)

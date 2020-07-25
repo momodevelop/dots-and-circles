@@ -103,11 +103,10 @@ struct v3f {
             f32 _;
         };
         struct {
-            f32 _;
-            v2f YZ;
+            f32 R, G, B;
         };
         struct {
-            f32 R, G, B;
+            f32 H, S, V;
         };
     };
     
@@ -116,6 +115,7 @@ struct v3f {
         return E[index]; 
     }
 };
+using c3f = v3f;
 
 struct v4f {
     union {
@@ -130,6 +130,17 @@ struct v4f {
         struct {
             f32 R, G, B, A;
         };
+        struct {
+            c3f RGB;
+            f32 _;
+        };
+        struct {
+            f32 H, S, V, A;
+        };
+        struct {
+            c3f HSV;
+            f32 _;
+        };
     };
     
     inline f32 operator[](usize index) const { 
@@ -137,8 +148,9 @@ struct v4f {
         return E[index]; 
     }
 };
+using c4f = v4f;
 
-
+// TODO(Momo): Templates....?
 static inline v3f 
 Add(v3f lhs, v3f rhs) {
     return { lhs.X+ rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z };

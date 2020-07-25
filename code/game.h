@@ -1,12 +1,12 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "ryoji_renderer.h"
+
 
 #include "game_platform.h"
 #include "game_input.h"
-#include "yuu_renderer.h"
-#include "yuu_assets.h"
-
+#include "game_assets.h"
 #include "game_entities.h"
 
 #if  INTERNAL
@@ -29,7 +29,7 @@ struct game_state_main {
 
 struct game_state_sandbox {
     static constexpr u8 TypeId = 2;
-    static constexpr u32 TotalEntities = 50000;
+    static constexpr u32 TotalEntities = 25000;
     test_entity Entities[TotalEntities];
 };
 

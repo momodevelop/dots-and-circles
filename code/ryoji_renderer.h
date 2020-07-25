@@ -1,14 +1,26 @@
-#ifndef __GAME_RENDER_COMMANDS__
-#define __GAME_RENDER_COMMANDS__
+#ifndef __RYOJI_RENDERER__
+#define __RYOJI_RENDERER__
 
 #include "ryoji_maths.h"
-#include "ryoji_colors.h"
 #include "ryoji_arenas.h"
 
 
-#include "yuu_assets.h"
+// TODO(Momo): Remove this
+#include "game_assets.h"
 
-// TODO(Momo): Consider shifting this part to Ryoji?
+// NOTE(Momo): Renderer Types
+struct render_bitmap {
+    u32 Width;
+    u32 Height;
+    
+    // TODO(Momo): Maybe seperate this? Might need to consider more use cases 
+    struct pixel {
+        u8 Red, Green, Blue, Alpha;
+    };
+    pixel* Pixels;
+};
+
+
 struct render_command_header {
     u32 Type;
     render_command_header* Next;
@@ -21,26 +33,49 @@ struct render_commands {
     render_command_header* Tail;
     
     // NOTE(Momo): Memory for linked list above
-    memory_arena Arena;
+    u8* Memory;
+    u8* MemoryAt;
+    u32 MemorySize;
     
-    // TODO(Momo): Camera transforms?
     // TODO(Momo): Sorting?
 };
 
 
 static inline void
-Init(render_commands* Commands, void* Memory, usize MemorySize) {
+Init(render_commands* Commands, void* Memory, u32 MemorySize) {
     Commands->Head = nullptr;
     Commands->Tail = nullptr;
-    
-    Init(&Commands->Arena, Memory, MemorySize);
+    Commands->Memory = (u8*)Memory;
+    Commands->MemorySize = MemorySize;
+    Commands->MemoryAt = (u8*)Memory;
 }
 
 static inline void
 Clear(render_commands* Commands) {
-    Clear(&Commands->Arena);
     Commands->Head = nullptr;
     Commands->Tail = nullptr;
+    Commands->MemoryAt = Commands->Memory;
+}
+
+static inline void *
+PushBlockFront(render_commands* Commands, u32 Size, u8 Alignment) {
+    Assert(Size && Alignment);
+    u8 Adjust = AlignForwardDiff(Commands->Memory, Alignment);
+    
+    u8* End = Commands->Memory + Commands->MemorySize;
+    if (Commands->MemoryAt + Size + Adjust > End) {
+        return nullptr; 
+    }
+    u8* Result = Commands->MemoryAt;
+    Commands->MemoryAt += Size;
+    
+    return Result;
+}
+
+template<typename T>
+static inline T*
+PushStructFront(render_commands* Commands) {
+    return (T*)PushBlockFront(Commands, sizeof(T), alignof(T));
 }
 
 template<typename T>
@@ -48,7 +83,7 @@ static inline T*
 PushCommand(render_commands* Commands) 
 {
     // NOTE(Momo): Allocate header first
-    auto Header = PushStruct<render_command_header>(&Commands->Arena);
+    auto* Header = PushStructFront<render_command_header>(Commands);
     Assert(Header);
     Header->Type = T::TypeId;
     Header->Next = nullptr;
@@ -64,7 +99,7 @@ PushCommand(render_commands* Commands)
     }
     
     // NOTE(Momo): Then allocate 
-    T* Ret  = PushStruct<T>(&Commands->Arena);
+    T* Ret  = PushStructFront<T>(Commands);
     Assert(Ret);
     Header->Entry = Ret;
     return Ret;
@@ -103,4 +138,4 @@ PushCommandTexturedQuad(render_commands* Commands, c4f Colors, m44f Transform, g
     Entry->Texture = Texture;
 }
 
-#endif //GAME_RENDERER_H
+#endif //RYOJI_RENDERER_H

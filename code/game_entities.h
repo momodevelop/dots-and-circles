@@ -3,7 +3,7 @@
 #define GAME_ENTITIES_H
 
 #include "ryoji_easing.h"
-#include "yuu_assets.h"
+#include "game_assets.h"
 
 
 
@@ -103,7 +103,7 @@ Update(splash_blackout_entity* Entity,
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
-    Entity->Colors.Alpha= EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    Entity->Colors.A = EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render

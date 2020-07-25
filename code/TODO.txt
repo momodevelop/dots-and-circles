@@ -1,5 +1,5 @@
-[] Renderer Refactor
-[] Alpha Blending?
+[] Renderer Sort Entries
+[] Shift bitmap to just use render_texture
 [] Color Library?
 [] Camera
 [] Game Coordinates

@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+struct color_rgba {
+    u8 Red, Green, Blue, Alpha;
+};
+
+
 struct bitmap {
     u32 Width;
     u32 Height;

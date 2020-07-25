@@ -7,7 +7,7 @@
 #include "thirdparty/glad/glad.c"
 
 #include "game_platform.h"
-#include "yuu_renderer_opengl.h"
+#include "ryoji_renderer_opengl.h"
 #include "game_input.h"
 
 #include "sdl_platform_timer.h"

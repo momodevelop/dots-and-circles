@@ -36,6 +36,8 @@ using uptr = uintptr_t;
 #define Mask(flag, mask) (flag | mask)
 #define Unmask(flag, mask) (flag & ~mask)
 #define IsMasked(flag, mask) ((flag & mask) > 0)
+#define Lerp(start, end, fraction) (start + (end - start)*fraction) 
+
 
 static inline void 
 ZeroBlock(void *mem, usize size) {
