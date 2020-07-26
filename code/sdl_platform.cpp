@@ -78,6 +78,14 @@ PlatformFreeFile(platform_read_file_result File) {
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
+    {
+        render_command_queue TestCommands;
+        u32 MemorySize = 17;
+        void* Memory = malloc(MemorySize);
+        Init(&TestCommands, Memory, MemorySize);
+    }
+    
+    
     
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
@@ -189,13 +197,11 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Render commands/queue
     void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
-    render_commands RenderCommands = {}; 
+    render_command_queue RenderCommands = {}; 
     Init(&RenderCommands, RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input GameInput = {};
-    
-    
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -203,8 +209,6 @@ int main(int argc, char* argv[]) {
         
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
-            
-            
             switch(e.type) {
                 case SDL_QUIT: {
                     gIsRunning = false;

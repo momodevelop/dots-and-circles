@@ -55,6 +55,7 @@ GlAttachShader(GLuint program, GLenum type, const GLchar* code) {
     glDeleteShader(shader);
 }
 
+
 static inline bool
 Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities) 
 {
@@ -87,8 +88,8 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
     constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\nlayout(location=2) in vec2 aTexCoord;\nlayout(location=3) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        mTexCoord = aTexCoord;\n}";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        mTexCoord = aTexCoord;\n}";
     
     constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\nfragColor = texture(uTexture, mTexCoord) * mColor; \n}";
     
@@ -195,10 +196,9 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     return true;
 }
 
-
 static inline void
-Render(renderer_opengl* Renderer, render_commands* Commands) {
-    
+Render(renderer_opengl* Renderer, render_command_queue* Commands) 
+{
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
     u32 InstancesToDrawCount = 0;
@@ -207,26 +207,24 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    
     using HeaderType = render_command_header;
-    for (render_command_header* Itr = (HeaderType*)Commands->Head; 
-         Itr != nullptr; 
-         Itr = Itr->Next) {
+    
+    for (u32 i = 0; i < Commands->EntryCount; ++i) {
+        auto* Entry = GetEntry(Commands, i);
+        auto* CurrentHeader = GetHeaderFromEntry(Commands, Entry);
         
-        render_command_header* CurrentHeader = (HeaderType*)Itr;
         switch(CurrentHeader->Type) {
-            case render_command_entry_clear::TypeId: {
-                using EntryType = render_command_entry_clear;
-                auto Entry = (EntryType*)CurrentHeader->Entry;
-                glClearColor(Entry->Colors.R, Entry->Colors.G, Entry->Colors.B, Entry->Colors.A);
+            case render_command_data_clear::TypeId: {
+                using data_t = render_command_data_clear;
+                auto* Data = (data_t*)GetDataFromHeader(Commands, CurrentHeader);
+                glClearColor(Data->Colors.R, Data->Colors.G, Data->Colors.B, Data->Colors.A);
             } break;
-            case render_command_entry_textured_quad::TypeId: {
-                // Get the entry
-                using EntryType = render_command_entry_textured_quad;
-                auto Entry = (EntryType*)CurrentHeader->Entry;
+            case render_command_data_textured_quad::TypeId: {
+                using data_t = render_command_data_textured_quad;
+                auto* Data = (data_t*)GetDataFromHeader(Commands, CurrentHeader);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
-                u32 GameTextureHandle = Entry->Texture.Handle;
+                u32 GameTextureHandle = Data->Texture.Handle;
                 GLuint RendererTextureHandle = Renderer->GameToRendererTextureTable[GameTextureHandle];
                 
                 // TODO(Momo): Abstract away the texture loading to a function?
@@ -238,12 +236,12 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
                     
                     GLuint* const TextureTableEntry = &Renderer->GameToRendererTextureTable[GameTextureHandle];
                     glCreateTextures(GL_TEXTURE_2D, 1, TextureTableEntry);
-                    glTextureStorage2D((*TextureTableEntry), 1, GL_RGBA8, Entry->Texture.Bitmap.Width, Entry->Texture.Bitmap.Height);
+                    glTextureStorage2D((*TextureTableEntry), 1, GL_RGBA8, Data->Texture.Bitmap.Width, Data->Texture.Bitmap.Height);
                     glTextureSubImage2D((*TextureTableEntry), 
                                         0, 0, 0, 
-                                        Entry->Texture.Bitmap.Width, Entry->Texture.Bitmap.Height, 
+                                        Data->Texture.Bitmap.Width, Data->Texture.Bitmap.Height, 
                                         GL_RGBA, GL_UNSIGNED_BYTE, 
-                                        Entry->Texture.Bitmap.Pixels);
+                                        Data->Texture.Bitmap.Pixels);
                 }
                 RendererTextureHandle = Renderer->GameToRendererTextureTable[GameTextureHandle];
                 
@@ -270,9 +268,9 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
                 glNamedBufferSubData(Renderer->Buffers[Vbo_Colors], 
                                      CurrentInstanceIndex * sizeof(c4f),
                                      sizeof(c4f), 
-                                     &Entry->Colors);
+                                     &Data->Colors);
                 
-                m44f Transform = Transpose(Entry->Transform);
+                m44f Transform = Transpose(Data->Transform);
                 glNamedBufferSubData(Renderer->Buffers[Vbo_Transform], 
                                      CurrentInstanceIndex* sizeof(m44f), 
                                      sizeof(m44f), 
@@ -286,7 +284,6 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
         }
     }
     
-    
     if (InstancesToDrawCount != 0) {
         
         glBindTexture(GL_TEXTURE_2D, CurrentTexture);
@@ -298,7 +295,7 @@ Render(renderer_opengl* Renderer, render_commands* Commands) {
                                             nullptr, 
                                             InstancesToDrawCount,
                                             LastDrawnInstanceIndex);
-    } 
+    }
 }
 
 

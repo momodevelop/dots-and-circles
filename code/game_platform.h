@@ -10,7 +10,7 @@
 
 
 // NOTE(Momo): Forward declarations 
-struct render_commands;
+struct render_command_queue;
 struct game_memory;
 struct platform_api;
 struct platform_read_file_result;
@@ -19,7 +19,7 @@ union game_input;
 // NOTE(Momo): Function typedefs and helpers
 typedef void game_update(platform_api* Platform, 
                          game_memory* GameMemory,  
-                         render_commands* RenderCommands, 
+                         render_command_queue* RenderCommands, 
                          game_input* Input, 
                          f32 DeltaTime);
 typedef void platform_log(const char* Format, ...);

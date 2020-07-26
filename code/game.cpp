@@ -2,7 +2,7 @@
 
 static inline void
 UpdateSandboxState(game* Game, 
-                   render_commands* RenderCommands, 
+                   render_command_queue* RenderCommands, 
                    f32 DeltaTime) {
     
     game_state_sandbox* State = &Game->GameState.Sandbox; 
@@ -56,7 +56,7 @@ UpdateSandboxState(game* Game,
 
 static inline void
 UpdateSplashState(game* Game, 
-                  render_commands* RenderCommands, 
+                  render_command_queue* RenderCommands, 
                   f32 DeltaTime) {
     game_state_splash* State = &Game->GameState.Splash; 
     if(!Game->IsStateInitialized) {
@@ -67,7 +67,7 @@ UpdateSplashState(game* Game,
             State->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
             State->SplashImg[0].TextureHandle = GameTextureType_ryoji;
             State->SplashImg[0].CountdownTimer = 0.f;
-            State->SplashImg[0].CountdownDuration = 3.f;
+            State->SplashImg[0].CountdownDuration = 5.f;
             State->SplashImg[0].Timer = 0.f;
             State->SplashImg[0].Duration = 2.f;
             State->SplashImg[0].StartX = -1000.f;
@@ -78,7 +78,7 @@ UpdateSplashState(game* Game,
             State->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
             State->SplashImg[1].TextureHandle = GameTextureType_yuu;
             State->SplashImg[1].CountdownTimer = 0.f;
-            State->SplashImg[1].CountdownDuration = 3.f;
+            State->SplashImg[1].CountdownDuration = 5.f;
             State->SplashImg[1].Timer = 0.f;
             State->SplashImg[1].Duration = 2.f;
             State->SplashImg[1].StartX = 1000.f;
@@ -89,7 +89,7 @@ UpdateSplashState(game* Game,
             State->SplashBlackout.Colors = { 0.f, 0.f, 0.f, 0.0f };
             State->SplashBlackout.TextureHandle = GameTextureType_blank;
             State->SplashBlackout.CountdownTimer = 0.f;
-            State->SplashBlackout.CountdownDuration = 5.f;
+            State->SplashBlackout.CountdownDuration = 8.f;
             State->SplashBlackout.Timer = 0.f;
             State->SplashBlackout.Duration = 1.f;
         }
@@ -116,7 +116,7 @@ UpdateSplashState(game* Game,
 extern "C" void
 GameUpdate(platform_api* Platform, 
            game_memory* GameMemory,  
-           render_commands* RenderCommands, 
+           render_command_queue* RenderCommands, 
            game_input* Input, 
            f32 DeltaTime)
 {
@@ -124,7 +124,7 @@ GameUpdate(platform_api* Platform,
     
     // NOTE(Momo): Initialization of the game
     if(!GameMemory->IsInitialized) {
-        Game->CurrentStateType = game_state_sandbox::TypeId;
+        Game->CurrentStateType = game_state_splash::TypeId;
         Game->IsStateInitialized = false;
         
         Init(&Game->MainArena,(u8*)GameMemory->Memory + sizeof(game), GameMemory->MemorySize - sizeof(game));

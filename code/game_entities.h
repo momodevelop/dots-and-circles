@@ -20,7 +20,7 @@ struct test_entity {
 static inline void
 Update(test_entity* Entity, 
        game_assets* Assets,
-       render_commands * RenderCommands, 
+       render_command_queue * RenderCommands, 
        f32 DeltaTime) {
     
     // NOTE(Momo): Update
@@ -57,7 +57,7 @@ struct splash_image_entity {
 static inline void
 Update(splash_image_entity* Entity, 
        game_assets* Assets,
-       render_commands * RenderCommands, 
+       render_command_queue * RenderCommands, 
        f32 DeltaTime) {
     Entity->CountdownTimer += DeltaTime;
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
@@ -96,7 +96,7 @@ struct splash_blackout_entity {
 static inline void
 Update(splash_blackout_entity* Entity, 
        game_assets* Assets, 
-       render_commands* RenderCommands,
+       render_command_queue* RenderCommands,
        f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
