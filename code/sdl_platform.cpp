@@ -266,6 +266,8 @@ int main(int argc, char* argv[]) {
         if (GameCode.Update) {
             GameCode.Update(&PlatformApi, &GameMemory, &RenderCommands, &GameInput, DeltaTime); 
         }
+        
+        //Sort(&RenderCommands);
         Render(&RendererOpenGL, &RenderCommands); 
         Clear(&RenderCommands);
         

@@ -19,7 +19,7 @@ UpdateSandboxState(game* Game,
             State->Entities[i].Rotation = 0.f;
             State->Entities[i].Scale = { 5.f, 5.f };
             State->Entities[i].Colors = { 1.f, 1.f, 1.f, 0.5f };
-#if 0
+#if 1
             if ( i < (game_state_sandbox::TotalEntities / 3))
                 State->Entities[i].TextureHandle = 1;
             else if ( i < (game_state_sandbox::TotalEntities / 3 * 2))
@@ -124,7 +124,7 @@ GameUpdate(platform_api* Platform,
     
     // NOTE(Momo): Initialization of the game
     if(!GameMemory->IsInitialized) {
-        Game->CurrentStateType = game_state_splash::TypeId;
+        Game->CurrentStateType = game_state_sandbox::TypeId;
         Game->IsStateInitialized = false;
         
         Init(&Game->MainArena,(u8*)GameMemory->Memory + sizeof(game), GameMemory->MemorySize - sizeof(game));

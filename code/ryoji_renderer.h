@@ -79,6 +79,24 @@ GetDataFromHeader(render_command_queue* Commands, render_command_header* Header)
     return (Commands->Memory + Header->OffsetToData);
 }
 
+static inline void
+Sort(render_command_queue* Commands) {
+    // TODO(Momo): Please use a better swap T_T
+    // NOTE(Momo): poo-poo Bubble sort :(
+    u32 N = Commands->EntryCount;
+    for (u32 i = 0; i < N-1; i++)      
+        for (u32 j = 0; j < N-i-1; j++) {
+        auto* Lhs = GetEntry(Commands, j);
+        auto* Rhs = GetEntry(Commands, j+1);
+        if (Lhs->SortKey > Rhs->SortKey) {
+            auto Temp = *Lhs;
+            *Lhs = *Rhs;
+            *Rhs = Temp;
+        }
+    }
+}
+
+
 
 // NOTE(Momo): Push functions
 static inline void*
@@ -94,6 +112,7 @@ PushBlockFront(render_command_queue* Commands, u32 Size, u8 Alignment) {
     
     u8* Result = Commands->DataMemoryAt;
     Commands->DataMemoryAt += Size;
+    
     return Result;
 }
 
@@ -130,8 +149,50 @@ PushStructBack(render_command_queue* Commands) {
 
 template<typename T>
 static inline T*
-PushCommand(render_command_queue* Commands) 
+PushCommand(render_command_queue* Commands, u32 SortKey) 
 {
+#if 1
+    // NOTE(Momo): Allocate Header
+    u32 HeaderSize = sizeof(render_command_header);
+    u8 HeaderAdjust = AlignForwardDiff(Commands->DataMemoryAt, alignof(render_command_header));
+    HeaderSize += HeaderAdjust;
+    
+    // TODO(Momo): Put below
+    auto* Header = (render_command_header*)Commands->DataMemoryAt;
+    Commands->DataMemoryAt += HeaderSize;
+    Header->Type = T::TypeId;
+    
+    
+    // NOTE(Momo): Allocate Data
+    u32 DataSize = sizeof(T);
+    u8 DataAdjust = AlignForwardDiff(Commands->DataMemoryAt, alignof(T));
+    DataSize += DataAdjust;
+    
+    // TODO(Momo): Put below
+    auto* Data = (T*)Commands->DataMemoryAt;
+    Commands->DataMemoryAt += DataSize;
+    Header->OffsetToData = (u32)((u8*)Data - Commands->Memory);
+    
+    
+    // NOTE(Momo): Allocate Entry
+    u32 EntrySize = sizeof(render_command_entry);
+    u8 EntryAdjust = AlignBackwardDiff(Commands->EntryMemoryAt, alignof(render_command_entry));
+    EntrySize += EntryAdjust;
+    
+    /*
+if (Commands->EntryMemoryAt - EntrySize - EntryAdjust < Commands->DataMemoryAt + DataSize + HeaderSize + HeaderAdjust + DataAdjust) {
+        return nullptr; 
+    }*/
+    
+    auto* Entry = (render_command_entry*)(Commands->EntryMemoryAt);
+    Entry->OffsetToHeader = (u32)((u8*)Header - Commands->Memory);
+    Entry->SortKey = SortKey;
+    Commands->EntryMemoryAt -= EntrySize;
+    
+    ++Commands->EntryCount;
+    
+    return Data;
+#else
     // NOTE(Momo): Allocate header first
     // TODO(Momo): Not really very nice. Each push might need to be reverted. 
     auto* Header = PushStructFront<render_command_header>(Commands);
@@ -148,9 +209,11 @@ PushCommand(render_command_queue* Commands)
     auto* Entry = PushStructBack<render_command_entry>(Commands);
     Assert(Entry);
     Entry->OffsetToHeader = (u32)((u8*)Header - Commands->Memory);
+    Entry->SortKey = SortKey;
     
     ++Commands->EntryCount;
     return Ret;
+#endif
 }
 
 // TODO(Momo): Set TypeId to some compile time counter
@@ -169,8 +232,8 @@ struct render_command_data_textured_quad {
 static inline void
 PushCommandClear(render_command_queue* Commands, c4f Colors) {
     using data_t = render_command_data_clear;
-    auto* Entry = PushCommand<data_t>(Commands);
-    Entry->Colors = Colors;
+    auto* Data = PushCommand<data_t>(Commands, 0);
+    Data->Colors = Colors;
 }
 
 
@@ -179,11 +242,12 @@ static inline void
 PushCommandTexturedQuad(render_command_queue* Commands, c4f Colors, m44f Transform, game_texture Texture) 
 {
     using data_t = render_command_data_textured_quad;
-    auto* Entry = PushCommand<data_t>(Commands);
+    auto* Data = PushCommand<data_t>(Commands, Texture.Handle+1);
     
-    Entry->Colors = Colors;
-    Entry->Transform = Transform;
-    Entry->Texture = Texture;
+    Data->Colors = Colors;
+    Data->Transform = Transform;
+    Data->Texture = Texture;
+    
 }
 
 #endif //RYOJI_RENDERER_H
