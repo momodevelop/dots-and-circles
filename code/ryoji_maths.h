@@ -353,7 +353,7 @@ Transpose(m44f M) {
 
 
 static inline m44f 
-MakeTranslationMatrix(f32 x, f32 y, f32 z) {
+TranslationMatrix(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, x,
         0.f, 1.f, 0.f, y,
@@ -363,13 +363,13 @@ MakeTranslationMatrix(f32 x, f32 y, f32 z) {
 }
 
 static inline m44f 
-MakeTranslationMatrix(v3f Vec) {
-    return MakeTranslationMatrix(Vec[0], Vec[1], Vec[2]);
+TranslationMatrix(v3f Vec) {
+    return TranslationMatrix(Vec[0], Vec[1], Vec[2]);
 }
 
 
 static inline m44f 
-MakeRotationXMatrix(f32 rad) {
+RotationXMatrix(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -381,7 +381,7 @@ MakeRotationXMatrix(f32 rad) {
 }
 
 static inline m44f 
-MakeRotationYMatrix(f32 rad) {
+RotationYMatrix(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -395,7 +395,7 @@ MakeRotationYMatrix(f32 rad) {
 
 
 static inline m44f 
-MakeRotationZMatrix(f32 rad) {
+RotationZMatrix(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -407,7 +407,7 @@ MakeRotationZMatrix(f32 rad) {
 }
 
 static inline m44f
-MakeScaleMatrix(f32 x, f32 y, f32 z) {
+ScaleMatrix(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f,   0.f,
         0.f, y, 0.f,   0.f,
@@ -419,13 +419,13 @@ MakeScaleMatrix(f32 x, f32 y, f32 z) {
 
 
 static inline m44f
-MakeScaleMatrix(v3f Vec) {
-    return MakeScaleMatrix(Vec[0], Vec[1], Vec[2]);
+ScaleMatrix(v3f Vec) {
+    return ScaleMatrix(Vec[0], Vec[1], Vec[2]);
 }
 
 // 
 static inline m44f 
-MakeOrthographicMatrix(f32 NdcLeft, f32 NdcRight,
+OrthographicMatrix(f32 NdcLeft, f32 NdcRight,
                        f32 NdcBottom, f32 NdcTop,
                        f32 NdcNear, f32 NdcFar,
                        f32 Left, f32 Right, 

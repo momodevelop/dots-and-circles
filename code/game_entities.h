@@ -27,9 +27,9 @@ Update(test_entity* Entity,
     Entity->Rotation +=  DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = MakeTranslationMatrix(Entity->Position);
-    m44f R = MakeRotationZMatrix(Entity->Rotation);
-    m44f S = MakeScaleMatrix(Entity->Scale);
+    m44f T = TranslationMatrix(Entity->Position);
+    m44f R = RotationZMatrix(Entity->Rotation);
+    m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandTexturedQuad(RenderCommands, 
@@ -69,8 +69,8 @@ Update(splash_image_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = MakeTranslationMatrix(Entity->Position);
-    m44f S = MakeScaleMatrix(Entity->Scale);
+    m44f T = TranslationMatrix(Entity->Position);
+    m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandTexturedQuad(RenderCommands, 
@@ -106,8 +106,8 @@ Update(splash_blackout_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = MakeTranslationMatrix(Entity->Position);
-    m44f S = MakeScaleMatrix(Entity->Scale);
+    m44f T = TranslationMatrix(Entity->Position);
+    m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandTexturedQuad(RenderCommands, 

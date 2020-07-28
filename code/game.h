@@ -46,8 +46,6 @@ union game_mode {
 struct game_state {
     
     
-    
-    
     game_mode GameMode;
     u32 CurrentMode;
     

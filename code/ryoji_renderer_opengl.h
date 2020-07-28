@@ -181,7 +181,7 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     
     // NOTE(Momo): Setup Orthographic Projection
     GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
-    auto uProjection  = MakeOrthographicMatrix(-1.f, 1.f,
+    auto uProjection  = OrthographicMatrix(-1.f, 1.f,
                                                -1.f, 1.f,
                                                -1.f, 1.f,
                                                -(f32)Width * 0.5f,  
