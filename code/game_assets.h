@@ -44,12 +44,9 @@ struct game_assets {
 };
 
 static inline void
-Init(game_assets* Assets, memory_arena* MainArena) {
+Init(game_assets* Assets, memory_arena* Arena) {
     // TODO(Momo): Calculate the amount of memory we actually need
-    u32 RequiredMemory = Megabytes(10);
-    void* Memory = PushBlock(MainArena, RequiredMemory);
-    Assert(Memory);
-    Init(&Assets->Arena, Memory, RequiredMemory);
+    InitSubArena(&Assets->Arena, Arena,  Megabytes(10));
 }
 
 

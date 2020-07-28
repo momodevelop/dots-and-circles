@@ -17,39 +17,46 @@ static platform_log* gLog;
 #endif
 
 
-struct game_state_splash {
+struct game_mode_splash {
     static constexpr u8 TypeId = 0;
     splash_image_entity SplashImg[2];
     splash_blackout_entity SplashBlackout;
 };
 
-struct game_state_main {
+struct game_mode_main {
     static constexpr u8 TypeId = 1;
     splash_image_entity SplashImg[2];
     splash_blackout_entity SplashBlackout;
     
 };
 
-struct game_state_sandbox {
+struct game_mode_sandbox {
     static constexpr u8 TypeId = 2;
     static constexpr u32 TotalEntities = 2500;
     test_entity Entities[TotalEntities];
 };
 
 
-union game_state {
-    game_state_splash Splash;
-    game_state_main Main;
-    game_state_sandbox Sandbox;
+union game_mode {
+    game_mode_splash Splash;
+    game_mode_main Main;
+    game_mode_sandbox Sandbox;
 };
 
-struct game {
-    game_state GameState;
-    u32 CurrentStateType;
-    bool IsStateInitialized;
+struct game_state {
+    
+    
+    
+    
+    game_mode GameMode;
+    u32 CurrentMode;
     
     game_assets Assets;
     memory_arena MainArena;
+    
+    b8 IsInitialized;
+    b8 IsStateInitialized;
+    
     
 };
 

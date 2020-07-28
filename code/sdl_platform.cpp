@@ -176,7 +176,6 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
-    GameMemory.IsInitialized = false;
     GameMemory.Memory = PushBlock(&PlatformArena, GameMemorySize);
     GameMemory.MemorySize = GameMemorySize;
     

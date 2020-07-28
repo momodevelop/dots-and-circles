@@ -46,7 +46,6 @@ IsValid(platform_api* Platform) {
 struct game_memory {
     void* Memory;
     u64 MemorySize;
-    bool IsInitialized;
 };
 
 

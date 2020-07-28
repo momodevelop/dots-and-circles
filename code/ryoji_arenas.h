@@ -51,5 +51,34 @@ PushArray(memory_arena* Arena, usize Count) {
     return (T*)PushBlock(Arena, sizeof(T) * Count, alignof(T));
 }
 
+// NOTE(Momo): temporary memory definitions
+struct temporary_memory {
+    memory_arena* Arena;
+    usize OldUsed;
+};
+
+static inline temporary_memory
+BeginTemporaryMemory(memory_arena *Arena) {
+    temporary_memory Ret;
+    Ret.Arena = Arena;
+    Ret.OldUsed = Arena->Used;
+    return Ret;
+}
+
+static inline void
+EndTemporaryMemory(temporary_memory* TempMemory) {
+    TempMemory->Arena->Used = TempMemory->OldUsed;
+}
+
+static inline void
+InitSubArena(memory_arena* DstArena, memory_arena* SrcArena, usize Capacity) {
+    Assert(Capacity);
+    DstArena->Memory = (u8*)PushBlock(SrcArena, Capacity);
+    Assert(DstArena->Memory);
+    DstArena->Capacity = Capacity;
+    
+}
+
+
 
 #endif
