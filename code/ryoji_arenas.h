@@ -23,6 +23,11 @@ Clear(memory_arena* Arena) {
     Arena->Used = 0;
 }
 
+static inline usize
+GetRemainingCapacity(memory_arena* Arena) {
+    return Arena->Capacity - Arena->Used;
+}
+
 static inline void* 
 PushBlock(memory_arena* Arena, usize size, u8 alignment = alignof(void*)) {
     Assert(size && alignment);

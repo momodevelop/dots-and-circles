@@ -78,15 +78,7 @@ PlatformFreeFile(platform_read_file_result File) {
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
-    {
-        render_command_queue TestCommands;
-        u32 MemorySize = 17;
-        void* Memory = malloc(MemorySize);
-        Init(&TestCommands, Memory, MemorySize);
-    }
-    
-    
-    
+
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
         SDL_Log("SDL could not initialize! SDL_Errgor: %s\n", SDL_GetError());

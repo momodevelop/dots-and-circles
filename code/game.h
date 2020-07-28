@@ -44,13 +44,14 @@ union game_mode {
 };
 
 struct game_state {
-    
-    
     game_mode GameMode;
     u32 CurrentMode;
     
     game_assets Assets;
+    
     memory_arena MainArena;
+    memory_arena ModeArena;
+    
     
     b8 IsInitialized;
     b8 IsStateInitialized;

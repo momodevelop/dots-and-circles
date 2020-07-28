@@ -202,7 +202,13 @@ GameUpdate(platform_api* Platform,
         GameState->CurrentMode = game_mode_splash::TypeId;
         GameState->IsStateInitialized = false;
         
+        // NOTE(Momo): Init Arenas
         Init(&GameState->MainArena,(u8*)GameMemory->Memory + sizeof(game_state), GameMemory->MemorySize - sizeof(game_state));
+        
+        InitSubArena(&GameState->ModeArena, &GameState->MainArena, 
+                     GetRemainingCapacity(&GameState->MainArena));
+        
+        
         
         // NOTE(Momo): Init Assets
         game_assets* GameAssets = &GameState->Assets;
