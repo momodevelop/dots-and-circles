@@ -6,7 +6,6 @@
 #include "game_assets.h"
 
 
-
 struct test_entity {
     v3f Scale;
     f32 Rotation;

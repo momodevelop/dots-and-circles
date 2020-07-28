@@ -19,16 +19,11 @@ struct render_bitmap {
     pixel* Pixels;
 };
 
-// TODO(Momo): Do I just put this into entry...?
-struct render_command_header {
+struct render_command_entry {
     u32 Type;
     u32 OffsetToData;
 };
 
-struct render_command_entry {
-    u32 SortKey;
-    u32 OffsetToHeader;
-};
 
 struct render_command_queue {
     u8* Memory;
@@ -69,151 +64,39 @@ GetEntry(render_command_queue* Commands, usize Index) {
     return (render_command_entry*)(Commands->EntryMemoryStart - Index * sizeof(render_command_entry));
 }
 
-static inline render_command_header*
-GetHeaderFromEntry(render_command_queue* Commands, render_command_entry* Entry) {
-    return (render_command_header*)(Commands->Memory + Entry->OffsetToHeader);
-}
 
 static inline void*
-GetDataFromHeader(render_command_queue* Commands, render_command_header* Header) {
-    return (Commands->Memory + Header->OffsetToData);
+GetDataFromEntry(render_command_queue* Commands, render_command_entry* Entry) {
+    return (Commands->Memory + Entry->OffsetToData);
 }
-
-static inline void
-Sort(render_command_queue* Commands) {
-    // TODO(Momo): Please use a better swap T_T
-    // NOTE(Momo): poo-poo Bubble sort :(
-    u32 N = Commands->EntryCount;
-    for (u32 i = 0; i < N-1; i++)      
-        for (u32 j = 0; j < N-i-1; j++) {
-        auto* Lhs = GetEntry(Commands, j);
-        auto* Rhs = GetEntry(Commands, j+1);
-        if (Lhs->SortKey > Rhs->SortKey) {
-            auto Temp = *Lhs;
-            *Lhs = *Rhs;
-            *Rhs = Temp;
-        }
-    }
-}
-
 
 
 // NOTE(Momo): Push functions
-static inline void*
-PushBlockFront(render_command_queue* Commands, u32 Size, u8 Alignment) {
-    Assert(Size && Alignment);
-    u8 Adjust = AlignForwardDiff(Commands->DataMemoryAt, Alignment);
-    Size += Adjust;
-    
-    Assert(Commands->DataMemoryAt + Size <= Commands->EntryMemoryAt);
-    if (Commands->DataMemoryAt + Size > Commands->EntryMemoryAt) {
-        return nullptr; 
-    }
-    
-    u8* Result = Commands->DataMemoryAt;
-    Commands->DataMemoryAt += Size;
-    
-    return Result;
-}
-
-
-static inline void*
-PushBlockBack(render_command_queue* Commands, u32 Size, u8 Alignment) {
-    Assert(Size && Alignment);
-    u8 Adjust = AlignBackwardDiff(Commands->EntryMemoryAt - Size, Alignment);
-    Size += Adjust;
-    
-    Assert(Commands->EntryMemoryAt - Size > Commands->DataMemoryAt);
-    if (Commands->EntryMemoryAt - Size < Commands->DataMemoryAt) {
-        return nullptr; 
-    }
-    
-    u8* Result = Commands->EntryMemoryAt;
-    Commands->EntryMemoryAt -= Size;
-    return Result;
-    
-}
-
-template<typename T>
-static inline T*
-PushStructFront(render_command_queue* Commands) {
-    return (T*)PushBlockFront(Commands, sizeof(T), alignof(T));
-}
-
-
-template<typename T>
-static inline T*
-PushStructBack(render_command_queue* Commands) {
-    return (T*)PushBlockBack(Commands, sizeof(T), alignof(T));
-}
-
 template<typename T>
 static inline T*
 PushCommand(render_command_queue* Commands, u32 SortKey) 
 {
-#if 1
-    // NOTE(Momo): Allocate Header
-    u32 HeaderSize = sizeof(render_command_header);
-    u8 HeaderAdjust = AlignForwardDiff(Commands->DataMemoryAt, alignof(render_command_header));
-    HeaderSize += HeaderAdjust;
-    
-    // TODO(Momo): Put below
-    auto* Header = (render_command_header*)Commands->DataMemoryAt;
-    Commands->DataMemoryAt += HeaderSize;
-    Header->Type = T::TypeId;
-    
-    
     // NOTE(Momo): Allocate Data
-    u32 DataSize = sizeof(T);
     u8 DataAdjust = AlignForwardDiff(Commands->DataMemoryAt, alignof(T));
-    DataSize += DataAdjust;
-    
-    // TODO(Momo): Put below
-    auto* Data = (T*)Commands->DataMemoryAt;
-    Commands->DataMemoryAt += DataSize;
-    Header->OffsetToData = (u32)((u8*)Data - Commands->Memory);
-    
+    u32 DataSize = sizeof(T);
     
     // NOTE(Momo): Allocate Entry
-    u32 EntrySize = sizeof(render_command_entry);
     u8 EntryAdjust = AlignBackwardDiff(Commands->EntryMemoryAt, alignof(render_command_entry));
-    EntrySize += EntryAdjust;
+    u32 EntrySize = sizeof(render_command_entry);
     
-    /*
-if (Commands->EntryMemoryAt - EntrySize - EntryAdjust < Commands->DataMemoryAt + DataSize + HeaderSize + HeaderAdjust + DataAdjust) {
+    if (Commands->EntryMemoryAt - EntrySize - EntryAdjust < Commands->DataMemoryAt + DataSize +  DataAdjust) {
         return nullptr; 
-    }*/
+    }
     
-    auto* Entry = (render_command_entry*)(Commands->EntryMemoryAt);
-    Entry->OffsetToHeader = (u32)((u8*)Header - Commands->Memory);
-    Entry->SortKey = SortKey;
+    auto* Data = (T*)((u8*)Commands->DataMemoryAt + DataAdjust);
+    Commands->DataMemoryAt += DataSize + DataAdjust;
+    
+    auto* Entry = (render_command_entry*)((u8*)Commands->EntryMemoryAt + EntryAdjust);
+    Entry->OffsetToData = (u32)((u8*)Data - Commands->Memory);
+    Entry->Type = T::TypeId; 
     Commands->EntryMemoryAt -= EntrySize;
-    
     ++Commands->EntryCount;
-    
     return Data;
-#else
-    // NOTE(Momo): Allocate header first
-    // TODO(Momo): Not really very nice. Each push might need to be reverted. 
-    auto* Header = PushStructFront<render_command_header>(Commands);
-    Assert(Header);
-    Header->Type = T::TypeId;
-    
-    // NOTE(Momo): Allocate the command data (the entry) 
-    T* Ret  = PushStructFront<T>(Commands);
-    Assert(Ret);
-    Header->OffsetToData = (u32)((u8*)Ret - Commands->Memory);
-    
-    
-    // NOTE(Momo): Allocate the sort
-    auto* Entry = PushStructBack<render_command_entry>(Commands);
-    Assert(Entry);
-    Entry->OffsetToHeader = (u32)((u8*)Header - Commands->Memory);
-    Entry->SortKey = SortKey;
-    
-    ++Commands->EntryCount;
-    return Ret;
-#endif
 }
 
 // TODO(Momo): Set TypeId to some compile time counter

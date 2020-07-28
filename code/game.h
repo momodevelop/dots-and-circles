@@ -25,11 +25,14 @@ struct game_state_splash {
 
 struct game_state_main {
     static constexpr u8 TypeId = 1;
+    splash_image_entity SplashImg[2];
+    splash_blackout_entity SplashBlackout;
+    
 };
 
 struct game_state_sandbox {
     static constexpr u8 TypeId = 2;
-    static constexpr u32 TotalEntities = 25000;
+    static constexpr u32 TotalEntities = 2500;
     test_entity Entities[TotalEntities];
 };
 

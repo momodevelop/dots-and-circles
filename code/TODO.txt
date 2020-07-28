@@ -1,5 +1,3 @@
-[] Renderer Sort Entries
-[] Shift bitmap to just use render_texture
 [] Color Library?
 [] Camera
 [] Game Coordinates
@@ -9,3 +7,4 @@
 [] Profiling? 
 [] Introspection?
 [] Asset loading??
+[] Shift bitmap to just use render_texture
