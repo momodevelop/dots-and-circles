@@ -196,23 +196,22 @@ GameUpdate(platform_api* Platform,
            f32 DeltaTime)
 {
     game_state* GameState = (game_state*)GameMemory->Memory;
-    
+    //game_state* GameState = GameMemory->GameState;
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
         GameState->CurrentMode = game_mode_splash::TypeId;
         GameState->IsStateInitialized = false;
         
-        // NOTE(Momo): Init Arenas
+        // NOTE(Momo): Arenas
         Init(&GameState->MainArena,(u8*)GameMemory->Memory + sizeof(game_state), GameMemory->MemorySize - sizeof(game_state));
         
-        InitSubArena(&GameState->ModeArena, &GameState->MainArena, 
-                     GetRemainingCapacity(&GameState->MainArena));
+        game_assets* GameAssets = &GameState->Assets;
+        Init(GameAssets, &GameState->MainArena, Megabytes(10));
         
-        
+        SubArena(&GameState->ModeArena, &GameState->MainArena, 
+                 GetRemainingCapacity(&GameState->MainArena));
         
         // NOTE(Momo): Init Assets
-        game_assets* GameAssets = &GameState->Assets;
-        Init(GameAssets, &GameState->MainArena);
         {
             auto Result = Platform->ReadFile("assets/ryoji.bmp");
             Assert(Result.Content);
@@ -231,9 +230,6 @@ GameUpdate(platform_api* Platform,
             LoadTexture(GameAssets, GameTextureType_blank, Result.Content);
             Platform->FreeFile(Result);
         }
-        
-        
-        
         
         GameState->IsInitialized = true;
 #if INTERNAL

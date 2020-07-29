@@ -25,7 +25,8 @@ typedef void game_update(platform_api* Platform,
 typedef void platform_log(const char* Format, ...);
 typedef platform_read_file_result platform_read_file(const char* path);
 typedef void platform_free_file(platform_read_file_result File);
-
+typedef void* platform_allocate_memory(usize Size);
+typedef void platform_deallocate_memory(void* Memory);
 
 struct platform_read_file_result {
     void* Content;
@@ -36,12 +37,10 @@ struct platform_api {
     platform_log* Log;
     platform_read_file* ReadFile;
     platform_free_file* FreeFile;
+    platform_allocate_memory* AllocateMemory;
+    platform_deallocate_memory* DeallocateMemory;
 };
 
-static inline b8
-IsValid(platform_api* Platform) {
-    return Platform->Log && Platform->ReadFile && Platform->FreeFile;
-}
 
 struct game_memory {
     void* Memory;

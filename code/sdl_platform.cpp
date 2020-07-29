@@ -43,6 +43,7 @@ Load(sdl_game_code* GameCode)
 
 static bool gIsRunning = true;
 
+// NOTE(Momo): Platform API code
 static inline void
 PlatformLog(const char* Format, ...) {
     va_list va;
@@ -76,9 +77,21 @@ PlatformFreeFile(platform_read_file_result File) {
     free(File.Content);
 }
 
+static inline void*
+PlatformAllocateMemory(usize Size) {
+    return malloc(Size);
+}
+
+static inline void
+PlatformDeallocateMemory(void* Memory) {
+    if (Memory) {
+        free(Memory);
+    }
+}
+
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
-
+    
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
         SDL_Log("SDL could not initialize! SDL_Errgor: %s\n", SDL_GetError());

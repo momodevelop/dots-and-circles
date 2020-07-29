@@ -44,9 +44,9 @@ struct game_assets {
 };
 
 static inline void
-Init(game_assets* Assets, memory_arena* Arena) {
+Init(game_assets* Assets, memory_arena* Arena, usize Capacity) {
     // TODO(Momo): Calculate the amount of memory we actually need
-    InitSubArena(&Assets->Arena, Arena,  Megabytes(10));
+    SubArena(&Assets->Arena, Arena, Capacity);
 }
 
 

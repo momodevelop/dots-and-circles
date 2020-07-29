@@ -18,6 +18,7 @@ Init(memory_arena* Arena, void* Memory, usize Capacity) {
     Arena->Capacity = Capacity;
 }
 
+
 static inline void 
 Clear(memory_arena* Arena) {
     Arena->Used = 0;
@@ -75,8 +76,10 @@ EndTemporaryMemory(temporary_memory* TempMemory) {
     TempMemory->Arena->Used = TempMemory->OldUsed;
 }
 
+
+
 static inline void
-InitSubArena(memory_arena* DstArena, memory_arena* SrcArena, usize Capacity) {
+SubArena(memory_arena* DstArena, memory_arena* SrcArena, usize Capacity) {
     Assert(Capacity);
     DstArena->Memory = (u8*)PushBlock(SrcArena, Capacity);
     Assert(DstArena->Memory);
