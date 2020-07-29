@@ -1,23 +1,8 @@
-#ifndef __RYOJI_RENDERER__
-#define __RYOJI_RENDERER__
+#ifndef __RYOJI_RENDER_COMMANDS_H__
+#define __RYOJI_RENDER_COMMANDS_H__
 
 #include "ryoji_maths.h"
 #include "ryoji_arenas.h"
-
-// TODO(Momo): Remove this
-#include "game_assets.h"
-
-// NOTE(Momo): Renderer Types
-struct render_bitmap {
-    u32 Width;
-    u32 Height;
-    
-    // TODO(Momo): Maybe seperate this? Might need to consider more use cases 
-    struct pixel {
-        u8 Red, Green, Blue, Alpha;
-    };
-    pixel* Pixels;
-};
 
 struct render_command_entry {
     u32 Type;
@@ -25,7 +10,7 @@ struct render_command_entry {
 };
 
 
-struct render_command_queue {
+struct render_commands {
     u8* Memory;
     u8* DataMemoryAt;
     u8* EntryMemoryStart;
@@ -36,7 +21,7 @@ struct render_command_queue {
 
 
 static inline void
-Clear(render_command_queue* Commands) {
+Clear(render_commands* Commands) {
     Commands->DataMemoryAt = Commands->Memory;
     
     u8* EntryMemoryStart = Commands->Memory + Commands->MemorySize - sizeof(render_command_entry);
@@ -50,7 +35,7 @@ Clear(render_command_queue* Commands) {
 }
 
 static inline void
-Init(render_command_queue* Commands, void* Memory, u32 MemorySize) {
+Init(render_commands* Commands, void* Memory, u32 MemorySize) {
     Commands->Memory = (u8*)Memory;
     Commands->MemorySize = MemorySize;
     Clear(Commands);
@@ -59,14 +44,14 @@ Init(render_command_queue* Commands, void* Memory, u32 MemorySize) {
 
 // NOTE(Momo): Accessors and Iterators
 static inline render_command_entry* 
-GetEntry(render_command_queue* Commands, usize Index) {
+GetEntry(render_commands* Commands, usize Index) {
     Assert(Index < Commands->EntryCount);
     return (render_command_entry*)(Commands->EntryMemoryStart - Index * sizeof(render_command_entry));
 }
 
 
 static inline void*
-GetDataFromEntry(render_command_queue* Commands, render_command_entry* Entry) {
+GetDataFromEntry(render_commands* Commands, render_command_entry* Entry) {
     return (Commands->Memory + Entry->OffsetToData);
 }
 
@@ -74,7 +59,7 @@ GetDataFromEntry(render_command_queue* Commands, render_command_entry* Entry) {
 // NOTE(Momo): Push functions
 template<typename T>
 static inline T*
-PushCommand(render_command_queue* Commands, u32 SortKey) 
+PushCommand(render_commands* Commands) 
 {
     // NOTE(Momo): Allocate Data
     u8 DataAdjust = AlignForwardDiff(Commands->DataMemoryAt, alignof(T));
@@ -97,40 +82,6 @@ PushCommand(render_command_queue* Commands, u32 SortKey)
     Commands->EntryMemoryAt -= EntrySize;
     ++Commands->EntryCount;
     return Data;
-}
-
-// TODO(Momo): Set TypeId to some compile time counter
-struct render_command_data_clear {
-    static constexpr u32 TypeId = 0;
-    c4f Colors;
-};
-
-struct render_command_data_textured_quad {
-    static constexpr u32 TypeId = 1;
-    game_texture Texture;
-    c4f Colors;
-    m44f Transform;
-};
-
-static inline void
-PushCommandClear(render_command_queue* Commands, c4f Colors) {
-    using data_t = render_command_data_clear;
-    auto* Data = PushCommand<data_t>(Commands, 0);
-    Data->Colors = Colors;
-}
-
-
-// TODO(Momo): Change TextureHandle and TextureData to use game_texture
-static inline void
-PushCommandTexturedQuad(render_command_queue* Commands, c4f Colors, m44f Transform, game_texture Texture) 
-{
-    using data_t = render_command_data_textured_quad;
-    auto* Data = PushCommand<data_t>(Commands, Texture.Handle+1);
-    
-    Data->Colors = Colors;
-    Data->Transform = Transform;
-    Data->Texture = Texture;
-    
 }
 
 #endif //RYOJI_RENDERER_H

@@ -1,9 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "ryoji_renderer.h"
-
-
+#include "game_renderer.h"
 #include "game_platform.h"
 #include "game_input.h"
 #include "game_assets.h"

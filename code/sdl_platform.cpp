@@ -7,7 +7,7 @@
 #include "thirdparty/glad/glad.c"
 
 #include "game_platform.h"
-#include "ryoji_renderer_opengl.h"
+#include "game_renderer_opengl.h"
 #include "game_input.h"
 
 #include "sdl_platform_timer.h"
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Render commands/queue
     void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
-    render_command_queue RenderCommands = {}; 
+    render_commands RenderCommands = {}; 
     Init(&RenderCommands, RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input

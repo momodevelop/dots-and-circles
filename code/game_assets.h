@@ -2,7 +2,6 @@
 #define __GAME_ASSETS__
 
 #include "ryoji.h"
-#include "ryoji_colors.h"
 #include "ryoji_arenas.h"
 
 // TODO(Momo): Remove stdlib and stdio 

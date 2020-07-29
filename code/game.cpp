@@ -2,7 +2,7 @@
 
 static inline void
 UpdateSandboxState(game_state* GameState, 
-                   render_command_queue* RenderCommands, 
+                   render_commands* RenderCommands, 
                    f32 DeltaTime) {
     
     game_mode_sandbox* State = &GameState->GameMode.Sandbox; 
@@ -56,7 +56,7 @@ UpdateSandboxState(game_state* GameState,
 
 static inline void
 UpdateSplashState(game_state* GameState, 
-                  render_command_queue* RenderCommands, 
+                  render_commands* RenderCommands, 
                   f32 DeltaTime) {
     game_mode_splash* State = &GameState->GameMode.Splash; 
     if(!GameState->IsStateInitialized) {
@@ -122,7 +122,7 @@ UpdateSplashState(game_state* GameState,
 
 static inline void
 UpdateMainState(game_state* GameState, 
-                render_command_queue* RenderCommands, 
+                render_commands* RenderCommands, 
                 f32 DeltaTime) {
     game_mode_main* State = &GameState->GameMode.Main; 
     if(!GameState->IsStateInitialized) {
@@ -191,7 +191,7 @@ UpdateMainState(game_state* GameState,
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
            platform_api* Platform, 
-           render_command_queue* RenderCommands, 
+           render_commands* RenderCommands, 
            game_input* Input, 
            f32 DeltaTime)
 {
@@ -210,36 +210,43 @@ GameUpdate(game_memory* GameMemory,
         
         // NOTE(Momo): Init Assets
         {
-            auto TempMemory = BeginTemporaryMemory(&GameState->MainArena);
+            auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/ryoji.bmp";
             u32 Filesize = Platform->GetFileSize(Filepath);
             Assert(Filesize);
-            
-            
-            Platform->ReadFile("assets/ryoji.bmp");
-            
-            Assert(Result.Content);
-            LoadTexture(GameAssets, GameTextureType_ryoji, Result.Content);
-            Platform->FreeFile(Result);
+            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
+            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
+            LoadTexture(GameAssets, GameTextureType_ryoji, BitmapMemory);
+            EndTemporaryMemory(TempMemory);
         }
         {
-            auto Result = Platform->ReadFile("assets/yuu.bmp");
-            Assert(Result.Content);
-            LoadTexture(GameAssets, GameTextureType_yuu, Result.Content);
-            Platform->FreeFile(Result);
+            
+            auto TempMemory = BeginTemporaryMemory(MainArena);
+            const char* Filepath = "assets/yuu.bmp";
+            u32 Filesize = Platform->GetFileSize(Filepath);
+            Assert(Filesize);
+            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
+            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
+            LoadTexture(GameAssets, GameTextureType_yuu, BitmapMemory);
+            EndTemporaryMemory(TempMemory);
         }
         {
-            auto Result = Platform->ReadFile("assets/blank.bmp");
-            Assert(Result.Content);
-            LoadTexture(GameAssets, GameTextureType_blank, Result.Content);
-            Platform->FreeFile(Result);
+            
+            auto TempMemory = BeginTemporaryMemory(MainArena);
+            const char* Filepath = "assets/blank.bmp";
+            u32 Filesize = Platform->GetFileSize(Filepath);
+            Assert(Filesize);
+            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
+            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
+            LoadTexture(GameAssets, GameTextureType_blank, BitmapMemory);
+            EndTemporaryMemory(TempMemory);
         }
         
         
         SubArena(&GameState->ModeArena, &GameState->MainArena, 
                  GetRemainingCapacity(&GameState->MainArena));
-        
         GameState->IsInitialized = true;
+        
 #if INTERNAL
         gLog = Platform->Log;
 #endif
