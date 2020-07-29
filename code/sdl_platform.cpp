@@ -52,42 +52,32 @@ PlatformLog(const char* Format, ...) {
     va_end(va);
 }
 
-
-
-static inline platform_read_file_result
-PlatformReadFile(const char* path) {
-    SDL_RWops * File = SDL_RWFromFile(path, "rb");
+static inline u32
+PlatformGetFileSize(const char* Path) {
+    SDL_RWops * File = SDL_RWFromFile(Path, "rb");
     if (File == nullptr) {
         return {};
     }
     Defer{ SDL_RWclose(File); };
     
-    platform_read_file_result Ret = {};
+    u32 Ret = 0;
     SDL_RWseek(File, 0, RW_SEEK_END);
-    Ret.ContentSize = (u32)SDL_RWtell(File);
+    Ret = (u32)SDL_RWtell(File);
     SDL_RWseek(File, 0, RW_SEEK_SET);
     
-    Ret.Content = malloc(Ret.ContentSize);
-    SDL_RWread(File, Ret.Content, 1, Ret.ContentSize);
     return Ret;
 }
 
 static inline void
-PlatformFreeFile(platform_read_file_result File) {
-    free(File.Content);
-}
-
-static inline void*
-PlatformAllocateMemory(usize Size) {
-    return malloc(Size);
-}
-
-static inline void
-PlatformDeallocateMemory(void* Memory) {
-    if (Memory) {
-        free(Memory);
+PlatformReadFile(void* Dest, u32 DestSize, const char* Path) {
+    SDL_RWops * File = SDL_RWFromFile(Path, "rb");
+    if (File == nullptr) {
+        return;
     }
+    Defer{ SDL_RWclose(File); };
+    SDL_RWread(File, Dest, 1, DestSize);
 }
+
 
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
@@ -181,10 +171,10 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
-    GameMemory.Memory = PushBlock(&PlatformArena, GameMemorySize);
-    GameMemory.MemorySize = GameMemorySize;
+    GameMemory.MainMemory = PushBlock(&PlatformArena, GameMainMemorySize);
+    GameMemory.MainMemorySize = GameMainMemorySize;
     
-    if ( !GameMemory.Memory ) {
+    if ( !GameMemory.MainMemory ) {
         SDL_Log("Cannot allocate game memory");
         return 1;
     }
@@ -193,7 +183,7 @@ int main(int argc, char* argv[]) {
     platform_api PlatformApi;
     PlatformApi.Log = PlatformLog;
     PlatformApi.ReadFile = PlatformReadFile;
-    PlatformApi.FreeFile = PlatformFreeFile;
+    PlatformApi.GetFileSize = PlatformGetFileSize;
     
     // NOTE(Momo): Timer
     sdl_timer timer;
@@ -210,7 +200,6 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
         Update(&GameInput);
-        
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
             switch(e.type) {
@@ -268,7 +257,7 @@ int main(int argc, char* argv[]) {
         
         
         if (GameCode.Update) {
-            GameCode.Update(&PlatformApi, &GameMemory, &RenderCommands, &GameInput, DeltaTime); 
+            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, DeltaTime); 
         }
         
         Render(&RendererOpenGL, &RenderCommands); 

@@ -189,31 +189,35 @@ UpdateMainState(game_state* GameState,
 
 // NOTE(Momo):  Exported Functions
 extern "C" void
-GameUpdate(platform_api* Platform, 
-           game_memory* GameMemory,  
+GameUpdate(game_memory* GameMemory,  
+           platform_api* Platform, 
            render_command_queue* RenderCommands, 
            game_input* Input, 
            f32 DeltaTime)
 {
-    game_state* GameState = (game_state*)GameMemory->Memory;
-    //game_state* GameState = GameMemory->GameState;
+    game_state* GameState = (game_state*)GameMemory->MainMemory;
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
         GameState->CurrentMode = game_mode_splash::TypeId;
         GameState->IsStateInitialized = false;
         
         // NOTE(Momo): Arenas
-        Init(&GameState->MainArena,(u8*)GameMemory->Memory + sizeof(game_state), GameMemory->MemorySize - sizeof(game_state));
+        memory_arena* MainArena = &GameState->MainArena;
+        Init(MainArena, (u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
         
         game_assets* GameAssets = &GameState->Assets;
-        Init(GameAssets, &GameState->MainArena, Megabytes(10));
-        
-        SubArena(&GameState->ModeArena, &GameState->MainArena, 
-                 GetRemainingCapacity(&GameState->MainArena));
+        Init(GameAssets, MainArena, Megabytes(10));
         
         // NOTE(Momo): Init Assets
         {
-            auto Result = Platform->ReadFile("assets/ryoji.bmp");
+            auto TempMemory = BeginTemporaryMemory(&GameState->MainArena);
+            const char* Filepath = "assets/ryoji.bmp";
+            u32 Filesize = Platform->GetFileSize(Filepath);
+            Assert(Filesize);
+            
+            
+            Platform->ReadFile("assets/ryoji.bmp");
+            
             Assert(Result.Content);
             LoadTexture(GameAssets, GameTextureType_ryoji, Result.Content);
             Platform->FreeFile(Result);
@@ -230,6 +234,10 @@ GameUpdate(platform_api* Platform,
             LoadTexture(GameAssets, GameTextureType_blank, Result.Content);
             Platform->FreeFile(Result);
         }
+        
+        
+        SubArena(&GameState->ModeArena, &GameState->MainArena, 
+                 GetRemainingCapacity(&GameState->MainArena));
         
         GameState->IsInitialized = true;
 #if INTERNAL

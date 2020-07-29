@@ -12,10 +12,13 @@ struct memory_arena {
 };
 
 static inline void 
-Init(memory_arena* Arena, void* Memory, usize Capacity) {
+Init(memory_arena* Arena, void* Memory, usize Capacity, b8 ZeroMemory = true) {
     Assert(Capacity);
     Arena->Memory = (u8*)Memory;
     Arena->Capacity = Capacity;
+    if(ZeroMemory) {
+        ZeroBlock(Memory, Capacity);
+    }
 }
 
 
@@ -76,17 +79,12 @@ EndTemporaryMemory(temporary_memory* TempMemory) {
     TempMemory->Arena->Used = TempMemory->OldUsed;
 }
 
-
-
 static inline void
 SubArena(memory_arena* DstArena, memory_arena* SrcArena, usize Capacity) {
     Assert(Capacity);
     DstArena->Memory = (u8*)PushBlock(SrcArena, Capacity);
     Assert(DstArena->Memory);
     DstArena->Capacity = Capacity;
-    
 }
-
-
 
 #endif

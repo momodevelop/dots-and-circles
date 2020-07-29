@@ -4,9 +4,9 @@
 #include "ryoji.h"
 
 // NOTE(Momo): Global Settings
-#define GameMemorySize Megabytes(100)
+#define GameMainMemorySize Megabytes(100)
 #define RenderCommandsMemorySize Megabytes(64)
-#define TotalMemorySize GameMemorySize + RenderCommandsMemorySize
+#define TotalMemorySize GameMainMemorySize + RenderCommandsMemorySize
 
 
 // NOTE(Momo): Forward declarations 
@@ -17,16 +17,14 @@ struct platform_read_file_result;
 union game_input;
 
 // NOTE(Momo): Function typedefs and helpers
-typedef void game_update(platform_api* Platform, 
-                         game_memory* GameMemory,  
+typedef void game_update(game_memory* GameMemory,  
+                         platform_api* Platform, 
                          render_command_queue* RenderCommands, 
                          game_input* Input, 
                          f32 DeltaTime);
 typedef void platform_log(const char* Format, ...);
-typedef platform_read_file_result platform_read_file(const char* path);
-typedef void platform_free_file(platform_read_file_result File);
-typedef void* platform_allocate_memory(usize Size);
-typedef void platform_deallocate_memory(void* Memory);
+typedef u32  platform_get_file_size(const char* Path);
+typedef void platform_read_file(void* Dest, u32 DestSize, const char* Path);
 
 struct platform_read_file_result {
     void* Content;
@@ -35,16 +33,14 @@ struct platform_read_file_result {
 
 struct platform_api {
     platform_log* Log;
+    platform_get_file_size* GetFileSize;
     platform_read_file* ReadFile;
-    platform_free_file* FreeFile;
-    platform_allocate_memory* AllocateMemory;
-    platform_deallocate_memory* DeallocateMemory;
 };
 
 
 struct game_memory {
-    void* Memory;
-    u64 MemorySize;
+    void* MainMemory;
+    u64 MainMemorySize;
 };
 
 
