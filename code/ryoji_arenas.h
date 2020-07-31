@@ -16,7 +16,8 @@ Init(memory_arena* Arena, void* Memory, usize Capacity) {
     Assert(Capacity);
     Arena->Memory = (u8*)Memory;
     Arena->Capacity = Capacity;
-    ZeroBlock(Memory, Capacity); 
+    
+    // TODO(Momo): Zero memory? 
 }
 
 

@@ -38,8 +38,7 @@ struct game_texture {
 
 struct game_assets {
     memory_arena Arena;
-    game_texture Textures[1024];
-    u32 TextureCount;
+    game_texture Textures[GameTextureType_max];
 };
 
 static inline void

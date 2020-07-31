@@ -1,6 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+
+
 #include "game_renderer.h"
 #include "game_platform.h"
 #include "game_input.h"
@@ -14,49 +16,33 @@ static platform_log* gLog;
 #define Log(fmt, ...)
 #endif
 
-
-struct game_mode_splash {
-    static constexpr u8 TypeId = 0;
-    splash_image_entity SplashImg[2];
-    splash_blackout_entity SplashBlackout;
-};
-
-struct game_mode_main {
-    static constexpr u8 TypeId = 1;
-    splash_image_entity SplashImg[2];
-    splash_blackout_entity SplashBlackout;
-    
-};
-
-struct game_mode_sandbox {
-    static constexpr u8 TypeId = 2;
-    static constexpr u32 TotalEntities = 2500;
-    test_entity Entities[TotalEntities];
-};
-
-
-union game_mode {
-    game_mode_splash Splash;
-    game_mode_main Main;
-    game_mode_sandbox Sandbox;
-};
-
 struct game_state {
-    game_mode GameMode;
+    union {
+        void* Mode;
+        struct game_mode_splash* SplashMode;
+        struct game_mode_main* MainMode;
+        struct game_mode_sandbox* SandboxMode;
+    };
+    
     u32 CurrentMode;
     
-    game_assets Assets;
+    game_assets* Assets;
     
     memory_arena MainArena;
     memory_arena ModeArena;
     
-    
     b8 IsInitialized;
-    b8 IsStateInitialized;
-    
-    
 };
 
-
+template<typename T>
+static inline void
+SetGameMode(game_state* GameState) {
+    memory_arena* ModeArena = &GameState->ModeArena;
+    Clear(ModeArena);
+    GameState->CurrentMode = T::TypeId;
+    T* Mode = PushStruct<T>(ModeArena); 
+    InitMode(Mode, GameState); // all modes must have init function
+    GameState->Mode = Mode;
+}
 
 #endif //GAME_H

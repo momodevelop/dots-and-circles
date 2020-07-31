@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
     renderer_opengl RendererOpenGL = {};
     Init(&RendererOpenGL, windowWidth, windowHeight, 1000000);
     
-    void* ProgramMemory = malloc(TotalMemorySize);
+    void* ProgramMemory = calloc(TotalMemorySize, sizeof(u8));
     if (ProgramMemory == nullptr){
         SDL_Log("Cannot allocate memory");
         return 1;
@@ -255,7 +255,6 @@ int main(int argc, char* argv[]) {
         u64 TimeElapsed = GetTimeElapsed(&timer);
         f32 DeltaTime = TimeElapsed / 1000.f;
         
-        
         if (GameCode.Update) {
             GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, DeltaTime); 
         }
@@ -266,7 +265,7 @@ int main(int argc, char* argv[]) {
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        SDL_Log("%lld  ms\n", TimeElapsed);
+        //SDL_Log("%lld  ms\n", TimeElapsed);
         SDL_GL_SwapWindow(window);
     }
     
