@@ -45,7 +45,13 @@ Update(main_image_entity* Entity,
     PushCommandTexturedQuad(RenderCommands, 
                             Entity->Colors, 
                             T*S,
-                            Assets->Textures[Entity->TextureHandle]);
+                            Assets->Textures[Entity->TextureHandle],
+                            {
+                                0.5f, 0.5f, // top right
+                                0.5f, 0.f, // bottom right
+                                0.f, 0.f, // bottom left
+                                0.f, 0.5f,  // top left
+                            });
 }
 
 struct main_blackout_entity {
@@ -82,7 +88,13 @@ Update(main_blackout_entity* Entity,
     PushCommandTexturedQuad(RenderCommands, 
                             Entity->Colors, 
                             T*S,
-                            Assets->Textures[Entity->TextureHandle]);
+                            Assets->Textures[Entity->TextureHandle],
+                            {
+                                0.5f, 0.5f, // top right
+                                0.5f, 0.f, // bottom right
+                                0.f, 0.f, // bottom left
+                                0.f, 0.5f,  // top left
+                            });
     
 }
 
@@ -137,7 +149,16 @@ static inline void
 UpdateMode(game_mode_main* Mode,
            game_state* GameState, 
            render_commands* RenderCommands, 
-           f32 DeltaTime) {
+           game_input* Input,
+           f32 DeltaTime) 
+{
+    
+#if INTERNAL
+    if (ProcessMetaInput(GameState, Input)) {
+        return;
+    }
+#endif
+    
     PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     
     for (u32 i = 0; i < 2; ++i) {

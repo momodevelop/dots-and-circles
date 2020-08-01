@@ -226,7 +226,39 @@ int main(int argc, char* argv[]) {
                         case SDLK_RETURN: {
                             GameInput.ButtonConfirm.Now = true;
                         }break;
+#if INTERNAL
+                        case SDLK_1: {
+                            GameInput.ButtonDebug[1].Now = true; 
+                        }break;
+                        case SDLK_2: {
+                            GameInput.ButtonDebug[2].Now = true;
+                        }break;
+                        case SDLK_3: {
+                            GameInput.ButtonDebug[3].Now = true;
+                        }break;
+                        case SDLK_4: {
+                            GameInput.ButtonDebug[4].Now = true;
+                        }break;
+                        case SDLK_5: {
+                            GameInput.ButtonDebug[5].Now = true;
+                        }break;
+                        case SDLK_6: {
+                            GameInput.ButtonDebug[6].Now = true;
+                        }break;
+                        case SDLK_7: {
+                            GameInput.ButtonDebug[7].Now = true;
+                        }break;
+                        case SDLK_8: {
+                            GameInput.ButtonDebug[8].Now = true;
+                        }break;
+                        case SDLK_9: {
+                            GameInput.ButtonDebug[9].Now = true;
+                        }break;
+                        case SDLK_0: {
+                            GameInput.ButtonDebug[0].Now = true;
+                        }break;
                         
+#endif
                     }
                 } break;
                 case SDL_KEYUP: {
@@ -246,6 +278,38 @@ int main(int argc, char* argv[]) {
                         case SDLK_RETURN: {
                             GameInput.ButtonConfirm.Now = false;
                         }break;
+#if INTERNAL
+                        case SDLK_1: {
+                            GameInput.ButtonDebug[1].Now = false; 
+                        }break;
+                        case SDLK_2: {
+                            GameInput.ButtonDebug[2].Now = false;
+                        }break;
+                        case SDLK_3: {
+                            GameInput.ButtonDebug[3].Now = false;
+                        }break;
+                        case SDLK_4: {
+                            GameInput.ButtonDebug[4].Now = false;
+                        }break;
+                        case SDLK_5: {
+                            GameInput.ButtonDebug[5].Now = false;
+                        }break;
+                        case SDLK_6: {
+                            GameInput.ButtonDebug[6].Now = false;
+                        }break;
+                        case SDLK_7: {
+                            GameInput.ButtonDebug[7].Now = false;
+                        }break;
+                        case SDLK_8: {
+                            GameInput.ButtonDebug[8].Now = false;
+                        }break;
+                        case SDLK_9: {
+                            GameInput.ButtonDebug[9].Now = false;
+                        }break;
+                        case SDLK_0: {
+                            GameInput.ButtonDebug[0].Now = false;
+                        }break;
+#endif
                     } break;
                 }
             }

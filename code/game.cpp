@@ -73,13 +73,13 @@ GameUpdate(game_memory* GameMemory,
     // NOTE(Momo): State machine
     switch(GameState->CurrentMode) {
         case game_mode_splash::TypeId: {
-            UpdateMode(GameState->SplashMode, GameState, RenderCommands, DeltaTime);
+            UpdateMode(GameState->SplashMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
         case game_mode_sandbox::TypeId: {
-            UpdateMode(GameState->SandboxMode, GameState, RenderCommands, DeltaTime);
+            UpdateMode(GameState->SandboxMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
         case game_mode_main::TypeId: {
-            UpdateMode(GameState->MainMode, GameState, RenderCommands, DeltaTime);
+            UpdateMode(GameState->MainMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
     }
 }

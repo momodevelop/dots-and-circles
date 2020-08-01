@@ -1,39 +1,42 @@
 #ifndef __GAME_RENDERER_OPENGL__
 #define __GAME_RENDERER_OPENGL__
 
-// NOTE(Momo): Renderer code for renderering the game to be used by platform
-// We will only have 1 model (a rectangle), which will have the 
-// capabilities have having 1 texture, 1 color, and 1 transform.
-
-
 #include "game_renderer.h"
 #include "game_assets.h"
 
 // NOTE(Momo): Buffers
-#define Vbo_Model 0 
-#define Vbo_Indices 1
-#define Vbo_Colors 2
-#define Vbo_Texture 3
-#define Vbo_Transform 4
-#define Vbo_Max 5
+enum {
+    renderer_vbo_Model,
+    renderer_vbo_Indices,
+    renderer_vbo_Colors,
+    renderer_vbo_Texture,
+    renderer_vbo_Transform,
+    renderer_vbo_Max
+};
+
 
 // NOTE(Momo): Attributes
-#define Atb_Model 0
-#define Atb_Colors 1
-#define Atb_Texture 2  
-#define Atb_Transform1 3  
-#define Atb_Transform2 4
-#define Atb_Transform3 5
-#define Atb_Transform4 6
+enum { 
+    renderer_atb_Model,    // 0 
+    renderer_atb_Colors,   // 1
+    renderer_atb_Texture1, // 2
+    renderer_atb_Texture2, // 3
+    renderer_atb_Transform1, // 4
+    renderer_atb_Transform2, // 5
+    renderer_atb_Transform3, // 6
+    renderer_atb_Transform4  // 7
+};
 
 // NOTE(Momo): VAO bindings
-#define VaoBind_Model 0 
-#define VaoBind_Colors 1
-#define VaoBind_Texture 2
-#define VaoBind_Transform 3
+enum {
+    renderer_vaobind_Model,
+    renderer_vaobind_Colors,
+    renderer_vaobind_Texture,
+    renderer_vaobind_Transform
+};
 
 struct renderer_opengl {
-    GLuint Buffers[Vbo_Max]; 
+    GLuint Buffers[renderer_vbo_Max]; 
     GLuint Shader;
     
     // NOTE(Momo): We only need one blueprint which is a 1x1 square.
@@ -43,7 +46,7 @@ struct renderer_opengl {
     GLuint BlankTexture;
     
     // NOTE(Momo): A table mapping 'game texture handler' <-> 'opengl texture handler'  
-    GLuint GameToRendererTextureTable[1024] = {};
+    GLuint GameToRendererTextureTable[GameTextureType_max] = {};
     
 };
 
@@ -63,34 +66,41 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     Renderer->MaxEntities = MaxEntities;
     constexpr static f32 quadModel[] = {
         // position   
-        1.f,  1.f, 0.0f,  // top right
-        1.f, -1.f, 0.0f,  // bottom right
-        -1.f, -1.f, 0.0f,  // bottom left
-        -1.f,  1.f, 0.0f   // top left 
+        -0.5f,  0.5f, 0.0f,   // top left 
+        0.5f,  0.5f, 0.0f,  // top right
+        -0.5f, -0.5f, 0.0f,  // bottom left
+        0.5f, -0.5f, 0.0f,  // bottom right
     };
     
     constexpr static u8 quadIndices[] = {
-        0, 1, 3,
-        1, 2, 3,
-    };
-    
-    constexpr static f32 quadTexCoords[] = {
-        1.f, 1.f, // top right
-        1.f, 0.f, // bottom right
-        0.f, 0.f, // bottom left
-        0.f, 1.f,  // top left
+        0, 1, 2,
+        1, 3, 2,
     };
     
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
-    constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\nlayout(location=2) in vec2 aTexCoord;\nlayout(location=3) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                mTexCoord = aTexCoord;\n}";
+    constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\n\
+                                                                        layout(location=2) in vec4 aTexCoord[2];\n\
+                                                                                                                \nlayout(location=4) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
+                                                                                    if (gl_VertexID == 0) { mTexCoord = aTexCoord[0].xy; }\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        else if (gl_VertexID == 1) { mTexCoord = aTexCoord[0].zw; }\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    else if (gl_VertexID == 2) { mTexCoord = aTexCoord[1].xy; }\n\
+                                                                                                                                                                                                    else if (gl_VertexID == 3) { mTexCoord = aTexCoord[1].zw; }\n\
+                                                                                                                                                                                                    //mTexCoord = aTexCoord[gl_VertexID];\n\
+                                                                                                                                                                                            }";
     
+    
+#if 1
     constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\nfragColor = texture(uTexture, mTexCoord) * mColor; \n}";
     
+#else
+    constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\n\
+                                                                                                                                                                                                                                                                                                                                        fragColor.x = mTexCoord.x; fragColor.y = mTexCoord.y; fragColor.z = 0.0; fragColor.w = 1.0; \n}";
+#endif
     
     glEnable(GL_DEPTH_TEST);
+    
 #if INTERNAL
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -101,64 +111,67 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     glViewport(0,0, Width, Height);
     
     // NOTE(Momo): Setup VBO
-    glCreateBuffers(Vbo_Max, Renderer->Buffers);
-    glNamedBufferStorage(Renderer->Buffers[Vbo_Model], sizeof(quadModel), quadModel, 0);
-    glNamedBufferStorage(Renderer->Buffers[Vbo_Indices], sizeof(quadIndices), quadIndices, 0);
-    glNamedBufferStorage(Renderer->Buffers[Vbo_Texture], sizeof(quadTexCoords), quadTexCoords, 0);
-    glNamedBufferStorage(Renderer->Buffers[Vbo_Colors], sizeof(c4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glCreateBuffers(renderer_vbo_Max, Renderer->Buffers);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Model], sizeof(quadModel), quadModel, 0);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Indices], sizeof(quadIndices), quadIndices, 0);
     
-    glNamedBufferStorage(Renderer->Buffers[Vbo_Transform], sizeof(c4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Texture], sizeof(f32) * 8 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(c4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Transform], sizeof(m44f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
     glCreateVertexArrays(1, &Renderer->Blueprint);
-    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Model, Renderer->Buffers[Vbo_Model], 0, sizeof(f32)*3);
-    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Texture, Renderer->Buffers[Vbo_Texture], 0, sizeof(f32)*2);
-    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Colors, Renderer->Buffers[Vbo_Colors],  0, sizeof(c4f));
-    glVertexArrayVertexBuffer(Renderer->Blueprint, VaoBind_Transform, Renderer->Buffers[Vbo_Transform], 0, sizeof(m44f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Model, Renderer->Buffers[renderer_vbo_Model], 0, sizeof(f32)*3);
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Texture, Renderer->Buffers[renderer_vbo_Texture], 0, sizeof(f32) * 8);
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(c4f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Transform, Renderer->Buffers[renderer_vbo_Transform], 0, sizeof(m44f));
     
     // NOTE(Momo): Setup Attributes
-    // hwaModelVtx
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Model); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Model, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Model, VaoBind_Model);
+    // aModelVtx
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Model); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Model, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Model, renderer_vaobind_Model);
     
     // aColor
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Colors); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Colors, 4, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Colors, VaoBind_Colors);
-    glVertexArrayBindingDivisor(Renderer->Blueprint, VaoBind_Colors, 1); 
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Colors); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Colors, 4, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Colors, renderer_vaobind_Colors);
+    glVertexArrayBindingDivisor(Renderer->Blueprint, renderer_vaobind_Colors, 1); 
     
     // aTexCoord
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Texture); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Texture, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Texture, VaoBind_Texture);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture1); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture2); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
+    
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Texture1, renderer_vaobind_Texture);
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Texture2, renderer_vaobind_Texture);
+    glVertexArrayBindingDivisor(Renderer->Blueprint, renderer_vaobind_Texture, 1); 
     
     
     // aTransform
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform1); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform2);
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform3); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
-    glEnableVertexArrayAttrib(Renderer->Blueprint, Atb_Transform4); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, Atb_Transform4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Transform1); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Transform1, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 0 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Transform2);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Transform2, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 1 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Transform3); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Transform3, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 2 * 4);
+    glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Transform4); 
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Transform4, 4, GL_FLOAT, GL_FALSE, sizeof(f32) * 3 * 4);
     
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform1, VaoBind_Transform);
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform2, VaoBind_Transform);
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform3, VaoBind_Transform);
-    glVertexArrayAttribBinding(Renderer->Blueprint, Atb_Transform4, VaoBind_Transform);
-    
-    // NOTE(Momo): If binding divisor is N, advance N per instance
-    glVertexArrayBindingDivisor(Renderer->Blueprint, VaoBind_Transform, 1); 
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Transform1, renderer_vaobind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Transform2, renderer_vaobind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Transform3, renderer_vaobind_Transform);
+    glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Transform4, renderer_vaobind_Transform);
+    glVertexArrayBindingDivisor(Renderer->Blueprint, renderer_vaobind_Transform, 1); 
     
     // NOTE(Momo): Alpha blend
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // NOTE(Momo): Setup indices
-    glVertexArrayElementBuffer(Renderer->Blueprint, Renderer->Buffers[Vbo_Indices]);
+    glVertexArrayElementBuffer(Renderer->Blueprint, Renderer->Buffers[renderer_vbo_Indices]);
     
     
     // Setup Shader Program
@@ -264,13 +277,19 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                 }
                 
                 // NOTE(Momo): Update the current instance values
-                glNamedBufferSubData(Renderer->Buffers[Vbo_Colors], 
+                glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
                                      CurrentInstanceIndex * sizeof(c4f),
                                      sizeof(c4f), 
                                      &Data->Colors);
                 
+                
+                glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
+                                     CurrentInstanceIndex * sizeof(quad2f),
+                                     sizeof(quad2f),
+                                     &Data->TextureCoords);
+                
                 m44f Transform = Transpose(Data->Transform);
-                glNamedBufferSubData(Renderer->Buffers[Vbo_Transform], 
+                glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Transform], 
                                      CurrentInstanceIndex* sizeof(m44f), 
                                      sizeof(m44f), 
                                      &Transform);
@@ -284,7 +303,6 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
     }
     
     if (InstancesToDrawCount != 0) {
-        
         glBindTexture(GL_TEXTURE_2D, CurrentTexture);
         glBindVertexArray(Renderer->Blueprint);
         glUseProgram(Renderer->Shader);
@@ -299,25 +317,26 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
 
 
 
-#undef Vbo_Model
-#undef Vbo_Indices
-#undef Vbo_Colors
-#undef Vbo_Texture
-#undef Vbo_Transform
-#undef Vbo_Max
+#undef renderer_vbo_Model
+#undef renderer_vbo_Indices
+#undef renderer_vbo_Colors
+#undef renderer_vbo_Texture
+#undef renderer_vbo_Transform
+#undef renderer_vbo_Max
 
-#undef Atb_Model
-#undef Atb_Colors
-#undef Atb_Texture 
+#undef renderer_atb_Model
+#undef renderer_atb_Colors
+#undef renderer_atb_Texture1
+#undef renderer_atb_Texture2
 
-#undef Atb_Transform1 
-#undef Atb_Transform2 
-#undef Atb_Transform3 
-#undef Atb_Transform4 
+#undef renderer_atb_Transform1 
+#undef renderer_atb_Transform2 
+#undef renderer_atb_Transform3 
+#undef renderer_atb_Transform4 
 
-#undef VaoBind_Model  
-#undef VaoBind_Colors 
-#undef VaoBind_Texture 
-#undef VaoBind_Transform 
+#undef renderer_vaobind_Model  
+#undef renderer_vaobind_Colors 
+#undef renderer_vaobind_Texture 
+#undef renderer_vaobind_Transform 
 
 #endif

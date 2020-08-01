@@ -15,6 +15,10 @@ union game_input {
         game_button ButtonRight;
         game_button ButtonLeft;
         game_button ButtonConfirm;
+        
+#if INTERNAL
+        game_button ButtonDebug[10];
+#endif
     };
 };
 

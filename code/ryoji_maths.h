@@ -426,12 +426,12 @@ ScaleMatrix(v3f Vec) {
 // 
 static inline m44f 
 OrthographicMatrix(f32 NdcLeft, f32 NdcRight,
-                       f32 NdcBottom, f32 NdcTop,
-                       f32 NdcNear, f32 NdcFar,
-                       f32 Left, f32 Right, 
-                       f32 Bottom, f32 Top,
-                       f32 Near, f32 Far,
-                       bool FlipZ) 
+                   f32 NdcBottom, f32 NdcTop,
+                   f32 NdcNear, f32 NdcFar,
+                   f32 Left, f32 Right, 
+                   f32 Bottom, f32 Top,
+                   f32 Near, f32 Far,
+                   bool FlipZ) 
 {
     m44f Ret = {};
     Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
@@ -458,6 +458,20 @@ MakeIdentityMatrix() {
 }
 
 
+struct quad2f {
+    union {
+        f32 E[8];
+        
+        struct {
+            v2f Points[4];
+        };
+    };
+    inline f32 operator[](usize index) const { 
+        Assert(index < 8);
+        return E[index]; 
+    }
+    
+};
 
 
 #endif 
