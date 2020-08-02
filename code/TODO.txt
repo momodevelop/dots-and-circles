@@ -1,8 +1,10 @@
-[] Color Library?
+[] Ice skating prototype
+    [] Simple animation system for sandbox
+    [] simple collision system
 [] Camera
 [] Game Coordinates
-[] User Interface
 [] Lines? Debug Lines?
+[] User Interface
 [] PNG loading?
 [] Profiling? 
 [] Introspection?

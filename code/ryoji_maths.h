@@ -169,7 +169,7 @@ Mul(v3f lhs, f32 rhs) {
 
 static inline v3f 
 Div(v3f lhs, f32 rhs) {
-    Assert(IsEqual(rhs, 0.f));
+    Assert(!IsEqual(rhs, 0.f));
     return { lhs.X/ rhs, lhs.Y / rhs, lhs.Z / rhs };
 }
 
@@ -285,8 +285,6 @@ static inline v3f
 Normalize(v3f lhs)  {
     v3f ret = lhs;
     f32 len = Len(lhs);
-    if (IsEqual(len, 1.f))
-        return ret;
     ret /= len;
     return ret;
 }

@@ -39,7 +39,6 @@ using uptr = uintptr_t;
 #define Lerp(start, end, fraction) (start + (end - start)*fraction) 
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
 
-
 static inline void 
 ZeroBlock(void *mem, usize size) {
     for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){

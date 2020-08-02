@@ -5,6 +5,69 @@
 #include "game.h"
 #include "game_assets.h"
 
+
+// NOTE(Momo): Wtf...
+quad2f SpriteAnimationDown[] {
+    {// left
+        0.00f, 0.01f,
+        1.f/3.f, 0.01f,
+        0.00f, 0.25f,
+        1.f/3.f, 0.25f
+    },
+    {// right
+        2.f/3.f, 0.01f,
+        1.00f, 0.01f,
+        2.f/3.f, 0.25f,
+        1.00f, 0.25f
+    },
+};
+
+quad2f SpriteAnimationLeft[] {
+    {// left
+        0.00f, 0.25f,
+        0.34f, 0.25f,
+        0.00f, 0.50f,
+        0.34f, 0.50f
+    },
+    {// right
+        0.67f, 0.25f,
+        1.00f, 0.25f,
+        0.67f, 0.50f,
+        1.00f, 0.50f
+    },
+};
+
+quad2f SpriteAnimationRight[] {
+    {// left
+        0.00f, 0.50f,
+        0.34f, 0.50f,
+        0.00f, 0.75f,
+        0.34f, 0.75f
+    },
+    {// right
+        0.67f, 0.50f,
+        1.00f, 0.50f,
+        0.67f, 0.75f,
+        1.00f, 0.75f
+    },
+};
+
+quad2f SpriteAnimationUp[] {
+    {// left
+        0.00f, 0.75f,
+        0.34f, 0.75f,
+        0.00f, 1.00f,
+        0.34f, 1.00f
+    },
+    {// right
+        0.67f, 0.75f,
+        1.00f, 0.75f,
+        0.67f, 1.00f,
+        1.00f, 1.00f
+    },
+};
+
+
 // NOTE(Momo): EC....S?
 struct sandbox_transform_component {
     v3f Scale;
@@ -18,36 +81,73 @@ struct sandbox_renderable_component {
     quad2f TextureCoords;
 };
 
-// TODO(Momo): Animation component
 
-struct sandbox_entity {
-    sandbox_transform_component Transform;
-    sandbox_renderable_component Renderable;
-    f32 Timer;
+struct sandbox_sprite_component {
+    u32 TextureHandle;
+    
+    // NOTE(Momo): Animation Data?
+    quad2f* AnimationArray;
+    u8 AnimationArraySize;
+    u8 AnimationAt;
+    u8 AnimationStopIndex;
+    f32 AnimationTimer;
+    f32 AnimationSpeed;
 };
 
 
-
-static inline void RenderingSystem(sandbox_transform_component* Transform, sandbox_renderable_component* Renderable,
-                                   render_commands* RenderCommands,
-                                   game_assets* Assets) 
+static inline void
+SpriteRenderingSystem(sandbox_transform_component* Transform,
+                      sandbox_sprite_component* Sprite,
+                      render_commands* RenderCommands,
+                      game_assets* Assets,
+                      f32 DeltaTime) 
 {
-    // NOTE(Momo): Render
+    
+    // NOTE(Momo): should be in a seperate system probably
+    Sprite->AnimationTimer += Sprite->AnimationSpeed * DeltaTime;
+    if (Sprite->AnimationTimer >= 1.f) {
+        Sprite->AnimationTimer = 0.f;
+        ++Sprite->AnimationAt;
+        if (Sprite->AnimationAt >= Sprite->AnimationArraySize) {
+            Sprite->AnimationAt = 0;
+        }
+    }
+    
+    
     m44f T = TranslationMatrix(Transform->Position);
     m44f R = RotationZMatrix(Transform->Rotation);
     m44f S = ScaleMatrix(Transform->Scale);
     
+    
     // TODO(Momo): This part should be done by renderer?
     PushCommandTexturedQuad(RenderCommands, 
-                            Renderable->Colors, 
+                            {1.f, 1.f, 1.f, 1.f}, 
                             T*R*S,
-                            Assets->Textures[Renderable->TextureHandle],
-                            {
-                                0.5f, 0.5f, // top right
-                                0.5f, 0.f, // bottom right
-                                0.f, 0.f, // bottom left
-                                0.f, 0.5f,  // top left
-                            });
+                            Assets->Textures[Sprite->TextureHandle],
+                            Sprite->AnimationArray[Sprite->AnimationAt]);
+}
+
+struct sandbox_physics_component {
+    v3f Velocity;
+    v3f Acceleration;
+};
+
+// TODO(Momo): Animation component
+struct sandbox_entity {
+    sandbox_transform_component Transform;
+    sandbox_physics_component Physics;
+    sandbox_sprite_component Sprite;
+};
+
+static inline void
+PhysicsSystem(sandbox_transform_component* Transform,
+              sandbox_physics_component* Physics,
+              f32 DeltaTime) 
+
+{
+    Physics->Velocity += Physics->Acceleration * DeltaTime;
+    Transform->Position += Physics->Velocity * DeltaTime;
+    Physics->Acceleration = {};
 }
 
 static inline void
@@ -56,61 +156,43 @@ Update(sandbox_entity* Entity,
        render_commands * RenderCommands, 
        f32 DeltaTime) {
     
-    // NOTE(Momo): Update
-    Entity->Transform.Rotation +=  DeltaTime;
+    PhysicsSystem(&Entity->Transform, &Entity->Physics, DeltaTime);
     
-    RenderingSystem(&Entity->Transform, 
-                    &Entity->Renderable, 
-                    RenderCommands, 
-                    Assets);
-    
+    SpriteRenderingSystem(&Entity->Transform, 
+                          &Entity->Sprite, 
+                          RenderCommands, 
+                          Assets,
+                          DeltaTime);
 }
-
 
 struct game_mode_sandbox {
     static constexpr u8 TypeId = 2;
-    static constexpr u32 TotalEntities = 2500;
-    sandbox_entity Entities[TotalEntities];
+    sandbox_entity Player;
 };
-
 
 static inline void
 InitMode(game_mode_sandbox* Mode, game_state* GameState) {
-    // NOTE(Momo): Create entities
-    f32 offsetX = -700.f;
-    f32 offsetY = -200.f;
-    f32 offsetDeltaX = 5.f;
-    f32 offsetDeltaY = 5.f;
-    for (u32 i = 0; i < game_mode_sandbox::TotalEntities; ++i)
-    {
-        Mode->Entities[i].Transform.Position = { offsetX, offsetY, 0.f };
-        Mode->Entities[i].Transform.Rotation = 0.f;
-        Mode->Entities[i].Transform.Scale = { 5.f, 5.f };
-        
-        Mode->Entities[i].Renderable.Colors = { 1.f, 1.f, 1.f, 0.5f };
-        Mode->Entities[i].Renderable.TextureCoords = {
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            0.0f, 0.0f,
-            1.0f, 0.0f
-        };
-        
-        if ( i < (game_mode_sandbox::TotalEntities / 3))
-            Mode->Entities[i].Renderable.TextureHandle = 1;
-        else if ( i < (game_mode_sandbox::TotalEntities / 3 * 2))
-            Mode->Entities[i].Renderable.TextureHandle = 2;
-        else if ( i < game_mode_sandbox::TotalEntities)
-            Mode->Entities[i].Renderable.TextureHandle = 0;
-        
-        offsetX += offsetDeltaX;
-        if (offsetX >= 700.f) {
-            offsetX = -700.f;
-            offsetY += offsetDeltaY;
-        }
-        
-    }
+    
+    sandbox_entity* Player = &Mode->Player;
+    
+    Player->Transform.Position = {};
+    Player->Transform.Rotation = 0.f;
+    Player->Transform.Scale = { 48.f * 2, 48.f * 2 };
+    
+    Player->Physics = {};
+    
+    Player->Sprite.TextureHandle = GameTextureType_karu;
+    Player->Sprite.AnimationArray = SpriteAnimationDown;
+    Player->Sprite.AnimationArraySize = ArrayCount(SpriteAnimationDown);
+    Player->Sprite.AnimationAt = 0;
+    Player->Sprite.AnimationStopIndex = 0;
+    Player->Sprite.AnimationTimer = 0.f;
+    Player->Sprite.AnimationSpeed = 10.f;
+    
+    
     Log("Sandbox state initialized!");
 }
+
 
 static inline void
 UpdateMode(game_mode_sandbox* Mode,
@@ -125,14 +207,36 @@ UpdateMode(game_mode_sandbox* Mode,
         return;
     }
 #endif
-    PushCommandClear(RenderCommands, { 0.0f, 0.0f, 0.0f, 0.f });
+    auto* Player = &Mode->Player;
+    f32 PlayerSpeed = 500.f;
+    v3f Direction = {};
     
-    for (u32 i = 0; i < game_mode_sandbox::TotalEntities; ++i) {
-        Update(&Mode->Entities[i], 
-               GameState->Assets, 
-               RenderCommands, 
-               DeltaTime);
+    // NOTE(Momo): Player controls
+    if(IsDown(Input->ButtonLeft)) {
+        Direction.X = -1.f;
+        Player->Sprite.AnimationArray = SpriteAnimationLeft;
+    };
+    
+    if(IsDown(Input->ButtonRight)) {
+        Direction.X = 1.f;
+        Player->Sprite.AnimationArray = SpriteAnimationRight;
     }
+    
+    if(IsDown(Input->ButtonUp)) {
+        Direction.Y = 1.f;
+        Player->Sprite.AnimationArray = SpriteAnimationUp;
+    };
+    if(IsDown(Input->ButtonDown)) {
+        Direction.Y = -1.f;
+        Player->Sprite.AnimationArray = SpriteAnimationDown;
+    }
+    if (Len(Direction) > 0.f) 
+        Player->Physics.Acceleration = Normalize(Direction) * PlayerSpeed;
+    
+    PushCommandClear(RenderCommands, { 0.65f, 0.9f, 1.0f, 0.f });
+    Update(Player, 
+           GameState->Assets, 
+           RenderCommands, 
+           DeltaTime);
 }
-
 #endif //GAME_MODE_SANDBOX_H

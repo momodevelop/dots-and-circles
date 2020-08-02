@@ -22,8 +22,6 @@ union game_input {
     };
 };
 
-
-
 static inline void
 Update(game_input* Input) {
     for (auto&& itr : Input->Buttons) {

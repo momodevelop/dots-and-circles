@@ -26,6 +26,7 @@ enum game_texture_type {
     GameTextureType_blank,
     GameTextureType_ryoji,
     GameTextureType_yuu,
+    GameTextureType_karu,
     GameTextureType_max,
 };
 

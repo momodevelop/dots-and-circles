@@ -38,7 +38,6 @@ GameUpdate(game_memory* GameMemory,
             EndTemporaryMemory(TempMemory);
         }
         {
-            
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/yuu.bmp";
             u32 Filesize = Platform->GetFileSize(Filepath);
@@ -58,6 +57,17 @@ GameUpdate(game_memory* GameMemory,
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
             LoadTexture(GameAssets, GameTextureType_blank, BitmapMemory);
             PushCommandLinkTexture(RenderCommands, GameAssets->Textures[GameTextureType_blank]);
+            EndTemporaryMemory(TempMemory);
+        }
+        {
+            auto TempMemory = BeginTemporaryMemory(MainArena);
+            const char* Filepath = "assets/karu.bmp";
+            u32 Filesize = Platform->GetFileSize(Filepath);
+            Assert(Filesize);
+            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
+            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
+            LoadTexture(GameAssets, GameTextureType_karu, BitmapMemory);
+            PushCommandLinkTexture(RenderCommands, GameAssets->Textures[GameTextureType_karu]);
             EndTemporaryMemory(TempMemory);
         }
         

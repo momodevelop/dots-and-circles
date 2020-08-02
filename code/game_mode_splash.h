@@ -117,10 +117,10 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[0].StartX = -1000.f;
         Mode->SplashImg[0].EndX = -200.f;
         Mode->SplashImg[0].TextureCoords = {
-            0.0f, 1.0f,  // top left
-            1.0f, 1.0f, // top right
-            0.f, 0.f, // bottom left
-            1.0f, 0.f, // bottom right
+            0.0f, 0.0f,  // top left
+            1.0f, 0.0f, // top right
+            0.f, 1.f, // bottom left
+            1.0f, 1.f, // bottom right
         };
         
         Mode->SplashImg[1].Position = { 0.f };
@@ -134,10 +134,10 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[1].StartX = 1000.f;
         Mode->SplashImg[1].EndX = 200.f;
         Mode->SplashImg[1].TextureCoords = {
-            0.0f, 0.5f,  // top left
-            0.5f, 0.5f, // top right
-            0.f, 0.f, // bottom left
-            0.5f, 0.f, // bottom right
+            0.0f, 0.0f,  // top left
+            1.0f, 0.0f, // top right
+            0.f, 1.f, // bottom left
+            1.0f, 1.f, // bottom right
         };
         
         Mode->SplashBlackout.Position = { 0.f, 0.f, 1.0f };
