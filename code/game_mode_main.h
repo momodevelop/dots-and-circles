@@ -45,7 +45,7 @@ Update(main_image_entity* Entity,
     PushCommandTexturedQuad(RenderCommands, 
                             Entity->Colors, 
                             T*S,
-                            Assets->Textures[Entity->TextureHandle],
+                            Entity->TextureHandle,
                             {
                                 0.5f, 0.5f, // top right
                                 0.5f, 0.f, // bottom right
@@ -88,7 +88,7 @@ Update(main_blackout_entity* Entity,
     PushCommandTexturedQuad(RenderCommands, 
                             Entity->Colors, 
                             T*S,
-                            Assets->Textures[Entity->TextureHandle],
+                            Entity->TextureHandle,
                             {
                                 0.5f, 0.5f, // top right
                                 0.5f, 0.f, // bottom right
@@ -114,7 +114,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 200.f, 200.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].TextureHandle = GameTextureType_yuu;
+        Mode->SplashImg[0].TextureHandle = GameBitmapHandle_Yuu;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 5.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -125,7 +125,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 200.f, 200.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].TextureHandle = GameTextureType_ryoji;
+        Mode->SplashImg[1].TextureHandle = GameBitmapHandle_Ryoji;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 5.f;
         Mode->SplashImg[1].Timer = 0.f;
@@ -136,7 +136,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Mode->SplashBlackout.Position = { 0.f, 0.f, 1.0f };
         Mode->SplashBlackout.Scale = { 800.f, 450.f };
         Mode->SplashBlackout.Colors = { 0.f, 0.f, 0.f, 0.0f };
-        Mode->SplashBlackout.TextureHandle = GameTextureType_blank;
+        Mode->SplashBlackout.TextureHandle = GameBitmapHandle_Blank;
         Mode->SplashBlackout.CountdownTimer = 0.f;
         Mode->SplashBlackout.CountdownDuration = 8.f;
         Mode->SplashBlackout.Timer = 0.f;

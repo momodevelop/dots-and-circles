@@ -33,8 +33,10 @@ GameUpdate(game_memory* GameMemory,
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameTextureType_ryoji, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands, GameAssets->Textures[GameTextureType_ryoji]);
+            LoadTexture(GameAssets, GameBitmapHandle_Ryoji, BitmapMemory);
+            PushCommandLinkTexture(RenderCommands,
+                                   GetBitmap(GameAssets, GameBitmapHandle_Ryoji),
+                                   GameBitmapHandle_Ryoji);
             EndTemporaryMemory(TempMemory);
         }
         {
@@ -44,8 +46,10 @@ GameUpdate(game_memory* GameMemory,
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameTextureType_yuu, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands, GameAssets->Textures[GameTextureType_yuu]);
+            LoadTexture(GameAssets, GameBitmapHandle_Yuu, BitmapMemory);
+            PushCommandLinkTexture(RenderCommands,
+                                   GetBitmap(GameAssets, GameBitmapHandle_Yuu), 
+                                   GameBitmapHandle_Yuu);
             EndTemporaryMemory(TempMemory);
         }
         {
@@ -55,8 +59,10 @@ GameUpdate(game_memory* GameMemory,
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameTextureType_blank, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands, GameAssets->Textures[GameTextureType_blank]);
+            LoadTexture(GameAssets, GameBitmapHandle_Blank, BitmapMemory);
+            PushCommandLinkTexture(RenderCommands, 
+                                   GetBitmap(GameAssets, GameBitmapHandle_Blank),
+                                   GameBitmapHandle_Blank);
             EndTemporaryMemory(TempMemory);
         }
         {
@@ -66,8 +72,10 @@ GameUpdate(game_memory* GameMemory,
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameTextureType_karu, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands, GameAssets->Textures[GameTextureType_karu]);
+            LoadTexture(GameAssets, GameBitmapHandle_Karu, BitmapMemory);
+            PushCommandLinkTexture(RenderCommands, 
+                                   GetBitmap(GameAssets, GameBitmapHandle_Karu),
+                                   GameBitmapHandle_Karu);
             EndTemporaryMemory(TempMemory);
         }
         

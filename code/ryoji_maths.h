@@ -456,6 +456,11 @@ MakeIdentityMatrix() {
 }
 
 
+struct rect2f {
+    v2f Min;
+    v2f Max;
+};
+
 struct quad2f {
     union {
         f32 E[8];
@@ -470,6 +475,15 @@ struct quad2f {
     }
     
 };
+
+static inline quad2f RectToQuad(rect2f Rect) {
+    return {
+        Rect.Min.X, Rect.Min.Y,
+        Rect.Max.X, Rect.Min.Y,
+        Rect.Min.Y, Rect.Max.Y,
+        Rect.Max.X, Rect.Max.Y
+    };
+}
 
 
 #endif 

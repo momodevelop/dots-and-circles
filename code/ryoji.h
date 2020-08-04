@@ -19,16 +19,16 @@ using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
 
-#define KILOBYTE (1 << 10)
-#define MEGABYTE (1 << 20)
-#define GIGABYTE (1 << 30)
+#define Kilobyte (1 << 10)
+#define Megabyte (1 << 20)
+#define Gigabyte (1 << 30)
 
 #define Abs(x) ((x < 0) ? -x : x)
-#define Max(x, y) ((x > y) x : y)
-#define Min(x, y) ((x < y) x : y)
-#define Kilobytes(num) (KILOBYTE * num)
-#define Megabytes(num) (MEGABYTE * num)
-#define Gigabytes(num) (GIGABYTE * num)
+#define Maximum(x, y) ((x > y) x : y)
+#define Minimum(x, y) ((x < y) x : y)
+#define Kilobytes(num) (Kilobyte * num)
+#define Megabytes(num) (Megabyte * num)
+#define Gigabytes(num) (Gigabyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 #define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #define TwoToOne(row, col, width) (col + row * width) 
@@ -38,6 +38,7 @@ using uptr = uintptr_t;
 #define IsMasked(flag, mask) ((flag & mask) > 0)
 #define Lerp(start, end, fraction) (start + (end - start)*fraction) 
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
+
 
 static inline void 
 ZeroBlock(void *mem, usize size) {

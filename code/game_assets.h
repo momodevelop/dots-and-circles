@@ -3,6 +3,7 @@
 
 #include "ryoji.h"
 #include "ryoji_arenas.h"
+#include "ryoji_asset_types.h"
 
 // TODO(Momo): Remove stdlib and stdio 
 #include <stdlib.h>
@@ -12,35 +13,19 @@ struct color_rgba {
     u8 Red, Green, Blue, Alpha;
 };
 
-
-struct bitmap {
-    u32 Width;
-    u32 Height;
-    
-    // NOTE(Momo): Array of pixels. Do we want to store size?
-    color_rgba* Pixels; 
-    
+enum game_bitmap_handle : u8 {
+    GameBitmapHandle_Blank,
+    GameBitmapHandle_Ryoji,
+    GameBitmapHandle_Yuu,
+    GameBitmapHandle_Karu,
+    GameBitmapHandle_Max,
 };
-
-enum game_texture_type {
-    GameTextureType_blank,
-    GameTextureType_ryoji,
-    GameTextureType_yuu,
-    GameTextureType_karu,
-    GameTextureType_max,
-};
-
-struct game_texture {
-    bitmap Bitmap;
-    game_texture_type Handle;
-};
-
-
 
 struct game_assets {
     memory_arena Arena;
-    game_texture Textures[GameTextureType_max];
+    bitmap Bitmaps[GameBitmapHandle_Max];
 };
+
 
 static inline void
 Init(game_assets* Assets, memory_arena* Arena, usize Capacity) {
@@ -49,8 +34,30 @@ Init(game_assets* Assets, memory_arena* Arena, usize Capacity) {
 }
 
 
-#define MapTo16(buffer, index) (buffer[index] | (buffer[index+1] << 8))
-#define MapTo32(buffer, index) (buffer[index] | (buffer[index+1] << 8) |  (buffer[index+2] << 16) | (buffer[index+3] << 24)) 
+static inline bitmap 
+GetBitmap(game_assets* Assets, game_bitmap_handle BitmapHandle) {
+    Assert(BitmapHandle >= 0 && BitmapHandle < GameBitmapHandle_Max);
+    return Assets->Bitmaps[BitmapHandle];
+}
+
+static inline u32 
+Read32(const u8* P) {
+#if BIG_ENDIAN
+    return P[0] << 24 | (P[1] << 18) |  (P[2] << 8) | (P[3]);
+#else
+    return P[0] | (P[1] << 8) |  (P[2] << 16) | (P[3] << 24);
+#endif
+}
+
+
+static inline u16
+Read16(const u8* P) {
+#if BIG_ENDIAN
+    return  (P[0] << 8) | P[1];
+#else
+    return  (P[0]) | (P[1] << 8);
+#endif
+}
 
 
 // TODO(Momo): Replace malloc with arena? Or platform memory code 
@@ -60,10 +67,10 @@ DebugMakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
     Ret.Width = Width;
     Ret.Height = Height;
     
-    usize Count = Width * Height;
-    Ret.Pixels = PushArray<color_rgba>(Arena, Count);
+    usize Count = Width * Height * sizeof(color_rgba);
+    Ret.Pixels = PushBlock(Arena, Count, alignof(color_rgba));
     Assert(Ret.Pixels);
-    ZeroDynamicArray(Ret.Pixels, Count);
+    ZeroBlock(Ret.Pixels, Count);
     return Ret;
 }
 
@@ -72,6 +79,8 @@ DebugMakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
 // TODO(Momo): Replace malloc with arena
 static inline bitmap
 DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
+    
+    
     constexpr u8 kFileHeaderSize = 14;
     constexpr u8 kInfoHeaderSize = 124;
     constexpr u8 kCompression = 3;
@@ -80,72 +89,63 @@ DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     
     const u8* const Memory = (const u8*)BmpMemory;
     
-    Assert(MapTo16(Memory, 0) == kSignature);
-    Assert(MapTo16(Memory, kFileHeaderSize + 14) == kBitsPerPixel);
-    Assert(MapTo32(Memory, kFileHeaderSize + 16) == kCompression);
+    Assert(Read16(Memory +  0) == kSignature);
+    Assert(Read16(Memory + kFileHeaderSize + 14) == kBitsPerPixel);
+    Assert(Read32(Memory + kFileHeaderSize + 16) == kCompression);
     
-    u32 Width = MapTo32(Memory,  kFileHeaderSize + 4);
-    u32 Height = MapTo32(Memory,  kFileHeaderSize + 8);
+    u32 Width = Read32(Memory + kFileHeaderSize + 4);
+    u32 Height = Read32(Memory + kFileHeaderSize + 8);
     bitmap Ret = DebugMakeEmptyBitmap(Width, Height, Arena);
     
-    u32 Offset = MapTo32(Memory, 10);
-    u32 RedMask = MapTo32(Memory, kFileHeaderSize + 40);
-    u32 GreenMask = MapTo32(Memory, kFileHeaderSize + 44);
-    u32 BlueMask = MapTo32(Memory, kFileHeaderSize + 48);
-    u32 AlphaMask = MapTo32(Memory, kFileHeaderSize + 52);
+    u32 Offset = Read32(Memory +  10);
+    u32 RedMask = Read32(Memory + kFileHeaderSize + 40);
+    u32 GreenMask = Read32(Memory +  kFileHeaderSize + 44);
+    u32 BlueMask = Read32(Memory +  kFileHeaderSize + 48);
+    u32 AlphaMask = Read32(Memory + kFileHeaderSize + 52);
     
+    // NOTE(Momo): Treat Pixels as color_rgba
+    color_rgba* RetPixels = (color_rgba*)Ret.Pixels;
     for (u32 i = 0; i < Ret.Width * Ret.Height; ++i) {
         const u8* PixelLocation = Memory + Offset + i * sizeof(color_rgba);
-        u32 Pixel = *(u32*)(PixelLocation);
-        
+        u32 PixelData = *(u32*)(PixelLocation);
         // TODO(Momo): Fill in pixels as if it's an array
         u32 mask = RedMask;
         if (mask > 0) {
-            u32 color = Pixel & mask;
+            u32 color = PixelData & mask;
             while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            Ret.Pixels[i].Red = (u8)color;
+            RetPixels[i].Red = (u8)color;
         }
         
         mask = GreenMask;
         if (mask > 0) {
-            u32 color = Pixel & mask;
+            u32 color = PixelData & mask;
             while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            Ret.Pixels[i].Green = (u8)color;
+            RetPixels[i].Green = (u8)color;
         }
         
         mask = BlueMask;
         if (mask > 0) {
-            u32 color = Pixel & mask;
+            u32 color = PixelData & mask;
             while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            Ret.Pixels[i].Blue = (u8)color;
+            RetPixels[i].Blue = (u8)color;
         }
         
         mask = AlphaMask;
         if(mask > 0) {
-            u32 color = Pixel & mask;
+            u32 color = PixelData & mask;
             while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            Ret.Pixels[i].Alpha = (u8)color;
+            RetPixels[i].Alpha = (u8)color;
         }
-        
     }
-    
-    
     return Ret;
 }
 
-
-
-#undef MapTo16
-#undef MapTo32
-
-
-static inline void
-LoadTexture(game_assets *Assets, game_texture_type Type, void* BitmapMemory) {
-    Assert(Type < GameTextureType_max);
+inline void
+LoadTexture(game_assets *Assets, game_bitmap_handle BitmapHandle, void* BitmapMemory) {
+    Assert(BitmapHandle < GameBitmapHandle_Max);
     
     // TODO(Momo): If type is already used, free the bitmap?
-    Assets->Textures[Type].Bitmap = DebugMakeBitmapFromBmp(BitmapMemory, &Assets->Arena);
-    Assets->Textures[Type].Handle = Type;
+    Assets->Bitmaps[BitmapHandle] = DebugMakeBitmapFromBmp(BitmapMemory, &Assets->Arena);
 }
 
 

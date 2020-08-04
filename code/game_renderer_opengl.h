@@ -48,7 +48,7 @@ struct renderer_opengl {
     GLuint BlankTexture;
     
     // NOTE(Momo): A table mapping 'game texture handler' <-> 'opengl texture handler'  
-    GLuint GameToRendererTextureTable[GameTextureType_max] = {};
+    GLuint GameToRendererTextureTable[GameBitmapHandle_Max] = {};
     
 };
 
@@ -82,12 +82,12 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
     constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\n\
-                                                                                                                                                                                layout(location=2) in vec2 aTexCoord[4];\n\
-                                                                                                                                                                                                                        \nlayout(location=6) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
-                                                                mTexCoord = aTexCoord[gl_VertexID];\n\
-                                                                                             mTexCoord.y = 1.0 - mTexCoord.y;\n\
-                                                                                                                                                                                                                                                                                        }";
+                                                                                                                                                                                                                            layout(location=2) in vec2 aTexCoord[4];\n\
+                                                                                                                                                                                                                                                                    \nlayout(location=6) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
+                                                                                                            mTexCoord = aTexCoord[gl_VertexID];\n\
+                                                                                                                                         mTexCoord.y = 1.0 - mTexCoord.y;\n\
+                                                                                                                                                                                                                                                                                                                                    }";
     
     
 #if 1
@@ -95,7 +95,7 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     
 #else
     constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                            fragColor.x = mTexCoord.x; fragColor.y = mTexCoord.y; fragColor.z = 0.0; fragColor.w = 1.0; \n}";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        fragColor.x = mTexCoord.x; fragColor.y = mTexCoord.y; fragColor.z = 0.0; fragColor.w = 1.0; \n}";
 #endif
     
     glEnable(GL_DEPTH_TEST);
@@ -188,8 +188,8 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     GLint result;
     glGetProgramiv(Renderer->Shader, GL_LINK_STATUS, &result);
     if (result != GL_TRUE) {
-        char msg[KILOBYTE];
-        glGetProgramInfoLog(Renderer->Shader, KILOBYTE, nullptr, msg);
+        char msg[Kilobyte];
+        glGetProgramInfoLog(Renderer->Shader, Kilobyte, nullptr, msg);
         // TODO(Momo): Log?
         return false;
     }
@@ -235,17 +235,17 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                 using data_t = render_command_data_link_texture;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
-                if (Renderer->GameToRendererTextureTable[Data->Texture.Handle] != 0) {
+                if (Renderer->GameToRendererTextureTable[Data->TextureHandle] != 0) {
                     // TODO(Momo): unload and reload texture
                 }
-                GLuint* const TextureTableEntry = &Renderer->GameToRendererTextureTable[Data->Texture.Handle];
+                GLuint* const TextureTableEntry = &Renderer->GameToRendererTextureTable[Data->TextureHandle];
                 glCreateTextures(GL_TEXTURE_2D, 1, TextureTableEntry);
-                glTextureStorage2D((*TextureTableEntry), 1, GL_RGBA8, Data->Texture.Bitmap.Width, Data->Texture.Bitmap.Height);
+                glTextureStorage2D((*TextureTableEntry), 1, GL_RGBA8, Data->TextureBitmap.Width, Data->TextureBitmap.Height);
                 glTextureSubImage2D((*TextureTableEntry), 
                                     0, 0, 0, 
-                                    Data->Texture.Bitmap.Width, Data->Texture.Bitmap.Height, 
+                                    Data->TextureBitmap.Width, Data->TextureBitmap.Height, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
-                                    Data->Texture.Bitmap.Pixels);
+                                    Data->TextureBitmap.Pixels);
                 
             } break;
             case render_command_data_textured_quad::TypeId: {
@@ -253,8 +253,8 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
-                u32 GameTextureHandle = Data->Texture.Handle;
-                GLuint RendererTextureHandle = Renderer->GameToRendererTextureTable[GameTextureHandle];
+                u32 GameBitmapHandle = Data->TextureHandle;
+                GLuint RendererTextureHandle = Renderer->GameToRendererTextureTable[GameBitmapHandle];
                 
                 if (RendererTextureHandle == 0) {
                     // TODO(Momo): Maybe render a dummy texture?
@@ -320,29 +320,4 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                                             LastDrawnInstanceIndex);
     }
 }
-
-
-
-#undef renderer_vbo_Model
-#undef renderer_vbo_Indices
-#undef renderer_vbo_Colors
-#undef renderer_vbo_Texture
-#undef renderer_vbo_Transform
-#undef renderer_vbo_Max
-
-#undef renderer_atb_Model
-#undef renderer_atb_Colors
-#undef renderer_atb_Texture1
-#undef renderer_atb_Texture2
-
-#undef renderer_atb_Transform1 
-#undef renderer_atb_Transform2 
-#undef renderer_atb_Transform3 
-#undef renderer_atb_Transform4 
-
-#undef renderer_vaobind_Model  
-#undef renderer_vaobind_Colors 
-#undef renderer_vaobind_Texture 
-#undef renderer_vaobind_Transform 
-
 #endif

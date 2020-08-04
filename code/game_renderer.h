@@ -22,9 +22,7 @@ PushCommandClear(render_commands* Commands, c4f Colors) {
 
 struct render_command_data_textured_quad {
     static constexpr u32 TypeId = 1;
-    game_texture Texture;
-    
-    //u32 TextureHandle;
+    u32 TextureHandle;
     c4f Colors;
     m44f Transform;
     
@@ -32,12 +30,11 @@ struct render_command_data_textured_quad {
 };
 
 
-// TODO(Momo): Change TextureHandle and TextureData to use game_texture
 static inline void
 PushCommandTexturedQuad(render_commands* Commands, 
                         c4f Colors, 
                         m44f Transform, 
-                        game_texture Texture,
+                        u32 TextureHandle,
                         quad2f TextureCoords) 
 {
     using data_t = render_command_data_textured_quad;
@@ -45,24 +42,25 @@ PushCommandTexturedQuad(render_commands* Commands,
     
     Data->Colors = Colors;
     Data->Transform = Transform;
-    Data->Texture = Texture;
+    Data->TextureHandle = TextureHandle;
     Data->TextureCoords = TextureCoords;
 }
 
-// TODO(Momo): A bit dangerous since I'm just transfering bitmap data by pointer.
-// The pointer might be invalid during the transfer.
 struct render_command_data_link_texture {
     static constexpr u32 TypeId = 2;
-    game_texture Texture;
-    //bitmap Bitmap;
-    //u32 GameTextureHandle;
+    bitmap TextureBitmap;
+    u32 TextureHandle;
 };
 
+
 static inline void 
-PushCommandLinkTexture(render_commands* Commands, game_texture Texture) {
+PushCommandLinkTexture(render_commands* Commands, 
+                       bitmap TextureBitmap, 
+                       u32 TextureHandle) {
     using data_t = render_command_data_link_texture;
     auto* Data = PushCommand<data_t>(Commands);
-    Data->Texture = Texture;
+    Data->TextureBitmap = TextureBitmap;
+    Data->TextureHandle = TextureHandle;
 }
 
 #endif //GAME_RENDERER_H
