@@ -72,23 +72,73 @@ GetBitmapFromSpritesheet(game_assets* Assets, game_spritesheet_handle Spriteshee
     return GetBitmap(Assets, GetSpritesheet(Assets, SpritesheetHandle).BitmapHandle);
 }
 
+// TODO(Momo): Think of a more general way that ignores endianness? 
 static inline u32 
-Read32(const u8* P) {
+Read32(const u8* P, bool isBigEndian) {
+    union {
+        u32 V;
+        u8 C[4];
+    } Ret;
+    
 #if BIG_ENDIAN
-    return P[0] << 24 | (P[1] << 18) |  (P[2] << 8) | (P[3]);
+    if (isBigEndian) {
+        Ret.C[0] = P[0];
+        Ret.C[1] = P[1];
+        Ret.C[2] = P[2];
+        Ret.C[3] = P[3];
+    }
+    else {
+        Ret.C[0] = P[3];
+        Ret.C[1] = P[2];
+        Ret.C[2] = P[1];
+        Ret.C[3] = P[0];
+    }
 #else
-    return P[0] | (P[1] << 8) |  (P[2] << 16) | (P[3] << 24);
+    if (isBigEndian) {
+        Ret.C[0] = P[3];
+        Ret.C[1] = P[2];
+        Ret.C[2] = P[1];
+        Ret.C[3] = P[0];
+    }
+    else {
+        Ret.C[0] = P[0];
+        Ret.C[1] = P[1];
+        Ret.C[2] = P[2];
+        Ret.C[3] = P[3];
+    }
 #endif
+    return Ret.V;
+    
 }
 
 
 static inline u16
-Read16(const u8* P) {
+Read16(const u8* P, bool isBigEndian) {
+    union {
+        u16 V;
+        u8 C[2];
+    } Ret;
+    
 #if BIG_ENDIAN
-    return  (P[0] << 8) | P[1];
+    if (isBigEndian) {
+        Ret.C[0] = P[0];
+        Ret.C[1] = P[1];
+    }
+    else {
+        Ret.C[0] = P[1];
+        Ret.C[1] = P[0];
+    }
 #else
-    return  (P[0]) | (P[1] << 8);
+    if (isBigEndian) {
+        Ret.C[0] = P[1];
+        Ret.C[1] = P[0];
+    }
+    else {
+        Ret.C[0] = P[0];
+        Ret.C[1] = P[1];
+    }
 #endif
+    return Ret.V;
 }
 
 
@@ -142,19 +192,19 @@ MakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     
     const u8* const Memory = (const u8*)BmpMemory;
     
-    Assert(Read16(Memory +  0) == kSignature);
-    Assert(Read16(Memory + kFileHeaderSize + 14) == kBitsPerPixel);
-    Assert(Read32(Memory + kFileHeaderSize + 16) == kCompression);
+    Assert(Read16(Memory +  0, false) == kSignature);
+    Assert(Read16(Memory + kFileHeaderSize + 14, false) == kBitsPerPixel);
+    Assert(Read32(Memory + kFileHeaderSize + 16, false) == kCompression);
     
-    u32 Width = Read32(Memory + kFileHeaderSize + 4);
-    u32 Height = Read32(Memory + kFileHeaderSize + 8);
+    u32 Width = Read32(Memory + kFileHeaderSize + 4, false);
+    u32 Height = Read32(Memory + kFileHeaderSize + 8, false);
     bitmap Ret = MakeEmptyBitmap(Width, Height, Arena);
     
-    u32 Offset = Read32(Memory +  10);
-    u32 RedMask = Read32(Memory + kFileHeaderSize + 40);
-    u32 GreenMask = Read32(Memory +  kFileHeaderSize + 44);
-    u32 BlueMask = Read32(Memory +  kFileHeaderSize + 48);
-    u32 AlphaMask = Read32(Memory + kFileHeaderSize + 52);
+    u32 Offset = Read32(Memory +  10, false);
+    u32 RedMask = Read32(Memory + kFileHeaderSize + 40, false);
+    u32 GreenMask = Read32(Memory +  kFileHeaderSize + 44, false);
+    u32 BlueMask = Read32(Memory +  kFileHeaderSize + 48, false);
+    u32 AlphaMask = Read32(Memory + kFileHeaderSize + 52, false);
     
     // NOTE(Momo): Treat Pixels as color_rgba
     color_rgba* RetPixels = (color_rgba*)Ret.Pixels;

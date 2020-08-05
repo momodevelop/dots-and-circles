@@ -1,13 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ryoji_common.cpp"
+
 static inline u32 
-Read32(const u8* P) {
+Read32(const u8* P, bool isBigEndian) {
+    union {
+        u32 V;
+        u8 C[4];
+    } Ret;
+    
 #if BIG_ENDIAN
-    return P[0] << 24 | (P[1] << 18) |  (P[2] << 8) | (P[3]);
+    if (isBigEndian) {
+        Ret.C[0] = P[0];
+        Ret.C[1] = P[1];
+        Ret.C[2] = P[2];
+        Ret.C[3] = P[3];
+    }
+    else {
+        Ret.C[0] = P[3];
+        Ret.C[1] = P[2];
+        Ret.C[2] = P[1];
+        Ret.C[3] = P[0];
+    }
 #else
-    return P[0] | (P[1] << 8) |  (P[2] << 16) | (P[3] << 24);
+    if (isBigEndian) {
+        Ret.C[0] = P[3];
+        Ret.C[1] = P[2];
+        Ret.C[2] = P[1];
+        Ret.C[3] = P[0];
+    }
+    else {
+        Ret.C[0] = P[0];
+        Ret.C[1] = P[1];
+        Ret.C[2] = P[2];
+        Ret.C[3] = P[3];
+    }
 #endif
+    return Ret.V;
+    
 }
 
 struct bitmap {
@@ -15,6 +45,17 @@ struct bitmap {
     u32 Height;
     void* Pixels;
 };
+
+struct png_ihdr {
+    u32 Width;
+    u32 Height;
+    u8 BitDepth, ColorType, CompressionMethod, FilterMethod, InterlaceMethod;
+};
+
+static inline void
+PrintIHDR(png_ihdr IHDR) {
+    printf("Width: %d\nHeight: %d\nBitDepth: %d\nColorType: %d\nCompressionMethod: %d\nFilterMethod: %d\nInterlaceMethod: %d\n", IHDR.Width, IHDR.Height, IHDR.BitDepth, IHDR.ColorType, IHDR.CompressionMethod, IHDR.FilterMethod, IHDR.InterlaceMethod); 
+}
 
 constexpr u32 png_header_type_IHDR = 0x49484452;
 constexpr u32 png_header_type_IEND = 0x49454E68;
@@ -57,43 +98,40 @@ bitmap ReadPng(const char* Filepath) {
     printf("It's png!\n");
     
     // NOTE(Momo): Trying to process a IHDR chunk (must be first)
-    u32 Width;
-    u32 Height;
-    u8 BitDepth, ColorType, CompressionMethod, FilterMethod, InterlaceMethod;
+    png_ihdr IHDR = {};
     {
         // Header
-        u32 ChunkLength = Read32(Itr); 
+        u32 ChunkLength = Read32(Itr, true); 
         Itr += sizeof(ChunkLength);
-        u32 ChunkType = Read32(Itr);
+        u32 ChunkType = Read32(Itr, true);
         Itr += sizeof(ChunkType);
-        
         if (ChunkType != png_header_type_IHDR)  {
+            printf("%X\n", ChunkType);
             printf("IHDR not first chunk!\n");
             return {};
         }
         
         // Data?
-        Width = Read32(Itr);
-        Itr += sizeof(Width);
-        Height= Read32(Itr);
-        Itr += sizeof(Height);
-        BitDepth = (*Itr);
-        Itr += sizeof(BitDepth);
-        ColorType = (*Itr));
-        Itr += sizeof(ColorType);
-        CompressionMethod = (*Itr);
-        Itr += sizeof(CompressionMethod);
-        FilterMethod = (*Itr);
-        Itr += sizeof(FilterMethod);
-        InterlaceMethod = (*Itr);
-        Itr += sizeof(InterlaceMathod);
+        IHDR.Width = Read32(Itr, true);
+        Itr += sizeof(IHDR.Width);
+        IHDR.Height= Read32(Itr, true);
+        Itr += sizeof(IHDR.Height);
+        IHDR.BitDepth = (*Itr);
+        Itr += sizeof(IHDR.BitDepth, true);
+        IHDR.ColorType = (*Itr);
+        Itr += sizeof(IHDR.ColorType, true);
+        IHDR.CompressionMethod = (*Itr);
+        Itr += sizeof(IHDR.CompressionMethod, true);
+        IHDR.FilterMethod = (*Itr);
+        Itr += sizeof(IHDR.FilterMethod, true);
+        IHDR.InterlaceMethod = (*Itr);
+        Itr += sizeof(IHDR.InterlaceMethod, true);
         
         // Footer
-        u32 ChunkCrc = Read32(Itr);
+        u32 ChunkCrc = Read32(Itr, true);
         Itr += sizeof(ChunkCrc);
-        
-        
     }
+    PrintIHDR(IHDR);
     
     
     return {};
