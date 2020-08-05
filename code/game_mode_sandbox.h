@@ -7,7 +7,6 @@
 #include "game_assets.h"
 
 
-
 // NOTE(Momo): EC....S?
 struct sandbox_transform_component {
     v3f Scale;
@@ -23,19 +22,15 @@ struct sandbox_renderable_component {
 
 
 struct sandbox_sprite_component {
-    u32 TextureHandle;
+    game_spritesheet_handle SpritesheetHandle;
     
     // NOTE(Momo): Animation Data?
-    quad2f* SpriteFrames;
     u8* AnimeFrames;
     u8 AnimeFramesCount;
     u8 AnimeAt;
     f32 AnimeTimer;
     f32 AnimeSpeed;
 };
-
-
-
 
 static inline void
 SpriteRenderingSystem(sandbox_transform_component* Transform,
@@ -60,14 +55,16 @@ SpriteRenderingSystem(sandbox_transform_component* Transform,
     m44f T = TranslationMatrix(Transform->Position);
     m44f R = RotationZMatrix(Transform->Rotation);
     m44f S = ScaleMatrix(Transform->Scale);
-
     
-    // TODO(Momo): This part should be done by renderer?
+    
+    auto Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
+    auto CurrentFrame = Sprite->AnimeFrames[Sprite->AnimeAt];
+    
     PushCommandTexturedQuad(RenderCommands, 
                             {1.f, 1.f, 1.f, 1.f}, 
                             T*R*S,
-                            Sprite->TextureHandle,
-                            Sprite->SpriteFrames[Sprite->AnimeFrames[Sprite->AnimeAt]]);
+                            Spritesheet.BitmapHandle,
+                            RectToQuad(Spritesheet.Frames[CurrentFrame]));
 }
 
 struct sandbox_physics_component {
@@ -75,11 +72,21 @@ struct sandbox_physics_component {
     v3f Acceleration;
 };
 
-// TODO(Momo): Animation component
+
+enum Direction  {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+};
+
 struct sandbox_entity {
     sandbox_transform_component Transform;
     sandbox_physics_component Physics;
     sandbox_sprite_component Sprite;
+    
+    Direction CurrentDirection;
+    f32 MovementSpeed;
 };
 
 static inline void
@@ -111,8 +118,6 @@ Update(sandbox_entity* Entity,
 
 struct game_mode_sandbox {
     static constexpr u8 TypeId = 2;
-    // NOTE(Momo): Spritesheet data? Animation data???
-    quad2f SpriteFrames[12];
     
     u8 AnimeWalkDown[4];
     u8 AnimeWalkLeft[4];
@@ -129,53 +134,37 @@ struct game_mode_sandbox {
     sandbox_entity Player;
 };
 
+
 static inline void
 InitMode(game_mode_sandbox* Mode, game_state* GameState) {
-    // TODO(Momo): Shift this to some other object?
-    bitmap Bitmap = GetBitmap(GameState->Assets, GameBitmapHandle_Karu);
-    f32 CellWidth = 48.f/Bitmap.Width;
-    f32 CellHeight = 48.f/Bitmap.Height;
-    f32 HalfPixelWidth =  1.f/Bitmap.Width;
-    f32 HalfPixelHeight = 1.f/Bitmap.Height;
     
-    // NOTE(Momo):  Init sprite frames
-    for (u8 r = 0; r < 4; ++r) {
-        for (u8 c = 0; c < 3; ++c) {
-            rect2f Rect = { 
-                c * CellWidth + HalfPixelWidth,
-                r * CellHeight + HalfPixelHeight,
-                (c+1) * CellWidth - HalfPixelWidth,
-                (r+1) * CellHeight - HalfPixelHeight,
-            };
-            Mode->SpriteFrames[TwoToOne(r,c,3)] = RectToQuad(Rect);
-        }
+    // NOTE(Momo): Animations
+    {
+        Mode->AnimeWalkDown[0] = 1; 
+        Mode->AnimeWalkDown[1] = 0;
+        Mode->AnimeWalkDown[2] = 1;
+        Mode->AnimeWalkDown[3] = 2;
+        
+        Mode->AnimeWalkLeft[0] = 4; 
+        Mode->AnimeWalkLeft[1] = 3;
+        Mode->AnimeWalkLeft[2] = 4;
+        Mode->AnimeWalkLeft[3] = 5;
+        
+        Mode->AnimeWalkRight[0] = 7; 
+        Mode->AnimeWalkRight[1] = 6;
+        Mode->AnimeWalkRight[2] = 7;
+        Mode->AnimeWalkRight[3] = 8;
+        
+        Mode->AnimeWalkUp[0] = 10; 
+        Mode->AnimeWalkUp[1] = 9;
+        Mode->AnimeWalkUp[2] = 10;
+        Mode->AnimeWalkUp[3] = 11;
+        
+        Mode->AnimeIdleDown[0] = 1;
+        Mode->AnimeIdleLeft[0] = 4;
+        Mode->AnimeIdleRight[0] = 7;
+        Mode->AnimeIdleUp[0] = 10;
     }
-    
-    
-    Mode->AnimeWalkDown[0] = 1; 
-    Mode->AnimeWalkDown[1] = 0;
-    Mode->AnimeWalkDown[2] = 1;
-    Mode->AnimeWalkDown[3] = 2;
-    
-    Mode->AnimeWalkLeft[0] = 4; 
-    Mode->AnimeWalkLeft[1] = 3;
-    Mode->AnimeWalkLeft[2] = 4;
-    Mode->AnimeWalkLeft[3] = 5;
-    
-    Mode->AnimeWalkRight[0] = 7; 
-    Mode->AnimeWalkRight[1] = 6;
-    Mode->AnimeWalkRight[2] = 7;
-    Mode->AnimeWalkRight[3] = 8;
-    
-    Mode->AnimeWalkUp[0] = 10; 
-    Mode->AnimeWalkUp[1] = 9;
-    Mode->AnimeWalkUp[2] = 10;
-    Mode->AnimeWalkUp[3] = 11;
-    
-    Mode->AnimeIdleDown[0] = 1;
-    Mode->AnimeIdleLeft[0] = 4;
-    Mode->AnimeIdleRight[0] = 7;
-    Mode->AnimeIdleUp[0] = 10;
     
     
     // NOTE(Momo): Init player
@@ -187,25 +176,17 @@ InitMode(game_mode_sandbox* Mode, game_state* GameState) {
     
     Player->Physics = {};
     
-    Player->Sprite.TextureHandle = GameBitmapHandle_Karu;
-    Player->Sprite.SpriteFrames = Mode->SpriteFrames;
+    Player->Sprite.SpritesheetHandle = GameSpritesheetHandle_Karu;
     Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
     Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
     Player->Sprite.AnimeAt = 0;
     Player->Sprite.AnimeTimer = 0.f;
     Player->Sprite.AnimeSpeed = 10.f;
-    
+    Player->MovementSpeed = 400.f;
+    Player->CurrentDirection = DOWN;
     
     Log("Sandbox state initialized!");
 }
-
-
-enum Direction  {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-} CurrentDirection = DOWN;
 
 
 static inline void
@@ -222,7 +203,6 @@ UpdateMode(game_mode_sandbox* Mode,
     }
 #endif
     auto* Player = &Mode->Player;
-    f32 PlayerSpeed = 400.f;
     v3f Direction = {};
     b8 IsMovementButtonDown = false;
     // NOTE(Momo): Player controls
@@ -230,8 +210,9 @@ UpdateMode(game_mode_sandbox* Mode,
         Direction.X = -1.f;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkLeft;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkLeft);
+        Player->CurrentDirection = LEFT;
         IsMovementButtonDown = true;
-        CurrentDirection = LEFT;
+        
     };
     
     if(IsDown(Input->ButtonRight)) {
@@ -239,7 +220,7 @@ UpdateMode(game_mode_sandbox* Mode,
         Player->Sprite.AnimeFrames = Mode->AnimeWalkRight;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkRight);
         IsMovementButtonDown = true;
-        CurrentDirection = RIGHT;
+        Player->CurrentDirection = RIGHT;
     }
     
     if(IsDown(Input->ButtonUp)) {
@@ -247,28 +228,26 @@ UpdateMode(game_mode_sandbox* Mode,
         Player->Sprite.AnimeFrames = Mode->AnimeWalkUp;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkUp);
         IsMovementButtonDown = true;
-        CurrentDirection = UP;
+        Player->CurrentDirection = UP;
     }
     if(IsDown(Input->ButtonDown)) {
         Direction.Y = -1.f;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
         IsMovementButtonDown = true;
-        CurrentDirection = DOWN;
+        Player->CurrentDirection = DOWN;
     }
     
-    
     if (IsMovementButtonDown) 
-        Player->Physics.Velocity = Normalize(Direction) * PlayerSpeed;
+        Player->Physics.Velocity = Normalize(Direction) * Player->MovementSpeed;
     else {
         Player->Physics.Velocity = {};
         // TODO(Momo): Idle animation?????
-        switch(CurrentDirection) {
+        switch(Player->CurrentDirection) {
             case DOWN: {
                 Player->Sprite.AnimeAt = 0;
                 Player->Sprite.AnimeFrames = Mode->AnimeIdleDown;
                 Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleDown);
-                
             } break;
             case LEFT: {
                 Player->Sprite.AnimeAt = 0;

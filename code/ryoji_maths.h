@@ -84,6 +84,10 @@ struct v2f {
             f32 U;
             f32 V;
         };
+        struct {
+            f32 W;
+            f32 H;
+        };
     };
     
     inline f32 operator[](usize index) const {
@@ -91,6 +95,7 @@ struct v2f {
         return E[index];
     };
 };
+
 
 struct v3f {
     union {
@@ -100,6 +105,10 @@ struct v3f {
         };
         struct {
             v2f XY;
+            f32 _;
+        };
+        struct {
+            v2f WH;
             f32 _;
         };
         struct {

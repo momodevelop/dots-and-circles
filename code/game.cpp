@@ -25,59 +25,83 @@ GameUpdate(game_memory* GameMemory,
         GameState->Assets = GameAssets;
         Init(GameAssets, MainArena, Megabytes(10));
         
-        // NOTE(Momo): Init Assets
-        {
+        // NOTE(Momo): Init Bitmap Assets
+        {// ryoji
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/ryoji.bmp";
             u32 Filesize = Platform->GetFileSize(Filepath);
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameBitmapHandle_Ryoji, BitmapMemory);
+            LoadBitmap(GameAssets, GameBitmapHandle_Ryoji, BitmapMemory);
             PushCommandLinkTexture(RenderCommands,
                                    GetBitmap(GameAssets, GameBitmapHandle_Ryoji),
                                    GameBitmapHandle_Ryoji);
             EndTemporaryMemory(TempMemory);
         }
-        {
+        {// yuu
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/yuu.bmp";
             u32 Filesize = Platform->GetFileSize(Filepath);
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameBitmapHandle_Yuu, BitmapMemory);
+            LoadBitmap(GameAssets, GameBitmapHandle_Yuu, BitmapMemory);
             PushCommandLinkTexture(RenderCommands,
                                    GetBitmap(GameAssets, GameBitmapHandle_Yuu), 
                                    GameBitmapHandle_Yuu);
             EndTemporaryMemory(TempMemory);
         }
-        {
+        {// blank
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/blank.bmp";
             u32 Filesize = Platform->GetFileSize(Filepath);
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameBitmapHandle_Blank, BitmapMemory);
+            LoadBitmap(GameAssets, GameBitmapHandle_Blank, BitmapMemory);
             PushCommandLinkTexture(RenderCommands, 
                                    GetBitmap(GameAssets, GameBitmapHandle_Blank),
                                    GameBitmapHandle_Blank);
             EndTemporaryMemory(TempMemory);
         }
-        {
+        {// karu
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/karu.bmp";
             u32 Filesize = Platform->GetFileSize(Filepath);
             Assert(Filesize);
             void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
             Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadTexture(GameAssets, GameBitmapHandle_Karu, BitmapMemory);
+            LoadBitmap(GameAssets, GameBitmapHandle_Karu, BitmapMemory);
             PushCommandLinkTexture(RenderCommands, 
                                    GetBitmap(GameAssets, GameBitmapHandle_Karu),
                                    GameBitmapHandle_Karu);
             EndTemporaryMemory(TempMemory);
         }
+        
+        // NOTE(Momo): Init Spritesheet Assets
+        {// karu
+            bitmap Bitmap = GetBitmap(GameState->Assets, GameBitmapHandle_Karu);
+            f32 CellWidth = 48.f/Bitmap.Width;
+            f32 CellHeight = 48.f/Bitmap.Height;
+            f32 HalfPixelWidth =  1.f/Bitmap.Width;
+            f32 HalfPixelHeight = 1.f/Bitmap.Height;
+            
+            // NOTE(Momo):  Init sprite frames
+            rect2f Rects[12];
+            for (u8 r = 0; r < 4; ++r) {
+                for (u8 c = 0; c < 3; ++c) {
+                    Rects[TwoToOne(r,c,3)] = { 
+                        c * CellWidth + HalfPixelWidth,
+                        r * CellHeight + HalfPixelHeight,
+                        (c+1) * CellWidth - HalfPixelWidth,
+                        (r+1) * CellHeight - HalfPixelHeight,
+                    };
+                }
+            }
+            LoadSpritesheet(GameAssets, GameSpritesheetHandle_Karu, GameBitmapHandle_Karu, Rects, 12);
+        }
+        
         
         
         // NOTE(Momo): Arena for modes

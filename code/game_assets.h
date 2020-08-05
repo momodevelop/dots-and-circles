@@ -5,15 +5,11 @@
 #include "ryoji_arenas.h"
 #include "ryoji_asset_types.h"
 
-// TODO(Momo): Remove stdlib and stdio 
-#include <stdlib.h>
-#include <stdio.h>
+// TODO(Momo): Kind of want to treat all these different asset types as the same thing...?
 
-struct color_rgba {
-    u8 Red, Green, Blue, Alpha;
-};
 
-enum game_bitmap_handle : u8 {
+// NOTE(Momo): Bitmaps
+enum game_bitmap_handle : u32 {
     GameBitmapHandle_Blank,
     GameBitmapHandle_Ryoji,
     GameBitmapHandle_Yuu,
@@ -21,15 +17,40 @@ enum game_bitmap_handle : u8 {
     GameBitmapHandle_Max,
 };
 
+// NOTE(Momo): Spritesheets
+enum game_spritesheet_handle {
+    GameSpritesheetHandle_Karu,
+    GameSpritesheetHandle_Max,
+};
+
+
+struct game_spritesheet {
+    game_bitmap_handle BitmapHandle;
+    rect2f* Frames;
+    u32 FramesCapacity; 
+};
+
+
+
+
+static inline void
+SetFrame(game_spritesheet* Spritesheet, u32 FrameIndex, rect2f Frame) {
+    Assert(FrameIndex < Spritesheet->FramesCapacity);
+    Spritesheet->Frames[FrameIndex] = Frame;
+}
+
+
+
+// NOTE(Momo): Assets
 struct game_assets {
     memory_arena Arena;
     bitmap Bitmaps[GameBitmapHandle_Max];
+    game_spritesheet Spritesheets[GameSpritesheetHandle_Max];
 };
 
 
 static inline void
 Init(game_assets* Assets, memory_arena* Arena, usize Capacity) {
-    // TODO(Momo): Calculate the amount of memory we actually need
     SubArena(&Assets->Arena, Arena, Capacity);
 }
 
@@ -38,6 +59,17 @@ static inline bitmap
 GetBitmap(game_assets* Assets, game_bitmap_handle BitmapHandle) {
     Assert(BitmapHandle >= 0 && BitmapHandle < GameBitmapHandle_Max);
     return Assets->Bitmaps[BitmapHandle];
+}
+
+static inline game_spritesheet 
+GetSpritesheet(game_assets* Assets, game_spritesheet_handle SpritesheetHandle) {
+    Assert(SpritesheetHandle >= 0 && SpritesheetHandle < GameSpritesheetHandle_Max);
+    return Assets->Spritesheets[SpritesheetHandle];
+}
+
+static inline bitmap
+GetBitmapFromSpritesheet(game_assets* Assets, game_spritesheet_handle SpritesheetHandle) {
+    return GetBitmap(Assets, GetSpritesheet(Assets, SpritesheetHandle).BitmapHandle);
 }
 
 static inline u32 
@@ -60,9 +92,34 @@ Read16(const u8* P) {
 }
 
 
-// TODO(Momo): Replace malloc with arena? Or platform memory code 
+struct color_rgba {
+    u8 Red, Green, Blue, Alpha;
+};
+
+static inline game_spritesheet
+MakeSpritesheet(game_bitmap_handle BitmapHandle, 
+                rect2f* Frames, 
+                u32 FramesCapacity,
+                memory_arena* Arena) 
+{
+    Assert(FramesCapacity > 0);
+    
+    game_spritesheet Ret;
+    
+    Ret.BitmapHandle = BitmapHandle;
+    Ret.Frames = PushArray<rect2f>(Arena, FramesCapacity);
+    Ret.FramesCapacity = FramesCapacity;
+    for (u32 i = 0; i < FramesCapacity; ++i) {
+        Ret.Frames[i] = Frames[i]; 
+    }
+    
+    
+    return Ret;
+}
+
+
 static inline bitmap 
-DebugMakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
+MakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
     bitmap Ret = {};
     Ret.Width = Width;
     Ret.Height = Height;
@@ -76,11 +133,8 @@ DebugMakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
 
 // NOTE(Momo): Only loads 32-bit BMP files
 // TODO(Momo): Replace with asset loading system?
-// TODO(Momo): Replace malloc with arena
 static inline bitmap
-DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
-    
-    
+MakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     constexpr u8 kFileHeaderSize = 14;
     constexpr u8 kInfoHeaderSize = 124;
     constexpr u8 kCompression = 3;
@@ -95,7 +149,7 @@ DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     
     u32 Width = Read32(Memory + kFileHeaderSize + 4);
     u32 Height = Read32(Memory + kFileHeaderSize + 8);
-    bitmap Ret = DebugMakeEmptyBitmap(Width, Height, Arena);
+    bitmap Ret = MakeEmptyBitmap(Width, Height, Arena);
     
     u32 Offset = Read32(Memory +  10);
     u32 RedMask = Read32(Memory + kFileHeaderSize + 40);
@@ -108,7 +162,6 @@ DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     for (u32 i = 0; i < Ret.Width * Ret.Height; ++i) {
         const u8* PixelLocation = Memory + Offset + i * sizeof(color_rgba);
         u32 PixelData = *(u32*)(PixelLocation);
-        // TODO(Momo): Fill in pixels as if it's an array
         u32 mask = RedMask;
         if (mask > 0) {
             u32 color = PixelData & mask;
@@ -141,11 +194,24 @@ DebugMakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
 }
 
 inline void
-LoadTexture(game_assets *Assets, game_bitmap_handle BitmapHandle, void* BitmapMemory) {
+LoadBitmap(game_assets *Assets, 
+           game_bitmap_handle BitmapHandle, 
+           void* BitmapMemory) 
+{
     Assert(BitmapHandle < GameBitmapHandle_Max);
-    
-    // TODO(Momo): If type is already used, free the bitmap?
-    Assets->Bitmaps[BitmapHandle] = DebugMakeBitmapFromBmp(BitmapMemory, &Assets->Arena);
+    Assets->Bitmaps[BitmapHandle] = MakeBitmapFromBmp(BitmapMemory, &Assets->Arena);
+}
+
+// TODO(Momo): Load from file....????
+inline void
+LoadSpritesheet(game_assets* Assets, 
+                game_spritesheet_handle SpritesheetHandle, 
+                game_bitmap_handle TargetBitmapHandle,
+                rect2f* Frames,
+                u32 TotalFrames) 
+{
+    Assert(SpritesheetHandle < GameSpritesheetHandle_Max);
+    Assets->Spritesheets[SpritesheetHandle] = MakeSpritesheet(TargetBitmapHandle, Frames, TotalFrames, &Assets->Arena);
 }
 
 
