@@ -5,6 +5,7 @@ SET me=%~dp0
 SET RootDir=%me%..
 SET CodeDir=%RootDir%\code
 SET BuildDir=%RootDir%\build
+SET Opt=%1%
 
 IF NOT "%Platform%" == "X64" IF NOT "%Platform%" == "x64" (EXIT /b)
 
@@ -27,7 +28,11 @@ rmdir %cd%\assets
 mkdir %cd%\assets
 copy %RootDir%\assets\* %cd%\assets
 
-cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
-cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp  -link %CommonLinkerFlags%
+IF "%Opt%"=="game" (
+	cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
+) ELSE (
+	cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
+	cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp  -link %CommonLinkerFlags%
+)
 
 popd

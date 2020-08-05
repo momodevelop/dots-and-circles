@@ -132,7 +132,6 @@ MakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
 }
 
 // NOTE(Momo): Only loads 32-bit BMP files
-// TODO(Momo): Replace with asset loading system?
 static inline bitmap
 MakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     constexpr u8 kFileHeaderSize = 14;

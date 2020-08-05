@@ -489,7 +489,7 @@ static inline quad2f RectToQuad(rect2f Rect) {
     return {
         Rect.Min.X, Rect.Min.Y,
         Rect.Max.X, Rect.Min.Y,
-        Rect.Min.Y, Rect.Max.Y,
+        Rect.Min.X, Rect.Max.Y,
         Rect.Max.X, Rect.Max.Y
     };
 }

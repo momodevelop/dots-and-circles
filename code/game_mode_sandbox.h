@@ -172,7 +172,7 @@ InitMode(game_mode_sandbox* Mode, game_state* GameState) {
     
     Player->Transform.Position = {};
     Player->Transform.Rotation = 0.f;
-    Player->Transform.Scale = { 48.f * 2, 48.f * 2 };
+    Player->Transform.Scale = { 48.f, 48.f};
     
     Player->Physics = {};
     
@@ -212,31 +212,33 @@ UpdateMode(game_mode_sandbox* Mode,
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkLeft);
         Player->CurrentDirection = LEFT;
         IsMovementButtonDown = true;
-        
     };
     
     if(IsDown(Input->ButtonRight)) {
         Direction.X = 1.f;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkRight;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkRight);
-        IsMovementButtonDown = true;
         Player->CurrentDirection = RIGHT;
+        IsMovementButtonDown = true;
+        
     }
     
     if(IsDown(Input->ButtonUp)) {
         Direction.Y = 1.f;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkUp;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkUp);
-        IsMovementButtonDown = true;
         Player->CurrentDirection = UP;
+        IsMovementButtonDown = true;
+        
     }
     if(IsDown(Input->ButtonDown)) {
         Direction.Y = -1.f;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
-        IsMovementButtonDown = true;
         Player->CurrentDirection = DOWN;
+        IsMovementButtonDown = true;
     }
+    
     
     if (IsMovementButtonDown) 
         Player->Physics.Velocity = Normalize(Direction) * Player->MovementSpeed;

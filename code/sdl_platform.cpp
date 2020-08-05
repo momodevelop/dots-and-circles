@@ -42,6 +42,7 @@ Load(sdl_game_code* GameCode)
 }
 
 static bool gIsRunning = true;
+static bool gIsPaused = false;
 
 // NOTE(Momo): Platform API code
 static inline void
@@ -200,6 +201,7 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
         Update(&GameInput);
+        
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
             switch(e.type) {
@@ -256,6 +258,20 @@ int main(int argc, char* argv[]) {
                         }break;
                         case SDLK_0: {
                             GameInput.ButtonDebug[0].Now = true;
+                        }break;
+                        
+                        // NOTE(Momo): platform specific debugging
+                        case SDLK_F1: {
+                            // NOTE(Momo): Global pausing
+                            gIsPaused = !gIsPaused;
+                            if (!gIsPaused) {
+                                Start(&timer);
+                            }
+                        }break;
+                        case SDLK_F2: {
+                            // NOTE(Momo): Hot reloading (
+                            Unload(&GameCode);
+                            Load(&GameCode);
                         }break;
                         
 #endif
@@ -315,6 +331,9 @@ int main(int argc, char* argv[]) {
             }
             
         }
+        
+        if (gIsPaused) 
+            continue;
         
         u64 TimeElapsed = GetTimeElapsed(&timer);
         f32 DeltaTime = TimeElapsed / 1000.f;

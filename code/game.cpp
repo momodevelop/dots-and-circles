@@ -25,6 +25,7 @@ GameUpdate(game_memory* GameMemory,
         GameState->Assets = GameAssets;
         Init(GameAssets, MainArena, Megabytes(10));
         
+        // TODO(Momo): All this should really be in game_assets.h
         // NOTE(Momo): Init Bitmap Assets
         {// ryoji
             auto TempMemory = BeginTemporaryMemory(MainArena);
@@ -84,8 +85,8 @@ GameUpdate(game_memory* GameMemory,
             bitmap Bitmap = GetBitmap(GameState->Assets, GameBitmapHandle_Karu);
             f32 CellWidth = 48.f/Bitmap.Width;
             f32 CellHeight = 48.f/Bitmap.Height;
-            f32 HalfPixelWidth =  1.f/Bitmap.Width;
-            f32 HalfPixelHeight = 1.f/Bitmap.Height;
+            f32 HalfPixelWidth =  0.25f/Bitmap.Width;
+            f32 HalfPixelHeight = 0.25f/Bitmap.Height;
             
             // NOTE(Momo):  Init sprite frames
             rect2f Rects[12];
