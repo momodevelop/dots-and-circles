@@ -17,7 +17,7 @@ using f32 = float;
 using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
-
+using b8 = bool;
 #define pure static inline
 #define global static
 #define Abs(x) ((x < 0) ? -x : x)
