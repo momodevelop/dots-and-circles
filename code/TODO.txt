@@ -1,11 +1,9 @@
-[] simple collision system
-    [] Debug lines
+[] Clean up debug lines
+[] Simple collision system
+[] Asset loading??
+[] Quaternion
 [] Camera
 [] Game Coordinates
-[] Lines? Debug Lines?
 [] User Interface
-[] PNG loading?
 [] Profiling? 
 [] Introspection?
-[] Asset loading??
-[] Shift bitmap to just use render_texture

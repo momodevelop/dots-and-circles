@@ -272,7 +272,10 @@ Midpoint(v3f lhs, v3f rhs)  {
 
 static inline f32 
 DistSq(v3f lhs, v3f rhs) { 
-    return (rhs.X- lhs.X) * (rhs.Y - lhs.Y) * (rhs.Z - lhs.Z);
+    return 
+        (rhs.X - lhs.X) * (rhs.X - lhs.X) + 
+        (rhs.Y - lhs.Y) * (rhs.Y - lhs.Y) +
+        (rhs.Z - lhs.Z) * (rhs.Z - lhs.Z);
 }
 
 static inline f32 
@@ -288,7 +291,7 @@ Dist(v3f lhs, v3f rhs)  {
 static inline f32 
 Len(v3f lhs)  { 
     return Sqrt(LenSq(lhs));
-};
+};w
 
 static inline v3f 
 Normalize(v3f lhs)  {
@@ -455,7 +458,7 @@ OrthographicMatrix(f32 NdcLeft, f32 NdcRight,
 
 
 static inline m44f 
-MakeIdentityMatrix() {
+IdentityMatrix() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -469,6 +472,38 @@ struct rect2f {
     v2f Min;
     v2f Max;
 };
+
+struct rect3f {
+    v3f Min;
+    v3f Max;
+};
+
+struct line2f {
+    v2f Min;
+    v2f Max;
+};
+
+struct line3f {
+    v3f Min;
+    v3f Max;
+};
+
+static inline line3f
+Line3(line2f Line2) {
+    return {
+        V3(Line2.Min),
+        V3(Line2.Max),
+    };
+}
+
+static inline rect3f
+Rect3(rect2f Rect2) {
+    return {
+        V3(Line2.Min),
+        V3(Line2.Max),
+    };
+}
+
 
 struct quad2f {
     union {
@@ -485,7 +520,16 @@ struct quad2f {
     
 };
 
-static inline quad2f RectToQuad(rect2f Rect) {
+static inline v3f 
+V3(v2f XY, f32 Z = 0.f) {
+    return {XY.X, XY.Y, Z};
+}
+
+
+
+
+static inline quad2f
+Quad2(rect2f Rect) {
     return {
         Rect.Min.X, Rect.Min.Y,
         Rect.Max.X, Rect.Min.Y,

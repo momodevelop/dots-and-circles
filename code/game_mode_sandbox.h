@@ -65,6 +65,30 @@ SpriteRenderingSystem(sandbox_transform_component* Transform,
                             T*R*S,
                             Spritesheet.BitmapHandle,
                             RectToQuad(Spritesheet.Frames[CurrentFrame]));
+    
+    
+#if INTERNAL
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Transform->Position.X-24.0f, Transform->Position.Y-24.0f,  
+                             Transform->Position.X+24.f, Transform->Position.Y-24.f, 
+                         });
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Transform->Position.X-24.0f, Transform->Position.Y-24.0f, 
+                             Transform->Position.X-24.f, Transform->Position.Y+24.f 
+                         });
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Transform->Position.X-24.0f, Transform->Position.Y+24.0f,  
+                             Transform->Position.X+24.f, Transform->Position.Y+24.f,  
+                         });
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Transform->Position.X+24.0f, Transform->Position.Y-24.0f,  
+                             Transform->Position.X+24.f, Transform->Position.Y+24.f,  
+                         });
+#endif
 }
 
 struct sandbox_physics_component {
@@ -270,11 +294,12 @@ UpdateMode(game_mode_sandbox* Mode,
         }
     }
     
-    
-    PushCommandClear(RenderCommands, { 0.65f, 0.9f, 1.0f, 0.f });
+    PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
+    PushCommandDebugLine(RenderCommands, {100.f, 100.f, 0.f, 0.f});
     Update(Player, 
            GameState->Assets, 
            RenderCommands, 
            DeltaTime);
+    
 }
 #endif //GAME_MODE_SANDBOX_H
