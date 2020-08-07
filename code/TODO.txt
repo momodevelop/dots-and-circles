@@ -1,6 +1,5 @@
-[] Ice skating prototype
-    [] Simple animation system for sandbox
-    [] simple collision system
+[] simple collision system
+    [] Debug lines
 [] Camera
 [] Game Coordinates
 [] Lines? Debug Lines?

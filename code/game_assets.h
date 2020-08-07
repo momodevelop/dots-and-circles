@@ -7,7 +7,6 @@
 
 // TODO(Momo): Kind of want to treat all these different asset types as the same thing...?
 
-
 // NOTE(Momo): Bitmaps
 enum game_bitmap_handle : u32 {
     GameBitmapHandle_Blank,
@@ -23,23 +22,17 @@ enum game_spritesheet_handle {
     GameSpritesheetHandle_Max,
 };
 
-
 struct game_spritesheet {
     game_bitmap_handle BitmapHandle;
     rect2f* Frames;
     u32 FramesCapacity; 
 };
 
-
-
-
 static inline void
 SetFrame(game_spritesheet* Spritesheet, u32 FrameIndex, rect2f Frame) {
     Assert(FrameIndex < Spritesheet->FramesCapacity);
     Spritesheet->Frames[FrameIndex] = Frame;
 }
-
-
 
 // NOTE(Momo): Assets
 struct game_assets {
@@ -72,9 +65,11 @@ GetBitmapFromSpritesheet(game_assets* Assets, game_spritesheet_handle Spriteshee
     return GetBitmap(Assets, GetSpritesheet(Assets, SpritesheetHandle).BitmapHandle);
 }
 
+
+
 // TODO(Momo): Think of a more general way that ignores endianness? 
 static inline u32 
-Read32(const u8* P, bool isBigEndian) {
+PeekU32(const u8* P, bool isBigEndian) {
     union {
         u32 V;
         u8 C[4];
@@ -112,8 +107,9 @@ Read32(const u8* P, bool isBigEndian) {
 }
 
 
+
 static inline u16
-Read16(const u8* P, bool isBigEndian) {
+PeekU16(const u8* P, bool isBigEndian) {
     union {
         u16 V;
         u8 C[2];
@@ -141,6 +137,19 @@ Read16(const u8* P, bool isBigEndian) {
     return Ret.V;
 }
 
+static inline u32
+ReadU32(u8** P, bool isBigEndian) {
+    u32 Ret = PeekU32((*P), isBigEndian);
+    (*P) += sizeof(u32);
+    return Ret;
+}
+
+static inline u16
+ReadU16(u8** P, bool isBigEndian) {
+    u16 Ret = PeekU16((*P), isBigEndian);
+    (*P) += sizeof(u16);
+    return Ret;
+}
 
 struct color_rgba {
     u8 Red, Green, Blue, Alpha;
@@ -163,10 +172,8 @@ MakeSpritesheet(game_bitmap_handle BitmapHandle,
         Ret.Frames[i] = Frames[i]; 
     }
     
-    
     return Ret;
 }
-
 
 static inline bitmap 
 MakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
@@ -192,19 +199,19 @@ MakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
     
     const u8* const Memory = (const u8*)BmpMemory;
     
-    Assert(Read16(Memory +  0, false) == kSignature);
-    Assert(Read16(Memory + kFileHeaderSize + 14, false) == kBitsPerPixel);
-    Assert(Read32(Memory + kFileHeaderSize + 16, false) == kCompression);
+    Assert(PeekU16(Memory +  0, false) == kSignature);
+    Assert(PeekU16(Memory + kFileHeaderSize + 14, false) == kBitsPerPixel);
+    Assert(PeekU32(Memory + kFileHeaderSize + 16, false) == kCompression);
     
-    u32 Width = Read32(Memory + kFileHeaderSize + 4, false);
-    u32 Height = Read32(Memory + kFileHeaderSize + 8, false);
+    u32 Width = PeekU32(Memory + kFileHeaderSize + 4, false);
+    u32 Height = PeekU32(Memory + kFileHeaderSize + 8, false);
     bitmap Ret = MakeEmptyBitmap(Width, Height, Arena);
     
-    u32 Offset = Read32(Memory +  10, false);
-    u32 RedMask = Read32(Memory + kFileHeaderSize + 40, false);
-    u32 GreenMask = Read32(Memory +  kFileHeaderSize + 44, false);
-    u32 BlueMask = Read32(Memory +  kFileHeaderSize + 48, false);
-    u32 AlphaMask = Read32(Memory + kFileHeaderSize + 52, false);
+    u32 Offset = PeekU32(Memory +  10, false);
+    u32 RedMask = PeekU32(Memory + kFileHeaderSize + 40, false);
+    u32 GreenMask = PeekU32(Memory +  kFileHeaderSize + 44, false);
+    u32 BlueMask = PeekU32(Memory +  kFileHeaderSize + 48, false);
+    u32 AlphaMask = PeekU32(Memory + kFileHeaderSize + 52, false);
     
     // NOTE(Momo): Treat Pixels as color_rgba
     color_rgba* RetPixels = (color_rgba*)Ret.Pixels;
