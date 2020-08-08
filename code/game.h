@@ -48,19 +48,19 @@ SetGameMode(game_state* GameState) {
 #if INTERNAL
 static inline b8
 ProcessMetaInput(game_state* GameState, game_input* Input) {
-    if (IsDown(Input->ButtonDebug[1])) {
+    if (IsPoked(Input->ButtonDebug[1])) {
         SetGameMode<game_mode_splash>(GameState);
         Log("Jumping to splash state");
         return true;
     }
-    else if (IsDown(Input->ButtonDebug[2])) {
+    else if (IsPoked(Input->ButtonDebug[2])) {
         SetGameMode<game_mode_main>(GameState);
         Log("Jumping to main state");
         
         return true;
     }
     
-    else if (IsDown(Input->ButtonDebug[0])) {
+    else if (IsPoked(Input->ButtonDebug[0])) {
         SetGameMode<game_mode_sandbox>(GameState);
         Log("Jumping to sandbox state");
         return true;

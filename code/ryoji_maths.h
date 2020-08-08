@@ -11,16 +11,191 @@
 // use standard library functions IN CASE we cannot use them!
 //
 
+// NOTE(Momo): Constants
 static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
 static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
 
+// NOTE(Momo): Structures
+struct v2f {
+    union {
+        f32 E[2];
+        struct {
+            f32 X;
+            f32 Y;
+        };
+        struct {
+            f32 U;
+            f32 V;
+        };
+        struct {
+            f32 W;
+            f32 H;
+        };
+    };
+    
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+
+
+struct v3f {
+    union {
+        f32 E[3];
+        struct {
+            f32 X, Y, Z;
+        };
+        struct {
+            v2f XY;
+            f32 _;
+        };
+        struct {
+            v2f WH;
+            f32 _;
+        };
+        
+    };
+    
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+
+struct c3f {
+    union {
+        f32 E[3];
+        struct {
+            f32 R, G, B;
+        };
+        struct {
+            f32 H, S, V;
+        };
+    };
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+
+
+struct v4f {
+    union {
+        f32 E[4];
+        struct {
+            f32 X, Y, Z, W;
+        };
+        struct {
+            v3f XYZ;
+            f32 _;
+        };
+    };
+    
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index]; }
+};
+
+struct c4f {
+    union {
+        f32 E[4];
+        struct {
+            f32 R, G, B, A;
+        };
+        struct {
+            c3f RGB;
+            f32 _;
+        };
+        struct {
+            f32 H, S, V, A;
+        };
+        struct {
+            c3f HSV;
+            f32 _;
+        };
+    };
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+
+struct m44f {
+    f32 E[4][4];
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+struct circle2f {
+    v2f Origin;
+    f32 Radius;
+};
+
+struct circle3f {
+    v3f Origin;
+    f32 Radius;
+};
+
+
+struct aabb2f {
+    v2f Origin;
+    v2f HalfDimensions;
+};
+
+struct aabb3f {
+    v3f Origin;
+    v3f HalfDimensions;
+};
+
+struct rect2f {
+    union {
+        v2f Points[2];
+        struct {
+            v2f Min;
+            v2f Max;
+        };
+    };
+};
+
+struct rect3f {
+    union {
+        v3f Points[2];
+        struct {
+            v3f Min;
+            v3f Max;
+        };
+    };
+};
+
+
+struct line2f {
+    union {
+        v2f Points[2];
+        struct {
+            v2f Min;
+            v2f Max;
+        };
+    };
+};
+
+struct line3f {
+    union {
+        v3f Points[2];
+        struct {
+            v3f Min;
+            v3f Max;
+        };
+    };
+};
+
+struct quad2f {
+    v2f Points[4];
+};
+
+struct quad3f {
+    v3f Points[4];
+};
+
+
+
+// NOTE(Momo): Functions
 static inline bool 
-IsEqual(f32 lhs, f32 rhs) {
-    return Abs(lhs - rhs) <= Epsilon32;
+IsEqual(f32 L, f32 R) {
+    return Abs(L - R) <= Epsilon32;
 }
 
-// Degrees and Radians
 static inline f32 
 DegToRad(f32 degrees) {
     return degrees * Pi32 / 180.f;
@@ -30,7 +205,6 @@ static inline f32
 RadToDeg(f32 radians) {
     return radians * 180.f / Pi32;
 }
-
 
 static inline f32 
 Sin(f32 x) {
@@ -73,276 +247,311 @@ Pow(f32 b, f32 e) {
     return powf(b,e);
 }
 
-struct v2f {
-    union {
-        f32 E[2];
-        struct {
-            f32 X;
-            f32 Y;
-        };
-        struct {
-            f32 U;
-            f32 V;
-        };
-        struct {
-            f32 W;
-            f32 H;
-        };
-    };
-    
-    inline f32 operator[](usize index) const {
-        Assert(index < 2);
-        return E[index];
-    };
-};
-
-
-struct v3f {
-    union {
-        f32 E[3];
-        struct {
-            f32 X, Y, Z;
-        };
-        struct {
-            v2f XY;
-            f32 _;
-        };
-        struct {
-            v2f WH;
-            f32 _;
-        };
-        struct {
-            f32 R, G, B;
-        };
-        struct {
-            f32 H, S, V;
-        };
-    };
-    
-    inline f32 operator[](usize index) const { 
-        Assert(index < 3);
-        return E[index]; 
-    }
-};
-using c3f = v3f;
-
-struct v4f {
-    union {
-        f32 E[4];
-        struct {
-            f32 X, Y, Z, W;
-        };
-        struct {
-            v3f XYZ;
-            f32 _;
-        };
-        struct {
-            f32 R, G, B, A;
-        };
-        struct {
-            c3f RGB;
-            f32 _;
-        };
-        struct {
-            f32 H, S, V, A;
-        };
-        struct {
-            c3f HSV;
-            f32 _;
-        };
-    };
-    
-    inline f32 operator[](usize index) const { 
-        Assert(index < 4);
-        return E[index]; 
-    }
-};
-using c4f = v4f;
-
-// TODO(Momo): Templates....?
-static inline v3f 
-Add(v3f lhs, v3f rhs) {
-    return { lhs.X+ rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z };
-    
-}
-
-static inline v3f 
-Sub(v3f lhs, v3f rhs) {
-    return { lhs.X- rhs.X, lhs.Y - rhs.Y, lhs.Z - rhs.Z };
-}
-
-static inline v3f 
-Mul(v3f lhs, f32 rhs) {
-    return { lhs.X* rhs, lhs.Y * rhs, lhs.Z * rhs };
-}
-
-static inline v3f 
-Div(v3f lhs, f32 rhs) {
-    Assert(!IsEqual(rhs, 0.f));
-    return { lhs.X/ rhs, lhs.Y / rhs, lhs.Z / rhs };
-}
-
-static inline v3f 
-Negate(v3f lhs){
-    return {-lhs.X, -lhs.Y, -lhs.Z};
-    
-}
-static inline bool 
-IsEqual(v3f lhs, v3f rhs) {
+// v2f
+static inline b8 
+IsEqual(v2f L, v2f R) {
     return 
-        IsEqual(lhs.X, rhs.X) && 
-        IsEqual(lhs.Y, rhs.Y) && 
-        IsEqual(lhs.Z, rhs.Z);
+        IsEqual(L.X, R.X) && 
+        IsEqual(L.Y, R.Y);
+}
+
+static inline v2f 
+Add(v2f L, v2f R) {
+    return { L.X+ R.X, L.Y + R.Y  };
+}
+
+static inline v2f 
+Sub(v2f L, v2f R) {
+    return { L.X- R.X, L.Y - R.Y };
+}
+
+static inline v2f 
+Mul(v2f L, f32 R) {
+    return { L.X* R, L.Y * R };
+}
+
+static inline v2f 
+Div(v2f L, f32 R) {
+    Assert(!IsEqual(R, 0.f));
+    return { L.X/ R, L.Y / R };
+}
+
+static inline v2f 
+Negate(v2f V){
+    return {-V.X, -V.Y };
 }
 
 static inline f32 
-Dot(v3f lhs, v3f rhs) {
-    return lhs.X* rhs.X+ lhs.Y * rhs.Y + lhs.Z * rhs.Z;
+Dot(v2f L, v2f  R) {
+    return L.X * R.X + L.Y * R.Y;
 }
 
-static inline v3f 
-operator+(v3f lhs, v3f rhs)  { 
-    return Add(lhs, rhs); 
+static inline v2f 
+operator+(v2f L, v2f R)  { 
+    return Add(L, R); 
 }
 
-static inline v3f 
-operator-(v3f lhs, v3f rhs)  { 
-    return Sub(lhs, rhs);
+static inline v2f 
+operator-(v2f L, v2f R)  { 
+    return Sub(L, R);
 }
 
-static inline v3f 
-operator*(v3f lhs, f32 rhs)  { 
-    return Mul(lhs, rhs);
+static inline v2f 
+operator*(v2f L, f32 R)  { 
+    return Mul(L, R);
 }
 
-static inline v3f 
-operator*(float lhs, v3f rhs)  { 
-    return Mul(rhs, lhs);
+static inline v2f 
+operator*(f32 L, v2f R)  { 
+    return Mul(R, L);
 }
 
 static inline f32 
-operator*(v3f lhs, v3f rhs) {
-    return Dot(lhs, rhs); 
+operator*(v2f L, v2f R) {
+    return Dot(L, R); 
 }
 
-static inline v3f 
-operator/(v3f lhs, f32 rhs)  { 
-    return Div(lhs, rhs); 
+static inline v2f 
+operator/(v2f L, f32 R)  { 
+    return Div(L, R); 
 }
 
-static inline v3f& 
-operator+=(v3f& lhs, v3f rhs) {
-    return lhs = lhs + rhs;
+static inline v2f& 
+operator+=(v2f& L, v2f R) {
+    return L = L + R;
 }
 
-static inline v3f& 
-operator-=(v3f& lhs, v3f rhs) {
-    return lhs = lhs - rhs;
+static inline v2f& 
+operator-=(v2f& L, v2f R) {
+    return L = L - R;
 }
 
-static inline v3f& 
-operator*=(v3f& lhs, f32 rhs) {
-    return lhs = lhs * rhs;
+static inline v2f& 
+operator*=(v2f& L, f32 R) {
+    return L = L * R;
 }
 
-static inline v3f& 
-operator/=(v3f& lhs, f32 rhs) {
-    return lhs = lhs / rhs;
+static inline v2f& 
+operator/=(v2f& L, f32 R) {
+    return L = L / R;
 }
 
 static inline bool 
-operator==(v3f lhs, v3f rhs)  { 
-    return IsEqual(lhs, rhs);
+operator==(v2f L, v2f R)  { 
+    return IsEqual(L, R);
 }
 
 static inline bool 
-operator!=(v3f lhs, v3f rhs) { 
-    return !(lhs == rhs); 
+operator!=(v2f L, v2f R) { 
+    return !(L == R); 
 }
 
-static inline v3f 
-operator-(v3f lhs)  {  
-    return { -lhs.X, -lhs.Y, -lhs.Z}; 
+static inline v2f 
+operator-(v2f L)  {  
+    return { -L.X, -L.Y }; 
 }
 
-static inline v3f 
-Midpoint(v3f lhs, v3f rhs)  { 
-    return (lhs + rhs) * 0.5f; 
+
+static inline f32 
+LengthSq(v2f L) { 
+    return L * L;
 }
 
 static inline f32 
-DistSq(v3f lhs, v3f rhs) { 
+Length(v2f L) { 
+    return Sqrt(LengthSq(L));
+}
+
+static inline v2f 
+Midpoint(v2f L, v2f R)  { 
+    return (L + R) * 0.5f; 
+}
+
+static inline f32 
+AngleBetween(v2f L, v2f R) {
+    return ACos((L * R) / (Length(L) * Length(R)));
+}
+
+// v3f
+static inline v3f 
+Add(v3f L, v3f R) {
+    return { L.X+ R.X, L.Y + R.Y, L.Z + R.Z };
+}
+
+static inline v3f 
+Sub(v3f L, v3f R) {
+    return { L.X- R.X, L.Y - R.Y, L.Z - R.Z };
+}
+
+static inline v3f 
+Mul(v3f L, f32 R) {
+    return { L.X* R, L.Y * R, L.Z * R };
+}
+
+static inline v3f 
+Div(v3f L, f32 R) {
+    Assert(!IsEqual(R, 0.f));
+    return { L.X/ R, L.Y / R, L.Z / R };
+}
+
+static inline v3f 
+Negate(v3f V){
+    return {-V.X, -V.Y, -V.Z};
+}
+
+static inline b8 
+IsEqual(v3f L, v3f R) {
     return 
-        (rhs.X - lhs.X) * (rhs.X - lhs.X) + 
-        (rhs.Y - lhs.Y) * (rhs.Y - lhs.Y) +
-        (rhs.Z - lhs.Z) * (rhs.Z - lhs.Z);
+        IsEqual(L.X, R.X) && 
+        IsEqual(L.Y, R.Y) && 
+        IsEqual(L.Z, R.Z);
 }
 
-static inline f32 
-LenSq(v3f lhs) { 
-    return lhs * lhs;	
-}
+
 
 static inline f32 
-Dist(v3f lhs, v3f rhs)  { 
-    return Sqrt(DistSq(lhs, rhs)); 
+Dot(v3f L, v3f R) {
+    return L.X * R.X + L.Y * R.Y + L.Z * R.Z;
 }
 
-static inline f32 
-Len(v3f lhs)  { 
-    return Sqrt(LenSq(lhs));
-};w
 
 static inline v3f 
-Normalize(v3f lhs)  {
-    v3f ret = lhs;
-    f32 len = Len(lhs);
+operator+(v3f L, v3f R)  { 
+    return Add(L, R); 
+}
+
+static inline v3f 
+operator-(v3f L, v3f R)  { 
+    return Sub(L, R);
+}
+
+static inline v3f 
+operator*(v3f L, f32 R)  { 
+    return Mul(L, R);
+}
+
+static inline v3f 
+operator*(f32 L, v3f R)  { 
+    return Mul(R, L);
+}
+
+static inline f32 
+operator*(v3f L, v3f R) {
+    return Dot(L, R); 
+}
+
+static inline v3f 
+operator/(v3f L, f32 R)  { 
+    return Div(L, R); 
+}
+
+static inline v3f& 
+operator+=(v3f& L, v3f R) {
+    return L = L + R;
+}
+
+static inline v3f& 
+operator-=(v3f& L, v3f R) {
+    return L = L - R;
+}
+
+static inline v3f& 
+operator*=(v3f& L, f32 R) {
+    return L = L * R;
+}
+
+static inline v3f& 
+operator/=(v3f& L, f32 R) {
+    return L = L / R;
+}
+
+static inline bool 
+operator==(v3f L, v3f R)  { 
+    return IsEqual(L, R);
+}
+
+static inline bool 
+operator!=(v3f L, v3f R) { 
+    return !(L == R); 
+}
+
+static inline v3f 
+operator-(v3f L)  {  
+    return { -L.X, -L.Y, -L.Z}; 
+}
+
+static inline v3f 
+Midpoint(v3f L, v3f R)  { 
+    return (L + R) * 0.5f; 
+}
+
+static inline f32 
+DistanceSq(v3f L, v3f R) { 
+    return 
+        (R.X - L.X) * (R.X - L.X) + 
+        (R.Y - L.Y) * (R.Y - L.Y) +
+        (R.Z - L.Z) * (R.Z - L.Z);
+}
+
+static inline f32 
+LengthSq(v3f L) { 
+    return L * L;
+}
+
+
+static inline f32 
+Distance(v3f L, v3f R)  { 
+    return Sqrt(DistanceSq(L, R)); 
+}
+
+static inline f32 
+Length(v3f L)  { 
+    return Sqrt(LengthSq(L));
+};
+
+static inline v3f 
+Normalize(v3f L)  {
+    v3f ret = L;
+    f32 len = Length(L);
     ret /= len;
     return ret;
 }
 
 static inline f32 
-AngleBetween(v3f lhs, v3f rhs) {
-    return ACos((lhs * rhs) / (Len(lhs) * Len(rhs)));
+AngleBetween(v3f L, v3f R) {
+    return ACos((L * R) / (Length(L) * Length(R)));
 }
 
 static inline bool 
-IsPerpendicular(v3f lhs, v3f rhs) 
+IsPerpendicular(v3f L, v3f R) 
 { 
-    return IsEqual((lhs * rhs), 0.f); 
+    return IsEqual((L * R), 0.f); 
 }
 
 static inline bool 
-IsSameDir(v3f lhs, v3f rhs) { 
-    return (lhs * rhs) > 0.f; 
+IsSameDir(v3f L, v3f R) { 
+    return (L * R) > 0.f; 
 }
 
 static inline bool 
-IsOppDir(v3f lhs, v3f rhs) { 
-    return (lhs * rhs) < 0.f;
+IsOppDir(v3f L, v3f R) { 
+    return (L * R) < 0.f;
 }
 
 static inline v3f 
 Project(v3f from, v3f to) { 
-    return (to * from) / LenSq(to) * to;
+    return (to * from) / LengthSq(to) * to;
 }
 
-// NOTE(Momo): I chose row major because it's easier to work on and OpenGL 
-struct m44f {
-    f32 E[4][4];
-    
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
-};
 
+// Row major
 static inline m44f 
-operator*(m44f lhs, m44f rhs) {
+operator*(m44f L, m44f R) {
     m44f res = {};
-    
     for (u8 r = 0; r < 4; r++) { 
         for (u8 c = 0; c < 4; c++) { 
             for (u8 i = 0; i < 4; i++) 
-                res[r][c] += lhs[r][i] *  rhs[i][c]; 
+                res[r][c] += L[r][i] *  R[i][c]; 
         } 
     } 
     return res;
@@ -467,66 +676,27 @@ IdentityMatrix() {
     };
 }
 
-
-struct rect2f {
-    v2f Min;
-    v2f Max;
-};
-
-struct rect3f {
-    v3f Min;
-    v3f Max;
-};
-
-struct line2f {
-    v2f Min;
-    v2f Max;
-};
-
-struct line3f {
-    v3f Min;
-    v3f Max;
-};
+static inline v3f 
+V3(v2f V) {
+    return { V.X, V.Y, 0.f };
+}
 
 static inline line3f
 Line3(line2f Line2) {
     return {
-        V3(Line2.Min),
-        V3(Line2.Max),
+        V3(Line2.Points[0]),
+        V3(Line2.Points[1]),
     };
 }
+
 
 static inline rect3f
 Rect3(rect2f Rect2) {
     return {
-        V3(Line2.Min),
-        V3(Line2.Max),
+        V3(Rect2.Points[0]),
+        V3(Rect2.Points[1]),
     };
 }
-
-
-struct quad2f {
-    union {
-        f32 E[8];
-        
-        struct {
-            v2f Points[4];
-        };
-    };
-    inline f32 operator[](usize index) const { 
-        Assert(index < 8);
-        return E[index]; 
-    }
-    
-};
-
-static inline v3f 
-V3(v2f XY, f32 Z = 0.f) {
-    return {XY.X, XY.Y, Z};
-}
-
-
-
 
 static inline quad2f
 Quad2(rect2f Rect) {

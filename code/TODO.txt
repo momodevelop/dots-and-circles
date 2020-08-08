@@ -1,6 +1,10 @@
-[] Clean up debug lines
+
+
 [] Simple collision system
+    [] Collision between multiple objects?
 [] Asset loading??
+[] Visual editor
+[] Circle debug lines?
 [] Quaternion
 [] Camera
 [] Game Coordinates

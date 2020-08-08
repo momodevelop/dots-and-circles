@@ -2,22 +2,22 @@
 #define __YUU_INPUT__
 
 // TODO(Momo): Needs to be a bit more generic to be engine code...
-struct game_button {
+struct input_button {
     bool Before : 1;
     bool Now : 1;
 };
 
 union game_input {
-    game_button Buttons[5];
+    input_button Buttons[15];
     struct {
-        game_button ButtonUp;
-        game_button ButtonDown;
-        game_button ButtonRight;
-        game_button ButtonLeft;
-        game_button ButtonConfirm;
+        input_button ButtonUp;
+        input_button ButtonDown;
+        input_button ButtonRight;
+        input_button ButtonLeft;
+        input_button ButtonConfirm;
         
 #if INTERNAL
-        game_button ButtonDebug[10];
+        input_button ButtonDebug[10];
 #endif
     };
 };
@@ -30,23 +30,23 @@ Update(game_input* Input) {
 }
 
 // before: 0, now: 1
-bool IsPoked(game_button Button) {
+bool IsPoked(input_button Button) {
     return !Button.Before && Button.Now;
 }
 
 // before: 1, now: 0
-bool IsReleased(game_button Button) {
+bool IsReleased(input_button Button) {
     return Button.Before && !Button.Now;
 }
 
 
 // before: X, now: 1
-bool IsDown(game_button Button) {
+bool IsDown(input_button Button) {
     return Button.Now;
 }
 
 // before: 1, now: 1
-bool IsHeld(game_button Button) {
+bool IsHeld(input_button Button) {
     return Button.Before && Button.Now;
 }
 

@@ -6,12 +6,15 @@
 #include "game.h"
 #include "game_assets.h"
 
-
 // NOTE(Momo): EC....S?
 struct sandbox_transform_component {
     v3f Scale;
     f32 Rotation;
     v3f Position;
+};
+
+struct sandbox_collision_component {
+    aabb3f Box;
 };
 
 struct sandbox_renderable_component {
@@ -64,31 +67,10 @@ SpriteRenderingSystem(sandbox_transform_component* Transform,
                             {1.f, 1.f, 1.f, 1.f}, 
                             T*R*S,
                             Spritesheet.BitmapHandle,
-                            RectToQuad(Spritesheet.Frames[CurrentFrame]));
+                            Quad2(Spritesheet.Frames[CurrentFrame]));
     
     
-#if INTERNAL
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Transform->Position.X-24.0f, Transform->Position.Y-24.0f,  
-                             Transform->Position.X+24.f, Transform->Position.Y-24.f, 
-                         });
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Transform->Position.X-24.0f, Transform->Position.Y-24.0f, 
-                             Transform->Position.X-24.f, Transform->Position.Y+24.f 
-                         });
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Transform->Position.X-24.0f, Transform->Position.Y+24.0f,  
-                             Transform->Position.X+24.f, Transform->Position.Y+24.f,  
-                         });
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Transform->Position.X+24.0f, Transform->Position.Y-24.0f,  
-                             Transform->Position.X+24.f, Transform->Position.Y+24.f,  
-                         });
-#endif
+    
 }
 
 struct sandbox_physics_component {
@@ -104,14 +86,72 @@ enum Direction  {
     RIGHT
 };
 
-struct sandbox_entity {
+struct sandbox_player {
     sandbox_transform_component Transform;
     sandbox_physics_component Physics;
     sandbox_sprite_component Sprite;
+    sandbox_collision_component Collision;
     
     Direction CurrentDirection;
     f32 MovementSpeed;
 };
+
+struct sandbox_block {
+    sandbox_transform_component Transform;
+    sandbox_collision_component Collision;
+};
+
+#if INTERNAL
+static inline void
+DrawCollisionDebugLinesSystem(sandbox_transform_component* Transform,
+                              sandbox_collision_component* Collision, render_commands * RenderCommands) 
+{
+    
+    auto* Box = &Collision->Box;
+    
+    rect2f Rect = {}; 
+    Rect.Min.X = Transform->Position.X + Box->Origin.X - Box->HalfDimensions.X;
+    Rect.Min.Y = Transform->Position.Y + Box->Origin.Y - Box->HalfDimensions.Y;
+    Rect.Max.X = Transform->Position.X + Box->Origin.X + Box->HalfDimensions.X;
+    Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->HalfDimensions.Y;
+    
+    // Bottom
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Rect.Min.X, 
+                             Rect.Min.Y,  
+                             Rect.Max.X, 
+                             Rect.Min.Y,
+                         });
+    // Left
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Rect.Min.X,
+                             Rect.Min.Y,
+                             Rect.Min.X,
+                             Rect.Max.Y,
+                         });
+    
+    //Top
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Rect.Min.X,
+                             Rect.Max.Y,
+                             Rect.Max.X,
+                             Rect.Max.Y,
+                         });
+    
+    //Right 
+    PushCommandDebugLine(RenderCommands, 
+                         { 
+                             Rect.Max.X,
+                             Rect.Min.Y,
+                             Rect.Max.X,
+                             Rect.Max.Y,
+                         });
+    
+}
+#endif
 
 static inline void
 PhysicsSystem(sandbox_transform_component* Transform,
@@ -125,13 +165,20 @@ PhysicsSystem(sandbox_transform_component* Transform,
 }
 
 static inline void
-Update(sandbox_entity* Entity, 
+Update(sandbox_player* Entity, f32 DeltaTime) 
+{
+    PhysicsSystem(&Entity->Transform, &Entity->Physics, DeltaTime);
+}
+
+static inline void 
+Render( sandbox_player* Entity, 
        game_assets* Assets,
        render_commands * RenderCommands, 
-       f32 DeltaTime) {
-    
-    PhysicsSystem(&Entity->Transform, &Entity->Physics, DeltaTime);
-    
+       f32 DeltaTime) 
+{
+#if INTERNAL
+    DrawCollisionDebugLinesSystem(&Entity->Transform, &Entity->Collision, RenderCommands);
+#endif
     SpriteRenderingSystem(&Entity->Transform, 
                           &Entity->Sprite, 
                           RenderCommands, 
@@ -139,6 +186,16 @@ Update(sandbox_entity* Entity,
                           DeltaTime);
 }
 
+
+static inline void
+Update(sandbox_block* Entity, 
+       render_commands * RenderCommands) 
+{
+    
+#if INTERNAL
+    DrawCollisionDebugLinesSystem(&Entity->Transform, &Entity->Collision, RenderCommands);
+#endif
+}
 
 struct game_mode_sandbox {
     static constexpr u8 TypeId = 2;
@@ -154,8 +211,8 @@ struct game_mode_sandbox {
     u8 AnimeIdleRight[1];
     
     
-    // TODO(Momo): sprite animation system?
-    sandbox_entity Player;
+    sandbox_player Player;
+    sandbox_block Block;
 };
 
 
@@ -192,22 +249,42 @@ InitMode(game_mode_sandbox* Mode, game_state* GameState) {
     
     
     // NOTE(Momo): Init player
-    sandbox_entity* Player = &Mode->Player;
+    {
+        auto* Player = &Mode->Player;
+        
+        Player->Transform.Position = {};
+        Player->Transform.Rotation = 0.f;
+        Player->Transform.Scale = { 48.f, 48.f, 0.f };
+        
+        Player->Physics = {};
+        Player->Collision = {};
+        Player->Collision.Box.Origin = { 0.f, 0.f, 0.f };
+        Player->Collision.Box.HalfDimensions = { 24.f, 24.f, 0.f };
+        
+        
+        Player->Sprite.SpritesheetHandle = GameSpritesheetHandle_Karu;
+        Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
+        Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
+        Player->Sprite.AnimeAt = 0;
+        Player->Sprite.AnimeTimer = 0.f;
+        Player->Sprite.AnimeSpeed = 10.f;
+        Player->MovementSpeed = 400.f;
+        Player->CurrentDirection = DOWN;
+    }
     
-    Player->Transform.Position = {};
-    Player->Transform.Rotation = 0.f;
-    Player->Transform.Scale = { 48.f, 48.f};
+    // NOTE(Momo): Init block
+    {
+        auto* Block = &Mode->Block;
+        
+        Block->Transform.Position = {200.f, 200.f};
+        Block->Transform.Rotation = 0.f;
+        Block->Transform.Scale = { 48.f, 48.f };
+        
+        Block->Collision = {};
+        Block->Collision.Box.Origin = {};
+        Block->Collision.Box.HalfDimensions = { 240.f, 240.f, 0.f };
+    }
     
-    Player->Physics = {};
-    
-    Player->Sprite.SpritesheetHandle = GameSpritesheetHandle_Karu;
-    Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
-    Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
-    Player->Sprite.AnimeAt = 0;
-    Player->Sprite.AnimeTimer = 0.f;
-    Player->Sprite.AnimeSpeed = 10.f;
-    Player->MovementSpeed = 400.f;
-    Player->CurrentDirection = DOWN;
     
     Log("Sandbox state initialized!");
 }
@@ -221,15 +298,16 @@ UpdateMode(game_mode_sandbox* Mode,
            f32 DeltaTime) 
 {
     
-#if INTERNALGameBitmapHandle_Karu
+#if INTERNAL
     if (ProcessMetaInput(GameState, Input)) {
         return;
     }
 #endif
+    
+    // TODO(Momo): Player controls in a system
     auto* Player = &Mode->Player;
     v3f Direction = {};
     b8 IsMovementButtonDown = false;
-    // NOTE(Momo): Player controls
     if(IsDown(Input->ButtonLeft)) {
         Direction.X = -1.f;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkLeft;
@@ -294,12 +372,54 @@ UpdateMode(game_mode_sandbox* Mode,
         }
     }
     
+    // NOTE(Momo): Entity updates
+    Update(Player, DeltaTime);
+    
     PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
-    PushCommandDebugLine(RenderCommands, {100.f, 100.f, 0.f, 0.f});
-    Update(Player, 
-           GameState->Assets, 
-           RenderCommands, 
-           DeltaTime);
+    
+    // TODO(Momo): Sledgehammered collision
+    {
+        auto Lhs = Mode->Block.Collision.Box;
+        auto Rhs = Mode->Player.Collision.Box;
+        
+        Lhs.Origin += Mode->Block.Transform.Position;
+        Rhs.Origin += Mode->Player.Transform.Position;
+        
+        
+        b8 IsCollided = true;
+        
+        v3f PushbackVector = {}; 
+        for(u8 i = 0; i < 3; ++i) 
+        {
+            f32 OriginDisplacement = Lhs.Origin[i] - Rhs.Origin[i];
+            f32 OriginDistance = Abs(OriginDisplacement);
+            f32 HalfRadiusSum = Lhs.HalfDimensions[i] + Rhs.HalfDimensions[i];
+            if (OriginDistance > HalfRadiusSum) {
+                IsCollided = false;
+                break;
+            }
+            
+            f32 PushbackScalar = OriginDistance - HalfRadiusSum;
+            f32 NormalizedOriginDisplacement = OriginDisplacement / OriginDistance;
+            PushbackVector[i] = NormalizedOriginDisplacement * PushbackScalar;
+        }
+        
+        if (IsCollided) {
+            if ( Abs(PushbackVector.X) < Abs(PushbackVector.Y)) 
+                Mode->Player.Transform.Position.X += PushbackVector.X ;
+            else 
+                Mode->Player.Transform.Position.Y += PushbackVector.Y ;
+        }
+        
+    }
+    
+    Mode->Block.Transform.Position.Y -= 100.f * DeltaTime;
+    // NOTE(Momo): Entity Renders
+    Render(Player, GameState->Assets, RenderCommands, DeltaTime);
+    
+    Update(&Mode->Block, 
+           RenderCommands);
+    
     
 }
 #endif //GAME_MODE_SANDBOX_H

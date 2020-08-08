@@ -24,7 +24,6 @@ struct render_command_data_textured_quad {
     u32 TextureHandle;
     c4f Colors;
     m44f Transform;
-    
     quad2f TextureCoords; 
 };
 
@@ -65,11 +64,11 @@ PushCommandLinkTexture(render_commands* Commands,
 #if INTERNAL
 static inline void 
 PushCommandDebugLine(render_commands* Commands, line2f Line, f32 Thickness = 1.f) {
-    f32 LineLength = Len(V3(Line.Max) - V3(Line.Min));
-    v3f LineMiddle = Midpoint(V3(Line.Max), V3(Line.Min));
+    f32 LineLength = Length(Line.Max - Line.Min);
+    v2f LineMiddle = Midpoint(Line.Max, Line.Min);
     
-    v3f LineVector = V3(Line.Max) - V3(Line.Min);
-    f32 Angle = AngleBetween(LineVector, {1.f, 0.f, 0.f});
+    v2f LineVector = Line.Max - Line.Min;
+    f32 Angle = AngleBetween(LineVector, { 1.f, 0.f });
     
     // TODO(Momo): change Z to biggest possible float number?
     m44f T = TranslationMatrix(LineMiddle.X, LineMiddle.Y, 100.f);
@@ -90,7 +89,6 @@ PushCommandDebugLine(render_commands* Commands, line2f Line, f32 Thickness = 1.f
     
     PushCommandTexturedQuad(Commands, Colors, Transform, GameBitmapHandle_Blank, UVCoords);
 }
-
 #endif
 
 #endif //GAME_RENDERER_H
