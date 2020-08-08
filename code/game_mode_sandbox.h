@@ -305,77 +305,77 @@ UpdateMode(game_mode_sandbox* Mode,
 #endif
     
     // TODO(Momo): Player controls in a system
-    auto* Player = &Mode->Player;
-    v3f Direction = {};
-    b8 IsMovementButtonDown = false;
-    if(IsDown(Input->ButtonLeft)) {
-        Direction.X = -1.f;
-        Player->Sprite.AnimeFrames = Mode->AnimeWalkLeft;
-        Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkLeft);
-        Player->CurrentDirection = LEFT;
-        IsMovementButtonDown = true;
-    };
-    
-    if(IsDown(Input->ButtonRight)) {
-        Direction.X = 1.f;
-        Player->Sprite.AnimeFrames = Mode->AnimeWalkRight;
-        Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkRight);
-        Player->CurrentDirection = RIGHT;
-        IsMovementButtonDown = true;
+    {
+        auto* Player = &Mode->Player;
+        v3f Direction = {};
+        b8 IsMovementButtonDown = false;
+        if(IsDown(Input->ButtonLeft)) {
+            Direction.X = -1.f;
+            Player->Sprite.AnimeFrames = Mode->AnimeWalkLeft;
+            Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkLeft);
+            Player->CurrentDirection = LEFT;
+            IsMovementButtonDown = true;
+        };
         
-    }
-    
-    if(IsDown(Input->ButtonUp)) {
-        Direction.Y = 1.f;
-        Player->Sprite.AnimeFrames = Mode->AnimeWalkUp;
-        Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkUp);
-        Player->CurrentDirection = UP;
-        IsMovementButtonDown = true;
-        
-    }
-    if(IsDown(Input->ButtonDown)) {
-        Direction.Y = -1.f;
-        Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
-        Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
-        Player->CurrentDirection = DOWN;
-        IsMovementButtonDown = true;
-    }
-    
-    
-    if (IsMovementButtonDown) 
-        Player->Physics.Velocity = Normalize(Direction) * Player->MovementSpeed;
-    else {
-        Player->Physics.Velocity = {};
-        // TODO(Momo): Idle animation?????
-        switch(Player->CurrentDirection) {
-            case DOWN: {
-                Player->Sprite.AnimeAt = 0;
-                Player->Sprite.AnimeFrames = Mode->AnimeIdleDown;
-                Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleDown);
-            } break;
-            case LEFT: {
-                Player->Sprite.AnimeAt = 0;
-                Player->Sprite.AnimeFrames = Mode->AnimeIdleLeft;
-                Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleLeft);
-            } break;
-            case RIGHT: {
-                Player->Sprite.AnimeAt = 0;
-                Player->Sprite.AnimeFrames = Mode->AnimeIdleRight;
-                Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleRight);
-            } break;
-            case UP: {
-                Player->Sprite.AnimeAt = 0;
-                Player->Sprite.AnimeFrames = Mode->AnimeIdleUp;
-                Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleUp);
-            } break;
+        if(IsDown(Input->ButtonRight)) {
+            Direction.X = 1.f;
+            Player->Sprite.AnimeFrames = Mode->AnimeWalkRight;
+            Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkRight);
+            Player->CurrentDirection = RIGHT;
+            IsMovementButtonDown = true;
             
+        }
+        
+        if(IsDown(Input->ButtonUp)) {
+            Direction.Y = 1.f;
+            Player->Sprite.AnimeFrames = Mode->AnimeWalkUp;
+            Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkUp);
+            Player->CurrentDirection = UP;
+            IsMovementButtonDown = true;
+            
+        }
+        if(IsDown(Input->ButtonDown)) {
+            Direction.Y = -1.f;
+            Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
+            Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
+            Player->CurrentDirection = DOWN;
+            IsMovementButtonDown = true;
+        }
+        
+        
+        if (IsMovementButtonDown) 
+            Player->Physics.Velocity = Normalize(Direction) * Player->MovementSpeed;
+        else {
+            Player->Physics.Velocity = {};
+            // TODO(Momo): Idle animation?????
+            switch(Player->CurrentDirection) {
+                case DOWN: {
+                    Player->Sprite.AnimeAt = 0;
+                    Player->Sprite.AnimeFrames = Mode->AnimeIdleDown;
+                    Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleDown);
+                } break;
+                case LEFT: {
+                    Player->Sprite.AnimeAt = 0;
+                    Player->Sprite.AnimeFrames = Mode->AnimeIdleLeft;
+                    Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleLeft);
+                } break;
+                case RIGHT: {
+                    Player->Sprite.AnimeAt = 0;
+                    Player->Sprite.AnimeFrames = Mode->AnimeIdleRight;
+                    Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleRight);
+                } break;
+                case UP: {
+                    Player->Sprite.AnimeAt = 0;
+                    Player->Sprite.AnimeFrames = Mode->AnimeIdleUp;
+                    Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeIdleUp);
+                } break;
+                
+            }
         }
     }
     
     // NOTE(Momo): Entity updates
     Update(Player, DeltaTime);
-    
-    PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
     
     // TODO(Momo): Sledgehammered collision
     {
@@ -413,8 +413,9 @@ UpdateMode(game_mode_sandbox* Mode,
         
     }
     
-    Mode->Block.Transform.Position.Y -= 100.f * DeltaTime;
-    // NOTE(Momo): Entity Renders
+    
+    // NOTE(Momo): Rendering 
+    PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
     Render(Player, GameState->Assets, RenderCommands, DeltaTime);
     
     Update(&Mode->Block, 
