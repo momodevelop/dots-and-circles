@@ -2,7 +2,6 @@
 #define __GAME_RENDERER_OPENGL__
 
 #include "game_renderer.h"
-#include "game_assets.h"
 
 // NOTE(Momo): Buffers
 enum {
@@ -48,7 +47,8 @@ struct renderer_opengl {
     GLuint BlankTexture;
     
     // NOTE(Momo): A table mapping 'game texture handler' <-> 'opengl texture handler'  
-    GLuint GameToRendererTextureTable[GameBitmapHandle_Max] = {};
+    // TODO(Momo): Make this dynamic? 
+    GLuint GameToRendererTextureTable[0xFF] = {};
     
 };
 
@@ -71,17 +71,17 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
     constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\n\
-                                                                                                                                                                                                                                                                                    layout(location=2) in vec2 aTexCoord[4];\n\
-                                                                                                                                                                                                                                                                                                                            \nlayout(location=6) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
-                                                                                                                                                                    mTexCoord = aTexCoord[gl_VertexID];\n\
-                                                                                                                                                                                                                                                                                                                                                                                            }";
+                                                                                                                                                                                                                                                                                                                                                                                                                layout(location=2) in vec2 aTexCoord[4];\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        \nlayout(location=6) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
+                                                                                                                                                                                                                                                                                                mTexCoord = aTexCoord[gl_VertexID];\n\
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }";
 #if 1
     constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\nfragColor = texture(uTexture, mTexCoord) * mColor; \n}";
     
 #else
     constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                fragColor.x = mTexCoord.x; fragColor.y = mTexCoord.y; fragColor.z = 0.0; fragColor.w = 1.0; \n}";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            fragColor.x = mTexCoord.x; fragColor.y = mTexCoord.y; fragColor.z = 0.0; fragColor.w = 1.0; \n}";
 #endif
     
     glEnable(GL_DEPTH_TEST);
@@ -166,7 +166,7 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     glVertexArrayElementBuffer(Renderer->Blueprint, Renderer->Buffers[renderer_vbo_Indices]);
     
     
-    // Setup Shader Program
+    // NOTE(Momo): Setup Shader Program
     Renderer->Shader = glCreateProgram();
     GlAttachShader(Renderer->Shader, GL_VERTEX_SHADER, vertexShader);
     GlAttachShader(Renderer->Shader, GL_FRAGMENT_SHADER, fragmentShader);
@@ -179,6 +179,19 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
         // TODO(Momo): Log?
         return false;
     }
+    
+    // NOTE(Momo): Blank texture setup
+    struct { 
+        u8 E[4];
+    } Pixel = {255, 255, 255, 255};
+    
+    glCreateTextures(GL_TEXTURE_2D, 1, &Renderer->BlankTexture);
+    glTextureStorage2D(Renderer->BlankTexture, 1, GL_RGBA8, 1, 1);
+    glTextureSubImage2D(Renderer->BlankTexture, 
+                        0, 0, 0, 
+                        1, 1, 
+                        GL_RGBA, GL_UNSIGNED_BYTE, 
+                        &Pixel);
     
     // NOTE(Momo): Setup Orthographic Projection
     GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
@@ -233,6 +246,61 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     Data->TextureBitmap.Pixels);
                 
+            } break;
+            case render_command_data_draw_quad::TypeId: {
+                using data_t = render_command_data_draw_quad;
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                
+                // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
+                GLuint RendererTextureHandle = Renderer->BlankTexture;
+                
+                if (RendererTextureHandle == 0) {
+                    // TODO(Momo): Maybe render a dummy texture?
+                    Assert(false);
+                }
+                
+                // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.
+                if (CurrentTexture != RendererTextureHandle) {
+                    if (InstancesToDrawCount != 0) {
+                        glBindTexture(GL_TEXTURE_2D, CurrentTexture);
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        
+                        glBindVertexArray(Renderer->Blueprint);
+                        glUseProgram(Renderer->Shader);
+                        glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
+                                                            6, 
+                                                            GL_UNSIGNED_BYTE, 
+                                                            nullptr, 
+                                                            InstancesToDrawCount,
+                                                            LastDrawnInstanceIndex);
+                        LastDrawnInstanceIndex += InstancesToDrawCount;
+                        InstancesToDrawCount= 0;
+                    }
+                    CurrentTexture = RendererTextureHandle;
+                }
+                
+                // NOTE(Momo): Update the current instance values
+                glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
+                                     CurrentInstanceIndex * sizeof(c4f),
+                                     sizeof(c4f), 
+                                     &Data->Colors);
+                
+                glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
+                                     CurrentInstanceIndex * sizeof(quad2f),
+                                     sizeof(quad2f),
+                                     &StandardQuadUV);
+                
+                // NOTE(Momo): Transpose; game is row-major
+                m44f Transform = Transpose(Data->Transform);
+                glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Transform], 
+                                     CurrentInstanceIndex* sizeof(m44f), 
+                                     sizeof(m44f), 
+                                     &Transform);
+                
+                // NOTE(Momo): Update Bookkeeping
+                ++InstancesToDrawCount;
+                ++CurrentInstanceIndex;
             } break;
             case render_command_data_textured_quad::TypeId: {
                 using data_t = render_command_data_textured_quad;

@@ -75,11 +75,11 @@ SpriteRenderingSystem(sandbox_transform_component* Transform,
     auto Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
     auto CurrentFrame = Sprite->AnimeFrames[Sprite->AnimeAt];
     
-    PushCommandTexturedQuad(RenderCommands, 
-                            {1.f, 1.f, 1.f, 1.f}, 
-                            T*R*S,
-                            Spritesheet.BitmapHandle,
-                            UVRect2ToQuad2(Spritesheet.Frames[CurrentFrame]));
+    PushCommandDrawTexturedQuad(RenderCommands, 
+                                {1.f, 1.f, 1.f, 1.f}, 
+                                T*R*S,
+                                Spritesheet.BitmapHandle,
+                                UVRect2ToQuad2(Spritesheet.Frames[CurrentFrame]));
     
 }
 
@@ -120,39 +120,8 @@ DrawCollisionDebugLinesSystem(sandbox_transform_component* Transform,
     Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->HalfDimensions.Y;
     
     // Bottom
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Rect.Min.X, 
-                             Rect.Min.Y,  
-                             Rect.Max.X, 
-                             Rect.Min.Y,
-                         });
-    // Left
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Rect.Min.X,
-                             Rect.Min.Y,
-                             Rect.Min.X,
-                             Rect.Max.Y,
-                         });
+    PushCommandDebugRect(RenderCommands, Rect);
     
-    //Top
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Rect.Min.X,
-                             Rect.Max.Y,
-                             Rect.Max.X,
-                             Rect.Max.Y,
-                         });
-    
-    //Right 
-    PushCommandDebugLine(RenderCommands, 
-                         { 
-                             Rect.Max.X,
-                             Rect.Min.Y,
-                             Rect.Max.X,
-                             Rect.Max.Y,
-                         });
     
 }
 #endif

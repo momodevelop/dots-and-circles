@@ -25,10 +25,10 @@ Update(main_image_entity* Entity,
     m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
-    PushCommandTexturedQuad(RenderCommands, 
-                            Entity->Colors, 
-                            T*S,
-                            Entity->TextureHandle);
+    PushCommandDrawTexturedQuad(RenderCommands, 
+                                Entity->Colors, 
+                                T*S,
+                                Entity->TextureHandle);
 }
 
 

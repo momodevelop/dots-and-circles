@@ -8,7 +8,7 @@
 // TODO(Momo): Kind of want to treat all these different asset types as the same thing...?
 
 // NOTE(Momo): Bitmaps
-enum game_bitmap_handle : u32 {
+enum game_bitmap_handle : u8 {
     GameBitmapHandle_Blank,
     GameBitmapHandle_Ryoji,
     GameBitmapHandle_Yuu,
@@ -17,7 +17,7 @@ enum game_bitmap_handle : u32 {
 };
 
 // NOTE(Momo): Spritesheets
-enum game_spritesheet_handle {
+enum game_spritesheet_handle : u8 {
     GameSpritesheetHandle_Karu,
     GameSpritesheetHandle_Max,
 };

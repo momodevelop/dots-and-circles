@@ -12,7 +12,7 @@ Ground rules about this renderer.
 // ---
 // |/|
 // ---
-- UV is layed out from bottom left.
+- UV origin is bottom left
 */
 
 #ifndef GAME_RENDERER_H
@@ -20,8 +20,7 @@ Ground rules about this renderer.
 
 #include "ryoji_render_commands.h"
 #include "ryoji_maths.h"
-
-#include "game_assets.h"
+#include "ryoji_asset_types.h"
 
 static inline quad2f
 UVRect2ToQuad2(rect2f Rect) {
@@ -58,6 +57,7 @@ struct render_command_data_clear {
     c4f Colors;
 };
 
+
 static inline void
 PushCommandClear(render_commands* Commands, c4f Colors) {
     using data_t = render_command_data_clear;
@@ -76,11 +76,11 @@ struct render_command_data_textured_quad {
 
 
 static inline void
-PushCommandTexturedQuad(render_commands* Commands, 
-                        c4f Colors, 
-                        m44f Transform, 
-                        u32 TextureHandle,
-                        quad2f TextureCoords = StandardQuadUV) 
+PushCommandDrawTexturedQuad(render_commands* Commands, 
+                            c4f Colors, 
+                            m44f Transform, 
+                            u32 TextureHandle,
+                            quad2f TextureCoords = StandardQuadUV) 
 {
     using data_t = render_command_data_textured_quad;
     auto* Data = PushCommand<data_t>(Commands);
@@ -90,6 +90,25 @@ PushCommandTexturedQuad(render_commands* Commands,
     Data->TextureHandle = TextureHandle;
     Data->TextureCoords = TextureCoords;
 }
+
+struct render_command_data_draw_quad {
+    static constexpr u32 TypeId = __LINE__;
+    c4f Colors;
+    m44f Transform;
+};
+
+
+static inline void
+PushCommandDrawQuad(render_commands* Commands, 
+                    c4f Colors, 
+                    m44f Transform) 
+{
+    using data_t = render_command_data_draw_quad;
+    auto* Data = PushCommand<data_t>(Commands);
+    Data->Colors = Colors;
+    Data->Transform = Transform;
+}
+
 
 struct render_command_data_link_texture {
     static constexpr u32 TypeId = __LINE__;
@@ -110,7 +129,11 @@ PushCommandLinkTexture(render_commands* Commands,
 
 #if INTERNAL
 static inline void 
-PushCommandDebugLine(render_commands* Commands, line2f Line, f32 Thickness = 1.f) {
+PushCommandDebugLine(render_commands* Commands, 
+                     line2f Line, 
+                     f32 Thickness = 1.f,
+                     c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+{
     f32 LineLength = Length(Line.Max - Line.Min);
     v2f LineMiddle = Midpoint(Line.Max, Line.Min);
     
@@ -124,17 +147,49 @@ PushCommandDebugLine(render_commands* Commands, line2f Line, f32 Thickness = 1.f
     
     m44f Transform = T*R*S;
     
-    quad2f UVCoords = {
-        0.0f, 0.0f,
-        1.f, 0.f,
-        0.f, 1.f,
-        1.f, 1.f
-    };
-    c4f Colors = {
-        0.f, 1.f, 0.f, 1.f
-    };
+    PushCommandDrawQuad(Commands, Colors, Transform);
+}
+
+static inline void 
+PushCommandDebugRect(render_commands* Commands, 
+                     rect2f Rect, 
+                     f32 Thickness = 1.f,
+                     c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+{
+    //Bottom
+    PushCommandDebugLine(Commands, 
+                         { 
+                             Rect.Min.X, 
+                             Rect.Min.Y,  
+                             Rect.Max.X, 
+                             Rect.Min.Y,
+                         }, Thickness, Colors);
+    // Left
+    PushCommandDebugLine(Commands, 
+                         { 
+                             Rect.Min.X,
+                             Rect.Min.Y,
+                             Rect.Min.X,
+                             Rect.Max.Y,
+                         }, Thickness, Colors);
     
-    PushCommandTexturedQuad(Commands, Colors, Transform, GameBitmapHandle_Blank, UVCoords);
+    //Top
+    PushCommandDebugLine(Commands, 
+                         { 
+                             Rect.Min.X,
+                             Rect.Max.Y,
+                             Rect.Max.X,
+                             Rect.Max.Y,
+                         }, Thickness, Colors);
+    
+    //Right 
+    PushCommandDebugLine(Commands, 
+                         { 
+                             Rect.Max.X,
+                             Rect.Min.Y,
+                             Rect.Max.X,
+                             Rect.Max.Y,
+                         }, Thickness, Colors);
 }
 #endif
 
