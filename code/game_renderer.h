@@ -6,6 +6,14 @@
 
 #include "game_assets.h"
 
+static inline constexpr quad2f StandardUV = {
+    0.0f, 0.0f,  // top left
+    1.0f, 0.0f, // top right
+    0.f, 1.f, // bottom left
+    1.0f, 1.f, // bottom right
+};
+
+
 struct render_command_data_clear {
     static constexpr u32 TypeId = 0;
     c4f Colors;
@@ -33,7 +41,7 @@ PushCommandTexturedQuad(render_commands* Commands,
                         c4f Colors, 
                         m44f Transform, 
                         u32 TextureHandle,
-                        quad2f TextureCoords) 
+                        quad2f TextureCoords = StandardUV) 
 {
     using data_t = render_command_data_textured_quad;
     auto* Data = PushCommand<data_t>(Commands);

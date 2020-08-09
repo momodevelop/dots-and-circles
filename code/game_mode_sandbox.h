@@ -6,6 +6,27 @@
 #include "game.h"
 #include "game_assets.h"
 
+// NOTE(Momo): Should we promote this to ryoji?
+// The problem is that there are multiple ways to map a rect to quad
+// This is but only one way.
+static inline quad2f
+Quad2(rect2f Rect) {
+    return {
+        Rect.Min.X, Rect.Min.Y,
+        Rect.Max.X, Rect.Min.Y,
+        Rect.Min.X, Rect.Max.Y,
+        Rect.Max.X, Rect.Max.Y
+    };
+}
+
+
+enum Direction  {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+};
+
 // NOTE(Momo): EC....S?
 struct sandbox_transform_component {
     v3f Scale;
@@ -22,7 +43,6 @@ struct sandbox_renderable_component {
     u32 TextureHandle;
     quad2f TextureCoords;
 };
-
 
 struct sandbox_sprite_component {
     game_spritesheet_handle SpritesheetHandle;
@@ -69,9 +89,10 @@ SpriteRenderingSystem(sandbox_transform_component* Transform,
                             Spritesheet.BitmapHandle,
                             Quad2(Spritesheet.Frames[CurrentFrame]));
     
-    
-    
 }
+
+
+
 
 struct sandbox_physics_component {
     v3f Velocity;
@@ -79,12 +100,6 @@ struct sandbox_physics_component {
 };
 
 
-enum Direction  {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-};
 
 struct sandbox_player {
     sandbox_transform_component Transform;
@@ -305,8 +320,8 @@ UpdateMode(game_mode_sandbox* Mode,
 #endif
     
     // TODO(Momo): Player controls in a system
+    auto* Player = &Mode->Player;
     {
-        auto* Player = &Mode->Player;
         v3f Direction = {};
         b8 IsMovementButtonDown = false;
         if(IsDown(Input->ButtonLeft)) {

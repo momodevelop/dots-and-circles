@@ -118,6 +118,7 @@ struct m44f {
     inline const auto& operator[](usize index) const { return E[index]; }
     inline auto& operator[](usize index) { return E[index];}
 };
+
 struct circle2f {
     v2f Origin;
     f32 Radius;
@@ -140,44 +141,24 @@ struct aabb3f {
 };
 
 struct rect2f {
-    union {
-        v2f Points[2];
-        struct {
-            v2f Min;
-            v2f Max;
-        };
-    };
+    v2f Min;
+    v2f Max;
 };
 
 struct rect3f {
-    union {
-        v3f Points[2];
-        struct {
-            v3f Min;
-            v3f Max;
-        };
-    };
+    v3f Min;
+    v3f Max;
 };
 
 
 struct line2f {
-    union {
-        v2f Points[2];
-        struct {
-            v2f Min;
-            v2f Max;
-        };
-    };
+    v2f Min;
+    v2f Max;
 };
 
 struct line3f {
-    union {
-        v3f Points[2];
-        struct {
-            v3f Min;
-            v3f Max;
-        };
-    };
+    v3f Min;
+    v3f Max;
 };
 
 struct quad2f {
@@ -676,35 +657,47 @@ IdentityMatrix() {
     };
 }
 
+static inline v2f
+V2(v3f V) {
+    return { V.X, V.Y };
+}
+
 static inline v3f 
 V3(v2f V) {
     return { V.X, V.Y, 0.f };
 }
 
-static inline line3f
-Line3(line2f Line2) {
+static inline line2f
+Line2(line3f Line) {
     return {
-        V3(Line2.Points[0]),
-        V3(Line2.Points[1]),
+        V2(Line.Min),
+        V2(Line.Max),
+    };
+}
+
+static inline line3f
+Line3(line2f Line) {
+    return {
+        V3(Line.Min),
+        V3(Line.Max),
+    };
+}
+
+
+static inline rect2f
+Rect2(rect3f Rect) {
+    return {
+        V2(Rect.Min),
+        V2(Rect.Max),
     };
 }
 
 
 static inline rect3f
-Rect3(rect2f Rect2) {
+Rect3(rect2f Rect) {
     return {
-        V3(Rect2.Points[0]),
-        V3(Rect2.Points[1]),
-    };
-}
-
-static inline quad2f
-Quad2(rect2f Rect) {
-    return {
-        Rect.Min.X, Rect.Min.Y,
-        Rect.Max.X, Rect.Min.Y,
-        Rect.Min.X, Rect.Max.Y,
-        Rect.Max.X, Rect.Max.Y
+        V3(Rect.Min),
+        V3(Rect.Max),
     };
 }
 
