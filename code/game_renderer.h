@@ -1,3 +1,16 @@
+/* NOTE(Momo): 
+Ground rules about this renderer.
+- This is a 2D renderer in 3D space. 
+- Right-handed coordinate system: +Y is up, +Z is towards
+- Only one model is supported: A quad that can be textured and colored 
+- Quad points (and thus UV mapping)  is defined in the an anti-clockwise order, starting from bottom left (to match our coordinate system): 
+1. bottom left
+2. bottom right
+3. top right
+4. top left 
+- UV: 
+*/
+
 #ifndef GAME_RENDERER_H
 #define GAME_RENDERER_H
 
@@ -6,13 +19,25 @@
 
 #include "game_assets.h"
 
-static inline constexpr quad2f StandardUV = {
+static inline constexpr quad2f StandardQuadUV = {
     0.0f, 0.0f,  // top left
     1.0f, 0.0f, // top right
     0.f, 1.f, // bottom left
     1.0f, 1.f, // bottom right
 };
 
+constexpr static f32 QuadModel[] = {
+    // position   
+    -0.5f,  0.5f, 0.0f,   // top left 
+    0.5f,  0.5f, 0.0f,  // top right
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    0.5f, -0.5f, 0.0f,  // bottom right
+};
+
+constexpr static u8 QuadIndices[] = {
+    0, 1, 2,
+    1, 3, 2,
+};
 
 struct render_command_data_clear {
     static constexpr u32 TypeId = 0;
@@ -41,7 +66,7 @@ PushCommandTexturedQuad(render_commands* Commands,
                         c4f Colors, 
                         m44f Transform, 
                         u32 TextureHandle,
-                        quad2f TextureCoords = StandardUV) 
+                        quad2f TextureCoords = StandardQuadUV) 
 {
     using data_t = render_command_data_textured_quad;
     auto* Data = PushCommand<data_t>(Commands);
