@@ -4,11 +4,15 @@ Ground rules about this renderer.
 - Right-handed coordinate system: +Y is up, +Z is towards
 - Only one model is supported: A quad that can be textured and colored 
 - Quad points (and thus UV mapping)  is defined in the an anti-clockwise order, starting from bottom left (to match our coordinate system): 
-1. bottom left
-2. bottom right
-3. top right
-4. top left 
-- UV: 
+0. bottom left
+1. bottom right
+2. top right
+3. top left 
+- Indices layout 2 triangles in the following fashion:
+// ---
+// |/|
+// ---
+- UV is layed out from bottom left.
 */
 
 #ifndef GAME_RENDERER_H
@@ -19,28 +23,38 @@ Ground rules about this renderer.
 
 #include "game_assets.h"
 
+static inline quad2f
+UVRect2ToQuad2(rect2f Rect) {
+    return {
+        Rect.Min.X, Rect.Min.Y, // bottom left  	
+        Rect.Max.X, Rect.Min.Y, // bottom right
+        Rect.Max.X, Rect.Max.Y, // top right
+        Rect.Min.X, Rect.Max.Y, // top left
+    };
+}
+
 static inline constexpr quad2f StandardQuadUV = {
-    0.0f, 0.0f,  // top left
-    1.0f, 0.0f, // top right
-    0.f, 1.f, // bottom left
-    1.0f, 1.f, // bottom right
+    0.f, 0.f, // bottom left
+    1.0f, 0.f, // bottom right
+    1.0f, 1.0f, // top right
+    0.0f, 1.0f,  // top left
 };
 
 constexpr static f32 QuadModel[] = {
     // position   
-    -0.5f,  0.5f, 0.0f,   // top left 
-    0.5f,  0.5f, 0.0f,  // top right
     -0.5f, -0.5f, 0.0f,  // bottom left
     0.5f, -0.5f, 0.0f,  // bottom right
+    0.5f,  0.5f, 0.0f,  // top right
+    -0.5f,  0.5f, 0.0f,   // top left 
 };
 
 constexpr static u8 QuadIndices[] = {
     0, 1, 2,
-    1, 3, 2,
+    0, 2, 3,
 };
 
 struct render_command_data_clear {
-    static constexpr u32 TypeId = 0;
+    static constexpr u32 TypeId = __LINE__;
     c4f Colors;
 };
 

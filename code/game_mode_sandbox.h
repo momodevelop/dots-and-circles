@@ -9,15 +9,7 @@
 // NOTE(Momo): Should we promote this to ryoji?
 // The problem is that there are multiple ways to map a rect to quad
 // This is but only one way.
-static inline quad2f
-Quad2(rect2f Rect) {
-    return {
-        Rect.Min.X, Rect.Min.Y,
-        Rect.Max.X, Rect.Min.Y,
-        Rect.Min.X, Rect.Max.Y,
-        Rect.Max.X, Rect.Max.Y
-    };
-}
+
 
 
 enum Direction  {
@@ -87,12 +79,9 @@ SpriteRenderingSystem(sandbox_transform_component* Transform,
                             {1.f, 1.f, 1.f, 1.f}, 
                             T*R*S,
                             Spritesheet.BitmapHandle,
-                            Quad2(Spritesheet.Frames[CurrentFrame]));
+                            UVRect2ToQuad2(Spritesheet.Frames[CurrentFrame]));
     
 }
-
-
-
 
 struct sandbox_physics_component {
     v3f Velocity;
@@ -236,30 +225,30 @@ InitMode(game_mode_sandbox* Mode, game_state* GameState) {
     
     // NOTE(Momo): Animations
     {
-        Mode->AnimeWalkDown[0] = 1; 
-        Mode->AnimeWalkDown[1] = 0;
-        Mode->AnimeWalkDown[2] = 1;
-        Mode->AnimeWalkDown[3] = 2;
+        Mode->AnimeWalkUp[0] = 1; 
+        Mode->AnimeWalkUp[1] = 0;
+        Mode->AnimeWalkUp[2] = 1;
+        Mode->AnimeWalkUp[3] = 2;
         
-        Mode->AnimeWalkLeft[0] = 4; 
-        Mode->AnimeWalkLeft[1] = 3;
-        Mode->AnimeWalkLeft[2] = 4;
-        Mode->AnimeWalkLeft[3] = 5;
+        Mode->AnimeWalkRight[0] = 4; 
+        Mode->AnimeWalkRight[1] = 3;
+        Mode->AnimeWalkRight[2] = 4;
+        Mode->AnimeWalkRight[3] = 5;
         
-        Mode->AnimeWalkRight[0] = 7; 
-        Mode->AnimeWalkRight[1] = 6;
-        Mode->AnimeWalkRight[2] = 7;
-        Mode->AnimeWalkRight[3] = 8;
+        Mode->AnimeWalkLeft[0] = 7; 
+        Mode->AnimeWalkLeft[1] = 6;
+        Mode->AnimeWalkLeft[2] = 7;
+        Mode->AnimeWalkLeft[3] = 8;
         
-        Mode->AnimeWalkUp[0] = 10; 
-        Mode->AnimeWalkUp[1] = 9;
-        Mode->AnimeWalkUp[2] = 10;
-        Mode->AnimeWalkUp[3] = 11;
+        Mode->AnimeWalkDown[0] = 10; 
+        Mode->AnimeWalkDown[1] = 9;
+        Mode->AnimeWalkDown[2] = 10;
+        Mode->AnimeWalkDown[3] = 11;
         
-        Mode->AnimeIdleDown[0] = 1;
-        Mode->AnimeIdleLeft[0] = 4;
-        Mode->AnimeIdleRight[0] = 7;
-        Mode->AnimeIdleUp[0] = 10;
+        Mode->AnimeIdleDown[0] = 10;
+        Mode->AnimeIdleLeft[0] = 7;
+        Mode->AnimeIdleRight[0] = 4;
+        Mode->AnimeIdleUp[0] = 1;
     }
     
     
@@ -291,7 +280,7 @@ InitMode(game_mode_sandbox* Mode, game_state* GameState) {
     {
         auto* Block = &Mode->Block;
         
-        Block->Transform.Position = {200.f, 200.f};
+        Block->Transform.Position = { 200.f, 200.f };
         Block->Transform.Rotation = 0.f;
         Block->Transform.Scale = { 48.f, 48.f };
         

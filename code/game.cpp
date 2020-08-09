@@ -13,6 +13,11 @@ GameUpdate(game_memory* GameMemory,
 #if INTERNAL
     gLog = Platform->Log;
 #endif
+    // NOTE(Momo): Delta time cap
+    if (DeltaTime > 1/30.f)
+        DeltaTime = 1/30.f;
+    
+    
     game_state* GameState = (game_state*)GameMemory->MainMemory;
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
