@@ -1,8 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-
-
 #include "game_renderer.h"
 #include "game_platform.h"
 #include "game_input.h"
@@ -21,7 +19,7 @@ struct game_state {
         void* Mode;
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
-        struct game_mode_sandbox* SandboxMode;
+        struct game_mode_menu* MenuMode;
     };
     
     u32 CurrentMode;
@@ -40,6 +38,7 @@ SetGameMode(game_state* GameState) {
     memory_arena* ModeArena = &GameState->ModeArena;
     Clear(ModeArena);
     GameState->CurrentMode = T::TypeId;
+    
     T* Mode = PushStruct<T>(ModeArena); 
     InitMode(Mode, GameState); // all modes must have init function
     GameState->Mode = Mode;
@@ -54,15 +53,14 @@ ProcessMetaInput(game_state* GameState, game_input* Input) {
         return true;
     }
     else if (IsPoked(Input->ButtonDebug[2])) {
-        SetGameMode<game_mode_main>(GameState);
-        Log("Jumping to main state");
-        
+        SetGameMode<game_mode_menu>(GameState);
+        Log("Jumping to menu state");
         return true;
     }
     
     else if (IsPoked(Input->ButtonDebug[0])) {
-        SetGameMode<game_mode_sandbox>(GameState);
-        Log("Jumping to sandbox state");
+        SetGameMode<game_mode_main>(GameState);
+        Log("Jumping to main state");
         return true;
     }
     

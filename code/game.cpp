@@ -1,6 +1,6 @@
 #include "game_mode_splash.h"
-#include "game_mode_sandbox.h"
 #include "game_mode_main.h"
+#include "game_mode_menu.h"
 
 // NOTE(Momo):  Exported Functions
 extern "C" void
@@ -123,8 +123,8 @@ GameUpdate(game_memory* GameMemory,
         case game_mode_splash::TypeId: {
             UpdateMode(GameState->SplashMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
-        case game_mode_sandbox::TypeId: {
-            UpdateMode(GameState->SandboxMode, GameState, RenderCommands, Input, DeltaTime);
+        case game_mode_menu::TypeId: {
+            UpdateMode(GameState->MenuMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
         case game_mode_main::TypeId: {
             UpdateMode(GameState->MainMode, GameState, RenderCommands, Input, DeltaTime);

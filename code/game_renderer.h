@@ -127,13 +127,17 @@ PushCommandLinkTexture(render_commands* Commands,
     Data->TextureHandle = TextureHandle;
 }
 
-#if INTERNAL
 static inline void 
-PushCommandDebugLine(render_commands* Commands, 
-                     line2f Line, 
-                     f32 Thickness = 1.f,
-                     c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+PushCommandDrawDebugLine(render_commands* Commands, 
+                         line2f Line, 
+                         f32 Thickness = 1.f,
+                         c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
+    // NOTE(Momo): Min.Y needs to be lower than Max.Y
+    if (Line.Min.Y > Line.Max.Y) {
+        Swap(Line.Min, Line.Max);
+    }
+    
     f32 LineLength = Length(Line.Max - Line.Min);
     v2f LineMiddle = Midpoint(Line.Max, Line.Min);
     
@@ -157,40 +161,39 @@ PushCommandDebugRect(render_commands* Commands,
                      c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     //Bottom
-    PushCommandDebugLine(Commands, 
-                         { 
-                             Rect.Min.X, 
-                             Rect.Min.Y,  
-                             Rect.Max.X, 
-                             Rect.Min.Y,
-                         }, Thickness, Colors);
+    PushCommandDrawDebugLine(Commands, 
+                             { 
+                                 Rect.Min.X, 
+                                 Rect.Min.Y,  
+                                 Rect.Max.X, 
+                                 Rect.Min.Y,
+                             }, Thickness, Colors);
     // Left
-    PushCommandDebugLine(Commands, 
-                         { 
-                             Rect.Min.X,
-                             Rect.Min.Y,
-                             Rect.Min.X,
-                             Rect.Max.Y,
-                         }, Thickness, Colors);
+    PushCommandDrawDebugLine(Commands, 
+                             { 
+                                 Rect.Min.X,
+                                 Rect.Min.Y,
+                                 Rect.Min.X,
+                                 Rect.Max.Y,
+                             }, Thickness, Colors);
     
     //Top
-    PushCommandDebugLine(Commands, 
-                         { 
-                             Rect.Min.X,
-                             Rect.Max.Y,
-                             Rect.Max.X,
-                             Rect.Max.Y,
-                         }, Thickness, Colors);
+    PushCommandDrawDebugLine(Commands, 
+                             { 
+                                 Rect.Min.X,
+                                 Rect.Max.Y,
+                                 Rect.Max.X,
+                                 Rect.Max.Y,
+                             }, Thickness, Colors);
     
     //Right 
-    PushCommandDebugLine(Commands, 
-                         { 
-                             Rect.Max.X,
-                             Rect.Min.Y,
-                             Rect.Max.X,
-                             Rect.Max.Y,
-                         }, Thickness, Colors);
+    PushCommandDrawDebugLine(Commands, 
+                             { 
+                                 Rect.Max.X,
+                                 Rect.Min.Y,
+                                 Rect.Max.X,
+                                 Rect.Max.Y,
+                             }, Thickness, Colors);
 }
-#endif
 
 #endif //GAME_RENDERER_H

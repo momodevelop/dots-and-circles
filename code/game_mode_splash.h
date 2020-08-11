@@ -4,7 +4,7 @@
 #include "ryoji_easing.h"
 
 #include "game.h"
-#include "game_mode_main.h"
+#include "game_mode_menu.h"
 
 struct splash_image_entity {
     v3f Scale;
@@ -160,11 +160,8 @@ UpdateMode(game_mode_splash* Mode,
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         Log("Splash state exit");
-        SetGameMode<game_mode_main>(GameState);
+        SetGameMode<game_mode_menu>(GameState);
     }
-    
-    
-    
 }
 
 #endif //GAME_MODE_SPLASH_iH

@@ -2,6 +2,7 @@
 #define __GAME_RENDERER_OPENGL__
 
 #include "game_renderer.h"
+#include "game_renderer_opengl_shaders.inl"
 
 // NOTE(Momo): Buffers
 enum {
@@ -70,19 +71,6 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     
     // NOTE(Momo): No real need to load these from file, since we fixed
     // our pipeline.
-    constexpr static const char* vertexShader = "#version 450 core\nlayout(location=0) in vec3 aModelVtx; \nlayout(location=1) in vec4 aColor;\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                layout(location=2) in vec2 aTexCoord[4];\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        \nlayout(location=6) in mat4 aTransform;\nout vec4 mColor;\nout vec2 mTexCoord;\nuniform mat4 uProjection;\n\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            void main(void) {\ngl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);\nmColor = aColor;\n\
-                                                                                                                                                                                                                                                                                                mTexCoord = aTexCoord[gl_VertexID];\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }";
-#if 1
-    constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\nfragColor = texture(uTexture, mTexCoord) * mColor; \n}";
-    
-#else
-    constexpr static const char* fragmentShader = "#version 450 core\nout vec4 fragColor;\nin vec4 mColor;\nin vec2 mTexCoord;\nuniform sampler2D uTexture;\nvoid main(void) {\n\
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            fragColor.x = mTexCoord.x; fragColor.y = mTexCoord.y; fragColor.z = 0.0; fragColor.w = 1.0; \n}";
-#endif
     
     glEnable(GL_DEPTH_TEST);
     
@@ -168,8 +156,8 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     
     // NOTE(Momo): Setup Shader Program
     Renderer->Shader = glCreateProgram();
-    GlAttachShader(Renderer->Shader, GL_VERTEX_SHADER, vertexShader);
-    GlAttachShader(Renderer->Shader, GL_FRAGMENT_SHADER, fragmentShader);
+    GlAttachShader(Renderer->Shader, GL_VERTEX_SHADER, RendererOpenGLVertexShader);
+    GlAttachShader(Renderer->Shader, GL_FRAGMENT_SHADER, RendererOpenGLVFragmentShader);
     glLinkProgram(Renderer->Shader);
     GLint result;
     glGetProgramiv(Renderer->Shader, GL_LINK_STATUS, &result);

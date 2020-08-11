@@ -49,8 +49,7 @@ ZeroBlock(void *mem, usize size) {
 #define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
 #define ZeroStaticArray(a) ZeroBlock((a), sizeof((a)))
 #define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
-
-
+#define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 
 // Assertion
 #if SLOW

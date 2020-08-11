@@ -46,6 +46,9 @@ struct v3f {
             f32 X, Y, Z;
         };
         struct {
+            f32 W, H, D;
+        };
+        struct {
             v2f XY;
             f32 _;
         };
