@@ -449,6 +449,9 @@ UpdateMode(game_mode_main* Mode,
     // NOTE(Momo): Entity updates
     Update(Player, DeltaTime);
     
+    
+#define STATE 0
+#if STATE
     // TODO(Momo): Sledgehammered collision
     for (u8 i = 0; i < ArrayCount(Mode->Blocks); ++i )
     {
@@ -464,7 +467,7 @@ UpdateMode(game_mode_main* Mode,
     }
     
     
-#if 0
+#else
     // TODO(Momo): Sledgehammered line collision
     {
         line2f Line = {};
@@ -483,7 +486,7 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position + Player->Collision.Box.Origin);
+        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
         v2 = { -Player->Collision.Box.HalfDimensions.W, Player->Collision.Box.HalfDimensions.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
@@ -499,7 +502,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDebugLine(RenderCommands, Line);
+        PushCommandDrawDebugLine(RenderCommands, Line);
     }
     
     {
@@ -519,7 +522,7 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position + Player->Collision.Box.Origin);
+        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
         v2 = { Player->Collision.Box.HalfDimensions.W, Player->Collision.Box.HalfDimensions.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
@@ -535,7 +538,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDebugLine(RenderCommands, Line);
+        PushCommandDrawDebugLine(RenderCommands, Line);
     }
     
     {
@@ -556,7 +559,7 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position + Player->Collision.Box.Origin);
+        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
         v2 = { Player->Collision.Box.HalfDimensions.W, -Player->Collision.Box.HalfDimensions.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
@@ -571,7 +574,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDebugLine(RenderCommands, Line);
+        PushCommandDrawDebugLine(RenderCommands, Line);
     }
     
     {
@@ -591,7 +594,7 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position + Player->Collision.Box.Origin);
+        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
         v2 = { -Player->Collision.Box.HalfDimensions.W, -Player->Collision.Box.HalfDimensions.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
@@ -606,19 +609,20 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDebugLine(RenderCommands, Line);
+        PushCommandDrawDebugLine(RenderCommands, Line);
     }
 #endif
     
     
-    PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
-    
-    Render(Player, GameState->Assets, RenderCommands, DeltaTime);
-    
     // NOTE(Momo): Rendering 
+    
+    PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
+    Render(Player, GameState->Assets, RenderCommands, DeltaTime);
+#if STATE
     for ( u8 i = 0; i < ArrayCount(Mode->Blocks); ++i ) {
         Render(&Mode->Blocks[i], RenderCommands);
     }
+#endif
     
     
 }
