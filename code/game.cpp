@@ -6,7 +6,7 @@
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
            platform_api* Platform, 
-           render_commands* RenderCommands, 
+           commands* RenderCommands, 
            game_input* Input, 
            f32 DeltaTime)
 {

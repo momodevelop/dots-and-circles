@@ -9,28 +9,18 @@ Ground rules about this renderer.
 2. top right
 3. top left 
 - Indices layout 2 triangles in the following fashion:
-// ---
-// |/|
-// ---
+* ---
+ * |/|
+ * ---
 - UV origin is bottom left
 */
-
 #ifndef GAME_RENDERER_H
 #define GAME_RENDERER_H
 
-#include "ryoji_render_commands.h"
+#include "ryoji_commands.h"
 #include "ryoji_maths.h"
 #include "ryoji_asset_types.h"
 
-static inline quad2f
-UVRect2ToQuad2(rect2f Rect) {
-    return {
-        Rect.Min.X, Rect.Min.Y, // bottom left  	
-        Rect.Max.X, Rect.Min.Y, // bottom right
-        Rect.Max.X, Rect.Max.Y, // top right
-        Rect.Min.X, Rect.Max.Y, // top left
-    };
-}
 
 static inline constexpr quad2f StandardQuadUV = {
     0.f, 0.f, // bottom left
@@ -52,21 +42,18 @@ constexpr static u8 QuadIndices[] = {
     0, 2, 3,
 };
 
-struct render_command_data_clear {
+
+struct render_command_data_clear_color {
     static constexpr u32 TypeId = __LINE__;
     c4f Colors;
 };
 
+struct render_command_data_set_view_projection {
+    static constexpr u32 TypeId = __LINE__;
+    m44f ViewProjection;
+};
 
-static inline void
-PushCommandClear(render_commands* Commands, c4f Colors) {
-    using data_t = render_command_data_clear;
-    auto* Data = PushCommand<data_t>(Commands);
-    Data->Colors = Colors;
-}
-
-
-struct render_command_data_textured_quad {
+struct render_command_data_draw_textured_quad {
     static constexpr u32 TypeId = __LINE__;
     u32 TextureHandle;
     c4f Colors;
@@ -75,39 +62,12 @@ struct render_command_data_textured_quad {
 };
 
 
-static inline void
-PushCommandDrawTexturedQuad(render_commands* Commands, 
-                            c4f Colors, 
-                            m44f Transform, 
-                            u32 TextureHandle,
-                            quad2f TextureCoords = StandardQuadUV) 
-{
-    using data_t = render_command_data_textured_quad;
-    auto* Data = PushCommand<data_t>(Commands);
-    
-    Data->Colors = Colors;
-    Data->Transform = Transform;
-    Data->TextureHandle = TextureHandle;
-    Data->TextureCoords = TextureCoords;
-}
-
 struct render_command_data_draw_quad {
     static constexpr u32 TypeId = __LINE__;
     c4f Colors;
     m44f Transform;
 };
 
-
-static inline void
-PushCommandDrawQuad(render_commands* Commands, 
-                    c4f Colors, 
-                    m44f Transform) 
-{
-    using data_t = render_command_data_draw_quad;
-    auto* Data = PushCommand<data_t>(Commands);
-    Data->Colors = Colors;
-    Data->Transform = Transform;
-}
 
 
 struct render_command_data_link_texture {
@@ -117,83 +77,7 @@ struct render_command_data_link_texture {
 };
 
 
-static inline void 
-PushCommandLinkTexture(render_commands* Commands, 
-                       bitmap TextureBitmap, 
-                       u32 TextureHandle) {
-    using data_t = render_command_data_link_texture;
-    auto* Data = PushCommand<data_t>(Commands);
-    Data->TextureBitmap = TextureBitmap;
-    Data->TextureHandle = TextureHandle;
-}
 
-static inline void 
-PushCommandDrawDebugLine(render_commands* Commands, 
-                         line2f Line, 
-                         f32 Thickness = 1.f,
-                         c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
-{
-    // NOTE(Momo): Min.Y needs to be lower than Max.Y
-    if (Line.Min.Y > Line.Max.Y) {
-        Swap(Line.Min, Line.Max);
-    }
-    
-    f32 LineLength = Length(Line.Max - Line.Min);
-    v2f LineMiddle = Midpoint(Line.Max, Line.Min);
-    
-    v2f LineVector = Line.Max - Line.Min;
-    f32 Angle = AngleBetween(LineVector, { 1.f, 0.f });
-    
-    // TODO(Momo): change Z to biggest possible float number?
-    m44f T = TranslationMatrix(LineMiddle.X, LineMiddle.Y, 100.f);
-    m44f R = RotationZMatrix(Angle);
-    m44f S = ScaleMatrix(LineLength, Thickness, 1.f) ;
-    
-    m44f Transform = T*R*S;
-    
-    PushCommandDrawQuad(Commands, Colors, Transform);
-}
-
-static inline void 
-PushCommandDebugRect(render_commands* Commands, 
-                     rect2f Rect, 
-                     f32 Thickness = 1.f,
-                     c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
-{
-    //Bottom
-    PushCommandDrawDebugLine(Commands, 
-                             { 
-                                 Rect.Min.X, 
-                                 Rect.Min.Y,  
-                                 Rect.Max.X, 
-                                 Rect.Min.Y,
-                             }, Thickness, Colors);
-    // Left
-    PushCommandDrawDebugLine(Commands, 
-                             { 
-                                 Rect.Min.X,
-                                 Rect.Min.Y,
-                                 Rect.Min.X,
-                                 Rect.Max.Y,
-                             }, Thickness, Colors);
-    
-    //Top
-    PushCommandDrawDebugLine(Commands, 
-                             { 
-                                 Rect.Min.X,
-                                 Rect.Max.Y,
-                                 Rect.Max.X,
-                                 Rect.Max.Y,
-                             }, Thickness, Colors);
-    
-    //Right 
-    PushCommandDrawDebugLine(Commands, 
-                             { 
-                                 Rect.Max.X,
-                                 Rect.Min.Y,
-                                 Rect.Max.X,
-                                 Rect.Max.Y,
-                             }, Thickness, Colors);
-}
+#include "game_renderer.cpp"
 
 #endif //GAME_RENDERER_H

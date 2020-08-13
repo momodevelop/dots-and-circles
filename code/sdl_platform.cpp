@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Render commands/queue
     void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
-    render_commands RenderCommands = {}; 
+    commands RenderCommands = {};
     Init(&RenderCommands, RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
@@ -273,7 +273,6 @@ int main(int argc, char* argv[]) {
                             Unload(&GameCode);
                             Load(&GameCode);
                         }break;
-                        
 #endif
                     }
                 } break;
@@ -348,8 +347,11 @@ int main(int argc, char* argv[]) {
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        //SDL_Log("%lld  ms\n", TimeElapsed);
+        SDL_Log("%lld  ms\n", TimeElapsed);
         SDL_GL_SwapWindow(window);
+        
+        // TODO(Momo): Cap framerate, or enforce framerate
+        SDL_Delay(16); // 60fps?
     }
     
     

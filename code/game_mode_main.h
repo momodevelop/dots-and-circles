@@ -6,6 +6,8 @@
 #include "game.h"
 #include "game_assets.h"
 
+
+v3f CameraPosition;
 // NOTE(Momo): Should we promote this to ryoji?
 // The problem is that there are multiple ways to map a rect to quad
 // This is but only one way.
@@ -33,6 +35,12 @@ struct renderable_component {
     quad2f TextureCoords;
 };
 
+
+struct physics_component {
+    v3f Velocity;
+    v3f Acceleration;
+};
+
 struct sprite_component {
     game_spritesheet_handle SpritesheetHandle;
     
@@ -42,45 +50,6 @@ struct sprite_component {
     u8 AnimeAt;
     f32 AnimeTimer;
     f32 AnimeSpeed;
-};
-
-static inline void
-SpriteRenderingSystem(transform_component* Transform,
-                      sprite_component* Sprite,
-                      render_commands* RenderCommands,
-                      game_assets* Assets,
-                      f32 DeltaTime) 
-{
-    // NOTE(Momo): should be in a seperate system probably
-    Sprite->AnimeTimer += Sprite->AnimeSpeed * DeltaTime;
-    if (Sprite->AnimeTimer >= 1.f) {
-        Sprite->AnimeTimer = 0.f;
-        ++Sprite->AnimeAt;
-        if (Sprite->AnimeAt >= Sprite->AnimeFramesCount) {
-            Sprite->AnimeAt = 0;
-        }
-        //Log("AnimeAt: %d is %d", Sprite->AnimeAt , Sprite->AnimeFrames[Sprite->AnimeAt]);
-    }
-    
-    m44f T = TranslationMatrix(Transform->Position);
-    m44f R = RotationZMatrix(Transform->Rotation);
-    m44f S = ScaleMatrix(Transform->Scale);
-    
-    
-    auto Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
-    auto CurrentFrame = Sprite->AnimeFrames[Sprite->AnimeAt];
-    
-    PushCommandDrawTexturedQuad(RenderCommands, 
-                                {1.f, 1.f, 1.f, 1.f}, 
-                                T*R*S,
-                                Spritesheet.BitmapHandle,
-                                UVRect2ToQuad2(Spritesheet.Frames[CurrentFrame]));
-    
-}
-
-struct physics_component {
-    v3f Velocity;
-    v3f Acceleration;
 };
 
 struct player {
@@ -98,70 +67,6 @@ struct block {
     collision_component Collision;
 };
 
-#if INTERNAL
-static inline void
-DrawCollisionDebugLinesSystem(transform_component* Transform,
-                              collision_component* Collision, render_commands * RenderCommands) 
-{
-    
-    auto* Box = &Collision->Box;
-    
-    rect2f Rect = {}; 
-    Rect.Min.X = Transform->Position.X + Box->Origin.X - Box->HalfDimensions.X;
-    Rect.Min.Y = Transform->Position.Y + Box->Origin.Y - Box->HalfDimensions.Y;
-    Rect.Max.X = Transform->Position.X + Box->Origin.X + Box->HalfDimensions.X;
-    Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->HalfDimensions.Y;
-    
-    // Bottom
-    PushCommandDebugRect(RenderCommands, Rect);
-    
-    
-}
-#endif
-
-static inline void
-PhysicsSystem(transform_component* Transform,
-              physics_component* Physics,
-              f32 DeltaTime) 
-
-{
-    Physics->Velocity += Physics->Acceleration * DeltaTime;
-    Transform->Position += Physics->Velocity * DeltaTime;
-    Physics->Acceleration = {};
-}
-
-static inline void
-Update(player* Entity, f32 DeltaTime) 
-{
-    PhysicsSystem(&Entity->Transform, &Entity->Physics, DeltaTime);
-}
-
-static inline void 
-Render(player* Entity, 
-       game_assets* Assets,
-       render_commands * RenderCommands, 
-       f32 DeltaTime) 
-{
-#if INTERNAL
-    DrawCollisionDebugLinesSystem(&Entity->Transform, &Entity->Collision, RenderCommands);
-#endif
-    SpriteRenderingSystem(&Entity->Transform, 
-                          &Entity->Sprite, 
-                          RenderCommands, 
-                          Assets,
-                          DeltaTime);
-}
-
-
-static inline void
-Render(block* Entity, 
-       render_commands * RenderCommands) 
-{
-    
-#if INTERNAL
-    DrawCollisionDebugLinesSystem(&Entity->Transform, &Entity->Collision, RenderCommands);
-#endif
-}
 
 struct game_mode_main {
     static constexpr u8 TypeId = 2;
@@ -187,11 +92,121 @@ struct game_mode_main {
         };
         block Blocks[30];
     };
+    
+    b8 IsControllingCamera;
 };
 
 
+
+static inline void
+SpriteRenderingSystem(game_mode_main* Mode, 
+                      transform_component* Transform,
+                      sprite_component* Sprite,
+                      commands* RenderCommands,
+                      game_assets* Assets,
+                      f32 DeltaTime) 
+{
+    
+    // NOTE(Momo): should be in a seperate system probably
+    Sprite->AnimeTimer += Sprite->AnimeSpeed * DeltaTime;
+    if (Sprite->AnimeTimer >= 1.f) {
+        Sprite->AnimeTimer = 0.f;
+        ++Sprite->AnimeAt;
+        if (Sprite->AnimeAt >= Sprite->AnimeFramesCount) {
+            Sprite->AnimeAt = 0;
+        }
+        //Log("AnimeAt: %d is %d", Sprite->AnimeAt , Sprite->AnimeFrames[Sprite->AnimeAt]);
+    }
+    
+    
+    m44f T = TranslationMatrix(Transform->Position);
+    m44f R = RotationZMatrix(Transform->Rotation);
+    m44f S = ScaleMatrix(Transform->Scale);
+    
+    auto Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
+    auto CurrentFrame = Sprite->AnimeFrames[Sprite->AnimeAt];
+    
+    PushCommandDrawTexturedQuad(RenderCommands, 
+                                {1.f, 1.f, 1.f, 1.f}, 
+                                T*R*S,
+                                Spritesheet.BitmapHandle,
+                                UVRect2ToQuad2(Spritesheet.Frames[CurrentFrame]));
+    
+}
+
+#if INTERNAL
+static inline void
+DrawCollisionLinesSystem(transform_component* Transform,
+                         collision_component* Collision, 
+                         commands* RenderCommands) 
+{
+    
+    auto* Box = &Collision->Box;
+    
+    rect2f Rect = {}; 
+    Rect.Min.X = Transform->Position.X + Box->Origin.X - Box->HalfDimensions.X;
+    Rect.Min.Y = Transform->Position.Y + Box->Origin.Y - Box->HalfDimensions.Y;
+    Rect.Max.X = Transform->Position.X + Box->Origin.X + Box->HalfDimensions.X;
+    Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->HalfDimensions.Y;
+    
+    // Bottom
+    PushCommandDrawLineRect(RenderCommands, Rect, CameraPosition);
+}
+#endif
+
+static inline void
+PhysicsSystem(transform_component* Transform,
+              physics_component* Physics,
+              f32 DeltaTime) 
+
+{
+    Physics->Velocity += Physics->Acceleration * DeltaTime;
+    Transform->Position += Physics->Velocity * DeltaTime;
+    Physics->Acceleration = {};
+}
+
+static inline void
+Update(player* Entity, f32 DeltaTime) 
+{
+    PhysicsSystem(&Entity->Transform, &Entity->Physics, DeltaTime);
+}
+
+static inline void 
+Render(game_mode_main* Mode,
+       player* Entity, 
+       game_assets* Assets,
+       commands* RenderCommands, 
+       f32 DeltaTime) 
+{
+#if INTERNAL
+    DrawCollisionLinesSystem(&Entity->Transform, &Entity->Collision, RenderCommands);
+#endif
+    SpriteRenderingSystem(Mode,
+                          &Entity->Transform, 
+                          &Entity->Sprite, 
+                          RenderCommands, 
+                          Assets,
+                          DeltaTime);
+}
+
+
+static inline void
+Render(block* Entity, 
+       commands * RenderCommands) 
+{
+    
+#if INTERNAL
+    DrawCollisionLinesSystem(&Entity->Transform, &Entity->Collision, RenderCommands);
+#endif
+}
+
 static inline void
 InitMode(game_mode_main* Mode, game_state* GameState) {
+    
+    // NOTE(Momo): Camera 
+    {
+        CameraPosition = {};
+    }
     
     // NOTE(Momo): Animations
     {
@@ -305,7 +320,6 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
             Block->Transform.Rotation = 0.f;
             Block->Transform.Scale = { 48.f, 48.f };
             
-            
             Block->Transform.Position.X +=  BlockHalfDimensions.X * 2.f * (ArrayCount(Mode->TopBlock) - 1), 0.f;
             
             
@@ -366,7 +380,7 @@ GetPushbackNormal(aabb2f Static, aabb2f Dynamic ) {
 static inline void
 UpdateMode(game_mode_main* Mode,
            game_state* GameState, 
-           render_commands* RenderCommands, 
+           commands* RenderCommands, 
            game_input* Input,
            f32 DeltaTime) 
 {
@@ -378,6 +392,19 @@ UpdateMode(game_mode_main* Mode,
 #endif
     // TODO(Momo): Player controls in a system
     auto* Player = &Mode->Player;
+    
+    
+    if(IsPoked(Input->ButtonConfirm)) {
+        Mode->IsControllingCamera = !Mode->IsControllingCamera;
+        if ( Mode->IsControllingCamera ) { 
+            Log("Now controlling camera");
+        }
+        else { 
+            Log("Now controlling player");
+        }
+    }
+    
+    if (!Mode->IsControllingCamera)
     {
         v3f Direction = {};
         b8 IsMovementButtonDown = false;
@@ -446,8 +473,37 @@ UpdateMode(game_mode_main* Mode,
         }
     }
     
+    else {
+        // NOTE(Momo): Controlling camera
+        f32 CameraSpeed = 500.f;
+        if(IsDown(Input->ButtonLeft)) {
+            CameraPosition.X -= CameraSpeed * DeltaTime;;
+        };
+        
+        if(IsDown(Input->ButtonRight)) {
+            CameraPosition.X += CameraSpeed * DeltaTime;;
+        }
+        
+        if(IsDown(Input->ButtonUp)) {
+            CameraPosition.Y += CameraSpeed * DeltaTime;;
+        }
+        if(IsDown(Input->ButtonDown)) {
+            CameraPosition.Y -= CameraSpeed * DeltaTime;;
+        }
+        
+        if(IsDown(Input->ButtonDebug[5])) {
+            CameraPosition.Z += CameraSpeed * DeltaTime;;
+        }
+        if(IsDown(Input->ButtonDebug[6])) {
+            CameraPosition.Z -= CameraSpeed * DeltaTime;;
+        }
+    }
+    
     // NOTE(Momo): Entity updates
     Update(Player, DeltaTime);
+    
+    PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
+    PushCommandSetCamera(RenderCommands, CameraPosition);
     
     
 #define STATE 0
@@ -502,7 +558,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawDebugLine(RenderCommands, Line);
+        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
     }
     
     {
@@ -538,7 +594,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawDebugLine(RenderCommands, Line);
+        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
     }
     
     {
@@ -574,7 +630,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawDebugLine(RenderCommands, Line);
+        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
     }
     
     {
@@ -609,20 +665,18 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawDebugLine(RenderCommands, Line);
+        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
     }
 #endif
     
-    
     // NOTE(Momo): Rendering 
-    
-    PushCommandClear(RenderCommands, { 0.5f, 0.5f, 0.5f, 0.f });
-    Render(Player, GameState->Assets, RenderCommands, DeltaTime);
+    Render(Mode, Player, GameState->Assets, RenderCommands, DeltaTime);
 #if STATE
     for ( u8 i = 0; i < ArrayCount(Mode->Blocks); ++i ) {
         Render(&Mode->Blocks[i], RenderCommands);
     }
 #endif
+    
     
     
 }

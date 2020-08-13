@@ -17,7 +17,7 @@ struct menu_image_entity {
 static inline void
 Update(menu_image_entity* Entity, 
        game_assets* Assets,
-       render_commands * RenderCommands, 
+       commands* RenderCommands, 
        f32 DeltaTime) {
     
     // NOTE(Momo): Render
@@ -53,7 +53,7 @@ InitMode(game_mode_menu* Mode, game_state* GameState) {
 static inline void
 UpdateMode(game_mode_menu* Mode,
            game_state* GameState, 
-           render_commands* RenderCommands, 
+           commands* RenderCommands, 
            game_input* Input,
            f32 DeltaTime) 
 {
@@ -63,12 +63,12 @@ UpdateMode(game_mode_menu* Mode,
         return;
     }
 #endif
-    
-    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });;
+    PushCommandSetCamera(RenderCommands, { 0.f, 0.f, 0.f });
     
     Update(&Mode->Img, 
            GameState->Assets, 
-           RenderCommands, 
+           RenderCommands,
            DeltaTime);
 }
 

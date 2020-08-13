@@ -8,9 +8,8 @@
 #define RenderCommandsMemorySize Megabytes(64)
 #define TotalMemorySize GameMainMemorySize + RenderCommandsMemorySize
 
-
 // NOTE(Momo): Forward declarations 
-struct render_commands;
+struct commands;
 struct game_memory;
 struct platform_api;
 struct platform_read_file_result;
@@ -19,7 +18,7 @@ union game_input;
 // NOTE(Momo): Function typedefs and helpers
 typedef void game_update(game_memory* GameMemory,  
                          platform_api* Platform, 
-                         render_commands* RenderCommands, 
+                         commands* RenderCommands, 
                          game_input* Input, 
                          f32 DeltaTime);
 typedef void platform_log(const char* Format, ...);

@@ -25,7 +25,7 @@ struct splash_image_entity {
 static inline void
 Update(splash_image_entity* Entity, 
        game_assets* Assets,
-       render_commands * RenderCommands, 
+       commands* RenderCommands, 
        f32 DeltaTime) {
     Entity->CountdownTimer += DeltaTime;
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
@@ -64,7 +64,7 @@ struct splash_blackout_entity {
 static inline void
 Update(splash_blackout_entity* Entity, 
        game_assets* Assets, 
-       render_commands* RenderCommands,
+       commands* RenderCommands,
        f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
@@ -134,7 +134,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
 static inline void
 UpdateMode(game_mode_splash* Mode,
            game_state* GameState, 
-           render_commands* RenderCommands, 
+           commands* RenderCommands, 
            game_input* Input,
            f32 DeltaTime) {
     
@@ -144,7 +144,9 @@ UpdateMode(game_mode_splash* Mode,
     }
 #endif
     
-    PushCommandClear(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });;
+    PushCommandSetCamera(RenderCommands, { 0.f, 0.f, 0.f });
+    
     for (u32 i = 0; i < 2; ++i) {
         Update(&Mode->SplashImg[i], 
                GameState->Assets, 

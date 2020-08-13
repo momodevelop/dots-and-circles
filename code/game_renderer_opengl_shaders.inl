@@ -33,8 +33,7 @@ constexpr static const char* fragmentShader = R"###(
 out vec4 fragColor;
 in vec4 mColor;
 in vec2 mTexCoord; 
-uniform sampler2D 
-uTexture;
+uniform sampler2D uTexture;
 
 void main(void) {
 	fragColor.x = mTexCoord.x; 

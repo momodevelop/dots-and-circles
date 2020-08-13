@@ -182,24 +182,13 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
                         &Pixel);
     
     // NOTE(Momo): Setup Orthographic Projection
-    GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
-    auto uProjection  = OrthographicMatrix(-1.f, 1.f,
-                                           -1.f, 1.f,
-                                           -1.f, 1.f,
-                                           -(f32)Width * 0.5f,  
-                                           (f32)Width * 0.5f, 
-                                           -(f32)Height * 0.5f, 
-                                           (f32)Height* 0.5f,
-                                           -100.f, 100.f,
-                                           true);
-    uProjection = Transpose(uProjection);
-    glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, uProjection[0]);
+    
     
     return true;
 }
 
 static inline void
-Render(renderer_opengl* Renderer, render_commands* Commands) 
+Render(renderer_opengl* Renderer, commands* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -209,14 +198,21 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
+    
+    
     for (u32 i = 0; i < Commands->EntryCount; ++i) {
         auto* Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            case render_command_data_clear::TypeId: {
-                using data_t = render_command_data_clear;
+            case render_command_data_set_view_projection::TypeId: {
+                using data_t = render_command_data_set_view_projection;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
-                glClearColor(Data->Colors.R, Data->Colors.G, Data->Colors.B, Data->Colors.A);
+                
+                auto Result = Transpose(Data->ViewProjection);
+                
+                GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
+                glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
+                
             } break;
             case render_command_data_link_texture::TypeId: {
                 using data_t = render_command_data_link_texture;
@@ -234,6 +230,11 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     Data->TextureBitmap.Pixels);
                 
+            } break;
+            case render_command_data_clear_color::TypeId: {
+                using data_t = render_command_data_clear_color;
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                glClearColor(Data->Colors.R, Data->Colors.G, Data->Colors.B, Data->Colors.A);
             } break;
             case render_command_data_draw_quad::TypeId: {
                 using data_t = render_command_data_draw_quad;
@@ -290,8 +291,8 @@ Render(renderer_opengl* Renderer, render_commands* Commands)
                 ++InstancesToDrawCount;
                 ++CurrentInstanceIndex;
             } break;
-            case render_command_data_textured_quad::TypeId: {
-                using data_t = render_command_data_textured_quad;
+            case render_command_data_draw_textured_quad::TypeId: {
+                using data_t = render_command_data_draw_textured_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table

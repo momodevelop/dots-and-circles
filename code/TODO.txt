@@ -1,13 +1,9 @@
-
-
-[] Simple collision system
-    [] Collision between multiple objects?
+[] Camera
+[] Game Coordinates
+[] User Interface
 [] Asset loading??
 [] Visual editor
 [] Circle debug lines?
 [] Quaternion
-[] Camera
-[] Game Coordinates
-[] User Interface
 [] Profiling? 
 [] Introspection?
