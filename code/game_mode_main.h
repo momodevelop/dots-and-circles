@@ -150,7 +150,7 @@ DrawCollisionLinesSystem(transform_component* Transform,
     Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->HalfDimensions.Y;
     
     // Bottom
-    PushCommandDrawLineRect(RenderCommands, Rect, CameraPosition);
+    PushCommandDrawLineRect(RenderCommands, Rect);
 }
 #endif
 
@@ -502,7 +502,7 @@ UpdateMode(game_mode_main* Mode,
     Update(Player, DeltaTime);
     
     PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
-    PushCommandSetOrthoCamera(RenderCommands, CameraPosition, { 1600.f, 900.f, 200.f });
+    PushCommandSetBasis(RenderCommands, CameraPosition, { 1600.f, 900.f, 200.f });
     
     
 #define STATE 0
@@ -557,7 +557,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
+        PushCommandDrawLine(RenderCommands, Line);
     }
     
     {
@@ -593,7 +593,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
+        PushCommandDrawLine(RenderCommands, Line);
     }
     
     {
@@ -629,7 +629,7 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
+        PushCommandDrawLine(RenderCommands, Line);
     }
     
     {
@@ -664,11 +664,13 @@ UpdateMode(game_mode_main* Mode,
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }
-        PushCommandDrawLine(RenderCommands, Line, CameraPosition);
+        PushCommandDrawLine(RenderCommands, Line);
     }
 #endif
     
+    
     // NOTE(Momo): Rendering 
+    PushCommandSetBasis(RenderCommands, {0.f, 0.f, 0.f}, { 1600.f, 900.f, 200.f });
     Render(Mode, Player, GameState->Assets, RenderCommands, DeltaTime);
 #if STATE
     for ( u8 i = 0; i < ArrayCount(Mode->Blocks); ++i ) {

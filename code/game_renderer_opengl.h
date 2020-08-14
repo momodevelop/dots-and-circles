@@ -184,6 +184,25 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     return true;
 }
 
+static inline void 
+DrawInstances(renderer_opengl* Renderer, GLint Texture, u32 InstancesToDraw, u32 IndexToDrawFrom) {
+    if (InstancesToDraw > 0) {
+        glBindTexture(GL_TEXTURE_2D, Texture);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBindVertexArray(Renderer->Blueprint);
+        glUseProgram(Renderer->Shader);
+        
+        glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
+                                            6, 
+                                            GL_UNSIGNED_BYTE, 
+                                            nullptr, 
+                                            InstancesToDraw,
+                                            IndexToDrawFrom);
+    }
+}
+
+
 static inline void
 Render(renderer_opengl* Renderer, commands* Commands) 
 {
@@ -201,26 +220,30 @@ Render(renderer_opengl* Renderer, commands* Commands)
         auto* Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            case render_command_data_set_ortho_camera::TypeId: {
-                using data_t = render_command_data_set_ortho_camera;
+            case render_command_data_set_basis::TypeId: {
+                using data_t = render_command_data_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 auto P  = OrthographicMatrix(-1.f, 1.f,
                                              -1.f, 1.f,
                                              -1.f, 1.f,
-                                             -Data->CameraSpace.W * 0.5f,  
-                                             Data->CameraSpace.W * 0.5f, 
-                                             -Data->CameraSpace.H * 0.5f, 
-                                             Data->CameraSpace.H* 0.5f,
-                                             -Data->CameraSpace.D * 0.5f, 
-                                             Data->CameraSpace.D * 0.5f,
+                                             -Data->Dimensions.W * 0.5f,  
+                                             Data->Dimensions.W * 0.5f, 
+                                             -Data->Dimensions.H * 0.5f, 
+                                             Data->Dimensions.H* 0.5f,
+                                             -Data->Dimensions.D * 0.5f, 
+                                             Data->Dimensions.D * 0.5f,
                                              true);
                 
-                m44f V = TranslationMatrix(-Data->CameraPosition.X, -Data->CameraPosition.Y, 0.f);
+                m44f V = TranslationMatrix(-Data->Origin.X, -Data->Origin.Y, 0.f);
                 auto Result = Transpose(P*V);
                 
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
+                
+                DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+                LastDrawnInstanceIndex += InstancesToDrawCount;
+                InstancesToDrawCount = 0;
                 
             } break;
             case render_command_data_link_texture::TypeId: {
@@ -259,22 +282,9 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.
                 if (CurrentTexture != RendererTextureHandle) {
-                    if (InstancesToDrawCount != 0) {
-                        glBindTexture(GL_TEXTURE_2D, CurrentTexture);
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        
-                        glBindVertexArray(Renderer->Blueprint);
-                        glUseProgram(Renderer->Shader);
-                        glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
-                                                            6, 
-                                                            GL_UNSIGNED_BYTE, 
-                                                            nullptr, 
-                                                            InstancesToDrawCount,
-                                                            LastDrawnInstanceIndex);
-                        LastDrawnInstanceIndex += InstancesToDrawCount;
-                        InstancesToDrawCount= 0;
-                    }
+                    DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+                    LastDrawnInstanceIndex += InstancesToDrawCount;
+                    InstancesToDrawCount = 0;
                     CurrentTexture = RendererTextureHandle;
                 }
                 
@@ -315,22 +325,9 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.
                 if (CurrentTexture != RendererTextureHandle) {
-                    if (InstancesToDrawCount != 0) {
-                        glBindTexture(GL_TEXTURE_2D, CurrentTexture);
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        
-                        glBindVertexArray(Renderer->Blueprint);
-                        glUseProgram(Renderer->Shader);
-                        glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
-                                                            6, 
-                                                            GL_UNSIGNED_BYTE, 
-                                                            nullptr, 
-                                                            InstancesToDrawCount,
-                                                            LastDrawnInstanceIndex);
-                        LastDrawnInstanceIndex += InstancesToDrawCount;
-                        InstancesToDrawCount= 0;
-                    }
+                    DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+                    LastDrawnInstanceIndex += InstancesToDrawCount;
+                    InstancesToDrawCount = 0;
                     CurrentTexture = RendererTextureHandle;
                 }
                 
@@ -360,16 +357,10 @@ Render(renderer_opengl* Renderer, commands* Commands)
         }
     }
     
-    if (InstancesToDrawCount != 0) {
-        glBindTexture(GL_TEXTURE_2D, CurrentTexture);
-        glBindVertexArray(Renderer->Blueprint);
-        glUseProgram(Renderer->Shader);
-        glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
-                                            6, 
-                                            GL_UNSIGNED_BYTE, 
-                                            nullptr, 
-                                            InstancesToDrawCount,
-                                            LastDrawnInstanceIndex);
-    }
+    DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+    
 }
+
+
+
 #endif

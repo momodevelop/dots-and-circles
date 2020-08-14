@@ -11,14 +11,14 @@ UVRect2ToQuad2(rect2f Rect) {
 
 // TODO(Momo): Lookat?
 inline void
-PushCommandSetOrthoCamera(commands* Commands, 
-                          v3f CameraPosition,
-                          v3f CameraSpace)   
+PushCommandSetBasis(commands* Commands, 
+                    v3f Origin,
+                    v3f Dimensions)   
 {
-    using data_t = render_command_data_set_ortho_camera;
+    using data_t = render_command_data_set_basis;
     auto* Data = Push<data_t>(Commands);
-    Data->CameraPosition = CameraPosition;
-    Data->CameraSpace = CameraSpace;
+    Data->Origin = Origin;
+    Data->Dimensions = Dimensions;
 }
 
 static inline void
@@ -70,7 +70,6 @@ PushCommandLinkTexture(commands* Commands,
 static inline void 
 PushCommandDrawLine(commands* Payload, 
                     line2f Line, 
-                    v3f CameraPosition,
                     f32 Thickness = 1.f,
                     c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
@@ -98,7 +97,6 @@ PushCommandDrawLine(commands* Payload,
 static inline void 
 PushCommandDrawLineRect(commands* Payload, 
                         rect2f Rect,
-                        v3f CameraPosition,
                         f32 Thickness = 1.f,
                         c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
@@ -109,7 +107,7 @@ PushCommandDrawLineRect(commands* Payload,
                             Rect.Min.Y,  
                             Rect.Max.X, 
                             Rect.Min.Y,
-                        }, CameraPosition, Thickness, Colors);
+                        },  Thickness, Colors);
     // Left
     PushCommandDrawLine(Payload, 
                         { 
@@ -117,7 +115,7 @@ PushCommandDrawLineRect(commands* Payload,
                             Rect.Min.Y,
                             Rect.Min.X,
                             Rect.Max.Y,
-                        }, CameraPosition, Thickness, Colors);
+                        },  Thickness, Colors);
     
     //Top
     PushCommandDrawLine(Payload, 
@@ -126,7 +124,7 @@ PushCommandDrawLineRect(commands* Payload,
                             Rect.Max.Y,
                             Rect.Max.X,
                             Rect.Max.Y,
-                        }, CameraPosition,Thickness, Colors);
+                        }, Thickness, Colors);
     
     //Right 
     PushCommandDrawLine(Payload, 
@@ -135,6 +133,6 @@ PushCommandDrawLineRect(commands* Payload,
                             Rect.Min.Y,
                             Rect.Max.X,
                             Rect.Max.Y,
-                        }, CameraPosition, Thickness, Colors);
+                        },  Thickness, Colors);
 }
 
