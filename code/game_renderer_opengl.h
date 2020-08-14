@@ -224,6 +224,10 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 using data_t = render_command_data_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
+                DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+                LastDrawnInstanceIndex += InstancesToDrawCount;
+                InstancesToDrawCount = 0;
+                
                 auto P  = OrthographicMatrix(-1.f, 1.f,
                                              -1.f, 1.f,
                                              -1.f, 1.f,
@@ -241,9 +245,7 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
                 
-                DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
-                LastDrawnInstanceIndex += InstancesToDrawCount;
-                InstancesToDrawCount = 0;
+                
                 
             } break;
             case render_command_data_link_texture::TypeId: {
