@@ -250,7 +250,6 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Player->Collision.Box.Origin = { 0.f, 0.f };
         Player->Collision.Box.HalfDimensions = { 24.f*2, 24.f*2 };
         
-        
         Player->Sprite.SpritesheetHandle = GameSpritesheetHandle_Karu;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
@@ -503,7 +502,7 @@ UpdateMode(game_mode_main* Mode,
     Update(Player, DeltaTime);
     
     PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
-    PushCommandSetCamera(RenderCommands, CameraPosition);
+    PushCommandSetOrthoCamera(RenderCommands, CameraPosition, { 1600.f, 900.f, 200.f });
     
     
 #define STATE 0

@@ -181,9 +181,6 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
                         GL_RGBA, GL_UNSIGNED_BYTE, 
                         &Pixel);
     
-    // NOTE(Momo): Setup Orthographic Projection
-    
-    
     return true;
 }
 
@@ -204,11 +201,23 @@ Render(renderer_opengl* Renderer, commands* Commands)
         auto* Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            case render_command_data_set_view_projection::TypeId: {
-                using data_t = render_command_data_set_view_projection;
+            case render_command_data_set_ortho_camera::TypeId: {
+                using data_t = render_command_data_set_ortho_camera;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
-                auto Result = Transpose(Data->ViewProjection);
+                auto P  = OrthographicMatrix(-1.f, 1.f,
+                                             -1.f, 1.f,
+                                             -1.f, 1.f,
+                                             -Data->CameraSpace.W * 0.5f,  
+                                             Data->CameraSpace.W * 0.5f, 
+                                             -Data->CameraSpace.H * 0.5f, 
+                                             Data->CameraSpace.H* 0.5f,
+                                             -Data->CameraSpace.D * 0.5f, 
+                                             Data->CameraSpace.D * 0.5f,
+                                             true);
+                
+                m44f V = TranslationMatrix(-Data->CameraPosition.X, -Data->CameraPosition.Y, 0.f);
+                auto Result = Transpose(P*V);
                 
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);

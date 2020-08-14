@@ -143,9 +143,8 @@ UpdateMode(game_mode_splash* Mode,
         return;
     }
 #endif
-    
-    PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });;
-    PushCommandSetCamera(RenderCommands, { 0.f, 0.f, 0.f });
+    PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushCommandSetOrthoCamera(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     
     for (u32 i = 0; i < 2; ++i) {
         Update(&Mode->SplashImg[i], 

@@ -347,10 +347,10 @@ int main(int argc, char* argv[]) {
         
         // NOTE(Momo): Timer update
         Tick(&timer);
-        SDL_Log("%lld  ms\n", TimeElapsed);
+        //SDL_Log("%lld  ms\n", TimeElapsed);
         SDL_GL_SwapWindow(window);
         
-        // TODO(Momo): Cap framerate, or enforce framerate
+        // TODO(Momo): Cap framerate, or enforce varying target framerates
         SDL_Delay(16); // 60fps?
     }
     

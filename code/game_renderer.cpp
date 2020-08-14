@@ -9,29 +9,16 @@ UVRect2ToQuad2(rect2f Rect) {
 }
 
 
+// TODO(Momo): Lookat?
 inline void
-PushCommandSetCamera(commands* Commands, 
-                     v3f CameraPosition) 
+PushCommandSetOrthoCamera(commands* Commands, 
+                          v3f CameraPosition,
+                          v3f CameraSpace)   
 {
-    using data_t = render_command_data_set_view_projection;
+    using data_t = render_command_data_set_ortho_camera;
     auto* Data = Push<data_t>(Commands);
-    
-    // TODO(Momo): Camera should handle some projection as well?
-    f32 Width = 1600.f;
-    f32 Height = 900.f;
-    
-    auto P  = OrthographicMatrix(-1.f, 1.f,
-                                 -1.f, 1.f,
-                                 -1.f, 1.f,
-                                 -(f32)Width * 0.5f,  
-                                 (f32)Width * 0.5f, 
-                                 -(f32)Height * 0.5f, 
-                                 (f32)Height* 0.5f,
-                                 -100.f, 100.f,
-                                 true);
-    
-    m44f V = TranslationMatrix(-CameraPosition.X, -CameraPosition.Y, 0.f);
-    Data->ViewProjection = P*V;
+    Data->CameraPosition = CameraPosition;
+    Data->CameraSpace = CameraSpace;
 }
 
 static inline void

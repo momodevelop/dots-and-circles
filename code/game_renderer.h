@@ -48,9 +48,10 @@ struct render_command_data_clear_color {
     c4f Colors;
 };
 
-struct render_command_data_set_view_projection {
+struct render_command_data_set_ortho_camera {
     static constexpr u32 TypeId = __LINE__;
-    m44f ViewProjection;
+    v3f CameraPosition;
+    v3f CameraSpace;
 };
 
 struct render_command_data_draw_textured_quad {
