@@ -50,7 +50,8 @@ struct renderer_opengl {
     // NOTE(Momo): A table mapping 'game texture handler' <-> 'opengl texture handler'  
     // TODO(Momo): Make this dynamic? 
     GLuint GameToRendererTextureTable[0xFF] = {};
-    
+    GLuint WindowWidth, WindowHeight;
+    GLuint RenderWidth, RenderHeight;
 };
 
 static inline void 
@@ -62,26 +63,43 @@ GlAttachShader(GLuint program, GLenum type, const GLchar* code) {
     glDeleteShader(shader);
 }
 
+static inline void AlignViewport(renderer_opengl* Renderer) {
+    auto Region = GetRenderRegion(Renderer->WindowWidth, Renderer->WindowHeight, Renderer->RenderWidth, Renderer->RenderHeight);
+    glViewport(Region.MinX, Region.MinY, Region.MaxX - Region.MinX, Region.MaxY - Region.MinY);
+}
+
+
+static inline void 
+SetRenderResolution(renderer_opengl* Renderer, GLuint RenderWidth, GLuint RenderHeight){
+    Renderer->RenderWidth = RenderWidth;
+    Renderer->RenderHeight = RenderHeight;
+    AlignViewport(Renderer);
+}
+
+static inline void 
+SetWindowResolution(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight) {
+    Renderer->WindowWidth = WindowWidth;
+    Renderer->WindowHeight = WindowHeight;
+    AlignViewport(Renderer);
+}
 
 static inline bool
-Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities) 
+Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei MaxEntities) 
 {
     Renderer->MaxEntities = MaxEntities;
+    Renderer->RenderWidth = WindowWidth;
+    Renderer->RenderHeight = WindowHeight;
+    Renderer->WindowWidth = WindowWidth;
+    Renderer->WindowHeight = WindowHeight;
     
-    
-    // NOTE(Momo): No real need to load these from file, since we fixed
-    // our pipeline.
+    AlignViewport(Renderer);
     
     glEnable(GL_DEPTH_TEST);
-    
 #if INTERNAL
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
-    
-    // NOTE(Momo): Set clear color and viewport
-    // TODO(Momo): Change according to game aspect ratio? Black pillars?
-    glViewport(0,0, Width, Height);
+    glViewport(0, 0, WindowWidth, WindowHeight);
     
     // NOTE(Momo): Setup VBO
     glCreateBuffers(renderer_vbo_Max, Renderer->Buffers);

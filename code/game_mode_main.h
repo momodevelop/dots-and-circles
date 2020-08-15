@@ -383,7 +383,6 @@ UpdateMode(game_mode_main* Mode,
            game_input* Input,
            f32 DeltaTime) 
 {
-    
 #if INTERNAL
     if (ProcessMetaInput(GameState, Input)) {
         return;
@@ -528,32 +527,16 @@ UpdateMode(game_mode_main* Mode,
         line2f Line = {};
         Line.Min = { -400.f, 0.f };
         Line.Max = { 0.f, 400.f };
-        // line pov
-        v2f p1;
-        v2f v1; 
-        f32 t1;
+        ray2f Ray1 = Ray2(Line);
+        ray2f Ray2 = {};
+        Ray2.Origin = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
+        Ray2.Direction = { -Player->Collision.Box.HalfDimensions.W, Player->Collision.Box.HalfDimensions.H };
         
-        // object's pov
-        v2f p2;
-        v2f v2;
-        f32 t2;
-        
-        p1 = Line.Min; 
-        v1 = Line.Max - Line.Min;
-        
-        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
-        v2 = { -Player->Collision.Box.HalfDimensions.W, Player->Collision.Box.HalfDimensions.H };
-        
-        t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
-        
-        t1 = (p2.X + t2*v2.X - p1.X)/v1.X;
-        
+        auto [t1, t2] = GetIntersectionTime(Ray1, Ray2);
         if (t2 >= 0.f && t2 <= 1.f && t1 >= 0.f && t1 <= 1.f) {
-            v2f IntersectionPt = p2 + v2*t2;
-            //Log("%f", t2);
+            v2f IntersectionPt = GetPoint(Ray2, t2);
             Log("%f, %f", IntersectionPt.X, IntersectionPt.Y);
-            
-            v2f cornerPt = p2 + v2;
+            v2f cornerPt = GetPoint(Ray2, 1.f);
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
             Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
         }

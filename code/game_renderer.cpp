@@ -1,3 +1,43 @@
+
+
+
+struct get_render_region_result {
+    u32 MinX, MinY, MaxX, MaxY;
+};
+
+static inline get_render_region_result 
+GetRenderRegion(u32 WindowWidth, u32 WindowHeight, u32 RenderWidth, u32 RenderHeight) {
+    Assert(RenderWidth > 0 && RenderHeight > 0 && WindowWidth > 0 && WindowHeight > 0);
+    get_render_region_result Ret = {};
+    
+    f32 OptimalWindowWidth = (f32)WindowHeight * ((f32)RenderWidth / (f32)RenderHeight);
+    f32 OptimalWindowHeight = (f32)WindowWidth * ((f32)RenderHeight / (f32)RenderWidth);
+    
+    if (OptimalWindowWidth > (f32)WindowWidth) {
+        // NOTE(Momo): Width has priority - top and bottom bars
+        Ret.MinX = 0;
+        Ret.MaxX = WindowWidth;
+        
+        f32 EmptyHeight = (f32)WindowHeight - OptimalWindowHeight;
+        
+        Ret.MinY = (u32)(EmptyHeight * 0.5f);
+        Ret.MaxY = Ret.MinY + (u32)OptimalWindowHeight;
+    }
+    else {
+        // NOTE(Momo): Height has priority - left and right bars
+        Ret.MinY = 0;
+        Ret.MaxY = WindowHeight;
+        
+        
+        f32 EmptyWidth = (f32)WindowWidth - OptimalWindowWidth;
+        
+        Ret.MinX = (u32)(EmptyWidth * 0.5f);
+        Ret.MaxX = Ret.MaxX + (u32)OptimalWindowWidth;
+    }
+    
+    return Ret;
+}
+
 static inline quad2f
 UVRect2ToQuad2(rect2f Rect) {
     return {

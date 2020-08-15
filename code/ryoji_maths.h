@@ -643,8 +643,7 @@ OrthographicMatrix(f32 NdcLeft, f32 NdcRight,
     Ret[3][3] = 1.f;
     Ret[0][3] = -(Right+Left)/(Right-Left);
     Ret[1][3] = -(Top+Bottom)/(Top-Bottom);
-    Ret[2][3] =  -(Far+Near)/(Far-Near);
-    Ret[3][3] = 1.f;
+    Ret[2][3] = -(Far+Near)/(Far-Near);
     
     return Ret;
 }
@@ -702,6 +701,47 @@ Rect3(rect2f Rect) {
         V3(Rect.Min),
         V3(Rect.Max),
     };
+}
+
+
+
+struct ray2f {
+    v2f Origin;
+    v2f Direction;
+};
+
+static inline ray2f
+Ray2(line2f Line) {
+    ray2f Ret = {};
+    Ret.Origin = Line.Min;
+    Ret.Direction = Line.Max - Line.Min;
+    return Ret;
+}
+
+
+struct get_intersection_time_result {
+    f32 LhsTime, RhsTime;
+};
+static inline get_intersection_time_result 
+GetIntersectionTime(ray2f Lhs, ray2f Rhs) {
+    f32 t1;
+    f32 t2;
+    
+    v2f p1 = Lhs.Origin;
+    v2f p2 = Rhs.Origin;
+    v2f v1 = Lhs.Direction;
+    v2f v2 = Rhs.Direction;
+    
+    
+    t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
+    t1 = (p2.X + t2*v2.X - p1.X)/v1.X;
+    
+    return { t1, t2 };
+}
+
+static inline v2f
+GetPoint(ray2f Ray, f32 Time) {
+    return Ray.Origin + Ray.Direction * Time;
 }
 
 
