@@ -134,7 +134,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
 static inline void
 UpdateMode(game_mode_splash* Mode,
            game_state* GameState, 
-           commands* RenderCommands, 
+           commands* RenderCommands,
            game_input* Input,
            f32 DeltaTime) {
     
@@ -144,7 +144,7 @@ UpdateMode(game_mode_splash* Mode,
     }
 #endif
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    PushCommandSetBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
+    PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     
     for (u32 i = 0; i < 2; ++i) {
         Update(&Mode->SplashImg[i], 

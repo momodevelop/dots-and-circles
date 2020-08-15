@@ -502,7 +502,7 @@ UpdateMode(game_mode_main* Mode,
     Update(Player, DeltaTime);
     
     PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
-    PushCommandSetBasis(RenderCommands, CameraPosition, { 1600.f, 900.f, 200.f });
+    PushCommandSetOrthoBasis(RenderCommands, CameraPosition, { 1600.f, 900.f, 200.f });
     
     
 #define STATE 0
@@ -669,8 +669,6 @@ UpdateMode(game_mode_main* Mode,
 #endif
     
     
-    // NOTE(Momo): Rendering 
-    PushCommandSetBasis(RenderCommands, {0.f, 0.f, 0.f}, { 1600.f, 900.f, 200.f });
     Render(Mode, Player, GameState->Assets, RenderCommands, DeltaTime);
 #if STATE
     for ( u8 i = 0; i < ArrayCount(Mode->Blocks); ++i ) {

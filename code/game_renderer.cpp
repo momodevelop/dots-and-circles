@@ -8,17 +8,34 @@ UVRect2ToQuad2(rect2f Rect) {
     };
 }
 
+static inline void
+PushCommandSetBasis(commands* Commands, m44f Basis) {
+    using data_t = render_command_data_set_basis;
+    auto* Data = Push<data_t>(Commands);
+    Data->Basis = Basis;
+}
 
-// TODO(Momo): Lookat?
-inline void
-PushCommandSetBasis(commands* Commands, 
-                    v3f Origin,
-                    v3f Dimensions)   
+static inline void
+PushCommandSetOrthoBasis(commands* Commands, 
+                         v3f Origin,
+                         v3f Dimensions)   
 {
     using data_t = render_command_data_set_basis;
     auto* Data = Push<data_t>(Commands);
-    Data->Origin = Origin;
-    Data->Dimensions = Dimensions;
+    
+    auto P  = OrthographicMatrix(-1.f, 1.f,
+                                 -1.f, 1.f,
+                                 -1.f, 1.f,
+                                 -Dimensions.W * 0.5f,  
+                                 Dimensions.W * 0.5f, 
+                                 -Dimensions.H * 0.5f, 
+                                 Dimensions.H* 0.5f,
+                                 -Dimensions.D * 0.5f, 
+                                 Dimensions.D * 0.5f,
+                                 true);
+    
+    m44f V = TranslationMatrix(-Origin.X, -Origin.Y, 0.f);
+    Data->Basis = P*V;
 }
 
 static inline void

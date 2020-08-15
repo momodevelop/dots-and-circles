@@ -169,10 +169,7 @@ Init(renderer_opengl* Renderer, GLuint Width, GLuint Height, GLsizei MaxEntities
     }
     
     // NOTE(Momo): Blank texture setup
-    struct { 
-        u8 E[4];
-    } Pixel = {255, 255, 255, 255};
-    
+    struct { u8 E[4]; } Pixel = {255, 255, 255, 255};
     glCreateTextures(GL_TEXTURE_2D, 1, &Renderer->BlankTexture);
     glTextureStorage2D(Renderer->BlankTexture, 1, GL_RGBA8, 1, 1);
     glTextureSubImage2D(Renderer->BlankTexture, 
@@ -220,6 +217,8 @@ Render(renderer_opengl* Renderer, commands* Commands)
         auto* Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
+            
+            
             case render_command_data_set_basis::TypeId: {
                 using data_t = render_command_data_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
@@ -228,24 +227,9 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 LastDrawnInstanceIndex += InstancesToDrawCount;
                 InstancesToDrawCount = 0;
                 
-                auto P  = OrthographicMatrix(-1.f, 1.f,
-                                             -1.f, 1.f,
-                                             -1.f, 1.f,
-                                             -Data->Dimensions.W * 0.5f,  
-                                             Data->Dimensions.W * 0.5f, 
-                                             -Data->Dimensions.H * 0.5f, 
-                                             Data->Dimensions.H* 0.5f,
-                                             -Data->Dimensions.D * 0.5f, 
-                                             Data->Dimensions.D * 0.5f,
-                                             true);
-                
-                m44f V = TranslationMatrix(-Data->Origin.X, -Data->Origin.Y, 0.f);
-                auto Result = Transpose(P*V);
-                
+                auto Result = Transpose(Data->Basis);
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
-                
-                
                 
             } break;
             case render_command_data_link_texture::TypeId: {
