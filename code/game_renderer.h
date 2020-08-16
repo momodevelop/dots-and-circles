@@ -76,6 +76,11 @@ struct render_command_data_link_texture {
     u32 TextureHandle;
 };
 
+struct render_command_data_set_design_resolution {
+    static constexpr u32 TypeId = __LINE__;
+    u32 Width;
+    u32 Height;
+};
 
 
 #include "game_renderer.cpp"

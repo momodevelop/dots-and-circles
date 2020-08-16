@@ -65,7 +65,15 @@ GlAttachShader(GLuint program, GLenum type, const GLchar* code) {
 
 static inline void AlignViewport(renderer_opengl* Renderer) {
     auto Region = GetRenderRegion(Renderer->WindowWidth, Renderer->WindowHeight, Renderer->RenderWidth, Renderer->RenderHeight);
-    glViewport(Region.MinX, Region.MinY, Region.MaxX - Region.MinX, Region.MaxY - Region.MinY);
+    
+    GLuint x, y, w, h;
+    x = Region.Min.X;
+    y = Region.Min.Y;
+    w = GetWidth(Region);
+    h = GetHeight(Region);
+    
+    glViewport(x, y, w, h);
+    glScissor(x, y, w, h);
 }
 
 
@@ -92,14 +100,19 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     Renderer->WindowWidth = WindowWidth;
     Renderer->WindowHeight = WindowHeight;
     
-    AlignViewport(Renderer);
     
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_SCISSOR_TEST);
 #if INTERNAL
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
-    glViewport(0, 0, WindowWidth, WindowHeight);
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    
+    AlignViewport(Renderer);
+    
     
     // NOTE(Momo): Setup VBO
     glCreateBuffers(renderer_vbo_Max, Renderer->Buffers);
@@ -235,8 +248,11 @@ Render(renderer_opengl* Renderer, commands* Commands)
         auto* Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            
-            
+            case render_command_data_set_design_resolution::TypeId: {
+                using data_t = render_command_data_set_design_resolution;
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                SetRenderResolution(Renderer, Data->Width, Data->Height);
+            } break;
             case render_command_data_set_basis::TypeId: {
                 using data_t = render_command_data_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);

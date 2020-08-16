@@ -1,7 +1,5 @@
-
-
-[] Game Coordinates
-[] User Interface
+[] Tile based rendering
+[] Fixed framerate (target framerate)
 [] Asset loading??
 [] Visual editor
 [] Circle debug lines?

@@ -1,38 +1,34 @@
-
-
-
-struct get_render_region_result {
-    u32 MinX, MinY, MaxX, MaxY;
-};
-
-static inline get_render_region_result 
-GetRenderRegion(u32 WindowWidth, u32 WindowHeight, u32 RenderWidth, u32 RenderHeight) {
+static inline rect<2, u32> 
+GetRenderRegion(u32 WindowWidth, 
+                u32 WindowHeight, 
+                u32 RenderWidth, 
+                u32 RenderHeight) {
     Assert(RenderWidth > 0 && RenderHeight > 0 && WindowWidth > 0 && WindowHeight > 0);
-    get_render_region_result Ret = {};
+    rect<2, u32> Ret = {};
     
     f32 OptimalWindowWidth = (f32)WindowHeight * ((f32)RenderWidth / (f32)RenderHeight);
     f32 OptimalWindowHeight = (f32)WindowWidth * ((f32)RenderHeight / (f32)RenderWidth);
     
     if (OptimalWindowWidth > (f32)WindowWidth) {
         // NOTE(Momo): Width has priority - top and bottom bars
-        Ret.MinX = 0;
-        Ret.MaxX = WindowWidth;
+        Ret.Min.X = 0;
+        Ret.Max.X = WindowWidth;
         
         f32 EmptyHeight = (f32)WindowHeight - OptimalWindowHeight;
         
-        Ret.MinY = (u32)(EmptyHeight * 0.5f);
-        Ret.MaxY = Ret.MinY + (u32)OptimalWindowHeight;
+        Ret.Min.Y = (u32)(EmptyHeight * 0.5f);
+        Ret.Max.Y = Ret.Min.Y + (u32)OptimalWindowHeight;
     }
     else {
         // NOTE(Momo): Height has priority - left and right bars
-        Ret.MinY = 0;
-        Ret.MaxY = WindowHeight;
+        Ret.Min.Y = 0;
+        Ret.Max.Y = WindowHeight;
         
         
         f32 EmptyWidth = (f32)WindowWidth - OptimalWindowWidth;
         
-        Ret.MinX = (u32)(EmptyWidth * 0.5f);
-        Ret.MaxX = Ret.MaxX + (u32)OptimalWindowWidth;
+        Ret.Min.X = (u32)(EmptyWidth * 0.5f);
+        Ret.Max.X = Ret.Min.X + (u32)OptimalWindowWidth;
     }
     
     return Ret;
@@ -127,7 +123,7 @@ PushCommandLinkTexture(commands* Commands,
 static inline void 
 PushCommandDrawLine(commands* Payload, 
                     line2f Line, 
-                    f32 Thickness = 1.f,
+                    f32 Thickness = 2.f,
                     c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
@@ -152,13 +148,13 @@ PushCommandDrawLine(commands* Payload,
 }
 
 static inline void 
-PushCommandDrawLineRect(commands* Payload, 
+PushCommandDrawLineRect(commands* Commands, 
                         rect2f Rect,
                         f32 Thickness = 1.f,
                         c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     //Bottom
-    PushCommandDrawLine(Payload, 
+    PushCommandDrawLine(Commands, 
                         { 
                             Rect.Min.X, 
                             Rect.Min.Y,  
@@ -166,7 +162,7 @@ PushCommandDrawLineRect(commands* Payload,
                             Rect.Min.Y,
                         },  Thickness, Colors);
     // Left
-    PushCommandDrawLine(Payload, 
+    PushCommandDrawLine(Commands, 
                         { 
                             Rect.Min.X,
                             Rect.Min.Y,
@@ -175,7 +171,7 @@ PushCommandDrawLineRect(commands* Payload,
                         },  Thickness, Colors);
     
     //Top
-    PushCommandDrawLine(Payload, 
+    PushCommandDrawLine(Commands, 
                         { 
                             Rect.Min.X,
                             Rect.Max.Y,
@@ -184,7 +180,7 @@ PushCommandDrawLineRect(commands* Payload,
                         }, Thickness, Colors);
     
     //Right 
-    PushCommandDrawLine(Payload, 
+    PushCommandDrawLine(Commands, 
                         { 
                             Rect.Max.X,
                             Rect.Min.Y,
@@ -193,3 +189,11 @@ PushCommandDrawLineRect(commands* Payload,
                         },  Thickness, Colors);
 }
 
+static inline void 
+PushCommandSetDesignResolution(commands* Commands, u32 Width, u32 Height)  
+{
+    using data_t = render_command_data_set_design_resolution;
+    auto* Data = Push<data_t>(Commands);
+    Data->Width = Width;
+    Data->Height = Height;
+}

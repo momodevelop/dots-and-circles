@@ -98,9 +98,9 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = SDL_CreateWindow("Vigil", 
                                           SDL_WINDOWPOS_UNDEFINED, 
                                           SDL_WINDOWPOS_UNDEFINED, 
-                                          1600, 
-                                          900, 
-                                          SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+                                          800, 
+                                          600, 
+                                          SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == nullptr) {
         SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -209,6 +209,14 @@ int main(int argc, char* argv[]) {
                     gIsRunning = false;
                     SDL_Log("Quit triggered\n");
                 } break; 
+                case SDL_WINDOWEVENT: {
+                    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        SDL_Log("Resizing: %d %d", e.window.data1, e.window.data2);
+                        SetWindowResolution(&RendererOpenGL, e.window.data1, e.window.data2);
+                        
+                    }
+                } break;
+                
                 
                 // NOTE(Momo): Handle keyboard
                 case SDL_KEYDOWN: {

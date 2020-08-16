@@ -92,12 +92,12 @@ SdlGlDebugCallback(GLenum source,
         break;
         
         case GL_DEBUG_SEVERITY_LOW:
-        _severity = "LOW";
-        break;
+        //_severity = "LOW";
+        return;
         
-        //case GL_DEBUG_SEVERITY_NOTIFICATION:
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
         //_severity = "NOTIFICATION";
-        //break;
+        return;
         
         default:
         _severity = "UNKNOWN";

@@ -13,7 +13,7 @@ GameUpdate(game_memory* GameMemory,
 #if INTERNAL
     gLog = Platform->Log;
 #endif
-    // NOTE(Momo): Delta time cap
+    // TODO(Momo): Fix the fixed timestep
     if (DeltaTime > 1/30.f)
         DeltaTime = 1/30.f;
     
@@ -113,9 +113,14 @@ GameUpdate(game_memory* GameMemory,
         // NOTE(Momo): Arena for modes
         SubArena(&GameState->ModeArena, &GameState->MainArena, 
                  GetRemainingCapacity(&GameState->MainArena));
-        
         SetGameMode<game_mode_splash>(GameState);
         GameState->IsInitialized = true;
+        
+        // NOTE(Momo): Set design resolution for game
+        {
+            PushCommandSetDesignResolution(RenderCommands, 1600, 900);
+        }
+        
     }
     
     // NOTE(Momo): State machine

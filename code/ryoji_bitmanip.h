@@ -3,7 +3,6 @@
 
 #include "ryoji.h"
 
-
 // Note that all alignment operations is catered to only power of 2!
 // Reference: https://stackoverflow.com/questions/227897/how-to-alloc-aligned-memory-only-using-the-standard-library
 // 

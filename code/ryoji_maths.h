@@ -16,53 +16,81 @@ static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
 static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
 
-// NOTE(Momo): Structures
-struct v2f {
-    union {
-        f32 E[2];
-        struct {
-            f32 X;
-            f32 Y;
-        };
-        struct {
-            f32 U;
-            f32 V;
-        };
-        struct {
-            f32 W;
-            f32 H;
-        };
-    };
-    
+template<usize n, typename type = f32> 
+struct vec {
+    type E[n];
     inline const auto& operator[](usize index) const { return E[index]; }
     inline auto& operator[](usize index) { return E[index];}
 };
 
-
-struct v3f {
+template<typename type>
+struct vec<2, type> {
     union {
-        f32 E[3];
+        type E[2];
         struct {
-            f32 X, Y, Z;
+            type X;
+            type Y;
         };
         struct {
-            f32 W, H, D;
+            type U;
+            type V;
         };
         struct {
-            v2f XY;
-            f32 _;
+            type W;
+            type H;
+        };
+    };
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+
+template<typename type>
+struct vec<3, type> {
+    union {
+        type E[3];
+        struct {
+            type X, Y, Z;
         };
         struct {
-            v2f WH;
-            f32 _;
+            type W, H, D;
+        };
+        struct {
+            vec<2, type> XY;
+            type _;
+        };
+        struct {
+            vec<2, type> WH;
+            type _;
         };
         
     };
-    
     inline const auto& operator[](usize index) const { return E[index]; }
     inline auto& operator[](usize index) { return E[index];}
 };
 
+
+template<typename type>
+struct vec<4, type> {
+    union {
+        type E[4];
+        struct {
+            type X, Y, Z, W;
+        };
+        struct {
+            vec<3, type> XYZ;
+            f32 _;
+        };
+    };
+    
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index]; }
+};
+using v2f = vec<2, f32>;
+using v3f = vec<3, f32>;
+using v4f = vec<4, f32>;
+
+
+///???
 struct c3f {
     union {
         f32 E[3];
@@ -75,23 +103,6 @@ struct c3f {
     };
     inline const auto& operator[](usize index) const { return E[index]; }
     inline auto& operator[](usize index) { return E[index];}
-};
-
-
-struct v4f {
-    union {
-        f32 E[4];
-        struct {
-            f32 X, Y, Z, W;
-        };
-        struct {
-            v3f XYZ;
-            f32 _;
-        };
-    };
-    
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index]; }
 };
 
 struct c4f {
@@ -122,61 +133,72 @@ struct m44f {
     inline auto& operator[](usize index) { return E[index];}
 };
 
-struct circle2f {
-    v2f Origin;
-    f32 Radius;
+
+template<usize N, typename type = f32>
+struct circle {
+    vec<N, type> Origin;
+    type Radius;
 };
+using circle2f = circle<2, f32>;
+using circle3f = circle<3, f32>;
 
-struct circle3f {
-    v3f Origin;
-    f32 Radius;
+template<usize N, typename type = f32>
+struct aabb {
+    vec<N, type> Origin;
+    vec<N, type> HalfDimensions;
 };
+using aabb2f = aabb<2, f32>;
+using aabb3f = aabb<3, f32>;
 
-
-struct aabb2f {
-    v2f Origin;
-    v2f HalfDimensions;
+template<usize N, typename type = f32>
+struct rect {
+    vec<N, type> Min;
+    vec<N, type> Max;
 };
+using rect2f = rect<2, f32>;
+using rect3f = rect<3, f32>;
+using line2f = rect<2, f32>;
+using line3f = rect<3, f32>;
 
-struct aabb3f {
-    v3f Origin;
-    v3f HalfDimensions;
+template<usize N, typename type>
+static inline type 
+GetLength(rect<N, type> Rect, usize Dimension) {
+    return Rect.Max[Dimension] - Rect.Min[Dimension]; 
+}
+
+
+template<usize N, typename type>
+static inline type 
+GetWidth(rect<N, type> Rect) {
+    return GetLength(Rect, 0); 
+}
+
+
+template<usize N, typename type>
+static inline type 
+GetHeight(rect<N, type> Rect) {
+    return GetLength(Rect, 1); 
+}
+
+
+template<usize N, typename type = f32>
+struct quad {
+    vec<N, type> Points[4];
 };
-
-struct rect2f {
-    v2f Min;
-    v2f Max;
-};
-
-struct rect3f {
-    v3f Min;
-    v3f Max;
-};
-
-
-struct line2f {
-    v2f Min;
-    v2f Max;
-};
-
-struct line3f {
-    v3f Min;
-    v3f Max;
-};
-
-struct quad2f {
-    v2f Points[4];
-};
-
-struct quad3f {
-    v3f Points[4];
-};
-
+using quad2f = quad<2, f32>;
+using quad3f = quad<3, f32>;
 
 
 // NOTE(Momo): Functions
-static inline bool 
-IsEqual(f32 L, f32 R) {
+template<typename type>
+static inline b8 
+IsEqual(type L, type R) {
+    return L == R;
+}
+
+template<>
+inline b8
+IsEqual<f32>(f32 L, f32 R) {
     return Abs(L - R) <= Epsilon32;
 }
 
@@ -231,299 +253,226 @@ Pow(f32 b, f32 e) {
     return powf(b,e);
 }
 
-// v2f
-static inline b8 
-IsEqual(v2f L, v2f R) {
-    return 
-        IsEqual(L.X, R.X) && 
-        IsEqual(L.Y, R.Y);
+template<usize N, typename type>
+static inline vec<N, type> 
+Add(vec<N, type> L, vec<N, type> R) {
+    vec<N, type> Ret = {};
+    for (usize i = 0; i < N; ++i) {
+        Ret[i] = L[i] + R[i];
+    }
+    return Ret;
 }
 
-static inline v2f 
-Add(v2f L, v2f R) {
-    return { L.X+ R.X, L.Y + R.Y  };
+template<usize N, typename type>
+static inline vec<N, type> 
+Sub(vec<N, type> L, vec<N, type> R) {
+    vec<N, type> Ret = {};
+    for (usize i = 0; i < N; ++i) {
+        Ret[i] = L[i] - R[i];
+    }
+    return Ret;
 }
 
-static inline v2f 
-Sub(v2f L, v2f R) {
-    return { L.X- R.X, L.Y - R.Y };
+template<usize N, typename type>
+static inline vec<N, type> 
+Mul(vec<N, type> L, f32 R) {
+    vec<N, type> Ret = {};
+    for (usize i = 0; i < N; ++i) {
+        Ret[i] = L[i] * R;
+    }
+    return Ret;
 }
 
-static inline v2f 
-Mul(v2f L, f32 R) {
-    return { L.X* R, L.Y * R };
-}
-
-static inline v2f 
-Div(v2f L, f32 R) {
+template<usize N, typename type>
+static inline vec<N, type> 
+Div(vec<N, type> L, f32 R) {
     Assert(!IsEqual(R, 0.f));
-    return { L.X/ R, L.Y / R };
+    vec<N, type> Ret = {};
+    for (usize i = 0; i < N; ++i) {
+        Ret[i] = L[i] / R;
+    }
+    return Ret;
 }
 
-static inline v2f 
-Negate(v2f V){
-    return {-V.X, -V.Y };
+template<usize N, typename type>
+static inline vec<N, type> 
+Negate(vec<N, type> V){
+    vec<N, type> Ret = {};
+    for (usize i = 0; i < N; ++i) {
+        Ret[i] = -V[i]
+    }
+    return Ret;
 }
 
+template<usize N, typename type>
+static inline b8 
+IsEqual(vec<N, type> L, vec<N, type> R) {
+    for (usize i = 0; i < N; ++i) {
+        if (!IsEqual(L[i], R[i]))
+            return false;
+    }
+}
+
+template<usize N, typename type>
 static inline f32 
-Dot(v2f L, v2f  R) {
-    return L.X * R.X + L.Y * R.Y;
+Dot(vec<N, type> L, vec<N, type> R) {
+    type Ret = {};
+    for (usize i = 0; i < N; ++i) {
+        Ret += L[i] * R[i];
+    }
+    return Ret;
 }
 
-static inline v2f 
-operator+(v2f L, v2f R)  { 
+template<usize N, typename type>
+static inline vec<N, type> 
+operator+(vec<N, type> L, vec<N, type> R)  { 
     return Add(L, R); 
 }
 
-static inline v2f 
-operator-(v2f L, v2f R)  { 
+template<usize N, typename type>
+static inline vec<N, type> 
+operator-(vec<N, type> L, vec<N, type> R)  { 
     return Sub(L, R);
 }
 
-static inline v2f 
-operator*(v2f L, f32 R)  { 
+template<usize N, typename type>
+static inline vec<N, type> 
+operator*(vec<N, type> L, f32 R)  { 
     return Mul(L, R);
 }
 
-static inline v2f 
-operator*(f32 L, v2f R)  { 
+template<usize N, typename type>
+static inline vec<N, type> 
+operator*(f32 L, vec<N, type> R)  { 
     return Mul(R, L);
 }
 
+template<usize N, typename type>
 static inline f32 
-operator*(v2f L, v2f R) {
+operator*(vec<N, type> L, vec<N, type> R) {
     return Dot(L, R); 
 }
 
-static inline v2f 
-operator/(v2f L, f32 R)  { 
+template<usize N, typename type>
+static inline vec<N, type> 
+operator/(vec<N, type> L, f32 R)  { 
     return Div(L, R); 
 }
 
-static inline v2f& 
-operator+=(v2f& L, v2f R) {
+template<usize N, typename type>
+static inline vec<N, type>& 
+operator+=(vec<N, type>& L, vec<N, type> R) {
     return L = L + R;
 }
 
-static inline v2f& 
-operator-=(v2f& L, v2f R) {
+template<usize N, typename type>
+static inline vec<N, type>& 
+operator-=(vec<N, type>& L, vec<N, type> R) {
     return L = L - R;
 }
 
-static inline v2f& 
-operator*=(v2f& L, f32 R) {
+template<usize N, typename type>
+static inline vec<N, type>& 
+operator*=(vec<N, type>& L, f32 R) {
     return L = L * R;
 }
 
-static inline v2f& 
-operator/=(v2f& L, f32 R) {
+template<usize N, typename type>
+static inline vec<N, type>& 
+operator/=(vec<N, type>& L, f32 R) {
     return L = L / R;
 }
 
+template<usize N, typename type>
 static inline bool 
-operator==(v2f L, v2f R)  { 
+operator==(vec<N, type> L, vec<N, type> R)  { 
     return IsEqual(L, R);
 }
 
+template<usize N, typename type>
 static inline bool 
-operator!=(v2f L, v2f R) { 
+operator!=(vec<N, type> L, vec<N, type> R) { 
     return !(L == R); 
 }
 
-static inline v2f 
-operator-(v2f L)  {  
-    return { -L.X, -L.Y }; 
+template<usize N, typename type>
+static inline vec<N, type> 
+operator-(vec<N, type> V)  { 
+    return Negate(V); 
 }
 
 
-static inline f32 
-LengthSq(v2f L) { 
-    return L * L;
+template<usize N, typename type>
+static inline vec<N, type> 
+Midpoint(vec<N, type> L, vec<N, type> R)  { 
+    return (L + R) / 2; 
 }
 
-static inline f32 
-Length(v2f L) { 
-    return Sqrt(LengthSq(L));
-}
-
-static inline v2f 
-Midpoint(v2f L, v2f R)  { 
-    return (L + R) * 0.5f; 
-}
-
-static inline f32 
-AngleBetween(v2f L, v2f R) {
-    return ACos((L * R) / (Length(L) * Length(R)));
-}
-
-// v3f
-static inline v3f 
-Add(v3f L, v3f R) {
-    return { L.X+ R.X, L.Y + R.Y, L.Z + R.Z };
-}
-
-static inline v3f 
-Sub(v3f L, v3f R) {
-    return { L.X- R.X, L.Y - R.Y, L.Z - R.Z };
-}
-
-static inline v3f 
-Mul(v3f L, f32 R) {
-    return { L.X* R, L.Y * R, L.Z * R };
-}
-
-static inline v3f 
-Div(v3f L, f32 R) {
-    Assert(!IsEqual(R, 0.f));
-    return { L.X/ R, L.Y / R, L.Z / R };
-}
-
-static inline v3f 
-Negate(v3f V){
-    return {-V.X, -V.Y, -V.Z};
-}
-
-static inline b8 
-IsEqual(v3f L, v3f R) {
-    return 
-        IsEqual(L.X, R.X) && 
-        IsEqual(L.Y, R.Y) && 
-        IsEqual(L.Z, R.Z);
+template<usize N, typename type>
+static inline type
+DistanceSq(vec<N, type> L, vec<N, type> R) { 
+    type Ret = {};
+    for(usize i = 0; i < N; ++i) {
+        Ret += (R[i] - L[i]) * (R[i] - L[i]);
+    }
+    return Ret;
 }
 
 
-
-static inline f32 
-Dot(v3f L, v3f R) {
-    return L.X * R.X + L.Y * R.Y + L.Z * R.Z;
+template<usize N, typename type>
+static inline type
+LengthSq(vec<N, type> V) { 
+    return V * V;
 }
 
-
-static inline v3f 
-operator+(v3f L, v3f R)  { 
-    return Add(L, R); 
-}
-
-static inline v3f 
-operator-(v3f L, v3f R)  { 
-    return Sub(L, R);
-}
-
-static inline v3f 
-operator*(v3f L, f32 R)  { 
-    return Mul(L, R);
-}
-
-static inline v3f 
-operator*(f32 L, v3f R)  { 
-    return Mul(R, L);
-}
-
-static inline f32 
-operator*(v3f L, v3f R) {
-    return Dot(L, R); 
-}
-
-static inline v3f 
-operator/(v3f L, f32 R)  { 
-    return Div(L, R); 
-}
-
-static inline v3f& 
-operator+=(v3f& L, v3f R) {
-    return L = L + R;
-}
-
-static inline v3f& 
-operator-=(v3f& L, v3f R) {
-    return L = L - R;
-}
-
-static inline v3f& 
-operator*=(v3f& L, f32 R) {
-    return L = L * R;
-}
-
-static inline v3f& 
-operator/=(v3f& L, f32 R) {
-    return L = L / R;
-}
-
-static inline bool 
-operator==(v3f L, v3f R)  { 
-    return IsEqual(L, R);
-}
-
-static inline bool 
-operator!=(v3f L, v3f R) { 
-    return !(L == R); 
-}
-
-static inline v3f 
-operator-(v3f L)  {  
-    return { -L.X, -L.Y, -L.Z}; 
-}
-
-static inline v3f 
-Midpoint(v3f L, v3f R)  { 
-    return (L + R) * 0.5f; 
-}
-
-static inline f32 
-DistanceSq(v3f L, v3f R) { 
-    return 
-        (R.X - L.X) * (R.X - L.X) + 
-        (R.Y - L.Y) * (R.Y - L.Y) +
-        (R.Z - L.Z) * (R.Z - L.Z);
-}
-
-static inline f32 
-LengthSq(v3f L) { 
-    return L * L;
-}
-
-
-static inline f32 
-Distance(v3f L, v3f R)  { 
+template<usize N, typename type>
+static inline type 
+Distance(vec<N, type> L, vec<N, type> R)  { 
     return Sqrt(DistanceSq(L, R)); 
 }
 
-static inline f32 
-Length(v3f L)  { 
+template<usize N, typename type>
+static inline type 
+Length(vec<N, type> L)  { 
     return Sqrt(LengthSq(L));
-};
+}
 
-static inline v3f 
-Normalize(v3f L)  {
-    v3f ret = L;
-    f32 len = Length(L);
+template<usize N, typename type>
+static inline vec<N, type> 
+Normalize(vec<N, type> L)  {
+    vec<N, type> ret = L;
+    type len = Length(L);
     ret /= len;
     return ret;
 }
 
+template<usize N, typename type>
 static inline f32 
-AngleBetween(v3f L, v3f R) {
+AngleBetween(vec<N, type> L, vec<N, type> R) {
     return ACos((L * R) / (Length(L) * Length(R)));
 }
 
-static inline bool 
-IsPerpendicular(v3f L, v3f R) 
-{ 
-    return IsEqual((L * R), 0.f); 
+template<usize N, typename type>
+static inline b8
+IsPerpendicular(vec<N, type> L, vec<N, type> R) { 
+    return IsEqual((L * R), 0); 
 }
 
+template<usize N, typename type>
 static inline bool 
-IsSameDir(v3f L, v3f R) { 
-    return (L * R) > 0.f; 
+IsSameDir(vec<N, type> L, vec<N, type> R) { 
+    return (L * R) > 0; 
 }
 
+template<usize N, typename type>
 static inline bool 
-IsOppDir(v3f L, v3f R) { 
-    return (L * R) < 0.f;
+IsOppDir(vec<N, type> L, vec<N, type> R) { 
+    return (L * R) < 0;
 }
 
-static inline v3f 
-Project(v3f from, v3f to) { 
+template<usize N, typename type>
+static inline vec<N, type> 
+Project(vec<N, type> from, vec<N, type> to) { 
     return (to * from) / LengthSq(to) * to;
 }
 
