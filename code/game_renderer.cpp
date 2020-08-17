@@ -1,10 +1,10 @@
-static inline rect<2, u32> 
+static inline rect2u 
 GetRenderRegion(u32 WindowWidth, 
                 u32 WindowHeight, 
                 u32 RenderWidth, 
                 u32 RenderHeight) {
     Assert(RenderWidth > 0 && RenderHeight > 0 && WindowWidth > 0 && WindowHeight > 0);
-    rect<2, u32> Ret = {};
+    rect2u Ret = {};
     
     f32 OptimalWindowWidth = (f32)WindowHeight * ((f32)RenderWidth / (f32)RenderHeight);
     f32 OptimalWindowHeight = (f32)WindowWidth * ((f32)RenderHeight / (f32)RenderWidth);
