@@ -677,6 +677,7 @@ operator*(m44f L, m44f R) {
 }
 
 
+// NOTE(Momo): Constructors
 static inline m44f 
 Transpose(m44f M) {
     m44f Ret = {};
@@ -761,7 +762,7 @@ ScaleMatrix(v3f Vec) {
     return ScaleMatrix(Vec[0], Vec[1], Vec[2]);
 }
 
-// 
+
 static inline m44f 
 OrthographicMatrix(f32 NdcLeft, f32 NdcRight,
                    f32 NdcBottom, f32 NdcTop,
@@ -879,5 +880,15 @@ GetPoint(ray2f Ray, f32 Time) {
     return Ray.Origin + Ray.Direction * Time;
 }
 
+
+static inline quad2f
+Quad2(rect2f Rect) {
+    return {
+        Rect.Min.X, Rect.Min.Y, // bottom left  	
+        Rect.Max.X, Rect.Min.Y, // bottom right
+        Rect.Max.X, Rect.Max.Y, // top right
+        Rect.Min.X, Rect.Max.Y, // top left
+    };
+}
 
 #endif 

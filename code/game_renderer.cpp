@@ -34,15 +34,7 @@ GetRenderRegion(u32 WindowWidth,
     return Ret;
 }
 
-static inline quad2f
-UVRect2ToQuad2(rect2f Rect) {
-    return {
-        Rect.Min.X, Rect.Min.Y, // bottom left  	
-        Rect.Max.X, Rect.Min.Y, // bottom right
-        Rect.Max.X, Rect.Max.Y, // top right
-        Rect.Min.X, Rect.Max.Y, // top left
-    };
-}
+
 
 static inline void
 PushCommandSetBasis(commands* Commands, m44f Basis) {
