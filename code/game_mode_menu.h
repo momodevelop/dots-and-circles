@@ -10,7 +10,7 @@
 struct menu_image_entity {
     v3f Scale;
     v3f Position;
-    c4f Colors;
+    v4f Colors;
     u32 TextureHandle;
 };
 

@@ -67,7 +67,7 @@ PushCommandSetOrthoBasis(commands* Commands,
 }
 
 static inline void
-PushCommandClearColor(commands* Commands, c4f Colors) {
+PushCommandClearColor(commands* Commands, v4f Colors) {
     using data_t = render_command_data_clear_color;
     auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
@@ -75,7 +75,7 @@ PushCommandClearColor(commands* Commands, c4f Colors) {
 
 static inline void
 PushCommandDrawTexturedQuad(commands* Commands, 
-                            c4f Colors, 
+                            v4f Colors, 
                             m44f Transform, 
                             u32 TextureHandle,
                             quad2f TextureCoords = StandardQuadUV) 
@@ -92,7 +92,7 @@ PushCommandDrawTexturedQuad(commands* Commands,
 
 static inline void
 PushCommandDrawQuad(commands* Commands, 
-                    c4f Colors, 
+                    v4f Colors, 
                     m44f Transform) 
 {
     using data_t = render_command_data_draw_quad;
@@ -116,7 +116,7 @@ static inline void
 PushCommandDrawLine(commands* Payload, 
                     line2f Line, 
                     f32 Thickness = 2.f,
-                    c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+                    v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
@@ -143,7 +143,7 @@ static inline void
 PushCommandDrawLineRect(commands* Commands, 
                         rect2f Rect,
                         f32 Thickness = 1.f,
-                        c4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+                        v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     //Bottom
     PushCommandDrawLine(Commands, 

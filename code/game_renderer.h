@@ -45,7 +45,7 @@ constexpr static u8 QuadIndices[] = {
 
 struct render_command_data_clear_color {
     static constexpr u32 TypeId = __LINE__;
-    c4f Colors;
+    v4f Colors;
 };
 
 struct render_command_data_set_basis {
@@ -56,7 +56,7 @@ struct render_command_data_set_basis {
 struct render_command_data_draw_textured_quad {
     static constexpr u32 TypeId = __LINE__;
     u32 TextureHandle;
-    c4f Colors;
+    v4f Colors;
     m44f Transform;
     quad2f TextureCoords; 
 };
@@ -64,7 +64,7 @@ struct render_command_data_draw_textured_quad {
 
 struct render_command_data_draw_quad {
     static constexpr u32 TypeId = __LINE__;
-    c4f Colors;
+    v4f Colors;
     m44f Transform;
 };
 

@@ -9,7 +9,7 @@
 struct splash_image_entity {
     v3f Scale;
     v3f Position;
-    c4f Colors;
+    v4f Colors;
     
     game_bitmap_handle TextureHandle;
     
@@ -51,7 +51,7 @@ Update(splash_image_entity* Entity,
 struct splash_blackout_entity {
     v3f Scale;
     v3f Position;
-    c4f Colors;
+    v4f Colors;
     u32 TextureHandle;
     
     f32 CountdownTimer;

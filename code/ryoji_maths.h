@@ -16,65 +16,81 @@ static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
 static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
 
-struct v2f {
-    union {
-        f32 E[2];
-        struct {
-            f32 X;
-            f32 Y;
-        };
-        struct {
-            f32 U;
-            f32 V;
-        };
-        struct {
-            f32 W;
-            f32 H;
-        };
+union v2f {
+    f32 E[2];
+    struct {
+        f32 X;
+        f32 Y;
+    };
+    struct {
+        f32 U;
+        f32 V;
+    };
+    struct {
+        f32 W;
+        f32 H;
     };
     inline const auto& operator[](usize index) const { return E[index]; }
     inline auto& operator[](usize index) { return E[index];}
 };
 
-struct v3f {
-    union {
-        f32 E[3];
-        struct {
-            f32 X, Y, Z;
-        };
-        struct {
-            f32 W, H, D;
-        };
-        struct {
-            f32 R, G, B;
-        };
-        struct {
+union v3f {
+    f32 E[3];
+    struct {
+        union {
             v2f XY;
-            f32 _;
+            struct {
+                f32 X, Y;
+            };
         };
-        struct {
-            v2f WH;
-            f32 _;
-        };
-        
-    };
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
-};
-
-
-struct v4f {
-    union {
-        f32 E[4];
-        struct {
-            f32 X, Y, Z, W;
-        };
-        struct {
-            v3f XYZ;
-            f32 _;
-        };
+        f32 Z;
     };
     
+    struct {
+        union {
+            v2f WH;
+            struct {
+                f32 W, H;
+            };
+        };
+        f32 D;
+    };
+    
+    struct {
+        f32 R, G, B;
+    };
+    inline const auto& operator[](usize index) const { return E[index]; }
+    inline auto& operator[](usize index) { return E[index];}
+};
+
+union v4f {
+    f32 E[4];
+    struct
+    {
+        union
+        {
+            v3f XYZ;
+            struct
+            {
+                f32 X, Y, Z;
+            };
+        };
+        
+        f32 W;
+    };
+    struct
+    {
+        union
+        {
+            v3f RGB;
+            struct
+            {
+                f32 R, G, B;
+            };
+        };
+        
+        f32 A;
+    };
     inline const auto& operator[](usize index) const { return E[index]; }
     inline auto& operator[](usize index) { return E[index]; }
 };
@@ -84,43 +100,6 @@ union v2u {
     struct {
         u32 X, Y;
     };
-};
-
-
-struct c3f {
-    union {
-        f32 E[3];
-        struct {
-            f32 R, G, B;
-        };
-        struct {
-            f32 H, S, V;
-        };
-    };
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
-};
-
-struct c4f {
-    union {
-        f32 E[4];
-        struct {
-            f32 R, G, B, A;
-        };
-        struct {
-            c3f RGB;
-            f32 _;
-        };
-        struct {
-            f32 H, S, V, A;
-        };
-        struct {
-            c3f HSV;
-            f32 _;
-        };
-    };
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
 };
 
 struct m44f {
@@ -143,12 +122,12 @@ struct circle3f {
 
 struct aabb2f {
     v2f Origin;
-    v2f HalfDimensions;
+    v2f Radius;
 };
 
 struct aabb3f {
     v3f Origin;
-    v3f HalfDimensions;
+    v3f Radius;
 };
 
 
@@ -269,6 +248,11 @@ Pow(f32 b, f32 e) {
 }
 
 // NOTE(Momo): v2f functions
+static inline v2f
+V2F(v3f V) {
+    return { V.X, V.Y };
+}
+
 static inline v2f 
 Add(v2f L, v2f R) {
     return { L.X + R.X, L.Y + R.Y };
@@ -465,6 +449,11 @@ Project(v2f from, v2f to) {
 
 
 // NOTE(Momo): v3f functions
+static inline v3f 
+V3F(v2f V) {
+    return { V.X, V.Y, 0.f };
+}
+
 static inline v3f 
 Add(v3f L, v3f R) {
     return { L.X + R.X, L.Y + R.Y, L.Z + R.Z };
@@ -795,47 +784,37 @@ IdentityMatrix() {
     };
 }
 
-static inline v2f
-V2(v3f V) {
-    return { V.X, V.Y };
-}
-
-static inline v3f 
-V3(v2f V) {
-    return { V.X, V.Y, 0.f };
-}
-
 static inline line2f
-Line2(line3f Line) {
+Line2F(line3f Line) {
     return {
-        V2(Line.Min),
-        V2(Line.Max),
+        V2F(Line.Min),
+        V2F(Line.Max),
     };
 }
 
 static inline line3f
-Line3(line2f Line) {
+Line3F(line2f Line) {
     return {
-        V3(Line.Min),
-        V3(Line.Max),
+        V3F(Line.Min),
+        V3F(Line.Max),
     };
 }
 
 
 static inline rect2f
-Rect2(rect3f Rect) {
+Rect2F(rect3f Rect) {
     return {
-        V2(Rect.Min),
-        V2(Rect.Max),
+        V2F(Rect.Min),
+        V2F(Rect.Max),
     };
 }
 
 
 static inline rect3f
-Rect3(rect2f Rect) {
+Rect3F(rect2f Rect) {
     return {
-        V3(Rect.Min),
-        V3(Rect.Max),
+        V3F(Rect.Min),
+        V3F(Rect.Max),
     };
 }
 
@@ -847,7 +826,7 @@ struct ray2f {
 };
 
 static inline ray2f
-Ray2(line2f Line) {
+Ray2F(line2f Line) {
     ray2f Ret = {};
     Ret.Origin = Line.Min;
     Ret.Direction = Line.Max - Line.Min;

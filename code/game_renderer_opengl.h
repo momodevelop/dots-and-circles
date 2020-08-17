@@ -120,7 +120,7 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Indices], sizeof(QuadIndices), QuadIndices, 0);
     
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Texture], sizeof(v2f) * 4 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(c4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(v4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Transform], sizeof(m44f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
@@ -128,7 +128,7 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     glCreateVertexArrays(1, &Renderer->Blueprint);
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Model, Renderer->Buffers[renderer_vbo_Model], 0, sizeof(f32)*3);
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Texture, Renderer->Buffers[renderer_vbo_Texture], 0, sizeof(f32) * 8);
-    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(c4f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(v4f));
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Transform, Renderer->Buffers[renderer_vbo_Transform], 0, sizeof(m44f));
     
     // NOTE(Momo): Setup Attributes
@@ -310,8 +310,8 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
-                                     CurrentInstanceIndex * sizeof(c4f),
-                                     sizeof(c4f), 
+                                     CurrentInstanceIndex * sizeof(v4f),
+                                     sizeof(v4f), 
                                      &Data->Colors);
                 
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
@@ -353,8 +353,8 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
-                                     CurrentInstanceIndex * sizeof(c4f),
-                                     sizeof(c4f), 
+                                     CurrentInstanceIndex * sizeof(v4f),
+                                     sizeof(v4f), 
                                      &Data->Colors);
                 
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],

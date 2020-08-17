@@ -30,7 +30,7 @@ struct collision_component {
 };
 
 struct renderable_component {
-    c4f Colors;
+    v4f Colors;
     u32 TextureHandle;
     quad2f TextureCoords;
 };
@@ -130,7 +130,7 @@ SpriteRenderingSystem(game_mode_main* Mode,
                                 {1.f, 1.f, 1.f, 1.f}, 
                                 T*R*S,
                                 Spritesheet.BitmapHandle,
-                                UVRect2ToQuad2(Spritesheet.Frames[CurrentFrame]));
+                                Quad2(Spritesheet.Frames[CurrentFrame]));
     
 }
 
@@ -144,10 +144,10 @@ DrawCollisionLinesSystem(transform_component* Transform,
     auto* Box = &Collision->Box;
     
     rect2f Rect = {}; 
-    Rect.Min.X = Transform->Position.X + Box->Origin.X - Box->HalfDimensions.X;
-    Rect.Min.Y = Transform->Position.Y + Box->Origin.Y - Box->HalfDimensions.Y;
-    Rect.Max.X = Transform->Position.X + Box->Origin.X + Box->HalfDimensions.X;
-    Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->HalfDimensions.Y;
+    Rect.Min.X = Transform->Position.X + Box->Origin.X - Box->Radius.X;
+    Rect.Min.Y = Transform->Position.Y + Box->Origin.Y - Box->Radius.Y;
+    Rect.Max.X = Transform->Position.X + Box->Origin.X + Box->Radius.X;
+    Rect.Max.Y = Transform->Position.Y + Box->Origin.Y + Box->Radius.Y;
     
     // Bottom
     PushCommandDrawLineRect(RenderCommands, Rect);
@@ -248,7 +248,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Player->Physics = {};
         Player->Collision = {};
         Player->Collision.Box.Origin = { 0.f, 0.f };
-        Player->Collision.Box.HalfDimensions = { 24.f*2, 24.f*2 };
+        Player->Collision.Box.Radius = { 24.f*2, 24.f*2 };
         
         Player->Sprite.SpritesheetHandle = GameSpritesheetHandle_Karu;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
@@ -276,7 +276,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
             
             Block->Collision = {};
             Block->Collision.Box.Origin = {};
-            Block->Collision.Box.HalfDimensions = BlockHalfDimensions;
+            Block->Collision.Box.Radius = BlockHalfDimensions;
         }
         
         // top line
@@ -292,7 +292,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
             
             Block->Collision = {};
             Block->Collision.Box.Origin = {};
-            Block->Collision.Box.HalfDimensions = BlockHalfDimensions;
+            Block->Collision.Box.Radius = BlockHalfDimensions;
         }
         
         // left line
@@ -307,7 +307,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
             Block->Transform.Position.Y +=  BlockHalfDimensions.Y * 2.f;
             Block->Collision = {};
             Block->Collision.Box.Origin = {};
-            Block->Collision.Box.HalfDimensions = BlockHalfDimensions;
+            Block->Collision.Box.Radius = BlockHalfDimensions;
         }
         
         // right line
@@ -325,7 +325,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
             Block->Transform.Position.Y +=  BlockHalfDimensions.Y * 2.f;
             Block->Collision = {};
             Block->Collision.Box.Origin = {};
-            Block->Collision.Box.HalfDimensions = BlockHalfDimensions;
+            Block->Collision.Box.Radius = BlockHalfDimensions;
         }
     }
     Log("Sandbox state initialized!");
@@ -338,7 +338,7 @@ IsColliding(aabb2f Lhs, aabb2f Rhs) {
     {
         f32 OriginDisplacement = Lhs.Origin[i] - Rhs.Origin[i];
         f32 OriginDistance = Abs(OriginDisplacement);
-        f32 HalfRadiusSum = Lhs.HalfDimensions[i] + Rhs.HalfDimensions[i];
+        f32 HalfRadiusSum = Lhs.Radius[i] + Rhs.Radius[i];
         if (OriginDistance > HalfRadiusSum) {
             return false;
         }
@@ -353,7 +353,7 @@ GetPushbackNormal(aabb2f Static, aabb2f Dynamic ) {
     {
         f32 OriginDisplacement = Static.Origin[i] - Dynamic.Origin[i];
         f32 OriginDistance = Abs(OriginDisplacement);
-        f32 HalfRadiusSum = Static.HalfDimensions[i] + Dynamic.HalfDimensions[i];
+        f32 HalfRadiusSum = Static.Radius[i] + Dynamic.Radius[i];
         if (OriginDistance > HalfRadiusSum) {
             
             return {};
@@ -511,11 +511,11 @@ UpdateMode(game_mode_main* Mode,
     {
         auto Lhs = Mode->Blocks[i].Collision.Box;
         auto Rhs = Mode->Player.Collision.Box;
-        Lhs.Origin += V2(Mode->Blocks[i].Transform.Position);
-        Rhs.Origin += V2(Mode->Player.Transform.Position);
+        Lhs.Origin += V2F(Mode->Blocks[i].Transform.Position);
+        Rhs.Origin += V2F(Mode->Player.Transform.Position);
         if (IsColliding(Lhs, Rhs)) {
             auto Pushback = GetPushbackNormal(Lhs, Rhs);
-            Mode->Player.Transform.Position += V3(Pushback);
+            Mode->Player.Transform.Position += V3F(Pushback);
             Log("Pushback %f %f", Pushback.X, Pushback.Y);
         }
     }
@@ -527,18 +527,18 @@ UpdateMode(game_mode_main* Mode,
         line2f Line = {};
         Line.Min = { -400.f, 0.f };
         Line.Max = { 0.f, 400.f };
-        ray2f Ray1 = Ray2(Line);
-        ray2f Ray2 = {};
-        Ray2.Origin = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
-        Ray2.Direction = { -Player->Collision.Box.HalfDimensions.W, Player->Collision.Box.HalfDimensions.H };
+        ray2f Ray1 = Ray2F(Line);
+        ray2f Ray2F = {};
+        Ray2F.Origin = V2F(Player->Transform.Position) + Player->Collision.Box.Origin;
+        Ray2F.Direction = { -Player->Collision.Box.Radius.W, Player->Collision.Box.Radius.H };
         
-        auto [t1, t2] = GetIntersectionTime(Ray1, Ray2);
+        auto [t1, t2] = GetIntersectionTime(Ray1, Ray2F);
         if (t2 >= 0.f && t2 <= 1.f && t1 >= 0.f && t1 <= 1.f) {
-            v2f IntersectionPt = GetPoint(Ray2, t2);
+            v2f IntersectionPt = GetPoint(Ray2F, t2);
             Log("%f, %f", IntersectionPt.X, IntersectionPt.Y);
-            v2f cornerPt = GetPoint(Ray2, 1.f);
+            v2f cornerPt = GetPoint(Ray2F, 1.f);
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
-            Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
+            Mode->Player.Transform.Position += V3F(cornerToIntersectionVec) ;
         }
         PushCommandDrawLine(RenderCommands, Line);
     }
@@ -560,8 +560,8 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
-        v2 = { Player->Collision.Box.HalfDimensions.W, Player->Collision.Box.HalfDimensions.H };
+        p2 = V2F(Player->Transform.Position) + Player->Collision.Box.Origin;
+        v2 = { Player->Collision.Box.Radius.W, Player->Collision.Box.Radius.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
         
@@ -574,7 +574,7 @@ UpdateMode(game_mode_main* Mode,
             
             v2f cornerPt = p2 + v2;
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
-            Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
+            Mode->Player.Transform.Position += V3F(cornerToIntersectionVec) ;
         }
         PushCommandDrawLine(RenderCommands, Line);
     }
@@ -597,8 +597,8 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
-        v2 = { Player->Collision.Box.HalfDimensions.W, -Player->Collision.Box.HalfDimensions.H };
+        p2 = V2F(Player->Transform.Position) + Player->Collision.Box.Origin;
+        v2 = { Player->Collision.Box.Radius.W, -Player->Collision.Box.Radius.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
         
@@ -610,7 +610,7 @@ UpdateMode(game_mode_main* Mode,
             
             v2f cornerPt = p2 + v2;
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
-            Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
+            Mode->Player.Transform.Position += V3F(cornerToIntersectionVec) ;
         }
         PushCommandDrawLine(RenderCommands, Line);
     }
@@ -632,8 +632,8 @@ UpdateMode(game_mode_main* Mode,
         p1 = Line.Min; 
         v1 = Line.Max - Line.Min;
         
-        p2 = V2(Player->Transform.Position) + Player->Collision.Box.Origin;
-        v2 = { -Player->Collision.Box.HalfDimensions.W, -Player->Collision.Box.HalfDimensions.H };
+        p2 = V2F(Player->Transform.Position) + Player->Collision.Box.Origin;
+        v2 = { -Player->Collision.Box.Radius.W, -Player->Collision.Box.Radius.H };
         
         t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
         
@@ -645,7 +645,7 @@ UpdateMode(game_mode_main* Mode,
             
             v2f cornerPt = p2 + v2;
             v2f cornerToIntersectionVec = IntersectionPt - cornerPt;
-            Mode->Player.Transform.Position += V3(cornerToIntersectionVec) ;
+            Mode->Player.Transform.Position += V3F(cornerToIntersectionVec) ;
         }
         PushCommandDrawLine(RenderCommands, Line);
     }
