@@ -98,8 +98,8 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = SDL_CreateWindow("Vigil", 
                                           SDL_WINDOWPOS_UNDEFINED, 
                                           SDL_WINDOWPOS_UNDEFINED, 
-                                          800, 
-                                          600, 
+                                          1600, 
+                                          900, 
                                           SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == nullptr) {
         SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());

@@ -4,6 +4,7 @@ project_name = "Ryoji";
 patterns = {
 	"*.cpp",
 	"*.h",
+	"*.cc",
 };
 blacklist_patterns = {
 	"thirdparty",

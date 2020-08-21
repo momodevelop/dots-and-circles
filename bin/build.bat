@@ -27,11 +27,15 @@ rmdir %cd%\assets
 mkdir %cd%\assets
 copy %RootDir%\assets\* %cd%\assets
 
-IF "%Opt%"=="game" (
-	cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
+IF "%Opt%"=="assets" ( 
+	cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cpp
 ) ELSE (
-	cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
-	cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp  -link %CommonLinkerFlags%
+	IF "%Opt%"=="game" (
+		cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
+	) ELSE (
+		cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
+		cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp -link %CommonLinkerFlags%
+	)
 )
 
 popd

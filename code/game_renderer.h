@@ -83,6 +83,6 @@ struct render_command_data_set_design_resolution {
 };
 
 
-#include "game_renderer.cpp"
+#include "game_renderer.cc"
 
 #endif //GAME_RENDERER_H

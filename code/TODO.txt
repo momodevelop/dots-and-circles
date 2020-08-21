@@ -1,6 +1,7 @@
+[] Asset loading
+[] Fonts
 [] Tile based rendering
 [] Fixed framerate (target framerate)
-[] Asset loading??
 [] Visual editor
 [] Circle debug lines?
 [] Quaternion

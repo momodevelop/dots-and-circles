@@ -2,13 +2,15 @@
 #define __GAME_ASSETS__
 
 #include "ryoji.h"
+#include "ryoji_maths.h"
 #include "ryoji_arenas.h"
 #include "ryoji_asset_types.h"
 
 // TODO(Momo): Kind of want to treat all these different asset types as the same thing...?
 
 // NOTE(Momo): Bitmaps
-enum game_bitmap_handle : u8 {
+// TODO(Momo): Consider using enum structs
+enum game_bitmap_handle : u32 {
     GameBitmapHandle_Blank,
     GameBitmapHandle_Ryoji,
     GameBitmapHandle_Yuu,
@@ -17,7 +19,7 @@ enum game_bitmap_handle : u8 {
 };
 
 // NOTE(Momo): Spritesheets
-enum game_spritesheet_handle : u8 {
+enum game_spritesheet_handle : u32 {
     GameSpritesheetHandle_Karu,
     GameSpritesheetHandle_Max,
 };
