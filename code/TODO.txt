@@ -1,5 +1,7 @@
 [] Asset loading
 [] Fonts
+[] Fix fade out bug
+[] Consider b32 for boolean (credit SigmaHeavyIndustries)
 [] Tile based rendering
 [] Fixed framerate (target framerate)
 [] Visual editor

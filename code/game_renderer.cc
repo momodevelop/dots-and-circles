@@ -38,7 +38,7 @@ GetRenderRegion(u32 WindowWidth,
 
 static inline void
 PushCommandSetBasis(commands* Commands, m44f Basis) {
-    using data_t = render_command_data_set_basis;
+    using data_t = render_command_set_basis;
     auto* Data = Push<data_t>(Commands);
     Data->Basis = Basis;
 }
@@ -48,7 +48,7 @@ PushCommandSetOrthoBasis(commands* Commands,
                          v3f Origin,
                          v3f Dimensions)   
 {
-    using data_t = render_command_data_set_basis;
+    using data_t = render_command_set_basis;
     auto* Data = Push<data_t>(Commands);
     
     auto P  = OrthographicMatrix(-1.f, 1.f,
@@ -68,7 +68,7 @@ PushCommandSetOrthoBasis(commands* Commands,
 
 static inline void
 PushCommandClearColor(commands* Commands, v4f Colors) {
-    using data_t = render_command_data_clear_color;
+    using data_t = render_command_clear_color;
     auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
 }
@@ -80,7 +80,7 @@ PushCommandDrawTexturedQuad(commands* Commands,
                             u32 TextureHandle,
                             quad2f TextureCoords = StandardQuadUV) 
 {
-    using data_t = render_command_data_draw_textured_quad;
+    using data_t = render_command_draw_textured_quad;
     auto* Data = Push<data_t>(Commands);
     
     Data->Colors = Colors;
@@ -95,7 +95,7 @@ PushCommandDrawQuad(commands* Commands,
                     v4f Colors, 
                     m44f Transform) 
 {
-    using data_t = render_command_data_draw_quad;
+    using data_t = render_command_draw_quad;
     auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
     Data->Transform = Transform;
@@ -106,7 +106,7 @@ static inline void
 PushCommandLinkTexture(commands* Commands, 
                        bitmap TextureBitmap, 
                        u32 TextureHandle) {
-    using data_t = render_command_data_link_texture;
+    using data_t = render_command_link_texture;
     auto* Data = Push<data_t>(Commands);
     Data->TextureBitmap = TextureBitmap;
     Data->TextureHandle = TextureHandle;
@@ -184,7 +184,7 @@ PushCommandDrawLineRect(commands* Commands,
 static inline void 
 PushCommandSetDesignResolution(commands* Commands, u32 Width, u32 Height)  
 {
-    using data_t = render_command_data_set_design_resolution;
+    using data_t = render_command_set_design_resolution;
     auto* Data = Push<data_t>(Commands);
     Data->Width = Width;
     Data->Height = Height;

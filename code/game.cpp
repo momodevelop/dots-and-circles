@@ -30,8 +30,75 @@ GameUpdate(game_memory* GameMemory,
         GameState->Assets = GameAssets;
         Init(GameAssets, MainArena, Megabytes(10));
         
+#if 1
+        {
+            Log("Reading assets...");
+            // TODO(Momo): 
+            temporary_memory TempMemory = BeginTemporaryMemory(MainArena);
+            const char* Filepath = "yuu";
+            u32 Filesize = Platform->GetFileSize(Filepath);
+            Assert(Filesize);
+            u8* AssetMemory = (u8*)PushBlock(TempMemory.Arena, Filesize);
+            u8* AssetMemoryItr = AssetMemory;
+            
+            Platform->ReadFile(AssetMemory, Filesize, Filepath);
+            
+            // NOTE(Momo): Check signature
+            Assert(CheckAssetSignature(AssetMemoryItr));
+            AssetMemoryItr += ArrayCount(AssetSignature);
+            
+            u32 AssetCount = ReadU32(&AssetMemoryItr, false);
+            
+            Log("Asset Count = %d", AssetCount);
+            // NOTE(Momo): Read headers
+            for (u32 i = 0; i < AssetCount; ++i)
+            {
+                asset_type Type = (asset_type)ReadU32(&AssetMemoryItr, false);
+                u32 OffsetToData = ReadU32(&AssetMemoryItr, false);
+                
+                u8* DataItr = AssetMemory;
+                DataItr += OffsetToData;
+                
+                // NOTE(Momo): Read Data
+                switch(Type) {
+                    case asset_type::Image: {
+                        u32 Width = ReadU32(&DataItr, false);
+                        u32 Height = ReadU32(&DataItr, false);
+                        u32 Channels = ReadU32(&DataItr, false);
+                        game_bitmap_handle Handle = (game_bitmap_handle)ReadU32(&DataItr, false);
+                        
+                        bitmap Bitmap = MakeEmptyBitmap(Width, Height, &GameAssets->Arena);
+                        CopyBlock(Bitmap.Pixels, DataItr, Width * Height * Channels);
+                        
+                        Log("Image Read: %d %d", Width, Height);
+                        
+                        LoadBitmap(GameAssets, Handle, Bitmap);
+                        PushCommandLinkTexture(RenderCommands,
+                                               GetBitmap(GameAssets, Handle), 
+                                               Handle);
+                    } break;
+                    case asset_type::Font: {
+                        // TODO(Momo): Implement
+                    } break;
+                    case asset_type::Spritesheet: {
+                        // TODO(Momo): Implement
+                    } break;
+                    case asset_type::Animation: {
+                        // TODO(Momo): Implement 
+                    } break;
+                    case asset_type::Sound: {
+                        // TODO(Momo): Implement
+                    } break;
+                }
+                EndTemporaryMemory(TempMemory);
+            }
+            
+            
+        }
+        
         // TODO(Momo): All this should really be in game_assets.h
         // NOTE(Momo): Init Bitmap Assets
+#else
         {// ryoji
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/ryoji.bmp";
@@ -45,6 +112,7 @@ GameUpdate(game_memory* GameMemory,
                                    GameBitmapHandle_Ryoji);
             EndTemporaryMemory(TempMemory);
         }
+        
         {// yuu
             auto TempMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "assets/yuu.bmp";
@@ -84,6 +152,8 @@ GameUpdate(game_memory* GameMemory,
                                    GameBitmapHandle_Karu);
             EndTemporaryMemory(TempMemory);
         }
+        
+#endif
         
         // NOTE(Momo): Init Spritesheet Assets
         {// karu

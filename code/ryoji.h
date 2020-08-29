@@ -6,6 +6,7 @@
 
 // Types
 using b8 = bool;
+using b32 = uint32_t;
 using u8 = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
@@ -18,6 +19,7 @@ using f32 = float;
 using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
+
 
 #define Kilobyte (1 << 10)
 #define Megabyte (1 << 20)
@@ -39,6 +41,12 @@ using uptr = uintptr_t;
 #define Lerp(start, end, fraction) (start + (end - start)*fraction) 
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
 
+static inline void 
+CopyBlock(void* dest, void* src, usize size) {
+    for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
+        *p = *q;
+    }
+}
 
 static inline void 
 ZeroBlock(void *mem, usize size) {
@@ -60,6 +68,13 @@ ZeroBlock(void *mem, usize size) {
 #define Assert(x) 
 #endif
 
+
+// Run-time system endianness check
+static inline b32 
+IsSystemBigEndian() {
+    int n = 1;
+    return (*(char*)&n != 1);
+}
 
 // Defer 
 namespace zawarudo {

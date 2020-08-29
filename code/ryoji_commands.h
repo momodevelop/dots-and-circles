@@ -4,7 +4,7 @@
 #include "ryoji_maths.h"
 #include "ryoji_arenas.h"
 
-struct command_entry {
+struct command_entry_header {
     u32 Type;
     u32 OffsetToData;
 };
@@ -24,8 +24,8 @@ static inline void
 Clear(commands* Commands) {
     Commands->DataMemoryAt = Commands->Memory;
     
-    u8* EntryMemoryStart = Commands->Memory + Commands->MemorySize - sizeof(command_entry);
-    u8 Adjust = AlignBackwardDiff(EntryMemoryStart, alignof(command_entry));
+    u8* EntryMemoryStart = Commands->Memory + Commands->MemorySize - sizeof(command_entry_header);
+    u8 Adjust = AlignBackwardDiff(EntryMemoryStart, alignof(command_entry_header));
     EntryMemoryStart -= Adjust;
     
     Commands->EntryMemoryStart = EntryMemoryStart;
@@ -43,15 +43,15 @@ Init(commands* Commands, void* Memory, u32 MemorySize) {
 
 
 // NOTE(Momo): Accessors and Iterators
-static inline command_entry* 
+static inline command_entry_header* 
 GetEntry(commands* Commands, usize Index) {
     Assert(Index < Commands->EntryCount);
-    return (command_entry*)(Commands->EntryMemoryStart - Index * sizeof(command_entry));
+    return (command_entry_header*)(Commands->EntryMemoryStart - Index * sizeof(command_entry_header));
 }
 
 
 static inline void*
-GetDataFromEntry(commands* Commands, command_entry* Entry) {
+GetDataFromEntry(commands* Commands, command_entry_header* Entry) {
     return (Commands->Memory + Entry->OffsetToData);
 }
 
@@ -66,8 +66,8 @@ Push(commands* Commands)
     u32 DataSize = sizeof(T);
     
     // NOTE(Momo): Allocate Entry
-    u8 EntryAdjust = AlignBackwardDiff(Commands->EntryMemoryAt, alignof(command_entry));
-    u32 EntrySize = sizeof(command_entry);
+    u8 EntryAdjust = AlignBackwardDiff(Commands->EntryMemoryAt, alignof(command_entry_header));
+    u32 EntrySize = sizeof(command_entry_header);
     
     if (Commands->EntryMemoryAt - EntrySize - EntryAdjust < Commands->DataMemoryAt + DataSize +  DataAdjust) {
         return nullptr; 
@@ -76,7 +76,7 @@ Push(commands* Commands)
     auto* Data = (T*)((u8*)Commands->DataMemoryAt + DataAdjust);
     Commands->DataMemoryAt += DataSize + DataAdjust;
     
-    auto* Entry = (command_entry*)((u8*)Commands->EntryMemoryAt + EntryAdjust);
+    auto* Entry = (command_entry_header*)((u8*)Commands->EntryMemoryAt + EntryAdjust);
     Entry->OffsetToData = (u32)((u8*)Data - Commands->Memory);
     Entry->Type = T::TypeId; 
     Commands->EntryMemoryAt -= EntrySize;

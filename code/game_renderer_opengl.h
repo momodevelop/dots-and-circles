@@ -216,6 +216,8 @@ static inline void
 DrawInstances(renderer_opengl* Renderer, GLint Texture, u32 InstancesToDraw, u32 IndexToDrawFrom) {
     if (InstancesToDraw > 0) {
         glBindTexture(GL_TEXTURE_2D, Texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindVertexArray(Renderer->Blueprint);
@@ -248,13 +250,13 @@ Render(renderer_opengl* Renderer, commands* Commands)
         auto* Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            case render_command_data_set_design_resolution::TypeId: {
-                using data_t = render_command_data_set_design_resolution;
+            case render_command_set_design_resolution::TypeId: {
+                using data_t = render_command_set_design_resolution;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 SetRenderResolution(Renderer, Data->Width, Data->Height);
             } break;
-            case render_command_data_set_basis::TypeId: {
-                using data_t = render_command_data_set_basis;
+            case render_command_set_basis::TypeId: {
+                using data_t = render_command_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
@@ -266,8 +268,8 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
                 
             } break;
-            case render_command_data_link_texture::TypeId: {
-                using data_t = render_command_data_link_texture;
+            case render_command_link_texture::TypeId: {
+                using data_t = render_command_link_texture;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 if (Renderer->GameToRendererTextureTable[Data->TextureHandle] != 0) {
@@ -283,13 +285,13 @@ Render(renderer_opengl* Renderer, commands* Commands)
                                     Data->TextureBitmap.Pixels);
                 
             } break;
-            case render_command_data_clear_color::TypeId: {
-                using data_t = render_command_data_clear_color;
+            case render_command_clear_color::TypeId: {
+                using data_t = render_command_clear_color;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 glClearColor(Data->Colors.R, Data->Colors.G, Data->Colors.B, Data->Colors.A);
             } break;
-            case render_command_data_draw_quad::TypeId: {
-                using data_t = render_command_data_draw_quad;
+            case render_command_draw_quad::TypeId: {
+                using data_t = render_command_draw_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
@@ -330,8 +332,8 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 ++InstancesToDrawCount;
                 ++CurrentInstanceIndex;
             } break;
-            case render_command_data_draw_textured_quad::TypeId: {
-                using data_t = render_command_data_draw_textured_quad;
+            case render_command_draw_textured_quad::TypeId: {
+                using data_t = render_command_draw_textured_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table

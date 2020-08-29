@@ -43,17 +43,17 @@ constexpr static u8 QuadIndices[] = {
 };
 
 
-struct render_command_data_clear_color {
+struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
     v4f Colors;
 };
 
-struct render_command_data_set_basis {
+struct render_command_set_basis {
     static constexpr u32 TypeId = __LINE__;
     m44f Basis;
 };
 
-struct render_command_data_draw_textured_quad {
+struct render_command_draw_textured_quad {
     static constexpr u32 TypeId = __LINE__;
     u32 TextureHandle;
     v4f Colors;
@@ -62,7 +62,7 @@ struct render_command_data_draw_textured_quad {
 };
 
 
-struct render_command_data_draw_quad {
+struct render_command_draw_quad {
     static constexpr u32 TypeId = __LINE__;
     v4f Colors;
     m44f Transform;
@@ -70,13 +70,13 @@ struct render_command_data_draw_quad {
 
 
 
-struct render_command_data_link_texture {
+struct render_command_link_texture {
     static constexpr u32 TypeId = __LINE__;
     bitmap TextureBitmap;
     u32 TextureHandle;
 };
 
-struct render_command_data_set_design_resolution {
+struct render_command_set_design_resolution {
     static constexpr u32 TypeId = __LINE__;
     u32 Width;
     u32 Height;

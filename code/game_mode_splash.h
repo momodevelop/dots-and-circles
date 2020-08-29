@@ -52,7 +52,6 @@ struct splash_blackout_entity {
     v3f Scale;
     v3f Position;
     v4f Colors;
-    u32 TextureHandle;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -79,10 +78,9 @@ Update(splash_blackout_entity* Entity,
     m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
-    PushCommandDrawTexturedQuad(RenderCommands, 
-                                Entity->Colors, 
-                                T*S,
-                                Entity->TextureHandle);
+    PushCommandDrawQuad(RenderCommands, 
+                        Entity->Colors, 
+                        T*S);
     
 }
 
@@ -122,7 +120,6 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashBlackout.Position = { 0.f, 0.f, 1.0f };
         Mode->SplashBlackout.Scale = { 1600.f, 900.f };
         Mode->SplashBlackout.Colors = { 0.f, 0.f, 0.f, 0.0f };
-        Mode->SplashBlackout.TextureHandle = GameBitmapHandle_Blank;
         Mode->SplashBlackout.CountdownTimer = 0.f;
         Mode->SplashBlackout.CountdownDuration = 8.f;
         Mode->SplashBlackout.Timer = 0.f;

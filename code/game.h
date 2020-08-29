@@ -29,7 +29,7 @@ struct game_state {
     memory_arena MainArena;
     memory_arena ModeArena;
     
-    b8 IsInitialized;
+    b32 IsInitialized;
 };
 
 template<typename T>
@@ -45,7 +45,7 @@ SetGameMode(game_state* GameState) {
 }
 
 #if INTERNAL
-static inline b8
+static inline b32
 ProcessMetaInput(game_state* GameState, game_input* Input) {
     if (IsPoked(Input->ButtonDebug[1])) {
         SetGameMode<game_mode_splash>(GameState);

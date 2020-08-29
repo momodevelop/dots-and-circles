@@ -6,6 +6,28 @@
 #include "ryoji_arenas.h"
 #include "ryoji_asset_types.h"
 
+static constexpr u8 AssetSignature[] = { 'M', 'O', 'M', 'O' };
+
+enum struct asset_type : u32 {
+    Image,
+    Font,
+    Spritesheet,
+    Animation,
+    Sound,
+};
+
+static inline b32
+CheckAssetSignature(void *Memory) {
+    u8* MemoryU8 = (u8*)Memory;
+    for (u32 i = 0; i < ArrayCount(AssetSignature); ++i) {
+        if (MemoryU8[i] != AssetSignature[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 // TODO(Momo): Kind of want to treat all these different asset types as the same thing...?
 
 // NOTE(Momo): Bitmaps
@@ -117,25 +139,26 @@ PeekU16(const u8* P, bool isBigEndian) {
         u8 C[2];
     } Ret;
     
-#if BIG_ENDIAN
-    if (isBigEndian) {
-        Ret.C[0] = P[0];
-        Ret.C[1] = P[1];
+    if (IsSystemBigEndian()) {
+        if (isBigEndian) {
+            Ret.C[0] = P[0];
+            Ret.C[1] = P[1];
+        }
+        else {
+            Ret.C[0] = P[1];
+            Ret.C[1] = P[0];
+        }
     }
     else {
-        Ret.C[0] = P[1];
-        Ret.C[1] = P[0];
+        if (isBigEndian) {
+            Ret.C[0] = P[1];
+            Ret.C[1] = P[0];
+        }
+        else {
+            Ret.C[0] = P[0];
+            Ret.C[1] = P[1];
+        }
     }
-#else
-    if (isBigEndian) {
-        Ret.C[0] = P[1];
-        Ret.C[1] = P[0];
-    }
-    else {
-        Ret.C[0] = P[0];
-        Ret.C[1] = P[1];
-    }
-#endif
     return Ret.V;
 }
 
@@ -249,6 +272,17 @@ MakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
         }
     }
     return Ret;
+}
+
+
+
+inline void
+LoadBitmap(game_assets *Assets, 
+           game_bitmap_handle BitmapHandle, 
+           bitmap Bitmap) 
+{
+    Assert(BitmapHandle < GameBitmapHandle_Max);
+    Assets->Bitmaps[BitmapHandle] = Bitmap;
 }
 
 inline void
