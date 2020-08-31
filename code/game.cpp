@@ -30,15 +30,14 @@ GameUpdate(game_memory* GameMemory,
         GameState->Assets = GameAssets;
         Init(GameAssets, MainArena, Megabytes(10));
         
-#if 1
         {
             Log("Reading assets...");
             // TODO(Momo): 
-            temporary_memory TempMemory = BeginTemporaryMemory(MainArena);
+            temporary_memory TempAssetMemory = BeginTemporaryMemory(MainArena);
             const char* Filepath = "yuu";
             u32 Filesize = Platform->GetFileSize(Filepath);
             Assert(Filesize);
-            u8* AssetMemory = (u8*)PushBlock(TempMemory.Arena, Filesize);
+            u8* AssetMemory = (u8*)PushBlock(TempAssetMemory.Arena, Filesize);
             u8* AssetMemoryItr = AssetMemory;
             
             Platform->ReadFile(AssetMemory, Filesize, Filepath);
@@ -74,14 +73,57 @@ GameUpdate(game_memory* GameMemory,
                         
                         LoadBitmap(GameAssets, Handle, Bitmap);
                         PushCommandLinkTexture(RenderCommands,
-                                               GetBitmap(GameAssets, Handle), 
+                                               Bitmap, 
                                                Handle);
                     } break;
                     case asset_type::Font: {
                         // TODO(Momo): Implement
                     } break;
                     case asset_type::Spritesheet: {
-                        // TODO(Momo): Implement
+                        temporary_memory SpritesheetArena = BeginTemporaryMemory(&TempAssetMemory);
+                        
+                        u32 Width = ReadU32(&DataItr, false);
+                        u32 Height = ReadU32(&DataItr, false);
+                        u32 Channels = ReadU32(&DataItr, false);
+                        game_spritesheet_handle Handle = (game_spritesheet_handle)ReadU32(&DataItr, false);
+                        u32 Rows = ReadU32(&DataItr, false);
+                        u32 Cols = ReadU32(&DataItr, false);
+                        
+                        bitmap Bitmap = MakeEmptyBitmap(Width, Height, &GameAssets->Arena);
+                        CopyBlock(Bitmap.Pixels, DataItr, Width * Height * Channels);
+                        
+                        Log("Spritesheet Read: %d %d %d %d %d", Width, Height, Rows, Cols);
+                        
+                        PushCommandLinkTexture(RenderCommands,
+                                               Bitmap, 
+                                               Handle);
+                        
+                        
+                        
+                        f32 FrameWidth = (f32)Bitmap.Width/Cols;
+                        f32 FrameHeight = (f32)Bitmap.Height/Rows;
+                        f32 CellWidth = FrameWidth/Width;
+                        f32 CellHeight = FrameHeight/Height;
+                        f32 HalfPixelWidth =  0.25f/Bitmap.Width;
+                        f32 HalfPixelHeight = 0.25f/Bitmap.Height;
+                        
+                        // NOTE(Momo):  Init sprite frames
+                        u32 TotalFrames = Rows * Cols;
+                        rect2f Rects[12]; // TODO(Momo): Dynamic pls
+                        for (u8 r = 0; r < Rows; ++r) {
+                            for (u8 c = 0; c < Cols; ++c) {
+                                Rects[TwoToOne(r,c,Cols)] = { 
+                                    c * CellWidth + HalfPixelWidth,
+                                    r * CellHeight + HalfPixelHeight,
+                                    (c+1) * CellWidth - HalfPixelWidth,
+                                    (r+1) * CellHeight - HalfPixelHeight,
+                                };
+                            }
+                        }
+                        LoadSpritesheet(GameAssets, GameSpritesheetHandle_Karu, Bitmap, Rects, TotalFrames);
+                        
+                        EndTemporaryMemory(SpritesheetArena);
+                        
                     } break;
                     case asset_type::Animation: {
                         // TODO(Momo): Implement 
@@ -90,92 +132,10 @@ GameUpdate(game_memory* GameMemory,
                         // TODO(Momo): Implement
                     } break;
                 }
-                EndTemporaryMemory(TempMemory);
+                EndTemporaryMemory(TempAssetMemory);
             }
             
             
-        }
-        
-        // TODO(Momo): All this should really be in game_assets.h
-        // NOTE(Momo): Init Bitmap Assets
-#else
-        {// ryoji
-            auto TempMemory = BeginTemporaryMemory(MainArena);
-            const char* Filepath = "assets/ryoji.bmp";
-            u32 Filesize = Platform->GetFileSize(Filepath);
-            Assert(Filesize);
-            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
-            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadBitmap(GameAssets, GameBitmapHandle_Ryoji, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands,
-                                   GetBitmap(GameAssets, GameBitmapHandle_Ryoji),
-                                   GameBitmapHandle_Ryoji);
-            EndTemporaryMemory(TempMemory);
-        }
-        
-        {// yuu
-            auto TempMemory = BeginTemporaryMemory(MainArena);
-            const char* Filepath = "assets/yuu.bmp";
-            u32 Filesize = Platform->GetFileSize(Filepath);
-            Assert(Filesize);
-            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
-            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadBitmap(GameAssets, GameBitmapHandle_Yuu, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands,
-                                   GetBitmap(GameAssets, GameBitmapHandle_Yuu), 
-                                   GameBitmapHandle_Yuu);
-            EndTemporaryMemory(TempMemory);
-        }
-        {// blank
-            auto TempMemory = BeginTemporaryMemory(MainArena);
-            const char* Filepath = "assets/blank.bmp";
-            u32 Filesize = Platform->GetFileSize(Filepath);
-            Assert(Filesize);
-            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
-            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadBitmap(GameAssets, GameBitmapHandle_Blank, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands, 
-                                   GetBitmap(GameAssets, GameBitmapHandle_Blank),
-                                   GameBitmapHandle_Blank);
-            EndTemporaryMemory(TempMemory);
-        }
-        {// karu
-            auto TempMemory = BeginTemporaryMemory(MainArena);
-            const char* Filepath = "assets/karu.bmp";
-            u32 Filesize = Platform->GetFileSize(Filepath);
-            Assert(Filesize);
-            void* BitmapMemory = PushBlock(TempMemory.Arena, Filesize);
-            Platform->ReadFile(BitmapMemory, Filesize, Filepath);
-            LoadBitmap(GameAssets, GameBitmapHandle_Karu, BitmapMemory);
-            PushCommandLinkTexture(RenderCommands, 
-                                   GetBitmap(GameAssets, GameBitmapHandle_Karu),
-                                   GameBitmapHandle_Karu);
-            EndTemporaryMemory(TempMemory);
-        }
-        
-#endif
-        
-        // NOTE(Momo): Init Spritesheet Assets
-        {// karu
-            bitmap Bitmap = GetBitmap(GameState->Assets, GameBitmapHandle_Karu);
-            f32 CellWidth = 48.f/Bitmap.Width;
-            f32 CellHeight = 48.f/Bitmap.Height;
-            f32 HalfPixelWidth =  0.25f/Bitmap.Width;
-            f32 HalfPixelHeight = 0.25f/Bitmap.Height;
-            
-            // NOTE(Momo):  Init sprite frames
-            rect2f Rects[12];
-            for (u8 r = 0; r < 4; ++r) {
-                for (u8 c = 0; c < 3; ++c) {
-                    Rects[TwoToOne(r,c,3)] = { 
-                        c * CellWidth + HalfPixelWidth,
-                        r * CellHeight + HalfPixelHeight,
-                        (c+1) * CellWidth - HalfPixelWidth,
-                        (r+1) * CellHeight - HalfPixelHeight,
-                    };
-                }
-            }
-            LoadSpritesheet(GameAssets, GameSpritesheetHandle_Karu, GameBitmapHandle_Karu, Rects, 12);
         }
         
         

@@ -123,13 +123,13 @@ SpriteRenderingSystem(game_mode_main* Mode,
     m44f R = RotationZMatrix(Transform->Rotation);
     m44f S = ScaleMatrix(Transform->Scale);
     
-    auto Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
+    game_spritesheet Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
     auto CurrentFrame = Sprite->AnimeFrames[Sprite->AnimeAt];
     
     PushCommandDrawTexturedQuad(RenderCommands, 
                                 {1.f, 1.f, 1.f, 1.f}, 
                                 T*R*S,
-                                Spritesheet.BitmapHandle,
+                                Sprite->SpritesheetHandle,
                                 Quad2(Spritesheet.Frames[CurrentFrame]));
     
 }

@@ -73,6 +73,14 @@ BeginTemporaryMemory(memory_arena *Arena) {
     return Ret;
 }
 
+static inline temporary_memory
+BeginTemporaryMemory(temporary_memory *TempMemory) {
+    temporary_memory Ret;
+    Ret.Arena = TempMemory->Arena;
+    Ret.OldUsed = TempMemory->Arena->Used;
+    return Ret;
+}
+
 static inline void
 EndTemporaryMemory(temporary_memory TempMemory) {
     TempMemory.Arena->Used = TempMemory.OldUsed;

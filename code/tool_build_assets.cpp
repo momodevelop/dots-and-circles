@@ -20,8 +20,18 @@ struct yuu_image {
     u32 Channels;
     game_bitmap_handle Handle;
 };
-#pragma pack(pop)
 
+
+struct yuu_spritesheet {
+    u32 Width;
+    u32 Height;
+    u32 Channels;
+    
+    game_spritesheet_handle Handle;
+    u32 Rows;
+    u32 Cols;
+};
+#pragma pack(pop)
 
 
 struct asset_builder_entry_image {
@@ -38,7 +48,10 @@ struct asset_builder_entry_font {
 };
 
 struct asset_builder_entry_spritesheet {
-    // TODO(Momo): 
+    const char* Filename;
+    game_spritesheet_handle Handle;
+    u32 Rows;
+    u32 Cols;
 };
 
 struct asset_builder_entry  {
@@ -79,6 +92,21 @@ AddImage(asset_builder* Assets, const char* Filename, game_bitmap_handle Handle)
     Entry->Type = asset_type::Image;
     Entry->Image.Filename = Filename;
     Entry->Image.Handle = Handle;
+}
+
+static inline void 
+AddSpritesheet(asset_builder* Assets, 
+               const char* Filename, 
+               game_spritesheet_handle Handle,  
+               u32 Rows, 
+               u32 Columns) 
+{
+    asset_builder_entry* Entry = AddAssetEntry(Assets);
+    Entry->Type = asset_type::Spritesheet;
+    Entry->Spritesheet.Filename = Filename;
+    Entry->Spritesheet.Handle = Handle;
+    Entry->Spritesheet.Rows = Rows;
+    Entry->Spritesheet.Cols = Columns;
 }
 
 
@@ -168,6 +196,52 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
             case asset_type::Font: {
             } break;
             case asset_type::Spritesheet: {
+                const char* ImageFilename = Entry->Image.Filename;
+                // TODO(Momo): Maybe we can support ImageComp on game side?
+                i32 ImageWidth, ImageHeight, ImageComp;
+                u8* LoadedImage = stbi_load(ImageFilename, &ImageWidth, &ImageHeight, &ImageComp, 0);
+                if (LoadedImage == nullptr) {
+                    printf("Error loading image: %s\n", ImageFilename);
+                    return false;
+                }
+                
+                // NOTE(Momo): Write Header
+                {
+                    fseek(pFile, (i32)HeaderAt, SEEK_SET);
+                    
+                    yuu_header Header = { 
+                        (u32)asset_type::Spritesheet,
+                        (u32)DataAt,
+                    };
+                    
+                    fwrite(&Header, sizeof(yuu_header), 1, pFile); 
+                    HeaderAt += sizeof(yuu_header);
+                }
+                
+                // NOTE(Momo): Write Data
+                {
+                    fseek(pFile, (i32)DataAt, SEEK_SET);
+                    
+                    yuu_spritesheet Spritesheet = {
+                        (u32)ImageWidth,
+                        (u32)ImageHeight,
+                        (u32)ImageComp,
+                        Entry->Spritesheet.Handle,
+                        Entry->Spritesheet.Rows,
+                        Entry->Spritesheet.Cols,
+                    };
+                    fwrite(&Spritesheet, sizeof(yuu_spritesheet), 1, pFile); 
+                    DataAt += sizeof(yuu_spritesheet);
+                    
+                    u32 ImageSize = (ImageWidth * ImageHeight * ImageComp);
+                    for (u8* Itr = LoadedImage; Itr < LoadedImage + ImageSize; ++Itr) 
+                    {
+                        fwrite(Itr, 1, 1, pFile); 
+                        ++DataAt;
+                    }
+                }
+                
+                printf("Loaded Spritesheet '%s': Width = %d, Height = %d, Comp = %d, Rows = %d, Cols = %d\n", ImageFilename, ImageWidth, ImageHeight, ImageComp, Entry->Spritesheet.Rows, Entry->Spritesheet.Cols);
             } break;
             case asset_type::Animation: {
             } break;
@@ -196,6 +270,8 @@ int main() {
         
         AddImage(Assets, "assets/ryoji.png", GameBitmapHandle_Ryoji);
         AddImage(Assets, "assets/yuu.png", GameBitmapHandle_Yuu);
+        
+        AddSpritesheet(Assets, "assets/karu.png", GameSpritesheetHandle_Karu, 4, 3);
         
     }
     

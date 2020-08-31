@@ -46,6 +46,7 @@ struct renderer_opengl {
     GLsizei MaxEntities;
     
     GLuint BlankTexture;
+    GLuint DummyTexture;
     
     // NOTE(Momo): A table mapping 'game texture handler' <-> 'opengl texture handler'  
     // TODO(Momo): Make this dynamic? 
@@ -200,14 +201,34 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     }
     
     // NOTE(Momo): Blank texture setup
-    struct { u8 E[4]; } Pixel = {255, 255, 255, 255};
-    glCreateTextures(GL_TEXTURE_2D, 1, &Renderer->BlankTexture);
-    glTextureStorage2D(Renderer->BlankTexture, 1, GL_RGBA8, 1, 1);
-    glTextureSubImage2D(Renderer->BlankTexture, 
-                        0, 0, 0, 
-                        1, 1, 
-                        GL_RGBA, GL_UNSIGNED_BYTE, 
-                        &Pixel);
+    struct pixel { u8 E[4]; };
+    {
+        pixel Pixel = { 255, 255, 255, 255 };
+        glCreateTextures(GL_TEXTURE_2D, 1, &Renderer->BlankTexture);
+        glTextureStorage2D(Renderer->BlankTexture, 1, GL_RGBA8, 1, 1);
+        glTextureSubImage2D(Renderer->BlankTexture, 
+                            0, 0, 0, 
+                            1, 1, 
+                            GL_RGBA, GL_UNSIGNED_BYTE, 
+                            &Pixel);
+    }
+    
+    // NOTE(Momo): Dummy texture setup
+    {
+        pixel Pixels[4] = {
+            { 125, 125, 125, 255 },
+            { 255, 255, 255, 255 },
+            { 255, 255, 255, 255 },
+            { 125, 125, 125, 255 },
+        };
+        glCreateTextures(GL_TEXTURE_2D, 1, &Renderer->DummyTexture);
+        glTextureStorage2D(Renderer->DummyTexture, 1, GL_RGBA8, 2, 2);
+        glTextureSubImage2D(Renderer->DummyTexture, 
+                            0, 0, 0, 
+                            2, 2, 
+                            GL_RGBA, GL_UNSIGNED_BYTE, 
+                            &Pixels);
+    }
     
     return true;
 }
@@ -299,7 +320,9 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 if (RendererTextureHandle == 0) {
                     // TODO(Momo): Maybe render a dummy texture?
-                    Assert(false);
+                    
+                    
+                    //Assert(false);
                 }
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.
@@ -341,8 +364,8 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 GLuint RendererTextureHandle = Renderer->GameToRendererTextureTable[GameBitmapHandle];
                 
                 if (RendererTextureHandle == 0) {
-                    // TODO(Momo): Maybe render a dummy texture?
-                    Assert(false);
+                    RendererTextureHandle = Renderer->DummyTexture;
+                    //Assert(false);
                 }
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.

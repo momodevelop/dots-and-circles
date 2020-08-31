@@ -27,8 +27,19 @@ CheckAssetSignature(void *Memory) {
     return true;
 }
 
+enum struct asset_type_id : u32 {
+    None, 
+    
+    // NOTE(Momo): Images
+    Image_Ryoji,
+    Image_Yuu,
+    
+    // NOTE(Momo): Spritesheets
+    Spritesheet_Karu,
+    
+    // TODO(Momo): Fonts
+};
 
-// TODO(Momo): Kind of want to treat all these different asset types as the same thing...?
 
 // NOTE(Momo): Bitmaps
 // TODO(Momo): Consider using enum structs
@@ -42,12 +53,13 @@ enum game_bitmap_handle : u32 {
 
 // NOTE(Momo): Spritesheets
 enum game_spritesheet_handle : u32 {
-    GameSpritesheetHandle_Karu,
+    // TODO(Momo): HACK
+    GameSpritesheetHandle_Karu = GameBitmapHandle_Max + 1,
     GameSpritesheetHandle_Max,
 };
 
 struct game_spritesheet {
-    game_bitmap_handle BitmapHandle;
+    bitmap Bitmap;
     rect2f* Frames;
     u32 FramesCapacity; 
 };
@@ -86,7 +98,7 @@ GetSpritesheet(game_assets* Assets, game_spritesheet_handle SpritesheetHandle) {
 
 static inline bitmap
 GetBitmapFromSpritesheet(game_assets* Assets, game_spritesheet_handle SpritesheetHandle) {
-    return GetBitmap(Assets, GetSpritesheet(Assets, SpritesheetHandle).BitmapHandle);
+    return GetSpritesheet(Assets, SpritesheetHandle).Bitmap;
 }
 
 
@@ -181,7 +193,7 @@ struct color_rgba {
 };
 
 static inline game_spritesheet
-MakeSpritesheet(game_bitmap_handle BitmapHandle, 
+MakeSpritesheet(bitmap Bitmap,
                 rect2f* Frames, 
                 u32 FramesCapacity,
                 memory_arena* Arena) 
@@ -190,7 +202,7 @@ MakeSpritesheet(game_bitmap_handle BitmapHandle,
     
     game_spritesheet Ret;
     
-    Ret.BitmapHandle = BitmapHandle;
+    Ret.Bitmap = Bitmap;
     Ret.Frames = PushArray<rect2f>(Arena, FramesCapacity);
     Ret.FramesCapacity = FramesCapacity;
     for (u32 i = 0; i < FramesCapacity; ++i) {
@@ -213,69 +225,6 @@ MakeEmptyBitmap(u32 Width, u32 Height, memory_arena* Arena) {
     return Ret;
 }
 
-// NOTE(Momo): Only loads 32-bit BMP files
-static inline bitmap
-MakeBitmapFromBmp(void* BmpMemory, memory_arena* Arena) {
-    constexpr u8 kFileHeaderSize = 14;
-    constexpr u8 kInfoHeaderSize = 124;
-    constexpr u8 kCompression = 3;
-    constexpr u8 kBitsPerPixel = 32;
-    constexpr u16 kSignature = 0x4D42;
-    
-    const u8* const Memory = (const u8*)BmpMemory;
-    
-    Assert(PeekU16(Memory +  0, false) == kSignature);
-    Assert(PeekU16(Memory + kFileHeaderSize + 14, false) == kBitsPerPixel);
-    Assert(PeekU32(Memory + kFileHeaderSize + 16, false) == kCompression);
-    
-    u32 Width = PeekU32(Memory + kFileHeaderSize + 4, false);
-    u32 Height = PeekU32(Memory + kFileHeaderSize + 8, false);
-    bitmap Ret = MakeEmptyBitmap(Width, Height, Arena);
-    
-    u32 Offset = PeekU32(Memory +  10, false);
-    u32 RedMask = PeekU32(Memory + kFileHeaderSize + 40, false);
-    u32 GreenMask = PeekU32(Memory +  kFileHeaderSize + 44, false);
-    u32 BlueMask = PeekU32(Memory +  kFileHeaderSize + 48, false);
-    u32 AlphaMask = PeekU32(Memory + kFileHeaderSize + 52, false);
-    
-    // NOTE(Momo): Treat Pixels as color_rgba
-    color_rgba* RetPixels = (color_rgba*)Ret.Pixels;
-    for (u32 i = 0; i < Ret.Width * Ret.Height; ++i) {
-        const u8* PixelLocation = Memory + Offset + i * sizeof(color_rgba);
-        u32 PixelData = *(u32*)(PixelLocation);
-        u32 mask = RedMask;
-        if (mask > 0) {
-            u32 color = PixelData & mask;
-            while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            RetPixels[i].Red = (u8)color;
-        }
-        
-        mask = GreenMask;
-        if (mask > 0) {
-            u32 color = PixelData & mask;
-            while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            RetPixels[i].Green = (u8)color;
-        }
-        
-        mask = BlueMask;
-        if (mask > 0) {
-            u32 color = PixelData & mask;
-            while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            RetPixels[i].Blue = (u8)color;
-        }
-        
-        mask = AlphaMask;
-        if(mask > 0) {
-            u32 color = PixelData & mask;
-            while( color != 0 && (mask & 1) == 0 ) mask >>= 1, color >>= 1;
-            RetPixels[i].Alpha = (u8)color;
-        }
-    }
-    return Ret;
-}
-
-
-
 inline void
 LoadBitmap(game_assets *Assets, 
            game_bitmap_handle BitmapHandle, 
@@ -286,27 +235,15 @@ LoadBitmap(game_assets *Assets,
 }
 
 inline void
-LoadBitmap(game_assets *Assets, 
-           game_bitmap_handle BitmapHandle, 
-           void* BitmapMemory) 
-{
-    Assert(BitmapHandle < GameBitmapHandle_Max);
-    Assets->Bitmaps[BitmapHandle] = MakeBitmapFromBmp(BitmapMemory, &Assets->Arena);
-}
-
-// TODO(Momo): Load from file....????
-inline void
 LoadSpritesheet(game_assets* Assets, 
                 game_spritesheet_handle SpritesheetHandle, 
-                game_bitmap_handle TargetBitmapHandle,
+                bitmap Bitmap,
                 rect2f* Frames,
                 u32 TotalFrames) 
 {
     Assert(SpritesheetHandle < GameSpritesheetHandle_Max);
-    Assets->Spritesheets[SpritesheetHandle] = MakeSpritesheet(TargetBitmapHandle, Frames, TotalFrames, &Assets->Arena);
+    Assets->Spritesheets[SpritesheetHandle] = MakeSpritesheet(Bitmap, Frames, TotalFrames, &Assets->Arena);
 }
-
-
 
 
 #endif  
