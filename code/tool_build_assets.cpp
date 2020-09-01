@@ -8,17 +8,20 @@
 
 #include "game_assets.h"
 
+
+#define MAX_ENTRIES 1024
+
 #pragma pack(push, 1)
 struct yuu_header {
-    u32 Type;
+    asset_type Type;
     u32 OffsetToData;
+    asset_id AssetId;
 };
 
 struct yuu_image {
     u32 Width;
     u32 Height;
     u32 Channels;
-    game_bitmap_handle Handle;
 };
 
 
@@ -27,7 +30,6 @@ struct yuu_spritesheet {
     u32 Height;
     u32 Channels;
     
-    game_spritesheet_handle Handle;
     u32 Rows;
     u32 Cols;
 };
@@ -36,7 +38,6 @@ struct yuu_spritesheet {
 
 struct asset_builder_entry_image {
     const char* Filename;
-    game_bitmap_handle Handle;
 };
 
 struct asset_builder_entry_sound {
@@ -49,13 +50,13 @@ struct asset_builder_entry_font {
 
 struct asset_builder_entry_spritesheet {
     const char* Filename;
-    game_spritesheet_handle Handle;
     u32 Rows;
     u32 Cols;
 };
 
 struct asset_builder_entry  {
     asset_type Type;
+    asset_id AssetId;
     union {
         asset_builder_entry_image Image;
         asset_builder_entry_sound Sound;
@@ -65,10 +66,10 @@ struct asset_builder_entry  {
     
 };
 
-#define BIG_NUMBER 1024
+
 struct asset_builder {
     // NOTE(Momo): For preparation before writing
-    asset_builder_entry Entries[BIG_NUMBER]; // TODO(Momo): Make this dynamic?
+    asset_builder_entry Entries[MAX_ENTRIES]; 
     u32 EntryCount;
 };
 
@@ -79,7 +80,7 @@ Init(asset_builder* Assets) {
 
 static inline asset_builder_entry*
 AddAssetEntry(asset_builder* Assets) {
-    Assert(Assets->EntryCount != BIG_NUMBER);
+    Assert(Assets->EntryCount != MAX_ENTRIES);
     asset_builder_entry* Ret = &Assets->Entries[Assets->EntryCount];
     ++Assets->EntryCount;
     return Ret;
@@ -87,24 +88,25 @@ AddAssetEntry(asset_builder* Assets) {
 
 
 static inline void
-AddImage(asset_builder* Assets, const char* Filename, game_bitmap_handle Handle) {
+AddImage(asset_builder* Assets, const char* Filename, asset_id AssetId) {
     asset_builder_entry* Entry = AddAssetEntry(Assets);
     Entry->Type = asset_type::Image;
+    Entry->AssetId = AssetId;
     Entry->Image.Filename = Filename;
-    Entry->Image.Handle = Handle;
+    
 }
 
 static inline void 
 AddSpritesheet(asset_builder* Assets, 
                const char* Filename, 
-               game_spritesheet_handle Handle,  
+               asset_id AssetId,  
                u32 Rows, 
                u32 Columns) 
 {
     asset_builder_entry* Entry = AddAssetEntry(Assets);
     Entry->Type = asset_type::Spritesheet;
+    Entry->AssetId = AssetId;
     Entry->Spritesheet.Filename = Filename;
-    Entry->Spritesheet.Handle = Handle;
     Entry->Spritesheet.Rows = Rows;
     Entry->Spritesheet.Cols = Columns;
 }
@@ -112,6 +114,7 @@ AddSpritesheet(asset_builder* Assets,
 
 static inline b32 
 WriteToFile(asset_builder* Assets, const char* Filename) {
+    // TODO(Momo): Maybe write a writer struct for all these states
     FILE* pFile = fopen(Filename, "wb");
     if (pFile == nullptr) {
         printf("Cannot open %s\n", Filename);
@@ -134,10 +137,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
     
     
     usize DataAt = HeaderAt + (sizeof(yuu_header) * Assets->EntryCount);
-    // NOTE(Momo): Fill the file with stuff until DataAt 
-    for (u32 i = 0; i < 100; ++i ) {
-        fputc(0, pFile);
-    }
     
     
     // NOTE(Momo): Write the data
@@ -163,6 +162,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                     yuu_header Header = { 
                         (u32)asset_type::Image,
                         (u32)DataAt,
+                        (u32)Entry->AssetId,
                     };
                     
                     fwrite(&Header, sizeof(yuu_header), 1, pFile); 
@@ -177,7 +177,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                         (u32)ImageWidth,
                         (u32)ImageHeight,
                         (u32)ImageComp,
-                        Entry->Image.Handle,
                     };
                     fwrite(&Image, sizeof(yuu_image), 1, pFile); 
                     DataAt += sizeof(yuu_image);
@@ -212,6 +211,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                     yuu_header Header = { 
                         (u32)asset_type::Spritesheet,
                         (u32)DataAt,
+                        (u32)Entry->AssetId,
                     };
                     
                     fwrite(&Header, sizeof(yuu_header), 1, pFile); 
@@ -226,7 +226,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                         (u32)ImageWidth,
                         (u32)ImageHeight,
                         (u32)ImageComp,
-                        Entry->Spritesheet.Handle,
                         Entry->Spritesheet.Rows,
                         Entry->Spritesheet.Cols,
                     };
@@ -268,10 +267,10 @@ int main() {
     {
         Init(Assets);
         
-        AddImage(Assets, "assets/ryoji.png", GameBitmapHandle_Ryoji);
-        AddImage(Assets, "assets/yuu.png", GameBitmapHandle_Yuu);
+        AddImage(Assets, "assets/ryoji.png", asset_id::Image_Ryoji);
+        AddImage(Assets, "assets/yuu.png", asset_id::Image_Yuu);
         
-        AddSpritesheet(Assets, "assets/karu.png", GameSpritesheetHandle_Karu, 4, 3);
+        AddSpritesheet(Assets, "assets/karu.png", asset_id::Spritesheet_Karu, 4, 3);
         
     }
     

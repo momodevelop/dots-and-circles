@@ -104,13 +104,34 @@ PushCommandDrawQuad(commands* Commands,
 
 static inline void 
 PushCommandLinkTexture(commands* Commands, 
-                       bitmap TextureBitmap, 
+                       u32 Width,
+                       u32 Height,
+                       void* Pixels,
                        u32 TextureHandle) {
     using data_t = render_command_link_texture;
     auto* Data = Push<data_t>(Commands);
-    Data->TextureBitmap = TextureBitmap;
+    Data->Width = Width;
+    Data->Height = Height;
+    Data->Pixels = Pixels;
     Data->TextureHandle = TextureHandle;
 }
+
+static inline void 
+PushCommandLinkTexture(commands* Commands, 
+                       asset_entry_image* Image,
+                       u32 TextureHandle) {
+    PushCommandLinkTexture(Commands, Image->Width, Image->Height, Image->Pixels, TextureHandle);
+}
+
+
+static inline void 
+PushCommandLinkTexture(commands* Commands, 
+                       asset_entry_spritesheet* Spritesheet,
+                       u32 TextureHandle) {
+    PushCommandLinkTexture(Commands, Spritesheet->Width, Spritesheet->Height, Spritesheet->Pixels, TextureHandle);
+}
+
+
 
 static inline void 
 PushCommandDrawLine(commands* Payload, 

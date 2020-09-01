@@ -298,12 +298,12 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 }
                 GLuint* const TextureTableEntry = &Renderer->GameToRendererTextureTable[Data->TextureHandle];
                 glCreateTextures(GL_TEXTURE_2D, 1, TextureTableEntry);
-                glTextureStorage2D((*TextureTableEntry), 1, GL_RGBA8, Data->TextureBitmap.Width, Data->TextureBitmap.Height);
+                glTextureStorage2D((*TextureTableEntry), 1, GL_RGBA8, Data->Width, Data->Height);
                 glTextureSubImage2D((*TextureTableEntry), 
                                     0, 0, 0, 
-                                    Data->TextureBitmap.Width, Data->TextureBitmap.Height, 
+                                    Data->Width, Data->Height, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
-                                    Data->TextureBitmap.Pixels);
+                                    Data->Pixels);
                 
             } break;
             case render_command_clear_color::TypeId: {

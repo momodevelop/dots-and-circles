@@ -52,5 +52,99 @@ AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 
+template<typename T>
+static inline T 
+Peek32(const u8* P, bool isBigEndian) {
+    static_assert(sizeof(T) == 4);
+    union {
+        T V;
+        u8 C[4];
+    } Ret;
+    
+    if (IsSystemBigEndian()) {
+        if (isBigEndian) {
+            Ret.C[0] = P[0];
+            Ret.C[1] = P[1];
+            Ret.C[2] = P[2];
+            Ret.C[3] = P[3];
+        }
+        else {
+            Ret.C[0] = P[3];
+            Ret.C[1] = P[2];
+            Ret.C[2] = P[1];
+            Ret.C[3] = P[0];
+        }
+    }
+    else {
+        if (isBigEndian) {
+            Ret.C[0] = P[3];
+            Ret.C[1] = P[2];
+            Ret.C[2] = P[1];
+            Ret.C[3] = P[0];
+        }
+        else {
+            Ret.C[0] = P[0];
+            Ret.C[1] = P[1];
+            Ret.C[2] = P[2];
+            Ret.C[3] = P[3];
+        }
+    }
+    return Ret.V;
+    
+}
+
+
+template<typename T>
+static inline T
+Peek16(const u8* P, bool isBigEndian) {
+    static_assert(sizeof(T) == 2);
+    union {
+        T V;
+        u8 C[2];
+    } Ret;
+    
+    if (IsSystemBigEndian()) {
+        if (isBigEndian) {
+            Ret.C[0] = P[0];
+            Ret.C[1] = P[1];
+        }
+        else {
+            Ret.C[0] = P[1];
+            Ret.C[1] = P[0];
+        }
+    }
+    else {
+        if (isBigEndian) {
+            Ret.C[0] = P[1];
+            Ret.C[1] = P[0];
+        }
+        else {
+            Ret.C[0] = P[0];
+            Ret.C[1] = P[1];
+        }
+    }
+    return Ret.V;
+}
+
+template<typename T>
+static inline T
+Read32(u8** P, bool isBigEndian) {
+    static_assert(sizeof(T) == 4);
+    
+    T Ret = Peek32<T>((*P), isBigEndian);
+    (*P) += sizeof(T);
+    return Ret;
+}
+
+template<typename T>
+static inline T
+ReadU16(u8** P, bool isBigEndian) {
+    static_assert(sizeof(T) == 2);
+    
+    TRet = Peek16<T>((*P), isBigEndian);
+    (*P) += sizeof(T);
+    return Ret;
+}
+
 
 #endif 

@@ -42,7 +42,7 @@ struct physics_component {
 };
 
 struct sprite_component {
-    game_spritesheet_handle SpritesheetHandle;
+    spritesheet_id SpritesheetHandle;
     
     // NOTE(Momo): Animation Data?
     u8* AnimeFrames;
@@ -123,14 +123,14 @@ SpriteRenderingSystem(game_mode_main* Mode,
     m44f R = RotationZMatrix(Transform->Rotation);
     m44f S = ScaleMatrix(Transform->Scale);
     
-    game_spritesheet Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
+    auto Spritesheet = GetSpritesheet(Assets, Sprite->SpritesheetHandle);
     auto CurrentFrame = Sprite->AnimeFrames[Sprite->AnimeAt];
     
     PushCommandDrawTexturedQuad(RenderCommands, 
                                 {1.f, 1.f, 1.f, 1.f}, 
                                 T*R*S,
-                                Sprite->SpritesheetHandle,
-                                Quad2(Spritesheet.Frames[CurrentFrame]));
+                                (u32)Sprite->SpritesheetHandle,
+                                Quad2(Spritesheet->Frames[CurrentFrame]));
     
 }
 
@@ -250,7 +250,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Player->Collision.Box.Origin = { 0.f, 0.f };
         Player->Collision.Box.Radius = { 24.f*2, 24.f*2 };
         
-        Player->Sprite.SpritesheetHandle = GameSpritesheetHandle_Karu;
+        Player->Sprite.SpritesheetHandle = asset_id::Spritesheet_Karu;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
         Player->Sprite.AnimeAt = 0;

@@ -19,7 +19,7 @@ Ground rules about this renderer.
 
 #include "ryoji_commands.h"
 #include "ryoji_maths.h"
-#include "ryoji_asset_types.h"
+#include "game_assets.h"
 
 
 static inline constexpr quad2f StandardQuadUV = {
@@ -72,7 +72,12 @@ struct render_command_draw_quad {
 
 struct render_command_link_texture {
     static constexpr u32 TypeId = __LINE__;
-    bitmap TextureBitmap;
+    u32 Width;
+    u32 Height;
+    void* Pixels;
+    
+    // TODO(Momo): Channels
+    // u32 Channels;
     u32 TextureHandle;
 };
 

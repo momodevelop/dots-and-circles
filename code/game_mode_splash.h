@@ -11,7 +11,7 @@ struct splash_image_entity {
     v3f Position;
     v4f Colors;
     
-    game_bitmap_handle TextureHandle;
+    image_id TextureHandle;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -45,7 +45,7 @@ Update(splash_image_entity* Entity,
     PushCommandDrawTexturedQuad(RenderCommands, 
                                 Entity->Colors, 
                                 T*S,
-                                Entity->TextureHandle);
+                                (u32)Entity->TextureHandle);
 }
 
 struct splash_blackout_entity {
@@ -98,7 +98,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 400.f, 400.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].TextureHandle = GameBitmapHandle_Ryoji;
+        Mode->SplashImg[0].TextureHandle = asset_id::Image_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 5.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -109,7 +109,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 400.f, 400.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].TextureHandle = GameBitmapHandle_Yuu;
+        Mode->SplashImg[1].TextureHandle = asset_id::Image_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 5.f;
         Mode->SplashImg[1].Timer = 0.f;
