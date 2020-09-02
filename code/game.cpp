@@ -14,25 +14,20 @@ GameUpdate(game_memory* GameMemory,
 #if INTERNAL
     gLog = Platform->Log;
 #endif
-    // TODO(Momo): Fix the fixed timestep
-    if (DeltaTime > 1/30.f)
-        DeltaTime = 1/30.f;
-    
-    
     game_state* GameState = (game_state*)GameMemory->MainMemory;
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
-        
         // NOTE(Momo): Arenas
         memory_arena* MainArena = &GameState->MainArena;
         Init(MainArena, (u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
         
         game_assets* GameAssets = PushStruct<game_assets>(MainArena);
         GameState->Assets = GameAssets;
-        Init(GameAssets, MainArena, Megabytes(10));
+        Init(GameAssets, MainArena);
         {
             Log("Reading assets...");
-            temporary_memory TempAssetMemory = BeginTemporaryMemory(MainArena);
+            temp_memory_arena TempAssetMemory = BeginTempArena(MainArena);
+            Defer{ EndTempArena(&TempAssetMemory); };
             
             const char* Filepath = "yuu";
             u32 Filesize = Platform->GetFileSize(Filepath);
@@ -63,22 +58,16 @@ GameUpdate(game_memory* GameMemory,
                         u32 Width = Read32<u32>(&DataItr, false);
                         u32 Height = Read32<u32>(&DataItr, false);
                         u32 Channels = Read32<u32>(&DataItr, false);
+                        auto* Image = LoadImage(GameAssets, 
+                                                AssetId, 
+                                                Width, 
+                                                Height, 
+                                                Channels, 
+                                                DataItr);
                         
-                        
-                        {
-                            auto Bitmap = MakeEmptyBitmap(Width, Height, Channels, &GameAssets->Arena);
-                            CopyBlock(Bitmap.Pixels, DataItr, Width * Height * Channels);
-                            asset_entry* Asset = &GameAssets->Entries[(u32)AssetId];
-                            Asset->Id = AssetId;
-                            Asset->Type = Type;
-                            Asset->Image = Bitmap;
-                            
-                            PushCommandLinkTexture(RenderCommands,
-                                                   &Bitmap, 
-                                                   (u32)AssetId);
-                        }
-                        
-                        
+                        PushCommandLinkTexture(RenderCommands,
+                                               Image, 
+                                               (u32)AssetId);
                         
                         Log("Image Loaded: %d %d", Width, Height);
                     } break;
@@ -86,56 +75,27 @@ GameUpdate(game_memory* GameMemory,
                         // TODO(Momo): Implement
                     } break;
                     case asset_type::Spritesheet: {
-                        //temporary_memory SpritesheetArena = BeginTemporaryMemory(&TempAssetMemory);
-                        
+                        //temp_memory_arena SpritesheetArena = BeginTempArena(&TempAssetMemory);
                         u32 Width = Read32<u32>(&DataItr, false);
                         u32 Height = Read32<u32>(&DataItr, false);
                         u32 Channels = Read32<u32>(&DataItr, false);
                         u32 Rows = Read32<u32>(&DataItr, false);
                         u32 Cols = Read32<u32>(&DataItr, false);
                         
-                        {
-                            auto Bitmap = MakeEmptyBitmap(Width, Height, Channels, &GameAssets->Arena);
-                            CopyBlock(Bitmap.Pixels, DataItr, Width * Height * Channels);
-                            
-                            f32 FrameWidth = (f32)Bitmap.Width/Cols;
-                            f32 FrameHeight = (f32)Bitmap.Height/Rows;
-                            f32 CellWidth = FrameWidth/Width;
-                            f32 CellHeight = FrameHeight/Height;
-                            f32 HalfPixelWidth =  0.25f/Bitmap.Width;
-                            f32 HalfPixelHeight = 0.25f/Bitmap.Height;
-                            
-                            // NOTE(Momo):  Init sprite frames
-                            u32 TotalFrames = Rows * Cols;
-                            rect2f Rects[12]; // TODO(Momo): Dynamic pls
-                            for (u8 r = 0; r < Rows; ++r) {
-                                for (u8 c = 0; c < Cols; ++c) {
-                                    Rects[TwoToOne(r,c,Cols)] = { 
-                                        c * CellWidth + HalfPixelWidth,
-                                        r * CellHeight + HalfPixelHeight,
-                                        (c+1) * CellWidth - HalfPixelWidth,
-                                        (r+1) * CellHeight - HalfPixelHeight,
-                                    };
-                                }
-                            }
-                            
-                            auto Spritesheet = MakeSpritesheet(Bitmap, Rects, TotalFrames, &GameAssets->Arena);
-                            {
-                                asset_entry* Asset = &GameAssets->Entries[(u32)AssetId];
-                                Asset->Id = AssetId;
-                                Asset->Type = Type;
-                                Asset->Spritesheet = Spritesheet;
-                            }
-                            
-                            
-                            PushCommandLinkTexture(RenderCommands,
-                                                   &Spritesheet, 
-                                                   (u32)AssetId);
-                            
-                            
-                            Log("Spritesheet Loaded %d %d %d %d %d", Width, Height, Rows, Cols);
-                        }
-                        //EndTemporaryMemory(SpritesheetArena);
+                        auto* Spritesheet = LoadSpritesheet(GameAssets,
+                                                            AssetId,
+                                                            Width,
+                                                            Height,
+                                                            Channels,
+                                                            Rows,
+                                                            Cols,
+                                                            DataItr);
+                        
+                        PushCommandLinkTexture(RenderCommands,
+                                               Spritesheet, 
+                                               (u32)AssetId);
+                        
+                        //EndTempArena(SpritesheetArena);
                         
                     } break;
                     case asset_type::Animation: {
@@ -145,7 +105,10 @@ GameUpdate(game_memory* GameMemory,
                         // TODO(Momo): Implement
                     } break;
                 }
-                EndTemporaryMemory(TempAssetMemory);
+                
+                
+                
+                
             }
             
             

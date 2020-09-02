@@ -118,7 +118,7 @@ PushCommandLinkTexture(commands* Commands,
 
 static inline void 
 PushCommandLinkTexture(commands* Commands, 
-                       asset_entry_image* Image,
+                       loaded_image* Image,
                        u32 TextureHandle) {
     PushCommandLinkTexture(Commands, Image->Width, Image->Height, Image->Pixels, TextureHandle);
 }
@@ -126,7 +126,7 @@ PushCommandLinkTexture(commands* Commands,
 
 static inline void 
 PushCommandLinkTexture(commands* Commands, 
-                       asset_entry_spritesheet* Spritesheet,
+                       loaded_spritesheet* Spritesheet,
                        u32 TextureHandle) {
     PushCommandLinkTexture(Commands, Spritesheet->Width, Spritesheet->Height, Spritesheet->Pixels, TextureHandle);
 }

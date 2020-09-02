@@ -20,7 +20,6 @@ Init(memory_arena* Arena, void* Memory, usize Capacity) {
     // TODO(Momo): Zero memory? 
 }
 
-
 static inline void 
 Clear(memory_arena* Arena) {
     Arena->Used = 0;
@@ -60,30 +59,49 @@ PushArray(memory_arena* Arena, usize Count) {
 }
 
 // NOTE(Momo): temporary memory definitions
-struct temporary_memory {
+struct temp_memory_arena {
     memory_arena* Arena;
     usize OldUsed;
 };
 
-static inline temporary_memory
-BeginTemporaryMemory(memory_arena *Arena) {
-    temporary_memory Ret;
+static inline temp_memory_arena
+BeginTempArena(memory_arena *Arena) {
+    temp_memory_arena Ret;
     Ret.Arena = Arena;
     Ret.OldUsed = Arena->Used;
     return Ret;
 }
 
-static inline temporary_memory
-BeginTemporaryMemory(temporary_memory *TempMemory) {
-    temporary_memory Ret;
+static inline temp_memory_arena
+BeginTempArena(temp_memory_arena *TempMemory) {
+    temp_memory_arena Ret;
     Ret.Arena = TempMemory->Arena;
     Ret.OldUsed = TempMemory->Arena->Used;
     return Ret;
 }
 
 static inline void
-EndTemporaryMemory(temporary_memory TempMemory) {
-    TempMemory.Arena->Used = TempMemory.OldUsed;
+EndTempArena(temp_memory_arena* TempMemory) {
+    TempMemory->Arena->Used = TempMemory->OldUsed;
+}
+
+
+static inline void* 
+PushBlock(temp_memory_arena* TempArena, usize size, u8 alignment = alignof(void*)) {
+    return PushBlock(TempArena->Arena, size, alignment);
+}
+
+template<typename T>
+static inline T*
+PushStruct(temp_memory_arena* TempArena) {
+    return PushStruct<T>(TempArena->Arena, sizeof(T), alignof(T));
+}
+
+
+template<typename T>
+static inline T*
+PushArray(temp_memory_arena* TempArena, usize Count) {
+    return PushArray<T>(TempArena->Arena, Count);
 }
 
 static inline void
