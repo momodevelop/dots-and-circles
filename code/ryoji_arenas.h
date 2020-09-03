@@ -81,8 +81,8 @@ BeginTempArena(temp_memory_arena *TempMemory) {
 }
 
 static inline void
-EndTempArena(temp_memory_arena* TempMemory) {
-    TempMemory->Arena->Used = TempMemory->OldUsed;
+EndTempArena(temp_memory_arena TempMemory) {
+    TempMemory.Arena->Used = TempMemory.OldUsed;
 }
 
 

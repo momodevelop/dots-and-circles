@@ -19,7 +19,6 @@ Ground rules about this renderer.
 
 #include "ryoji_commands.h"
 #include "ryoji_maths.h"
-#include "game_assets.h"
 
 
 static inline constexpr quad2f StandardQuadUV = {

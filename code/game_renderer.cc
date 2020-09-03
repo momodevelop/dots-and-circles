@@ -116,22 +116,6 @@ PushCommandLinkTexture(commands* Commands,
     Data->TextureHandle = TextureHandle;
 }
 
-static inline void 
-PushCommandLinkTexture(commands* Commands, 
-                       loaded_image* Image,
-                       u32 TextureHandle) {
-    PushCommandLinkTexture(Commands, Image->Width, Image->Height, Image->Pixels, TextureHandle);
-}
-
-
-static inline void 
-PushCommandLinkTexture(commands* Commands, 
-                       loaded_spritesheet* Spritesheet,
-                       u32 TextureHandle) {
-    PushCommandLinkTexture(Commands, Spritesheet->Width, Spritesheet->Height, Spritesheet->Pixels, TextureHandle);
-}
-
-
 
 static inline void 
 PushCommandDrawLine(commands* Payload, 

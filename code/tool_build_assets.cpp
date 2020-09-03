@@ -6,26 +6,26 @@
 #include "thirdparty/stb/stb_image.h"
 
 
-#include "game_assets.h"
+#include "game_asset_types.h"
 
 
 #define MAX_ENTRIES 1024
 
 #pragma pack(push, 1)
-struct yuu_header {
+struct asset_file_entry {
     asset_type Type;
     u32 OffsetToData;
     asset_id AssetId;
 };
 
-struct yuu_image {
+struct asset_file_data_image {
     u32 Width;
     u32 Height;
     u32 Channels;
 };
 
 
-struct yuu_spritesheet {
+struct asset_file_data_spritesheet {
     u32 Width;
     u32 Height;
     u32 Channels;
@@ -136,7 +136,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
     HeaderAt += sizeof(Assets->EntryCount);
     
     
-    usize DataAt = HeaderAt + (sizeof(yuu_header) * Assets->EntryCount);
+    usize DataAt = HeaderAt + (sizeof(asset_file_entry) * Assets->EntryCount);
     
     
     // NOTE(Momo): Write the data
@@ -159,27 +159,27 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 {
                     fseek(pFile, (i32)HeaderAt, SEEK_SET);
                     
-                    yuu_header Header = { 
-                        (u32)asset_type::Image,
+                    asset_file_entry Header = { 
+                        asset_type::Image,
                         (u32)DataAt,
-                        (u32)Entry->AssetId,
+                        Entry->AssetId,
                     };
                     
-                    fwrite(&Header, sizeof(yuu_header), 1, pFile); 
-                    HeaderAt += sizeof(yuu_header);
+                    fwrite(&Header, sizeof(asset_file_entry), 1, pFile); 
+                    HeaderAt += sizeof(asset_file_entry);
                 }
                 
                 // NOTE(Momo): Write Data
                 {
                     fseek(pFile, (i32)DataAt, SEEK_SET);
                     
-                    yuu_image Image = {
+                    asset_file_data_image Image = {
                         (u32)ImageWidth,
                         (u32)ImageHeight,
                         (u32)ImageComp,
                     };
-                    fwrite(&Image, sizeof(yuu_image), 1, pFile); 
-                    DataAt += sizeof(yuu_image);
+                    fwrite(&Image, sizeof(asset_file_data_image), 1, pFile); 
+                    DataAt += sizeof(asset_file_data_image);
                     
                     u32 ImageSize = (ImageWidth * ImageHeight * ImageComp);
                     for (u8* Itr = LoadedImage; Itr < LoadedImage + ImageSize; ++Itr) 
@@ -208,29 +208,29 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 {
                     fseek(pFile, (i32)HeaderAt, SEEK_SET);
                     
-                    yuu_header Header = { 
-                        (u32)asset_type::Spritesheet,
+                    asset_file_entry Header = { 
+                        asset_type::Spritesheet,
                         (u32)DataAt,
-                        (u32)Entry->AssetId,
+                        Entry->AssetId,
                     };
                     
-                    fwrite(&Header, sizeof(yuu_header), 1, pFile); 
-                    HeaderAt += sizeof(yuu_header);
+                    fwrite(&Header, sizeof(asset_file_entry), 1, pFile); 
+                    HeaderAt += sizeof(asset_file_entry);
                 }
                 
                 // NOTE(Momo): Write Data
                 {
                     fseek(pFile, (i32)DataAt, SEEK_SET);
                     
-                    yuu_spritesheet Spritesheet = {
+                    asset_file_data_spritesheet Spritesheet = {
                         (u32)ImageWidth,
                         (u32)ImageHeight,
                         (u32)ImageComp,
                         Entry->Spritesheet.Rows,
                         Entry->Spritesheet.Cols,
                     };
-                    fwrite(&Spritesheet, sizeof(yuu_spritesheet), 1, pFile); 
-                    DataAt += sizeof(yuu_spritesheet);
+                    fwrite(&Spritesheet, sizeof(asset_file_data_spritesheet), 1, pFile); 
+                    DataAt += sizeof(asset_file_data_spritesheet);
                     
                     u32 ImageSize = (ImageWidth * ImageHeight * ImageComp);
                     for (u8* Itr = LoadedImage; Itr < LoadedImage + ImageSize; ++Itr) 
@@ -241,8 +241,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 }
                 
                 printf("Loaded Spritesheet '%s': Width = %d, Height = %d, Comp = %d, Rows = %d, Cols = %d\n", ImageFilename, ImageWidth, ImageHeight, ImageComp, Entry->Spritesheet.Rows, Entry->Spritesheet.Cols);
-            } break;
-            case asset_type::Animation: {
             } break;
             case asset_type::Sound: {
             } break;
