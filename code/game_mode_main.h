@@ -29,12 +29,6 @@ struct collision_component {
     aabb2f Box;
 };
 
-struct renderable_component {
-    v4f Colors;
-    u32 TextureHandle;
-    quad2f TextureCoords;
-};
-
 
 struct physics_component {
     v3f Velocity;
@@ -128,7 +122,7 @@ SpriteRenderingSystem(game_mode_main* Mode,
     PushCommandDrawTexturedQuad(RenderCommands, 
                                 {1.f, 1.f, 1.f, 1.f}, 
                                 T*R*S,
-                                (u32)Sprite->SpritesheetHandle,
+                                GetBitmapId(Assets, Sprite->SpritesheetHandle),
                                 Quad2(GetSpritesheetFrame(Assets, Sprite->SpritesheetHandle, CurrentFrame)));
     
 }
@@ -209,6 +203,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
     
     // NOTE(Momo): Animations
     {
+#if 1
         Mode->AnimeWalkUp[0] = 1; 
         Mode->AnimeWalkUp[1] = 0;
         Mode->AnimeWalkUp[2] = 1;
@@ -233,6 +228,12 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Mode->AnimeIdleLeft[0] = 7;
         Mode->AnimeIdleRight[0] = 4;
         Mode->AnimeIdleUp[0] = 1;
+#else 
+        // TODO(Momo): Maybe we want something like this...?
+        image_id LeftSpriteFrame = GetLeftSprite();
+        
+        
+#endif
     }
     
     
@@ -249,7 +250,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Player->Collision.Box.Origin = { 0.f, 0.f };
         Player->Collision.Box.Radius = { 24.f*2, 24.f*2 };
         
-        Player->Sprite.SpritesheetHandle = asset_id::Spritesheet_Karu;
+        Player->Sprite.SpritesheetHandle = spritesheet_id::Karu;
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
         Player->Sprite.AnimeAt = 0;

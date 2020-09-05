@@ -11,7 +11,7 @@ struct splash_image_entity {
     v3f Position;
     v4f Colors;
     
-    image_id TextureHandle;
+    image_id ImageHandle;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -42,10 +42,7 @@ Update(splash_image_entity* Entity,
     m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
-    PushCommandDrawTexturedQuad(RenderCommands, 
-                                Entity->Colors, 
-                                T*S,
-                                (u32)Entity->TextureHandle);
+    PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S, GetBitmapId(Assets, Entity->ImageHandle));
 }
 
 struct splash_blackout_entity {
@@ -78,9 +75,7 @@ Update(splash_blackout_entity* Entity,
     m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
-    PushCommandDrawQuad(RenderCommands, 
-                        Entity->Colors, 
-                        T*S);
+    PushCommandDrawQuad(RenderCommands, Entity->Colors, T*S);
     
 }
 
@@ -98,7 +93,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 400.f, 400.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].TextureHandle = asset_id::Image_Ryoji;
+        Mode->SplashImg[0].ImageHandle = image_id::Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 5.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -109,7 +104,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 400.f, 400.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].TextureHandle = asset_id::Image_Yuu;
+        Mode->SplashImg[1].ImageHandle = image_id::Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 5.f;
         Mode->SplashImg[1].Timer = 0.f;

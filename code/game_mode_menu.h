@@ -7,6 +7,11 @@
 #include "game_mode_splash.h"
 
 
+static inline void
+DrawString(commands* Commands, f32 X, f32 Y, const char* String) {
+    // TODO(Momo): Implementation
+}
+
 // NOTE(Momo): Mode /////////////////////////////////////////////
 struct game_mode_menu {
     static constexpr u8 TypeId = 1;
@@ -32,6 +37,8 @@ UpdateMode(game_mode_menu* Mode,
 #endif
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });;
     PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
+    
+    DrawString(RenderCommands, 0.f, 0.f, "Hello World~!");
 }
 
 

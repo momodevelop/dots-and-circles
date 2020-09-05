@@ -11,15 +11,14 @@ enum struct asset_type : u32 {
     Sound,
 };
 
-enum struct asset_id : u32 {
-    // NOTE(Momo): Images
-    Image_Ryoji,
-    Image_Yuu,
-    
-    // NOTE(Momo): Spritesheets
-    Spritesheet_Karu,
-    
-    Max,
+
+enum struct image_id : u32 {
+    Ryoji,
+    Yuu,
+};
+
+enum struct spritesheet_id : u32 {
+    Karu,
 };
 
 #endif 
