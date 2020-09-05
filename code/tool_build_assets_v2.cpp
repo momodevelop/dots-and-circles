@@ -52,20 +52,22 @@ Pack(image_pack* Packer, u32 AtlasWidth, u32 AtlasHeight) {
     Spaces->H = AtlasHeight;
     ++SpaceCount;
     
-    printf("=== Packing...\n");
+    printf("=== Trying to pack at: W = %d, H = %d\n", AtlasWidth, AtlasHeight);
     {
         for ( u32 i = 0; i < Packer->EntryCount; ++i ) {
             image_entry* Entry = Packer->Entries + i;
             printf("\tPacking %s...\n", Entry->Filename);
             
             // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
+            
             u32 ChosenSpaceIndex = SpaceCount;
             {
-                for (u32 j = SpaceCount - 1; j >= 0; --j ) {
-                    rect* Space = Spaces + j;
+                for (u32 j = 0; j < SpaceCount; ++j ) {
+                    u32 Index = SpaceCount - j - 1;
+                    rect* Space = Spaces + Index;
                     // NOTE(Momo): Check if the image fits
                     if (Entry->W <= Space->W && Entry->H <= Space->H) {
-                        ChosenSpaceIndex = j;
+                        ChosenSpaceIndex = Index;
                         
                         break;
                         
@@ -76,7 +78,7 @@ Pack(image_pack* Packer, u32 AtlasWidth, u32 AtlasHeight) {
             
             // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
             if (ChosenSpaceIndex == SpaceCount) {
-                printf("\tFit not found, terminating\n");
+                printf("\t[FAILED] Fit not found, terminating\n");
                 return false;
             }
             
@@ -145,7 +147,7 @@ Pack(image_pack* Packer, u32 AtlasWidth, u32 AtlasHeight) {
     }
     
     // Debug purposes
-#if 1
+#if 0
     printf("--- Results:\n");
     for ( u32 i = 0; i < Packer->EntryCount; ++i ) {
         auto* Entry = Packer->Entries + i;
@@ -157,34 +159,25 @@ Pack(image_pack* Packer, u32 AtlasWidth, u32 AtlasHeight) {
 }
 
 
-static inline void
-OutputToPng(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels, const char* Filename) 
-{
+static inline u8* 
+CreateAtlas(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels) {
     u32 MemorySize = AtlasWidth * AtlasHeight * AtlasChannels;
     u8* Memory = (u8*)calloc(MemorySize, sizeof(u8));
     if (!Memory) {
-        printf("Failed to get memory\n");
-        return;
+        return nullptr;
     }
-    Defer { free(Memory); };
     
-    
-    printf("=== Writing to %s\n", Filename);
     for (u32 i = 0; i < Pack->EntryCount; ++i) {
         auto* Entry = Pack->Entries + i;
         printf("\tLoading %s\n", Entry->Filename);
         
-        
         i32 W,H,C;
         u8* LoadedImage = stbi_load(Entry->Filename, &W, &H, &C, 0);
         if (LoadedImage == nullptr) {
-            printf("Failed to load :(\n");
-            return;
+            return nullptr;
         }
         Defer { stbi_image_free(LoadedImage); };
         Assert(W == Entry->W && H == Entry->H);
-        
-        
         
         i32 j = 0;
         for (i32 y = Entry->Y; y < Entry->Y + Entry->H; ++y) {
@@ -198,15 +191,62 @@ OutputToPng(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels
         
     }
     
-    stbi_write_png(Filename, AtlasWidth, AtlasHeight, AtlasChannels, Memory, AtlasWidth * AtlasChannels);
-    printf("=== Write to %s completed\n", Filename);
+    return Memory;
 }
 
+
+static inline void
+FreeAtlas(u8* Memory) {
+    free(Memory);
+}
+
+
+static inline b32
+OutputPng(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels, const char* Filename) 
+{
+    printf("=== Writing to %s \n", Filename);
+    u8* Memory = CreateAtlas(Pack, AtlasWidth, AtlasHeight, AtlasChannels);
+    if (!Memory) {
+        return false;
+    }
+    Defer { FreeAtlas(Memory); };
+    
+    
+    stbi_write_png(Filename, AtlasWidth, AtlasHeight, AtlasChannels, Memory, AtlasWidth * AtlasChannels);
+    printf("=== Write to %s completed\n", Filename);
+    return true;
+}
+
+
+static inline b32
+OutputAtlas(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels, const char* Filename) 
+{
+    printf("=== Creating Texture: W = %d, H = %d, C = %d\n", AtlasWidth, AtlasHeight, AtlasChannels);
+    
+    u32 MemorySize = AtlasWidth * AtlasHeight * AtlasChannels;
+    u8* Memory = CreateAtlas(Pack, AtlasWidth, AtlasHeight, AtlasChannels);
+    if (!Memory) {
+        return false;
+    }
+    
+    
+    FILE * File = fopen(Filename, "wb");
+    if (File == nullptr) {
+        return false;
+    }
+    
+    fwrite(Memory, MemorySize, 1, File);
+    printf("\t[SUCCESS] Texture Created!\n");
+    
+    return true;
+}
+
+#define ATLAS_WIDTH_LIMIT 4096
+#define ATLAS_HEIGHT_LIMIT 4096
 
 int main() {
     image_pack Packer_ = {};
     image_pack* Packer = &Packer_;
-    
     
     AddImage(Packer, "assets/ryoji.png");
     AddImage(Packer, "assets/yuu.png");
@@ -214,13 +254,29 @@ int main() {
     
     // TODO(Momo): Might wanna sort first?
     // Sort(Packer);
-    u32 AtlasWidth = 1024;
-    u32 AtlasHeight = 1024;
+    u32 AtlasWidth = 128;
+    u32 AtlasHeight = 128;
+    for (;;) {
+        b32 Success = Pack(Packer, AtlasWidth, AtlasHeight);
+        if (!Success) {
+            if(AtlasWidth >= ATLAS_WIDTH_LIMIT || AtlasHeight >= ATLAS_HEIGHT_LIMIT) {
+                printf("Mou Give up desu -_-;");
+                return 1;
+            }
+            
+            AtlasWidth *= 2;
+            AtlasHeight *= 2;
+        }
+        else {
+            break;
+        }
+    }
+    printf("Finalized Atlas W/H: W = %d, H = %d\n", AtlasWidth, AtlasHeight);
     
-    Pack(Packer, AtlasWidth, AtlasHeight);
-    
-    OutputToPng(Packer, AtlasWidth, AtlasHeight, 4, "debug.png" );
-    
+    OutputPng(Packer, AtlasWidth, AtlasHeight, 4, "yuu.debug.png" );
+    OutputAtlas(Packer, AtlasWidth, AtlasHeight, 4, "yuu.atlas");
     
     
+    
+    return 0;
 }
