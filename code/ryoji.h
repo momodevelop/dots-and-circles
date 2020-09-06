@@ -26,8 +26,8 @@ using uptr = uintptr_t;
 #define Gigabyte (1 << 30)
 
 #define Abs(x) (((x) < 0) ? -(x) : (x))
-#define Maximum(x, y) (((x) > (y)) (x) : (y))
-#define Minimum(x, y) (((x) < (y)) (x) : (y))
+#define Maximum(x, y) (((x) > (y)) ? (x) : (y))
+#define Minimum(x, y) (((x) < (y)) ? (x) : (y))
 #define Kilobytes(num) (Kilobyte * num)
 #define Megabytes(num) (Megabyte * num)
 #define Gigabytes(num) (Gigabyte * num)

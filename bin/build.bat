@@ -28,8 +28,8 @@ mkdir %cd%\assets
 copy %RootDir%\assets\* %cd%\assets
 
 IF "%Opt%"=="assets" ( 
-	REM cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cpp
-	cl %CommonCompilerFlags% %CodeDir%\tool_build_assets_v2.cpp
+	cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cpp
+	REM cl %CommonCompilerFlags% %CodeDir%\tool_build_assets_v2.cpp
 ) ELSE (
 	IF "%Opt%"=="game" (
 		cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate

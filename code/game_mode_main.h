@@ -128,6 +128,7 @@ SpriteRenderingSystem(game_mode_main* Mode,
 }
 
 #if INTERNAL
+
 static inline void
 DrawCollisionLinesSystem(transform_component* Transform,
                          collision_component* Collision, 

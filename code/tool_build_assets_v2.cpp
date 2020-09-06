@@ -11,6 +11,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image_write.h"
 
+#define ATLAS_WIDTH_LIMIT 4096
+#define ATLAS_HEIGHT_LIMIT 4096
+
 
 struct rect {
     i32 X, Y, W, H;
@@ -22,17 +25,29 @@ struct image_entry {
 };
 
 
-struct image_pack {
+struct image_packer {
     image_entry Entries[1024];
     u32 EntryCount;
+    
+    u32 AtlasWidth;
+    u32 AtlasHeight;
+    u32 AtlasChannels;
 };
 
-struct packed_images {
-};
+static inline void
+Init(image_packer* Packer, u32 StartWidth, u32 StartHeight, u32 Channels) {
+    Assert(StartWidth > 0);
+    Assert(StartHeight > 0);
+    Assert(Channels > 0);
+    
+    Packer->AtlasWidth = StartWidth;
+    Packer->AtlasHeight = StartHeight;
+    Packer->AtlasChannels = Channels;
+}
 
 
 static inline void 
-AddImage(image_pack* Packer, const char* Filename) {
+AddImage(image_packer* Packer, const char* Filename) {
     image_entry* Entry = Packer->Entries +  Packer->EntryCount;
     Entry->Filename = Filename;
     stbi_info(Filename, &Entry->W, &Entry->H, 0);
@@ -42,17 +57,17 @@ AddImage(image_pack* Packer, const char* Filename) {
 }
 
 static inline b32 
-Pack(image_pack* Packer, u32 AtlasWidth, u32 AtlasHeight) {
+PackSub(image_packer* Packer) {
     rect Spaces[1024];
     u32 SpaceCount = 0;
     
     Spaces->X = 0;
     Spaces->Y = 0;
-    Spaces->W = AtlasWidth;
-    Spaces->H = AtlasHeight;
+    Spaces->W = Packer->AtlasWidth;
+    Spaces->H = Packer->AtlasHeight;
     ++SpaceCount;
     
-    printf("=== Trying to pack at: W = %d, H = %d\n", AtlasWidth, AtlasHeight);
+    printf("=== Trying to pack at: W = %d, H = %d\n", Packer->AtlasWidth, Packer->AtlasHeight);
     {
         for ( u32 i = 0; i < Packer->EntryCount; ++i ) {
             image_entry* Entry = Packer->Entries + i;
@@ -158,17 +173,40 @@ Pack(image_pack* Packer, u32 AtlasWidth, u32 AtlasHeight) {
     return true;
 }
 
+static inline b32 
+Pack(image_packer* Packer) {
+    
+    // NOTE(Momo): POT scaling.
+    for (;;) {
+        b32 Success = PackSub(Packer);
+        if (!Success) {
+            if(Packer->AtlasWidth >= ATLAS_WIDTH_LIMIT || Packer->AtlasHeight >= ATLAS_HEIGHT_LIMIT) {
+                return false;
+            }
+            
+            Packer->AtlasWidth *= 2;
+            Packer->AtlasHeight *= 2;
+        }
+        else {
+            break;
+        }
+    }
+    
+    return true;
+}
+
+
 
 static inline u8* 
-CreateAtlas(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels) {
-    u32 MemorySize = AtlasWidth * AtlasHeight * AtlasChannels;
+CreateAtlas(image_packer* Packer) {
+    u32 MemorySize = Packer->AtlasWidth * Packer->AtlasHeight * Packer->AtlasChannels;
     u8* Memory = (u8*)calloc(MemorySize, sizeof(u8));
     if (!Memory) {
         return nullptr;
     }
     
-    for (u32 i = 0; i < Pack->EntryCount; ++i) {
-        auto* Entry = Pack->Entries + i;
+    for (u32 i = 0; i < Packer->EntryCount; ++i) {
+        auto* Entry = Packer->Entries + i;
         printf("\tLoading %s\n", Entry->Filename);
         
         i32 W,H,C;
@@ -182,8 +220,8 @@ CreateAtlas(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels
         i32 j = 0;
         for (i32 y = Entry->Y; y < Entry->Y + Entry->H; ++y) {
             for (i32 x = Entry->X; x < Entry->X + Entry->W; ++x) {
-                i32 Index = TwoToOne(y, x, AtlasWidth) * AtlasChannels;
-                for (u32 c = 0; c < AtlasChannels; ++c) {
+                i32 Index = TwoToOne(y, x, Packer->AtlasWidth) * Packer->AtlasChannels;
+                for (u32 c = 0; c < Packer->AtlasChannels; ++c) {
                     Memory[Index + c] = LoadedImage[j++];
                 }
             }
@@ -202,38 +240,38 @@ FreeAtlas(u8* Memory) {
 
 
 static inline b32
-OutputPng(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels, const char* Filename) 
+OutputAtlasPng(image_packer* Packer, const char* Filename) 
 {
     printf("=== Writing to %s \n", Filename);
-    u8* Memory = CreateAtlas(Pack, AtlasWidth, AtlasHeight, AtlasChannels);
+    u8* Memory = CreateAtlas(Packer);
     if (!Memory) {
         return false;
     }
     Defer { FreeAtlas(Memory); };
     
     
-    stbi_write_png(Filename, AtlasWidth, AtlasHeight, AtlasChannels, Memory, AtlasWidth * AtlasChannels);
+    stbi_write_png(Filename, Packer->AtlasWidth, Packer->AtlasHeight, Packer->AtlasChannels, Memory, Packer->AtlasWidth * Packer->AtlasChannels);
     printf("=== Write to %s completed\n", Filename);
     return true;
 }
 
 
 static inline b32
-OutputAtlas(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels, const char* Filename) 
+OutputAtlasRaw(image_packer* Packer, const char* Filename) 
 {
-    printf("=== Creating Texture: W = %d, H = %d, C = %d\n", AtlasWidth, AtlasHeight, AtlasChannels);
+    printf("=== Creating Texture: W = %d, H = %d, C = %d\n", Packer->AtlasWidth, Packer->AtlasHeight, Packer->AtlasChannels);
     
-    u32 MemorySize = AtlasWidth * AtlasHeight * AtlasChannels;
-    u8* Memory = CreateAtlas(Pack, AtlasWidth, AtlasHeight, AtlasChannels);
+    u32 MemorySize = Packer->AtlasWidth * Packer->AtlasHeight * Packer->AtlasChannels;
+    u8* Memory = CreateAtlas(Packer);
     if (!Memory) {
         return false;
     }
-    
     
     FILE * File = fopen(Filename, "wb");
     if (File == nullptr) {
         return false;
     }
+    Defer { fclose(File); };
     
     fwrite(Memory, MemorySize, 1, File);
     printf("\t[SUCCESS] Texture Created!\n");
@@ -241,12 +279,26 @@ OutputAtlas(image_pack* Pack, u32 AtlasWidth, u32 AtlasHeight, u32 AtlasChannels
     return true;
 }
 
-#define ATLAS_WIDTH_LIMIT 4096
-#define ATLAS_HEIGHT_LIMIT 4096
+static inline void
+OutputAtlasData(image_packer* Packer, const char* Filename) 
+{
+    FILE * File = fopen(Filename, "wb");
+    if (File == nullptr) {
+        return false;
+    }
+    Defer { fclose(File); };
+    fwrite(Memory, MemorySize, 1, File);
+    
+    for (u32 i = 0; i < Packer->EntryCount; ++i) {
+        
+    }
+    
+}
 
 int main() {
-    image_pack Packer_ = {};
-    image_pack* Packer = &Packer_;
+    image_packer Packer_ = {};
+    image_packer* Packer = &Packer_;
+    Init(Packer, 128, 128, 4);
     
     AddImage(Packer, "assets/ryoji.png");
     AddImage(Packer, "assets/yuu.png");
@@ -254,28 +306,13 @@ int main() {
     
     // TODO(Momo): Might wanna sort first?
     // Sort(Packer);
-    u32 AtlasWidth = 128;
-    u32 AtlasHeight = 128;
-    for (;;) {
-        b32 Success = Pack(Packer, AtlasWidth, AtlasHeight);
-        if (!Success) {
-            if(AtlasWidth >= ATLAS_WIDTH_LIMIT || AtlasHeight >= ATLAS_HEIGHT_LIMIT) {
-                printf("Mou Give up desu -_-;");
-                return 1;
-            }
-            
-            AtlasWidth *= 2;
-            AtlasHeight *= 2;
-        }
-        else {
-            break;
-        }
-    }
-    printf("Finalized Atlas W/H: W = %d, H = %d\n", AtlasWidth, AtlasHeight);
     
-    OutputPng(Packer, AtlasWidth, AtlasHeight, 4, "yuu.debug.png" );
-    OutputAtlas(Packer, AtlasWidth, AtlasHeight, 4, "yuu.atlas");
+    Pack(Packer);
+    printf("Finalized Atlas W/H: W = %d, H = %d\n", Packer->AtlasWidth, Packer->AtlasHeight);
     
+    OutputAtlasPng(Packer, "yuu.debug.png" );
+    OutputAtlasRaw(Packer, "yuu.atlas");
+    OutputAtlasData(Packer, "yuu.data");
     
     
     return 0;
