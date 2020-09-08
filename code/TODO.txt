@@ -1,7 +1,9 @@
 [] Image splitting tool
-
-
 [] Fonts
+[] Texture Atlas
+
+
+
 [] Tile based rendering
 [] Fixed framerate (target framerate)
 [] Visual editor

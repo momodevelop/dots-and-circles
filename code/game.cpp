@@ -35,7 +35,6 @@ GameUpdate(game_memory* GameMemory,
         
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 1600, 900);
-        
     }
     
     // NOTE(Momo): State machine

@@ -93,7 +93,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 400.f, 400.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].ImageHandle = image_id::Ryoji;
+        Mode->SplashImg[0].ImageHandle = GetImage(GameState->Assets, Asset_ImageRyoji);
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 5.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -104,7 +104,7 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 400.f, 400.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].ImageHandle = image_id::Yuu;
+        Mode->SplashImg[1].ImageHandle = GetImage(GameState->Assets, Asset_ImageYuu);
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 5.f;
         Mode->SplashImg[1].Timer = 0.f;

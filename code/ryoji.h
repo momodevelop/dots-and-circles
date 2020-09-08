@@ -41,6 +41,13 @@ using uptr = uintptr_t;
 #define Lerp(start, end, fraction) (start + (end - start)*fraction) 
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
 
+static inline u32
+StringLen(const char* Str) {
+    u32 Count = 0;
+    for(; (*Str) != 0 ; ++Count, ++Str);
+    return Count;
+}
+
 static inline void 
 CopyBlock(void* dest, void* src, usize size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){

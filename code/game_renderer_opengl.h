@@ -4,6 +4,9 @@
 #include "game_renderer.h"
 #include "game_renderer_opengl_shaders.inl"
 
+
+
+
 // NOTE(Momo): Buffers
 enum {
     renderer_vbo_Model,

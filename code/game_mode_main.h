@@ -251,7 +251,7 @@ InitMode(game_mode_main* Mode, game_state* GameState) {
         Player->Collision.Box.Origin = { 0.f, 0.f };
         Player->Collision.Box.Radius = { 24.f*2, 24.f*2 };
         
-        Player->Sprite.SpritesheetHandle = spritesheet_id::Karu;
+        Player->Sprite.SpritesheetHandle = GetSpritesheet(GameState->Assets, Asset_SpritesheetKaru);
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
         Player->Sprite.AnimeAt = 0;

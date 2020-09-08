@@ -3,7 +3,7 @@ Ground rules about this renderer.
 - This is a 2D renderer in 3D space. 
 - Right-handed coordinate system: +Y is up, +Z is towards
 - Only one model is supported: A quad that can be textured and colored 
-- Quad points (and thus UV mapping)  is defined in the an anti-clockwise order, starting from bottom left (to match our coordinate system): 
+- Quad points defined in the an anti-clockwise order, starting from bottom left (to match our coordinate system): 
 0. bottom left
 1. bottom right
 2. top right
@@ -19,27 +19,6 @@ Ground rules about this renderer.
 
 #include "ryoji_commands.h"
 #include "ryoji_maths.h"
-
-
-static inline constexpr quad2f StandardQuadUV = {
-    0.f, 0.f, // bottom left
-    1.0f, 0.f, // bottom right
-    1.0f, 1.0f, // top right
-    0.0f, 1.0f,  // top left
-};
-
-constexpr static f32 QuadModel[] = {
-    // position   
-    -0.5f, -0.5f, 0.0f,  // bottom left
-    0.5f, -0.5f, 0.0f,  // bottom right
-    0.5f,  0.5f, 0.0f,  // top right
-    -0.5f,  0.5f, 0.0f,   // top left 
-};
-
-constexpr static u8 QuadIndices[] = {
-    0, 1, 2,
-    0, 2, 3,
-};
 
 
 struct render_command_clear_color {

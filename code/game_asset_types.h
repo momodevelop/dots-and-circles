@@ -3,22 +3,26 @@
 
 static constexpr u8 AssetSignature[] = { 'M', 'O', 'M', 'O' };
 
-
-enum struct asset_type : u32 {
-    Image,
-    Font,
-    Spritesheet,
-    Sound,
+enum asset_type : u32 {
+    AssetType_Image,
+    AssetType_Font,
+    AssetType_Spritesheet,
+    AssetType_Sound,
+    AssetType_Atlas,
 };
 
 
-enum struct image_id : u32 {
-    Ryoji,
-    Yuu,
+enum asset_id : u32 {
+    Asset_ImageRyoji,
+    Asset_ImageYuu,
+    Asset_SpritesheetKaru,
 };
 
-enum struct spritesheet_id : u32 {
-    Karu,
+
+enum atlas_image_id : u32 {
+    Atlas_ImageRyoji,
+    Atlas_ImageYuu,
 };
+
 
 #endif 

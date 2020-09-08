@@ -1,3 +1,24 @@
+constexpr static f32 QuadModel[] = {
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    0.5f, -0.5f, 0.0f,  // bottom right
+    0.5f,  0.5f, 0.0f,  // top right
+    -0.5f,  0.5f, 0.0f,   // top left 
+};
+
+constexpr static u8 QuadIndices[] = {
+    0, 1, 2,
+    0, 2, 3,
+};
+
+
+static inline constexpr quad2f StandardQuadUV = {
+    0.f, 0.f, // bottom left
+    1.0f, 0.f, // bottom right
+    1.0f, 1.0f, // top right
+    0.0f, 1.0f,  // top left
+};
+
+
 static inline rect2u 
 GetRenderRegion(u32 WindowWidth, 
                 u32 WindowHeight, 
@@ -72,6 +93,8 @@ PushCommandClearColor(commands* Commands, v4f Colors) {
     auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
 }
+
+
 
 static inline void
 PushCommandDrawTexturedQuad(commands* Commands, 

@@ -8,14 +8,14 @@
 
 #include "game_asset_types.h"
 
-struct asset_image {
+struct asset_data_image {
     u32 Width;
     u32 Height;
     void* Pixels; 
     u32 BitmapId;
 };
 
-struct asset_spritesheet {
+struct asset_data_spritesheet {
     u32 Width;
     u32 Height;
     void* Pixels; 
@@ -27,16 +27,36 @@ struct asset_spritesheet {
     u32 BitmapId;
 };
 
+struct image_id { 
+    u32 Value; 
+    operator u32() {
+        return Value;
+    }
+};
+
+struct spritesheet_id { 
+    u32 Value; 
+    operator u32() {
+        return Value;
+    }
+};
+
+
+struct asset_entry {
+    asset_type Type;
+    asset_id Id;
+    union {
+        void* Data;
+        asset_data_image* Image;
+        asset_data_spritesheet* Spritesheet;
+    };
+};
+
 struct game_assets {
     memory_arena Arena;
+    asset_entry* Entries;
+    u32 EntryCount;
     
-    asset_image* Images;
-    u32 ImageCount;
-    
-    asset_spritesheet* Spritesheets;
-    u32 SpritesheetCount;
-    
-    // TODO(Momo): Eventually want to merge spritesheets and images together.
     u32 BitmapCounter;
     
     platform_api* Platform;
@@ -55,82 +75,91 @@ CheckAssetSignature(void *Memory) {
 
 
 static inline void
-LoadImage(game_assets* Assets, commands* RenderCommands, image_id Id, u8** Data) {
-    asset_image* Image = Assets->Images + (u32)Id;
-    
+LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) {
     u32 Width = Read32<u32>(Data, false);
     u32 Height = Read32<u32>(Data, false);
     u32 Channels = Read32<u32>(Data, false);
     
-    Image->Width = Width;
-    Image->Height = Height;
-    Image->BitmapId = Assets->BitmapCounter++;
-    
-    // NOTE(Momo): Allocate pixel data
-    usize Size = Width * Height * Channels;
-    Image->Pixels = PushBlock(&Assets->Arena, Size, 1);
-    Assert(Image->Pixels);
-    CopyBlock(Image->Pixels, (*Data), Size);
-    
-    PushCommandLinkTexture(RenderCommands, 
-                           Image->Width, 
-                           Image->Height,
-                           Image->Pixels,
-                           Image->BitmapId);
-    
+    // NOTE(Momo): Allocate Image
+    asset_entry* Entry = Assets->Entries + Id;
+    {
+        Entry->Type = AssetType_Image;
+        Entry->Id = Id;
+        Entry->Image = PushStruct<asset_data_image>(&Assets->Arena);
+        Entry->Image->Width = Width;
+        Entry->Image->Height = Height;
+        Entry->Image->BitmapId = Assets->BitmapCounter++;
+        
+        // NOTE(Momo): Allocate pixel data
+        usize Size = Width * Height * Channels;
+        Entry->Image->Pixels = PushBlock(&Assets->Arena, Size, 1);
+        Assert(Entry->Image->Pixels);
+        CopyBlock(Entry->Image->Pixels, (*Data), Size);
+        
+        PushCommandLinkTexture(RenderCommands, 
+                               Entry->Image->Width, 
+                               Entry->Image->Height,
+                               Entry->Image->Pixels,
+                               Entry->Image->BitmapId);
+    }
 }
 
 
 static inline void
-LoadSpritesheet(game_assets* Assets, commands* RenderCommands, spritesheet_id Id, u8** Data) 
+LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) 
 {
-    asset_spritesheet* Spritesheet = Assets->Spritesheets + (u32)Id;
-    
     u32 Width = Read32<u32>(Data, false);
     u32 Height = Read32<u32>(Data, false);
     u32 Channels = Read32<u32>(Data, false);
     u32 Rows = Read32<u32>(Data, false);
     u32 Cols = Read32<u32>(Data, false);
     
-    Spritesheet->Width = Width;
-    Spritesheet->Height = Height;
-    Spritesheet->Rows = Rows;
-    Spritesheet->Cols = Cols; 
-    Spritesheet->BitmapId = Assets->BitmapCounter++;
-    
-    // NOTE(Momo): Allocate pixel data
-    usize Size = Width * Height * Channels;
-    Spritesheet->Pixels = PushBlock(&Assets->Arena, Size, 1);
-    Assert(Spritesheet->Pixels);
-    CopyBlock(Spritesheet->Pixels, (*Data), Size);
-    
-    f32 FrameWidth = (f32)Width/Cols;
-    f32 FrameHeight = (f32)Height/Rows;
-    f32 CellWidth = FrameWidth/Width;
-    f32 CellHeight = FrameHeight/Height;
-    f32 HalfPixelWidth =  0.25f/Width;
-    f32 HalfPixelHeight = 0.25f/Height;
-    
-    // NOTE(Momo): Allocate sprite frames
-    u32 TotalFrames = Rows * Cols;
-    rect2f* Rects = PushArray<rect2f>(&Assets->Arena, TotalFrames); 
-    for (u8 r = 0; r < Rows; ++r) {
-        for (u8 c = 0; c < Cols; ++c) {
-            Rects[TwoToOne(r,c,Cols)] = { 
-                c * CellWidth + HalfPixelWidth,
-                r * CellHeight + HalfPixelHeight,
-                (c+1) * CellWidth - HalfPixelWidth,
-                (r+1) * CellHeight - HalfPixelHeight,
-            };
+    // NOTE(Momo): Allocate Spritesheet
+    asset_entry* Entry = Assets->Entries + Id;
+    {
+        Entry->Type = AssetType_Spritesheet;
+        Entry->Id = Id;
+        Entry->Spritesheet = PushStruct<asset_data_spritesheet>(&Assets->Arena);
+        Entry->Spritesheet->Width = Width;
+        Entry->Spritesheet->Height = Height;
+        Entry->Spritesheet->Rows = Rows;
+        Entry->Spritesheet->Cols = Cols; 
+        Entry->Spritesheet->BitmapId = Assets->BitmapCounter++;
+        
+        // NOTE(Momo): Allocate pixel data
+        usize Size = Width * Height * Channels;
+        Entry->Spritesheet->Pixels = PushBlock(&Assets->Arena, Size, 1);
+        Assert(Entry->Spritesheet->Pixels);
+        CopyBlock(Entry->Spritesheet->Pixels, (*Data), Size);
+        
+        f32 FrameWidth = (f32)Width/Cols;
+        f32 FrameHeight = (f32)Height/Rows;
+        f32 CellWidth = FrameWidth/Width;
+        f32 CellHeight = FrameHeight/Height;
+        f32 HalfPixelWidth =  0.25f/Width;
+        f32 HalfPixelHeight = 0.25f/Height;
+        
+        // NOTE(Momo): Allocate sprite frames
+        u32 TotalFrames = Rows * Cols;
+        rect2f* Rects = PushArray<rect2f>(&Assets->Arena, TotalFrames); 
+        for (u8 r = 0; r < Rows; ++r) {
+            for (u8 c = 0; c < Cols; ++c) {
+                Rects[TwoToOne(r,c,Cols)] = { 
+                    c * CellWidth + HalfPixelWidth,
+                    r * CellHeight + HalfPixelHeight,
+                    (c+1) * CellWidth - HalfPixelWidth,
+                    (r+1) * CellHeight - HalfPixelHeight,
+                };
+            }
         }
+        Entry->Spritesheet->Frames = Rects;
+        
+        PushCommandLinkTexture(RenderCommands,
+                               Entry->Spritesheet->Width, 
+                               Entry->Spritesheet->Height,
+                               Entry->Spritesheet->Pixels,
+                               Entry->Spritesheet->BitmapId);
     }
-    Spritesheet->Frames = Rects;
-    
-    PushCommandLinkTexture(RenderCommands,
-                           Spritesheet->Width, 
-                           Spritesheet->Height,
-                           Spritesheet->Pixels,
-                           Spritesheet->BitmapId);
 }
 
 
@@ -165,43 +194,36 @@ Init(game_assets* Assets,
         FileMemoryItr+= ArrayCount(AssetSignature);
         
         // NOTE(Momo): Read the counts in order
-        Assets->ImageCount = Read32<u32>(&FileMemoryItr, false);
-        Assets->SpritesheetCount = Read32<u32>(&FileMemoryItr, false);
-        
+        Assets->EntryCount = Read32<u32>(&FileMemoryItr, false);
     }
     
     // NOTE(Momo): Allocate Assets
     {
         // NOTE(Momo): All entries are allocated first. Their data will follow after.
-        Assets->Images = PushArray<asset_image>(&Assets->Arena, Assets->ImageCount);
-        Assets->Spritesheets = PushArray<asset_spritesheet>(&Assets->Arena, Assets->SpritesheetCount);
-        u32 AssetCount = Assets->ImageCount + Assets->SpritesheetCount;
+        Assets->Entries = PushArray<asset_entry>(&Assets->Arena, Assets->EntryCount);
         
-        for (u32 i = 0; i < AssetCount; ++i)
+        for (u32 i = 0; i < Assets->EntryCount; ++i)
         {
             // NOTE(Momo): Read headers
             auto FileAssetType = Read32<asset_type>(&FileMemoryItr, false);
             u32 FileOffsetToEntry = Read32<u32>(&FileMemoryItr, false);
+            auto FileAssetId = Read32<asset_id>(&FileMemoryItr, false);
+            
             u8* FileEntryItr = FileMemory + FileOffsetToEntry;
             
             switch(FileAssetType) {
-                case asset_type::Image: {
-                    auto Id = Read32<image_id>(&FileMemoryItr, false);
-                    LoadImage(Assets, RenderCommands, Id, &FileEntryItr);
-                    
+                case AssetType_Image: {
+                    LoadImage(Assets, RenderCommands, FileAssetId, &FileEntryItr);
                 } break;
-                case asset_type::Font: {
+                case AssetType_Font: {
                     // TODO(Momo): Implement
                 } break;
-                case asset_type::Spritesheet: {
-                    auto Id = Read32<spritesheet_id>(&FileMemoryItr, false);
-                    LoadSpritesheet(Assets, RenderCommands, Id, &FileEntryItr);
+                case AssetType_Spritesheet: {
+                    LoadSpritesheet(Assets, RenderCommands, FileAssetId, &FileEntryItr);
                 } break;
-                case asset_type::Sound: {
+                case AssetType_Sound: {
                     // TODO(Momo): Implement
                 } break;
-                
-                
                 
             }
             
@@ -211,24 +233,45 @@ Init(game_assets* Assets,
 }
 
 
+
 // NOTE(Momo): Image Interface
+static inline image_id
+GetImage(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Image);
+    return { Id };
+}
+
+
 static inline u32 
 GetBitmapId(game_assets* Assets, image_id Id) {
-    return (Assets->Images + (u32)Id)->BitmapId;
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Image);
+    return Entry->Image->BitmapId;
 }
 
 // NOTE(Momo): Spritesheet Interface
-static inline rect2f 
-GetSpritesheetFrame(game_assets* Assets, spritesheet_id Id, u32 FrameIndex) {
-    asset_spritesheet* Spritesheet = Assets->Spritesheets + (u32)Id;
-    Assert(FrameIndex < (Spritesheet->Rows * Spritesheet->Cols));
-    return Spritesheet->Frames[FrameIndex];
+static inline spritesheet_id
+GetSpritesheet(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Spritesheet);
+    return { Id };
 }
-
 
 static inline u32 
 GetBitmapId(game_assets* Assets, spritesheet_id Id) {
-    return (Assets->Spritesheets + (u32)Id)->BitmapId;
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Spritesheet);
+    return Entry->Spritesheet->BitmapId;
 }
+
+static inline rect2f 
+GetSpritesheetFrame(game_assets* Assets, spritesheet_id Id, u32 FrameIndex) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Spritesheet);
+    Assert(FrameIndex < (Entry->Spritesheet->Rows * Entry->Spritesheet->Cols));
+    return Entry->Spritesheet->Frames[FrameIndex];
+}
+
 
 #endif  

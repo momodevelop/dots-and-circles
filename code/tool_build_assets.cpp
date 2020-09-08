@@ -28,12 +28,7 @@
 struct asset_file_entry {
     asset_type Type;
     u32 OffsetToData;
-    union {
-        image_id ImageId;
-        spritesheet_id SpritesheetId;
-        //font_id FontId;
-        //sound_id SoundId;
-    };
+    asset_id Id;
 };
 
 struct asset_file_data_image {
@@ -51,6 +46,11 @@ struct asset_file_data_spritesheet {
     u32 Rows;
     u32 Cols;
 };
+
+struct asset_file_data_atlas {
+    
+    
+};
 #pragma pack(pop)
 
 
@@ -58,10 +58,9 @@ struct asset_file_data_spritesheet {
 // NOTE(Momo): Atlas Builder //////////////////////////////////////////////////////////////
 struct atlas_builder_entry {
     const char* Filename;
+    atlas_image_id Id;
     i32 X, Y, W, H;
 };
-
-
 
 struct atlas_builder {
     atlas_builder_entry Entries[MAX_ENTRIES];
@@ -90,7 +89,6 @@ AddImage(atlas_builder* Builder, const char* Filename) {
     ++Builder->EntryCount;
 }
 
-// TODO(Momo): Write my own sort?
 // NOTE(Momo): Sort by area. Maybe sort by other methods?
 static inline i32
 Comparer(const void* Lhs, const void* Rhs) {
@@ -125,30 +123,11 @@ Comparer(const void* Lhs, const void* Rhs) {
     auto LhsMultipler = Maximum(L->W, L->H)/Minimum(L->W, L->H) * L->W * L->H;
     auto RhsMultipler = Maximum(R->W, R->H)/Minimum(R->W, R->H) * R->W * R->H;
     return RhsMultipler - LhsMultipler;
-    
-    
 }
 
 static inline void 
 Sort(atlas_builder* Builder) {
-#if 1
-    printf("--- Before sort: \n");
-    for ( u32 j = 0; j < Builder->EntryCount; ++j ) {
-        auto* Space = Builder->Entries + j;
-        printf("\tSpace %d: Area = %d\n", j,  Space->W * Space->H);
-        
-    }
-#endif
-    
     qsort(Builder->Entries, Builder->EntryCount, sizeof(atlas_builder_entry), Comparer);
-#if 1
-    printf("--- After sort: \n");
-    for ( u32 j = 0; j < Builder->EntryCount; ++j ) {
-        auto* Space = Builder->Entries + j;
-        printf("\tSpace %d: Area = %d\n", j,  Space->W * Space->H);
-        
-    }
-#endif
 }
 
 static inline b32 
@@ -191,15 +170,6 @@ PackSub(atlas_builder* Builder) {
             // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
             if (ChosenSpaceIndex == SpaceCount) {
                 printf("\t[FAILED] Fit not found, terminating\n");
-#if 0
-                printf("\t[FAILED] Fit %d %d\n", Entry->W, Entry->H );
-                printf("--- Space Left:\n");
-                for ( u32 j = 0; j < SpaceCount; ++j ) {
-                    auto* Space = Spaces + j;
-                    printf("\tSpace %d: X = %d, Y = %d, W = %d, H = %d\n", j,  Space->X, Space->Y, Space->W, Space->H);
-                    
-                }
-#endif
                 return false;
             }
             
@@ -377,9 +347,6 @@ OutputToPng(atlas_builder* Builder, const char* Filename)
 
 
 // NOTE(Momo): Asset Builder //////////////////////////////////////////////////////////
-struct asset_builder_entry_atlas {
-};
-
 struct asset_builder_entry_image {
     const char* Filename;
 };
@@ -388,8 +355,17 @@ struct asset_builder_entry_sound {
     // TODO(Momo): 
 };
 
+struct asset_builder_entry_atlas {
+    atlas_builder* AtlasBuilder;
+};
+
+
+
 struct asset_builder_entry_font {
-    // TODO(Momo): 
+    const char* Filename;
+    const char* Characters;
+    u32 CharacterCount;
+    f32 Size;
 };
 
 struct asset_builder_entry_spritesheet {
@@ -400,18 +376,13 @@ struct asset_builder_entry_spritesheet {
 
 struct asset_builder_entry  {
     asset_type Type;
-    union {
-        image_id ImageId;
-        spritesheet_id SpritesheetId;
-        //font_id FontId;
-        //sound_id SoundId;
-    };
+    asset_id Id;
     
     union {
         asset_builder_entry_image Image;
         asset_builder_entry_sound Sound;
-        asset_builder_entry_font Font;
         asset_builder_entry_spritesheet Spritesheet;
+        asset_builder_entry_atlas Atlas;
     };
     
 };
@@ -420,49 +391,47 @@ struct asset_builder_entry  {
 struct asset_builder {
     asset_builder_entry Entries[MAX_ENTRIES];
     u32 EntryCount;
-    
-    u32 ImageCount;
-    u32 SpritesheetCount;
-    u32 FontCount;
-    u32 SoundCount;
 };
 
 
 static inline asset_builder_entry*
-AddAssetEntry(asset_builder* Assets) {
+AddAssetEntry(asset_builder* Assets, asset_id Id, asset_type Type) {
     Assert(Assets->EntryCount != MAX_ENTRIES);
-    asset_builder_entry* Ret = &Assets->Entries[Assets->EntryCount];
-    ++Assets->EntryCount;
-    
+    asset_builder_entry* Ret = &Assets->Entries[Assets->EntryCount++];
+    Ret->Id = Id;
+    Ret->Type = Type;
     return Ret;
 }
 
 
 static inline void
-AddImage(asset_builder* Assets, const char* Filename, image_id Id) {
-    asset_builder_entry* Entry = AddAssetEntry(Assets);
-    Entry->Type = asset_type::Image;
-    Entry->ImageId = Id;
+AddImage(asset_builder* Assets, const char* Filename, asset_id Id) {
+    asset_builder_entry* Entry = AddAssetEntry(Assets, Id, AssetType_Image);
     Entry->Image.Filename = Filename;
-    ++Assets->ImageCount;
 }
 
 static inline void 
 AddSpritesheet(asset_builder* Assets, 
                const char* Filename, 
-               spritesheet_id Id,  
+               asset_id Id,  
                u32 Rows, 
                u32 Columns) 
 {
-    asset_builder_entry* Entry = AddAssetEntry(Assets);
-    Entry->Type = asset_type::Spritesheet;
-    Entry->SpritesheetId = Id;
+    asset_builder_entry* Entry = AddAssetEntry(Assets, Id, AssetType_Spritesheet);
     Entry->Spritesheet.Filename = Filename;
     Entry->Spritesheet.Rows = Rows;
     Entry->Spritesheet.Cols = Columns;
-    ++Assets->SpritesheetCount;
 }
 
+
+static inline void 
+AddAtlas(asset_builder* Assets, atlas_builder* Atlas, asset_id Id) 
+{
+    asset_builder_entry* Entry = AddAssetEntry(Assets, Id, AssetType_Atlas);
+    // TODO(Momo): Maybe copy over required things?
+    
+    Entry->Atlas.AtlasBuilder = Atlas;
+}
 
 static inline b32 
 WriteToFile(asset_builder* Assets, const char* Filename) {
@@ -482,22 +451,10 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
     fwrite(AssetSignature, sizeof(u8), sizeof(AssetSignature), pFile);
     HeaderAt += sizeof(AssetSignature);
     
-    
     // NOTE(Momo): Write the amount of items
-    // TODO(Momo): Write a helper function for this?
-    fwrite(&Assets->ImageCount, sizeof(Assets->ImageCount), 1, pFile);
-    HeaderAt += sizeof(Assets->ImageCount);
+    fwrite(&Assets->EntryCount, sizeof(Assets->EntryCount), 1, pFile);
+    HeaderAt += sizeof(Assets->EntryCount);
     
-    fwrite(&Assets->SpritesheetCount, sizeof(Assets->SpritesheetCount), 1, pFile);
-    HeaderAt += sizeof(Assets->SpritesheetCount);
-    
-#if 0
-    fwrite(&Assets->FontCount, sizeof(Assets->FontCount), 1, pFile);
-    HeaderAt += sizeof(Assets->FontCount);
-    
-    fwrite(&Assets->SoundCount, sizeof(Assets->SoundCount), 1, pFile);
-    HeaderAt += sizeof(Assets->SoundCount);
-#endif
     
     usize DataAt = HeaderAt + (sizeof(asset_file_entry) * Assets->EntryCount);
     
@@ -508,7 +465,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
         asset_builder_entry* Entry = &Assets->Entries[i];
         
         switch(Entry->Type) {
-            case asset_type::Image: {
+            case AssetType_Image: {
                 const char* ImageFilename = Entry->Image.Filename;
                 i32 ImageWidth, ImageHeight, ImageComp;
                 u8* LoadedImage = stbi_load(ImageFilename, &ImageWidth, &ImageHeight, &ImageComp, 0);
@@ -523,9 +480,9 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                     fseek(pFile, (i32)HeaderAt, SEEK_SET);
                     
                     asset_file_entry Header = {};
-                    Header.Type = asset_type::Image;
+                    Header.Type = Entry->Type;
                     Header.OffsetToData = (u32)DataAt;
-                    Header.ImageId = Entry->ImageId;
+                    Header.Id = Entry->Id;
                     
                     fwrite(&Header, sizeof(asset_file_entry), 1, pFile); 
                     HeaderAt += sizeof(asset_file_entry);
@@ -554,9 +511,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 printf("Loaded Image '%s': Width = %d, Height = %d, Comp = %d\n", ImageFilename, ImageWidth, ImageHeight, ImageComp);
                 
             } break;
-            case asset_type::Font: {
-            } break;
-            case asset_type::Spritesheet: {
+            case AssetType_Spritesheet: {
                 const char* ImageFilename = Entry->Image.Filename;
                 i32 ImageWidth, ImageHeight, ImageComp;
                 u8* LoadedImage = stbi_load(ImageFilename, &ImageWidth, &ImageHeight, &ImageComp, 0);
@@ -572,9 +527,9 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                     fseek(pFile, (i32)HeaderAt, SEEK_SET);
                     
                     asset_file_entry Header = {};
-                    Header.Type = asset_type::Spritesheet;
+                    Header.Type = AssetType_Spritesheet;
                     Header.OffsetToData = (u32)DataAt;
-                    Header.SpritesheetId = Entry->SpritesheetId;
+                    Header.Id = Entry->Id;
                     
                     fwrite(&Header, sizeof(asset_file_entry), 1, pFile); 
                     HeaderAt += sizeof(asset_file_entry);
@@ -603,8 +558,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 }
                 
                 printf("Loaded Spritesheet '%s': Width = %d, Height = %d, Comp = %d, Rows = %d, Cols = %d\n", ImageFilename, ImageWidth, ImageHeight, ImageComp, Entry->Spritesheet.Rows, Entry->Spritesheet.Cols);
-            } break;
-            case asset_type::Sound: {
             } break;
         }
         
@@ -649,8 +602,6 @@ int main() {
     const char* Characters = "abc";
     char OutFileBuffer[6];
     for (u32 i = 0; i < ArrayCount(Characters) - 1; ++i) {
-        
-        
         u32 Width = 0;
         u32 Height = 0;
         {
@@ -665,7 +616,6 @@ int main() {
         
         stbtt_MakeCodepointBitmap(&FontInfo, Bitmap, Width, Height, Width, Scale, Scale, Characters[i]);
         
-        
         OutFileBuffer[0] = Characters[i];
         OutFileBuffer[1] = '.';
         OutFileBuffer[2] = 'p';
@@ -676,46 +626,14 @@ int main() {
     }
     
 #else 
-    // TODO(Momo): Options for this? (different assets for different renderers?)
-    stbi_set_flip_vertically_on_load(false);
     
     atlas_builder Atlas_ = {};
     atlas_builder* Atlas = &Atlas_;
     {
-        
-        AddImage(Atlas, "assets/atlas_test/1.png");
-        AddImage(Atlas, "assets/atlas_test/2.png");
-        AddImage(Atlas, "assets/atlas_test/3.png");
-        AddImage(Atlas, "assets/atlas_test/4.png");
-        AddImage(Atlas, "assets/atlas_test/5.png");
-        AddImage(Atlas, "assets/atlas_test/6.png");
-        AddImage(Atlas, "assets/atlas_test/7.png");
-        AddImage(Atlas, "assets/atlas_test/8.png");
-        AddImage(Atlas, "assets/atlas_test/9.png");
-        AddImage(Atlas, "assets/atlas_test/10.png");
-        AddImage(Atlas, "assets/atlas_test/11.png");
-        AddImage(Atlas, "assets/atlas_test/12.png");
-        AddImage(Atlas, "assets/atlas_test/13.png");
-        AddImage(Atlas, "assets/atlas_test/14.png");
-        
-        
-        for (u32 i = 0 ; i < 20; ++i ) {
-            AddImage(Atlas, "assets/atlas_test/2.png");
-            AddImage(Atlas, "assets/atlas_test/3.png");
-            AddImage(Atlas, "assets/atlas_test/4.png");
-            AddImage(Atlas, "assets/atlas_test/5.png");
-            AddImage(Atlas, "assets/atlas_test/6.png");
-            AddImage(Atlas, "assets/atlas_test/7.png");
-            AddImage(Atlas, "assets/atlas_test/8.png");
-            AddImage(Atlas, "assets/atlas_test/9.png");
-            AddImage(Atlas, "assets/atlas_test/10.png");
-            AddImage(Atlas, "assets/atlas_test/11.png");
-            AddImage(Atlas, "assets/atlas_test/12.png");
-        }
-        
+        AddImage(Atlas, "assets/ryoji.png");
+        AddImage(Atlas, "assets/yuu.png");
         
         Sort(Atlas);
-        
         
         if (!Pack(Atlas, 128, 128, 4)) {
             printf("Pack failed\n");
@@ -723,19 +641,22 @@ int main() {
         }
         printf("Final Atlas Dimension: W = %d, H = %d\n", Atlas->Width, Atlas->Height);
         
+#if 1
         OutputToPng(Atlas, "test.png");
+#endif
     }
-    
     
     
     // NOTE(Momo): Gather all the assets we need to load
     asset_builder Assets_ = {};
     asset_builder* Assets = &Assets_;
     {
-        AddImage(Assets, "assets/ryoji.png", image_id::Ryoji);
-        AddImage(Assets, "assets/yuu.png", image_id::Yuu);
-        AddSpritesheet(Assets, "assets/karu.png", spritesheet_id::Karu, 4, 3);
-        //AddAtlas(Assets, Atlas, atlas_id::Main);
+        AddImage(Assets, "assets/ryoji.png", Asset_ImageRyoji);
+        AddImage(Assets, "assets/yuu.png", Asset_ImageYuu);
+        
+        AddSpritesheet(Assets, "assets/karu.png", Asset_SpritesheetKaru, 4, 3);
+        
+        
         
     }
     
