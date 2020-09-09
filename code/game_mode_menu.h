@@ -1,7 +1,6 @@
 #ifndef GAME_MODE_MENU_H
 #define GAME_MODE_MENU_H
 
-#include "game.h"
 #include "game_mode_splash.h"
 
 
@@ -16,16 +15,16 @@ struct game_mode_menu {
 };
 
 static inline void 
-InitMode(game_mode_menu* Mode, game_state* GameState) {
+Init(game_mode_menu* Mode, game_state* GameState) {
     Log("Menu state initialized!");
 }
 
 static inline void
-UpdateMode(game_mode_menu* Mode,
-           game_state* GameState, 
-           commands* RenderCommands, 
-           game_input* Input,
-           f32 DeltaTime) 
+Update(game_mode_menu* Mode,
+       game_state* GameState, 
+       commands* RenderCommands, 
+       game_input* Input,
+       f32 DeltaTime) 
 {
     
 #if INTERNAL

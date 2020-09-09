@@ -3,9 +3,6 @@
 
 #include "ryoji_easing.h"
 
-#include "game.h"
-#include "game_mode_menu.h"
-
 struct splash_image_entity {
     v3f Scale;
     v3f Position;
@@ -81,14 +78,13 @@ Update(splash_blackout_entity* Entity,
 }
 
 struct game_mode_splash {
-    static constexpr u8 TypeId = 0;
     splash_image_entity SplashImg[2];
     splash_blackout_entity SplashBlackout;
 };
 
 
 static inline void
-InitMode(game_mode_splash* Mode, game_state* GameState) {
+Init(game_mode_splash* Mode, game_state* GameState) {
     // NOTE(Momo): Create entities
     {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
@@ -125,11 +121,11 @@ InitMode(game_mode_splash* Mode, game_state* GameState) {
 }
 
 static inline void
-UpdateMode(game_mode_splash* Mode,
-           game_state* GameState, 
-           commands* RenderCommands,
-           game_input* Input,
-           f32 DeltaTime) {
+Update(game_mode_splash* Mode,
+       game_state* GameState, 
+       commands* RenderCommands,
+       game_input* Input,
+       f32 DeltaTime) {
     
 #if INTERNAL
     if (ProcessMetaInput(GameState, Input)) {
@@ -154,7 +150,7 @@ UpdateMode(game_mode_splash* Mode,
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         Log("Splash state exit");
-        SetGameMode<game_mode_menu>(GameState);
+        SetGameMode(GameState, GameModeType_Menu);
     }
 }
 

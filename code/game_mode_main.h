@@ -3,8 +3,6 @@
 
 #include "ryoji_easing.h"
 #include "ryoji_maths.h"
-#include "game.h"
-#include "game_assets.h"
 
 
 v3f CameraPosition;
@@ -195,7 +193,7 @@ Render(block* Entity,
 }
 
 static inline void
-InitMode(game_mode_main* Mode, game_state* GameState) {
+Init(game_mode_main* Mode, game_state* GameState) {
     
     // NOTE(Momo): Camera 
     {
@@ -378,11 +376,11 @@ GetPushbackNormal(aabb2f Static, aabb2f Dynamic ) {
 
 
 static inline void
-UpdateMode(game_mode_main* Mode,
-           game_state* GameState, 
-           commands* RenderCommands, 
-           game_input* Input,
-           f32 DeltaTime) 
+Update(game_mode_main* Mode,
+       game_state* GameState, 
+       commands* RenderCommands, 
+       game_input* Input,
+       f32 DeltaTime) 
 {
 #if INTERNAL
     if (ProcessMetaInput(GameState, Input)) {

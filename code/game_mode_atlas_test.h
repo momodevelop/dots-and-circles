@@ -10,16 +10,16 @@ struct game_mode_atlas_test {
 };
 
 static inline void 
-InitMode(game_mode_atlas_test* Mode, game_state* GameState) {
+Init(game_mode_atlas_test* Mode, game_state* GameState) {
     Log("Atlas Test state initialized!");
 }
 
 static inline void
-UpdateMode(game_mode_atlas_test* Mode,
-           game_state* GameState, 
-           commands* RenderCommands, 
-           game_input* Input,
-           f32 DeltaTime) 
+Update(game_mode_atlas_test* Mode,
+       game_state* GameState, 
+       commands* RenderCommands, 
+       game_input* Input,
+       f32 DeltaTime) 
 {
     
 #if INTERNAL
