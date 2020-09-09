@@ -1,27 +1,21 @@
-#ifndef GAME_MODE_MENU_H
-#define GAME_MODE_MENU_H
+#ifndef GAME_MODE_ATLAS_TEST_H
+#define GAME_MODE_ATLAS_TEST_H
 
 #include "game.h"
-#include "game_mode_splash.h"
 
-
-static inline void
-DrawString(commands* Commands, f32 X, f32 Y, const char* String) {
-    // TODO(Momo): Implementation
-}
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
-struct game_mode_menu {
-    static constexpr u8 TypeId = 1;
+struct game_mode_atlas_test {
+    static constexpr u8 TypeId = 3;
 };
 
 static inline void 
-InitMode(game_mode_menu* Mode, game_state* GameState) {
-    Log("Menu state initialized!");
+InitMode(game_mode_atlas_test* Mode, game_state* GameState) {
+    Log("Atlas Test state initialized!");
 }
 
 static inline void
-UpdateMode(game_mode_menu* Mode,
+UpdateMode(game_mode_atlas_test* Mode,
            game_state* GameState, 
            commands* RenderCommands, 
            game_input* Input,
@@ -36,9 +30,8 @@ UpdateMode(game_mode_menu* Mode,
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });;
     PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     
-    DrawString(RenderCommands, 0.f, 0.f, "Hello World~!");
 }
 
 
 
-#endif //GAME_MODE_MENU_H
+#endif 

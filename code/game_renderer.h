@@ -20,7 +20,6 @@ Ground rules about this renderer.
 #include "ryoji_commands.h"
 #include "ryoji_maths.h"
 
-
 struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
     v4f Colors;

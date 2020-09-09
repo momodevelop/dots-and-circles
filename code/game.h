@@ -1,11 +1,14 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "game_renderer.h"
 #include "game_platform.h"
 #include "game_input.h"
+#include "game_renderer.h"
 #include "game_assets.h"
+
 #include "game_entities.h"
+
+
 
 #if  INTERNAL
 static platform_log* gLog;
@@ -20,9 +23,12 @@ struct game_state {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
         struct game_mode_menu* MenuMode;
+        struct game_mode_atlas_test* AtlasTestMode;
     };
     
     u32 CurrentMode;
+    
+    void (*UpdateMode)(void* Mode, game_state* State, commands* RenderCommands, game_input* Input, f32 DeltaTime);
     
     game_assets* Assets;
     
@@ -55,6 +61,11 @@ ProcessMetaInput(game_state* GameState, game_input* Input) {
     else if (IsPoked(Input->ButtonDebug[2])) {
         SetGameMode<game_mode_menu>(GameState);
         Log("Jumping to menu state");
+        return true;
+    }
+    else if (IsPoked(Input->ButtonDebug[9])) {
+        SetGameMode<game_mode_atlas_test>(GameState);
+        Log("Jumping to atlas test state");
         return true;
     }
     

@@ -29,16 +29,12 @@ struct asset_data_spritesheet {
 
 struct image_id { 
     u32 Value; 
-    operator u32() {
-        return Value;
-    }
+    operator u32() { return Value; }
 };
 
 struct spritesheet_id { 
     u32 Value; 
-    operator u32() {
-        return Value;
-    }
+    operator u32() { return Value; }
 };
 
 
@@ -272,6 +268,8 @@ GetSpritesheetFrame(game_assets* Assets, spritesheet_id Id, u32 FrameIndex) {
     Assert(FrameIndex < (Entry->Spritesheet->Rows * Entry->Spritesheet->Cols));
     return Entry->Spritesheet->Frames[FrameIndex];
 }
+
+// NOTE(Momo): Atlas Interface
 
 
 #endif  

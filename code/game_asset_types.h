@@ -16,13 +16,7 @@ enum asset_id : u32 {
     Asset_ImageRyoji,
     Asset_ImageYuu,
     Asset_SpritesheetKaru,
+    Asset_FontDefault,
 };
-
-
-enum atlas_image_id : u32 {
-    Atlas_ImageRyoji,
-    Atlas_ImageYuu,
-};
-
 
 #endif 

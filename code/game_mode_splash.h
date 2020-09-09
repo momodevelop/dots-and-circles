@@ -20,6 +20,7 @@ struct splash_image_entity {
     f32 Duration;
     f32 StartX;
     f32 EndX;
+    
 };
 
 static inline void

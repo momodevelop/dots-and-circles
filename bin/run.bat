@@ -8,9 +8,16 @@ pushd %BuildDir%
 
 IF "%Opt%"=="assets" (
 	call tool_build_assets.exe
-	REM call tool_build_assets_v2.exe
+	GOTO End
+) 
 
-) ELSE (
-	call sdl_platform.exe
-)
+IF "%Opt%"=="atlas" (
+	call tool_build_atlas.exe
+	GOTO End
+) 
+
+call sdl_platform.exe
+
+:End
+
 popd
