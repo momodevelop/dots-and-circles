@@ -364,9 +364,10 @@ GetBitmapId(game_assets* Assets, font_id Id) {
     return Entry->Font->BitmapId;
 }
 
-// TODO(Momo): This is very bad haha. We should really use Codepoint to get the font UV..........
+// TODO(Momo): This is very bad haha. 
+// We should really use Codepoint to get the font UV..........
 static inline rect2f 
-GetFontUV(game_assets* Assets, font_id Id, u32 FrameIndex) {
+GetFontCharacterUV(game_assets* Assets, font_id Id, u32 FrameIndex) {
     asset_entry* Entry = Assets->Entries + Id;
     Assert(Entry->Type == AssetType_Font);
     
@@ -385,5 +386,19 @@ GetFontUV(game_assets* Assets, font_id Id, u32 FrameIndex) {
         UVYmax,
     };
 }
+
+#if 0
+static inline f32
+GetFontCharacterScale(game_assets* Assets, font_id Id, u32 FrameIndex, f32 FontSize) {
+    // Fontsize dictate the height of the lettering.
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Font);
+    
+    auto* Font = Entry->Font;
+    auto* CharacterData = Font->CharacterData + FrameIndex;
+    
+    return (f32)CharacterData->W / CharacterData->H;
+}
+#endif
 
 #endif  

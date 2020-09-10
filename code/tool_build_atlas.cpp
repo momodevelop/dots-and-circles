@@ -27,14 +27,16 @@ struct atlas_file_header {
     u32 Height;
     u32 Channels;
     
+    u32 EntryCount;
+    u32 OffsetToEntries;
+    
     u32 RectCount;
-    u32 OffsetToRectData;
-    
-    u32 FontCount;
-    u32 OffsetToFontData;
-    
-    u32 GroupCount;
-    u32 OffsetToGroupData;
+    u32 OffsetToRects;
+};
+
+struct atlas_file_entry {
+    u32 Id;
+    u32 Type;
 };
 #pragma pack(pop)
 
@@ -42,7 +44,6 @@ struct atlas_file_header {
 // NOTE(Momo): Atlas Builder //////////////////////////////////////////////////////////////
 enum atlas_builder_entry_type {
     AtlasEntryType_Image,
-    AtlasEntryType_Font,
 };
 
 struct atlas_builder_entry_image {
@@ -50,16 +51,11 @@ struct atlas_builder_entry_image {
     u32 RectIndex;
 };
 
-struct atlas_builder_entry_font {
-};
-
-
 struct atlas_builder_entry {
     const char* Name;
     atlas_builder_entry_type Type;
     union {
         atlas_builder_entry_image Image;
-        atlas_builder_entry_font Font;
     };
 };
 
@@ -68,14 +64,11 @@ struct atlas_builder_rect {
 };
 
 struct atlas_builder {
-    atlas_builder_rect Rects[MAX_ENTRIES];
+    atlas_builder_rect Rects[MAX_RECTS];
     u32 RectCount;
     
     atlas_builder_entry Entries[MAX_ENTRIES];
     u32 EntryCount;
-    u32 GroupCount;
-    u32 FontCount;
-    u32 ImageCount;
     
     
     u32 Width;
@@ -95,17 +88,21 @@ Init(atlas_builder* Builder, u32 StartWidth, u32 StartHeight, u32 Channels) {
 }
 
 static inline u32
-AddRect(atlas_builder* Builder, atlas_builder_rect NewRect) {
-    auto* Rect = Builder->Rects +  Builder->RectCount++;
-    Assert(Builder->RectCount  < MAX_RECTS);
-    (*Rect) = NewRect;
+AddRect(atlas_builder* Builder, i32 W, i32 H) {
+    auto* Rect = Builder->Rects +  Builder->RectCount;
+    (*Rect) = {0, 0, W, H};
+    
+    
+    ++Builder->RectCount;
+    Assert(Builder->RectCount < LARGE_NUMBER);
+    
     return Builder->RectCount - 1;
 }
 
 static inline atlas_builder_entry*
 AddEntry(atlas_builder* Builder, atlas_builder_entry_type Type) {
     auto* Entry = Builder->Entries +  Builder->EntryCount++;
-    Assert(Builder->EntryCount < MAX_ENTRIES);
+    Assert(Builder->EntryCount < LARGE_NUMBER);
     Entry->Type = Type;
     return Entry;
 }
@@ -117,27 +114,16 @@ AddImage(atlas_builder* Builder, const char* Filename) {
     
     i32 W, H;
     stbi_info(Filename, &W, &H, 0);
-    Entry->Image.RectIndex = AddRect(Builder, {0, 0, W, H});
+    Entry->Image.RectIndex = AddRect(Builder, W, H);
 }
-
-#if 0
-static inline void 
-AddFont(atlas_builder* Builder, const char* Filename, const char* Characters, f32 Size) {
-    
-    auto* Entry = Builder->Entries +  Builder->EntryCount;
-    Entry->Filename = Filename;
-    stbi_info(Filename, &Entry->W, &Entry->H, 0);
-    ++Builder->EntryCount;
-}
-#endif
 
 
 
 // NOTE(Momo): Sort by area. Maybe sort by other methods?
 static inline i32
 Comparer(const void* Lhs, const void* Rhs) {
-    const auto* L = (atlas_builder_rect*)Lhs;
-    const auto* R = (atlas_builder_rect*)Rhs;
+    const auto* L = (atlas_builder_rect**)Lhs;
+    const auto* R = (atlas_builder_rect**)Rhs;
     
     auto LhsArea = L->W * L->H;
     auto RhsArea = R->W * R->H;
@@ -169,16 +155,10 @@ Comparer(const void* Lhs, const void* Rhs) {
     return RhsMultipler - LhsMultipler;
 }
 
-static inline void 
-Sort(atlas_builder* Builder) {
-    qsort(Builder->Rects, Builder->RectCount, sizeof(atlas_builder_rect), Comparer);
-}
 
 static inline b32 
-PackSub(atlas_builder* Builder) {
-    struct rect {
-        i32 X, Y, W, H;
-    } Spaces[MAX_ENTRIES];
+TryPack(atlas_builder* Builder) {
+    atlas_builder_rect Spaces[MAX_RECTS];
     u32 SpaceCount = 0;
     
     Spaces->X = 0;
@@ -202,7 +182,6 @@ PackSub(atlas_builder* Builder) {
                     // NOTE(Momo): Check if the image fits
                     if (Rect->W <= Space->W && Rect->H <= Space->H) {
                         ChosenSpaceIndex = Index;
-                        
                         break;
                         
                     }
@@ -307,13 +286,21 @@ Pack(atlas_builder* Builder, u32 StartAtlasWidth, u32 StartAtlasHeight, u32 Chan
     Assert(StartAtlasHeight > 0);
     Assert(Channels > 0);
     
+    // NOTE(Momo): Sort
+    atlas_builder_rect* SortedRects[MAX_RECTS];
+    {
+        for (u32 i = 0; i < Builder->RectCount; ++i) 
+            SortedRects[i] = &Builder->Rects[i];
+        qsort(SortedRects, Builder->RectCount, sizeof(atlas_builder_rect*), Comparer);
+    }
+    
     Builder->Width = StartAtlasWidth;
     Builder->Height = StartAtlasHeight;
     Builder->Channels = Channels;
     
     // NOTE(Momo): POT scaling.
     for (;;) {
-        b32 Success = PackSub(Builder);
+        b32 Success = TryPack(Builder);
         if (!Success) {
             if(Builder->Width >= ATLAS_WIDTH_LIMIT || Builder->Height >= ATLAS_HEIGHT_LIMIT) {
                 return false;
@@ -331,7 +318,7 @@ Pack(atlas_builder* Builder, u32 StartAtlasWidth, u32 StartAtlasHeight, u32 Chan
 }
 
 static inline u8* 
-AllocateAtlasData(atlas_builder* Builder) {
+AllocateTexture(atlas_builder* Builder) {
     u32 MemorySize = Builder->Width * Builder->Height * Builder->Channels;
     u8* Memory = (u8*)calloc(MemorySize, sizeof(u8));
     if (!Memory) {
@@ -342,70 +329,6 @@ AllocateAtlasData(atlas_builder* Builder) {
         auto* Entry = Builder->Entries + i;
         
         switch(Entry->Type) {
-            case AtlasEntryType_Image: {
-                auto* Image = &Entry->Image;
-                auto* Rect = Builder->Rects + Image->RectIndex;
-                
-                i32 W,H,C;
-                u8* LoadedImage = stbi_load(Image->Filename, &W, &H, &C, 0);
-                if (LoadedImage == nullptr) {
-                    return nullptr;
-                }
-                Defer { stbi_image_free(LoadedImage); };
-                
-                // TODO(Momo): Limitation: Color Channels of all images must be same as builder channels
-                Assert(W == Rect->W && H == Rect->H && C == (i32)Builder->Channels); 
-                
-                i32 j = 0;
-                for (i32 y = Rect->Y; y < Rect->Y + Rect->H; ++y) {
-                    for (i32 x = Rect->X; x < Rect->X + Rect->W; ++x) {
-                        i32 Index = TwoToOne(y, x, Builder->Width) * Builder->Channels;
-                        for (u32 c = 0; c < Builder->Channels; ++c) {
-                            Memory[Index + c] = LoadedImage[j++];
-                        }
-                    }
-                }
-                
-            } break;
-            
-        }
-        
-    }
-    
-    return Memory;
-}
-
-static inline void
-FreeAtlasData(u8* Memory) {
-    free(Memory);
-}
-
-// NOTE(Momo): Debug no tame
-static inline b32
-WriteToPng(atlas_builder* Builder, const char* Filename) 
-{
-    printf("=== Writing to %s \n", Filename);
-    u8* Memory = AllocateAtlasData(Builder);
-    if (!Memory) {
-        return false;
-    }
-    Defer { FreeAtlasData(Memory); };
-    
-    stbi_write_png(Filename, Builder->Width, Builder->Height, Builder->Channels, Memory, Builder->Width * Builder->Channels);
-    printf("\tWrite completed\n");
-    return true;
-}
-
-static inline b32
-WriteToAtlas(atlas_builder* Builder, const char* Filename) {
-    printf("=== Writing to %s \n", Filename);
-    u8* Memory = AllocateAtlasData(Builder);
-    if (!Memory) { return false; }
-    Defer { FreeAtlasData(Memory); };
-    
-    
-    switch(Entry->Type) {
-        case AtlasEntryType_Image: {
             auto* Image = &Entry->Image;
             auto* Rect = Builder->Rects + Image->RectIndex;
             
@@ -427,13 +350,40 @@ WriteToAtlas(atlas_builder* Builder, const char* Filename) {
                         Memory[Index + c] = LoadedImage[j++];
                     }
                 }
-            }
+            } break;
             
-            
-        } break;
+        }
         
     }
     
+    return Memory;
+}
+
+static inline void
+FreeTexture(u8* Memory) {
+    free(Memory);
+}
+
+// NOTE(Momo): Debug no tame
+static inline b32
+WriteToPng(atlas_builder* Builder, const char* Filename) 
+{
+    printf("=== Writing to %s \n", Filename);
+    u8* Memory = AllocateTexture(Builder);
+    if (!Memory) {
+        return false;
+    }
+    Defer { FreeTexture(Memory); };
+    
+    stbi_write_png(Filename, Builder->Width, Builder->Height, Builder->Channels, Memory, Builder->Width * Builder->Channels);
+    printf("\tWrite completed\n");
+    return true;
+}
+
+static inline b32
+WriteToAtlas(atlas_builder* Builder, const char* Filename) {
+    printf("=== Writing to %s \n", Filename);
+    return true;
 }
 
 
@@ -444,7 +394,7 @@ int main() {
         AddImage(Atlas, "assets/ryoji.png");
         AddImage(Atlas, "assets/yuu.png");
         //AddFont(Atlas, "assets/font.odt", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 36.f);
-        Sort(Atlas);
+        
         
     }
     
@@ -454,7 +404,6 @@ int main() {
     }
     printf("Final Atlas Dimension: W = %d, H = %d\n", Atlas->Width, Atlas->Height);
     WriteToPng(Atlas, "assets/atlas.png");
-    
     WriteToAtlas(Atlas, "assets/ryoji.atlas");
     
     

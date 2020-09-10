@@ -88,6 +88,13 @@ GameUpdate(game_memory* GameMemory,
         GameState->Assets = GameAssets;
         Init(GameAssets, MainArena, Platform, RenderCommands, "yuu");
         
+        // NOTE(Momo): Atlas?
+        {
+            
+        }
+        
+        
+        
         
         // NOTE(Momo): Arena for modes
         SubArena(&GameState->ModeArena, &GameState->MainArena, 
