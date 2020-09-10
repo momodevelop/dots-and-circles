@@ -129,7 +129,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 fseek(OutFile, (i32)HeaderAt, SEEK_SET);
                 {
                     asset_file_entry Header = {};
-                    Header.Type = AssetType_Spritesheet;
+                    Header.Type = Entry->Type;
                     Header.OffsetToData = (u32)DataAt;
                     Header.Id = Entry->Id;
                     
@@ -163,7 +163,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
             } break;
             
             case AssetType_Font: {
-                
                 const char* FontFilename = Entry->Font.Filename;
                 u8* FontBuffer = nullptr; 
                 {
@@ -218,7 +217,7 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 fseek(OutFile, (i32)HeaderAt, SEEK_SET);
                 {
                     asset_file_entry Header = {};
-                    Header.Type = AssetType_Font;
+                    Header.Type = Entry->Type;
                     Header.OffsetToData = (u32)DataAt;
                     Header.Id = Entry->Id;
                     
@@ -230,8 +229,6 @@ WriteToFile(asset_builder* Assets, const char* Filename) {
                 // NOTE(Momo): Write Data
                 fseek(OutFile, (i32)DataAt, SEEK_SET);
                 {
-                    
-                    
                     asset_file_data_font Font = {};
                     Font.Width = (u32)BitmapWidth;
                     Font.Height = (u32)BitmapHeight;

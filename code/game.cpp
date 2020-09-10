@@ -103,10 +103,10 @@ GameUpdate(game_memory* GameMemory,
         case GameModeType_Splash: {
             Update(GameState->SplashMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
-        case GameModeType_Main: {
+        case GameModeType_Menu: {
             Update(GameState->MenuMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
-        case GameModeType_Menu: {
+        case GameModeType_Main: {
             Update(GameState->MainMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
         case GameModeType_AtlasTest: {

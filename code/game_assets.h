@@ -8,6 +8,23 @@
 
 #include "game_asset_types.h"
 
+
+struct asset_data_font_character_data {
+    u32 X, Y, W, H;
+    u32 Codepoint;
+};
+
+struct asset_data_font {
+    u32 Width;
+    u32 Height;
+    void* Pixels;
+    
+    u32 BitmapId;
+    
+    asset_data_font_character_data* CharacterData;
+    u32 CharacterCount;
+};
+
 struct asset_data_image {
     u32 Width;
     u32 Height;
@@ -37,6 +54,12 @@ struct spritesheet_id {
     operator u32() { return Value; }
 };
 
+struct font_id { 
+    u32 Value; 
+    operator u32() { return Value; }
+};
+
+
 
 struct asset_entry {
     asset_type Type;
@@ -45,6 +68,7 @@ struct asset_entry {
         void* Data;
         asset_data_image* Image;
         asset_data_spritesheet* Spritesheet;
+        asset_data_font* Font;
     };
 };
 
@@ -100,6 +124,61 @@ LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data)
     }
 }
 
+static inline void
+LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) {
+    u32 Width = Read32<u32>(Data, false);
+    u32 Height = Read32<u32>(Data, false);
+    u32 Channels = Read32<u32>(Data, false);
+    u32 CharacterCount = Read32<u32>(Data, false);
+    
+    
+    // NOTE(Momo): Allocate the font
+    asset_entry* Entry = Assets->Entries + Id;
+    {
+        Entry->Type = AssetType_Font;
+        Entry->Id = Id;
+        Entry->Font = PushStruct<asset_data_font>(&Assets->Arena);
+        Entry->Font->Width = Width;
+        Entry->Font->Height = Height;
+        Entry->Font->BitmapId = Assets->BitmapCounter++;
+        
+        // NOTE(Momo): Allocate character data
+        Entry->Font->CharacterData = PushArray<asset_data_font_character_data>(&Assets->Arena, CharacterCount);
+        Entry->Font->CharacterCount = CharacterCount;
+        for (u32 i = 0; i < CharacterCount; ++i) {
+            auto* CharacterData = Entry->Font->CharacterData + i;
+            
+            u32 X = Read32<u32>(Data, false);
+            u32 Y = Read32<u32>(Data, false);
+            u32 W = Read32<u32>(Data, false);
+            u32 H = Read32<u32>(Data, false);
+            u32 Codepoint = Read32<u32>(Data, false);
+            
+            CharacterData->X = X;
+            CharacterData->Y = Y;
+            CharacterData->W = W;
+            CharacterData->H = H;
+            CharacterData->Codepoint = Codepoint;
+            
+            
+            
+        }
+        
+        
+        // NOTE(Momo): Allocate pixel data
+        usize Size = Width * Height * Channels;
+        Entry->Font->Pixels = PushBlock(&Assets->Arena, Size, 1);
+        Assert(Entry->Font->Pixels);
+        CopyBlock(Entry->Font->Pixels, (*Data), Size);
+        
+        PushCommandLinkTexture(RenderCommands,
+                               Entry->Font->Width, 
+                               Entry->Font->Height,
+                               Entry->Font->Pixels,
+                               Entry->Font->BitmapId);
+    }
+    
+}
 
 static inline void
 LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) 
@@ -212,7 +291,7 @@ Init(game_assets* Assets,
                     LoadImage(Assets, RenderCommands, FileAssetId, &FileEntryItr);
                 } break;
                 case AssetType_Font: {
-                    // TODO(Momo): Implement
+                    LoadFont(Assets, RenderCommands, FileAssetId, &FileEntryItr);
                 } break;
                 case AssetType_Spritesheet: {
                     LoadSpritesheet(Assets, RenderCommands, FileAssetId, &FileEntryItr);
@@ -269,7 +348,42 @@ GetSpritesheetFrame(game_assets* Assets, spritesheet_id Id, u32 FrameIndex) {
     return Entry->Spritesheet->Frames[FrameIndex];
 }
 
-// NOTE(Momo): Atlas Interface
+// NOTE(Momo): Font Interface
+static inline font_id 
+GetFont(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Font);
+    return { Id };
+}
 
+
+static inline u32 
+GetBitmapId(game_assets* Assets, font_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Font);
+    return Entry->Font->BitmapId;
+}
+
+// TODO(Momo): This is very bad haha. We should really use Codepoint to get the font UV..........
+static inline rect2f 
+GetFontUV(game_assets* Assets, font_id Id, u32 FrameIndex) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Font);
+    
+    auto* Font = Entry->Font;
+    auto* CharacterData = Font->CharacterData + FrameIndex;
+    
+    f32 UVXmin = (f32)CharacterData->X / Font->Width;
+    f32 UVYmin = 1.f - ((f32)CharacterData->H / Font->Height); ;
+    f32 UVXmax = UVXmin + ((f32) CharacterData->W / Font->Width);
+    f32 UVYmax = 1.f;
+    
+    return {
+        UVXmin,
+        UVYmin,
+        UVXmax,
+        UVYmax,
+    };
+}
 
 #endif  

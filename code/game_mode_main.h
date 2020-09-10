@@ -61,8 +61,6 @@ struct block {
 
 
 struct game_mode_main {
-    static constexpr u8 TypeId = 2;
-    
     u8 AnimeWalkDown[4];
     u8 AnimeWalkLeft[4];
     u8 AnimeWalkRight[4];
