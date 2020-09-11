@@ -15,7 +15,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image_write.h"
 
-#define DEBUG_PNG 0
+#define DEBUG_PNG 1
+#define BITMAP_CHANNELS 4
 
 // NOTE(Momo): File Structures  //////////////////////////////////////////////////////////////
 #pragma pack(push, 1)
@@ -25,17 +26,27 @@ struct atlas_file_header {
     u32 EntryDataOffset;
     
     u32 RectCount;
-    u32 RectsDataOffset;
+    u32 RectDataOffset;
     
     u32 BitmapWidth;
     u32 BitmapHeight;
+    u32 BitmapChannels;
     u32 BitmapDataOffset;
 };
 
 struct atlas_file_entry {
     u32 Id;
     u32 Type;
+    u32 OffsetToData;
 };
+
+struct atlas_file_entry_data_image {
+    u32 RectIndex;
+};
+
+struct atlas_file_entry_data_font {
+};
+
 #pragma pack(pop)
 
 
@@ -58,12 +69,16 @@ struct atlas_builder_entry {
 };
 
 struct atlas_builder_rect {
-    i32 X, Y, W, H;
+    u32 X, Y, W, H;
 };
 
 struct atlas_builder {
     atlas_builder_rect* Rects; // List
-    atlas_builder_entry* Entries; //List
+    atlas_builder_rect** SortedRects; // List
+    atlas_builder_entry* Entries; // List
+    
+    u32 Width;
+    u32 Height;
     
     const char* OutputFilename;
     b32 Started;
@@ -71,8 +86,8 @@ struct atlas_builder {
 
 
 static inline u8* 
-AllocateBitmap(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels = 4) {
-    u32 BitmapSize = Width * Height * Channels;
+AllocateBitmap(atlas_builder* Builder) {
+    u32 BitmapSize = Builder->Width * Builder->Height * BITMAP_CHANNELS;
     u8* BitmapMemory = (u8*)calloc(BitmapSize, sizeof(u8));
     if (!BitmapMemory) {
         return nullptr;
@@ -82,28 +97,35 @@ AllocateBitmap(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels = 4) 
     
     
     u32 EntryCount = ListCount(Builder->Entries);
-    for (u32 i = 0; i <  EntryCount; ++i) {
+    for (u32 i = 0; i < EntryCount; ++i) {
         auto* Entry = Builder->Entries + i;
         
-        auto* Image = &Entry->Image;
-        auto* Rect = Builder->Rects + Image->RectIndex;
-        
-        i32 W,H,C;
-        u8* LoadedImage = stbi_load(Image->Filename, &W, &H, &C, 0);
-        if (LoadedImage == nullptr) {
-            return nullptr;
-        }
-        Defer { stbi_image_free(LoadedImage); };
-        
-        Assert(W == Rect->W && H == Rect->H && C == (i32)Channels); 
-        
-        i32 j = 0;
-        for (i32 y = Rect->Y; y < Rect->Y + Rect->H; ++y) {
-            for (i32 x = Rect->X; x < Rect->X + Rect->W; ++x) {
-                u32 Index = TwoToOne(y, x, Width) * Channels;
-                Assert(Index < BitmapSize);
-                for (u32 c = 0; c < Channels; ++c) {
-                    BitmapMemory[Index + c] = LoadedImage[j++];
+        // TODO(Momo): Cater for different types
+        {
+            auto* Image = &Entry->Image;
+            auto* Rect = Builder->Rects + Image->RectIndex;
+            
+            i32 W,H,C;
+            
+            u8* LoadedImage = stbi_load(Image->Filename, &W, &H, &C, 0);
+            if (LoadedImage == nullptr) {
+                return nullptr;
+            }
+            Defer { stbi_image_free(LoadedImage); };
+            
+            
+            Assert((u32)W == Rect->W);
+            Assert((u32)H == Rect->H);
+            Assert((u32)C == BITMAP_CHANNELS); 
+            
+            i32 j = 0;
+            for (u32 y = Rect->Y; y < Rect->Y + Rect->H; ++y) {
+                for (u32 x = Rect->X; x < Rect->X + Rect->W; ++x) {
+                    u32 Index = TwoToOne(y, x, Builder->Width) * BITMAP_CHANNELS;
+                    Assert(Index < BitmapSize);
+                    for (u32 c = 0; c < BITMAP_CHANNELS; ++c) {
+                        BitmapMemory[Index + c] = LoadedImage[j++];
+                    }
                 }
             }
         }
@@ -119,12 +141,12 @@ FreeBitmap(u8* Memory) {
 }
 
 static inline u32
-AddRect(atlas_builder* Builder, i32 W, i32 H) {
+AddRect(atlas_builder* Builder, u32 W, u32 H) {
     atlas_builder_rect Rect = {0, 0, W, H};
     ListPush(Builder->Rects, Rect);
     
     
-    return ListCount(Builder->Rects);
+    return ListCount(Builder->Rects) - 1;
 }
 
 static inline atlas_builder_entry*
@@ -144,7 +166,7 @@ AddImage(atlas_builder* Builder, const char* Filename) {
     
     i32 W, H;
     stbi_info(Filename, &W, &H, 0);
-    Entry->Image.RectIndex = AddRect(Builder, W, H);
+    Entry->Image.RectIndex = AddRect(Builder, (u32)W, (u32)H);
 }
 
 
@@ -158,7 +180,7 @@ Comparer(const void* Lhs, const void* Rhs) {
     auto LhsArea = L->W * L->H;
     auto RhsArea = R->W * R->H;
     if (LhsArea != RhsArea)
-        return  RhsArea - LhsArea;
+        return RhsArea - LhsArea;
     
     auto LhsPerimeter = L->W + L->H;
     auto RhsPerimeter = R->W + R->H;
@@ -199,167 +221,156 @@ TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
     }
     
     
-    {
-        u32 RectCount = ListCount(Builder->Rects);
-        for (u32 i = 0; i < RectCount; ++i ) {
-            auto* Rect = Builder->Rects + i;
-            
-            // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
-            u32 SpaceCount = ListCount(Spaces);
-            u32 ChosenSpaceIndex = SpaceCount;
-            {
-                for (u32 j = 0; j < SpaceCount; ++j ) {
-                    u32 Index = SpaceCount - j - 1;
-                    auto* Space = Spaces + Index;
-                    // NOTE(Momo): Check if the image fits
-                    if (Rect->W <= Space->W && Rect->H <= Space->H) {
-                        ChosenSpaceIndex = Index;
-                        break;
-                        
-                    }
+    for (u32 i = 0; i < ListCount(Builder->SortedRects); ++i ) {
+        atlas_builder_rect* Rect = *(Builder->SortedRects + i);
+        
+        // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
+        u32 ChosenSpaceIndex = ListCount(Spaces);
+        {
+            for (u32 j = 0; j < ChosenSpaceIndex ; ++j ) {
+                u32 Index = ChosenSpaceIndex - j - 1;
+                auto* Space = Spaces + Index;
+                // NOTE(Momo): Check if the image fits
+                if (Rect->W <= Space->W && Rect->H <= Space->H) {
+                    ChosenSpaceIndex = Index;
+                    break;
+                    
                 }
             }
-            
-            
-            // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
-            if (ChosenSpaceIndex == SpaceCount) {
-                return false;
-            }
-            
-            // NOTE(Momo): Swap and pop the chosen space
-            auto ChosenSpace = Spaces[ChosenSpaceIndex];
-            if (SpaceCount > 0) {
-                Spaces[ChosenSpaceIndex] = Spaces[SpaceCount - 1];
-                --SpaceCount;
-            }
-            
-            // NOTE(Momo): Split if not perfect fit
-            if (ChosenSpace.W != Rect->W && ChosenSpace.H == Rect->H) {
-                // Split right
-                atlas_builder_rect SplitSpaceRight = {};
-                SplitSpaceRight.X = ChosenSpace.X + Rect->W;
-                SplitSpaceRight.Y = ChosenSpace.Y;
-                SplitSpaceRight.W = ChosenSpace.W - Rect->W;
-                SplitSpaceRight.H = Rect->H;
-                Spaces[SpaceCount++] = SplitSpaceRight;
-                
-            }
-            else if (ChosenSpace.W == Rect->W && ChosenSpace.H != Rect->H) {
-                // Split down
-                atlas_builder_rect SplitSpaceDown = {};
-                SplitSpaceDown.X = ChosenSpace.X;
-                SplitSpaceDown.Y = ChosenSpace.Y + Rect->H;
-                SplitSpaceDown.W = ChosenSpace.W;
-                SplitSpaceDown.H = ChosenSpace.H - Rect->H;
-                Spaces[SpaceCount++] = SplitSpaceDown;
-                
-            }
-            else if (ChosenSpace.W != Rect->W && ChosenSpace.H != Rect->H) {
-                // Split right
-                atlas_builder_rect SplitSpaceRight = {};
-                SplitSpaceRight.X = ChosenSpace.X + Rect->W;
-                SplitSpaceRight.Y = ChosenSpace.Y;
-                SplitSpaceRight.W = ChosenSpace.W - Rect->W;
-                SplitSpaceRight.H = Rect->H;
-                
-                // Split down
-                atlas_builder_rect SplitSpaceDown = {};
-                SplitSpaceDown.X = ChosenSpace.X;
-                SplitSpaceDown.Y = ChosenSpace.Y + Rect->H;
-                SplitSpaceDown.W = ChosenSpace.W;
-                SplitSpaceDown.H = ChosenSpace.H - Rect->H;
-                
-                // Choose to insert the bigger one first before the smaller one
-                u32 RightArea = SplitSpaceRight.W * SplitSpaceRight.H;
-                u32 DownArea = SplitSpaceDown.W * SplitSpaceDown.H;
-                if (RightArea > DownArea) {
-                    Spaces[SpaceCount++] = SplitSpaceRight;
-                    Spaces[SpaceCount++] = SplitSpaceDown;
-                }
-                else {
-                    Spaces[SpaceCount++] = SplitSpaceDown;
-                    Spaces[SpaceCount++] = SplitSpaceRight;
-                }
-                
-            }
-            
-            // NOTE(Momo): Add to packed images
-            Rect->X = ChosenSpace.X;
-            Rect->Y = ChosenSpace.Y;
         }
+        
+        
+        // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
+        if (ChosenSpaceIndex == ListCount(Spaces)) {
+            return false;
+        }
+        
+        // NOTE(Momo): Swap and pop the chosen space
+        auto ChosenSpace = Spaces[ChosenSpaceIndex];
+        if (ListCount(Spaces) > 0) {
+            
+            Spaces[ChosenSpaceIndex] = ListLast(Spaces);
+            ListPop(Spaces);
+        }
+        
+        // NOTE(Momo): Split if not perfect fit
+        if (ChosenSpace.W != Rect->W && ChosenSpace.H == Rect->H) {
+            // Split right
+            atlas_builder_rect SplitSpaceRight = {};
+            SplitSpaceRight.X = ChosenSpace.X + Rect->W;
+            SplitSpaceRight.Y = ChosenSpace.Y;
+            SplitSpaceRight.W = ChosenSpace.W - Rect->W;
+            SplitSpaceRight.H = Rect->H;
+            
+            ListPush(Spaces, SplitSpaceRight);
+            
+        }
+        else if (ChosenSpace.W == Rect->W && ChosenSpace.H != Rect->H) {
+            // Split down
+            atlas_builder_rect SplitSpaceDown = {};
+            SplitSpaceDown.X = ChosenSpace.X;
+            SplitSpaceDown.Y = ChosenSpace.Y + Rect->H;
+            SplitSpaceDown.W = ChosenSpace.W;
+            SplitSpaceDown.H = ChosenSpace.H - Rect->H;
+            
+            ListPush(Spaces,SplitSpaceDown);
+        }
+        else if (ChosenSpace.W != Rect->W && ChosenSpace.H != Rect->H) {
+            // Split right
+            atlas_builder_rect SplitSpaceRight = {};
+            SplitSpaceRight.X = ChosenSpace.X + Rect->W;
+            SplitSpaceRight.Y = ChosenSpace.Y;
+            SplitSpaceRight.W = ChosenSpace.W - Rect->W;
+            SplitSpaceRight.H = Rect->H;
+            
+            // Split down
+            atlas_builder_rect SplitSpaceDown = {};
+            SplitSpaceDown.X = ChosenSpace.X;
+            SplitSpaceDown.Y = ChosenSpace.Y + Rect->H;
+            SplitSpaceDown.W = ChosenSpace.W;
+            SplitSpaceDown.H = ChosenSpace.H - Rect->H;
+            
+            // Choose to insert the bigger one first before the smaller one
+            u32 RightArea = SplitSpaceRight.W * SplitSpaceRight.H;
+            u32 DownArea = SplitSpaceDown.W * SplitSpaceDown.H;
+            if (RightArea > DownArea) {
+                ListPush(Spaces, SplitSpaceRight);
+                ListPush(Spaces, SplitSpaceDown);
+            }
+            else {
+                ListPush(Spaces, SplitSpaceDown);
+                ListPush(Spaces, SplitSpaceRight);
+            }
+            
+        }
+        
+        // NOTE(Momo): Add to packed images
+        Rect->X = ChosenSpace.X;
+        Rect->Y = ChosenSpace.Y;
     }
     
-    // Debug purposes
-#if 0
-    printf("--- Results:\n");
-    for ( u32 i = 0; i < Builder->EntryCount; ++i ) {
-        auto* Entry = Builder->Entries + i;
-        printf("\tPacked %s at: X = %d, Y = %d, W = %d, H = %d\n", Rect->Filename, Rect->X, Rect->Y, Rect->W, Rect->H);
-    }
-    
-    printf("--- Space Left:\n");
-    for ( u32 i = 0; i < SpaceCount; ++i ) {
-        auto* Space = Spaces + i;
-        printf("\tSpace %d: X = %d, Y = %d, W = %d, H = %d\n", i,  Space->X, Space->Y, Space->W, Space->H);
-    }
-#endif
     
     return true;
 }
 
 
-// NOTE(Momo): For now, we only support POT scaling.
-static b32 
-Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
-    Assert(StartSize > 0);
-    Assert(SizeLimit > 0);
-    
-    printf("=== Building atlas '%s'\n", Builder->OutputFilename);
-    
-    // NOTE(Momo): Sort
-    atlas_builder_rect** SortedRects = nullptr; // List
-    Defer { ListFree(SortedRects); };
+static void
+Sort(atlas_builder* Builder) {
     printf("\t[Sort] Begin\n");
-    {
-        u32 RectCount = ListCount(Builder->Rects);
-        for (u32 i = 0; i < RectCount; ++i) {
-            ListPush(SortedRects, &Builder->Rects[i]);
-        }
-        qsort(SortedRects, RectCount, sizeof(atlas_builder_rect*), Comparer);
-    }
-    printf("\t[Sort] End\n");
     
-    // NOTE(Momo): Pack
+    u32 RectCount = ListCount(Builder->Rects);
+    for (u32 i = 0; i < RectCount; ++i) {
+        ListPush(Builder->SortedRects, &Builder->Rects[i]);
+    }
+    qsort(Builder->SortedRects, RectCount, sizeof(atlas_builder_rect*), Comparer);
+    
+    printf("\t[Sort] End\n");
+}
+
+// NOTE(Momo): For now, we only support POT scaling.
+static b32
+Pack(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
     u32 Width = StartSize;
     u32 Height = StartSize;
+    
     printf("\t[Pack] Begin\n");
-    {
-        for (;;) {
-            printf("\t\tTrying to pack at: W = %d, H = %d\n", Width, Height);
-            b32 Success = TryPack(Builder, Width, Height);
-            if (!Success) {
-                printf("\t\tFit not found.\n");
-                if(Width >= SizeLimit || Height >= SizeLimit) {
-                    printf("\t\tExceeded size limit! Terminating...\n");
-                    return false;
-                }
-                
+    for (;;) {
+        printf("\t\tTrying to pack at: W = %d, H = %d\n", Width, Height);
+        b32 Success = TryPack(Builder, Width, Height);
+        if (!Success) {
+            printf("\t\tFit not found.\n");
+            if(Width >= SizeLimit || Height >= SizeLimit) {
+                printf("\t\tExceeded size limit! Terminating...\n");
+                return false;
             }
-            else {
-                
-                break;
-            }
-            
-            // NOTE(Momo): POT scaling. 
-            Width *= 2;
-            Height *= 2;
         }
+        else {
+            break;
+        }
+        
+        // NOTE(Momo): POT scaling. 
+        Width *= 2;
+        Height *= 2;
     }
     printf("\t[Pack] End\n");
     
+    Builder->Width = Width;
+    Builder->Height = Height;
     
-    // NOTE(Momo): Output
-    const u32 Channels = 4;
+    return true;
+}
+
+
+// NOTE(Momo): GenerateDataFile
+// Atlas file will be written in this format:
+// - Header
+// - Rects
+// - Bitmap
+// - Entries
+// - Bitmap
+// - Other data from entries.
+static b32 
+GenerateDataFile(atlas_builder* Builder) {
     printf("\t[Output] Begin\n");
     {
         FILE * OutputFile = fopen(Builder->OutputFilename, "wb");
@@ -367,22 +378,62 @@ Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
             printf("\t\tCannot open file '%s'\n", Builder->OutputFilename);
             return false;
         }
+        Defer { fclose(OutputFile); };
         
-        u8 EntryDataAt = 0;
+        
+        u32 OtherDataAt = 0;
         
         // NOTE(Momo): Write Header
         {
             atlas_file_header Header = {}; 
-            Header.EntryCount = ListCount(Builder->Entries);
-            Header.EntryDataOffset = sizeof(Header); 
             
             Header.RectCount = ListCount(Builder->Rects);
-            Header.RectDataOffset = Header.EntryDataOffset + sizeof(atlas_file_entry) * Header.EntryCount;
+            Header.RectDataOffset = sizeof(Header);  
             
-            Header.BitmapWidth = Width;
-            Header.BitmapHeight = Height;
+            Header.BitmapWidth = Builder->Width;
+            Header.BitmapHeight = Builder->Height;
+            Header.BitmapChannels = BITMAP_CHANNELS;
+            Header.BitmapDataOffset = Header.RectDataOffset + sizeof(atlas_builder_rect) * Header.RectCount;
             
+            Header.EntryCount = ListCount(Builder->Entries);
+            Header.EntryDataOffset = Header.BitmapDataOffset + Builder->Width * Builder->Height * BITMAP_CHANNELS;
+            
+            OtherDataAt = Header.EntryDataOffset + sizeof(atlas_file_entry) * Header.RectCount;
             fwrite(&Header, sizeof(Header), 1, OutputFile);
+        }
+        
+        // NOTE(Momo): Write Rects
+        {
+            u32 RectCount = ListCount(Builder->Rects);
+            fwrite(Builder->Rects, sizeof(atlas_builder_rect), RectCount, OutputFile);
+        }
+        
+        // NOTE(Momo): Write Bitmap
+        {
+            u8 * BitmapMemory = AllocateBitmap(Builder);
+            if (BitmapMemory == nullptr) {
+                printf("\t\tBitmap allocation failed\n");
+                return false;
+                
+            }
+            Defer { FreeBitmap(BitmapMemory); };
+            u32 BitmapSize = Builder->Width * Builder->Height * BITMAP_CHANNELS;
+            
+            fwrite(BitmapMemory, 1, BitmapSize, OutputFile);
+            
+            
+#if DEBUG_PNG
+            {
+                // TODO(Momo): Use dynamic string
+                //char Buffer[256] = {};
+                printf("\t\tWriting to '%s'... \n", "debug.png");
+                if (!stbi_write_png("debug.png", Builder->Width, Builder->Height, BITMAP_CHANNELS, BitmapMemory, Builder->Width * BITMAP_CHANNELS)) {
+                    printf("\t\tWrite failed\n");
+                    return false;
+                }
+                printf("\t\tWrite completed\n");
+            }
+#endif
         }
         
         // NOTE(Momo): Write Entries
@@ -390,38 +441,34 @@ Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
             
         }
         
-        // NOTE(Momo): Write Rects
-        {
-        }
-        
-        // NOTE(Momo): Write Bitmap
         
         
-        
-        
-        
-        
-        
-        
-        
-#if DEBUG_PNG
-        printf("=== Writing to %s \n", Filename);
-        stbi_write_png(Filename, Width, Height, Channels, Memory, Width * Channels);
-        printf("\tWrite completed\n");
-        
-#endif
     }
     printf("\t[Output] End\n");
     
     return true;
 }
 
-
-static inline b32
-WriteToAtlas(atlas_builder* Builder, const char* Filename) {
-    printf("=== Writing to %s \n", Filename);
+static b32 
+Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
+    Assert(StartSize > 0);
+    Assert(SizeLimit > 0);
+    
+    printf("=== Building atlas '%s'\n", Builder->OutputFilename);
+    
+    Sort(Builder);
+    
+    if (!Pack(Builder, StartSize, SizeLimit)) {
+        return false;
+    }
+    
+    if (!GenerateDataFile(Builder)) {
+        return false;
+    }
+    
     return true;
 }
+
 
 static inline void
 StartAtlas(atlas_builder* Builder, const char* OutputFilename) {
@@ -438,8 +485,6 @@ EndAtlas(atlas_builder* Builder) {
     
     Build(Builder, 128, 4096);
     
-    
-    
     Assert(Builder->Started);
     ListFree(Builder->Rects);
     ListFree(Builder->Entries);
@@ -450,13 +495,34 @@ EndAtlas(atlas_builder* Builder) {
 
 int main() {
     atlas_builder Atlas_ = {};
-    
-    
     atlas_builder* Atlas = &Atlas_;
+    
     StartAtlas(Atlas, "yuu");
     {
+        
+#if 1
         AddImage(Atlas, "assets/ryoji.png");
         AddImage(Atlas, "assets/yuu.png");
+#else
+        AddImage(Atlas, "assets/atlas_test/1.png");
+        AddImage(Atlas, "assets/atlas_test/2.png");
+        AddImage(Atlas, "assets/atlas_test/3.png");
+        AddImage(Atlas, "assets/atlas_test/4.png");
+        AddImage(Atlas, "assets/atlas_test/5.png");
+        AddImage(Atlas, "assets/atlas_test/6.png");
+        AddImage(Atlas, "assets/atlas_test/7.png");
+        AddImage(Atlas, "assets/atlas_test/8.png");
+        AddImage(Atlas, "assets/atlas_test/9.png");
+        AddImage(Atlas, "assets/atlas_test/10.png");
+        AddImage(Atlas, "assets/atlas_test/2.png");
+        AddImage(Atlas, "assets/atlas_test/3.png");
+        AddImage(Atlas, "assets/atlas_test/4.png");
+        AddImage(Atlas, "assets/atlas_test/5.png");
+        AddImage(Atlas, "assets/atlas_test/6.png");
+        AddImage(Atlas, "assets/atlas_test/7.png");
+        AddImage(Atlas, "assets/atlas_test/8.png");
+        AddImage(Atlas, "assets/atlas_test/9.png");
+#endif
         //AddFont(Atlas, "assets/font.odt", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 36.f);
     }
     EndAtlas(Atlas);
