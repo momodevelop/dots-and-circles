@@ -56,7 +56,6 @@ CopyString(char * Dest, const char* Str) {
     (*Dest) = 0;
 }
 
-
 static inline void 
 CopyBlock(void* dest, void* src, usize size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){

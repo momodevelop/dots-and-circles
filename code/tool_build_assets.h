@@ -67,6 +67,10 @@ struct asset_builder_entry_image {
     const char* Filename;
 };
 
+struct asset_builder_entry_atlas {
+    const char* Filename;
+};
+
 struct asset_builder_entry_sound {
     // TODO(Momo): 
 };
@@ -89,9 +93,10 @@ struct asset_builder_entry  {
     
     union {
         asset_builder_entry_image Image;
-        asset_builder_entry_sound Sound;
+        //asset_builder_entry_sound Sound;
         asset_builder_entry_spritesheet Spritesheet;
         asset_builder_entry_font Font;
+        asset_builder_entry_atlas Atlas;
     };
     
 };

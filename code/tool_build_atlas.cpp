@@ -37,14 +37,14 @@ struct atlas_file_header {
 struct atlas_file_entry {
     u32 Id;
     u32 Type;
-    u32 OffsetToData;
+    u32 DataOffset;
 };
 
-struct atlas_file_entry_data_image {
+struct atlas_file_data_image {
     u32 RectIndex;
 };
 
-struct atlas_file_entry_data_font {
+struct atlas_file_data_font {
 };
 
 #pragma pack(pop)
@@ -330,6 +330,9 @@ Sort(atlas_builder* Builder) {
 // NOTE(Momo): For now, we only support POT scaling.
 static b32
 Pack(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
+    Assert(StartSize > 0);
+    Assert(SizeLimit > 0);
+    
     u32 Width = StartSize;
     u32 Height = StartSize;
     
@@ -372,6 +375,7 @@ Pack(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
 static b32 
 GenerateDataFile(atlas_builder* Builder) {
     printf("\t[Output] Begin\n");
+    printf("\t\tWriting to '%s'... \n", Builder->OutputFilename);
     {
         FILE * OutputFile = fopen(Builder->OutputFilename, "wb");
         if (!OutputFile) {
@@ -421,29 +425,67 @@ GenerateDataFile(atlas_builder* Builder) {
             
             fwrite(BitmapMemory, 1, BitmapSize, OutputFile);
             
-            
 #if DEBUG_PNG
             {
                 // TODO(Momo): Use dynamic string
                 //char Buffer[256] = {};
-                printf("\t\tWriting to '%s'... \n", "debug.png");
-                if (!stbi_write_png("debug.png", Builder->Width, Builder->Height, BITMAP_CHANNELS, BitmapMemory, Builder->Width * BITMAP_CHANNELS)) {
+                const char * PngFilename = "debug.png";
+                printf("\t\tWriting to '%s'... \n", PngFilename);
+                if (!stbi_write_png(PngFilename, Builder->Width, Builder->Height, BITMAP_CHANNELS, BitmapMemory, Builder->Width * BITMAP_CHANNELS)) {
                     printf("\t\tWrite failed\n");
                     return false;
                 }
-                printf("\t\tWrite completed\n");
+                printf("\t\tWrite to '%s' completed\n", PngFilename);
             }
 #endif
         }
         
         // NOTE(Momo): Write Entries
         {
+            usize EntryAt = ftell(OutputFile);
+            usize DataAt = EntryAt + (sizeof(atlas_file_entry) * ListCount(Builder->Entries));
+            
+            for (u32 i = 0; i < ListCount(Builder->Entries); ++i) {
+                auto* Entry = Builder->Entries + i;
+                
+                // NOTE(Momo): Write file entry
+                fseek(OutputFile, (i32)EntryAt, SEEK_SET);
+                {
+                    atlas_file_entry FileEntry = {};
+                    FileEntry.Id = i;
+                    FileEntry.Type = Entry->Type;
+                    FileEntry.DataOffset = (u32)DataAt;
+                    
+                    fwrite(&FileEntry, sizeof(atlas_file_entry), 1, OutputFile); 
+                    EntryAt += sizeof(atlas_file_entry);
+                }
+                
+                fseek(OutputFile, (i32)DataAt, SEEK_SET);
+                {
+                    // NOTE(Momo): Write Data
+                    switch(Entry->Type) {
+                        case AtlasEntryType_Image: {
+                            atlas_file_data_image ImageData = {};
+                            ImageData.RectIndex = Entry->Image.RectIndex;
+                            
+                            fwrite(&ImageData, sizeof(atlas_file_data_image), 1, OutputFile); 
+                            DataAt += sizeof(atlas_file_data_image);
+                        } break;
+                        default: {
+                            Assert(false);
+                        }
+                    }
+                }
+                
+            }
             
         }
         
         
         
     }
+    
+    printf("\t\tWrite to '%s' completed\n", Builder->OutputFilename);
     printf("\t[Output] End\n");
     
     return true;
@@ -451,20 +493,7 @@ GenerateDataFile(atlas_builder* Builder) {
 
 static b32 
 Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
-    Assert(StartSize > 0);
-    Assert(SizeLimit > 0);
     
-    printf("=== Building atlas '%s'\n", Builder->OutputFilename);
-    
-    Sort(Builder);
-    
-    if (!Pack(Builder, StartSize, SizeLimit)) {
-        return false;
-    }
-    
-    if (!GenerateDataFile(Builder)) {
-        return false;
-    }
     
     return true;
 }
@@ -482,8 +511,12 @@ StartAtlas(atlas_builder* Builder, const char* OutputFilename) {
 
 static inline void
 EndAtlas(atlas_builder* Builder) {
+    printf("[Build] Building '%s' started \n", Builder->OutputFilename);
+    Sort(Builder);
+    Pack(Builder, 128, 4096);
+    GenerateDataFile(Builder);
+    printf("[Build] Building '%s' complete\n", Builder->OutputFilename);
     
-    Build(Builder, 128, 4096);
     
     Assert(Builder->Started);
     ListFree(Builder->Rects);
@@ -497,7 +530,7 @@ int main() {
     atlas_builder Atlas_ = {};
     atlas_builder* Atlas = &Atlas_;
     
-    StartAtlas(Atlas, "yuu");
+    StartAtlas(Atlas, "yuu.atlas");
     {
         
 #if 1

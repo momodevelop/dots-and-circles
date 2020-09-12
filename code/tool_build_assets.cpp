@@ -13,7 +13,7 @@ int main() {
         AddFont(Assets, "assets/CodeNewRoman.otf", Asset_FontDefault, 36.f, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
     }
     
-    WriteToFile(Assets, "yuu");
+    Write(Assets, "yuu");
     
     return 0;
     
