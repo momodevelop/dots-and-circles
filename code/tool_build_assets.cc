@@ -61,7 +61,7 @@ WriteSpritesheetData (asset_builder* Assets, FILE* File, asset_builder_entry_spr
     FileSpritesheet.Cols = Spritesheet->Cols;
     
     fwrite(&FileSpritesheet, sizeof(asset_file_data_spritesheet), 1, File); 
-    BytesWritten+= sizeof(asset_file_data_spritesheet);
+    BytesWritten += sizeof(asset_file_data_spritesheet);
     
     u32 Size = (Width * Height * Comp);
     for (u8* Itr = Loaded; Itr < Loaded + Size; ++Itr) 
@@ -162,14 +162,13 @@ WriteFontData(asset_builder* Assets, FILE* File, asset_builder_entry_font* Font)
         FileFont.Channels = (u32)Channels;
         FileFont.CharacterCount = (u32)CharacterCount;
         
-        fwrite(&Font, sizeof(asset_file_data_font), 1, File); 
-        WrittenBytes += sizeof(asset_file_data_font);
+        fwrite(&FileFont, sizeof(FileFont), 1, File); 
+        WrittenBytes += sizeof(FileFont);
         
         // NOTE(Momo): Data will be structured after header with:
         // - Array of stamps
         // - Bitmap Data
         // Also, the bitmap is just going to be one row of characters
-        
         
         // NOTE(Momo): Write array of rects for each code point
         for (u32 j = 0; j < CharacterCount; ++j) {

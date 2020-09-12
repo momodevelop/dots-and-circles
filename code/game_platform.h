@@ -4,7 +4,7 @@
 #include "ryoji.h"
 
 // NOTE(Momo): Global Settings
-#define GameMainMemorySize Megabytes(100)
+#define GameMainMemorySize Gigabytes(1)
 #define RenderCommandsMemorySize Megabytes(64)
 #define TotalMemorySize GameMainMemorySize + RenderCommandsMemorySize
 
@@ -13,7 +13,7 @@ struct commands;
 struct game_memory;
 struct platform_api;
 struct platform_read_file_result;
-union game_input;
+struct game_input;
 
 // NOTE(Momo): Function typedefs and helpers
 typedef void game_update(game_memory* GameMemory,  

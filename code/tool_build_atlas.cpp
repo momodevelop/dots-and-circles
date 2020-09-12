@@ -5,6 +5,8 @@
 #include "ryoji.h"
 #include "ryoji_list.h"
 
+#include "game_atlas_types.h"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image.h"
@@ -44,16 +46,12 @@ struct atlas_file_data_image {
     u32 RectIndex;
 };
 
-struct atlas_file_data_font {
-};
+struct atlas_file_data_font {};
 
 #pragma pack(pop)
 
 
 // NOTE(Momo): Atlas Builder //////////////////////////////////////////////////////////////
-enum atlas_builder_entry_type {
-    AtlasEntryType_Image,
-};
 
 struct atlas_builder_entry_image {
     const char* Filename;
@@ -61,7 +59,7 @@ struct atlas_builder_entry_image {
 };
 
 struct atlas_builder_entry {
-    atlas_builder_entry_type Type;
+    atlas_entry_type Type;
     union {
         atlas_builder_entry_image Image;
         // TODO(Momo): Other types here
@@ -547,14 +545,16 @@ int main() {
         AddImage(Atlas, "assets/atlas_test/8.png");
         AddImage(Atlas, "assets/atlas_test/9.png");
         AddImage(Atlas, "assets/atlas_test/10.png");
-        AddImage(Atlas, "assets/atlas_test/2.png");
-        AddImage(Atlas, "assets/atlas_test/3.png");
-        AddImage(Atlas, "assets/atlas_test/4.png");
-        AddImage(Atlas, "assets/atlas_test/5.png");
-        AddImage(Atlas, "assets/atlas_test/6.png");
-        AddImage(Atlas, "assets/atlas_test/7.png");
-        AddImage(Atlas, "assets/atlas_test/8.png");
-        AddImage(Atlas, "assets/atlas_test/9.png");
+        for (u32 i = 0; i < 50; ++i) {
+            AddImage(Atlas, "assets/atlas_test/2.png");
+            AddImage(Atlas, "assets/atlas_test/3.png");
+            AddImage(Atlas, "assets/atlas_test/4.png");
+            AddImage(Atlas, "assets/atlas_test/5.png");
+            AddImage(Atlas, "assets/atlas_test/6.png");
+            AddImage(Atlas, "assets/atlas_test/7.png");
+            AddImage(Atlas, "assets/atlas_test/8.png");
+            AddImage(Atlas, "assets/atlas_test/9.png");
+        }
 #endif
         //AddFont(Atlas, "assets/font.odt", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 36.f);
     }

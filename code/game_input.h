@@ -7,18 +7,20 @@ struct input_button {
     bool Now : 1;
 };
 
-union game_input {
-    input_button Buttons[15];
-    struct {
-        input_button ButtonUp;
-        input_button ButtonDown;
-        input_button ButtonRight;
-        input_button ButtonLeft;
-        input_button ButtonConfirm;
-        
+struct game_input {
+    union {
+        input_button Buttons[15];
+        struct {
+            input_button ButtonUp;
+            input_button ButtonDown;
+            input_button ButtonRight;
+            input_button ButtonLeft;
+            input_button ButtonConfirm;
+            
 #if INTERNAL
-        input_button ButtonDebug[10];
+            input_button ButtonDebug[10];
 #endif
+        };
     };
 };
 

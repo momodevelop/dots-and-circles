@@ -1,6 +1,7 @@
+[] Texture Atlas
+
 [] Image splitting tool
 [] Fonts
-[] Texture Atlas
 
 
 
