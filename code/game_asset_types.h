@@ -17,6 +17,7 @@ enum asset_id : u32 {
     Asset_ImageYuu,
     Asset_SpritesheetKaru,
     Asset_FontDefault,
+    Asset_AtlasDefault,
 };
 
 #endif 

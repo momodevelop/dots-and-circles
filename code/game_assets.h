@@ -95,10 +95,10 @@ CheckAssetSignature(void *Memory) {
 
 
 static inline void
-LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) {
-    u32 Width = Read32<u32>(Data, false);
-    u32 Height = Read32<u32>(Data, false);
-    u32 Channels = Read32<u32>(Data, false);
+LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) {
+    u32 Width = Read32<u32>(&Data, false);
+    u32 Height = Read32<u32>(&Data, false);
+    u32 Channels = Read32<u32>(&Data, false);
     
     // NOTE(Momo): Allocate Image
     asset_entry* Entry = Assets->Entries + Id;
@@ -114,7 +114,7 @@ LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data)
         usize Size = Width * Height * Channels;
         Entry->Image->Pixels = PushBlock(&Assets->Arena, Size, 1);
         Assert(Entry->Image->Pixels);
-        CopyBlock(Entry->Image->Pixels, (*Data), Size);
+        CopyBlock(Entry->Image->Pixels, Data, Size);
         
         PushCommandLinkTexture(RenderCommands, 
                                Entry->Image->Width, 
@@ -125,7 +125,7 @@ LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data)
 }
 
 static inline void
-LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) {
+LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) {
     u32 Width = Read32<u32>(Data, false);
     u32 Height = Read32<u32>(Data, false);
     u32 Channels = Read32<u32>(Data, false);
@@ -148,11 +148,11 @@ LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) 
         for (u32 i = 0; i < CharacterCount; ++i) {
             auto* CharacterData = Entry->Font->CharacterData + i;
             
-            u32 X = Read32<u32>(Data, false);
-            u32 Y = Read32<u32>(Data, false);
-            u32 W = Read32<u32>(Data, false);
-            u32 H = Read32<u32>(Data, false);
-            u32 Codepoint = Read32<u32>(Data, false);
+            u32 X = Read32<u32>(&Data, false);
+            u32 Y = Read32<u32>(&Data, false);
+            u32 W = Read32<u32>(&Data, false);
+            u32 H = Read32<u32>(&Data, false);
+            u32 Codepoint = Read32<u32>(&Data, false);
             
             CharacterData->X = X;
             CharacterData->Y = Y;
@@ -169,7 +169,7 @@ LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) 
         usize Size = Width * Height * Channels;
         Entry->Font->Pixels = PushBlock(&Assets->Arena, Size, 1);
         Assert(Entry->Font->Pixels);
-        CopyBlock(Entry->Font->Pixels, (*Data), Size);
+        CopyBlock(Entry->Font->Pixels, Data, Size);
         
         PushCommandLinkTexture(RenderCommands,
                                Entry->Font->Width, 
@@ -181,13 +181,13 @@ LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) 
 }
 
 static inline void
-LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8** Data) 
+LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
 {
-    u32 Width = Read32<u32>(Data, false);
-    u32 Height = Read32<u32>(Data, false);
-    u32 Channels = Read32<u32>(Data, false);
-    u32 Rows = Read32<u32>(Data, false);
-    u32 Cols = Read32<u32>(Data, false);
+    u32 Width = Read32<u32>(&Data, false);
+    u32 Height = Read32<u32>(&Data, false);
+    u32 Channels = Read32<u32>(&Data, false);
+    u32 Rows = Read32<u32>(&Data, false);
+    u32 Cols = Read32<u32>(&Data, false);
     
     // NOTE(Momo): Allocate Spritesheet
     asset_entry* Entry = Assets->Entries + Id;
@@ -205,7 +205,7 @@ LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8**
         usize Size = Width * Height * Channels;
         Entry->Spritesheet->Pixels = PushBlock(&Assets->Arena, Size, 1);
         Assert(Entry->Spritesheet->Pixels);
-        CopyBlock(Entry->Spritesheet->Pixels, (*Data), Size);
+        CopyBlock(Entry->Spritesheet->Pixels, Data, Size);
         
         f32 FrameWidth = (f32)Width/Cols;
         f32 FrameHeight = (f32)Height/Rows;
@@ -284,21 +284,27 @@ Init(game_assets* Assets,
             u32 FileOffsetToEntry = Read32<u32>(&FileMemoryItr, false);
             auto FileAssetId = Read32<asset_id>(&FileMemoryItr, false);
             
-            u8* FileEntryItr = FileMemory + FileOffsetToEntry;
-            
+            u8* FileEntryDataItr = FileMemory + FileOffsetToEntry;
             switch(FileAssetType) {
                 case AssetType_Image: {
-                    LoadImage(Assets, RenderCommands, FileAssetId, &FileEntryItr);
+                    LoadImage(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
                 } break;
                 case AssetType_Font: {
-                    LoadFont(Assets, RenderCommands, FileAssetId, &FileEntryItr);
+                    LoadFont(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
                 } break;
                 case AssetType_Spritesheet: {
-                    LoadSpritesheet(Assets, RenderCommands, FileAssetId, &FileEntryItr);
+                    LoadSpritesheet(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
+                } break;
+                case AssetType_Atlas: {
+                    LoadAtlas(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
                 } break;
                 case AssetType_Sound: {
                     // TODO(Momo): Implement
                 } break;
+                default: {
+                    Assert(false);
+                } break;
+                
                 
             }
             

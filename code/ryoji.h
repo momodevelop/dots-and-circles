@@ -42,14 +42,14 @@ using uptr = uintptr_t;
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
 
 static inline u32
-CountString(const char* Str) {
+NtsLength(const char* Str) {
     u32 Count = 0;
     for(; (*Str) != 0 ; ++Count, ++Str);
     return Count;
 }
 
 static inline void
-CopyString(char * Dest, const char* Str) {
+NtsCopy(char * Dest, const char* Str) {
     for(; (*Str) != 0 ; ++Str, ++Dest) {
         (*Dest) = (*Str);
     }

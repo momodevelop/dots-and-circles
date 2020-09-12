@@ -530,7 +530,7 @@ int main() {
     atlas_builder Atlas_ = {};
     atlas_builder* Atlas = &Atlas_;
     
-    StartAtlas(Atlas, "yuu.atlas");
+    StartAtlas(Atlas, "assets/yuu.atlas");
     {
         
 #if 1

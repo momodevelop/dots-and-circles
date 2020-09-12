@@ -11,8 +11,8 @@ int main() {
         AddImage(Assets, "assets/yuu.png", Asset_ImageYuu);
         AddSpritesheet(Assets, "assets/karu.png", Asset_SpritesheetKaru, 4, 3);
         AddFont(Assets, "assets/CodeNewRoman.otf", Asset_FontDefault, 36.f, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        AddAtlas(Assets, "assets/yuu.atlas", Asset_AtlasDefault);
     }
-    
     Write(Assets, "yuu");
     
     return 0;

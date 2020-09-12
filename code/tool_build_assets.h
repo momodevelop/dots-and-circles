@@ -30,6 +30,9 @@ struct asset_file_entry {
     asset_id Id;
 };
 
+// NOTE(Momo): Note that atlas is just raw data, to be read by a seperate system 
+//struct asset_file_data_atlas {};
+
 struct asset_file_data_image {
     u32 Width;
     u32 Height;

@@ -23,6 +23,12 @@ AddFont(asset_builder* Assets, const char* Filename, asset_id Id, f32 Size, cons
     Entry->Font.Size = Size;
 }
 
+static inline void 
+AddAtlas(asset_builder* Assets, const char* Filename, asset_id Id) 
+{
+    asset_builder_entry* Entry = AddAssetEntry(Assets, Id, AssetType_Atlas);
+    Entry->Atlas.Filename = Filename;
+}
 
 static inline void 
 AddSpritesheet(asset_builder* Assets, 
@@ -43,10 +49,7 @@ WriteSpritesheetData (asset_builder* Assets, FILE* File, asset_builder_entry_spr
     u32 BytesWritten = 0;
     i32 Width, Height, Comp;
     u8* Loaded = stbi_load(Spritesheet->Filename, &Width, &Height, &Comp, 0);
-    if (Loaded == nullptr) {
-        printf("Error loading spritesheet %s\n", Spritesheet->Filename);
-        return false;
-    }
+    Assert(Loaded != nullptr);
     Defer { stbi_image_free(Loaded); };
     
     // NOTE(Momo): Write Data
@@ -79,10 +82,7 @@ WriteImageData(asset_builder* Assets, FILE* File, asset_builder_entry_image* Ima
     u32 BytesWritten = 0;
     i32 Width, Height, Comp;
     u8* LoadedImage = stbi_load(Image->Filename, &Width, &Height, &Comp, 0);
-    if (LoadedImage == nullptr) {
-        printf("Error loading image: %s\n", Image->Filename);
-        return false;
-    }
+    Assert(LoadedImage != nullptr);
     Defer { stbi_image_free(LoadedImage); };
     
     asset_file_data_image FileImage = {};
@@ -126,12 +126,10 @@ WriteFontData(asset_builder* Assets, FILE* File, asset_builder_entry_font* Font)
     Defer { free(FontBuffer); };
     
     stbtt_fontinfo FontInfo;
-    if (!stbtt_InitFont(&FontInfo, FontBuffer, 0)) {
-        return false;
-    }
+    Assert(stbtt_InitFont(&FontInfo, FontBuffer, 0));
     
     f32 Scale = stbtt_ScaleForPixelHeight(&FontInfo, Font->Size);
-    u32 CharacterCount = CountString(Font->Characters);
+    u32 CharacterCount = NtsLength(Font->Characters);
     
     auto* Stamps = (asset_file_data_font_character*)malloc(CharacterCount* sizeof(asset_file_data_font_character));
     Defer { free(Stamps); };
@@ -224,6 +222,33 @@ WriteFontData(asset_builder* Assets, FILE* File, asset_builder_entry_font* Font)
 }
 
 
+static inline u32 
+WriteAtlasData(asset_builder* Assets, FILE* File, asset_builder_entry_atlas* Atlas) {
+    // NOTE(Momo): Just copy raw data
+    u32 BytesWritten = 0;
+    
+    FILE* AtlasFile = fopen(Atlas->Filename, "rb");
+    Assert(AtlasFile != nullptr);
+    Defer { fclose(AtlasFile); };
+    
+    fseek (AtlasFile, 0, SEEK_END);
+    u32 AtlasFileSize = (u32)ftell(AtlasFile);
+    fseek (AtlasFile, 0, SEEK_SET);
+    
+    for (u32 i = 0; i < AtlasFileSize; ++i) {
+        u8 Byte;
+        fread(&Byte, 1, 1, AtlasFile);
+        fwrite(&Byte, 1, 1, File); 
+        ++BytesWritten;
+    }
+    
+    printf("Loaded Atlas '%s': Filesize = %d\n", Atlas->Filename, AtlasFileSize);
+    
+    return BytesWritten;
+    
+    
+}
+
 static inline b32 
 Write(asset_builder* Assets, const char* Filename) {
     // TODO(Momo): Maybe write a writer struct for all these states
@@ -275,10 +300,15 @@ Write(asset_builder* Assets, const char* Filename) {
             case AssetType_Spritesheet: {
                 DataAt += WriteSpritesheetData(Assets, OutFile, &Entry->Spritesheet);
             } break;
-            
             case AssetType_Font: {
                 DataAt += WriteFontData(Assets, OutFile, &Entry->Font);
-            } break; 
+            } break;
+            case AssetType_Atlas: {
+                DataAt += WriteAtlasData(Assets, OutFile, &Entry->Atlas);
+            } break;
+            default: {
+                Assert(false);
+            }
         }
         
     }
