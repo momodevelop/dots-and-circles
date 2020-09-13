@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef GAME_ASSET_FONT_H
 #define GAME_ASSET_FONT_H
 
@@ -22,11 +24,7 @@ struct font_id { u32 Value; };
 
 static inline void
 LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) {
-    u32 Width = Read32<u32>(&Data, false);
-    u32 Height = Read32<u32>(&Data, false);
-    u32 Channels = Read32<u32>(&Data, false);
-    u32 CharacterCount = Read32<u32>(&Data, false);
-    
+    auto* YuuFont = Read<yuu_font>(&Data);
     
     // NOTE(Momo): Allocate the font
     asset_entry* Entry = Assets->Entries + Id;
@@ -34,13 +32,13 @@ LoadFont(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) {
         Entry->Type = AssetType_Font;
         Entry->Id = Id;
         Entry->Font = PushStruct<font>(&Assets->Arena);
-        Entry->Font->Width = Width;
-        Entry->Font->Height = Height;
+        Entry->Font->Width = YuuFont->Width;
+        Entry->Font->Height = YuuFont->Height;
         Entry->Font->BitmapId = Assets->BitmapCounter++;
         
         // NOTE(Momo): Allocate character data
-        Entry->Font->CharacterData = PushArray<font_character>(&Assets->Arena, CharacterCount);
-        Entry->Font->CharacterCount = CharacterCount;
+        Entry->Font->CharacterData = PushArray<font_character>(&Assets->Arena, YuuFont->CharacterCount);
+        Entry->Font->CharacterCount = YuuFont->CharacterCount;
         for (u32 i = 0; i < CharacterCount; ++i) {
             auto* CharacterData = Entry->Font->CharacterData + i;
             
@@ -114,3 +112,4 @@ GetFontCharacterUV(game_assets* Assets, font_id Id, u32 FrameIndex) {
 
 
 #endif //GAME_ASSET_FONT_H
+#endif

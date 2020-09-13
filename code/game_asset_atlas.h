@@ -1,6 +1,8 @@
 #ifndef GAME_ASSET_ATLAS_H
 #define GAME_ASSET_ATLAS_H
 
+#include "game_atlas_types.h"
+
 struct atlas_image {
     u32 RectIndex;
 };
@@ -9,7 +11,6 @@ struct atlas_entry {
     u32 Id;
     atlas_entry_type Type;
     union {
-        void* Data;
         atlas_image* Image;
     };
 };
@@ -40,76 +41,71 @@ struct atlas_image_id {
 
 static inline void
 LoadAtlas(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data)  {
-    u8* AtlasStart = Data;
-    
-    u32 EntryCount = Read32<u32>(&Data, false);
-    u32 EntryDataOffset = Read32<u32>(&Data, false);
-    u32 RectCount = Read32<u32>(&Data, false);
-    u32 RectDataOffset = Read32<u32>(&Data, false);
-    u32 BitmapWidth = Read32<u32>(&Data, false);
-    u32 BitmapHeight = Read32<u32>(&Data, false);
-    u32 BitmapChannels = Read32<u32>(&Data, false);
-    u32 BitmapDataOffset = Read32<u32>(&Data, false);
-    
-    
+    yuu_atlas* YuuAtlas = Read<yuu_atlas>(&Data);
+    u8* const AtlasStart = Data;
     // NOTE(Momo): Allocate Atlas
     asset_entry* Entry = Assets->Entries + Id;
     {
         Entry->Type = AssetType_Atlas;
         Entry->Id = Id;
-        
         Entry->Atlas = PushStruct<atlas>(&Assets->Arena);
-        Entry->Atlas->Width = BitmapWidth;
-        Entry->Atlas->Height = BitmapHeight;
-        Entry->Atlas->Channels = BitmapChannels;
-        Entry->Atlas->EntryCount = EntryCount;
-        Entry->Atlas->RectCount = RectCount;
         
-        
-        // NOTE(Momo): Allocate pixel data
-        u8* BitmapAt = AtlasStart + BitmapDataOffset;
-        usize Size = BitmapWidth * BitmapHeight * BitmapChannels;
-        Entry->Atlas->Pixels = PushBlock(&Assets->Arena, Size, 1);
-        Assert(Entry->Atlas->Pixels);
-        CopyBlock(Entry->Atlas->Pixels, BitmapAt, Size);
+        atlas* Atlas = Entry->Atlas;
+        Atlas->Width = YuuAtlas->Width;
+        Atlas->Height = YuuAtlas->Height;
+        Atlas->Channels = YuuAtlas->Channels;
+        Atlas->EntryCount = YuuAtlas->EntryCount;
+        Atlas->RectCount = YuuAtlas->RectCount;
+        Atlas->BitmapId = Assets->BitmapCounter++;
         
         // NOTE(Momo): Allocate Rects
-        Entry->Atlas->Rects = PushArray<rect2u>(&Assets->Arena, RectCount);
-        u8* RectAt = AtlasStart + RectDataOffset;
-        for (u32 i = 0; i < RectCount; ++i) {
-            auto Rect = Entry->Atlas->Rects + i;
-            Rect->Min.X = Read32<u32>(&RectAt, false);
-            Rect->Min.Y = Read32<u32>(&RectAt, false);
-            Rect->Max.X = Read32<u32>(&RectAt, false) + Rect->Min.X;
-            Rect->Max.Y = Read32<u32>(&RectAt, false) + Rect->Min.Y;
+        {
+            Atlas->Rects = PushArray<rect2u>(&Assets->Arena, Atlas->EntryCount);
+            for (u32 i = 0; i < Atlas->RectCount; ++i) {
+                auto* Rect = Atlas->Rects + i;
+                Rect->Min.X = Read32<u32>(&Data, false);
+                Rect->Min.Y = Read32<u32>(&Data, false);
+                Rect->Max.X = Read32<u32>(&Data, false) + Rect->Min.X;
+                Rect->Max.Y = Read32<u32>(&Data, false) + Rect->Min.Y;
+            }
         }
         
+        // NOTE(Momo): Allocate pixel data
+        {
+            usize Size = Atlas->Width * Atlas->Height * Atlas->Channels;
+            Atlas->Pixels = PushBlock(&Assets->Arena, Size, 1);
+            Assert(Atlas->Pixels);
+            CopyBlock(Atlas->Pixels, Data, Size);
+            Data += Size;
+        }
         
-        Entry->Atlas->Entries = PushArray<atlas_entry>(&Assets->Arena, EntryCount);
-        u8* EntryAt = AtlasStart + EntryDataOffset;
-        for (u32 i = 0; i < EntryCount; ++i) {
-            auto* AtlasEntry = Entry->Atlas->Entries + i;
-            AtlasEntry->Id = Read32<u32>(&EntryAt, false);
-            AtlasEntry->Type = Read32<atlas_entry_type>(&EntryAt, false);
-            u32 DataOffset = Read32<u32>(&EntryAt, false);
-            
-            u8* DataAt = AtlasStart + DataOffset;
-            switch(AtlasEntry->Type) {
-                case AtlasType_Image: {
-                    AtlasEntry->Image = PushStruct<atlas_image>(&Assets->Arena);
-                    AtlasEntry->Image->RectIndex = Read32<u32>(&DataAt, false);
-                } break;
+        // NOTE(Momo): Allocate entry data
+        {
+            Atlas->Entries = PushArray<atlas_entry>(&Assets->Arena, Atlas->EntryCount);
+            for (u32 i = 0; i < Atlas->EntryCount; ++i) {
+                auto* AtlasEntry = Atlas->Entries + i;
+                auto* YuuAtlasEntry = Read<yuu_atlas_entry>(&Data); 
                 
-                default: {
-                    Assert(false);
-                }
-            };
-            
+                AtlasEntry->Id = YuuAtlasEntry->Id;
+                AtlasEntry->Type = YuuAtlasEntry->Type;
+                
+                switch(AtlasEntry->Type) {
+                    case AtlasEntryType_Image: {
+                        AtlasEntry->Image = PushStruct<atlas_image>(&Assets->Arena);
+                        auto* YuuAtlasImage = Read<yuu_atlas_image>(&Data); 
+                        AtlasEntry->Image->RectIndex = YuuAtlasImage->RectIndex;
+                    } break;
+                    
+                    default: {
+                        Assert(false);
+                    }
+                };
+                
+            }
         }
         
         
         
-        Entry->Atlas->BitmapId = Assets->BitmapCounter++;
     }
     
     
@@ -122,7 +118,7 @@ LoadAtlas(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
 }
 
 
-// NOTE(Momo): Atlas  Interface
+// NOTE(Momo): Atlas Interface
 static inline atlas_id
 GetAtlas(game_assets* Assets, asset_id Id) {
     asset_entry* Entry = Assets->Entries + Id;
@@ -152,7 +148,7 @@ GetImageUV(game_assets* Assets, atlas_id Id, u32 AtlasEntryId) {
     
     auto* Atlas = Entry->Atlas;
     auto* AtlasEntry = Atlas->Entries + AtlasEntryId;
-    Assert(AtlasEntry->Type == AtlasType_Image);
+    Assert(AtlasEntry->Type == AtlasEntryType_Image);
     
     u32 RectIndex = AtlasEntry->Image->RectIndex;
     rect2u Rect = Atlas->Rects[RectIndex];

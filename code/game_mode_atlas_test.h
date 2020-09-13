@@ -31,18 +31,32 @@ Update(game_mode_atlas_test* Mode,
     PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     
     
-    atlas_id AtlasId = GetAtlas(GameState->Assets, Asset_AtlasDefault);
-    v4f Color = { 1.f, 1.f, 1.f, 1.f };
-    m44f Transform = ScaleMatrix(200.f, 200.f, 1.f);
-    quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, 1));
-    u32 TextureHandle = GetBitmapId(GameState->Assets, AtlasId);
-    PushCommandDrawTexturedQuad(RenderCommands, 
-                                Color, 
-                                Transform, 
-                                TextureHandle,
-                                Quad);
+    {
+        atlas_id AtlasId = GetAtlas(GameState->Assets, Asset_AtlasDefault);
+        v4f Color = { 1.f, 1.f, 1.f, 1.f };
+        m44f Transform = ScaleMatrix(200.f, 200.f, 1.f);
+        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, 0));
+        u32 TextureHandle = GetBitmapId(GameState->Assets, AtlasId);
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    Color, 
+                                    Transform, 
+                                    TextureHandle,
+                                    Quad);
+    }
     
     
+    {
+        atlas_id AtlasId = GetAtlas(GameState->Assets, Asset_AtlasDefault);
+        v4f Color = { 1.f, 1.f, 1.f, 1.f };
+        m44f Transform = TranslationMatrix(-200.f, -200.f, 1.f) * ScaleMatrix(200.f, 200.f, 1.f);
+        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, 1));
+        u32 TextureHandle = GetBitmapId(GameState->Assets, AtlasId);
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    Color, 
+                                    Transform, 
+                                    TextureHandle,
+                                    Quad);
+    }
     
 }
 

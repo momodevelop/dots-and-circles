@@ -141,10 +141,18 @@ static inline T
 ReadU16(u8** P, bool isBigEndian) {
     static_assert(sizeof(T) == 2);
     
-    TRet = Peek16<T>((*P), isBigEndian);
+    T Ret = Peek16<T>((*P), isBigEndian);
     (*P) += sizeof(T);
     return Ret;
 }
 
+
+template<typename T>
+static inline T*
+Read(u8** P) {
+    T* Ret = (T*)(*P);
+    (*P) += sizeof(T);
+    return Ret;
+}
 
 #endif 

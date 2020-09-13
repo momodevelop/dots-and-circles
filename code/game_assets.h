@@ -7,7 +7,7 @@
 #include "ryoji_commands.h"
 
 #include "game_asset_types.h"
-#include "game_atlas_types.h"
+
 
 struct asset_entry {
     asset_type Type;
@@ -16,7 +16,6 @@ struct asset_entry {
         void* Data;
         struct image* Image;
         struct spritesheet* Spritesheet;
-        struct font* Font;
         struct atlas* Atlas;
     };
 };
@@ -33,7 +32,6 @@ struct game_assets {
 
 #include "game_asset_image.h"
 #include "game_asset_spritesheet.h"
-#include "game_asset_font.h"
 #include "game_asset_atlas.h"
 
 inline b32
@@ -86,7 +84,7 @@ Init(game_assets* Assets,
     // NOTE(Momo): Allocate Assets
     {
         // NOTE(Momo): All entries are allocated first. Their data will follow after.
-        Assets->Entries = PushArray<asset_entry>(&Assets->Arena, Assets->EntryCount);
+        Assets->Entries = PushArray<asset_entry>(&Assets->Arena, Asset_Count);
         
         for (u32 i = 0; i < Assets->EntryCount; ++i)
         {
@@ -100,18 +98,11 @@ Init(game_assets* Assets,
                 case AssetType_Image: {
                     LoadImage(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
                 } break;
-                case AssetType_Font: {
-                    LoadFont(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
-                } break;
                 case AssetType_Spritesheet: {
                     LoadSpritesheet(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
                 } break;
                 case AssetType_Atlas: {
                     LoadAtlas(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
-                    
-                } break;
-                case AssetType_Sound: {
-                    // TODO(Momo): Implement
                 } break;
                 default: {
                     Assert(false);

@@ -4,13 +4,13 @@
 struct spritesheet {
     u32 Width;
     u32 Height;
-    void* Pixels; 
-    
-    rect2f* Frames;
+    u32 Channels;
     u32 Rows;
     u32 Cols;
-    
     u32 BitmapId;
+    
+    void* Pixels; 
+    rect2f* Frames;
 };
 
 struct spritesheet_id { u32 Value; };
@@ -18,45 +18,44 @@ struct spritesheet_id { u32 Value; };
 static inline void
 LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
 {
-    u32 Width = Read32<u32>(&Data, false);
-    u32 Height = Read32<u32>(&Data, false);
-    u32 Channels = Read32<u32>(&Data, false);
-    u32 Rows = Read32<u32>(&Data, false);
-    u32 Cols = Read32<u32>(&Data, false);
-    
+    auto* YuuSS = Read<yuu_spritesheet>(&Data);
     
     // NOTE(Momo): Allocate Spritesheet
     asset_entry* Entry = Assets->Entries + Id;
     {
         Entry->Type = AssetType_Spritesheet;
         Entry->Id = Id;
+        
         Entry->Spritesheet = PushStruct<spritesheet>(&Assets->Arena);
-        Entry->Spritesheet->Width = Width;
-        Entry->Spritesheet->Height = Height;
-        Entry->Spritesheet->Rows = Rows;
-        Entry->Spritesheet->Cols = Cols; 
-        Entry->Spritesheet->BitmapId = Assets->BitmapCounter++;
+        spritesheet* SS = Entry->Spritesheet;
+        
+        SS->Width = YuuSS->Width;
+        SS->Height = YuuSS->Height;
+        SS->Channels = YuuSS->Channels;
+        SS->Rows = YuuSS->Rows;
+        SS->Cols = YuuSS->Cols; 
+        SS->BitmapId = Assets->BitmapCounter++;
         
         // NOTE(Momo): Allocate pixel data
-        usize Size = Width * Height * Channels;
-        Entry->Spritesheet->Pixels = PushBlock(&Assets->Arena, Size, 1);
-        Assert(Entry->Spritesheet->Pixels);
-        CopyBlock(Entry->Spritesheet->Pixels, Data, Size);
+        usize Size = SS->Width * SS->Height * SS->Channels;
+        SS->Pixels = PushBlock(&Assets->Arena, Size, 1);
+        Assert(SS->Pixels);
+        CopyBlock(SS->Pixels, Data, Size);
         
         
-        f32 FrameWidth = (f32)Width/Cols;
-        f32 FrameHeight = (f32)Height/Rows;
-        f32 CellWidth = FrameWidth/Width;
-        f32 CellHeight = FrameHeight/Height;
-        f32 HalfPixelWidth =  0.25f/Width;
-        f32 HalfPixelHeight = 0.25f/Height;
+        f32 FrameWidth = (f32)SS->Width/SS->Cols;
+        f32 FrameHeight = (f32)SS->Height/SS->Rows;
+        f32 CellWidth = FrameWidth/SS->Width;
+        f32 CellHeight = FrameHeight/SS->Height;
+        f32 HalfPixelWidth =  0.25f/SS->Width;
+        f32 HalfPixelHeight = 0.25f/SS->Height;
         
         // NOTE(Momo): Allocate sprite frames
-        u32 TotalFrames = Rows * Cols;
+        u32 TotalFrames = SS->Rows * SS->Cols;
         rect2f* Rects = PushArray<rect2f>(&Assets->Arena, TotalFrames); 
-        for (u8 r = 0; r < Rows; ++r) {
-            for (u8 c = 0; c < Cols; ++c) {
-                Rects[TwoToOne(r,c,Cols)] = { 
+        for (u8 r = 0; r < SS->Rows; ++r) {
+            for (u8 c = 0; c < SS->Cols; ++c) {
+                Rects[TwoToOne(r,c,SS->Cols)] = { 
                     c * CellWidth + HalfPixelWidth,
                     r * CellHeight + HalfPixelHeight,
                     (c+1) * CellWidth - HalfPixelWidth,
@@ -64,13 +63,13 @@ LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* 
                 };
             }
         }
-        Entry->Spritesheet->Frames = Rects;
+        SS->Frames = Rects;
         
         PushCommandLinkTexture(RenderCommands,
-                               Entry->Spritesheet->Width, 
-                               Entry->Spritesheet->Height,
-                               Entry->Spritesheet->Pixels,
-                               Entry->Spritesheet->BitmapId);
+                               SS->Width, 
+                               SS->Height,
+                               SS->Pixels,
+                               SS->BitmapId);
     }
 }
 
