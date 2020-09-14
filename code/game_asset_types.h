@@ -13,11 +13,20 @@ enum atlas_entry_id : u32 {
     AtlasEntry_Default_Ryoji,
     AtlasEntry_Default_Yuu,
     
-    
+    AtlasEntry_Default_Karu00,
+    AtlasEntry_Default_Karu01,
+    AtlasEntry_Default_Karu02,
+    AtlasEntry_Default_Karu10,
+    AtlasEntry_Default_Karu11,
+    AtlasEntry_Default_Karu12,
+    AtlasEntry_Default_Karu20,
+    AtlasEntry_Default_Karu21,
+    AtlasEntry_Default_Karu22,
+    AtlasEntry_Default_Karu30,
+    AtlasEntry_Default_Karu31,
+    AtlasEntry_Default_Karu32,
     // NOTE(Momo): Other atlas types
 };
-
-
 
 enum asset_type : u32 {
     AssetType_Image,

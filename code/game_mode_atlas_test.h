@@ -30,12 +30,12 @@ Update(game_mode_atlas_test* Mode,
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     
-    
+    // NOTE(Momo): Image Test
     {
         atlas_id AtlasId = GetAtlas(GameState->Assets, Asset_AtlasDefault);
         v4f Color = { 1.f, 1.f, 1.f, 1.f };
         m44f Transform = ScaleMatrix(200.f, 200.f, 1.f);
-        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, 0));
+        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, AtlasEntry_Default_Ryoji));
         u32 TextureHandle = GetBitmapId(GameState->Assets, AtlasId);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color, 
@@ -49,7 +49,7 @@ Update(game_mode_atlas_test* Mode,
         atlas_id AtlasId = GetAtlas(GameState->Assets, Asset_AtlasDefault);
         v4f Color = { 1.f, 1.f, 1.f, 1.f };
         m44f Transform = TranslationMatrix(-200.f, -200.f, 1.f) * ScaleMatrix(200.f, 200.f, 1.f);
-        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, 1));
+        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, AtlasEntry_Default_Yuu));
         u32 TextureHandle = GetBitmapId(GameState->Assets, AtlasId);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color, 
@@ -57,6 +57,23 @@ Update(game_mode_atlas_test* Mode,
                                     TextureHandle,
                                     Quad);
     }
+    
+    // NOTE(Momo): Spritesheet Test
+    {
+        atlas_id AtlasId = GetAtlas(GameState->Assets, Asset_AtlasDefault);
+        v4f Color = { 1.f, 1.f, 1.f, 1.f };
+        m44f Transform = TranslationMatrix(200.f, 200.f, 1.f) * ScaleMatrix(200.f, 200.f, 1.f);
+        quad2f Quad = Quad2(GetImageUV(GameState->Assets, AtlasId, AtlasEntry_Default_Karu00));
+        u32 TextureHandle = GetBitmapId(GameState->Assets, AtlasId);
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    Color, 
+                                    Transform, 
+                                    TextureHandle,
+                                    Quad);
+    }
+    
+    
+    
     
 }
 

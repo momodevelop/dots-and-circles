@@ -177,6 +177,16 @@ GetHeight(rect2u Rect) {
     return Rect.Max.Y - Rect.Min.Y; 
 }
 
+static inline rect2u 
+Translate(rect2u Rect, u32 X, u32 Y) {
+    return { Rect.Min.X + X, Rect.Min.Y + Y, Rect.Max.X + X, Rect.Max.Y + Y};
+}
+
+static inline rect2u 
+Translate(rect2u Rect, v2u Vec) {
+    return { Rect.Min.X + Vec.X, Rect.Min.Y + Vec.Y, Rect.Max.X + Vec.X, Rect.Max.Y + Vec.Y };
+}
+
 // rect2f
 static inline f32
 GetWidth(rect2f Rect) {
@@ -187,7 +197,6 @@ static inline f32
 GetHeight(rect2f Rect) {
     return Rect.Max.Y - Rect.Min.Y; 
 }
-
 
 
 // NOTE(Momo): Common Functions

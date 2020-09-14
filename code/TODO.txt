@@ -1,10 +1,4 @@
-[] Texture Atlas
-
-[] Image splitting tool
 [] Fonts
-
-
-
 [] Tile based rendering
 [] Fixed framerate (target framerate)
 [] Visual editor

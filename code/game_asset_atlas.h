@@ -63,10 +63,7 @@ LoadAtlas(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
             Atlas->Rects = PushArray<rect2u>(&Assets->Arena, Atlas->EntryCount);
             for (u32 i = 0; i < Atlas->RectCount; ++i) {
                 auto* Rect = Atlas->Rects + i;
-                Rect->Min.X = Read32<u32>(&Data, false);
-                Rect->Min.Y = Read32<u32>(&Data, false);
-                Rect->Max.X = Read32<u32>(&Data, false) + Rect->Min.X;
-                Rect->Max.Y = Read32<u32>(&Data, false) + Rect->Min.Y;
+                (*Rect) = *(Read<rect2u>(&Data));
             }
         }
         
@@ -153,17 +150,12 @@ GetImageUV(game_assets* Assets, atlas_id Id, u32 AtlasEntryId) {
     u32 RectIndex = AtlasEntry->Image->RectIndex;
     rect2u Rect = Atlas->Rects[RectIndex];
     
-    f32 UVXmin = (f32)Rect.Min.X / Atlas->Width;
-    f32 UVYmin = 1.f - ((f32)GetHeight(Rect) / Atlas->Height); ;
-    f32 UVXmax = UVXmin + ((f32)GetWidth(Rect) / Atlas->Width);
-    f32 UVYmax = 1.f;
-    
     
     return {
-        UVXmin,
-        UVYmin,
-        UVXmax,
-        UVYmax,
+        (f32)Rect.Min.X/Atlas->Width,
+        (f32)(Atlas->Height - Rect.Max.Y)/Atlas->Height,
+        (f32)Rect.Max.X/Atlas->Width,
+        (f32)(Atlas->Height - Rect.Min.Y)/Atlas->Height,
     };
 }
 

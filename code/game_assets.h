@@ -46,7 +46,6 @@ CheckAssetSignature(void *Memory) {
 }
 
 
-
 // TODO(Momo): Perhaps remove render_commands and replace with platform call for linking textures?
 static inline void
 Init(game_assets* Assets, 
