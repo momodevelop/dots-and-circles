@@ -1,4 +1,0 @@
-#ifndef RYOJI_ASSET_TYPES_H
-#define RYOJI_ASSET_TYPES_H
-
-#endif //RYOJI_ASSET_TYPES_H

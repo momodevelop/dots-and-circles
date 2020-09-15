@@ -10,21 +10,22 @@ enum atlas_entry_type : u32 {
 
 enum atlas_entry_id : u32 {
     // NOTE(Momo): for default
-    AtlasEntry_Default_Ryoji,
-    AtlasEntry_Default_Yuu,
+    AtlasDefault_Ryoji = 0,
+    AtlasDefault_Yuu,
     
-    AtlasEntry_Default_Karu00,
-    AtlasEntry_Default_Karu01,
-    AtlasEntry_Default_Karu02,
-    AtlasEntry_Default_Karu10,
-    AtlasEntry_Default_Karu11,
-    AtlasEntry_Default_Karu12,
-    AtlasEntry_Default_Karu20,
-    AtlasEntry_Default_Karu21,
-    AtlasEntry_Default_Karu22,
-    AtlasEntry_Default_Karu30,
-    AtlasEntry_Default_Karu31,
-    AtlasEntry_Default_Karu32,
+    AtlasDefault_Karu00,
+    AtlasDefault_Karu01,
+    AtlasDefault_Karu02,
+    AtlasDefault_Karu10,
+    AtlasDefault_Karu11,
+    AtlasDefault_Karu12,
+    AtlasDefault_Karu20,
+    AtlasDefault_Karu21,
+    AtlasDefault_Karu22,
+    AtlasDefault_Karu30,
+    AtlasDefault_Karu31,
+    AtlasDefault_Karu32,
+    AtlasDefault_Count,
     // NOTE(Momo): Other atlas types
 };
 
@@ -46,6 +47,12 @@ enum asset_id : u32 {
 
 
 #pragma pack(push, 1)
+struct yuu_entry {
+    asset_type Type;
+    u32 OffsetToData;
+    asset_id Id;
+};
+
 struct yuu_image {
     u32 Width;
     u32 Height;
@@ -64,7 +71,7 @@ struct yuu_atlas_image {
 };
 
 struct yuu_atlas_entry {
-    u32 Id; // TODO(Momo): atlas_entry_id
+    atlas_entry_id Id; // TODO(Momo): atlas_entry_id
     atlas_entry_type Type; 
     
     // NOTE(Momo): Data is:

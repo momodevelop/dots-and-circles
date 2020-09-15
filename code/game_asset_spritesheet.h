@@ -24,7 +24,6 @@ LoadSpritesheet(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* 
     asset_entry* Entry = Assets->Entries + Id;
     {
         Entry->Type = AssetType_Spritesheet;
-        Entry->Id = Id;
         
         Entry->Spritesheet = PushStruct<spritesheet>(&Assets->Arena);
         spritesheet* SS = Entry->Spritesheet;

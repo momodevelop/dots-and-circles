@@ -47,7 +47,6 @@ LoadAtlas(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
     asset_entry* Entry = Assets->Entries + Id;
     {
         Entry->Type = AssetType_Atlas;
-        Entry->Id = Id;
         Entry->Atlas = PushStruct<atlas>(&Assets->Arena);
         
         atlas* Atlas = Entry->Atlas;
@@ -139,7 +138,7 @@ GetRects(game_assets* Assets, atlas_id Id) {
 }
 
 static inline rect2f
-GetImageUV(game_assets* Assets, atlas_id Id, u32 AtlasEntryId) {
+GetImageUV(game_assets* Assets, atlas_id Id, atlas_entry_id AtlasEntryId) {
     auto* Entry = Assets->Entries + Id.Value;
     Assert(Entry->Type == AssetType_Atlas);
     

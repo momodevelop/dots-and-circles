@@ -11,9 +11,7 @@
 
 struct asset_entry {
     asset_type Type;
-    asset_id Id;
     union {
-        void* Data;
         struct image* Image;
         struct spritesheet* Spritesheet;
         struct atlas* Atlas;
@@ -88,20 +86,18 @@ Init(game_assets* Assets,
         for (u32 i = 0; i < Assets->EntryCount; ++i)
         {
             // NOTE(Momo): Read headers
-            auto FileAssetType = Read32<asset_type>(&FileMemoryItr, false);
-            u32 FileOffsetToEntry = Read32<u32>(&FileMemoryItr, false);
-            auto FileAssetId = Read32<asset_id>(&FileMemoryItr, false);
+            auto* YuuEntry =  Read<yuu_entry>(&FileMemoryItr);
             
-            u8* FileEntryDataItr = FileMemory + FileOffsetToEntry;
-            switch(FileAssetType) {
+            u8* FileEntryDataItr = FileMemory +  YuuEntry->OffsetToData;
+            switch(YuuEntry->Type) {
                 case AssetType_Image: {
-                    LoadImage(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
+                    LoadImage(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
                 } break;
                 case AssetType_Spritesheet: {
-                    LoadSpritesheet(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
+                    LoadSpritesheet(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
                 } break;
                 case AssetType_Atlas: {
-                    LoadAtlas(Assets, RenderCommands, FileAssetId, FileEntryDataItr);
+                    LoadAtlas(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
                 } break;
                 default: {
                     Assert(false);

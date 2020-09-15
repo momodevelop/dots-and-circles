@@ -7,7 +7,6 @@
 #include "ryoji_maths.h"
 #include "ryoji_list.h"
 
-#define MAX_ENTRIES 1024 
 #define DEBUG_PNG 1
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -23,18 +22,6 @@
 #include "game_asset_types.h"
 #include "game_atlas_types.h"
 
-
-// NOTE(Momo): File Structures  //////////////////////////////////////////////////////////////
-#pragma pack(push, 1)
-struct asset_file_entry {
-    asset_type Type;
-    u32 OffsetToData;
-    asset_id Id;
-};
-
-#pragma pack(pop)
-
-
 // NOTE(Momo): Atlas Builder ///////////////////////////////////////////////////////////
 
 // TODO(Momo): Support for different number of channels?
@@ -46,10 +33,9 @@ struct atlas_builder_entry_image {
 
 struct atlas_builder_entry {
     atlas_entry_type Type;
-    atlas_entry_id Id;
     union {
         atlas_builder_entry_image Image;
-        // TODO(Momo): Other types here
+        // TODO(Momo): Other types here?
     };
 };
 
@@ -132,12 +118,9 @@ AddRect(atlas_builder* Builder, u32 W, u32 H) {
 
 static inline atlas_builder_entry*
 AddEntry(atlas_builder* Builder, atlas_entry_type Type, atlas_entry_id Id) {
-    atlas_builder_entry Entry;
-    Entry.Type = Type;
-    Entry.Id = Id;
-    ListPush(Builder->Entries, Entry);
-    
-    return &ListLast(Builder->Entries);
+    atlas_builder_entry* Entry = Builder->Entries + Id;
+    Entry->Type = Type;
+    return Entry;
 }
 
 static inline void 
@@ -361,14 +344,16 @@ Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
 }
 
 static inline void 
-Clean(atlas_builder* Builder) {
+Init(atlas_builder* Builder, u32 Capacity) {
+    ListAdd(Builder->Entries, Capacity);
+}
+
+static inline void 
+Free(atlas_builder* Builder) {
     ListFree(Builder->Rects);
     ListFree(Builder->Entries);
     ListFree(Builder->SortedRects);
-    Builder->Started = false;
 }
-
-
 
 // NOTE(Momo): Asset Builder //////////////////////////////////////////////////////////
 struct asset_source_image {
@@ -394,7 +379,6 @@ struct asset_source_spritesheet {
 struct asset_source  {
     asset_type Type;
     asset_id Id;
-    
     union {
         asset_source_image Image;
         asset_source_spritesheet Spritesheet;
@@ -406,30 +390,38 @@ struct asset_source  {
 
 
 struct asset_builder {
-    asset_source Entries[MAX_ENTRIES];
-    u32 EntryCount;
+    asset_source* Entries; // List
 };
 
+static inline void 
+Init(asset_builder* Builder, u32 Capacity) {
+    ListAdd(Builder->Entries, Capacity);
+}
+
+static inline void
+Free(asset_builder* Builder) {
+    ListFree(Builder->Entries);
+}
+
 static inline asset_source*
-AddAssetEntry(asset_builder* Assets, asset_id Id, asset_type Type) {
-    Assert(Assets->EntryCount != MAX_ENTRIES);
-    asset_source* Ret = &Assets->Entries[Assets->EntryCount++];
-    Ret->Id = Id;
+AddEntry(asset_builder* Assets, asset_id Id, asset_type Type) {
+    asset_source* Ret = Assets->Entries + Id;
     Ret->Type = Type;
+    Ret->Id = Id;
     return Ret;
 }
 
 
 static inline void
 AddImage(asset_builder* Assets, const char* Filename, asset_id Id) {
-    asset_source* Entry = AddAssetEntry(Assets, Id, AssetType_Image);
+    asset_source* Entry = AddEntry(Assets, Id, AssetType_Image);
     Entry->Image.Filename = Filename;
 }
 
 static inline void 
 AddAtlas(asset_builder* Assets, atlas_builder* Builder, asset_id Id) 
 {
-    asset_source* Entry = AddAssetEntry(Assets, Id, AssetType_Atlas);
+    asset_source* Entry = AddEntry(Assets, Id, AssetType_Atlas);
     Entry->Atlas.Builder = Builder;
 }
 
@@ -440,7 +432,7 @@ AddSpritesheet(asset_builder* Assets,
                u32 Rows, 
                u32 Columns) 
 {
-    asset_source* Entry = AddAssetEntry(Assets, Id, AssetType_Spritesheet);
+    asset_source* Entry = AddEntry(Assets, Id, AssetType_Spritesheet);
     Entry->Spritesheet.Filename = Filename;
     Entry->Spritesheet.Rows = Rows;
     Entry->Spritesheet.Cols = Columns;
@@ -533,12 +525,12 @@ WriteAtlasData(asset_builder* Assets, FILE* File, asset_source_atlas* Atlas) {
             // TODO(Momo): Use dynamic string
             //char Buffer[256] = {};
             const char * PngFilename = "debug.png";
-            printf("\t\tWriting to '%s'... \n", PngFilename);
+            printf("\tWriting to '%s'... \n", PngFilename);
             if (!stbi_write_png(PngFilename, Builder->Width, Builder->Height, BITMAP_CHANNELS, BitmapMemory, Builder->Width * BITMAP_CHANNELS)) {
-                printf("\t\tWrite failed\n");
+                printf("\tWrite failed\n");
                 Assert(false);
             }
-            printf("\t\tWrite to '%s' completed\n", PngFilename);
+            printf("\tWriting to '%s' completed\n", PngFilename);
         }
 #endif
     }
@@ -550,7 +542,6 @@ WriteAtlasData(asset_builder* Assets, FILE* File, asset_source_atlas* Atlas) {
             // NOTE(Momo): Write file entry
             {
                 yuu_atlas_entry FileEntry = {};
-                FileEntry.Id = Entry->Id; 
                 FileEntry.Type = Entry->Type;
                 
                 fwrite(&FileEntry, sizeof(FileEntry), 1, File); 
@@ -597,26 +588,26 @@ Write(asset_builder* Assets, const char* Filename) {
     HeaderAt += sizeof(AssetSignature);
     
     // NOTE(Momo): Write the amount of items
-    fwrite(&Assets->EntryCount, sizeof(Assets->EntryCount), 1, OutFile);
-    HeaderAt += sizeof(Assets->EntryCount);
+    u32 EntryCount = ListCount(Assets->Entries);
+    fwrite(&EntryCount, sizeof(EntryCount), 1, OutFile);
+    HeaderAt += sizeof(EntryCount);
     
-    usize DataAt = HeaderAt + (sizeof(asset_file_entry) * Assets->EntryCount);
-    
+    usize DataAt = HeaderAt + (sizeof(yuu_entry) * EntryCount);
     
     // NOTE(Momo): Write the data
-    for (u32 i = 0; i < Assets->EntryCount; ++i)
+    for (u32 i = 0; i < EntryCount; ++i)
     {
         asset_source* Entry = &Assets->Entries[i];
         // NOTE(Momo): Write Header
         fseek(OutFile, (i32)HeaderAt, SEEK_SET);
         {
-            asset_file_entry Header = {};
+            yuu_entry Header = {};
             Header.Type = Entry->Type;
             Header.OffsetToData = (u32)DataAt;
             Header.Id = Entry->Id;
             
-            fwrite(&Header, sizeof(asset_file_entry), 1, OutFile); 
-            HeaderAt += sizeof(asset_file_entry);
+            fwrite(&Header, sizeof(yuu_entry), 1, OutFile); 
+            HeaderAt += sizeof(yuu_entry);
         }
         
         
@@ -633,6 +624,7 @@ Write(asset_builder* Assets, const char* Filename) {
                 WriteAtlasData(Assets, OutFile, &Entry->Atlas);
             } break;
             default: {
+                printf("Type = %d\n", Entry->Type);
                 Assert(false);
             }
         }

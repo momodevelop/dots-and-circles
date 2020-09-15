@@ -19,7 +19,6 @@ LoadImage(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
     asset_entry* Entry = Assets->Entries + Id;
     {
         Entry->Type = AssetType_Image;
-        Entry->Id = Id;
         Entry->Image = PushStruct<image>(&Assets->Arena);
         Entry->Image->Width = YuuImage->Width;
         Entry->Image->Height = YuuImage->Height;
