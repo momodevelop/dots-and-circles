@@ -3,12 +3,11 @@ Ground rules about this renderer.
 - This is a 2D renderer in 3D space. 
 - Right-handed coordinate system: +Y is up, +Z is towards
 - Only one model is supported: A quad that can be textured and colored 
-- Quad points defined in the an anti-clockwise order, starting from bottom left (to match our coordinate system): 
-0. bottom left
-1. bottom right
-2. top right
-3. top left 
-- UV origin is from top left.
+- UV origin is from top left. Points given for UV to map to the quad is given in this order:
+>> 0. Top left
+>> 1. Top right
+>> 2. Bottom right
+>> 3. Bottom left
 
 - Indices layout 2 triangles in the following fashion:
 * ---
