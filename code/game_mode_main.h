@@ -119,7 +119,7 @@ SpriteRenderingSystem(game_mode_main* Mode,
                                 {1.f, 1.f, 1.f, 1.f}, 
                                 T*R*S,
                                 GetBitmapId(Assets, Sprite->SpritesheetHandle),
-                                Quad2(GetSpritesheetFrame(Assets, Sprite->SpritesheetHandle, CurrentFrame)));
+                                Quad2F(GetSpritesheetFrame(Assets, Sprite->SpritesheetHandle, CurrentFrame)));
     
 }
 

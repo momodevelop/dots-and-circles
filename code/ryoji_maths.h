@@ -262,6 +262,11 @@ V2F(v3f V) {
     return { V.X, V.Y };
 }
 
+static inline v2f
+V2F(v2u V) {
+    return { (f32)V.X, (f32)V.Y };
+}
+
 static inline v2f 
 Add(v2f L, v2f R) {
     return { L.X + R.X, L.Y + R.Y };
@@ -305,7 +310,6 @@ static inline f32
 Dot(v2f L, v2f R) {
     return { L.X * R.X + L.Y * R.Y };
 }
-
 
 
 static inline v2f 
@@ -818,6 +822,14 @@ Rect2F(rect3f Rect) {
     };
 }
 
+static inline rect2f 
+Rect2F(rect2u Rect) {
+    return {
+        V2F(Rect.Min),
+        V2F(Rect.Max),
+    };
+}
+
 
 static inline rect3f
 Rect3F(rect2f Rect) {
@@ -827,6 +839,22 @@ Rect3F(rect2f Rect) {
     };
 }
 
+
+// NOTE(Momo): Gets the normalized values of Rect A based on another Rect B
+static inline rect2f 
+RatioRect(rect2f A, rect2f B) {
+    return  {
+        Ratio(A.Min.X, B.Min.X, B.Max.X),
+        Ratio(A.Min.Y, B.Min.Y, B.Max.Y),
+        Ratio(A.Max.X, B.Min.X, B.Max.X),
+        Ratio(A.Max.Y, B.Min.X, B.Max.Y),
+    };
+}
+
+static inline rect2f 
+RatioRect(rect2u A, rect2u B) {
+    return RatioRect(Rect2F(A), Rect2F(B));
+}
 
 
 struct ray2f {
@@ -870,12 +898,12 @@ GetPoint(ray2f Ray, f32 Time) {
 
 
 static inline quad2f
-Quad2(rect2f Rect) {
+Quad2F(rect2f Rect) {
     return {
-        Rect.Min.X, Rect.Min.Y, // bottom left  	
-        Rect.Max.X, Rect.Min.Y, // bottom right
-        Rect.Max.X, Rect.Max.Y, // top right
         Rect.Min.X, Rect.Max.Y, // top left
+        Rect.Max.X, Rect.Max.Y, // top right
+        Rect.Max.X, Rect.Min.Y, // bottom right
+        Rect.Min.X, Rect.Min.Y, // bottom left
     };
 }
 

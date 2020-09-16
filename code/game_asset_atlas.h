@@ -104,7 +104,6 @@ LoadAtlas(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
         
     }
     
-    
     PushCommandLinkTexture(RenderCommands,
                            Entry->Atlas->Width, 
                            Entry->Atlas->Height,
@@ -115,11 +114,11 @@ LoadAtlas(game_assets* Assets, commands* RenderCommands, asset_id Id, u8* Data) 
 
 
 // NOTE(Momo): Atlas Interface
-static inline atlas_id
+static inline atlas*
 GetAtlas(game_assets* Assets, asset_id Id) {
     asset_entry* Entry = Assets->Entries + Id;
     Assert(Entry->Type == AssetType_Atlas);
-    return { Id };
+    return Entry->Atlas;
 }
 
 

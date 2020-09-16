@@ -15,6 +15,7 @@ struct asset_entry {
         struct image* Image;
         struct spritesheet* Spritesheet;
         struct atlas* Atlas;
+        struct atlas_rect* AtlasRect;
     };
 };
 
@@ -31,6 +32,7 @@ struct game_assets {
 #include "game_asset_image.h"
 #include "game_asset_spritesheet.h"
 #include "game_asset_atlas.h"
+#include "game_asset_atlas_rect.h"
 
 inline b32
 CheckAssetSignature(void *Memory) {
@@ -98,6 +100,9 @@ Init(game_assets* Assets,
                 } break;
                 case AssetType_Atlas: {
                     LoadAtlas(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
+                } break;
+                case AssetType_AtlasRect: { 
+                    LoadAtlasRect(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
                 } break;
                 default: {
                     Assert(false);

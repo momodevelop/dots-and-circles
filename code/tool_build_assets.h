@@ -23,7 +23,6 @@
 #include "game_atlas_types.h"
 
 // NOTE(Momo): Atlas Builder ///////////////////////////////////////////////////////////
-
 // TODO(Momo): Support for different number of channels?
 #define BITMAP_CHANNELS 4 
 struct atlas_builder_entry_image {
@@ -33,6 +32,7 @@ struct atlas_builder_entry_image {
 
 struct atlas_builder_entry {
     atlas_entry_type Type;
+    usize Id;
     union {
         atlas_builder_entry_image Image;
         // TODO(Momo): Other types here?
@@ -46,9 +46,6 @@ struct atlas_builder {
     
     u32 Width;
     u32 Height;
-    
-    const char* OutputFilename;
-    b32 Started;
 };
 
 
@@ -111,21 +108,22 @@ static inline u32
 AddRect(atlas_builder* Builder, u32 W, u32 H) {
     rect2u Rect = {0, 0, W, H};
     ListPush(Builder->Rects, Rect);
-    
-    
     return ListCount(Builder->Rects) - 1;
 }
 
 static inline atlas_builder_entry*
-AddEntry(atlas_builder* Builder, atlas_entry_type Type, atlas_entry_id Id) {
-    atlas_builder_entry* Entry = Builder->Entries + Id;
-    Entry->Type = Type;
-    return Entry;
+AddEntry(atlas_builder* Builder, atlas_entry_type Type, usize Id) {
+    atlas_builder_entry Entry = {};
+    Entry.Id = Id;
+    Entry.Type = Type;
+    
+    ListPush(Builder->Entries, Entry);
+    return &ListLast(Builder->Entries);
 }
 
 static inline void 
-AddImage(atlas_builder* Builder, const char* Filename, atlas_entry_id Id) {
-    auto* Entry = AddEntry(Builder,  AtlasEntryType_Image, Id);
+AddImage(atlas_builder* Builder, const char* Filename, usize Id) {
+    auto* Entry = AddEntry(Builder, AtlasEntryType_Image, Id);
     Entry->Image.Filename = Filename;
     
     i32 W, H;
@@ -345,7 +343,7 @@ Build(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
 
 static inline void 
 Init(atlas_builder* Builder, u32 Capacity) {
-    ListAdd(Builder->Entries, Capacity);
+    // TODO(Momo): Remove?
 }
 
 static inline void 
@@ -363,6 +361,12 @@ struct asset_source_image {
 struct asset_source_atlas {
     atlas_builder* Builder;
 };
+
+struct asset_source_atlas_rect {
+    rect2u Rect;
+    asset_id AtlasAssetId;
+};
+
 
 struct asset_source_font {
     const char* Filename;
@@ -384,6 +388,7 @@ struct asset_source  {
         asset_source_spritesheet Spritesheet;
         asset_source_font Font;
         asset_source_atlas Atlas;
+        asset_source_atlas_rect AtlasRect;
     };
     
 };
@@ -411,6 +416,7 @@ AddEntry(asset_builder* Assets, asset_id Id, asset_type Type) {
     return Ret;
 }
 
+// TODO(Momo): Rearrange, put asset_id in front.
 
 static inline void
 AddImage(asset_builder* Assets, const char* Filename, asset_id Id) {
@@ -423,6 +429,13 @@ AddAtlas(asset_builder* Assets, atlas_builder* Builder, asset_id Id)
 {
     asset_source* Entry = AddEntry(Assets, Id, AssetType_Atlas);
     Entry->Atlas.Builder = Builder;
+}
+
+static inline void 
+AddAtlasRect(asset_builder* Assets, rect2u Rect, asset_id AtlasAssetId, asset_id Id) {
+    asset_source* Entry = AddEntry(Assets, Id, AssetType_AtlasRect);
+    Entry->AtlasRect.Rect = Rect;
+    Entry->AtlasRect.AtlasAssetId = AtlasAssetId;
 }
 
 static inline void 
@@ -565,13 +578,26 @@ WriteAtlasData(asset_builder* Assets, FILE* File, asset_source_atlas* Atlas) {
     }
     
     printf("Loaded Atlas: Rects = %d, Entries = %d, Width = %d, Height = %d\n",  Header.RectCount, Header.EntryCount, Header.Width, Header.Height);
+}
+
+
+static inline void
+WriteAtlasRectData(asset_builder* Assets, FILE* File, asset_source_atlas_rect* AtlasRect) {
     
+    yuu_atlas_rect YuuAtlasRect  = {};
+    YuuAtlasRect.Rect = AtlasRect->Rect;
+    YuuAtlasRect.AtlasAssetId = AtlasRect->AtlasAssetId;
+    
+    // NOTE(Momo): Write the data info
+    fwrite(&YuuAtlasRect, sizeof(yuu_atlas_rect), 1, File); 
+    
+    
+    printf("Loaded Atlas Rect: MinX = %d, MinY = %d, MaxX = %d, MaxY = %d\n", AtlasRect->Rect.Min.X, AtlasRect->Rect.Min.Y, AtlasRect->Rect.Max.X, AtlasRect->Rect.Max.Y);
     
 }
 
 static inline b32 
 Write(asset_builder* Assets, const char* Filename) {
-    // TODO(Momo): Maybe write a writer struct for all these states
     FILE* OutFile = fopen(Filename, "wb");
     if (OutFile == nullptr) {
         printf("Cannot open %s\n", Filename);
@@ -623,13 +649,15 @@ Write(asset_builder* Assets, const char* Filename) {
             case AssetType_Atlas: {
                 WriteAtlasData(Assets, OutFile, &Entry->Atlas);
             } break;
+            case AssetType_AtlasRect: {
+                WriteAtlasRectData(Assets, OutFile, &Entry->AtlasRect);
+            } break;
             default: {
-                printf("Type = %d\n", Entry->Type);
+                printf("Unknown Type = %d\n", Entry->Type);
                 Assert(false);
             }
         }
         DataAt = ftell(OutFile);
-        
     }
     
     return true;

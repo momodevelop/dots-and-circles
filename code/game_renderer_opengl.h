@@ -4,8 +4,24 @@
 #include "game_renderer.h"
 #include "game_renderer_opengl_shaders.inl"
 
+constexpr static inline f32 QuadModel[] = {
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    0.5f, -0.5f, 0.0f,  // bottom right
+    0.5f,  0.5f, 0.0f,  // top right
+    -0.5f,  0.5f, 0.0f,   // top left 
+};
 
+constexpr static inline u8 QuadIndices[] = {
+    0, 1, 2,
+    0, 2, 3,
+};
 
+constexpr static inline quad2f QuadUV[] = {
+    0.0f, 1.0f,  // top left
+    1.0f, 1.0f, // top right
+    1.0f, 0.f, // bottom right
+    0.f, 0.f, // bottom left
+};
 
 // NOTE(Momo): Buffers
 enum {
@@ -345,7 +361,7 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
                                      CurrentInstanceIndex * sizeof(quad2f),
                                      sizeof(quad2f),
-                                     &StandardQuadUV);
+                                     &QuadUV);
                 
                 // NOTE(Momo): Transpose; game is row-major
                 m44f Transform = Transpose(Data->Transform);

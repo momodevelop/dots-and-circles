@@ -40,6 +40,7 @@ using uptr = uintptr_t;
 #define IsMasked(flag, mask) ((flag & mask) > 0)
 #define Lerp(start, end, fraction) (start + (end - start)*fraction) 
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
+#define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
 
 static inline u32
 NtsLength(const char* Str) {

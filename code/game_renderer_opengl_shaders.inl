@@ -12,7 +12,7 @@ void main(void) {
 	gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);
 	mColor = aColor;
 	mTexCoord = aTexCoord[gl_VertexID];
-	mTexCoord.y = 1.0 - mTexCoord.y;
+	//mTexCoord.y = 1.0 - mTexCoord.y;
 })###";
 
 #if 1

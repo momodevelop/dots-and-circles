@@ -34,6 +34,7 @@ enum asset_type : u32 {
     AssetType_Spritesheet,
     AssetType_Sound,
     AssetType_Atlas,
+    AssetType_AtlasRect,
 };
 
 
@@ -42,10 +43,28 @@ enum asset_id : u32 {
     Asset_ImageYuu,
     Asset_SpritesheetKaru,
     Asset_AtlasDefault,
+    
+    // NOTE(Momo): Rects
+    Asset_RectRyoji,
+    Asset_RectYuu,
+    Asset_RectKaru00,
+    Asset_RectKaru01,
+    Asset_RectKaru02,
+    Asset_RectKaru10,
+    Asset_RectKaru11,
+    Asset_RectKaru12,
+    Asset_RectKaru20,
+    Asset_RectKaru21,
+    Asset_RectKaru22,
+    Asset_RectKaru30,
+    Asset_RectKaru31,
+    Asset_RectKaru32,
+    
     Asset_Count,
 };
 
 
+// NOTE(Momo): asset pack file structures
 #pragma pack(push, 1)
 struct yuu_entry {
     asset_type Type;
@@ -88,6 +107,11 @@ else : {
 };
 
 
+struct yuu_atlas_rect {
+    rect2u Rect;
+    asset_id AtlasAssetId;
+};
+
 struct yuu_atlas {
     u32 EntryCount;
     u32 RectCount;
@@ -100,7 +124,6 @@ rect2u Rects[RectCount]
 u8 Pixles[Width * Height * Channels]
 yuu_atlas_entry Entries[EntryCount]
 */
-    
 };
 
 

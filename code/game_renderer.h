@@ -8,11 +8,12 @@ Ground rules about this renderer.
 1. bottom right
 2. top right
 3. top left 
+- UV origin is from top left.
+
 - Indices layout 2 triangles in the following fashion:
 * ---
  * |/|
  * ---
-- UV origin is bottom left
 */
 #ifndef GAME_RENDERER_H
 #define GAME_RENDERER_H

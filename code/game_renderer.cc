@@ -1,24 +1,3 @@
-constexpr static f32 QuadModel[] = {
-    -0.5f, -0.5f, 0.0f,  // bottom left
-    0.5f, -0.5f, 0.0f,  // bottom right
-    0.5f,  0.5f, 0.0f,  // top right
-    -0.5f,  0.5f, 0.0f,   // top left 
-};
-
-constexpr static u8 QuadIndices[] = {
-    0, 1, 2,
-    0, 2, 3,
-};
-
-
-static inline constexpr quad2f StandardQuadUV = {
-    0.f, 0.f, // bottom left
-    1.0f, 0.f, // bottom right
-    1.0f, 1.0f, // top right
-    0.0f, 1.0f,  // top left
-};
-
-
 static inline rect2u 
 GetRenderRegion(u32 WindowWidth, 
                 u32 WindowHeight, 
@@ -101,7 +80,13 @@ PushCommandDrawTexturedQuad(commands* Commands,
                             v4f Colors, 
                             m44f Transform, 
                             u32 TextureHandle,
-                            quad2f TextureCoords = StandardQuadUV) 
+                            quad2f TextureCoords = {
+                                0.0f, 1.0f,  // top left
+                                1.0f, 1.0f, // top right
+                                1.0f, 0.f, // bottom right
+                                0.f, 0.f, // bottom left
+                                
+                            }) 
 {
     using data_t = render_command_draw_textured_quad;
     auto* Data = Push<data_t>(Commands);
