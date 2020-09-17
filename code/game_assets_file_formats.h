@@ -41,8 +41,10 @@ enum asset_type : u32 {
 enum asset_id : u32 {
     Asset_ImageRyoji,
     Asset_ImageYuu,
+    Asset_ImageAtlasDefault,
+    
     Asset_SpritesheetKaru,
-    Asset_AtlasDefault,
+    
     
     // NOTE(Momo): Rects
     Asset_RectRyoji,

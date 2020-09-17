@@ -1,5 +1,0 @@
-#ifndef GAME_ATLAS_TYPES_H
-#define GAME_ATLAS_TYPES_H
-
-
-#endif //GAME_ATLAS_TYPES_H

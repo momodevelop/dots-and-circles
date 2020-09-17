@@ -65,6 +65,6 @@ struct render_command_set_design_resolution {
 };
 
 
-#include "game_renderer.cc"
+#include "game_renderer.hpp"
 
 #endif //GAME_RENDERER_H

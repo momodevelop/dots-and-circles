@@ -6,7 +6,7 @@
 #include "ryoji_arenas.h"
 #include "ryoji_commands.h"
 
-#include "game_asset_types.h"
+#include "game_assets_file_formats.h"
 
 
 struct asset_entry {
@@ -29,10 +29,9 @@ struct game_assets {
     platform_api* Platform;
 };
 
-#include "game_asset_image.h"
-#include "game_asset_spritesheet.h"
-#include "game_asset_atlas.h"
-#include "game_asset_atlas_rect.h"
+#include "game_assets_image.h"
+#include "game_assets_spritesheet.h"
+#include "game_assets_atlas_rect.h"
 
 inline b32
 CheckAssetSignature(void *Memory) {
@@ -97,9 +96,6 @@ Init(game_assets* Assets,
                 } break;
                 case AssetType_Spritesheet: {
                     LoadSpritesheet(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
-                } break;
-                case AssetType_Atlas: {
-                    LoadAtlas(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);
                 } break;
                 case AssetType_AtlasRect: { 
                     LoadAtlasRect(Assets, RenderCommands, YuuEntry->Id, FileEntryDataItr);

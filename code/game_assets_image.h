@@ -47,6 +47,12 @@ GetImage(game_assets* Assets, asset_id Id) {
     return { Id };
 }
 
+static inline image*
+GetImagePtr(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Image);
+    return Entry->Image;
+}
 
 static inline u32 
 GetBitmapId(game_assets* Assets, image_id Id) {

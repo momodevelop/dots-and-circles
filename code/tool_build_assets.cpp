@@ -35,15 +35,16 @@ int main() {
     Init(Assets, Asset_Count);
     Defer { Free(Assets); };
     {
-        SetImage(Assets, Asset_ImageRyoji, "assets/ryoji.png", );
-        SetImage(Assets, Asset_ImageYuu, "assets/yuu.png",);
+        SetImage(Assets, Asset_ImageRyoji, "assets/ryoji.png");
+        SetImage(Assets, Asset_ImageYuu, "assets/yuu.png");
         SetSpritesheet(Assets, Asset_SpritesheetKaru, "assets/karu.png", 4, 3);
-        SetAtlas(Assets,  Asset_AtlasDefault, Atlas);
+        //SetAtlas(Assets,  Asset_AtlasDefault, Atlas);
+        SetAtlasImage(Assets, Asset_ImageAtlasDefault, Atlas);
         
-        for(u32 i = 0; i < ListCount(Atlas->Entries); ++i) {
+        for(u32 i = 0; i < DynBufferCount(Atlas->Entries); ++i) {
             auto* AtlasEntry = Atlas->Entries + i;
             rect2u Rect = *(Atlas->Rects + AtlasEntry->Image.RectIndex);
-            SetAtlasRect(Assets, (asset_id)AtlasEntry->Id, Rect, Asset_AtlasDefault, );
+            SetAtlasRect(Assets, (asset_id)AtlasEntry->Id, Rect, Asset_ImageAtlasDefault);
         }
         
         
