@@ -397,7 +397,7 @@ struct asset_source  {
 struct asset_builder {
     asset_source* Entries; // List
 };
-
+g
 static inline void 
 Init(asset_builder* Builder, u32 Capacity) {
     ListAdd(Builder->Entries, Capacity);
@@ -409,43 +409,41 @@ Free(asset_builder* Builder) {
 }
 
 static inline asset_source*
-AddEntry(asset_builder* Assets, asset_id Id, asset_type Type) {
+SetEntry(asset_builder* Assets, asset_id Id, asset_type Type) {
     asset_source* Ret = Assets->Entries + Id;
     Ret->Type = Type;
     Ret->Id = Id;
     return Ret;
 }
 
-// TODO(Momo): Rearrange, put asset_id in front.
-
 static inline void
-AddImage(asset_builder* Assets, const char* Filename, asset_id Id) {
-    asset_source* Entry = AddEntry(Assets, Id, AssetType_Image);
+SetImage(asset_builder* Assets, asset_id Id, const char* Filename) {
+    asset_source* Entry = SetEntry(Assets, Id, AssetType_Image);
     Entry->Image.Filename = Filename;
 }
 
 static inline void 
-AddAtlas(asset_builder* Assets, atlas_builder* Builder, asset_id Id) 
+SetAtlas(asset_builder* Assets, asset_id Id, atlas_builder* Builder) 
 {
-    asset_source* Entry = AddEntry(Assets, Id, AssetType_Atlas);
+    asset_source* Entry = SetEntry(Assets, Id, AssetType_Atlas);
     Entry->Atlas.Builder = Builder;
 }
 
 static inline void 
-AddAtlasRect(asset_builder* Assets, rect2u Rect, asset_id AtlasAssetId, asset_id Id) {
-    asset_source* Entry = AddEntry(Assets, Id, AssetType_AtlasRect);
+SetAtlasRect(asset_builder* Assets, asset_id Id, rect2u Rect, asset_id AtlasAssetId) {
+    asset_source* Entry = SetEntry(Assets, Id, AssetType_AtlasRect);
     Entry->AtlasRect.Rect = Rect;
     Entry->AtlasRect.AtlasAssetId = AtlasAssetId;
 }
 
 static inline void 
-AddSpritesheet(asset_builder* Assets, 
+SetSpritesheet(asset_builder* Assets, 
+               asset_id Id,
                const char* Filename, 
-               asset_id Id,  
                u32 Rows, 
                u32 Columns) 
 {
-    asset_source* Entry = AddEntry(Assets, Id, AssetType_Spritesheet);
+    asset_source* Entry = SetEntry(Assets, Id, AssetType_Spritesheet);
     Entry->Spritesheet.Filename = Filename;
     Entry->Spritesheet.Rows = Rows;
     Entry->Spritesheet.Cols = Columns;

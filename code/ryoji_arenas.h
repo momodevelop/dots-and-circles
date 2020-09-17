@@ -4,34 +4,31 @@
 #include "ryoji.h"
 #include "ryoji_bitmanip.h"
 
-
-struct memory_arena {
+struct arena {
     u8* Memory;
     usize Used;
     usize Capacity;
 };
 
 static inline void 
-Init(memory_arena* Arena, void* Memory, usize Capacity) {
+Init(arena* Arena, void* Memory, usize Capacity) {
     Assert(Capacity);
     Arena->Memory = (u8*)Memory;
     Arena->Capacity = Capacity;
-    
-    // TODO(Momo): Zero memory? 
 }
 
 static inline void 
-Clear(memory_arena* Arena) {
+Clear(arena* Arena) {
     Arena->Used = 0;
 }
 
 static inline usize
-GetRemainingCapacity(memory_arena* Arena) {
+GetRemainingCapacity(arena* Arena) {
     return Arena->Capacity - Arena->Used;
 }
 
 static inline void* 
-PushBlock(memory_arena* Arena, usize size, u8 alignment = alignof(void*)) {
+PushBlock(arena* Arena, usize size, u8 alignment = alignof(void*)) {
     Assert(size && alignment);
     u8 adjust = AlignForwardDiff(Arena->Memory, alignment);
     
@@ -47,65 +44,65 @@ PushBlock(memory_arena* Arena, usize size, u8 alignment = alignof(void*)) {
 
 template<typename T>
 static inline T*
-PushStruct(memory_arena* Arena) {
+PushStruct(arena* Arena) {
     return (T*)PushBlock(Arena, sizeof(T), alignof(T));
 }
 
 
 template<typename T>
 static inline T*
-PushArray(memory_arena* Arena, usize Count) {
+PushArray(arena* Arena, usize Count) {
     return (T*)PushBlock(Arena, sizeof(T) * Count, alignof(T));
 }
 
-// NOTE(Momo): temporary memory definitions
-struct temp_memory_arena {
-    memory_arena* Arena;
+// NOTE(Momo): temporary memory API
+struct temp_arena {
+    arena* Arena;
     usize OldUsed;
 };
 
-static inline temp_memory_arena
-BeginTempArena(memory_arena *Arena) {
-    temp_memory_arena Ret;
+static inline temp_arena
+BeginTempArena(arena *Arena) {
+    temp_arena Ret;
     Ret.Arena = Arena;
     Ret.OldUsed = Arena->Used;
     return Ret;
 }
 
-static inline temp_memory_arena
-BeginTempArena(temp_memory_arena *TempMemory) {
-    temp_memory_arena Ret;
+static inline temp_arena
+BeginTempArena(temp_arena *TempMemory) {
+    temp_arena Ret;
     Ret.Arena = TempMemory->Arena;
     Ret.OldUsed = TempMemory->Arena->Used;
     return Ret;
 }
 
 static inline void
-EndTempArena(temp_memory_arena TempMemory) {
+EndTempArena(temp_arena TempMemory) {
     TempMemory.Arena->Used = TempMemory.OldUsed;
 }
 
 
 static inline void* 
-PushBlock(temp_memory_arena* TempArena, usize size, u8 alignment = alignof(void*)) {
+PushBlock(temp_arena* TempArena, usize size, u8 alignment = alignof(void*)) {
     return PushBlock(TempArena->Arena, size, alignment);
 }
 
 template<typename T>
 static inline T*
-PushStruct(temp_memory_arena* TempArena) {
+PushStruct(temp_arena* TempArena) {
     return PushStruct<T>(TempArena->Arena, sizeof(T), alignof(T));
 }
 
 
 template<typename T>
 static inline T*
-PushArray(temp_memory_arena* TempArena, usize Count) {
+PushArray(temp_arena* TempArena, usize Count) {
     return PushArray<T>(TempArena->Arena, Count);
 }
 
 static inline void
-SubArena(memory_arena* DstArena, memory_arena* SrcArena, usize Capacity) {
+SubArena(arena* DstArena, arena* SrcArena, usize Capacity) {
     Assert(Capacity);
     DstArena->Memory = (u8*)PushBlock(SrcArena, Capacity);
     Assert(DstArena->Memory);

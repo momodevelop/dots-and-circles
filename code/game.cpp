@@ -37,7 +37,7 @@ ProcessMetaInput(game_state* GameState, game_input* Input) {
 
 static void
 SetGameMode(game_state* GameState, game_mode_type ModeType) {
-    memory_arena* ModeArena = &GameState->ModeArena;
+    arena* ModeArena = &GameState->ModeArena;
     Clear(ModeArena);
     
     switch(ModeType) {
@@ -80,7 +80,7 @@ GameUpdate(game_memory* GameMemory,
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
         // NOTE(Momo): Arenas
-        memory_arena* MainArena = &GameState->MainArena;
+        arena* MainArena = &GameState->MainArena;
         Init(MainArena, (u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
         
         // NOTE(Momo): Assets

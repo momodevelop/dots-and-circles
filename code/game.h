@@ -36,8 +36,8 @@ struct game_state {
     
     game_assets* Assets;
     
-    memory_arena MainArena;
-    memory_arena ModeArena;
+    arena MainArena;
+    arena ModeArena;
     
     b32 IsInitialized;
     

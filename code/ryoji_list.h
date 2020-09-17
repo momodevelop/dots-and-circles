@@ -1,4 +1,3 @@
-
 #ifndef RYOJI_LIST_H
 #define RYOJI_LIST_H
 

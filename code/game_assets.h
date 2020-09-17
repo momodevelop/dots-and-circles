@@ -20,7 +20,7 @@ struct asset_entry {
 };
 
 struct game_assets {
-    memory_arena Arena;
+    arena Arena;
     asset_entry* Entries;
     u32 EntryCount;
     
@@ -49,12 +49,12 @@ CheckAssetSignature(void *Memory) {
 // TODO(Momo): Perhaps remove render_commands and replace with platform call for linking textures?
 static inline void
 Init(game_assets* Assets, 
-     memory_arena* Arena, 
+     arena* Arena, 
      platform_api* Platform,
      commands* RenderCommands,
      const char* Filename) 
 {
-    memory_arena* AssetArena = &Assets->Arena;
+    arena* AssetArena = &Assets->Arena;
     SubArena(AssetArena, Arena, Megabytes(100));
     Assets->Platform = Platform;
     
