@@ -19,14 +19,21 @@
 #include "thirdparty/stb/stb_image_write.h"
 
 
-#include "game_asset_types.h"
+#include "game_asset_types.h"  
 #include "game_atlas_types.h"
 
 // NOTE(Momo): Atlas Builder ///////////////////////////////////////////////////////////
+struct atlas_builder_loaded_font {
+};
+
 
 struct atlas_builder_entry_image {
     const char* Filename;
     u32 RectIndex;
+};
+
+struct atlas_builder_entry_font {
+    
 };
 
 struct atlas_builder_entry {
@@ -34,7 +41,7 @@ struct atlas_builder_entry {
     usize Id;
     union {
         atlas_builder_entry_image Image;
-        // TODO(Momo): Other types here?
+        atlas_builder_entry_font Font;
     };
 };
 
