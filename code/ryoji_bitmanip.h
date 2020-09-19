@@ -155,4 +155,14 @@ Read(u8** P) {
     return Ret;
 }
 
+
+template<typename T>
+static inline void
+Write(u8** P, T Item) {
+    T* LocationAsT = (T*)(*P);
+    (*LocationAsT) = Item;
+    (*P) += sizeof(T);
+}
+
+
 #endif 

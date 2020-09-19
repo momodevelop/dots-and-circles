@@ -4,9 +4,6 @@
 static constexpr u8 AssetSignature[] = { 'M', 'O', 'M', 'O' };
 
 
-enum atlas_entry_type : u32 {
-    AtlasEntryType_Image,
-};
 
 enum atlas_entry_id : u32 {
     // NOTE(Momo): for default
@@ -62,6 +59,62 @@ enum asset_id : u32 {
     Asset_RectKaru31,
     Asset_RectKaru32,
     
+    // NOTE(Momo): Font rects ahhhh
+    Asset_FontRect_a,
+    Asset_FontRect_b,
+    Asset_FontRect_c,
+    Asset_FontRect_d,
+    Asset_FontRect_e,
+    Asset_FontRect_f,
+    Asset_FontRect_g,
+    Asset_FontRect_h,
+    Asset_FontRect_i,
+    Asset_FontRect_j,
+    Asset_FontRect_k,
+    Asset_FontRect_l,
+    Asset_FontRect_m,
+    Asset_FontRect_n,
+    Asset_FontRect_o,
+    Asset_FontRect_p,
+    Asset_FontRect_q,
+    Asset_FontRect_r,
+    Asset_FontRect_s,
+    Asset_FontRect_t,
+    Asset_FontRect_u,
+    Asset_FontRect_v,
+    Asset_FontRect_w,
+    Asset_FontRect_x,
+    Asset_FontRect_y,
+    Asset_FontRect_z,
+    
+    Asset_FontRect_A,
+    Asset_FontRect_B,
+    Asset_FontRect_C,
+    Asset_FontRect_D,
+    Asset_FontRect_E,
+    Asset_FontRect_F,
+    Asset_FontRect_G,
+    Asset_FontRect_H,
+    Asset_FontRect_I,
+    Asset_FontRect_J,
+    Asset_FontRect_K,
+    Asset_FontRect_L,
+    Asset_FontRect_M,
+    Asset_FontRect_N,
+    Asset_FontRect_O,
+    Asset_FontRect_P,
+    Asset_FontRect_Q,
+    Asset_FontRect_R,
+    Asset_FontRect_S,
+    Asset_FontRect_T,
+    Asset_FontRect_U,
+    Asset_FontRect_V,
+    Asset_FontRect_W,
+    Asset_FontRect_X,
+    Asset_FontRect_Y,
+    Asset_FontRect_Z,
+    
+    
     Asset_Count,
 };
 
@@ -84,28 +137,6 @@ u8 Pixels[Width * Height * Channels];
 */
     
     
-};
-
-
-struct yuu_atlas_image {
-    u32 RectIndex;
-};
-
-struct yuu_atlas_entry {
-    atlas_entry_id Id; // TODO(Momo): atlas_entry_id
-    atlas_entry_type Type; 
-    
-    // NOTE(Momo): Data is:
-    /*
-    if Image: {
-----RectIndex
-}
-else : {
-
-}
-        
-    
-*/
 };
 
 

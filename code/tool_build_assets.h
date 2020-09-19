@@ -18,22 +18,23 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "thirdparty/stb/stb_image_write.h"
 
+#include "game_assets_file_formats.h"  
 
-#include "game_asset_types.h"  
-#include "game_atlas_types.h"
-
-// NOTE(Momo): Atlas Builder ///////////////////////////////////////////////////////////
-struct atlas_builder_loaded_font {
+enum atlas_entry_type : u32 {
+    AtlasEntryType_Image,
+    AtlasEntryType_FontGlyph,
 };
 
 
+// NOTE(Momo): Atlas Builder ///////////////////////////////////////////////////////////
 struct atlas_builder_entry_image {
     const char* Filename;
     u32 RectIndex;
 };
 
 struct atlas_builder_entry_font {
-    
+    i32 Codepoint;
+    u32 RectIndex;
 };
 
 struct atlas_builder_entry {
@@ -41,7 +42,7 @@ struct atlas_builder_entry {
     usize Id;
     union {
         atlas_builder_entry_image Image;
-        atlas_builder_entry_font Font;
+        atlas_builder_entry_font FontGlyph;
     };
 };
 
@@ -136,6 +137,16 @@ AddImage(atlas_builder* Builder, const char* Filename, usize Id) {
     i32 W, H;
     stbi_info(Filename, &W, &H, 0);
     Entry->Image.RectIndex = AddRect(Builder, (u32)W, (u32)H);
+}
+
+static inline void 
+AddFontGlyph(atlas_builder* Builder, i32 Codepoint, stbtt_fontinfo* FontInfo, usize Id) {
+    auto* Entry = AddEntry(Builder, AtlasEntryType_FontGlyph, Id);
+    Entry->FontGlyph.Codepoint = Codepoint;
+    
+    
+    
+    Entry->FontGlyph.RectIndex = AddRect(Builder, (u32)W, (u32)H);
 }
 
 
@@ -553,81 +564,6 @@ WriteImageData(asset_builder* Assets, FILE* File, asset_source_image* Image)
 }
 
 
-static inline void 
-WriteAtlasData(asset_builder* Assets, FILE* File, asset_source_atlas* Atlas) {
-    atlas_builder* Builder = Atlas->Builder;
-    usize AtlasStart = ftell(File);
-    
-    // NOTE(Momo): Write Header
-    yuu_atlas Header = {}; 
-    {
-        Header.Width = Builder->Width;
-        Header.Height = Builder->Height;
-        Header.Channels = Builder->Channels;
-        Header.EntryCount = DynBufferCount(Builder->Entries);
-        Header.RectCount = DynBufferCount(Builder->Rects);
-        
-        fwrite(&Header, sizeof(Header), 1, File);
-    }
-    // NOTE(Momo): Write Rects
-    {
-        fwrite(Builder->Rects, sizeof(rect2u), Header.RectCount, File);
-    }
-    // NOTE(Momo): Write Bitmap
-    {
-        u8 * BitmapMemory = AllocateBitmap(Builder);
-        Assert(BitmapMemory);
-        Defer { FreeBitmap(BitmapMemory); };
-        u32 BitmapSize = Header.Width * Header.Height * Header.Channels;
-        fwrite(BitmapMemory, 1, BitmapSize, File);
-#if DEBUG_PNG
-        {
-            // TODO(Momo): Use dynamic string
-            //char Buffer[256] = {};
-            const char * PngFilename = "debug.png";
-            printf("\tWriting to '%s'... \n", PngFilename);
-            if (!stbi_write_png(PngFilename, Builder->Width, Builder->Height, Builder->Channels, BitmapMemory, Builder->Width * Builder->Channels)) {
-                printf("\tWrite failed\n");
-                Assert(false);
-            }
-            printf("\tWriting to '%s' completed\n", PngFilename);
-        }
-#endif
-    }
-    // NOTE(Momo): Write Entries
-    {
-        for (u32 i = 0; i < DynBufferCount(Builder->Entries); ++i) {
-            auto* Entry = Builder->Entries + i;
-            
-            // NOTE(Momo): Write file entry
-            {
-                yuu_atlas_entry FileEntry = {};
-                FileEntry.Type = Entry->Type;
-                
-                fwrite(&FileEntry, sizeof(FileEntry), 1, File); 
-            }
-            
-            // NOTE(Momo): Write Data
-            switch(Entry->Type) {
-                case AtlasEntryType_Image: {
-                    yuu_atlas_image ImageData = {};
-                    ImageData.RectIndex = Entry->Image.RectIndex;
-                    
-                    fwrite(&ImageData, sizeof(ImageData), 1, File); 
-                } break;
-                default: {
-                    Assert(false);
-                }
-            }
-            
-        }
-        
-    }
-    
-    printf("Loaded Atlas: Rects = %d, Entries = %d, Width = %d, Height = %d\n",  Header.RectCount, Header.EntryCount, Header.Width, Header.Height);
-}
-
-
 static inline void
 WriteAtlasRectData(asset_builder* Assets, FILE* File, asset_source_atlas_rect* AtlasRect) {
     
@@ -692,9 +628,6 @@ Write(asset_builder* Assets, const char* Filename) {
             } break;
             case AssetType_Spritesheet: {
                 WriteSpritesheetData(Assets, OutFile, &Entry->Spritesheet);
-            } break;
-            case AssetType_Atlas: {
-                WriteAtlasData(Assets, OutFile, &Entry->Atlas);
             } break;
             case AssetType_AtlasRect: {
                 WriteAtlasRectData(Assets, OutFile, &Entry->AtlasRect);

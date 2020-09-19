@@ -12,11 +12,13 @@ int main() {
         fseek(File, 0, SEEK_END);
         auto Size = ftell(File);
         fseek(File, 0, SEEK_SET);
-        u8* Buffer = malloc(Size);
-        fread(Buffer, 1, Size);
+        u8* Buffer = (u8*)malloc(Size);
+        fread(Buffer, 1, Size, File);
         stbtt_InitFont(&LoadedFont, Buffer, 0);
         free(Buffer);
     }
+    
+    
     
     atlas_builder Atlas_ = {};
     atlas_builder* Atlas = &Atlas_;
@@ -39,8 +41,10 @@ int main() {
         AddImage(Atlas, "assets/karu31.png", Asset_RectKaru31);
         AddImage(Atlas, "assets/karu32.png", Asset_RectKaru32);
         
-        AddFont(Atlas, 'a', LoadedFont)
-            
+        for (i32 i = 'a'; i <= 'z'; ++i) {
+            //AddFontGlyph(Atlas, 'a', LoadedFont, )
+        }
+        
     }
     if (!Build(Atlas, 128, 4096)) {
         Assert(false);
@@ -64,7 +68,6 @@ int main() {
             rect2u Rect = *(Atlas->Rects + AtlasEntry->Image.RectIndex);
             SetAtlasRect(Assets, (asset_id)AtlasEntry->Id, Rect, Asset_ImageAtlasDefault);
         }
-#endif
         
     }
     Write(Assets, "yuu");
