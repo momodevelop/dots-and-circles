@@ -33,19 +33,21 @@ WriteInfo(atlas_builder* Builder, const char* InfoFilename) {
     Defer { printf("[Write] Write to file complete\n"); };
     
     auto Result = AllocateInfo(Builder);
+    Assert(Result.Ok);
     Defer { FreeInfo(Result); };
     
-    Assert(Result.Ok);
     printf("\tWriting to %s\n", InfoFilename); 
     fwrite(Result.Memory, Result.Size, 1, fopen(InfoFilename, "wb"));
 }
 
 
 static inline void
-AddImage(atlas_builder* Builder, const char* Filename, asset_id Id) {
+AddImage(atlas_builder* Builder, const char* Filename, asset_id AssetId, asset_id TargetAtlasId) 
+{
     yuu_atlas_ud_image Data = {};
-    Data.Id = Id;
-    Data.Type = YuuAtlasUserDataType_Image;
+    Data.Base.AssetId = AssetId;
+    Data.Base.AtlasAssetId = TargetAtlasId;
+    Data.Base.Type = YuuAtlasUserDataType_Image;
     
     i32 W, H, C;
     unsigned char* BitmapData = stbi_load(Filename, &W, &H, &C, 0);
@@ -59,23 +61,25 @@ int main() {
     atlas_builder Atlas_ = {};
     atlas_builder* Atlas = &Atlas_;
     Defer { Free(Atlas); };
+    
     Begin(Atlas);
     {
-        AddImage(Atlas, "assets/ryoji.png", Asset_RectRyoji);
-        AddImage(Atlas, "assets/yuu.png", Asset_RectYuu);
+        asset_id TargetAtlasAssetId = Asset_ImageAtlasDefault;
+        AddImage(Atlas, "assets/ryoji.png", Asset_RectRyoji, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/yuu.png", Asset_RectYuu, TargetAtlasAssetId);
         
-        AddImage(Atlas, "assets/karu00.png", Asset_RectKaru00);
-        AddImage(Atlas, "assets/karu01.png", Asset_RectKaru01);
-        AddImage(Atlas, "assets/karu02.png", Asset_RectKaru02);
-        AddImage(Atlas, "assets/karu10.png", Asset_RectKaru10);
-        AddImage(Atlas, "assets/karu11.png", Asset_RectKaru11);
-        AddImage(Atlas, "assets/karu12.png", Asset_RectKaru12);
-        AddImage(Atlas, "assets/karu20.png", Asset_RectKaru20);
-        AddImage(Atlas, "assets/karu21.png", Asset_RectKaru21);
-        AddImage(Atlas, "assets/karu22.png", Asset_RectKaru22);
-        AddImage(Atlas, "assets/karu30.png", Asset_RectKaru30);
-        AddImage(Atlas, "assets/karu31.png", Asset_RectKaru31);
-        AddImage(Atlas, "assets/karu32.png", Asset_RectKaru32);
+        AddImage(Atlas, "assets/karu00.png", Asset_RectKaru00, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu01.png", Asset_RectKaru01, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu02.png", Asset_RectKaru02, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu10.png", Asset_RectKaru10, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu11.png", Asset_RectKaru11, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu12.png", Asset_RectKaru12, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu20.png", Asset_RectKaru20, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu21.png", Asset_RectKaru21, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu22.png", Asset_RectKaru22, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu30.png", Asset_RectKaru30, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu31.png", Asset_RectKaru31, TargetAtlasAssetId);
+        AddImage(Atlas, "assets/karu32.png", Asset_RectKaru32, TargetAtlasAssetId);
     }
     End(Atlas);
     WriteBitmapToPng(Atlas, "assets/atlas.png");

@@ -1,42 +1,44 @@
 #include "tool_build_assets.h"
 
+#include "ryoji_atlas_builder.h"
+#include "ryoji_bitmanip.h"
 
-
-int main() {
+static inline void 
+ReadAtlasInfo(asset_builder* Assets, const char * Filename) {
+    FILE* File = fopen(Filename, "rb");
+    Assert(File);
+    Defer { fclose(File); };
     
-#if 1
-    atlas_builder Atlas_ = {};
-    atlas_builder* Atlas = &Atlas_;
-    Init(Atlas, AtlasDefault_Count);
-    Defer { Free(Atlas); };
-    {
-        AddImage(Atlas, "assets/ryoji.png", Asset_RectRyoji);
-        AddImage(Atlas, "assets/yuu.png", Asset_RectYuu);
+    
+    atlas_builder_info_header Header; 
+    fread(&Header, sizeof(Header), 1, File);
+    
+    
+    for(u32 i = 0; i < Header.EntryCount; ++i ) {
+        atlas_builder_info_entry Entry; 
+        fread(&Entry, sizeof(Entry), 1, File);
         
-        AddImage(Atlas, "assets/karu00.png", Asset_RectKaru00);
-        AddImage(Atlas, "assets/karu01.png", Asset_RectKaru01);
-        AddImage(Atlas, "assets/karu02.png", Asset_RectKaru02);
-        AddImage(Atlas, "assets/karu10.png", Asset_RectKaru10);
-        AddImage(Atlas, "assets/karu11.png", Asset_RectKaru11);
-        AddImage(Atlas, "assets/karu12.png", Asset_RectKaru12);
-        AddImage(Atlas, "assets/karu20.png", Asset_RectKaru20);
-        AddImage(Atlas, "assets/karu21.png", Asset_RectKaru21);
-        AddImage(Atlas, "assets/karu22.png", Asset_RectKaru22);
-        AddImage(Atlas, "assets/karu30.png", Asset_RectKaru30);
-        AddImage(Atlas, "assets/karu31.png", Asset_RectKaru31);
-        AddImage(Atlas, "assets/karu32.png", Asset_RectKaru32);
+        // peeking
+        yuu_atlas_ud_type Type = {};
+        {
+            auto RecallPoint = ftell(File);
+            fread(&Type, sizeof(Type), 1, File);
+            fseek(File, RecallPoint, SEEK_SET);
+        }
         
-        for (i32 i = 'a'; i <= 'z'; ++i) {
-            //AddFontGlyph(Atlas, 'a', LoadedFont, )
+        switch(Type) {
+            case YuuAtlasUserDataType_Image: {
+                yuu_atlas_ud_image ImageData = {};
+                fread(&ImageData, sizeof(ImageData), 1, File);
+                SetAtlasRect(Assets, ImageData.AssetId, Entry.Rect, ImageData.AtlasAssetId);
+            } break;
         }
         
     }
-    if (!Build(Atlas, 128, 4096)) {
-        Assert(false);
-    }
-#endif
-    
-    
+}
+
+
+int main() {
     
     // NOTE(Momo): Gather all the assets we need to load
     asset_builder Assets_ = {};
@@ -48,11 +50,9 @@ int main() {
         SetImage(Assets, Asset_ImageYuu, "assets/yuu.png");
         SetSpritesheet(Assets, Asset_SpritesheetKaru, "assets/karu.png", 4, 3);
         SetImage(Assets, Asset_ImageAtlasDefault, "assets/atlas.png");
-        for(u32 i = 0; i < DynBufferCount(Atlas->Entries); ++i) {
-            auto* AtlasEntry = Atlas->Entries + i;
-            rect2u Rect = *(Atlas->Rects + AtlasEntry->Image.RectIndex);
-            SetAtlasRect(Assets, (asset_id)AtlasEntry->Id, Rect, Asset_ImageAtlasDefault);
-        }
+        
+        ReadAtlasInfo(Assets, "assets/atlas_info.dat");
+        
     }
     Write(Assets, "yuu");
     

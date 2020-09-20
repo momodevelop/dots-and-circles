@@ -78,6 +78,20 @@ AddEntry(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels
     AddEntry(Builder, Width, Height, Channels, Pixels, nullptr, 0);
 }
 
+
+
+// NOTE(Momo): Should already be aligned. 
+// All types are the same so don't need top pragma pack
+struct atlas_builder_info_header {
+    u32 EntryCount;
+};
+
+struct atlas_builder_info_entry {
+    rect2u Rect;
+    u32 UserDataSize;
+};
+
+
 // NOTE(Momo): Memory contains all entries in the following format
 /*
 rect2u, user_data_size (u32), user_data...rect2u, user_data_size (u32), user_data...
@@ -94,11 +108,12 @@ static inline atlas_builder_allocate_info_result
 AllocateInfo(atlas_builder* Builder) 
 {
     // NOTE(Momo): Precalculate size
-    u32 Size = DynBufferCount(Builder->Entries) * sizeof(rect2u);
-    for (u32 i = 0; i < DynBufferCount(Builder->Entries); ++i ){
-        auto* Entry = Builder->Entries + i;
-        Size += sizeof(u32) + Entry->UserDataSize; 
+    u32 EntryCount = DynBufferCount(Builder->Entries);
+    u32 Size = EntryCount * sizeof(atlas_builder_info_entry);
+    for (u32 i = 0; i < EntryCount; ++i ){
+        Size += Builder->Entries[i].UserDataSize; 
     }
+    Size += sizeof(atlas_builder_info_header);
     
     void* Memory = malloc(Size);
     if ( Memory == nullptr ) {
@@ -106,16 +121,26 @@ AllocateInfo(atlas_builder* Builder)
     }
     u8* Itr = (u8*)Memory;
     
-    for (u32 i = 0; i < DynBufferCount(Builder->Entries); ++i ){
+    // NOTE(Momo): Header
+    {
+        atlas_builder_info_header InfoHeader = {};
+        InfoHeader.EntryCount = EntryCount;
+        Write(&Itr, InfoHeader);
+    }
+    
+    // NOTE(Momo): Data
+    for (u32 i = 0; i < EntryCount; ++i ){
         auto* Entry = Builder->Entries + i;
-        rect2u Rect = *(Builder->Rects + Entry->RectIndex);
-        Write(&Itr, Rect);
-        Write(&Itr, Entry->UserDataSize);
+        atlas_builder_info_entry InfoEntry = {};
+        InfoEntry.Rect= Builder->Rects[Entry->RectIndex];
+        InfoEntry.UserDataSize = Entry->UserDataSize;
+        Write(&Itr, InfoEntry);
+        
         CopyBlock(Itr, Entry->UserData, Entry->UserDataSize);
         Itr += Entry->UserDataSize;
     }
+    Assert(Itr == (u8*)Memory + Size);
     
-    Assert(Itr <= (u8*)Memory + Size);
     
     return { true, Size, Memory };
 }

@@ -76,7 +76,7 @@ Init(game_assets* Assets,
         FileMemoryItr+= ArrayCount(AssetSignature);
         
         // NOTE(Momo): Read the counts in order
-        Assets->EntryCount = Read32<u32>(&FileMemoryItr, false);
+        Assets->EntryCount = *(Read<u32>(&FileMemoryItr));
     }
     
     // NOTE(Momo): Allocate Assets

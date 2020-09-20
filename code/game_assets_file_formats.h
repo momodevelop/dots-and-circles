@@ -175,18 +175,21 @@ u8 Pixels[Width * Height * Channels];
 enum yuu_atlas_ud_type : u32 {
     YuuAtlasUserDataType_Image,
     YuuAtlasuserdataType_Font,
-    
 };
+
 
 struct yuu_atlas_ud_image {
     yuu_atlas_ud_type Type;
-    asset_id Id;
+    asset_id AssetId;
+    asset_id AtlasAssetId; 
 };
 
 struct yuu_atlas_ud_font {
-    
+    yuu_atlas_ud_type Type;
+    asset_id AssetId;
+    asset_id AtlasAssetId; 
+    int Codepoint;
 };
-
 
 
 #pragma pack(pop)
