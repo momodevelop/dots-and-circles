@@ -3,23 +3,8 @@
 
 
 int main() {
-    stbtt_fontinfo LoadedFont;
-    {
-        FILE* File = fopen("Default.ttf", "rb");
-        if (File == nullptr) {
-            return 0;
-        }
-        fseek(File, 0, SEEK_END);
-        auto Size = ftell(File);
-        fseek(File, 0, SEEK_SET);
-        u8* Buffer = (u8*)malloc(Size);
-        fread(Buffer, 1, Size, File);
-        stbtt_InitFont(&LoadedFont, Buffer, 0);
-        free(Buffer);
-    }
     
-    
-    
+#if 1
     atlas_builder Atlas_ = {};
     atlas_builder* Atlas = &Atlas_;
     Init(Atlas, AtlasDefault_Count);
@@ -49,6 +34,7 @@ int main() {
     if (!Build(Atlas, 128, 4096)) {
         Assert(false);
     }
+#endif
     
     
     
@@ -61,14 +47,12 @@ int main() {
         SetImage(Assets, Asset_ImageRyoji, "assets/ryoji.png");
         SetImage(Assets, Asset_ImageYuu, "assets/yuu.png");
         SetSpritesheet(Assets, Asset_SpritesheetKaru, "assets/karu.png", 4, 3);
-        SetAtlasImage(Assets, Asset_ImageAtlasDefault, Atlas);
-        
+        SetImage(Assets, Asset_ImageAtlasDefault, "assets/atlas.png");
         for(u32 i = 0; i < DynBufferCount(Atlas->Entries); ++i) {
             auto* AtlasEntry = Atlas->Entries + i;
             rect2u Rect = *(Atlas->Rects + AtlasEntry->Image.RectIndex);
             SetAtlasRect(Assets, (asset_id)AtlasEntry->Id, Rect, Asset_ImageAtlasDefault);
         }
-        
     }
     Write(Assets, "yuu");
     

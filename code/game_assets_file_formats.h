@@ -4,7 +4,7 @@
 static constexpr u8 AssetSignature[] = { 'M', 'O', 'M', 'O' };
 
 
-
+// NOTE(Momo): Asset Structs
 enum atlas_entry_id : u32 {
     // NOTE(Momo): for default
     AtlasDefault_Ryoji = 0,
@@ -29,8 +29,6 @@ enum atlas_entry_id : u32 {
 enum asset_type : u32 {
     AssetType_Image,
     AssetType_Spritesheet,
-    AssetType_Sound,
-    AssetType_Atlas,
     AssetType_AtlasRect,
 };
 
@@ -59,6 +57,7 @@ enum asset_id : u32 {
     Asset_RectKaru31,
     Asset_RectKaru32,
     
+#if 0
     // NOTE(Momo): Font rects ahhhh
     Asset_FontRect_a,
     Asset_FontRect_b,
@@ -113,7 +112,7 @@ enum asset_id : u32 {
     Asset_FontRect_X,
     Asset_FontRect_Y,
     Asset_FontRect_Z,
-    
+#endif
     
     Asset_Count,
 };
@@ -135,8 +134,6 @@ struct yuu_image {
     /*
 u8 Pixels[Width * Height * Channels];
 */
-    
-    
 };
 
 
@@ -173,6 +170,25 @@ struct yuu_spritesheet {
 u8 Pixels[Width * Height * Channels];
 */
 };
+
+// NOTE(Momo): Atlas User Data Structs
+enum yuu_atlas_ud_type : u32 {
+    YuuAtlasUserDataType_Image,
+    YuuAtlasuserdataType_Font,
+    
+};
+
+struct yuu_atlas_ud_image {
+    yuu_atlas_ud_type Type;
+    asset_id Id;
+};
+
+struct yuu_atlas_ud_font {
+    
+};
+
+
+
 #pragma pack(pop)
 
 

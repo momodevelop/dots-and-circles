@@ -201,30 +201,30 @@ Init(game_mode_main* Mode, game_state* GameState) {
     // NOTE(Momo): Animations
     {
 #if 1
-        Mode->AnimeWalkUp[0] = 1; 
-        Mode->AnimeWalkUp[1] = 0;
-        Mode->AnimeWalkUp[2] = 1;
-        Mode->AnimeWalkUp[3] = 2;
+        Mode->AnimeWalkDown[0] = 1; 
+        Mode->AnimeWalkDown[1] = 0;
+        Mode->AnimeWalkDown[2] = 1;
+        Mode->AnimeWalkDown[3] = 2;
         
-        Mode->AnimeWalkRight[0] = 4; 
-        Mode->AnimeWalkRight[1] = 3;
-        Mode->AnimeWalkRight[2] = 4;
-        Mode->AnimeWalkRight[3] = 5;
+        Mode->AnimeWalkLeft[0] = 4; 
+        Mode->AnimeWalkLeft[1] = 3;
+        Mode->AnimeWalkLeft[2] = 4;
+        Mode->AnimeWalkLeft[3] = 5;
         
-        Mode->AnimeWalkLeft[0] = 7; 
-        Mode->AnimeWalkLeft[1] = 6;
-        Mode->AnimeWalkLeft[2] = 7;
-        Mode->AnimeWalkLeft[3] = 8;
+        Mode->AnimeWalkRight[0] = 7; 
+        Mode->AnimeWalkRight[1] = 6;
+        Mode->AnimeWalkRight[2] = 7;
+        Mode->AnimeWalkRight[3] = 8;
         
-        Mode->AnimeWalkDown[0] = 10; 
-        Mode->AnimeWalkDown[1] = 9;
-        Mode->AnimeWalkDown[2] = 10;
-        Mode->AnimeWalkDown[3] = 11;
+        Mode->AnimeWalkUp[0] = 10; 
+        Mode->AnimeWalkUp[1] = 9;
+        Mode->AnimeWalkUp[2] = 10;
+        Mode->AnimeWalkUp[3] = 11;
         
-        Mode->AnimeIdleDown[0] = 10;
-        Mode->AnimeIdleLeft[0] = 7;
-        Mode->AnimeIdleRight[0] = 4;
-        Mode->AnimeIdleUp[0] = 1;
+        Mode->AnimeIdleUp[0] = 10;
+        Mode->AnimeIdleRight[0] = 7;
+        Mode->AnimeIdleLeft[0] = 4;
+        Mode->AnimeIdleDown[0] = 1;
 #else 
         // TODO(Momo): Maybe we want something like this...?
         image_id LeftSpriteFrame = GetLeftSprite();

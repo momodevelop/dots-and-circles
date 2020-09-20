@@ -2,6 +2,7 @@
 #define RYOJI_ATLAS_BUILDER_H
 
 #include <stdlib.h>
+
 #include "ryoji.h"
 #include "ryoji_maths.h"
 #include "ryoji_bitmanip.h"
@@ -84,6 +85,7 @@ rect2u, user_data_size (u32), user_data...rect2u, user_data_size (u32), user_dat
 if user_data_size is 0, there will not be user_data
 */
 struct atlas_builder_allocate_info_result {
+    b32 Ok;
     u32 Size;
     void* Memory;
 };
@@ -99,6 +101,9 @@ AllocateInfo(atlas_builder* Builder)
     }
     
     void* Memory = malloc(Size);
+    if ( Memory == nullptr ) {
+        return { false, Size, Memory };
+    }
     u8* Itr = (u8*)Memory;
     
     for (u32 i = 0; i < DynBufferCount(Builder->Entries); ++i ){
@@ -112,11 +117,11 @@ AllocateInfo(atlas_builder* Builder)
     
     Assert(Itr <= (u8*)Memory + Size);
     
-    return { Size, Memory };
+    return { true, Size, Memory };
 }
 
 static inline void
-FreeAtlasInfo(atlas_builder_allocate_info_result AllocateInfoResult) {
+FreeInfo(atlas_builder_allocate_info_result AllocateInfoResult) {
     free(AllocateInfoResult.Memory);
 }
 

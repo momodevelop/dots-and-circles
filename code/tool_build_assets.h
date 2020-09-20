@@ -139,16 +139,6 @@ AddImage(atlas_builder* Builder, const char* Filename, usize Id) {
     Entry->Image.RectIndex = AddRect(Builder, (u32)W, (u32)H);
 }
 
-static inline void 
-AddFontGlyph(atlas_builder* Builder, i32 Codepoint, stbtt_fontinfo* FontInfo, usize Id) {
-    auto* Entry = AddEntry(Builder, AtlasEntryType_FontGlyph, Id);
-    Entry->FontGlyph.Codepoint = Codepoint;
-    
-    
-    
-    Entry->FontGlyph.RectIndex = AddRect(Builder, (u32)W, (u32)H);
-}
-
 
 
 // NOTE(Momo): Sort by area. Maybe sort by other methods?
@@ -373,30 +363,14 @@ Free(atlas_builder* Builder) {
 }
 
 // NOTE(Momo): Asset Builder //////////////////////////////////////////////////////////
-enum asset_source_image_type {
-    AssetSourceImageType_File,
-    AssetSourceImageType_AtlasBuilder,
-};
-
 struct asset_source_image {
-    asset_source_image_type Type;
-    union {
-        const char* Filename;
-        atlas_builder * AtlasBuilder;
-    };
-};
-
-
-struct asset_source_atlas {
-    atlas_builder* Builder;
+    const char* Filename;
 };
 
 struct asset_source_atlas_rect {
     rect2u Rect;
     asset_id AtlasAssetId;
 };
-
-
 
 struct asset_source_spritesheet {
     const char* Filename;
@@ -410,7 +384,6 @@ struct asset_source  {
     union {
         asset_source_image Image;
         asset_source_spritesheet Spritesheet;
-        asset_source_atlas Atlas;
         asset_source_atlas_rect AtlasRect;
     };
     
@@ -443,14 +416,6 @@ static inline void
 SetImage(asset_builder* Assets, asset_id Id, const char* Filename) {
     asset_source* Entry = SetEntry(Assets, Id, AssetType_Image);
     Entry->Image.Filename = Filename;
-    Entry->Image.Type = AssetSourceImageType_File;
-}
-
-static inline void 
-SetAtlas(asset_builder* Assets, asset_id Id, atlas_builder* Builder) 
-{
-    asset_source* Entry = SetEntry(Assets, Id, AssetType_Atlas);
-    Entry->Atlas.Builder = Builder;
 }
 
 static inline void 
@@ -458,13 +423,6 @@ SetAtlasRect(asset_builder* Assets, asset_id Id, rect2u Rect, asset_id AtlasAsse
     asset_source* Entry = SetEntry(Assets, Id, AssetType_AtlasRect);
     Entry->AtlasRect.Rect = Rect;
     Entry->AtlasRect.AtlasAssetId = AtlasAssetId;
-}
-
-static inline void 
-SetAtlasImage(asset_builder* Assets, asset_id Id, atlas_builder* Builder) {
-    asset_source* Entry = SetEntry(Assets, Id, AssetType_Image);
-    Entry->Image.AtlasBuilder = Builder;
-    Entry->Image.Type = AssetSourceImageType_AtlasBuilder;
 }
 
 static inline void 
@@ -513,36 +471,15 @@ WriteImageData(asset_builder* Assets, FILE* File, asset_source_image* Image)
 {
     u8* LoadedImage = nullptr;
     u32 Width = 0, Height = 0, Channels = 0;
-    switch (Image->Type) {
-        case AssetSourceImageType_File: {
-            i32 W, H, C;
-            LoadedImage = stbi_load(Image->Filename, &W, &H, &C, 0);
-            Assert(LoadedImage != nullptr);
-            Width = (u32)W;
-            Height = (u32)H; 
-            Channels = (u32)C;
-        } break;
-        case AssetSourceImageType_AtlasBuilder: {
-            LoadedImage = AllocateBitmap(Image->AtlasBuilder);
-            Width = Image->AtlasBuilder->Width;
-            Height = Image->AtlasBuilder->Height;
-            Channels = Image->AtlasBuilder->Channels;
-        } break;
-        default: {
-            Assert(false);
-        }
+    {
+        i32 W, H, C;
+        LoadedImage = stbi_load(Image->Filename, &W, &H, &C, 0);
+        Assert(LoadedImage != nullptr);
+        Width = (u32)W;
+        Height = (u32)H; 
+        Channels = (u32)C;
     }
-    
-    Defer {
-        switch (Image->Type) {
-            case AssetSourceImageType_File: {
-                stbi_image_free(LoadedImage);
-            } break;
-            case AssetSourceImageType_AtlasBuilder: {
-                FreeBitmap(LoadedImage);
-            } break;
-        }
-    };
+    Defer { stbi_image_free(LoadedImage); };
     
     yuu_image FileImage = {};
     FileImage.Width = Width;
@@ -606,7 +543,7 @@ Write(asset_builder* Assets, const char* Filename) {
     // NOTE(Momo): Write the data
     for (u32 i = 0; i < EntryCount; ++i)
     {
-        asset_source* Entry = &Assets->Entries[i];
+        asset_source* Entry = Assets->Entries + i;
         // NOTE(Momo): Write Header
         fseek(OutFile, (i32)HeaderAt, SEEK_SET);
         {
