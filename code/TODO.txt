@@ -1,4 +1,5 @@
 [] Fonts
+[] AssetBuilder v2? Consider a much simpler asset layout since we are most probably not doing asset streaming.  
 [] Tile based rendering
 [] Fixed framerate (target framerate)
 [] Visual editor
@@ -6,8 +7,6 @@
 [] Quaternion
 [] Profiling? 
 [] Introspection?
-
-[] Memory Arena -> Shrink to fit?
 [] Consider making link texture a platform function?
 [] Consider seperating the assets into their own type arrays
     

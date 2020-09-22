@@ -57,7 +57,7 @@ enum asset_id : u32 {
     Asset_RectKaru31,
     Asset_RectKaru32,
     
-#if 0
+#if 1
     // NOTE(Momo): Font rects ahhhh
     Asset_FontRect_a,
     Asset_FontRect_b,

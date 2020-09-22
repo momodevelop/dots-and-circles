@@ -6,38 +6,45 @@
 #include "ryoji.h"
 #include "ryoji_maths.h"
 #include "ryoji_bitmanip.h"
-#include "ryoji_dynamic_buffer.h"
+
 
 struct atlas_builder_entry {
     u32 BitmapWidth, BitmapHeight, BitmapChannels;
-    u32 StartSize, SizeLimit;
     u8* BitmapPixels;
     
     void* UserData;
     u32 UserDataSize;
     
-    usize RectIndex;
+    u32 RectIndex;
 };
 
+template<usize N>
 struct atlas_builder {
-    rect2u* Rects; // List
-    rect2u** SortedRects; // List
-    atlas_builder_entry* Entries; // List
+    rect2u Rects[N];
+    u32 RectCount;
+    
+    rect2u* SortedRects[N];
+    u32 SortedRectCount;
+    
+    atlas_builder_entry Entries[N];
+    u32 EntryCount;
     
     u32 Width;
     u32 Height;
     u32 Channels;
+    
+    b32 IsBegin;
 };
 
-static inline u32
-AddRect(atlas_builder* Builder, u32 W, u32 H) {
-    rect2u Rect = {0, 0, W, H};
-    DynBufferPush(Builder->Rects, Rect);
-    return DynBufferCount(Builder->Rects) - 1;
+
+template<usize N> static inline u32
+AddRect(atlas_builder<N>* Builder, u32 W, u32 H) {
+    Builder->Rects[Builder->RectCount++] = {0, 0, W, H};
+    return Builder->RectCount - 1;
 }
 
-static inline void
-AddEntry(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels, void* UserData, u32 UserDataSize) 
+template<usize N> static inline void
+AddEntry(atlas_builder<N>* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels, void* UserData, u32 UserDataSize) 
 {
     Assert(Width > 0);
     Assert(Height > 0);
@@ -49,32 +56,23 @@ AddEntry(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels
     Entry.BitmapWidth = Width;
     Entry.BitmapHeight = Height;
     Entry.BitmapChannels = Channels;
-    u32 BitmapSize = Width * Height * Channels;
-    Entry.BitmapPixels = (u8*)malloc(BitmapSize);
-    Assert(Entry.BitmapPixels);
-    CopyBlock(Entry.BitmapPixels, Pixels, BitmapSize);
+    Entry.BitmapPixels = Pixels;
     
-    if (UserData != nullptr) {
-        Assert(UserDataSize > 0);
-        Entry.UserData = malloc(UserDataSize);
-        Assert(Entry.UserData);
-        Entry.UserDataSize = UserDataSize;
-        CopyBlock(Entry.UserData, UserData, UserDataSize);
-    }
+    Entry.UserData = UserData;
+    Entry.UserDataSize = UserDataSize;
     
     Entry.RectIndex = AddRect(Builder, Width, Height);
     
-    DynBufferPush(Builder->Entries, Entry);
+    Builder->Entries[Builder->EntryCount++] = Entry;
 }
 
-template<typename user_data_t>
-static inline void 
-AddEntry(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels, user_data_t* UserData) {
+template<usize N, typename user_data_t> static inline void 
+AddEntry(atlas_builder<N>* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels, user_data_t* UserData) {
     AddEntry(Builder, Width, Height, Channels, Pixels, UserData, sizeof(user_data_t));
 }
 
-static inline void 
-AddEntry(atlas_builder* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels) {
+template<usize N> static inline void 
+AddEntry(atlas_builder<N>* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels) {
     AddEntry(Builder, Width, Height, Channels, Pixels, nullptr, 0);
 }
 
@@ -104,13 +102,12 @@ struct atlas_builder_allocate_info_result {
     void* Memory;
 };
 
-static inline atlas_builder_allocate_info_result 
-AllocateInfo(atlas_builder* Builder) 
+template<usize N> static inline atlas_builder_allocate_info_result 
+AllocateInfo(atlas_builder<N>* Builder) 
 {
     // NOTE(Momo): Precalculate size
-    u32 EntryCount = DynBufferCount(Builder->Entries);
-    u32 Size = EntryCount * sizeof(atlas_builder_info_entry);
-    for (u32 i = 0; i < EntryCount; ++i ){
+    u32 Size = Builder->EntryCount * sizeof(atlas_builder_info_entry);
+    for (u32 i = 0; i < Builder->EntryCount; ++i ){
         Size += Builder->Entries[i].UserDataSize; 
     }
     Size += sizeof(atlas_builder_info_header);
@@ -124,12 +121,12 @@ AllocateInfo(atlas_builder* Builder)
     // NOTE(Momo): Header
     {
         atlas_builder_info_header InfoHeader = {};
-        InfoHeader.EntryCount = EntryCount;
+        InfoHeader.EntryCount = Builder->EntryCount;
         Write(&Itr, InfoHeader);
     }
     
     // NOTE(Momo): Data
-    for (u32 i = 0; i < EntryCount; ++i ){
+    for (u32 i = 0; i < Builder->EntryCount; ++i ){
         auto* Entry = Builder->Entries + i;
         atlas_builder_info_entry InfoEntry = {};
         InfoEntry.Rect= Builder->Rects[Entry->RectIndex];
@@ -156,8 +153,14 @@ struct atlas_builder_allocate_bitmap_result {
     u8* Bitmap;
 };
 
-static inline atlas_builder_allocate_bitmap_result 
-AllocateBitmap(atlas_builder* Builder) {
+
+template<usize N> static inline usize
+GetBitmapSize(atlas_builder<N>* Builder) {
+    return Builder->Width * Builder->Height * Builder->Channels;
+}
+
+template<usize N> static inline atlas_builder_allocate_bitmap_result 
+AllocateBitmap(atlas_builder<N>* Builder) {
     u32 BitmapSize = Builder->Width * Builder->Height * Builder->Channels;
     u8* BitmapMemory = (u8*)calloc(BitmapSize, sizeof(u8));
     if (!BitmapMemory) {
@@ -167,8 +170,7 @@ AllocateBitmap(atlas_builder* Builder) {
     // NOTE(Momo): Check. Total area of Rects must match 
     
     
-    u32 EntryCount = DynBufferCount(Builder->Entries);
-    for (u32 i = 0; i < EntryCount; ++i) {
+    for (u32 i = 0; i < Builder->EntryCount; ++i) {
         auto* Entry = Builder->Entries + i;
         rect2u Rect = *(Builder->Rects + Entry->RectIndex);
         
@@ -242,20 +244,17 @@ AtlasBuilderComparer(const void* Lhs, const void* Rhs) {
 }
 
 
-static inline b32 
-TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
-    rect2u* Spaces = nullptr;
-    {
-        rect2u Space{ 0, 0, Width, Height };
-        DynBufferPush(Spaces, Space);
-    }
+template<usize N> static inline b32 
+TryPack(atlas_builder<N>* Builder, u32 Width, u32 Height) {
+    rect2u Spaces[N+1];
+    u32 SpaceCount = 0;
+    Spaces[SpaceCount++] = { 0, 0, Width, Height };
     
-    
-    for (u32 i = 0; i < DynBufferCount(Builder->SortedRects); ++i ) {
+    for (u32 i = 0; i < Builder->SortedRectCount; ++i ) {
         rect2u Rect = **(Builder->SortedRects + i);
         
         // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
-        u32 ChosenSpaceIndex = DynBufferCount(Spaces);
+        u32 ChosenSpaceIndex = SpaceCount;
         {
             for (u32 j = 0; j < ChosenSpaceIndex ; ++j ) {
                 u32 Index = ChosenSpaceIndex - j - 1;
@@ -264,23 +263,21 @@ TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
                 if (GetWidth(Rect) <= GetWidth(Space) && GetHeight(Rect) <= GetHeight(Space)) {
                     ChosenSpaceIndex = Index;
                     break;
-                    
                 }
             }
         }
         
         
         // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
-        if (ChosenSpaceIndex == DynBufferCount(Spaces)) {
+        if (ChosenSpaceIndex == SpaceCount) {
             return false;
         }
         
         // NOTE(Momo): Swap and pop the chosen space
         rect2u ChosenSpace = Spaces[ChosenSpaceIndex];
-        if (DynBufferCount(Spaces) > 0) {
-            
-            Spaces[ChosenSpaceIndex] = DynBufferLast(Spaces);
-            DynBufferPop(Spaces);
+        if (SpaceCount > 0) {
+            Spaces[ChosenSpaceIndex] = Spaces[SpaceCount-1];
+            --SpaceCount;
         }
         
         // NOTE(Momo): Split if not perfect fit
@@ -292,8 +289,7 @@ TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
                 ChosenSpace.Max.X, 
                 ChosenSpace.Max.Y,
             };
-            DynBufferPush(Spaces, SplitSpaceRight);
-            
+            Spaces[SpaceCount++] = SplitSpaceRight;
         }
         else if (GetWidth(ChosenSpace) == GetWidth(Rect) && GetHeight(ChosenSpace) != GetHeight(Rect)) {
             // Split down
@@ -303,7 +299,7 @@ TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
                 ChosenSpace.Max.X,
                 ChosenSpace.Max.X
             };
-            DynBufferPush(Spaces,SplitSpaceDown);
+            Spaces[SpaceCount++] = SplitSpaceDown;
         }
         else if (GetWidth(ChosenSpace) != GetWidth(Rect) && GetHeight(ChosenSpace) != GetHeight(Rect)) {
             // Split right
@@ -326,12 +322,12 @@ TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
             u32 RightArea = GetWidth(SplitSpaceRight) * GetHeight(SplitSpaceRight);
             u32 DownArea = GetWidth(SplitSpaceDown) * GetHeight(SplitSpaceDown);
             if (RightArea > DownArea) {
-                DynBufferPush(Spaces, SplitSpaceRight);
-                DynBufferPush(Spaces, SplitSpaceDown);
+                Spaces[SpaceCount++] = SplitSpaceRight;
+                Spaces[SpaceCount++] = SplitSpaceDown;
             }
             else {
-                DynBufferPush(Spaces, SplitSpaceDown);
-                DynBufferPush(Spaces, SplitSpaceRight);
+                Spaces[SpaceCount++] = SplitSpaceDown;
+                Spaces[SpaceCount++] = SplitSpaceRight;
             }
             
         }
@@ -344,20 +340,19 @@ TryPack(atlas_builder* Builder, u32 Width, u32 Height) {
 }
 
 
-static void
-Sort(atlas_builder* Builder) {
-    u32 RectCount = DynBufferCount(Builder->Rects);
-    for (u32 i = 0; i < RectCount; ++i) {
-        DynBufferPush(Builder->SortedRects, &Builder->Rects[i]);
+template<usize N> static void
+Sort(atlas_builder<N>* Builder) {
+    for (u32 i = 0; i < Builder->RectCount; ++i) {
+        Builder->SortedRects[Builder->SortedRectCount++] =  &Builder->Rects[i];
     }
     
     // TODO(Momo): Is there really no way to delare something that accepts a lambda?
-    qsort(Builder->SortedRects, RectCount, sizeof(rect2u*), AtlasBuilderComparer);
+    qsort(Builder->SortedRects, Builder->RectCount, sizeof(rect2u*), AtlasBuilderComparer);
 }
 
 // NOTE(Momo): For now, we only support POT scaling.
-static inline void 
-Pack(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
+template<usize N> static inline void 
+Pack(atlas_builder<N>* Builder, u32 StartSize, u32 SizeLimit) {
     Assert(StartSize > 0);
     Assert(SizeLimit > 0);
     
@@ -387,30 +382,30 @@ Pack(atlas_builder* Builder, u32 StartSize, u32 SizeLimit) {
 
 
 
-static inline void 
-Free(atlas_builder* Builder) {
-    for (u32 i = 0; i < DynBufferCount(Builder->Entries); ++i) {
+template<usize N> static inline void 
+Begin(atlas_builder<N>* Builder) {
+    Assert(!Builder->IsBegin);
+    for (u32 i = 0; i < Builder->EntryCount; ++i) {
         free(Builder->Entries[i].UserData);
         free(Builder->Entries[i].BitmapPixels);
     }
-    DynBufferFree(Builder->Entries);
-    DynBufferFree(Builder->Rects);
-    DynBufferFree(Builder->SortedRects);
+    Builder->EntryCount = 0;
+    Builder->RectCount = 0;
+    Builder->SortedRectCount = 0;
+    Builder->Width = 0;
+    Builder->Height = 0;
+    Builder->Channels = 0;
+    
+    Builder->IsBegin = true;
 }
 
-
-
-
-static inline void 
-Begin(atlas_builder* Builder) {
-    Free(Builder);
-}
-
-static inline void 
-End(atlas_builder* Builder, u32 StartSize = 128, u32 SizeLimit = 4096) {
-    Assert(DynBufferCount(Builder->Entries) > 0);
+template<usize N> static inline void 
+End(atlas_builder<N>* Builder, u32 StartSize = 128, u32 SizeLimit = 4096) {
+    Assert(Builder->IsBegin);
+    Assert(Builder->EntryCount > 0);
     Sort(Builder);
     Pack(Builder, StartSize, SizeLimit);
+    Builder->IsBegin = false;
 }
 
 
