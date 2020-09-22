@@ -147,27 +147,20 @@ FreeInfo(atlas_builder_allocate_info_result AllocateInfoResult) {
     free(AllocateInfoResult.Memory);
 }
 
-struct atlas_builder_allocate_bitmap_result {
-    b32 Ok;
-    u32 Width, Height, Channels;
-    u8* Bitmap;
-};
-
 
 template<usize N> static inline usize
 GetBitmapSize(atlas_builder<N>* Builder) {
+    Assert(!Builder->IsBegin);
     return Builder->Width * Builder->Height * Builder->Channels;
 }
 
-template<usize N> static inline atlas_builder_allocate_bitmap_result 
-AllocateBitmap(atlas_builder<N>* Builder) {
+template<usize N> static inline void
+GetBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height, u32* Channels) {
     u32 BitmapSize = Builder->Width * Builder->Height * Builder->Channels;
-    u8* BitmapMemory = (u8*)calloc(BitmapSize, sizeof(u8));
-    if (!BitmapMemory) {
-        return {};
-    }
-    
-    // NOTE(Momo): Check. Total area of Rects must match 
+    u8* BitmapMemory = (u8*)Memory;
+    (*Width) = Builder->Width;
+    (*Height) = Builder->Height;
+    (*Channels) = Builder->Channels;
     
     
     for (u32 i = 0; i < Builder->EntryCount; ++i) {
@@ -191,14 +184,7 @@ AllocateBitmap(atlas_builder<N>* Builder) {
         
     }
     
-    return { true, Builder->Width, Builder->Height, Builder->Channels, BitmapMemory };
 }
-
-static inline void
-FreeBitmap(atlas_builder_allocate_bitmap_result AllocateBitmapResult) {
-    free(AllocateBitmapResult.Bitmap);
-}
-
 
 
 // NOTE(Momo): Sort by area. Maybe sort by other methods?

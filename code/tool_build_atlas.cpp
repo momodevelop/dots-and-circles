@@ -67,12 +67,15 @@ WriteBitmapToPng(atlas_builder<N>* Builder, const char* PngFilename) {
     printf("[Write] Write to file started \n");
     Defer { printf("[Write] Write to file complete\n"); };
     
-    auto Result = AllocateBitmap(Builder);
-    Defer { FreeBitmap(Result); };
+    auto BitmapSize = GetBitmapSize(Builder);
+    void* BitmapMemory = malloc(BitmapSize);
+    Defer { free(BitmapMemory); };
     
-    Assert(Result.Ok);
+    u32 W, H, C;
+    GetBitmap(Builder, BitmapMemory, &W, &H, &C);
+    
     printf("\tWriting to %s\n", PngFilename); 
-    stbi_write_png(PngFilename, Result.Width, Result.Height, Result.Channels, Result.Bitmap, Builder->Width * Builder->Channels);
+    stbi_write_png(PngFilename, W, H, C, BitmapMemory, W*C);
 }
 
 template<usize N> static inline void 
@@ -265,8 +268,8 @@ int main() {
     Defer {
         for (u32 i = 0; i < ArrayCount(ImageParams); ++i) 
             FreeAtlasImage(AtlasImages[i]);
-        for (u32 i = 0; i < ArrayCount(ImageParams); ++i) 
-            FreeAtlasImage(AtlasImages[i]);
+        for (u32 i = 0; i < ArrayCount(FontParams); ++i) 
+            FreeAtlasFont(AtlasFonts[i]);
     };
     
     
