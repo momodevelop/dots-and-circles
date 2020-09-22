@@ -174,7 +174,7 @@ u8 Pixels[Width * Height * Channels];
 // NOTE(Momo): Atlas User Data Structs
 enum yuu_atlas_ud_type : u32 {
     YuuAtlasUserDataType_Image,
-    YuuAtlasuserdataType_Font,
+    YuuAtlasUserDataType_Font,
 };
 
 
@@ -189,6 +189,7 @@ struct yuu_atlas_ud_font {
     asset_id AssetId;
     asset_id AtlasAssetId; 
     int Codepoint;
+    f32 Size;
 };
 
 
