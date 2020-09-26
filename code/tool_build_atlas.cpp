@@ -161,7 +161,7 @@ FreeAtlasFont(loaded_atlas_font AtlasFont) {
     free(AtlasFont.Bitmap.Pixels);
 }
 
-// NOTE(Momo): Data stuff
+// NOTE(Momo): Data stuff for atlas
 struct {
     const char* Filename;
     asset_id Id;
@@ -263,7 +263,6 @@ int main() {
                                       FontParams[i].Id, 
                                       FontParams[i].TargetAtlasId);
     }
-    
     
     Defer {
         for (u32 i = 0; i < ArrayCount(ImageParams); ++i) 

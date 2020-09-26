@@ -18,7 +18,6 @@
 
 #include "game_assets_file_formats.h"  
 
-
 enum asset_source_type { 
     AssetSourceType_ImageByFilename,
     AssetSourceType_ImageByRaw,

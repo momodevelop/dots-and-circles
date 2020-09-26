@@ -7,15 +7,16 @@
 #include "ryoji_maths.h"
 #include "ryoji_bitmanip.h"
 
+typedef void (*atlas_builder_get_bitmap_info_cb)(void* UserContext, u32* BitmapWidth, u32* BitmapHeight, u32* BitmapChannels);
+typedef void (*atlas_builder_load_bitmap_cb)(void* UserContext, u8** BitmapMemory, u32* BitmapWidth, u32* BitmapHeight, u32* BitmapChannels);
+typedef void (*atlas_builder_unload_bitmap_cb)(void* UserContext);
 
 struct atlas_builder_entry {
-    u32 BitmapWidth, BitmapHeight, BitmapChannels;
-    u8* BitmapPixels;
-    
-    void* UserData;
-    u32 UserDataSize;
-    
-    u32 RectIndex;
+    void* UserContext;
+    atlas_builder_get_bitmap_info_cb  GetInfoCb;
+    atlas_builder_load_bitmap_cb LoadCb;
+    atlas_builder_unload_bitmap_cb UnloadCb;
+    usize RectIndex;
 };
 
 template<usize N>
@@ -37,125 +38,43 @@ struct atlas_builder {
 };
 
 
-template<usize N> static inline u32
+template<usize N> static inline void
+AddEntry(atlas_builder<N>* Builder, 
+         atlas_builder_get_bitmap_info_cb GetInfoCb, 
+         atlas_builder_load_bitmap_cb LoadCb,
+         atlas_builder_unload_bitmap_cb UnloadCb,
+         void* UserContext) 
+{
+    Assert(GetInfoCb != nullptr);
+    Assert(LoadCb != nullptr);
+    Assert(UnloadCb != nullptr);
+    
+    atlas_builder_entry Entry = {};
+    Entry.LoadCb = LoadCb;
+    Entry.UnloadCb = UnloadCb;
+    Entry.GetInfoCb = GetInfoCb;
+    Entry.UserContext = UserContext;
+    
+    u32 W, H, C;
+    Entry.GetInfoCb(UserContext, &W, &H, &C);
+    Entry.RectIndex = AddRect(Builder, W, H);
+    Builder->Entries[Builder->EntryCount++] = Entry;
+}
+
+template<usize N> static inline usize
 AddRect(atlas_builder<N>* Builder, u32 W, u32 H) {
     Builder->Rects[Builder->RectCount++] = {0, 0, W, H};
     return Builder->RectCount - 1;
 }
 
-template<usize N> static inline void
-AddEntry(atlas_builder<N>* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels, void* UserData, u32 UserDataSize) 
-{
-    Assert(Width > 0);
-    Assert(Height > 0);
-    Assert(Channels > 0);
-    Assert(Pixels != nullptr);
-    
-    atlas_builder_entry Entry = {};
-    
-    Entry.BitmapWidth = Width;
-    Entry.BitmapHeight = Height;
-    Entry.BitmapChannels = Channels;
-    Entry.BitmapPixels = Pixels;
-    
-    Entry.UserData = UserData;
-    Entry.UserDataSize = UserDataSize;
-    
-    Entry.RectIndex = AddRect(Builder, Width, Height);
-    
-    Builder->Entries[Builder->EntryCount++] = Entry;
-}
-
-template<usize N, typename user_data_t> static inline void 
-AddEntry(atlas_builder<N>* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels, user_data_t* UserData) {
-    AddEntry(Builder, Width, Height, Channels, Pixels, UserData, sizeof(user_data_t));
-}
-
-template<usize N> static inline void 
-AddEntry(atlas_builder<N>* Builder, u32 Width, u32 Height, u32 Channels, u8* Pixels) {
-    AddEntry(Builder, Width, Height, Channels, Pixels, nullptr, 0);
-}
-
-
-
-// NOTE(Momo): Should already be aligned. 
-// All types are the same so don't need top pragma pack
-struct atlas_builder_info_header {
-    u32 EntryCount;
-};
-
-struct atlas_builder_info_entry {
-    rect2u Rect;
-    u32 UserDataSize;
-};
-
-
-// NOTE(Momo): Memory contains all entries in the following format
-/*
-rect2u, user_data_size (u32), user_data...rect2u, user_data_size (u32), user_data...
-
-if user_data_size is 0, there will not be user_data
-*/
-struct atlas_builder_allocate_info_result {
-    b32 Ok;
-    u32 Size;
-    void* Memory;
-};
-
-template<usize N> static inline atlas_builder_allocate_info_result 
-AllocateInfo(atlas_builder<N>* Builder) 
-{
-    // NOTE(Momo): Precalculate size
-    u32 Size = Builder->EntryCount * sizeof(atlas_builder_info_entry);
-    for (u32 i = 0; i < Builder->EntryCount; ++i ){
-        Size += Builder->Entries[i].UserDataSize; 
-    }
-    Size += sizeof(atlas_builder_info_header);
-    
-    void* Memory = malloc(Size);
-    if ( Memory == nullptr ) {
-        return { false, Size, Memory };
-    }
-    u8* Itr = (u8*)Memory;
-    
-    // NOTE(Momo): Header
-    {
-        atlas_builder_info_header InfoHeader = {};
-        InfoHeader.EntryCount = Builder->EntryCount;
-        Write(&Itr, InfoHeader);
-    }
-    
-    // NOTE(Momo): Data
-    for (u32 i = 0; i < Builder->EntryCount; ++i ){
-        auto* Entry = Builder->Entries + i;
-        atlas_builder_info_entry InfoEntry = {};
-        InfoEntry.Rect= Builder->Rects[Entry->RectIndex];
-        InfoEntry.UserDataSize = Entry->UserDataSize;
-        Write(&Itr, InfoEntry);
-        
-        CopyBlock(Itr, Entry->UserData, Entry->UserDataSize);
-        Itr += Entry->UserDataSize;
-    }
-    Assert(Itr == (u8*)Memory + Size);
-    
-    
-    return { true, Size, Memory };
-}
-
-static inline void
-FreeInfo(atlas_builder_allocate_info_result AllocateInfoResult) {
-    free(AllocateInfoResult.Memory);
-}
-
-
 template<usize N> static inline usize
-GetBitmapSize(atlas_builder<N>* Builder) {
+GetAtlasBitmapSize(atlas_builder<N>* Builder) {
     Assert(!Builder->IsBegin);
     return Builder->Width * Builder->Height * Builder->Channels;
 }
 
 template<usize N> static inline void
-GetBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height, u32* Channels) {
+GetAtlasBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height, u32* Channels) {
     u32 BitmapSize = Builder->Width * Builder->Height * Builder->Channels;
     u8* BitmapMemory = (u8*)Memory;
     (*Width) = Builder->Width;
@@ -167,9 +86,20 @@ GetBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height, u32*
         auto* Entry = Builder->Entries + i;
         rect2u Rect = *(Builder->Rects + Entry->RectIndex);
         
-        Assert((u32)Entry->BitmapWidth == GetWidth(Rect));
-        Assert((u32)Entry->BitmapHeight == GetHeight(Rect));
-        Assert((u32)Entry->BitmapChannels == Builder->Channels); 
+        // Load bitmap here
+        u32 EntryBitmapWidth, EntryBitmapHeight, EntryBitmapChannels;
+        u8* EntryBitmapMemory;
+        
+        Entry->LoadCb(Entry->UserContext, &EntryBitmapMemory, &EntryBitmapWidth, &EntryBitmapHeight, &EntryBitmapChannels);
+        
+        Defer { Entry->UnloadCb(Entry->UserContext); };
+        
+        Assert(EntryBitmapWidth > 0);
+        Assert(EntryBitmapHeight > 0);
+        Assert(EntryBitmapChannels > 0);
+        Assert(EntryBitmapWidth == GetWidth(Rect));
+        Assert(EntryBitmapHeight == GetHeight(Rect));
+        Assert(EntryBitmapChannels == Builder->Channels); 
         
         i32 j = 0;
         for (u32 y = Rect.Min.Y; y < Rect.Min.Y + GetHeight(Rect); ++y) {
@@ -177,7 +107,7 @@ GetBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height, u32*
                 u32 Index = TwoToOne(y, x, Builder->Width) * Builder->Channels;
                 Assert(Index < BitmapSize);
                 for (u32 c = 0; c < Builder->Channels; ++c) {
-                    BitmapMemory[Index + c] = Entry->BitmapPixels[j++];
+                    BitmapMemory[Index + c] = EntryBitmapMemory[j++];
                 }
             }
         }
@@ -185,7 +115,6 @@ GetBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height, u32*
     }
     
 }
-
 
 // NOTE(Momo): Sort by area. Maybe sort by other methods?
 static inline i32
@@ -371,10 +300,6 @@ Pack(atlas_builder<N>* Builder, u32 StartSize, u32 SizeLimit) {
 template<usize N> static inline void 
 Begin(atlas_builder<N>* Builder) {
     Assert(!Builder->IsBegin);
-    for (u32 i = 0; i < Builder->EntryCount; ++i) {
-        free(Builder->Entries[i].UserData);
-        free(Builder->Entries[i].BitmapPixels);
-    }
     Builder->EntryCount = 0;
     Builder->RectCount = 0;
     Builder->SortedRectCount = 0;
