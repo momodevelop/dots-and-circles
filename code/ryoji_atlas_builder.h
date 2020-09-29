@@ -116,48 +116,6 @@ GetAtlasBitmap(atlas_builder<N>* Builder, void* Memory, u32* Width, u32* Height,
     
 }
 
-// NOTE(Momo): Sort by area. Maybe sort by other methods?
-static inline i32
-AtlasBuilderComparer(const void* Lhs, const void* Rhs) {
-    const rect2u L = (**(rect2u**)(Lhs));
-    const rect2u R = (**(rect2u**)(Rhs));
-    
-    
-    auto LW = GetWidth(L);
-    auto LH = GetHeight(L);
-    auto RW = GetWidth(R);
-    auto RH = GetHeight(R);
-    
-    auto LhsArea = LW * LH;
-    auto RhsArea = RW * RH;
-    if (LhsArea != RhsArea)
-        return RhsArea - LhsArea;
-    
-    auto LhsPerimeter = LW + LH;
-    auto RhsPerimeter = RW + RH;
-    if (LhsPerimeter != RhsPerimeter)
-        return RhsPerimeter - LhsPerimeter;
-    
-    // By bigger side
-    auto LhsBiggerSide = Maximum(LW, LH);
-    auto RhsBiggerSide = Maximum(RW, RH);
-    if (LhsBiggerSide != RhsBiggerSide) 
-        return RhsBiggerSide - LhsBiggerSide;
-    
-    // By Width
-    if (LW != RW)
-        return RW - LW;
-    
-    // By right
-    if (LH != RH)
-        return RH - LH;
-    
-    // pathological multipler
-    auto LhsMultipler = Maximum(LW, LH)/Minimum(LW, LH) * LW * LH;
-    auto RhsMultipler = Maximum(RW, RH)/Minimum(RW, RH) * RW * RH;
-    return RhsMultipler - LhsMultipler;
-}
-
 
 template<usize N> static inline b32 
 TryPack(atlas_builder<N>* Builder, u32 Width, u32 Height) {
@@ -262,7 +220,47 @@ Sort(atlas_builder<N>* Builder) {
     }
     
     // TODO(Momo): Is there really no way to delare something that accepts a lambda?
-    qsort(Builder->SortedRects, Builder->RectCount, sizeof(rect2u*), AtlasBuilderComparer);
+    auto Comparer = [](const void* Lhs, const void* Rhs) ->i32 {
+        const rect2u L = (**(rect2u**)(Lhs));
+        const rect2u R = (**(rect2u**)(Rhs));
+        
+        
+        auto LW = GetWidth(L);
+        auto LH = GetHeight(L);
+        auto RW = GetWidth(R);
+        auto RH = GetHeight(R);
+        
+        auto LhsArea = LW * LH;
+        auto RhsArea = RW * RH;
+        if (LhsArea != RhsArea)
+            return RhsArea - LhsArea;
+        
+        auto LhsPerimeter = LW + LH;
+        auto RhsPerimeter = RW + RH;
+        if (LhsPerimeter != RhsPerimeter)
+            return RhsPerimeter - LhsPerimeter;
+        
+        // By bigger side
+        auto LhsBiggerSide = Maximum(LW, LH);
+        auto RhsBiggerSide = Maximum(RW, RH);
+        if (LhsBiggerSide != RhsBiggerSide) 
+            return RhsBiggerSide - LhsBiggerSide;
+        
+        // By Width
+        if (LW != RW)
+            return RW - LW;
+        
+        // By right
+        if (LH != RH)
+            return RH - LH;
+        
+        // pathological multipler
+        auto LhsMultipler = Maximum(LW, LH)/Minimum(LW, LH) * LW * LH;
+        auto RhsMultipler = Maximum(RW, RH)/Minimum(RW, RH) * RW * RH;
+        return RhsMultipler - LhsMultipler;
+    };
+    
+    qsort(Builder->SortedRects, Builder->RectCount, sizeof(rect2u*), Comparer);
 }
 
 // NOTE(Momo): For now, we only support POT scaling.
