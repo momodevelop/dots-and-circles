@@ -70,6 +70,7 @@ ZeroBlock(void *mem, usize size) {
         *p = 0;
     }
 }
+
 #define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
 #define ZeroStaticArray(a) ZeroBlock((a), sizeof((a)))
 #define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)

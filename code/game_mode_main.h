@@ -34,7 +34,10 @@ struct physics_component {
 };
 
 struct sprite_component {
+#if SPRITESHEET
     spritesheet_id SpritesheetHandle;
+#endif
+    
     
     // NOTE(Momo): Animation Data?
     u8* AnimeFrames;
@@ -96,6 +99,7 @@ SpriteRenderingSystem(game_mode_main* Mode,
                       game_assets* Assets,
                       f32 DeltaTime) 
 {
+#if SPRITESHEET
     
     // NOTE(Momo): should be in a seperate system probably
     Sprite->AnimeTimer += Sprite->AnimeSpeed * DeltaTime;
@@ -120,10 +124,9 @@ SpriteRenderingSystem(game_mode_main* Mode,
                                 T*R*S,
                                 GetBitmapId(Assets, Sprite->SpritesheetHandle),
                                 Quad2F(GetSpritesheetFrame(Assets, Sprite->SpritesheetHandle, CurrentFrame)));
+#endif
     
 }
-
-#if INTERNAL
 
 static inline void
 DrawCollisionLinesSystem(transform_component* Transform,
@@ -142,7 +145,6 @@ DrawCollisionLinesSystem(transform_component* Transform,
     // Bottom
     PushCommandDrawLineRect(RenderCommands, Rect);
 }
-#endif
 
 static inline void
 PhysicsSystem(transform_component* Transform,
@@ -247,7 +249,9 @@ Init(game_mode_main* Mode, game_state* GameState) {
         Player->Collision.Box.Origin = { 0.f, 0.f };
         Player->Collision.Box.Radius = { 24.f*2, 24.f*2 };
         
+#if SPRITESHEET
         Player->Sprite.SpritesheetHandle = GetSpritesheet(GameState->Assets, Asset_SpritesheetKaru);
+#endif
         Player->Sprite.AnimeFrames = Mode->AnimeWalkDown;
         Player->Sprite.AnimeFramesCount = ArrayCount(Mode->AnimeWalkDown);
         Player->Sprite.AnimeAt = 0;

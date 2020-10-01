@@ -1,34 +1,10 @@
 #ifndef GAME_ASSETS_TYPE_ID 
 #define GAME_ASSETS_TYPE_ID
 
-static constexpr u8 AssetSignature[] = { 'M', 'O', 'M', 'O' };
-
-
-// NOTE(Momo): Asset Structs
-enum atlas_entry_id : u32 {
-    // NOTE(Momo): for default
-    AtlasDefault_Ryoji = 0,
-    AtlasDefault_Yuu,
-    
-    AtlasDefault_Karu00,
-    AtlasDefault_Karu01,
-    AtlasDefault_Karu02,
-    AtlasDefault_Karu10,
-    AtlasDefault_Karu11,
-    AtlasDefault_Karu12,
-    AtlasDefault_Karu20,
-    AtlasDefault_Karu21,
-    AtlasDefault_Karu22,
-    AtlasDefault_Karu30,
-    AtlasDefault_Karu31,
-    AtlasDefault_Karu32,
-    AtlasDefault_Count,
-    // NOTE(Momo): Other atlas types
-};
+#include "ryoji_maths.h"
 
 enum asset_type : u32 {
     AssetType_Image,
-    AssetType_Spritesheet,
     AssetType_AtlasRect,
 };
 
@@ -122,7 +98,6 @@ enum asset_id : u32 {
 #pragma pack(push, 1)
 struct yuu_entry {
     asset_type Type;
-    u32 OffsetToData;
     asset_id Id;
 };
 
