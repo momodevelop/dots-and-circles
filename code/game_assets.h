@@ -9,6 +9,20 @@
 #include "game_assets_file_formats.h"
 
 
+// NOTE(Momo): Asset types
+struct image {
+    u32 Width;
+    u32 Height;
+    u32 Channels;
+    void* Pixels; 
+    u32 BitmapId;
+};
+
+struct atlas_rect {
+    rect2u Rect;
+    asset_id AtlasAssetId;
+};
+
 struct asset_entry {
     asset_type Type;
     union {
@@ -26,7 +40,10 @@ struct game_assets {
     platform_api* Platform;
 };
 
-#include "game_assets_image.h"
+
+
+struct image_id { u32 Value; };
+
 #include "game_assets_atlas_rect.h"
 
 inline b32
@@ -72,7 +89,7 @@ Init(game_assets* Assets,
     u32 FileEntryCount = 0;
     {
         Assert(CheckAssetSignature(FileMemoryItr, "MOMO"));
-        FileMemoryItr+= ArrayCount(Signature);
+        FileMemoryItr+= NtsLength("MOMO");
         
         // NOTE(Momo): Read the counts in order
         FileEntryCount = *(Read<u32>(&FileMemoryItr));
@@ -114,6 +131,16 @@ Init(game_assets* Assets,
                 
             } break;
             case AssetType_AtlasRect: { 
+                auto* YuuAtlasRect = Read<yuu_atlas_rect>(&FileMemoryItr);
+                
+                auto* Entry = Assets->Entries + YuuEntry->Id;
+                Entry->Type = AssetType_AtlasRect;
+                Entry->AtlasRect = PushStruct<atlas_rect>(&Assets->Arena);
+                
+                auto* AtlasRect = Entry->AtlasRect;
+                AtlasRect->Rect = YuuAtlasRect->Rect;
+                AtlasRect->AtlasAssetId = YuuAtlasRect->AtlasAssetId;
+                
             } break;
             default: {
                 Assert(false);
@@ -126,6 +153,35 @@ Init(game_assets* Assets,
     
 }
 
+
+// NOTE(Momo): Image Interface
+static inline image_id
+GetImage(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Image);
+    return { Id };
+}
+
+static inline image*
+GetImagePtr(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_Image);
+    return Entry->Image;
+}
+
+static inline u32 
+GetBitmapId(game_assets* Assets, image_id Id) {
+    asset_entry* Entry = Assets->Entries + Id.Value;
+    return Entry->Image->BitmapId;
+}
+
+// NOTE(Momo): Interfaces
+static inline atlas_rect 
+GetAtlasRect(game_assets* Assets, asset_id Id) {
+    asset_entry* Entry = Assets->Entries + Id;
+    Assert(Entry->Type == AssetType_AtlasRect);
+    return *(Entry->AtlasRect);
+}
 
 
 

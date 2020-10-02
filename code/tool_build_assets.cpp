@@ -43,7 +43,7 @@ FreeFont(loaded_font Font) {
 }
 
 
-// Atlas stuff ////////////////////////
+// NOTE(Momo):  Atlas stuff ////////////////////////
 enum atlas_context_type {
     AtlasContextType_Image,
     AtlasContextType_Font,
@@ -56,8 +56,6 @@ struct atlas_context_image {
     asset_id AtlasAssetId;
     u8* Bitmap;
 };
-
-
 
 static inline void
 AtlasContextImageUnloadCb(void* LoadContext) {
@@ -75,32 +73,6 @@ struct atlas_context_font {
     u8* Bitmap;
 };    
 
-static inline void
-AtlasContextFontLoadCb(void* LoadContext, u8** BitmapData, u32* BitmapWidth, u32* BitmapHeight, u32* BitmapChannels) 
-{
-    auto* Context = (atlas_context_font*)LoadContext; 
-    constexpr u32 Channels = 4;
-    f32 Scale = stbtt_ScaleForPixelHeight(&Context->LoadedFont.Info, Context->Size);
-    i32 Width, Height;
-    u8* FontBitmapOneCh = stbtt_GetCodepointBitmap(&Context->LoadedFont.Info, 0, Scale, 
-                                                   Context->Codepoint, &Width, &Height, nullptr, nullptr);
-    Defer { stbtt_FreeBitmap( FontBitmapOneCh, nullptr ); };
-    
-    u32 BitmapDimensions = (u32)(Width * Height);
-    u8* FontBitmap = (u8*)malloc(BitmapDimensions * Channels); 
-    u8* FontBitmapItr = FontBitmap;
-    u32 k = 0;
-    for (u32 i = 0; i < BitmapDimensions; ++i ){
-        for (u32 j = 0; j < Channels; ++j ) {
-            FontBitmapItr[k++] = FontBitmapOneCh[i];
-        }
-    }
-    
-    *BitmapWidth = (u32)Width;
-    *BitmapHeight = (u32)Height;
-    *BitmapChannels = Channels;
-    *BitmapData = FontBitmap;
-}
 
 static inline void
 AtlasContextFontUnloadCb(void* LoadContext) {
@@ -109,15 +81,17 @@ AtlasContextFontUnloadCb(void* LoadContext) {
 }
 
 
-// Asset stuff
+// NOTE(Momo):  Asset stuff
 struct asset_context_image_filename {
     const char* Filename;
     asset_id Id;
     void* Data;
 };
 
-static inline void
-AssetContextImageFilenameWriteCb(void* UserContext, void** DataToWrite, usize* DataSize) {
+static inline asset_write_context
+AssetContextImageFilenameWriteCb(void* UserContext) {
+    asset_write_context Ret = {};
+    
     auto* Context = (asset_context_image_filename*)UserContext;
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
@@ -150,19 +124,15 @@ AssetContextImageFilenameWriteCb(void* UserContext, void** DataToWrite, usize* D
     Write(&DatItr, FileImage);
     CopyBlock(DatItr, LoadedImage, BitmapSize);
     
-    (*DataToWrite) = Dat;
-    (*DataSize) = DatSize;
-    
     printf("Loaded Image: Width = %d, Height = %d, Channels = %d\n",  Width, Height, Channels);
     
+    Ret.DataToWrite = Dat;
+    Ret.DataSize = DatSize;
+    
+    return Ret;
+    
 }
 
-
-static inline void
-AssetContextImageFilenameFreeCb(void* UserContext) {
-    auto* Context = (asset_context_image_filename*)UserContext;
-    free(Context->Data);
-}
 
 struct asset_context_image_raw {
     u32 Width, Height, Channels;
@@ -171,8 +141,9 @@ struct asset_context_image_raw {
     void* Data;
 };
 
-static inline void
-AssetContextImageRawWriteCb(void* UserContext, void** DataToWrite, usize* DataSize) {
+static inline asset_write_context
+AssetContextImageRawWriteCb(void* UserContext) {
+    asset_write_context Ret = {};
     auto* Context = (asset_context_image_raw*)UserContext;
     
     u32 BitmapSize = Context->Width * Context->Height * Context->Channels;
@@ -193,13 +164,61 @@ AssetContextImageRawWriteCb(void* UserContext, void** DataToWrite, usize* DataSi
     Write(&DatItr, FileImage);
     CopyBlock(DatItr, Context->Bitmap, BitmapSize);
     
+    
     printf("Loaded Image: Width = %d, Height = %d, Channels = %d\n",  Context->Width, Context->Height, Context->Channels);
+    
+    Ret.DataToWrite = Dat;
+    Ret.DataSize = DatSize;
+    
+    return Ret;
     
 }
 
+static inline void 
+AssetContextFreeCb(asset_write_context Context) {
+    free(Context.DataToWrite);
+}
+
+
+struct asset_context_atlas_rect {
+    asset_id Id;
+    asset_id AtlasAssetId;
+    rect2u Rect;
+    void* Data;
+};
+
+
+static inline asset_write_context 
+AssetContextAtlasRectWriteCb(void* UserContext) {
+    asset_write_context Ret = {};
+    auto* Context = (asset_context_atlas_rect*)UserContext;
+    
+    usize DatSize = sizeof(yuu_entry) + sizeof(yuu_atlas_rect);
+    void* Dat = calloc(DatSize, 1);
+    u8* DatItr = (u8*)Dat;
+    
+    yuu_entry Entry = {};
+    Entry.Type = AssetType_AtlasRect;
+    Entry.Id = Context->Id;
+    
+    yuu_atlas_rect AtlasRect  = {};
+    AtlasRect.Rect = Context->Rect;
+    AtlasRect.AtlasAssetId = Context->AtlasAssetId;
+    
+    Write(&DatItr, Entry);
+    Write(&DatItr, AtlasRect);
+    
+    printf("Loaded Rect: X = %d, Y = %d, W = %d, H = %d\n", Context->Rect.Min.X, Context->Rect.Min.Y, GetWidth(Context->Rect), GetHeight(Context->Rect));
+    
+    Ret.DataToWrite = Dat;
+    Ret.DataSize = DatSize;
+    
+    return Ret;
+}
+
 static inline void
-AssetContextImageRawFreeCb(void* UserContext) {
-    auto* Context = (asset_context_image_raw*)UserContext;
+AssetContextAtlasRectFreeCb(void* UserContext) {
+    auto* Context = (asset_context_atlas_rect*)UserContext;
     free(Context->Data);
 }
 
@@ -212,7 +231,7 @@ Init(ryyrp_rect* Rect, atlas_context_image* Context){
     Rect->UserData = Context;
 }
 
-static inline void  
+static inline void
 Init(ryyrp_rect* Rect, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
     f32 Scale = stbtt_ScaleForPixelHeight(&Context->LoadedFont.Info, Context->Size);
@@ -249,7 +268,7 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
     for (u32 i = 0; i < RectCount; ++i) {
         auto Rect = Rects[i];
         
-        atlas_context_type Type = *(atlas_context_type*)Rect.UserData;
+        auto Type = *(atlas_context_type*)Rect.UserData;
         switch(Type) {
             case AtlasContextType_Image: {
                 auto* Context = (atlas_context_image*)Rect.UserData;
@@ -257,7 +276,6 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
                 u8* BitmapMemory = stbi_load(Context->Filename, &W, &H, &C, 0);
                 Defer { stbi_image_free(BitmapMemory); };
                 WriteSubBitmapToAtlas(&AtlasMemory, Width, Height, BitmapMemory, Rect);
-                
             } break;
             case AtlasContextType_Font: {
                 auto* Context = (atlas_context_font*)Rect.UserData; 
@@ -292,7 +310,7 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
 
 
 int main() {
-    atlas_context_image ImageContexts[] = {
+    atlas_context_image AtlasImageContexts[] = {
         { AtlasContextType_Image, "assets/ryoji.png",  Asset_RectRyoji, Asset_ImageAtlasDefault },
         { AtlasContextType_Image, "assets/yuu.png",    Asset_RectYuu,    Asset_ImageAtlasDefault },
         { AtlasContextType_Image, "assets/karu00.png", Asset_RectKaru00, Asset_ImageAtlasDefault },
@@ -308,7 +326,7 @@ int main() {
         { AtlasContextType_Image, "assets/karu31.png", Asset_RectKaru31, Asset_ImageAtlasDefault },
         { AtlasContextType_Image, "assets/karu32.png", Asset_RectKaru32, Asset_ImageAtlasDefault },
     };
-    atlas_context_font FontContexts[] = {
+    atlas_context_font AtlasFontContexts[] = {
         {  AtlasContextType_Font, 'a', 72, Asset_FontRect_a, Asset_ImageAtlasDefault },
         {  AtlasContextType_Font, 'b', 72, Asset_FontRect_b, Asset_ImageAtlasDefault },
         {  AtlasContextType_Font, 'c', 72, Asset_FontRect_c, Asset_ImageAtlasDefault },
@@ -363,15 +381,16 @@ int main() {
         {  AtlasContextType_Font, 'Z', 72, Asset_FontRect_Z, Asset_ImageAtlasDefault },
     };
     
-    ryyrp_rect PackedRects[128];
+    constexpr usize TotalRects = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
+    ryyrp_rect PackedRects[TotalRects];
     usize PackedRectCount = 0;
     {
         loaded_font LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
-        for (u32 i = 0; i < ArrayCount(ImageContexts); ++i ) {
-            Init(PackedRects + PackedRectCount++, ImageContexts + i);
+        for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
+            Init(PackedRects + PackedRectCount++, AtlasImageContexts + i);
         }
-        for (u32 i = 0; i < ArrayCount(FontContexts); ++i) {
-            auto* Font = FontContexts + i;
+        for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
+            auto* Font = AtlasFontContexts + i;
             Font->LoadedFont = LoadedFont;
             Init(PackedRects + PackedRectCount++, Font);
         }
@@ -394,7 +413,10 @@ int main() {
     // NOTE(Momo): Generate atlas from rects
     void* AtlasBitmap = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
     Defer { free(AtlasBitmap); };
+    
+#if 0
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasBitmap, AtlasWidth*4);
+#endif
     
     // NOTE(Momo): Gather all the assets we need to load
     asset_builder<128> Assets_ = {};
@@ -410,7 +432,7 @@ int main() {
             AddEntry(Assets, 
                      AssetContextImageFilename + i, 
                      AssetContextImageFilenameWriteCb, 
-                     AssetContextImageFilenameFreeCb); 
+                     AssetContextFreeCb); 
         }
         
         // NOTE(Momo): Image by raw
@@ -422,7 +444,51 @@ int main() {
             AddEntry(Assets, 
                      AssetContextImageRaw + i, 
                      AssetContextImageRawWriteCb, 
-                     AssetContextImageRawFreeCb); 
+                     AssetContextFreeCb); 
+        }
+        
+        // NOTE(Momo): Atlas rects (image rects?)
+        asset_context_atlas_rect AssetContextAtlasRects[TotalRects];
+        for(u32 i = 0; i <  PackedRectCount; ++i) {
+            auto Rect = PackedRects[i];
+            auto Type = *(atlas_context_type*)Rect.UserData;
+            switch(Type) {
+                case AtlasContextType_Image: {
+                    auto AtlasContextImage = (atlas_context_image*)Rect.UserData;
+                    auto* AssetContextAtlasRect = AssetContextAtlasRects + i;
+                    AssetContextAtlasRect->Id = AtlasContextImage->AssetId;
+                    AssetContextAtlasRect->AtlasAssetId = AtlasContextImage->AtlasAssetId;
+                    AssetContextAtlasRect->Rect = { 
+                        Rect.X,
+                        Rect.Y,
+                        Rect.X + Rect.W,
+                        Rect.Y + Rect.H,
+                    };
+                    AddEntry(Assets, 
+                             AssetContextAtlasRect,
+                             AssetContextAtlasRectWriteCb,
+                             AssetContextFreeCb);
+                    
+                } break;
+                case AtlasContextType_Font: {
+                    auto AtlasContextImage = (atlas_context_font*)Rect.UserData;
+                    auto* AssetContextAtlasRect = AssetContextAtlasRects + i;
+                    AssetContextAtlasRect->Id = AtlasContextImage->AssetId;
+                    AssetContextAtlasRect->AtlasAssetId = AtlasContextImage->AtlasAssetId;
+                    AssetContextAtlasRect->Rect = { 
+                        Rect.X,
+                        Rect.Y,
+                        Rect.X + Rect.W,
+                        Rect.Y + Rect.H,
+                    };
+                    AddEntry(Assets, 
+                             AssetContextAtlasRect,
+                             AssetContextAtlasRectWriteCb,
+                             AssetContextFreeCb);
+                } break;
+                
+            }
+            
         }
         
     }

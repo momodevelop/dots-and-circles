@@ -106,8 +106,8 @@ struct yuu_image {
     u32 Height;
     u32 Channels;
     // NOTE(Momo): Data is:
-    /*
-u8 Pixels[Width * Height * Channels];
+    /* 
+u8 Pixels[Width * Height * Channels]; 
 */
 };
 
@@ -117,58 +117,6 @@ struct yuu_atlas_rect {
     asset_id AtlasAssetId;
 };
 
-struct yuu_atlas {
-    u32 EntryCount;
-    u32 RectCount;
-    u32 Width;
-    u32 Height;
-    u32 Channels;
-    // NOTE(Momo): Data is:
-    /*
-rect2u Rects[RectCount]
-u8 Pixles[Width * Height * Channels]
-yuu_atlas_entry Entries[EntryCount]
-*/
-};
-
-
-struct yuu_spritesheet {
-    u32 Width;
-    u32 Height;
-    u32 Channels;
-    
-    u32 Rows;
-    u32 Cols;
-    
-    // NOTE(Momo): Data is:
-    /*
-u8 Pixels[Width * Height * Channels];
-*/
-};
-
-// NOTE(Momo): Atlas User Data Structs
-enum yuu_atlas_ud_type : u32 {
-    YuuAtlasUserDataType_Image,
-    YuuAtlasUserDataType_Font,
-};
-
-
-struct yuu_atlas_ud_image {
-    yuu_atlas_ud_type Type;
-    asset_id AssetId;
-    asset_id AtlasAssetId; 
-};
-
-struct yuu_atlas_ud_font {
-    yuu_atlas_ud_type Type;
-    asset_id AssetId;
-    asset_id AtlasAssetId; 
-    int Codepoint;
-    f32 Size;
-};
-
-
 #pragma pack(pop)
-
 
 #endif 

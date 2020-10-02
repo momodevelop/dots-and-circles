@@ -4,11 +4,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ryoji.h"
-#include "ryoji_maths.h"
 
 
-typedef void (*asset_builder_write_cb)(void* Context, void** DataToWrite, usize* DataSize);
-typedef void (*asset_builder_free_cb)(void* Context);
+struct asset_write_context {
+    void* DataToWrite;
+    usize DataSize;
+};
+
+typedef asset_write_context (*asset_builder_write_cb)(void* Context);
+typedef void (*asset_builder_free_cb)(asset_write_context WriteContext);
+
 
 struct asset_entry {
     asset_builder_write_cb WriteCb;
@@ -57,11 +62,9 @@ Write(asset_builder<N>* Assets, const char* Filename, const char* Signature) {
     for (u32 i = 0; i < EntryCount; ++i) {
         auto* Entry = Assets->Entries + i;
         
-        void* DataToWrite;
-        usize DataSize;
-        Entry->WriteCb(Entry->UserContext, &DataToWrite, &DataSize);
-        fwrite(DataToWrite, DataSize, 1, OutFile);
-        Entry->FreeCb(Entry->UserContext);
+        auto WriteContext = Entry->WriteCb(Entry->UserContext);
+        fwrite(WriteContext.DataToWrite, WriteContext.DataSize, 1, OutFile);
+        Entry->FreeCb(WriteContext);
     }
     
     return true;
