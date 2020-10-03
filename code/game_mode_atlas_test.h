@@ -32,25 +32,16 @@ Update(game_mode_atlas_test* Mode,
     
     // NOTE(Momo): Image Test
     {
-        atlas_rect Rect = GetAtlasRect(GameState->Assets, Asset_RectRyoji);
-        
         v4f Color = { 1.f, 1.f, 1.f, 1.f };
         m44f Transform = ScaleMatrix(200.f, 200.f, 1.f);
-        //quad2f Quad = Quad2F(GetImageUV(GameState->Assets, AtlasId, AtlasDefault_Ryoji));
+        auto AtlasRect = GameState->Assets->AtlasRects[AtlasRect_Ryoji];
         
-        image* Atlas = GetImagePtr(GameState->Assets, Rect.AtlasAssetId);
-        rect2f NormRect = RatioRect(Rect.Rect, {0, 0, Atlas->Width, Atlas->Height});
-        quad2f Quad = Quad2F(NormRect);
-        
-        Log("%d %d %d %d", Rect.Rect.Min.X, Rect.Rect.Min.Y, Rect.Rect.Max.X, Rect.Rect.Max.Y);
-        
-        Log("%f %f %f %f", NormRect.Min.X, NormRect.Min.Y, NormRect.Max.X, NormRect.Max.Y);
-        auto TextureHandle = Atlas->BitmapId;
+        auto TextureHandle = AtlasRect.BitmapId;
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color, 
                                     Transform, 
-                                    TextureHandle,
-                                    Quad);
+                                    AtlasRect.BitmapId,
+                                    GetAtlasUV(GameState->Assets, AtlasRect));
     }
     
     

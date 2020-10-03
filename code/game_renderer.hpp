@@ -97,6 +97,22 @@ PushCommandDrawTexturedQuad(commands* Commands,
     Data->TextureCoords = TextureCoords;
 }
 
+static inline void
+PushCommandDrawTexturedQuad(commands* Commands,
+                            v4f Colors, 
+                            m44f Transform, 
+                            u32 TextureHandle,
+                            rect2f TextureCoords) 
+{
+    using data_t = render_command_draw_textured_quad;
+    auto* Data = Push<data_t>(Commands);
+    
+    Data->Colors = Colors;
+    Data->Transform = Transform;
+    Data->TextureHandle = TextureHandle;
+    Data->TextureCoords = Quad2F(TextureCoords);
+}
+
 
 static inline void
 PushCommandDrawQuad(commands* Commands, 

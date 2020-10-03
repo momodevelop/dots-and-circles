@@ -10,41 +10,33 @@
 
 
 // NOTE(Momo): Asset types
-struct image {
-    u32 Width;
-    u32 Height;
-    u32 Channels;
-    void* Pixels; 
-    u32 BitmapId;
+struct bitmap {
+    u32 Width, Height, Channels;
+    void* Pixels;
 };
 
 struct atlas_rect {
     rect2u Rect;
-    asset_id AtlasAssetId;
+    bitmap_id BitmapId;
 };
 
-struct asset_entry {
-    asset_type Type;
-    union {
-        struct image* Image;
-        struct atlas_rect* AtlasRect;
-    };
-};
 
 struct game_assets {
     arena Arena;
-    asset_entry Entries[Asset_Count];
+    
+    bitmap Bitmaps[Bitmap_Count];
+    atlas_rect AtlasRects[AtlasRect_Count];
     
     u32 BitmapCounter;
-    
     platform_api* Platform;
 };
 
+static inline quad2f
+GetAtlasUV(game_assets* Assets, atlas_rect AtlasRect) {
+    auto Bitmap = Assets->Bitmaps[AtlasRect.BitmapId];
+    return Quad2F(RatioRect(AtlasRect.Rect, {0, 0, Bitmap.Width, Bitmap.Height}));
+}
 
-
-struct image_id { u32 Value; };
-
-#include "game_assets_atlas_rect.h"
 
 inline b32
 CheckAssetSignature(void *Memory, const char* Signature) {
@@ -55,7 +47,7 @@ CheckAssetSignature(void *Memory, const char* Signature) {
             return false;
         }
     }
-    return true;
+    return true; 
 }
 
 
@@ -102,45 +94,34 @@ Init(game_assets* Assets,
         auto* YuuEntry = Read<yuu_entry>(&FileMemoryItr);
         
         switch(YuuEntry->Type) {
-            case AssetType_Image: {
-                auto* YuuImage = Read<yuu_image>(&FileMemoryItr);
+            case AssetType_Bitmap: {
+                auto* YuuBitmap = Read<yuu_bitmap>(&FileMemoryItr);
                 
                 // NOTE(Momo): Allocate Image
-                auto* Entry = Assets->Entries + YuuEntry->Id;
-                Entry->Type = AssetType_Image;
-                Entry->Image = PushStruct<image>(&Assets->Arena);
-                
-                auto* Image = Entry->Image;
-                Image->Width = YuuImage->Width;
-                Image->Height = YuuImage->Height;
-                Image->Channels = YuuImage->Channels;
-                Image->BitmapId = Assets->BitmapCounter++;
+                auto* Bitmap = Assets->Bitmaps + YuuBitmap->Id;
+                Bitmap->Width = YuuBitmap->Width;
+                Bitmap->Height = YuuBitmap->Height;
+                Bitmap->Channels = YuuBitmap->Channels;
                 
                 // NOTE(Momo): Allocate pixel data
-                usize BitmapSize = Image->Width * Image->Height * Image->Channels;
-                Image->Pixels = PushBlock(&Assets->Arena, BitmapSize, 1);
-                Assert(Image->Pixels);
-                CopyBlock(Image->Pixels, FileMemoryItr, BitmapSize);
+                usize BitmapSize = Bitmap->Width * Bitmap->Height * Bitmap->Channels;
+                Bitmap->Pixels = PushBlock(&Assets->Arena, BitmapSize, 1);
+                Assert(Bitmap->Pixels);
+                CopyBlock(Bitmap->Pixels, FileMemoryItr, BitmapSize);
                 FileMemoryItr += BitmapSize;
                 
                 PushCommandLinkTexture(RenderCommands, 
-                                       Image->Width, 
-                                       Image->Height,
-                                       Image->Pixels,
-                                       Image->BitmapId);
+                                       Bitmap->Width, 
+                                       Bitmap->Height,
+                                       Bitmap->Pixels,
+                                       YuuBitmap->Id);
                 
             } break;
             case AssetType_AtlasRect: { 
                 auto* YuuAtlasRect = Read<yuu_atlas_rect>(&FileMemoryItr);
-                
-                auto* Entry = Assets->Entries + YuuEntry->Id;
-                Entry->Type = AssetType_AtlasRect;
-                Entry->AtlasRect = PushStruct<atlas_rect>(&Assets->Arena);
-                
-                auto* AtlasRect = Entry->AtlasRect;
+                auto* AtlasRect = Assets->AtlasRects + YuuAtlasRect->Id;
                 AtlasRect->Rect = YuuAtlasRect->Rect;
-                AtlasRect->AtlasAssetId = YuuAtlasRect->AtlasAssetId;
-                
+                AtlasRect->BitmapId = YuuAtlasRect->BitmapId;
             } break;
             default: {
                 Assert(false);
@@ -153,35 +134,6 @@ Init(game_assets* Assets,
     
 }
 
-
-// NOTE(Momo): Image Interface
-static inline image_id
-GetImage(game_assets* Assets, asset_id Id) {
-    asset_entry* Entry = Assets->Entries + Id;
-    Assert(Entry->Type == AssetType_Image);
-    return { Id };
-}
-
-static inline image*
-GetImagePtr(game_assets* Assets, asset_id Id) {
-    asset_entry* Entry = Assets->Entries + Id;
-    Assert(Entry->Type == AssetType_Image);
-    return Entry->Image;
-}
-
-static inline u32 
-GetBitmapId(game_assets* Assets, image_id Id) {
-    asset_entry* Entry = Assets->Entries + Id.Value;
-    return Entry->Image->BitmapId;
-}
-
-// NOTE(Momo): Interfaces
-static inline atlas_rect 
-GetAtlasRect(game_assets* Assets, asset_id Id) {
-    asset_entry* Entry = Assets->Entries + Id;
-    Assert(Entry->Type == AssetType_AtlasRect);
-    return *(Entry->AtlasRect);
-}
 
 
 

@@ -52,8 +52,8 @@ enum atlas_context_type {
 struct atlas_context_image {
     atlas_context_type Type;
     const char* Filename;
-    asset_id AssetId;
-    asset_id AtlasAssetId;
+    atlas_rect_id Id;
+    bitmap_id BitmapId;
     u8* Bitmap;
 };
 
@@ -67,8 +67,8 @@ struct atlas_context_font {
     atlas_context_type Type;
     u32 Codepoint;
     f32 Size;
-    asset_id AssetId;
-    asset_id AtlasAssetId;
+    atlas_rect_id Id;
+    bitmap_id BitmapId;
     loaded_font LoadedFont;
     u8* Bitmap;
 };    
@@ -84,7 +84,7 @@ AtlasContextFontUnloadCb(void* LoadContext) {
 // NOTE(Momo):  Asset stuff
 struct asset_context_image_filename {
     const char* Filename;
-    asset_id Id;
+    bitmap_id Id;
     void* Data;
 };
 
@@ -107,15 +107,16 @@ AssetContextImageFilenameWriteCb(void* UserContext) {
     Defer { stbi_image_free(LoadedImage); };
     
     u32 BitmapSize = Width * Height * Channels;
-    usize DatSize = sizeof(yuu_entry) + sizeof(yuu_image) + BitmapSize;
+    usize DatSize = sizeof(yuu_entry) + sizeof(yuu_bitmap) + BitmapSize;
     void* Dat = calloc(DatSize, 1);
     u8* DatItr = (u8*)Dat;
     
     yuu_entry Entry = {};
-    Entry.Type = AssetType_Image;
-    Entry.Id = Context->Id;
+    Entry.Type = AssetType_Bitmap;
     
-    yuu_image FileImage = {};
+    
+    yuu_bitmap FileImage = {};
+    FileImage.Id = Context->Id;
     FileImage.Width = Width;
     FileImage.Height = Height;
     FileImage.Channels = Channels;
@@ -136,7 +137,7 @@ AssetContextImageFilenameWriteCb(void* UserContext) {
 
 struct asset_context_image_raw {
     u32 Width, Height, Channels;
-    asset_id Id;
+    bitmap_id Id;
     void* Bitmap;
     void* Data;
 };
@@ -147,15 +148,15 @@ AssetContextImageRawWriteCb(void* UserContext) {
     auto* Context = (asset_context_image_raw*)UserContext;
     
     u32 BitmapSize = Context->Width * Context->Height * Context->Channels;
-    usize DatSize = sizeof(yuu_entry) + sizeof(yuu_image) + BitmapSize;
+    usize DatSize = sizeof(yuu_entry) + sizeof(yuu_bitmap) + BitmapSize;
     void* Dat = calloc(DatSize, 1);
     u8* DatItr = (u8*)Dat;
     
     yuu_entry Entry = {};
-    Entry.Type = AssetType_Image;
-    Entry.Id = Context->Id;
+    Entry.Type = AssetType_Bitmap;
     
-    yuu_image FileImage = {};
+    yuu_bitmap FileImage = {};
+    FileImage.Id = Context->Id;
     FileImage.Width = Context->Width;
     FileImage.Height = Context->Height;
     FileImage.Channels = Context->Channels;
@@ -181,8 +182,8 @@ AssetContextFreeCb(asset_write_context Context) {
 
 
 struct asset_context_atlas_rect {
-    asset_id Id;
-    asset_id AtlasAssetId;
+    atlas_rect_id Id;
+    bitmap_id BitmapId;
     rect2u Rect;
     void* Data;
 };
@@ -199,11 +200,11 @@ AssetContextAtlasRectWriteCb(void* UserContext) {
     
     yuu_entry Entry = {};
     Entry.Type = AssetType_AtlasRect;
-    Entry.Id = Context->Id;
     
     yuu_atlas_rect AtlasRect  = {};
+    AtlasRect.Id = Context->Id;
     AtlasRect.Rect = Context->Rect;
-    AtlasRect.AtlasAssetId = Context->AtlasAssetId;
+    AtlasRect.BitmapId = Context->BitmapId;
     
     Write(&DatItr, Entry);
     Write(&DatItr, AtlasRect);
@@ -311,74 +312,74 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
 
 int main() {
     atlas_context_image AtlasImageContexts[] = {
-        { AtlasContextType_Image, "assets/ryoji.png",  Asset_RectRyoji, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/yuu.png",    Asset_RectYuu,    Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu00.png", Asset_RectKaru00, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu01.png", Asset_RectKaru01, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu02.png", Asset_RectKaru02, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu10.png", Asset_RectKaru10, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu11.png", Asset_RectKaru11, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu12.png", Asset_RectKaru12, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu20.png", Asset_RectKaru20, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu21.png", Asset_RectKaru21, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu22.png", Asset_RectKaru22, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu30.png", Asset_RectKaru30, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu31.png", Asset_RectKaru31, Asset_ImageAtlasDefault },
-        { AtlasContextType_Image, "assets/karu32.png", Asset_RectKaru32, Asset_ImageAtlasDefault },
+        { AtlasContextType_Image, "assets/ryoji.png",  AtlasRect_Ryoji, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/yuu.png",    AtlasRect_Yuu,    Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu00.png", AtlasRect_Karu00, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu01.png", AtlasRect_Karu01, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu02.png", AtlasRect_Karu02, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu10.png", AtlasRect_Karu10, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu11.png", AtlasRect_Karu11, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu12.png", AtlasRect_Karu12, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu20.png", AtlasRect_Karu20, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu21.png", AtlasRect_Karu21, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu22.png", AtlasRect_Karu22, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu30.png", AtlasRect_Karu30, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu31.png", AtlasRect_Karu31, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Bitmap_AtlasDefault },
     };
     atlas_context_font AtlasFontContexts[] = {
-        {  AtlasContextType_Font, 'a', 72, Asset_FontRect_a, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'b', 72, Asset_FontRect_b, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'c', 72, Asset_FontRect_c, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'd', 72, Asset_FontRect_d, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'e', 72, Asset_FontRect_e, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'f', 72, Asset_FontRect_f, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'g', 72, Asset_FontRect_g, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'h', 72, Asset_FontRect_h, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'i', 72, Asset_FontRect_i, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'j', 72, Asset_FontRect_j, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'k', 72, Asset_FontRect_k, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'l', 72, Asset_FontRect_l, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'm', 72, Asset_FontRect_m, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'n', 72, Asset_FontRect_n, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'o', 72, Asset_FontRect_o, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'p', 72, Asset_FontRect_p, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'q', 72, Asset_FontRect_q, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'r', 72, Asset_FontRect_r, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 's', 72, Asset_FontRect_s, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 't', 72, Asset_FontRect_t, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'u', 72, Asset_FontRect_u, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'v', 72, Asset_FontRect_v, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'w', 72, Asset_FontRect_w, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'x', 72, Asset_FontRect_x, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'y', 72, Asset_FontRect_y, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'z', 72, Asset_FontRect_z, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'A', 72, Asset_FontRect_A, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'B', 72, Asset_FontRect_B, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'C', 72, Asset_FontRect_C, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'D', 72, Asset_FontRect_D, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'E', 72, Asset_FontRect_E, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'F', 72, Asset_FontRect_F, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'G', 72, Asset_FontRect_G, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'H', 72, Asset_FontRect_H, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'I', 72, Asset_FontRect_I, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'J', 72, Asset_FontRect_J, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'K', 72, Asset_FontRect_K, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'L', 72, Asset_FontRect_L, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'M', 72, Asset_FontRect_M, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'N', 72, Asset_FontRect_N, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'O', 72, Asset_FontRect_O, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'P', 72, Asset_FontRect_P, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'Q', 72, Asset_FontRect_Q, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'R', 72, Asset_FontRect_R, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'S', 72, Asset_FontRect_S, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'T', 72, Asset_FontRect_T, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'U', 72, Asset_FontRect_U, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'V', 72, Asset_FontRect_V, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'W', 72, Asset_FontRect_W, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'X', 72, Asset_FontRect_X, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'Y', 72, Asset_FontRect_Y, Asset_ImageAtlasDefault },
-        {  AtlasContextType_Font, 'Z', 72, Asset_FontRect_Z, Asset_ImageAtlasDefault },
+        {  AtlasContextType_Font, 'a', 72, AtlasRect_a, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'b', 72, AtlasRect_b, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'c', 72, AtlasRect_c, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'd', 72, AtlasRect_d, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'e', 72, AtlasRect_e, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'f', 72, AtlasRect_f, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'g', 72, AtlasRect_g, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'h', 72, AtlasRect_h, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'i', 72, AtlasRect_i, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'j', 72, AtlasRect_j, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'k', 72, AtlasRect_k, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'l', 72, AtlasRect_l, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'm', 72, AtlasRect_m, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'n', 72, AtlasRect_n, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'o', 72, AtlasRect_o, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'p', 72, AtlasRect_p, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'q', 72, AtlasRect_q, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'r', 72, AtlasRect_r, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 's', 72, AtlasRect_s, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 't', 72, AtlasRect_t, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'u', 72, AtlasRect_u, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'v', 72, AtlasRect_v, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'w', 72, AtlasRect_w, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'x', 72, AtlasRect_x, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'y', 72, AtlasRect_y, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'z', 72, AtlasRect_z, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'A', 72, AtlasRect_A, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'B', 72, AtlasRect_B, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'C', 72, AtlasRect_C, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'D', 72, AtlasRect_D, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'E', 72, AtlasRect_E, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'F', 72, AtlasRect_F, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'G', 72, AtlasRect_G, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'H', 72, AtlasRect_H, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'I', 72, AtlasRect_I, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'J', 72, AtlasRect_J, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'K', 72, AtlasRect_K, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'L', 72, AtlasRect_L, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'M', 72, AtlasRect_M, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'N', 72, AtlasRect_N, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'O', 72, AtlasRect_O, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'P', 72, AtlasRect_P, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'Q', 72, AtlasRect_Q, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'R', 72, AtlasRect_R, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'S', 72, AtlasRect_S, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'T', 72, AtlasRect_T, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'U', 72, AtlasRect_U, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'V', 72, AtlasRect_V, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'W', 72, AtlasRect_W, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'X', 72, AtlasRect_X, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'Y', 72, AtlasRect_Y, Bitmap_AtlasDefault },
+        {  AtlasContextType_Font, 'Z', 72, AtlasRect_Z, Bitmap_AtlasDefault },
     };
     
     constexpr usize TotalRects = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
@@ -424,8 +425,8 @@ int main() {
     {
         // NOTE(Momo): Image by filename
         asset_context_image_filename AssetContextImageFilename[] = {
-            { "assets/ryoji.png", Asset_ImageRyoji },
-            { "assets/yuu.png", Asset_ImageYuu},
+            { "assets/ryoji.png", Bitmap_Ryoji },
+            { "assets/yuu.png", Bitmap_Yuu},
         };
         
         for(u32 i = 0; i < ArrayCount(AssetContextImageFilename); ++i) {
@@ -437,7 +438,7 @@ int main() {
         
         // NOTE(Momo): Image by raw
         asset_context_image_raw AssetContextImageRaw[] = {
-            {  AtlasWidth, AtlasHeight, 4, Asset_ImageAtlasDefault, AtlasBitmap }
+            {  AtlasWidth, AtlasHeight, 4, Bitmap_AtlasDefault, AtlasBitmap }
         };
         
         for(u32 i = 0; i < ArrayCount(AssetContextImageRaw); ++i) {
@@ -456,8 +457,8 @@ int main() {
                 case AtlasContextType_Image: {
                     auto AtlasContextImage = (atlas_context_image*)Rect.UserData;
                     auto* AssetContextAtlasRect = AssetContextAtlasRects + i;
-                    AssetContextAtlasRect->Id = AtlasContextImage->AssetId;
-                    AssetContextAtlasRect->AtlasAssetId = AtlasContextImage->AtlasAssetId;
+                    AssetContextAtlasRect->Id = AtlasContextImage->Id;
+                    AssetContextAtlasRect->BitmapId = AtlasContextImage->BitmapId;
                     AssetContextAtlasRect->Rect = { 
                         Rect.X,
                         Rect.Y,
@@ -473,8 +474,8 @@ int main() {
                 case AtlasContextType_Font: {
                     auto AtlasContextImage = (atlas_context_font*)Rect.UserData;
                     auto* AssetContextAtlasRect = AssetContextAtlasRects + i;
-                    AssetContextAtlasRect->Id = AtlasContextImage->AssetId;
-                    AssetContextAtlasRect->AtlasAssetId = AtlasContextImage->AtlasAssetId;
+                    AssetContextAtlasRect->Id = AtlasContextImage->Id;
+                    AssetContextAtlasRect->BitmapId = AtlasContextImage->BitmapId;
                     AssetContextAtlasRect->Rect = { 
                         Rect.X,
                         Rect.Y,

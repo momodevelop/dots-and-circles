@@ -15,6 +15,7 @@
 #include "sdl_platform_utils.h"
 
 
+
 // NOTE(Momo): sdl_game_code
 struct sdl_game_code {
     game_update* Update;
@@ -43,6 +44,9 @@ Load(sdl_game_code* GameCode)
 
 static bool gIsRunning = true;
 static bool gIsPaused = false;
+constexpr u64 ScreenTicks60FPS = 1000/60;
+constexpr u64 ScreenTicks30FPS = 1000/30;
+
 
 // NOTE(Momo): Platform API code
 static inline void
@@ -197,6 +201,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Input
     game_input GameInput = {};
+    f32 TimeStepMultiplier = 1.f;
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -272,8 +277,11 @@ int main(int argc, char* argv[]) {
                         case SDLK_F1: {
                             // NOTE(Momo): Global pausing
                             gIsPaused = !gIsPaused;
-                            if (!gIsPaused) {
-                                Start(&timer);
+                            if (gIsPaused) {
+                                TimeStepMultiplier = 0.f;
+                            }
+                            else {
+                                TimeStepMultiplier = 1.f;
                             }
                         }break;
                         case SDLK_F2: {
@@ -339,11 +347,8 @@ int main(int argc, char* argv[]) {
             
         }
         
-        if (gIsPaused) 
-            continue;
-        
         u64 TimeElapsed = GetTimeElapsed(&timer);
-        f32 DeltaTime = TimeElapsed / 1000.f;
+        f32 DeltaTime = TimeElapsed / 1000.f * TimeStepMultiplier;
         
         if (GameCode.Update) {
             GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, DeltaTime); 
@@ -352,14 +357,24 @@ int main(int argc, char* argv[]) {
         Render(&RendererOpenGL, &RenderCommands); 
         Clear(&RenderCommands);
         
-        
         // NOTE(Momo): Timer update
         Tick(&timer);
-        //SDL_Log("%lld  ms\n", TimeElapsed);
         SDL_GL_SwapWindow(window);
         
-        // TODO(Momo): Cap framerate, or enforce varying target framerates
-        SDL_Delay(16); // 60fps?
+        
+#if 0
+        // TODO(Momo): 16 is 60FPS (1000/60). Perhaps...
+        if (ScreenTicks60FPS > TimeElapsed) {
+            //SDL_Log("%lld  ms\n", TimeElapsed);
+            SDL_Delay((Uint32)(ScreenTicks60FPS - TimeElapsed)); // 60fps?
+        }
+        else {
+            SDL_Log("%lld  ms\n", TimeElapsed);
+        }
+#else 
+        SDL_Delay(16);
+#endif
+        
     }
     
     

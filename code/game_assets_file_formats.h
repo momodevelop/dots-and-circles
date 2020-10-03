@@ -3,94 +3,91 @@
 
 #include "ryoji_maths.h"
 
-enum asset_type : u32 {
-    AssetType_Image,
-    AssetType_AtlasRect,
+enum bitmap_id : u32 {
+    Bitmap_Ryoji,
+    Bitmap_Yuu,
+    Bitmap_AtlasDefault,
+    
+    Bitmap_Count,
 };
 
 
-enum asset_id : u32 {
-    Asset_ImageRyoji,
-    Asset_ImageYuu,
-    Asset_ImageAtlasDefault,
+enum atlas_rect_id : u32 {
+    AtlasRect_Ryoji,
+    AtlasRect_Yuu,
+    AtlasRect_Karu00,
+    AtlasRect_Karu01,
+    AtlasRect_Karu02,
+    AtlasRect_Karu10,
+    AtlasRect_Karu11,
+    AtlasRect_Karu12,
+    AtlasRect_Karu20,
+    AtlasRect_Karu21,
+    AtlasRect_Karu22,
+    AtlasRect_Karu30,
+    AtlasRect_Karu31,
+    AtlasRect_Karu32,
     
-    Asset_SpritesheetKaru,
+    AtlasRect_a,
+    AtlasRect_b,
+    AtlasRect_c,
+    AtlasRect_d,
+    AtlasRect_e,
+    AtlasRect_f,
+    AtlasRect_g,
+    AtlasRect_h,
+    AtlasRect_i,
+    AtlasRect_j,
+    AtlasRect_k,
+    AtlasRect_l,
+    AtlasRect_m,
+    AtlasRect_n,
+    AtlasRect_o,
+    AtlasRect_p,
+    AtlasRect_q,
+    AtlasRect_r,
+    AtlasRect_s,
+    AtlasRect_t,
+    AtlasRect_u,
+    AtlasRect_v,
+    AtlasRect_w,
+    AtlasRect_x,
+    AtlasRect_y,
+    AtlasRect_z,
     
+    AtlasRect_A,
+    AtlasRect_B,
+    AtlasRect_C,
+    AtlasRect_D,
+    AtlasRect_E,
+    AtlasRect_F,
+    AtlasRect_G,
+    AtlasRect_H,
+    AtlasRect_I,
+    AtlasRect_J,
+    AtlasRect_K,
+    AtlasRect_L,
+    AtlasRect_M,
+    AtlasRect_N,
+    AtlasRect_O,
+    AtlasRect_P,
+    AtlasRect_Q,
+    AtlasRect_R,
+    AtlasRect_S,
+    AtlasRect_T,
+    AtlasRect_U,
+    AtlasRect_V,
+    AtlasRect_W,
+    AtlasRect_X,
+    AtlasRect_Y,
+    AtlasRect_Z,
     
-    // NOTE(Momo): Rects
-    Asset_RectRyoji,
-    Asset_RectYuu,
-    Asset_RectKaru00,
-    Asset_RectKaru01,
-    Asset_RectKaru02,
-    Asset_RectKaru10,
-    Asset_RectKaru11,
-    Asset_RectKaru12,
-    Asset_RectKaru20,
-    Asset_RectKaru21,
-    Asset_RectKaru22,
-    Asset_RectKaru30,
-    Asset_RectKaru31,
-    Asset_RectKaru32,
-    
-#if 1
-    // NOTE(Momo): Font rects ahhhh
-    Asset_FontRect_a,
-    Asset_FontRect_b,
-    Asset_FontRect_c,
-    Asset_FontRect_d,
-    Asset_FontRect_e,
-    Asset_FontRect_f,
-    Asset_FontRect_g,
-    Asset_FontRect_h,
-    Asset_FontRect_i,
-    Asset_FontRect_j,
-    Asset_FontRect_k,
-    Asset_FontRect_l,
-    Asset_FontRect_m,
-    Asset_FontRect_n,
-    Asset_FontRect_o,
-    Asset_FontRect_p,
-    Asset_FontRect_q,
-    Asset_FontRect_r,
-    Asset_FontRect_s,
-    Asset_FontRect_t,
-    Asset_FontRect_u,
-    Asset_FontRect_v,
-    Asset_FontRect_w,
-    Asset_FontRect_x,
-    Asset_FontRect_y,
-    Asset_FontRect_z,
-    
-    Asset_FontRect_A,
-    Asset_FontRect_B,
-    Asset_FontRect_C,
-    Asset_FontRect_D,
-    Asset_FontRect_E,
-    Asset_FontRect_F,
-    Asset_FontRect_G,
-    Asset_FontRect_H,
-    Asset_FontRect_I,
-    Asset_FontRect_J,
-    Asset_FontRect_K,
-    Asset_FontRect_L,
-    Asset_FontRect_M,
-    Asset_FontRect_N,
-    Asset_FontRect_O,
-    Asset_FontRect_P,
-    Asset_FontRect_Q,
-    Asset_FontRect_R,
-    Asset_FontRect_S,
-    Asset_FontRect_T,
-    Asset_FontRect_U,
-    Asset_FontRect_V,
-    Asset_FontRect_W,
-    Asset_FontRect_X,
-    Asset_FontRect_Y,
-    Asset_FontRect_Z,
-#endif
-    
-    Asset_Count,
+    AtlasRect_Count,
+};
+
+enum asset_type : u32 {
+    AssetType_Bitmap,
+    AssetType_AtlasRect,
 };
 
 
@@ -98,10 +95,10 @@ enum asset_id : u32 {
 #pragma pack(push, 1)
 struct yuu_entry {
     asset_type Type;
-    asset_id Id;
 };
 
-struct yuu_image {
+struct yuu_bitmap {
+    bitmap_id Id;
     u32 Width;
     u32 Height;
     u32 Channels;
@@ -113,8 +110,10 @@ u8 Pixels[Width * Height * Channels];
 
 
 struct yuu_atlas_rect {
+    atlas_rect_id Id;
+    bitmap_id BitmapId;
     rect2u Rect;
-    asset_id AtlasAssetId;
+    
 };
 
 #pragma pack(pop)

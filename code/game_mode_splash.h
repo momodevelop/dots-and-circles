@@ -8,7 +8,7 @@ struct splash_image_entity {
     v3f Position;
     v4f Colors;
     
-    image_id ImageHandle;
+    bitmap_id BitmapHandle;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -40,7 +40,7 @@ Update(splash_image_entity* Entity,
     m44f S = ScaleMatrix(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
-    PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S, GetBitmapId(Assets, Entity->ImageHandle));
+    PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S,  Entity->BitmapHandle);
 }
 
 struct splash_blackout_entity {
@@ -90,9 +90,9 @@ Init(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 400.f, 400.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].ImageHandle = GetImage(GameState->Assets, Asset_ImageRyoji);
+        Mode->SplashImg[0].BitmapHandle = Bitmap_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
-        Mode->SplashImg[0].CountdownDuration = 5.f;
+        Mode->SplashImg[0].CountdownDuration = 1.f;
         Mode->SplashImg[0].Timer = 0.f;
         Mode->SplashImg[0].Duration = 2.f;
         Mode->SplashImg[0].StartX = -1000.f;
@@ -101,9 +101,9 @@ Init(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 400.f, 400.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].ImageHandle = GetImage(GameState->Assets, Asset_ImageYuu);
+        Mode->SplashImg[1].BitmapHandle = Bitmap_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
-        Mode->SplashImg[1].CountdownDuration = 5.f;
+        Mode->SplashImg[1].CountdownDuration = 1.f;
         Mode->SplashImg[1].Timer = 0.f;
         Mode->SplashImg[1].Duration = 2.f;
         Mode->SplashImg[1].StartX = 1000.f;
@@ -113,7 +113,7 @@ Init(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashBlackout.Scale = { 1600.f, 900.f };
         Mode->SplashBlackout.Colors = { 0.f, 0.f, 0.f, 0.0f };
         Mode->SplashBlackout.CountdownTimer = 0.f;
-        Mode->SplashBlackout.CountdownDuration = 8.f;
+        Mode->SplashBlackout.CountdownDuration = 3.f;
         Mode->SplashBlackout.Timer = 0.f;
         Mode->SplashBlackout.Duration = 1.f;
     }
@@ -150,7 +150,7 @@ Update(game_mode_splash* Mode,
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         Log("Splash state exit");
-        SetGameMode(GameState, GameModeType_Menu);
+        SetGameMode(GameState, GameModeType_Splash);
     }
 }
 
