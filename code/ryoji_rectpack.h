@@ -66,7 +66,7 @@ ryy__SortPred(const void* Lhs, const void* Rhs) {
     if (L.W != R.W)
         return R.W - L.W;
     
-    // By right
+    // By Height
     if (L.H != R.H)
         return R.H - L.H;
     

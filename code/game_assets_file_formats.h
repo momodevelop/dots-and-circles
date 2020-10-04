@@ -11,6 +11,15 @@ enum bitmap_id : u32 {
     Bitmap_Count,
 };
 
+static constexpr u32 Codepoint_Start = 32;
+static constexpr u32 Codepoint_End = 126;
+static constexpr u32 Codepoint_Count = Codepoint_End - Codepoint_Start;
+
+enum font_id : u32 {
+    Font_Default,
+    Font_Count,
+};
+
 
 enum atlas_rect_id : u32 {
     AtlasRect_Ryoji,
@@ -28,66 +37,13 @@ enum atlas_rect_id : u32 {
     AtlasRect_Karu31,
     AtlasRect_Karu32,
     
-    AtlasRect_a,
-    AtlasRect_b,
-    AtlasRect_c,
-    AtlasRect_d,
-    AtlasRect_e,
-    AtlasRect_f,
-    AtlasRect_g,
-    AtlasRect_h,
-    AtlasRect_i,
-    AtlasRect_j,
-    AtlasRect_k,
-    AtlasRect_l,
-    AtlasRect_m,
-    AtlasRect_n,
-    AtlasRect_o,
-    AtlasRect_p,
-    AtlasRect_q,
-    AtlasRect_r,
-    AtlasRect_s,
-    AtlasRect_t,
-    AtlasRect_u,
-    AtlasRect_v,
-    AtlasRect_w,
-    AtlasRect_x,
-    AtlasRect_y,
-    AtlasRect_z,
-    
-    AtlasRect_A,
-    AtlasRect_B,
-    AtlasRect_C,
-    AtlasRect_D,
-    AtlasRect_E,
-    AtlasRect_F,
-    AtlasRect_G,
-    AtlasRect_H,
-    AtlasRect_I,
-    AtlasRect_J,
-    AtlasRect_K,
-    AtlasRect_L,
-    AtlasRect_M,
-    AtlasRect_N,
-    AtlasRect_O,
-    AtlasRect_P,
-    AtlasRect_Q,
-    AtlasRect_R,
-    AtlasRect_S,
-    AtlasRect_T,
-    AtlasRect_U,
-    AtlasRect_V,
-    AtlasRect_W,
-    AtlasRect_X,
-    AtlasRect_Y,
-    AtlasRect_Z,
-    
     AtlasRect_Count,
 };
 
 enum asset_type : u32 {
     AssetType_Bitmap,
     AssetType_AtlasRect,
+    AssetType_FontGlyph,
 };
 
 
@@ -114,6 +70,13 @@ struct yuu_atlas_rect {
     bitmap_id BitmapId;
     rect2u Rect;
     
+};
+
+struct yuu_font_glyph {
+    font_id FontId;
+    bitmap_id BitmapId;
+    u32 Codepoint;
+    rect2u Rect;
 };
 
 #pragma pack(pop)

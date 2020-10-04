@@ -21,13 +21,29 @@ struct atlas_rect {
 };
 
 
+struct font {
+    
+    // NOTE(Momo): We cater for a fixed set of codepoints. 
+    // ASCII 32 to 126 
+    // Worry about sparseness next time.
+    rect2u GlyphRects[Codepoint_Count];
+};
+
+static inline usize
+GetGlyphIndexFromCodepoint(u32 Codepoint) {
+    Assert(Codepoint >= Codepoint_Start);
+    Assert(Codepoint <= Codepoint_End);
+    return Codepoint - Codepoint_Start;
+}
+
+
 struct game_assets {
     arena Arena;
     
     bitmap Bitmaps[Bitmap_Count];
     atlas_rect AtlasRects[AtlasRect_Count];
+    font Fonts[Font_Count];
     
-    u32 BitmapCounter;
     platform_api* Platform;
 };
 
@@ -38,7 +54,7 @@ GetAtlasUV(game_assets* Assets, atlas_rect AtlasRect) {
 }
 
 
-inline b32
+static inline b32
 CheckAssetSignature(void *Memory, const char* Signature) {
     u8* MemoryU8 = (u8*)Memory;
     u32 SigLen = NtsLength(Signature);
@@ -122,6 +138,14 @@ Init(game_assets* Assets,
                 auto* AtlasRect = Assets->AtlasRects + YuuAtlasRect->Id;
                 AtlasRect->Rect = YuuAtlasRect->Rect;
                 AtlasRect->BitmapId = YuuAtlasRect->BitmapId;
+            } break;
+            case AssetType_FontGlyph: {
+                auto* YuuFontGlyph = Read<yuu_font_glyph>(&FileMemoryItr);
+                auto* Font = Assets->Fonts + YuuFontGlyph->FontId;
+                
+                
+                usize GlyphIndex = GetGlyphIndexFromCodepoint(YuuFontGlyph->Codepoint);
+                Font->GlyphRects[GlyphIndex] = YuuFontGlyph->Rect;
             } break;
             default: {
                 Assert(false);
