@@ -21,15 +21,12 @@ void Start(sdl_timer* Timer) {
 
 
 static inline 
-void Tick(sdl_timer * Timer) {
+u64 GetTicksElapsed(sdl_timer* Timer) {
     Timer->EndFrameCounter = SDL_GetPerformanceCounter();
     Timer->CountsElapsed = Timer->EndFrameCounter - Timer->PrevFrameCounter;
     
     Timer->PrevFrameCounter = Timer->EndFrameCounter; 
-}
-
-static inline 
-u64 GetTimeElapsed(sdl_timer* Timer) {
+    
     // NOTE(Momo): 
     // PerformanceCounter(C) gives how many count has elapsed.
     // PerformanceFrequency(F) gives how many counts/second.

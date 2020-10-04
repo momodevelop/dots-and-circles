@@ -190,9 +190,6 @@ int main(int argc, char* argv[]) {
     PlatformApi.ReadFile = PlatformReadFile;
     PlatformApi.GetFileSize = PlatformGetFileSize;
     
-    // NOTE(Momo): Timer
-    sdl_timer timer;
-    Start(&timer);
     
     // NOTE(Momo): Render commands/queue
     void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
@@ -201,7 +198,17 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Input
     game_input GameInput = {};
+    
+    // NOTE(Momo): Timestep related
+    // TODO(Momo): What if we can't hit 60fps?
     f32 TimeStepMultiplier = 1.f;
+    u64 TargetTicksElapsed = 16; // 60FPS
+    f32 TargetDeltaTime = TargetTicksElapsed / 1000.f;
+    
+    // NOTE(Momo): Timer
+    sdl_timer timer;
+    Start(&timer);
+    
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
@@ -347,33 +354,24 @@ int main(int argc, char* argv[]) {
             
         }
         
-        u64 TimeElapsed = GetTimeElapsed(&timer);
-        f32 DeltaTime = TimeElapsed / 1000.f * TimeStepMultiplier;
         
         if (GameCode.Update) {
-            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, DeltaTime); 
+            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, TargetDeltaTime); 
         }
         
         Render(&RendererOpenGL, &RenderCommands); 
         Clear(&RenderCommands);
         
         // NOTE(Momo): Timer update
-        Tick(&timer);
         SDL_GL_SwapWindow(window);
         
+        u64 ActualTicksElapsed = GetTicksElapsed(&timer);
+        if (TargetTicksElapsed > ActualTicksElapsed) {
+            //SDL_Log("%lld  ms\n", TicksElapsed);
+            SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
+        }
         
-#if 0
-        // TODO(Momo): 16 is 60FPS (1000/60). Perhaps...
-        if (ScreenTicks60FPS > TimeElapsed) {
-            //SDL_Log("%lld  ms\n", TimeElapsed);
-            SDL_Delay((Uint32)(ScreenTicks60FPS - TimeElapsed)); // 60fps?
-        }
-        else {
-            SDL_Log("%lld  ms\n", TimeElapsed);
-        }
-#else 
-        SDL_Delay(16);
-#endif
+        SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
         
     }
     
