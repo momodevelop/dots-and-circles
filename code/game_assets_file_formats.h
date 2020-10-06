@@ -44,6 +44,7 @@ enum asset_type : u32 {
     AssetType_Bitmap,
     AssetType_AtlasRect,
     AssetType_FontGlyph,
+    AssetType_FontKerning,
 };
 
 
@@ -77,6 +78,13 @@ struct yuu_font_glyph {
     bitmap_id BitmapId;
     u32 Codepoint;
     rect2u Rect;
+};
+
+struct yuu_font_kerning {
+    font_id FontId;
+    u32 Kerning;
+    u32 CodepointA;
+    u32 CodepointB;
 };
 
 #pragma pack(pop)

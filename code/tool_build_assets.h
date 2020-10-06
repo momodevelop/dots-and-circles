@@ -183,4 +183,18 @@ WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u3
     
 }
 
+static inline void 
+WriteFontKerning(ab_context* Context, font_id FontId, u32 CodepointA, u32 CodepointB, u32 Kerning) 
+{
+    WriteEntry(Context, AssetType_FontKerning);
+    
+    yuu_font_kerning Font = {};
+    Font.FontId = FontId;
+    Font.Kerning = Kerning;
+    Font.CodepointA = CodepointA;
+    Font.CodepointB = CodepointB;
+    fwrite(&Font, sizeof(Font), 1, Context->File);
+    
+}
+
 #endif //TOOL_BUILD_ASSETS_H

@@ -21,12 +21,23 @@ struct atlas_rect {
 };
 
 
+struct font_glyph {
+    rect2u Rect;
+    bitmap_id BitmapId;
+};
+
+static inline f32
+AspectRatio(font_glyph Glyph) {
+    return (f32)GetWidth(Glyph.Rect) / GetHeight(Glyph.Rect);
+}
+
 struct font {
     
     // NOTE(Momo): We cater for a fixed set of codepoints. 
     // ASCII 32 to 126 
     // Worry about sparseness next time.
-    rect2u GlyphRects[Codepoint_Count];
+    font_glyph Glyphs[Codepoint_Count];
+    u32 Kernings[Codepoint_Count][Codepoint_Count];
 };
 
 static inline usize
@@ -51,6 +62,12 @@ static inline quad2f
 GetAtlasUV(game_assets* Assets, atlas_rect AtlasRect) {
     auto Bitmap = Assets->Bitmaps[AtlasRect.BitmapId];
     return Quad2F(RatioRect(AtlasRect.Rect, {0, 0, Bitmap.Width, Bitmap.Height}));
+}
+
+static inline quad2f
+GetAtlasUV(game_assets* Assets, font_glyph Glyph) {
+    auto Bitmap = Assets->Bitmaps[Glyph.BitmapId];
+    return Quad2F(RatioRect(Glyph.Rect, {0, 0, Bitmap.Width, Bitmap.Height}));
 }
 
 
@@ -142,10 +159,15 @@ Init(game_assets* Assets,
             case AssetType_FontGlyph: {
                 auto* YuuFontGlyph = Read<yuu_font_glyph>(&FileMemoryItr);
                 auto* Font = Assets->Fonts + YuuFontGlyph->FontId;
-                
-                
                 usize GlyphIndex = GetGlyphIndexFromCodepoint(YuuFontGlyph->Codepoint);
-                Font->GlyphRects[GlyphIndex] = YuuFontGlyph->Rect;
+                Font->Glyphs[GlyphIndex].Rect = YuuFontGlyph->Rect;
+                Font->Glyphs[GlyphIndex].BitmapId = YuuFontGlyph->BitmapId;
+            } break;
+            case AssetType_FontKerning: {
+                auto* YuuFontKerning = Read<yuu_font_kerning>(&FileMemoryItr);
+                auto* Font = Assets->Fonts + YuuFontKerning->FontId;
+                Font->Kernings[YuuFontKerning->CodepointA][YuuFontKerning->CodepointB] = YuuFontKerning->Kerning;
+                
             } break;
             default: {
                 Assert(false);

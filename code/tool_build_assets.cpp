@@ -158,8 +158,117 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
     
 }
 
+#if 0
+// NOTE(Momo): Rects WILL be sorted after this function
+static inline b32
+ryyrp_PackDebug(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount) {
+    qsort(Rects, RectCount, sizeof(ryyrp_rect), ryy__SortPred);
+    
+    
+    usize CurrentNodeCount = 0;
+    Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };
+    
+    for (u32 i = 0; i < RectCount; ++i ) {
+        auto Rect = Rects[i];
+        
+        // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
+        usize ChosenSpaceIndex = CurrentNodeCount;
+        {
+            for (usize  j = 0; j < ChosenSpaceIndex ; ++j ) {
+                usize Index = ChosenSpaceIndex - j - 1;
+                ryyrp_node Space = Context->Nodes[Index];
+                // NOTE(Momo): Check if the image fits
+                if (Rect.W <= Space.W && Rect.H <= Space.H) {
+                    ChosenSpaceIndex = Index;
+                    break;
+                }
+            }
+        }
+        
+        
+        // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
+        if (ChosenSpaceIndex == CurrentNodeCount) {
+            return false;
+        }
+        
+        // NOTE(Momo): Swap and pop the chosen space
+        ryyrp_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
+        if (CurrentNodeCount > 0) {
+            Context->Nodes[ChosenSpaceIndex] = Context->Nodes[CurrentNodeCount-1];
+            --CurrentNodeCount;
+        }
+        
+        // NOTE(Momo): Split if not perfect fit
+        if (ChosenSpace.W != Rect.W && ChosenSpace.H == Rect.H) {
+            // Split right
+            ryyrp_node SplitSpaceRight = {
+                ChosenSpace.X + Rect.W,
+                ChosenSpace.Y,
+                ChosenSpace.W - Rect.W,
+                ChosenSpace.H
+            };
+            Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
+        }
+        else if (ChosenSpace.W == Rect.W && ChosenSpace.H != Rect.H) {
+            // Split down
+            ryyrp_node SplitSpaceDown = {
+                ChosenSpace.X,
+                ChosenSpace.Y + Rect.H,
+                ChosenSpace.W,
+                ChosenSpace.H - Rect.H
+            };
+            Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
+        }
+        else if (ChosenSpace.W != Rect.W && ChosenSpace.H != Rect.H) {
+            // Split right
+            ryyrp_node SplitSpaceRight = {
+                ChosenSpace.X + Rect.W,
+                ChosenSpace.Y,
+                ChosenSpace.W - Rect.W,
+                Rect.H,
+            };
+            
+            // Split down
+            ryyrp_node SplitSpaceDown = {
+                ChosenSpace.X,
+                ChosenSpace.Y + Rect.H,
+                ChosenSpace.W,
+                ChosenSpace.H - Rect.H,
+            };
+            
+            // Choose to insert the bigger one first before the smaller one
+            u32 RightArea = SplitSpaceRight.W * SplitSpaceRight.H;
+            u32 DownArea = SplitSpaceDown.W * SplitSpaceDown.H;
+            if (RightArea > DownArea) {
+                Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
+                Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
+            }
+            else {
+                Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
+                Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
+            }
+            
+        }
+        
+        // NOTE(Momo): Translate the rect
+        Rects[i].X = ChosenSpace.X;
+        Rects[i].Y = ChosenSpace.Y;
+        
+        u8* AtlasBitmap = GenerateAtlas(Rects, RectCount, Context->Width, Context->Height);
+        Defer { free(AtlasBitmap); };
+        stbi_write_png("test.png", Context->Width, Context->Height, 4, AtlasBitmap, Context->Width*4);
+        
+    }
+    
+    return true;
+}
+#endif
+
 
 int main() {
+    loaded_font LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
+    Defer { FreeFont(LoadedFont); };
+    
     atlas_context_image AtlasImageContexts[] = {
         { AtlasContextType_Image, "assets/ryoji.png",  AtlasRect_Ryoji, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/yuu.png",    AtlasRect_Yuu,    Bitmap_AtlasDefault },
@@ -181,9 +290,9 @@ int main() {
     constexpr usize TotalRects = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
     ryyrp_rect PackedRects[TotalRects];
+    
     usize PackedRectCount = 0;
     {
-        loaded_font LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
         for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
             Init(PackedRects + PackedRectCount++, AtlasImageContexts + i);
         }
@@ -200,14 +309,14 @@ int main() {
     }
     
     // NOTE(Momo): Pack rects
-    u32 AtlasWidth = 2024;
-    u32 AtlasHeight = 2024;
+    u32 AtlasWidth = 1024;
+    u32 AtlasHeight = 1024;
     {
         constexpr usize NodeCount = ArrayCount(PackedRects) + 1;
         ryyrp_context RectPackContext;
         ryyrp_node RectPackNodes[NodeCount];
         ryyrp_Init(&RectPackContext, AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
-        if (!ryyrp_Pack(&RectPackContext, PackedRects, PackedRectCount)) {
+        if (!ryyrp_Pack(&RectPackContext, PackedRects, PackedRectCount, RyyrpSort_Height)) {
             printf("Failed to generate bitmap\n");
             Assert(false);
         }
@@ -247,6 +356,17 @@ int main() {
                 
             }
         }
+        
+        
+        for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
+            for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {
+                u32 Kerning = (u32)stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
+                WriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
+            }
+        }
+        
+        
+        
     }
     End(AssetBuilder);
     

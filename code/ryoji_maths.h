@@ -839,6 +839,16 @@ Rect3F(rect2f Rect) {
     };
 }
 
+static inline f32 
+AspectRatio(rect2f R) {
+    return GetWidth(R)/GetHeight(R);
+}
+
+static inline f32 
+AspectRatio(rect2u R) {
+    return (f32)GetWidth(R)/GetHeight(R);
+}
+
 
 // NOTE(Momo): Gets the normalized values of Rect A based on another Rect B
 static inline rect2f 
