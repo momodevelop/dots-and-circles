@@ -351,12 +351,15 @@ int main() {
                 case AtlasContextType_Font: {
                     auto* Font  = (atlas_context_font*)Rect.UserData;
                     rect2u Rect2U = { Rect.X, Rect.Y, Rect.X + Rect.W, Rect.Y + Rect.H };
-                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint,  Rect2U);
+                    
+                    i32 Advance;
+                    i32 LeftSideBearing; 
+                    stbtt_GetCodepointHMetrics(&LoadedFont.Info, Font->Codepoint, &Advance, &LeftSideBearing);
+                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, Rect2U, (u32)Advance);
                 } break;
                 
             }
         }
-        
         
         for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
             for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {

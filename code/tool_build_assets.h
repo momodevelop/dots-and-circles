@@ -170,7 +170,7 @@ WriteAtlasRect(ab_context* Context, atlas_rect_id Id, bitmap_id TargetBitmapId, 
 }
 
 static inline void 
-WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, rect2u Rect) 
+WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, rect2u Rect, u32 Advance) 
 {
     WriteEntry(Context, AssetType_FontGlyph);
     
@@ -179,8 +179,8 @@ WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u3
     FontGlyph.BitmapId = TargetBitmapId;
     FontGlyph.Codepoint = Codepoint;
     FontGlyph.Rect = Rect;
+    FontGlyph.Advance = Advance;
     fwrite(&FontGlyph, sizeof(FontGlyph), 1, Context->File);
-    
 }
 
 static inline void 

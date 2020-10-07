@@ -43,6 +43,7 @@ enum atlas_rect_id : u32 {
 enum asset_type : u32 {
     AssetType_Bitmap,
     AssetType_AtlasRect,
+    AssetType_Font,
     AssetType_FontGlyph,
     AssetType_FontKerning,
 };
@@ -73,10 +74,17 @@ struct yuu_atlas_rect {
     
 };
 
+struct yuu_font {
+    font_id Id;
+    f32 Size;
+    // NOTE(Momo): Other general font info here
+};
+
 struct yuu_font_glyph {
     font_id FontId;
     bitmap_id BitmapId;
     u32 Codepoint;
+    u32 Advance;
     rect2u Rect;
 };
 

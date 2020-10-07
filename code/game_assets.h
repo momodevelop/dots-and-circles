@@ -32,7 +32,6 @@ AspectRatio(font_glyph Glyph) {
 }
 
 struct font {
-    
     // NOTE(Momo): We cater for a fixed set of codepoints. 
     // ASCII 32 to 126 
     // Worry about sparseness next time.
@@ -156,12 +155,18 @@ Init(game_assets* Assets,
                 AtlasRect->Rect = YuuAtlasRect->Rect;
                 AtlasRect->BitmapId = YuuAtlasRect->BitmapId;
             } break;
+            case AssetType_Font: {
+                auto* YuuFont = Read<yuu_font>(&FileMemoryItr);
+                auto* Font = Assets->Fonts + YuuFont->Id;
+                Font->Size = YuuFont->Size;
+            } break;
             case AssetType_FontGlyph: {
                 auto* YuuFontGlyph = Read<yuu_font_glyph>(&FileMemoryItr);
                 auto* Font = Assets->Fonts + YuuFontGlyph->FontId;
                 usize GlyphIndex = GetGlyphIndexFromCodepoint(YuuFontGlyph->Codepoint);
                 Font->Glyphs[GlyphIndex].Rect = YuuFontGlyph->Rect;
                 Font->Glyphs[GlyphIndex].BitmapId = YuuFontGlyph->BitmapId;
+                Font->Glyphs[GlyphIndex].Advance = YuuFontGlyph->Advance;
             } break;
             case AssetType_FontKerning: {
                 auto* YuuFontKerning = Read<yuu_font_kerning>(&FileMemoryItr);
