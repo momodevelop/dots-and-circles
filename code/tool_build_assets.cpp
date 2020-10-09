@@ -3,6 +3,16 @@
 #include "ryoji_rectpack.h"
 
 
+static inline rect2u
+Rect2U(ryyrp_rect Rect) {
+    return { 
+        Rect.X, 
+        Rect.Y, 
+        Rect.X + Rect.W, 
+        Rect.Y + Rect.H 
+    };
+    
+}
 
 ////////
 struct loaded_font {
@@ -47,28 +57,16 @@ struct atlas_context_image {
     u8* Bitmap;
 };
 
-static inline void
-AtlasContextImageUnloadCb(void* LoadContext) {
-    auto* Context = (atlas_context_image*)LoadContext; 
-    stbi_image_free(Context->Bitmap);
-}
 
 struct atlas_context_font {
     atlas_context_type Type;
     font_id FontId;
     bitmap_id BitmapId;
-    f32 Size;
+    f32 RasterScale;
     u32 Codepoint;
     loaded_font LoadedFont;
     u8* Bitmap;
 };    
-
-
-static inline void
-AtlasContextFontUnloadCb(void* LoadContext) {
-    auto* Context = (atlas_context_font*)LoadContext; 
-    stbtt_FreeBitmap(Context->Bitmap, nullptr);
-}
 
 
 
@@ -84,8 +82,7 @@ Init(ryyrp_rect* Rect, atlas_context_image* Context){
 static inline void
 Init(ryyrp_rect* Rect, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
-    f32 Scale = stbtt_ScaleForPixelHeight(&Context->LoadedFont.Info, Context->Size);
-    stbtt_GetCodepointBitmapBox(&Context->LoadedFont.Info, Context->Codepoint, Scale, Scale, &ix0, &iy0, &ix1, &iy1);
+    stbtt_GetCodepointBitmapBox(&Context->LoadedFont.Info, Context->Codepoint, Context->RasterScale, Context->RasterScale, &ix0, &iy0, &ix1, &iy1);
     
     Rect->W= (u32)(ix1 - ix0);
     Rect->H= (u32)(iy1 - iy0);
@@ -130,10 +127,12 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
             case AtlasContextType_Font: {
                 auto* Context = (atlas_context_font*)Rect.UserData; 
                 constexpr u32 Channels = 4;
-                f32 Scale = stbtt_ScaleForPixelHeight(&Context->LoadedFont.Info, Context->Size);
+                
                 i32 W, H;
-                u8* FontBitmapOneCh = stbtt_GetCodepointBitmap(&Context->LoadedFont.Info, 0, Scale, 
-                                                               Context->Codepoint, &W, &H, nullptr, nullptr);
+                u8* FontBitmapOneCh = stbtt_GetCodepointBitmap(&Context->LoadedFont.Info, 
+                                                               Context->RasterScale, Context->RasterScale, 
+                                                               Context->Codepoint, 
+                                                               &W, &H, nullptr, nullptr);
                 Defer { stbtt_FreeBitmap( FontBitmapOneCh, nullptr ); };
                 
                 u32 BitmapDimensions = (u32)(W * H);
@@ -158,115 +157,10 @@ GenerateAtlas(const ryyrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
     
 }
 
-#if 0
-// NOTE(Momo): Rects WILL be sorted after this function
-static inline b32
-ryyrp_PackDebug(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount) {
-    qsort(Rects, RectCount, sizeof(ryyrp_rect), ryy__SortPred);
-    
-    
-    usize CurrentNodeCount = 0;
-    Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };
-    
-    for (u32 i = 0; i < RectCount; ++i ) {
-        auto Rect = Rects[i];
-        
-        // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
-        usize ChosenSpaceIndex = CurrentNodeCount;
-        {
-            for (usize  j = 0; j < ChosenSpaceIndex ; ++j ) {
-                usize Index = ChosenSpaceIndex - j - 1;
-                ryyrp_node Space = Context->Nodes[Index];
-                // NOTE(Momo): Check if the image fits
-                if (Rect.W <= Space.W && Rect.H <= Space.H) {
-                    ChosenSpaceIndex = Index;
-                    break;
-                }
-            }
-        }
-        
-        
-        // NOTE(Momo): If an empty space that can fit is found, we remove that space and split.
-        if (ChosenSpaceIndex == CurrentNodeCount) {
-            return false;
-        }
-        
-        // NOTE(Momo): Swap and pop the chosen space
-        ryyrp_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
-        if (CurrentNodeCount > 0) {
-            Context->Nodes[ChosenSpaceIndex] = Context->Nodes[CurrentNodeCount-1];
-            --CurrentNodeCount;
-        }
-        
-        // NOTE(Momo): Split if not perfect fit
-        if (ChosenSpace.W != Rect.W && ChosenSpace.H == Rect.H) {
-            // Split right
-            ryyrp_node SplitSpaceRight = {
-                ChosenSpace.X + Rect.W,
-                ChosenSpace.Y,
-                ChosenSpace.W - Rect.W,
-                ChosenSpace.H
-            };
-            Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
-        }
-        else if (ChosenSpace.W == Rect.W && ChosenSpace.H != Rect.H) {
-            // Split down
-            ryyrp_node SplitSpaceDown = {
-                ChosenSpace.X,
-                ChosenSpace.Y + Rect.H,
-                ChosenSpace.W,
-                ChosenSpace.H - Rect.H
-            };
-            Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
-        }
-        else if (ChosenSpace.W != Rect.W && ChosenSpace.H != Rect.H) {
-            // Split right
-            ryyrp_node SplitSpaceRight = {
-                ChosenSpace.X + Rect.W,
-                ChosenSpace.Y,
-                ChosenSpace.W - Rect.W,
-                Rect.H,
-            };
-            
-            // Split down
-            ryyrp_node SplitSpaceDown = {
-                ChosenSpace.X,
-                ChosenSpace.Y + Rect.H,
-                ChosenSpace.W,
-                ChosenSpace.H - Rect.H,
-            };
-            
-            // Choose to insert the bigger one first before the smaller one
-            u32 RightArea = SplitSpaceRight.W * SplitSpaceRight.H;
-            u32 DownArea = SplitSpaceDown.W * SplitSpaceDown.H;
-            if (RightArea > DownArea) {
-                Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
-                Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
-            }
-            else {
-                Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
-                Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
-            }
-            
-        }
-        
-        // NOTE(Momo): Translate the rect
-        Rects[i].X = ChosenSpace.X;
-        Rects[i].Y = ChosenSpace.Y;
-        
-        u8* AtlasBitmap = GenerateAtlas(Rects, RectCount, Context->Width, Context->Height);
-        Defer { free(AtlasBitmap); };
-        stbi_write_png("test.png", Context->Width, Context->Height, 4, AtlasBitmap, Context->Width*4);
-        
-    }
-    
-    return true;
-}
-#endif
-
-
 int main() {
     loaded_font LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
+    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f);
+    
     Defer { FreeFont(LoadedFont); };
     
     atlas_context_image AtlasImageContexts[] = {
@@ -301,7 +195,7 @@ int main() {
             Font->Type = AtlasContextType_Font;
             Font->LoadedFont = LoadedFont;
             Font->Codepoint = Codepoint_Start + i;
-            Font->Size = 72.f;
+            Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
             Font->FontId = Font_Default;
             Font->BitmapId = Bitmap_AtlasDefault;
             Init(PackedRects + PackedRectCount++, Font);
@@ -321,6 +215,7 @@ int main() {
             Assert(false);
         }
     }
+    
     
     // NOTE(Momo): Generate atlas from rects
     u8* AtlasBitmap = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
@@ -344,26 +239,38 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Rect.UserData;
-                    rect2u Rect2U = { Rect.X, Rect.Y, Rect.X + Rect.W, Rect.Y + Rect.H };
-                    WriteAtlasRect(AssetBuilder, Image->Id, Image->BitmapId,  Rect2U);
+                    rect2u AtlasRect = Rect2U(Rect);
+                    WriteAtlasRect(AssetBuilder, Image->Id, Image->BitmapId, AtlasRect);
                     
                 } break;
                 case AtlasContextType_Font: {
                     auto* Font  = (atlas_context_font*)Rect.UserData;
-                    rect2u Rect2U = { Rect.X, Rect.Y, Rect.X + Rect.W, Rect.Y + Rect.H };
                     
                     i32 Advance;
                     i32 LeftSideBearing; 
                     stbtt_GetCodepointHMetrics(&LoadedFont.Info, Font->Codepoint, &Advance, &LeftSideBearing);
-                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, Rect2U, (u32)Advance);
+                    
+                    rect2i Box;
+                    stbtt_GetCodepointBox(&LoadedFont.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
+                    
+                    
+                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, FontPixelScale * Advance,
+                                   FontPixelScale * LeftSideBearing,
+                                   Rect2U(Rect), 
+                                   Rect2F(Box) * FontPixelScale);
+                    
                 } break;
                 
             }
         }
         
+        i32 Ascent, Descent, LineGap;
+        stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
+        WriteFont(AssetBuilder, Font_Default, (f32)LineGap); 
+        
         for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
             for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {
-                u32 Kerning = (u32)stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
+                i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
                 WriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }

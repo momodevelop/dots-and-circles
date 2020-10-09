@@ -76,21 +76,23 @@ struct yuu_atlas_rect {
 
 struct yuu_font {
     font_id Id;
-    f32 Size;
-    // NOTE(Momo): Other general font info here
+    f32 LineGap;
 };
 
 struct yuu_font_glyph {
     font_id FontId;
     bitmap_id BitmapId;
     u32 Codepoint;
-    u32 Advance;
-    rect2u Rect;
+    f32 Advance;
+    f32 LeftBearing;
+    rect2f Box; 
+    rect2u AtlasRect;
+    
 };
 
 struct yuu_font_kerning {
     font_id FontId;
-    u32 Kerning;
+    i32 Kerning;
     u32 CodepointA;
     u32 CodepointB;
 };

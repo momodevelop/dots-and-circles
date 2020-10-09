@@ -169,8 +169,19 @@ WriteAtlasRect(ab_context* Context, atlas_rect_id Id, bitmap_id TargetBitmapId, 
     fwrite(&AtlasRect, sizeof(AtlasRect), 1,  Context->File);
 }
 
+static inline void
+WriteFont(ab_context* Context, font_id Id, f32 LineGap) 
+{
+    WriteEntry(Context, AssetType_Font);
+    
+    yuu_font Font = {};
+    Font.Id = Id;
+    Font.LineGap = LineGap;
+    fwrite(&Font, sizeof(Font), 1, Context->File);
+}
+
 static inline void 
-WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, rect2u Rect, u32 Advance) 
+WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, f32 Advance, f32 LeftBearing, rect2u AtlasRect, rect2f Box) 
 {
     WriteEntry(Context, AssetType_FontGlyph);
     
@@ -178,13 +189,16 @@ WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u3
     FontGlyph.FontId = FontId;
     FontGlyph.BitmapId = TargetBitmapId;
     FontGlyph.Codepoint = Codepoint;
-    FontGlyph.Rect = Rect;
+    FontGlyph.AtlasRect = AtlasRect;
+    FontGlyph.LeftBearing = LeftBearing;
     FontGlyph.Advance = Advance;
+    FontGlyph.Box = Box;
     fwrite(&FontGlyph, sizeof(FontGlyph), 1, Context->File);
+    
 }
 
 static inline void 
-WriteFontKerning(ab_context* Context, font_id FontId, u32 CodepointA, u32 CodepointB, u32 Kerning) 
+WriteFontKerning(ab_context* Context, font_id FontId, u32 CodepointA, u32 CodepointB, i32 Kerning) 
 {
     WriteEntry(Context, AssetType_FontKerning);
     
