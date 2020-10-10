@@ -16,6 +16,7 @@ struct game_input {
             input_button ButtonRight;
             input_button ButtonLeft;
             input_button ButtonConfirm;
+            input_button ButtonSwitch;
             
 #if INTERNAL
             input_button ButtonDebug[10];

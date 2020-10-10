@@ -178,6 +178,8 @@ int main() {
         { AtlasContextType_Image, "assets/karu30.png", AtlasRect_Karu30, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/karu31.png", AtlasRect_Karu31, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerWhite, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerBlack, Bitmap_AtlasDefault },
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
     

@@ -23,7 +23,7 @@ struct atlas_rect {
 
 struct font_glyph {
     rect2u AtlasRect;
-    v2f BaselineOffset; 
+    rect2f Box; 
     bitmap_id BitmapId;
     f32 Advance;
     f32 LeftBearing;
@@ -61,6 +61,7 @@ struct game_assets {
     
     platform_api* Platform;
 };
+
 
 static inline quad2f
 GetAtlasUV(game_assets* Assets, atlas_rect* AtlasRect) {
@@ -175,7 +176,7 @@ Init(game_assets* Assets,
                 Glyph->BitmapId = YuuFontGlyph->BitmapId;
                 Glyph->Advance = YuuFontGlyph->Advance;
                 Glyph->LeftBearing = YuuFontGlyph->LeftBearing;
-                Glyph->BaselineOffset = YuuFontGlyph->BaselineOffset;
+                Glyph->Box = YuuFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
                 auto* YuuFontKerning = Read<yuu_font_kerning>(&FileMemoryItr);

@@ -1,12 +1,8 @@
 #ifndef GAME_MODE_ATLAS_TEST_H
 #define GAME_MODE_ATLAS_TEST_H
 
-#include "game.h"
-
-
 // NOTE(Momo): Mode /////////////////////////////////////////////
 struct game_mode_atlas_test {
-    static constexpr u8 TypeId = 3;
 };
 
 static inline void 
@@ -21,6 +17,7 @@ DrawString(commands* RenderCommands,
 {
     v3f CurPosition = Position;
     
+    
     v4f Color = { 1.f, 1.f, 1.f, 1.f };
     auto* Font = Assets->Fonts + Font_Default;
     
@@ -31,12 +28,12 @@ DrawString(commands* RenderCommands,
         
         // NOTE(Momo): Set bottom left as origin
         m44f BLT = TranslationMatrix(0.5f, 0.5f, 0.f); 
-        m44f S = ScaleMatrix(GetWidth(Box) * Scale, 
-                             GetHeight(Box) * Scale, 
+        m44f S = ScaleMatrix(GetWidth(Box) * Size, 
+                             GetHeight(Box) * Size, 
                              1.f);
         
-        m44f T = TranslationMatrix(CurPosition.X + Box.Min.X * Scale, 
-                                   CurPosition.Y + Box.Min.Y * Scale,  
+        m44f T = TranslationMatrix(CurPosition.X + Box.Min.X * Size, 
+                                   CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         
         PushCommandDrawTexturedQuad(RenderCommands, 
@@ -45,9 +42,9 @@ DrawString(commands* RenderCommands,
                                     Glyph->BitmapId,
                                     GetAtlasUV(Assets, Glyph));
         
-        CurPosition.X += Glyph->Advance;
+        CurPosition.X += Glyph->Advance * Size;
         if (String[i+1] != 0 ) {
-            CurPosition.X += Font->Kernings[String[i]][String[i+1]] * Scale;
+            CurPosition.X += Font->Kernings[String[i]][String[i+1]] * Size;
         }
     }
     

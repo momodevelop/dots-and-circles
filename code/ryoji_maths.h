@@ -102,6 +102,13 @@ union v2u {
     };
 };
 
+union v2i {
+    i32 E[2];
+    struct {
+        i32 X, Y;
+    };
+};
+
 struct m44f {
     f32 E[4][4];
     inline const auto& operator[](usize index) const { return E[index]; }
@@ -130,6 +137,10 @@ struct aabb3f {
     v3f Radius;
 };
 
+struct rect2i {
+    v2i Min;
+    v2i Max;
+};
 
 struct rect2u {
     v2u Min;
@@ -262,10 +273,17 @@ V2F(v3f V) {
     return { V.X, V.Y };
 }
 
+
 static inline v2f
 V2F(v2u V) {
     return { (f32)V.X, (f32)V.Y };
 }
+
+static inline v2f
+V2F(v2i V) {
+    return { (f32)V.X, (f32)V.Y };
+}
+
 
 static inline v2f 
 Add(v2f L, v2f R) {
@@ -591,6 +609,14 @@ operator-(v3f V)  {
 }
 
 
+static inline rect2f
+operator*(rect2f Rect, f32 F) {
+    return {
+        Rect.Min * F,
+        Rect.Max * F,
+    };
+}
+
 
 static inline v3f 
 Midpoint(v3f L, v3f R)  { 
@@ -679,7 +705,6 @@ operator*(m44f L, m44f R) {
 }
 
 
-// NOTE(Momo): Constructors
 static inline m44f 
 Transpose(m44f M) {
     m44f Ret = {};
@@ -830,6 +855,13 @@ Rect2F(rect2u Rect) {
     };
 }
 
+static inline rect2f 
+Rect2F(rect2i Rect) {
+    return {
+        V2F(Rect.Min),
+        V2F(Rect.Max),
+    };
+}
 
 static inline rect3f
 Rect3F(rect2f Rect) {

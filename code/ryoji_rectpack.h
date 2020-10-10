@@ -28,8 +28,6 @@ struct ryyrp_rect {
     
     // NOTE(Momo): Output
     u32 X, Y;
-    
-    
 };
 
 struct ryyrp_context {

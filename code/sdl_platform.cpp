@@ -134,6 +134,8 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo) Initialize OpenGL context  core)
     SDL_Log("SDL creating context\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
+    //SDL_GL_SetSwapInterval(1);
+    
     if (context == nullptr) { 
         SDL_Log("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -248,6 +250,9 @@ int main(int argc, char* argv[]) {
                         case SDLK_RETURN: {
                             GameInput.ButtonConfirm.Now = true;
                         }break;
+                        case SDLK_SPACE: {
+                            GameInput.ButtonSwitch.Now = true;
+                        }break;
 #if INTERNAL
                         case SDLK_1: {
                             GameInput.ButtonDebug[1].Now = true; 
@@ -315,6 +320,9 @@ int main(int argc, char* argv[]) {
                         }break;
                         case SDLK_RETURN: {
                             GameInput.ButtonConfirm.Now = false;
+                        }break;
+                        case SDLK_SPACE: {
+                            GameInput.ButtonSwitch.Now = false;
                         }break;
 #if INTERNAL
                         case SDLK_1: {

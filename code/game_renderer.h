@@ -1,7 +1,7 @@
 /* NOTE(Momo): 
 Ground rules about this renderer.
 - This is a 2D renderer in 3D space. 
-- Right-handed coordinate system: +Y is up, +Z is towards
+- Right-handed coordinate system: +Y is up, +Z is towards you
 - Only one model is supported: A quad that can be textured and colored 
 - UV origin is from top left. Points given for UV to map to the quad is given in this order:
 >> 0. Top left
