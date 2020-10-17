@@ -1,6 +1,3 @@
-[] Fonts
-[] AssetBuilder v2? Consider a much simpler asset layout since we are most probably not doing asset streaming.  
-[] Tile based rendering
 [] Fixed framerate (target framerate)
 [] Visual editor
 [] Circle debug lines?

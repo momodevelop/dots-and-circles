@@ -1,6 +1,7 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
+#include "game.h"
 #include "ryoji_easing.h"
 #include "ryoji_maths.h"
 
@@ -54,7 +55,7 @@ Init(game_mode_main* Mode, game_state* GameState) {
     Player->Size = { 32.f, 32.f };
     
     // NOTE(Momo): We start as White
-    Player->AbsorbMode = PlayerAbsorbMode_White;
+    Player->MoodType = MoodType_White;
     Player->WhiteImageAlpha = 1.f;
     Player->WhiteImageAlphaTarget = 1.f;
     
@@ -114,15 +115,15 @@ Update(game_mode_main* Mode,
         
         // NOTE(Momo): Absorb Mode Switch
         if(IsPoked(Input->ButtonSwitch)) {
-            Player->AbsorbMode = (Player->AbsorbMode == PlayerAbsorbMode_White) ? PlayerAbsorbMode_Black : PlayerAbsorbMode_White;
+            Player->MoodType = (Player->MoodType == MoodType_White) ? MoodType_Black : MoodType_White;
             
             
-            switch(Player->AbsorbMode) {
-                case PlayerAbsorbMode_White: {
+            switch(Player->MoodType) {
+                case MoodType_White: {
                     Log("White nao!");
                     Player->WhiteImageAlphaTarget = 1.f;
                 } break;
-                case PlayerAbsorbMode_Black: {
+                case MoodType_Black: {
                     Log("Black nao!");
                     Player->WhiteImageAlphaTarget = 0.f;
                 }break;

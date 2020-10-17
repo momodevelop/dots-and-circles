@@ -3,7 +3,7 @@
 
 #include "game_platform.h"
 
-#if  INTERNAL
+#ifdef  INTERNAL
 static platform_log* gLog;
 #define Log(fmt, ...) gLog(fmt, __VA_ARGS__);
 #else 
@@ -23,8 +23,7 @@ enum game_mode_type : u32 {
     GameModeType_Menu,
     GameModeType_AtlasTest,
 };
-
-
+	
 struct game_state {
     game_mode_type ModeType;
     union {

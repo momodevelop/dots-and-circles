@@ -6,8 +6,9 @@
 #include "ryoji_arenas.h"
 #include "ryoji_commands.h"
 
+#include "game_platform.h"
 #include "game_assets_file_formats.h"
-
+#include "game_renderer.h"
 
 // NOTE(Momo): Asset types
 struct bitmap {
@@ -50,7 +51,6 @@ GetGlyphIndexFromCodepoint(u32 Codepoint) {
     Assert(Codepoint <= Codepoint_End);
     return Codepoint - Codepoint_Start;
 }
-
 
 struct game_assets {
     arena Arena;
