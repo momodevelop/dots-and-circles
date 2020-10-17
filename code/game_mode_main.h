@@ -4,9 +4,9 @@
 #include "ryoji_easing.h"
 #include "ryoji_maths.h"
 
-enum player_absorb_mode : b32 {
-    PlayerAbsorbMode_White,
-    PlayerAbsorbMode_Black,
+enum mood_type : b32 {
+    MoodType_White,
+    MoodType_Black,
 };
 
 struct player {
@@ -26,8 +26,13 @@ struct player {
     v3f Velocity; 
     
     // NOTE(Momo): Gameplay
-    player_absorb_mode AbsorbMode;
+    mood_type MoodType;
     f32 MovementSpeed;
+};
+
+
+struct bullet {
+    mood_type MoodType;
     
 };
 

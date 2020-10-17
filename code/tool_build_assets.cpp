@@ -2,30 +2,29 @@
 #include "ryoji_bitmanip.h"
 #include "ryoji_rectpack.h"
 
-
 static inline rect2u
 Rect2U(ryyrp_rect Rect) {
-    return { 
+	return { 
         Rect.X, 
         Rect.Y, 
         Rect.X + Rect.W, 
         Rect.Y + Rect.H 
-    };
-    
+    };    
 }
 
 ////////
 struct loaded_font {
-    stbtt_fontinfo Info;
+	stbtt_fontinfo Info;
     void* Data;
 };
 
 static inline loaded_font
 AllocateFontFromFile(const char* Filename) {
-    stbtt_fontinfo Font;
-    FILE* FontFile = fopen(Filename, "rb");
+	stbtt_fontinfo Font;
+    FILE* FontFile = nullptr; 
+	fopen_s(&FontFile, Filename, "rb");
     Defer { fclose(FontFile); };
-    
+	    
     fseek(FontFile, 0, SEEK_END);
     auto Size = ftell(FontFile);
     fseek(FontFile, 0, SEEK_SET);
@@ -82,12 +81,17 @@ Init(ryyrp_rect* Rect, atlas_context_image* Context){
 static inline void
 Init(ryyrp_rect* Rect, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
-    stbtt_GetCodepointBitmapBox(&Context->LoadedFont.Info, Context->Codepoint, Context->RasterScale, Context->RasterScale, &ix0, &iy0, &ix1, &iy1);
+    stbtt_GetCodepointBitmapBox(&Context->LoadedFont.Info, 
+			Context->Codepoint, 
+			Context->RasterScale, 
+			Context->RasterScale, 
+			&ix0, &iy0, &ix1, &iy1);
     
     Rect->W= (u32)(ix1 - ix0);
     Rect->H= (u32)(iy1 - iy0);
     Rect->UserData = Context;
 }
+
 
 static inline void 
 WriteSubBitmapToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,

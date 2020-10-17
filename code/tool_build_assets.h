@@ -94,7 +94,8 @@ static inline void
 Begin(ab_context* Context, const char* Filename, const char* Signature) 
 {
     Context->EntryCount = 0;
-    Context->File = fopen(Filename, "wb");
+    Context->File = nullptr; 
+	fopen_s(&Context->File, Filename, "wb");
     Assert(Context->File);
     
     // NOTE(Momo): Write signature

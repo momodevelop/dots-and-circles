@@ -4,9 +4,9 @@
 #include "ryoji.h"
 
 // NOTE(Momo): Global Settings
-#define GameMainMemorySize Gigabytes(1)
-#define RenderCommandsMemorySize Megabytes(64)
-#define TotalMemorySize GameMainMemorySize + RenderCommandsMemorySize
+static constexpr u64 GameMainMemorySize = Gigabytes(1);
+static constexpr u64 RenderCommandsMemorySize = Megabytes(64);
+static constexpr u64 TotalMemorySize = GameMainMemorySize + RenderCommandsMemorySize;
 
 // NOTE(Momo): Forward declarations 
 struct commands;
