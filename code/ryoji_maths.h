@@ -209,7 +209,6 @@ GetHeight(rect2f Rect) {
     return Rect.Max.Y - Rect.Min.Y; 
 }
 
-
 // NOTE(Momo): Common Functions
 static inline b8
 IsEqual(f32 L, f32 R) {
@@ -326,7 +325,7 @@ IsEqual(v2f L, v2f R) {
 
 static inline f32 
 Dot(v2f L, v2f R) {
-    return { L.X * R.X + L.Y * R.Y };
+    return L.X * R.X + L.Y * R.Y;
 }
 
 
@@ -527,7 +526,7 @@ IsEqual(v3f L, v3f R) {
 
 static inline f32 
 Dot(v3f L, v3f R) {
-    return { L.X * R.X + L.Y * R.Y + L.Z * R.Z};
+    return L.X * R.X + L.Y * R.Y + L.Z * R.Z;
 }
 
 
@@ -690,6 +689,22 @@ Project(v3f from, v3f to) {
     return (to * from) / LengthSq(to) * to;
 }
 
+// Intersections
+static inline b32
+IsIntersecting(circle2f L, circle2f R) {
+	f32 distsq = DistanceSq(L.Origin, R.Origin);
+	f32 rsq = L.Radius + R.Radius;
+    rsq *= rsq;
+	return distsq < rsq;
+}
+
+static inline b32
+IsIntersecting(circle3f L, circle3f R) {
+	f32 distsq = DistanceSq(L.Origin, R.Origin);
+	f32 rsq = L.Radius + R.Radius;
+    rsq *= rsq;
+	return distsq < rsq;
+}
 
 // Row major
 static inline m44f 
