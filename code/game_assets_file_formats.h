@@ -1,7 +1,8 @@
 #ifndef GAME_ASSETS_TYPE_ID 
 #define GAME_ASSETS_TYPE_ID
 
-#include "ryoji_maths.h"
+
+#include "mm_maths.h"
 
 enum bitmap_id : u32 {
     Bitmap_Ryoji,
@@ -73,7 +74,7 @@ u8 Pixels[Width * Height * Channels];
 struct yuu_atlas_rect {
     atlas_rect_id Id;
     bitmap_id BitmapId;
-    rect2u Rect;
+    mmm_rect2u Rect;
     
 };
 
@@ -88,8 +89,8 @@ struct yuu_font_glyph {
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;
-    rect2f Box; 
-    rect2u AtlasRect;
+    mmm_rect2f Box; 
+    mmm_rect2u AtlasRect;
     
 };
 

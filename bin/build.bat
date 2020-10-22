@@ -27,11 +27,6 @@ rmdir %cd%\assets
 mkdir %cd%\assets
 copy %RootDir%\assets\* %cd%\assets
 
-IF "%Opt%"=="atlas" ( 
-	cl %CommonCompilerFlags% %CodeDir%\tool_build_atlas.cpp
-	GOTO End
-)
-
 IF "%Opt%"=="assets" (
 	cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cpp
 	GOTO End

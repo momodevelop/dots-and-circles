@@ -2,16 +2,26 @@
 #define GAME_MODE_MAIN_H
 
 #include "game.h"
-#include "ryoji_easing.h"
-#include "ryoji_maths.h"
+#include "mm_easing.h"
+
+#include "mm_maths.h"
 
 enum mood_type : b32 {
     MoodType_White,
     MoodType_Black,
 };
 
-enum bullet_pattern_type : u32 {
-    BulletPatternType_Homing,
+enum enemy_mood_pattern_type : u32 {
+    EnemyMoodPatternType_White,
+    EnemyMoodPatternType_Black,
+};
+
+enum enemy_firing_pattern_type : u32 {
+    EnemyFiringPatternType_Homing,
+};
+
+enum enemy_movement_type : u32 {
+    EnemyMovementType_Static,
 };
 
 struct player {
@@ -23,15 +33,15 @@ struct player {
     f32 WhiteImageTransitionTimer;
     f32 WhiteImageTransitionDuration;
     
-    v2f Size;
+    mmm_v2f Size;
    
 	// Collision
-    circle2f HitCircle;
+    mmm_circle2f HitCircle;
 
 
     // Physics
-    v2f Position;
-    v2f Direction; 
+    mmm_v2f Position;
+    mmm_v2f Direction; 
     
     // Gameplay
     mood_type MoodType;
@@ -41,43 +51,95 @@ struct player {
 
 struct bullet {
 	atlas_rect* ImageRect;
-	v2f Size;
+	mmm_v2f Size;
     mood_type MoodType;
-    v2f Direction;
-	v2f Position;
+    mmm_v2f Direction;
+	mmm_v2f Position;
 	f32 Speed;
-	circle2f HitCircle; 
+	mmm_circle2f HitCircle; 
 };
 
 struct enemy {
     atlas_rect* ImageRect;
-	v2f Size; 
-	v2f Position;
-    bullet_pattern_type BulletPatternType;
+	mmm_v2f Size; 
+	mmm_v2f Position;
+    enemy_firing_pattern_type FiringPatternType;
+    enemy_mood_pattern_type MoodPatternType;
+    enemy_movement_type MovementType;
 
     f32 FireTimer;
 	f32 FireDuration;
 
+    f32 LifeTimer;
+    f32 LifeDuration;
 };
 
 struct game_mode_main {
     player Player;
 	
-	bullet Bullets[10];
+	bullet Bullets[128];
 	u32 BulletCount;
     
-	enemy Enemy;
+	enemy Enemies[128];
+    u32 EnemyCount;
+
+    // Manages spawning of enemies
+
+
 
 };
 
+static inline enemy* 
+SpawnEnemy(game_mode_main* Mode, 
+        game_assets* Assets, 
+        mmm_v2f Position,
+        enemy_mood_pattern_type MoodPatternType,
+        enemy_firing_pattern_type FiringPatternType, 
+        enemy_movement_type MovementType, 
+        f32 FireRate,
+        f32 LifeDuration) 
+{
+    Assert(Mode->EnemyCount < ArrayCount(Mode->Enemies));
+    enemy* Ret = Mode->Enemies + Mode->EnemyCount;
+    
+    Ret->Position = Position;
+    Ret->Size = { 32.f, 32.f };
+
+    Ret->FireTimer = 0.f;
+    Ret->FireDuration = FireRate; 
+    Ret->LifeDuration = LifeDuration;
+
+    Ret->FiringPatternType = FiringPatternType;
+    Ret->MoodPatternType = MoodPatternType;
+    Ret->MovementType = MovementType;
+
+    // TODO: Change to appropriate enemy
+    Ret->ImageRect = Assets->AtlasRects + AtlasRect_PlayerWhite;
+    
+    ++Mode->EnemyCount;
+    return Ret;
+
+}
+
+static inline void 
+DestroyEnemy(game_mode_main* Mode, enemy* Enemy) {
+    // swap with active enemy at the end
+    *Enemy = Mode->Enemies[Mode->EnemyCount];
+    --Mode->EnemyCount;
+}
+
 static inline bullet*
-SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Direction, f32 Speed, mood_type Mood) {
+SpawnBullet(game_mode_main* Mode, game_assets* Assets, mmm_v2f Position, mmm_v2f Direction, f32 Speed, mood_type Mood) {
 	Assert(Mode->BulletCount < ArrayCount(Mode->Bullets));
     bullet* Ret = Mode->Bullets + Mode->BulletCount;
+    
     Ret->Position = Position;
 	Ret->Speed = Speed;
-	if (LengthSq(Direction) > 0.f)
-	    Ret->Direction = Normalize(Direction);
+    Ret->Size = { 32.f, 32.f };
+    Ret->HitCircle = {{ 0.f, 0.f }, 12.f };
+
+    if (mmm_LengthSq(Direction) > 0.f)
+	    Ret->Direction = mmm_Normalize(Direction);
 	Ret->MoodType = Mood;
 	Ret->ImageRect = Assets->AtlasRects + ((Ret->MoodType == MoodType_White) ? AtlasRect_PlayerWhite : AtlasRect_PlayerBlack);
 	++Mode->BulletCount;
@@ -115,35 +177,22 @@ Init(game_mode_main* Mode, game_state* GameState) {
     Player->WhiteImageTransitionDuration = 0.05f;
     Player->WhiteImageTransitionTimer = Player->WhiteImageTransitionDuration;
 
-
-	for (u32 i = 0; i < ArrayCount(Mode->Bullets); ++i) {
-	    bullet* Bullet = Mode->Bullets + i;
-		Bullet->Direction = {};
-		Bullet->Position = {};
-		Bullet->Speed = 0.f;
-		Bullet->Size = { 32.f, 32.f };
-		Bullet->HitCircle = {{ 0.f, 0.f }, 12.f};
-	}
+	for (u32 i = 0; i < ArrayCount(Mode->Bullets); ++i) 
+        Mode->Bullets[i] = {};
     
-    // Test enemy
-	enemy* Enemy = &Mode->Enemy;
-    Enemy->Position = { 100, -100 };
-    Enemy->ImageRect = Assets->AtlasRects + AtlasRect_PlayerWhite;
-	Enemy->Size = { 48.f, 48.f };
-	Enemy->FireTimer = 0.f;
-	Enemy->FireDuration = 1.f;
-
+    for (u32 i = 0; i < ArrayCount(Mode->Enemies); ++i) 
+        Mode->Enemies[i] = {};
 }
 
 static inline void
 Collide(game_mode_main* Mode, player* Player, bullet* Bullet) {
-    circle2f PlayerCircle = Player->HitCircle;
+    mmm_circle2f PlayerCircle = Player->HitCircle;
 	PlayerCircle.Origin += Player->Position;
 
-	circle2f BulletCircle = Bullet->HitCircle;
+	mmm_circle2f BulletCircle = Bullet->HitCircle;
 	BulletCircle.Origin += Bullet->Position;
 
-	if (IsIntersecting(PlayerCircle, BulletCircle)) {
+	if (mmm_IsIntersecting(PlayerCircle, BulletCircle)) {
 	     if (Player->MoodType == Bullet->MoodType ) {
 		     Log("We Vibing!");
 		     DestroyBullet(Mode, Bullet);
@@ -157,7 +206,7 @@ Collide(game_mode_main* Mode, player* Player, bullet* Bullet) {
 static inline void
 Update(game_mode_main* Mode,
        game_state* GameState, 
-       commands* RenderCommands, 
+       mmcmd_commands* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
@@ -174,7 +223,7 @@ Update(game_mode_main* Mode,
     
     // NOTE(Momo): Input
     {
-        v2f Direction = {};
+        mmm_v2f Direction = {};
         b8 IsMovementButtonDown = false;
         if(IsDown(Input->ButtonLeft)) {
             Direction.X = -1.f;
@@ -196,7 +245,7 @@ Update(game_mode_main* Mode,
         }
         
         if (IsMovementButtonDown) 
-            Player->Direction = Normalize(Direction);
+            Player->Direction = mmm_Normalize(Direction);
         else {
             Player->Direction = {};
         }
@@ -240,16 +289,28 @@ Update(game_mode_main* Mode,
 
 
 	// Enemy update
+    for ( u32 i = 0; i < Mode->EnemyCount; ++i )
 	{
-        enemy* Enemy = &Mode->Enemy;
+        enemy* Enemy = Mode->Enemies + i;
         Enemy->FireTimer += DeltaTime;
 
-		if (Enemy->FireTimer > Enemy->FireDuration) {
-	        switch (Enemy->BulletPatternType) {
-		    	case BulletPatternType_Homing: {
-		            v2f Dir = Player->Position - Enemy->Position;
+        // Movement
+        switch( Enemy->MovementType ) {
+            case EnemyMovementType_Static:
+                // Do nothing
+                break;
+            default: 
+                Assert(false);
+        }
+        // Fire
+		if (Enemy->FireTimer > Enemy->FireDuration) {       
+            mmm_v2f Dir = Player->Position - Enemy->Position;
+            switch (Enemy->FiringPatternType) {
+		    	case EnemyFiringPatternType_Homing: 
 					SpawnBullet(Mode, Assets, Enemy->Position, Dir, 100.f, MoodType_White);
-			    } break;
+			        break;
+                default:
+                    Assert(false);
 		    }
 
             Enemy->FireTimer = 0.f;
@@ -272,12 +333,12 @@ Update(game_mode_main* Mode,
 #define ZLay_Enemy  100.f
     // NOTE(Momo): Player Rendering
     {
-        m44f S = ScaleMatrix(V3F(Player->Size));
+        mmm_m44f S = mmm_Scale(mmm_V3F(Player->Size));
         
-		v3f RenderPos = V3F(Player->Position);
+		mmm_v3f RenderPos = mmm_V3F(Player->Position);
         RenderPos.Z = ZLay_Player;
 
-        m44f T = TranslationMatrix(RenderPos);
+        mmm_m44f T = mmm_Translation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, 1.f }, 
                                     T*S, 
@@ -285,7 +346,7 @@ Update(game_mode_main* Mode,
                                     GetAtlasUV(Assets, Player->BlackImageRect));
         
 		RenderPos.Z += 0.1f;
-        T = TranslationMatrix(RenderPos);
+        T = mmm_Translation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, Player->WhiteImageAlpha}, 
                                     T*S, 
@@ -293,15 +354,15 @@ Update(game_mode_main* Mode,
                                     GetAtlasUV(Assets, Player->WhiteImageRect));
     }
 
-		// Bullet Rendering 
+	// Bullet Rendering 
 	for( u32 i = 0; i < Mode->BulletCount; ++i) 
 	{
 		bullet* Bullet = Mode->Bullets + i;
 
-		m44f S = ScaleMatrix(V3F(Bullet->Size));
-		v3f RenderPos = V3F(Bullet->Position);
+		mmm_m44f S = mmm_Scale(mmm_V3F(Bullet->Size));
+		mmm_v3f RenderPos = mmm_V3F(Bullet->Position);
 		RenderPos.Z = ZLay_Bullet + (f32)i * 0.01f;
-		m44f T = TranslationMatrix(RenderPos);
+		mmm_m44f T = mmm_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
@@ -311,12 +372,13 @@ Update(game_mode_main* Mode,
 
 
 	// Enemy Rendering
+    for( u32 i = 0; i < Mode->EnemyCount; ++i )
 	{
-	    enemy* Enemy = &Mode->Enemy;
-		m44f S = ScaleMatrix(V3F(Enemy->Size));
-		v3f RenderPos = V3F(Enemy->Position);
+	    enemy* Enemy = Mode->Enemies + i;
+		mmm_m44f S = mmm_Scale(mmm_V3F(Enemy->Size));
+		mmm_v3f RenderPos = mmm_V3F(Enemy->Position);
 		RenderPos.Z = ZLay_Enemy; 
-		m44f T = TranslationMatrix(RenderPos);
+		mmm_m44f T = mmm_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,

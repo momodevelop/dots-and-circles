@@ -16,7 +16,7 @@ Init(game_mode_menu* Mode, game_state* GameState) {
 static inline void
 Update(game_mode_menu* Mode,
        game_state* GameState, 
-       commands* RenderCommands, 
+       mmcmd_commands* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
@@ -32,19 +32,19 @@ Update(game_mode_menu* Mode,
     game_assets* Assets = GameState->Assets;
     {
         
-        v4f Color = {1.f, 1.f, 1.f, 1.f};
+        mmm_v4f Color = {1.f, 1.f, 1.f, 1.f};
         font_id Font = GetFont(Assets, Asset_FontDefault);
         
         
         f32 Size = 36.f;
         f32 OffsetX = 0.f;
         for ( u32 i = 0; i < 5; ++i ){
-            quad2f Quad = Quad2(GetFontCharacterUV(Assets, Font, i));
+            mmm_quad2f Quad = Quad2(GetFontCharacterUV(Assets, Font, i));
             f32 Aspect = GetFontCharacterAspect(Assets, Font, i);
             
             
             u32 TextureHandle = GetBitmapId(Assets, Font);
-            m44f Transform = TranslationMatrix(OffsetX, 1.f, 0.f) *ScaleMatrix(Size * Aspect, Size, 1.f); 
+            mmm_m44f Transform = mmm_Translation(OffsetX, 1.f, 0.f) *mmm_Scale(Size * Aspect, Size, 1.f); 
             
             OffsetX += Size * Aspect;
             PushCommandDrawTexturedQuad(RenderCommands, 

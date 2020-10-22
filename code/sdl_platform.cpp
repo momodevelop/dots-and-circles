@@ -1,7 +1,8 @@
 #include <stdlib.h>
 
-#include "ryoji_maths.h"
-#include "ryoji_arenas.h"
+
+#include "mm_maths.h"
+#include "mm_arena.h"
 
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
@@ -12,7 +13,6 @@
 
 #include "sdl_platform_timer.h"
 #include "sdl_platform_gldebug.h"
-#include "sdl_platform_utils.h"
 
 
 
@@ -119,9 +119,8 @@ int main(int argc, char* argv[]) {
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    
+    //SDL_GL_SetSwapInterval(1);    
 #if INTERNAL
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif  
@@ -134,7 +133,6 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo) Initialize OpenGL context  core)
     SDL_Log("SDL creating context\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
-    //SDL_GL_SetSwapInterval(1);
     
     if (context == nullptr) { 
         SDL_Log("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
@@ -161,7 +159,9 @@ int main(int argc, char* argv[]) {
 #endif
     
     // NOTE(Momo): Renderer Init
-    auto [windowWidth, windowHeight] = SDLGetWindowSize(window);
+    i32 windowWidth, windowHeight;
+    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+
     renderer_opengl RendererOpenGL = {};
     Init(&RendererOpenGL, windowWidth, windowHeight, 1000000);
     
@@ -173,12 +173,11 @@ int main(int argc, char* argv[]) {
     Defer { free(ProgramMemory); };
     
     // NOTE(Momo): Memory Arena for platform
-    arena PlatformArena = {};
-    Init(&PlatformArena, ProgramMemory, TotalMemorySize);
+    mmarn_arena PlatformArena = mmarn_CreateArena(ProgramMemory, TotalMemorySize);
     
     // NOTE(Momo): Game Init
     game_memory GameMemory = {};
-    GameMemory.MainMemory = PushBlock(&PlatformArena, GameMainMemorySize);
+    GameMemory.MainMemory = mmarn_PushBlock(&PlatformArena, GameMainMemorySize);
     GameMemory.MainMemorySize = GameMainMemorySize;
     
     if ( !GameMemory.MainMemory ) {
@@ -194,9 +193,8 @@ int main(int argc, char* argv[]) {
     
     
     // NOTE(Momo): Render commands/queue
-    void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
-    commands RenderCommands = {};
-    Init(&RenderCommands, RenderCommandsMemory, RenderCommandsMemorySize);
+    void* RenderCommandsMemory = mmarn_PushBlock(&PlatformArena, RenderCommandsMemorySize);
+    mmcmd_commands RenderCommands = mmcmd_Create(RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input GameInput = {};
@@ -368,19 +366,17 @@ int main(int argc, char* argv[]) {
         }
         
         Render(&RendererOpenGL, &RenderCommands); 
-        Clear(&RenderCommands);
+        mmcmd_Clear(&RenderCommands);
         
         // NOTE(Momo): Timer update
         SDL_GL_SwapWindow(window);
-        
         u64 ActualTicksElapsed = GetTicksElapsed(&timer);
         if (TargetTicksElapsed > ActualTicksElapsed) {
             //SDL_Log("%lld  ms\n", TicksElapsed);
             SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
         }
         
-       // SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
-        
+        SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
     }
     
     

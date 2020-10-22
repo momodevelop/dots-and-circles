@@ -41,16 +41,17 @@ using uptr = uintptr_t;
 #define Lerp(start, end, fraction) ((start) + ((end) - (start))*(fraction)) 
 #define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
 #define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
+#define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 
 static inline u32
-NtsLength(const char* Str) {
+StrLen(const char* Str) {
     u32 Count = 0;
     for(; (*Str) != 0 ; ++Count, ++Str);
     return Count;
 }
 
 static inline void
-NtsCopy(char * Dest, const char* Str) {
+StrCopy(char * Dest, const char* Str) {
     for(; (*Str) != 0 ; ++Str, ++Dest) {
         (*Dest) = (*Str);
     }
@@ -58,23 +59,23 @@ NtsCopy(char * Dest, const char* Str) {
 }
 
 static inline void 
-CopyBlock(void* dest, void* src, usize size) {
+MemCopy(void* dest, void* src, usize size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
         *p = *q;
     }
 }
 
 static inline void 
-ZeroBlock(void *mem, usize size) {
+MemZero(void *mem, usize size) {
     for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
         *p = 0;
     }
 }
 
-#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
-#define ZeroStaticArray(a) ZeroBlock((a), sizeof((a)))
-#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
-#define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
+#define ZeroMem(m, s) MemZero(m, s)
+#define ZeroStruct(p) ZeroMem((p), sizeof(*(p)))
+#define ZeroStaticArray(a) ZeroMem((a), sizeof((a)))
+#define ZeroDynamicArray(a, c) ZeroMem((a), sizeof(*(a)) * c)
 
 // Assertion
 #if SLOW

@@ -1,6 +1,7 @@
 #ifndef __GAME_RENDERER_OPENGL__
 #define __GAME_RENDERER_OPENGL__
 
+#include "thirdparty/glad/glad.h"
 #include "game_renderer.h"
 #include "game_renderer_opengl_shaders.inl"
 
@@ -16,7 +17,7 @@ constexpr static inline u8 QuadIndices[] = {
     0, 2, 3,
 };
 
-constexpr static inline quad2f QuadUV[] = {
+constexpr static inline mmm_quad2f QuadUV[] = {
     0.0f, 1.0f,  // top left
     1.0f, 1.0f, // top right
     1.0f, 0.f, // bottom right
@@ -89,8 +90,8 @@ static inline void AlignViewport(renderer_opengl* Renderer) {
     GLuint x, y, w, h;
     x = Region.Min.X;
     y = Region.Min.Y;
-    w = GetWidth(Region);
-    h = GetHeight(Region);
+    w = mmm_Width(Region);
+    h = mmm_Height(Region);
     
     glViewport(x, y, w, h);
     glScissor(x, y, w, h);
@@ -139,17 +140,17 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Model], sizeof(QuadModel), QuadModel, 0);
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Indices], sizeof(QuadIndices), QuadIndices, 0);
     
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Texture], sizeof(v2f) * 4 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(v4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Transform], sizeof(m44f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Texture], sizeof(mmm_v2f) * 4 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(mmm_v4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Transform], sizeof(mmm_m44f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
     glCreateVertexArrays(1, &Renderer->Blueprint);
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Model, Renderer->Buffers[renderer_vbo_Model], 0, sizeof(f32)*3);
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Texture, Renderer->Buffers[renderer_vbo_Texture], 0, sizeof(f32) * 8);
-    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(v4f));
-    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Transform, Renderer->Buffers[renderer_vbo_Transform], 0, sizeof(m44f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(mmm_v4f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Transform, Renderer->Buffers[renderer_vbo_Transform], 0, sizeof(mmm_m44f));
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
@@ -165,13 +166,13 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     
     // aTexCoord
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture1); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture1, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 0);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture1, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 0);
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture2); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture2, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 1);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture2, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 1);
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture3); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture3, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 2);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture3, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 2);
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture4); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture4, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 3);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture4, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 3);
     
     glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Texture1, renderer_vaobind_Texture);
     glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Texture2, renderer_vaobind_Texture);
@@ -274,7 +275,7 @@ DrawInstances(renderer_opengl* Renderer, GLint Texture, u32 InstancesToDraw, u32
 
 
 static inline void
-Render(renderer_opengl* Renderer, commands* Commands) 
+Render(renderer_opengl* Renderer, mmcmd_commands* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -287,30 +288,30 @@ Render(renderer_opengl* Renderer, commands* Commands)
     
     
     for (u32 i = 0; i < Commands->EntryCount; ++i) {
-        auto* Entry = GetEntry(Commands, i);
+        auto* Entry = mmcmd_GetEntry(Commands, i);
         
         switch(Entry->Type) {
             case render_command_set_design_resolution::TypeId: {
                 using data_t = render_command_set_design_resolution;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
                 SetRenderResolution(Renderer, Data->Width, Data->Height);
             } break;
             case render_command_set_basis::TypeId: {
                 using data_t = render_command_set_basis;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
                 
                 DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
                 LastDrawnInstanceIndex += InstancesToDrawCount;
                 InstancesToDrawCount = 0;
                 
-                auto Result = Transpose(Data->Basis);
+                auto Result = mmm_Transpose(Data->Basis);
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
                 
             } break;
             case render_command_link_texture::TypeId: {
                 using data_t = render_command_link_texture;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
                 
                 if (Renderer->GameToRendererTextureTable[Data->TextureHandle] != 0) {
                     // TODO(Momo): unload and reload texture
@@ -327,22 +328,15 @@ Render(renderer_opengl* Renderer, commands* Commands)
             } break;
             case render_command_clear_color::TypeId: {
                 using data_t = render_command_clear_color;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
                 glClearColor(Data->Colors.R, Data->Colors.G, Data->Colors.B, Data->Colors.A);
             } break;
             case render_command_draw_quad::TypeId: {
                 using data_t = render_command_draw_quad;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
                 GLuint RendererTextureHandle = Renderer->BlankTexture;
-                
-                if (RendererTextureHandle == 0) {
-                    // TODO(Momo): Maybe render a dummy texture?
-                    
-                    
-                    //Assert(false);
-                }
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently processed texture, batch draw all instances before the current instance.
                 if (CurrentTexture != RendererTextureHandle) {
@@ -354,20 +348,20 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
-                                     CurrentInstanceIndex * sizeof(v4f),
-                                     sizeof(v4f), 
+                                     CurrentInstanceIndex * sizeof(mmm_v4f),
+                                     sizeof(mmm_v4f), 
                                      &Data->Colors);
                 
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
-                                     CurrentInstanceIndex * sizeof(quad2f),
-                                     sizeof(quad2f),
+                                     CurrentInstanceIndex * sizeof(mmm_quad2f),
+                                     sizeof(mmm_quad2f),
                                      &QuadUV);
                 
-                // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = Transpose(Data->Transform);
+                // NOTE(Momo): mmm_Transpose; game is row-major
+                mmm_m44f Transform = mmm_Transpose(Data->Transform);
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Transform], 
-                                     CurrentInstanceIndex* sizeof(m44f), 
-                                     sizeof(m44f), 
+                                     CurrentInstanceIndex* sizeof(mmm_m44f), 
+                                     sizeof(mmm_m44f), 
                                      &Transform);
                 
                 // NOTE(Momo): Update Bookkeeping
@@ -376,7 +370,7 @@ Render(renderer_opengl* Renderer, commands* Commands)
             } break;
             case render_command_draw_textured_quad::TypeId: {
                 using data_t = render_command_draw_textured_quad;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
                 u32 GameBitmapHandle = Data->TextureHandle;
@@ -397,20 +391,20 @@ Render(renderer_opengl* Renderer, commands* Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
-                                     CurrentInstanceIndex * sizeof(v4f),
-                                     sizeof(v4f), 
+                                     CurrentInstanceIndex * sizeof(mmm_v4f),
+                                     sizeof(mmm_v4f), 
                                      &Data->Colors);
                 
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
-                                     CurrentInstanceIndex * sizeof(quad2f),
-                                     sizeof(quad2f),
+                                     CurrentInstanceIndex * sizeof(mmm_quad2f),
+                                     sizeof(mmm_quad2f),
                                      &Data->TextureCoords);
                 
-                // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = Transpose(Data->Transform);
+                // NOTE(Momo): mmm_Transpose; game is row-major
+                mmm_m44f Transform = mmm_Transpose(Data->Transform);
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Transform], 
-                                     CurrentInstanceIndex* sizeof(m44f), 
-                                     sizeof(m44f), 
+                                     CurrentInstanceIndex* sizeof(mmm_m44f), 
+                                     sizeof(mmm_m44f), 
                                      &Transform);
                 
                 // NOTE(Momo): Update Bookkeeping

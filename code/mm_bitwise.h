@@ -1,7 +1,7 @@
-#ifndef __RYOJI_BITMANIP__
-#define __RYOJI_BITMANIP__
+#ifndef __MOMO_BITWISE__
+#define __MOMO_BITWISE__
 
-#include "ryoji.h"
+#include "mm_std.h"
 
 // Note that all alignment operations is catered to only power of 2!
 // Reference: https://stackoverflow.com/questions/227897/how-to-alloc-aligned-memory-only-using-the-standard-library
@@ -26,7 +26,7 @@
 // e.g.  8 bytes -> ~(1000 - 1) = ~0111 = 1000
 // And thus, the forumla for backward alignment is: A & ~(N-1)
 static inline void* 
-AlignBackward(void* ptr, u8 align) {
+mmbw_AlignBackward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(uptr(ptr) & ~(align - 1));
 }
@@ -37,24 +37,24 @@ AlignBackward(void* ptr, u8 align) {
 // Then the formula for the difference is the the original address minus the result: 
 // A - (A & ~(N-1))
 static inline void* 
-AlignForward(void* ptr, u8 align) {
+mmbw_AlignForward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
 }
 
 static inline u8 
-AlignBackwardDiff(void* ptr, u8 align)  {
-    return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
+mmbw_AlignBackwardDiff(void* ptr, u8 align)  {
+    return u8((uptr)ptr - uptr(mmbw_AlignBackward(ptr, align)));
 }
 
 static inline u8 
-AlignForwardDiff(void* ptr, u8 align)  {
-    return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
+mmbw_AlignForwardDiff(void* ptr, u8 align)  {
+    return u8(uptr(mmbw_AlignForward(ptr, align)) - uptr(ptr));
 }
 
 template<typename T>
 static inline T*
-Peek(u8* P) {
+mmbw_Peek(u8* P) {
     T* Ret = (T*)P;
     (*P) += sizeof(T);
     return Ret;
@@ -62,7 +62,7 @@ Peek(u8* P) {
 
 template<typename T>
 static inline T*
-Read(u8** P) {
+mmbw_Read(u8** P) {
     T* Ret = (T*)(*P);
     (*P) += sizeof(T);
     return Ret;
@@ -71,7 +71,7 @@ Read(u8** P) {
 
 template<typename T>
 static inline void
-Write(u8** P, T Item) {
+mmbw_Write(u8** P, T Item) {
     T* LocationAsT = (T*)(*P);
     (*LocationAsT) = Item;
     (*P) += sizeof(T);

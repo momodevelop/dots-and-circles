@@ -1,4 +1,4 @@
-#include "../code/ryoji.h"
+#include "../code/mm_std.h"
 
 
 int main() {

@@ -1,25 +1,24 @@
 #ifndef RYY_RECTPACK_H
 #define RYY_RECTPACK_H
-#include "ryoji.h"
+
+#include <stdlib.h>
+#include "mm_std.h"
 
 
-/* TODO: How to use:
-*/
-
-enum ryyrp_sort_type {
-    RyyrpSort_Width,
-    RyyrpSort_Height,
-    RyyrpSort_Area,
-    RyyrpSort_Perimeter,
-    RyyrpSort_Pathological,
-    RyyrpSort_BiggerSide,
+enum mmrp_sort_type {
+    MmrpSort_Width,
+    MmrpSort_Height,
+    MmrpSort_Area,
+    MmrpSort_Perimeter,
+    MmrpSort_Pathological,
+    MmrpSort_BiggerSide,
 };
 
-struct ryyrp_node {
+struct mmrp_node {
     u32 X, Y, W, H;
 };
 
-struct ryyrp_rect {
+struct mmrp_rect {
     // NOTE(Momo): Input
     u32 W, H; 
     
@@ -30,15 +29,15 @@ struct ryyrp_rect {
     u32 X, Y;
 };
 
-struct ryyrp_context {
+struct mmrp_context {
     u32 Width;
     u32 Height;
-    ryyrp_node* Nodes;
+    mmrp_node* Nodes;
     usize NodeCount;
 };
 
 static inline void
-ryyrp_Init(ryyrp_context* Context, u32 Width, u32 Height, ryyrp_node* Nodes, usize NodeCount) 
+mmrp_Init(mmrp_context* Context, u32 Width, u32 Height, mmrp_node* Nodes, usize NodeCount) 
 {
     Context->Width = Width;
     Context->Height = Height;
@@ -49,51 +48,51 @@ ryyrp_Init(ryyrp_context* Context, u32 Width, u32 Height, ryyrp_node* Nodes, usi
 
 
 static inline i32 
-ryyrp__SortWidth(const void* Lhs, const void* Rhs) {
-    auto L = (*(ryyrp_rect*)(Lhs));
-    auto R = (*(ryyrp_rect*)(Rhs));
+mmrp__SortWidth(const void* Lhs, const void* Rhs) {
+    auto L = (*(mmrp_rect*)(Lhs));
+    auto R = (*(mmrp_rect*)(Rhs));
     return R.W - L.W ;
 }
 
 
 static inline i32 
-ryyrp__SortHeight(const void* Lhs, const void* Rhs) {
-    auto L = (*(ryyrp_rect*)(Lhs));
-    auto R = (*(ryyrp_rect*)(Rhs));
+mmrp__SortHeight(const void* Lhs, const void* Rhs) {
+    auto L = (*(mmrp_rect*)(Lhs));
+    auto R = (*(mmrp_rect*)(Rhs));
     return R.H - L.H;
 }
 
 static inline i32 
-ryyrp__SortPerimeter(const void* Lhs, const void* Rhs) {
-    auto L = (*(ryyrp_rect*)(Lhs));
-    auto R = (*(ryyrp_rect*)(Rhs));
+mmrp__SortPerimeter(const void* Lhs, const void* Rhs) {
+    auto L = (*(mmrp_rect*)(Lhs));
+    auto R = (*(mmrp_rect*)(Rhs));
     auto LhsPerimeter = L.W + L.H;
     auto RhsPerimeter = R.W + R.H;
     return RhsPerimeter - LhsPerimeter;
 }
 
 static inline i32 
-ryyrp__SortArea(const void* Lhs, const void* Rhs) {
-    auto L = (*(ryyrp_rect*)(Lhs));
-    auto R = (*(ryyrp_rect*)(Rhs));
+mmrp__SortArea(const void* Lhs, const void* Rhs) {
+    auto L = (*(mmrp_rect*)(Lhs));
+    auto R = (*(mmrp_rect*)(Rhs));
     auto LhsArea = L.W * L.H;
     auto RhsArea = R.W * R.H;
     return  RhsArea - LhsArea;
 }
 
 static inline i32
-ryyrp__SortBiggerSide(const void* Lhs, const void* Rhs) {
-    auto L = (*(ryyrp_rect*)(Lhs));
-    auto R = (*(ryyrp_rect*)(Rhs));
+mmrp__SortBiggerSide(const void* Lhs, const void* Rhs) {
+    auto L = (*(mmrp_rect*)(Lhs));
+    auto R = (*(mmrp_rect*)(Rhs));
     auto LhsBiggerSide = Maximum(L.W, L.H);
     auto RhsBiggerSide = Maximum(R.W, R.H);
     return RhsBiggerSide - LhsBiggerSide;
 }
 
 static inline i32
-ryyrp__SortPathological(const void* Lhs, const void* Rhs) {
-    auto L = (*(ryyrp_rect*)(Lhs));
-    auto R = (*(ryyrp_rect*)(Rhs));
+mmrp__SortPathological(const void* Lhs, const void* Rhs) {
+    auto L = (*(mmrp_rect*)(Lhs));
+    auto R = (*(mmrp_rect*)(Rhs));
     auto LhsMultipler = Maximum(L.W, L.H)/Minimum(L.W, L.H) * L.W * L.H;
     auto RhsMultipler = Maximum(R.W, R.H)/Minimum(R.W, R.H) * R.W * R.H;
     return RhsMultipler - LhsMultipler;
@@ -101,22 +100,22 @@ ryyrp__SortPathological(const void* Lhs, const void* Rhs) {
 
 
 static inline void 
-ryyrp__Sort(ryyrp_rect* Rects, usize RectCount, ryyrp_sort_type SortType) {
+mmrp__Sort(mmrp_rect* Rects, usize RectCount, mmrp_sort_type SortType) {
     switch(SortType) {
-        case RyyrpSort_Width: {
-            qsort(Rects, RectCount, sizeof(ryyrp_rect), ryyrp__SortWidth);
+        case MmrpSort_Width: {
+            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortWidth);
         } break;
-        case RyyrpSort_Height: {
-            qsort(Rects, RectCount, sizeof(ryyrp_rect), ryyrp__SortHeight);
+        case MmrpSort_Height: {
+            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortHeight);
         } break;
-        case RyyrpSort_Area: {
-            qsort(Rects, RectCount, sizeof(ryyrp_rect), ryyrp__SortArea);
+        case MmrpSort_Area: {
+            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortArea);
         } break;
-        case RyyrpSort_Perimeter: {
-            qsort(Rects, RectCount, sizeof(ryyrp_rect), ryyrp__SortPerimeter);
+        case MmrpSort_Perimeter: {
+            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortPerimeter);
         } break;
-        case RyyrpSort_Pathological: {
-            qsort(Rects, RectCount, sizeof(ryyrp_rect), ryyrp__SortPathological);
+        case MmrpSort_Pathological: {
+            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortPathological);
         } break;
         default: {
             Assert(false);
@@ -128,9 +127,9 @@ ryyrp__Sort(ryyrp_rect* Rects, usize RectCount, ryyrp_sort_type SortType) {
 
 // NOTE(Momo): Rects WILL be sorted after this function
 static inline b32
-ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sort_type SortType = RyyrpSort_Area) 
+mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_type SortType = MmrpSort_Area) 
 {
-    ryyrp__Sort(Rects, RectCount, SortType);
+    mmrp__Sort(Rects, RectCount, SortType);
     
     usize CurrentNodeCount = 0;
     Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };
@@ -143,7 +142,7 @@ ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sor
         {
             for (usize  j = 0; j < ChosenSpaceIndex ; ++j ) {
                 usize Index = ChosenSpaceIndex - j - 1;
-                ryyrp_node Space = Context->Nodes[Index];
+                mmrp_node Space = Context->Nodes[Index];
                 // NOTE(Momo): Check if the image fits
                 if (Rect.W <= Space.W && Rect.H <= Space.H) {
                     ChosenSpaceIndex = Index;
@@ -159,7 +158,7 @@ ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sor
         }
         
         // NOTE(Momo): Swap and pop the chosen space
-        ryyrp_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
+        mmrp_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
         if (CurrentNodeCount > 0) {
             Context->Nodes[ChosenSpaceIndex] = Context->Nodes[CurrentNodeCount-1];
             --CurrentNodeCount;
@@ -168,7 +167,7 @@ ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sor
         // NOTE(Momo): Split if not perfect fit
         if (ChosenSpace.W != Rect.W && ChosenSpace.H == Rect.H) {
             // Split right
-            ryyrp_node SplitSpaceRight = {
+            mmrp_node SplitSpaceRight = {
                 ChosenSpace.X + Rect.W,
                 ChosenSpace.Y,
                 ChosenSpace.W - Rect.W,
@@ -178,7 +177,7 @@ ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sor
         }
         else if (ChosenSpace.W == Rect.W && ChosenSpace.H != Rect.H) {
             // Split down
-            ryyrp_node SplitSpaceDown = {
+            mmrp_node SplitSpaceDown = {
                 ChosenSpace.X,
                 ChosenSpace.Y + Rect.H,
                 ChosenSpace.W,
@@ -188,7 +187,7 @@ ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sor
         }
         else if (ChosenSpace.W != Rect.W && ChosenSpace.H != Rect.H) {
             // Split right
-            ryyrp_node SplitSpaceRight = {
+            mmrp_node SplitSpaceRight = {
                 ChosenSpace.X + Rect.W,
                 ChosenSpace.Y,
                 ChosenSpace.W - Rect.W,
@@ -196,7 +195,7 @@ ryyrp_Pack(ryyrp_context* Context, ryyrp_rect* Rects, usize RectCount, ryyrp_sor
             };
             
             // Split down
-            ryyrp_node SplitSpaceDown = {
+            mmrp_node SplitSpaceDown = {
                 ChosenSpace.X,
                 ChosenSpace.Y + Rect.H,
                 ChosenSpace.W,

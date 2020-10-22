@@ -11,28 +11,28 @@ Init(game_mode_atlas_test* Mode, game_state* GameState) {
 }
 
 static inline void
-DrawString(commands* RenderCommands, 
+DrawString(mmcmd_commands* RenderCommands, 
            game_assets* Assets,
-           v3f Position, f32 Size, const char* String) 
+           mmm_v3f Position, f32 Size, const char* String) 
 {
-    v3f CurPosition = Position;
+    mmm_v3f CurPosition = Position;
     
     
-    v4f Color = { 1.f, 1.f, 1.f, 1.f };
+    mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
     auto* Font = Assets->Fonts + Font_Default;
     
-    u32 Strlen = NtsLength(String);
+    u32 Strlen = StrLen(String);
     for(u32 i = 0; i < Strlen; ++i) {
         auto* Glyph = Font->Glyphs + GetGlyphIndexFromCodepoint(String[i]);
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f BLT = TranslationMatrix(0.5f, 0.5f, 0.f); 
-        m44f S = ScaleMatrix(GetWidth(Box) * Size, 
-                             GetHeight(Box) * Size, 
+        mmm_m44f BLT = mmm_Translation(0.5f, 0.5f, 0.f); 
+        mmm_m44f S = mmm_Scale(mmm_Width(Box) * Size, 
+                             mmm_Height(Box) * Size, 
                              1.f);
         
-        m44f T = TranslationMatrix(CurPosition.X + Box.Min.X * Size, 
+        mmm_m44f T = mmm_Translation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         
@@ -55,7 +55,7 @@ DrawString(commands* RenderCommands,
 static inline void
 Update(game_mode_atlas_test* Mode,
        game_state* GameState, 
-       commands* RenderCommands, 
+       mmcmd_commands* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
@@ -72,8 +72,8 @@ Update(game_mode_atlas_test* Mode,
 #if 1
     // NOTE(Momo): Image Test
     {
-        v4f Color = { 1.f, 1.f, 1.f, 1.f };
-        m44f Transform = ScaleMatrix(5.f, 5.f, 1.f);
+        mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
+        mmm_m44f Transform = mmm_Scale(5.f, 5.f, 1.f);
         auto* AtlasRect = GameState->Assets->AtlasRects + AtlasRect_Ryoji;
         
         PushCommandDrawTexturedQuad(RenderCommands, 
