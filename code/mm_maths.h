@@ -1,7 +1,7 @@
 #ifndef __MOMO_MATH__
 #define __MOMO_MATH__
 
-#include "mm_std.h"
+#include "mm_core.h"
 #include <math.h>
 
 

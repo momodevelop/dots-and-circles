@@ -1,7 +1,6 @@
 #ifndef GAME_ASSETS_TYPE_ID 
 #define GAME_ASSETS_TYPE_ID
 
-
 #include "mm_maths.h"
 
 enum bitmap_id : u32 {

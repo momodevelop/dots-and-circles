@@ -2,7 +2,7 @@
 #define RYY_RECTPACK_H
 
 #include <stdlib.h>
-#include "mm_std.h"
+#include "mm_core.h"
 
 
 enum mmrp_sort_type {

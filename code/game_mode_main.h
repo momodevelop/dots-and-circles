@@ -1,10 +1,10 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
-#include "game.h"
 #include "mm_easing.h"
-
 #include "mm_maths.h"
+#include "mm_pool.h"
+#include "game.h"
 
 enum mood_type : b32 {
     MoodType_White,
@@ -75,21 +75,19 @@ struct enemy {
 };
 
 struct game_mode_main {
+    mmarn_arena Arena;
+
     player Player;
-	
-	bullet Bullets[128];
-	u32 BulletCount;
-    
-	enemy Enemies[128];
-    u32 EnemyCount;
 
-    // Manages spawning of enemies
+    mmrrp_pool<bullet> Bullets;
+    mmrrp_pool<enemy> Enemies;
 
-
+    f32 WaveTimer;
+    f32 WaveDuration;
 
 };
 
-static inline enemy* 
+static inline enemy*
 SpawnEnemy(game_mode_main* Mode, 
         game_assets* Assets, 
         mmm_v2f Position,
@@ -99,8 +97,7 @@ SpawnEnemy(game_mode_main* Mode,
         f32 FireRate,
         f32 LifeDuration) 
 {
-    Assert(Mode->EnemyCount < ArrayCount(Mode->Enemies));
-    enemy* Ret = Mode->Enemies + Mode->EnemyCount;
+    enemy* Ret = mmrrp_Borrow<enemy>(&Mode->Enemies);
     
     Ret->Position = Position;
     Ret->Size = { 32.f, 32.f };
@@ -116,49 +113,40 @@ SpawnEnemy(game_mode_main* Mode,
     // TODO: Change to appropriate enemy
     Ret->ImageRect = Assets->AtlasRects + AtlasRect_PlayerWhite;
     
-    ++Mode->EnemyCount;
     return Ret;
 
 }
 
-static inline void 
-DestroyEnemy(game_mode_main* Mode, enemy* Enemy) {
-    // swap with active enemy at the end
-    *Enemy = Mode->Enemies[Mode->EnemyCount];
-    --Mode->EnemyCount;
-}
-
 static inline bullet*
 SpawnBullet(game_mode_main* Mode, game_assets* Assets, mmm_v2f Position, mmm_v2f Direction, f32 Speed, mood_type Mood) {
-	Assert(Mode->BulletCount < ArrayCount(Mode->Bullets));
-    bullet* Ret = Mode->Bullets + Mode->BulletCount;
+    bullet* Ret = mmrrp_Borrow<bullet>(&Mode->Bullets);
     
     Ret->Position = Position;
 	Ret->Speed = Speed;
-    Ret->Size = { 32.f, 32.f };
-    Ret->HitCircle = {{ 0.f, 0.f }, 12.f };
+    Ret->Size = { 16.f, 16.f };
+    Ret->HitCircle = {
+        { 0.f, 0.f }, 
+        Ret->Size.X * 0.5f 
+    };
 
     if (mmm_LengthSq(Direction) > 0.f)
 	    Ret->Direction = mmm_Normalize(Direction);
-	Ret->MoodType = Mood;
+	
+    Ret->MoodType = Mood;
 	Ret->ImageRect = Assets->AtlasRects + ((Ret->MoodType == MoodType_White) ? AtlasRect_PlayerWhite : AtlasRect_PlayerBlack);
-	++Mode->BulletCount;
 		
 	return Ret;
 }
 	
-static inline void
-DestroyBullet(game_mode_main* Mode, bullet* Bullet) {
-    // Swap with active bullet at the end
-    *Bullet = Mode->Bullets[Mode->BulletCount-1];	
-	--Mode->BulletCount;
-}
 
 static inline void 
 Init(game_mode_main* Mode, game_state* GameState) {
     Log("Main state initialized!");
-	Mode->BulletCount = 0;
-			
+    
+    Mode->Arena = mmarn_PushArenaAll(&GameState->ModeArena);
+    Mode->Bullets = mmrrp_PushPool<bullet>(&Mode->Arena, 128);
+    Mode->Enemies = mmrrp_PushPool<enemy>(&Mode->Arena, 128);
+
     auto* Assets = GameState->Assets;
     auto* Player = &Mode->Player;
     Player->Speed = 250.f;
@@ -176,12 +164,6 @@ Init(game_mode_main* Mode, game_state* GameState) {
     
     Player->WhiteImageTransitionDuration = 0.05f;
     Player->WhiteImageTransitionTimer = Player->WhiteImageTransitionDuration;
-
-	for (u32 i = 0; i < ArrayCount(Mode->Bullets); ++i) 
-        Mode->Bullets[i] = {};
-    
-    for (u32 i = 0; i < ArrayCount(Mode->Enemies); ++i) 
-        Mode->Enemies[i] = {};
 }
 
 static inline void
@@ -194,11 +176,7 @@ Collide(game_mode_main* Mode, player* Player, bullet* Bullet) {
 
 	if (mmm_IsIntersecting(PlayerCircle, BulletCircle)) {
 	     if (Player->MoodType == Bullet->MoodType ) {
-		     Log("We Vibing!");
-		     DestroyBullet(Mode, Bullet);
-		 }
-		 else {
-		     Log("Emo :(");
+		     mmrrp_Return(&Mode->Bullets, Bullet);
 		 }
 	}
 }
@@ -282,17 +260,42 @@ Update(game_mode_main* Mode,
 
 
 	// Bullet Update
-	for( u32 i = 0; i < Mode->BulletCount; ++i) {
-		bullet* Bullet = Mode->Bullets + i;
+	for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
+		bullet* Bullet = &Mode->Bullets[i];
 		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
 	}
 
 
+    // Spawning logic Update
+    {
+        // TODO: Wave logic
+        Mode->WaveTimer += DeltaTime;
+        if (Mode->WaveTimer >= Mode->WaveDuration) {
+            // randomize a wave logic
+            // For now just create an enemy at a location
+            SpawnEnemy(Mode, 
+                    Assets, 
+                    {}, 
+                    EnemyMoodPatternType_White,
+                    EnemyFiringPatternType_Homing,
+                    EnemyMovementType_Static,
+                    3.0f,
+                    10.f);
+            
+            Mode->WaveTimer = 0.f;
+        }
+
+
+    }
+
 	// Enemy update
-    for ( u32 i = 0; i < Mode->EnemyCount; ++i )
+    for ( u32 i = 0; i < Mode->Enemies.Used; ++i )
 	{
-        enemy* Enemy = Mode->Enemies + i;
+        enemy* Enemy = &Mode->Enemies[i];
+
+        // Tick all timers
         Enemy->FireTimer += DeltaTime;
+        Enemy->LifeTimer += DeltaTime;
 
         // Movement
         switch( Enemy->MovementType ) {
@@ -302,6 +305,7 @@ Update(game_mode_main* Mode,
             default: 
                 Assert(false);
         }
+
         // Fire
 		if (Enemy->FireTimer > Enemy->FireDuration) {       
             mmm_v2f Dir = Player->Position - Enemy->Position;
@@ -316,13 +320,18 @@ Update(game_mode_main* Mode,
             Enemy->FireTimer = 0.f;
 		}
 
+        // Life
+        if (Enemy->LifeTimer > Enemy->LifeDuration) {
+            mmrrp_Return(&Mode->Enemies, Enemy); 
+        }
+
 	}
    
 	// Collision 
 	{
 		// Player vs every bullet
-		for( u32 i = 0; i < Mode->BulletCount; ++i) {
-            bullet* Bullet = Mode->Bullets + i;
+		for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
+            bullet* Bullet = &Mode->Bullets[i];
 			Collide(Mode, Player, Bullet);
 		}
 	}
@@ -355,9 +364,9 @@ Update(game_mode_main* Mode,
     }
 
 	// Bullet Rendering 
-	for( u32 i = 0; i < Mode->BulletCount; ++i) 
+	for( u32 i = 0; i < Mode->Bullets.Used; ++i) 
 	{
-		bullet* Bullet = Mode->Bullets + i;
+		bullet* Bullet = &Mode->Bullets[i];
 
 		mmm_m44f S = mmm_Scale(mmm_V3F(Bullet->Size));
 		mmm_v3f RenderPos = mmm_V3F(Bullet->Position);
@@ -372,9 +381,9 @@ Update(game_mode_main* Mode,
 
 
 	// Enemy Rendering
-    for( u32 i = 0; i < Mode->EnemyCount; ++i )
+    for( u32 i = 0; i < Mode->Enemies.Used; ++i )
 	{
-	    enemy* Enemy = Mode->Enemies + i;
+	    enemy* Enemy = &Mode->Enemies[i];
 		mmm_m44f S = mmm_Scale(mmm_V3F(Enemy->Size));
 		mmm_v3f RenderPos = mmm_V3F(Enemy->Position);
 		RenderPos.Z = ZLay_Enemy; 

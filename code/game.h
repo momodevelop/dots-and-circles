@@ -14,7 +14,6 @@ static platform_log* gLog;
 #include "game_input.h"
 #include "game_renderer.h"
 #include "game_assets.h"
-#include "game_entities.h"
 
 // NOTE(Momo): How much do we care to make this generic and use CRTP + std::variant?
 enum game_mode_type : u32 {

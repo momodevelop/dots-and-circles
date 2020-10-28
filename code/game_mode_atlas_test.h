@@ -1,6 +1,8 @@
 #ifndef GAME_MODE_ATLAS_TEST_H
 #define GAME_MODE_ATLAS_TEST_H
 
+#include "game.h"
+
 // NOTE(Momo): Mode /////////////////////////////////////////////
 struct game_mode_atlas_test {
 };

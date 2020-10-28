@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "mm_std.h"
+#include "mm_core.h"
 
 
 #define STB_IMAGE_IMPLEMENTATION

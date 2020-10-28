@@ -1,8 +1,7 @@
 #ifndef __MOMO_EASING_H__
 #define __MOMO_EASING_H__
 
-#include "mm_std.h"
-
+#include "mm_core.h"
 #include "mm_maths.h"
 
 static inline

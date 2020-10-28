@@ -1,6 +1,9 @@
-[] Fixed framerate (target framerate)
+[] Rng
 [] Enemy pool
-[] Visual editor
+[] Waves
+[] Hot swapping code
+[] Fixed framerate (target framerate)
+
 [] Circle debug lines?
 [] Quaternion
 [] Profiling? 

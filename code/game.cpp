@@ -88,7 +88,7 @@ GameUpdate(game_memory* GameMemory,
         Init(GameAssets, MainArena, Platform, RenderCommands, "yuu");
         
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = mmarn_PushArena(MainArena, mmarn_Remaining(GameState->MainArena));
+        GameState->ModeArena = mmarn_PushArenaAll(MainArena);
         SetGameMode(GameState, GameModeType_Splash);
         GameState->IsInitialized = true;
         

@@ -1,7 +1,7 @@
 #ifndef __MOMO_ARENA__
 #define __MOMO_ARENA__
 
-#include "mm_std.h"
+#include "mm_core.h"
 #include "mm_bitwise.h"
 
 struct mmarn_arena {
@@ -21,10 +21,11 @@ mmarn_Clear(mmarn_arena* Arena) {
     Arena->Used = 0;
 }
 
-static inline usize
-mmarn_Remaining(mmarn_arena Arena) {
-    return Arena.Capacity - Arena.Used;
+static inline usize 
+mmarn_Remaining(mmarn_arena* Arena) {
+    return Arena->Capacity - Arena->Used;
 }
+
 
 static inline void* 
 mmarn_PushBlock(mmarn_arena* Arena, usize size, u8 alignment = alignof(void*)) {
@@ -69,16 +70,13 @@ mmarn_BeginScratch(mmarn_arena* Arena) {
 }
 
 static inline mmarn_scratch
-mmarn_BeginScratch(mmarn_scratch TempMemory) {
-    mmarn_scratch Ret;
-    Ret.Arena = TempMemory.Arena;
-    Ret.OldUsed = TempMemory.Arena->Used;
-    return Ret;
+mmarn_BeginScratch(mmarn_scratch* TempMemory) {
+    return mmarn_BeginScratch(TempMemory->Arena);
 }
 
 static inline void
-mmarn_EndScratch(mmarn_scratch TempMemory) {
-    TempMemory.Arena->Used = TempMemory.OldUsed;
+mmarn_EndScratch(mmarn_scratch* TempMemory) {
+    TempMemory->Arena->Used = TempMemory->OldUsed;
 }
 
 
@@ -108,6 +106,12 @@ mmarn_PushArena(mmarn_arena* SrcArena, usize Capacity) {
     Assert(Ret.Memory);
     Ret.Capacity = Capacity;
     return Ret;
+}
+
+// Creates a sub arena with all remaining memory
+static inline mmarn_arena
+mmarn_PushArenaAll(mmarn_arena* SrcArena) { 
+    return mmarn_PushArena(SrcArena, mmarn_Remaining(SrcArena));
 }
 
 #endif

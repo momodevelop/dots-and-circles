@@ -1,7 +1,7 @@
 #ifndef __MOMO_BITWISE__
 #define __MOMO_BITWISE__
 
-#include "mm_std.h"
+#include "mm_core.h"
 
 // Note that all alignment operations is catered to only power of 2!
 // Reference: https://stackoverflow.com/questions/227897/how-to-alloc-aligned-memory-only-using-the-standard-library

@@ -110,20 +110,4 @@ namespace zawarudo {
 #define zawarudo_VARANON(counter) zawarudo_VARANON_IMPL(counter)
 #define Defer auto zawarudo_VARANON(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
-// Enum string generator
-#define zawarudo_GENERATE_ENUM_PART(ENUM) ENUM,
-#define zawarudo_GENERATE_SWITCH_CASE_PART(STR) case STR: return #STR;
-#define GenerateEnumStrings(ENUM_NAME, FUNC_NAME, FOREACH) \
-enum ENUM_NAME { \
-FOREACH(zawarudo_GENERATE_ENUM_PART) \
-};\
-static inline const char* FUNC_NAME(ENUM_NAME e) { \
-switch(e) { \
-FOREACH(zawarudo_GENERATE_SWITCH_CASE_PART) \
-default: return "Unknown Error :("; \
-} \
-}\
-
-
-
 #endif

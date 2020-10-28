@@ -1,7 +1,7 @@
 #ifndef __GAME_ASSETS__
 #define __GAME_ASSETS__
 
-#include "mm_std.h"
+#include "mm_core.h"
 
 #include "mm_maths.h"
 #include "mm_arena.h"
@@ -102,7 +102,7 @@ Init(game_assets* Assets,
     Assets->Platform = Platform;
     
     mmarn_scratch Scratch = mmarn_BeginScratch(&Assets->Arena);
-    Defer{ mmarn_EndScratch(Scratch); };
+    Defer{ mmarn_EndScratch(&Scratch); };
     
     // NOTE(Momo): File read into temp mmarn_arena
     // TODO(Momo): We could just create the assets as we read.
@@ -118,8 +118,9 @@ Init(game_assets* Assets,
     // NOTE(Momo): Read and check file header
     u32 FileEntryCount = 0;
     {
-        Assert(CheckAssetSignature(FileMemoryItr, "MOMO"));
-        FileMemoryItr+= StrLen("MOMO");
+        const char* Signature = "MOMO";
+        Assert(CheckAssetSignature(FileMemoryItr, Signature));
+        FileMemoryItr+= StrLen(Signature);
         
         // NOTE(Momo): Read the counts in order
         FileEntryCount = *(mmbw_Read<u32>(&FileMemoryItr));

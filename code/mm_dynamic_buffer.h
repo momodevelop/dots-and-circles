@@ -1,7 +1,7 @@
 #ifndef MOMO_DYNAMIC_BUFFER_H
 #define MOMO_DYNAMIC_BUFFER_H
 
-#include "mm_std.h"
+#include "mm_core.h"
 
 #define mmdbf_Capacity(a) ((a) ? mmdbf__RawCapacity(a) : 0)
 #define mmdbf_Count(a) ((a) ? mmdbf__RawCount(a) : 0)

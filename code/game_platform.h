@@ -1,7 +1,7 @@
 #ifndef __YUU_PLATFORM__
 #define __YUU_PLATFORM__
 
-#include "mm_std.h"
+#include "mm_core.h"
 
 // NOTE(Momo): Global Settings
 static constexpr u64 GameMainMemorySize = Gigabytes(1);
