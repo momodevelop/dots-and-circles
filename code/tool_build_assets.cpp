@@ -1,6 +1,6 @@
 #include "tool_build_assets.h"
 #include "mm_bitwise.h"
-#include "mm_rectpack.h"
+#include "mm_rect_packer.h"
 
 static inline mmm_rect2u
 Rect2U(mmrp_rect Rect) {

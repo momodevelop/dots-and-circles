@@ -7,8 +7,8 @@
 #include "mm_core.h"
 #include "mm_dynamic_buffer.h"
 #include "mm_easing.h"
-#include "mm_pool.h"
-#include "mm_rectpack.h"
+#include "mm_swap_remove_pool.h"
+#include "mm_rect_packer.h"
 
 
 

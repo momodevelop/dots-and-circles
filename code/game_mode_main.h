@@ -3,7 +3,7 @@
 
 #include "mm_easing.h"
 #include "mm_maths.h"
-#include "mm_pool.h"
+#include "mm_swap_remove_pool.h"
 #include "game.h"
 
 enum mood_type : b32 {
@@ -79,8 +79,8 @@ struct game_mode_main {
 
     player Player;
 
-    mmrrp_pool<bullet> Bullets;
-    mmrrp_pool<enemy> Enemies;
+    mmsrp_pool<bullet> Bullets;
+    mmsrp_pool<enemy> Enemies;
 
     f32 WaveTimer;
     f32 WaveDuration;
@@ -97,7 +97,7 @@ SpawnEnemy(game_mode_main* Mode,
         f32 FireRate,
         f32 LifeDuration) 
 {
-    enemy* Ret = mmrrp_Borrow<enemy>(&Mode->Enemies);
+    enemy* Ret = mmsrp_Borrow<enemy>(&Mode->Enemies);
     
     Ret->Position = Position;
     Ret->Size = { 32.f, 32.f };
@@ -119,7 +119,7 @@ SpawnEnemy(game_mode_main* Mode,
 
 static inline bullet*
 SpawnBullet(game_mode_main* Mode, game_assets* Assets, mmm_v2f Position, mmm_v2f Direction, f32 Speed, mood_type Mood) {
-    bullet* Ret = mmrrp_Borrow<bullet>(&Mode->Bullets);
+    bullet* Ret = mmsrp_Borrow<bullet>(&Mode->Bullets);
     
     Ret->Position = Position;
 	Ret->Speed = Speed;
@@ -144,8 +144,8 @@ Init(game_mode_main* Mode, game_state* GameState) {
     Log("Main state initialized!");
     
     Mode->Arena = mmarn_PushArenaAll(&GameState->ModeArena);
-    Mode->Bullets = mmrrp_PushPool<bullet>(&Mode->Arena, 128);
-    Mode->Enemies = mmrrp_PushPool<enemy>(&Mode->Arena, 128);
+    Mode->Bullets = mmsrp_PushPool<bullet>(&Mode->Arena, 128);
+    Mode->Enemies = mmsrp_PushPool<enemy>(&Mode->Arena, 128);
 
     auto* Assets = GameState->Assets;
     auto* Player = &Mode->Player;
@@ -166,20 +166,6 @@ Init(game_mode_main* Mode, game_state* GameState) {
     Player->WhiteImageTransitionTimer = Player->WhiteImageTransitionDuration;
 }
 
-static inline void
-Collide(game_mode_main* Mode, player* Player, bullet* Bullet) {
-    mmm_circle2f PlayerCircle = Player->HitCircle;
-	PlayerCircle.Origin += Player->Position;
-
-	mmm_circle2f BulletCircle = Bullet->HitCircle;
-	BulletCircle.Origin += Bullet->Position;
-
-	if (mmm_IsIntersecting(PlayerCircle, BulletCircle)) {
-	     if (Player->MoodType == Bullet->MoodType ) {
-		     mmrrp_Return(&Mode->Bullets, Bullet);
-		 }
-	}
-}
 
 static inline void
 Update(game_mode_main* Mode,
@@ -194,7 +180,7 @@ Update(game_mode_main* Mode,
     }
 #endif
     PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
-    PushCommandSetOrthoBasis(RenderCommands, {}, { 1600.f, 900.f, 200.f });
+    PushCommandSetOrthoBasis(RenderCommands, {}, { 1600.f, 900.f, 1000.f });
     
     auto* Assets = GameState->Assets;
     auto* Player = &Mode->Player;
@@ -288,14 +274,12 @@ Update(game_mode_main* Mode,
 
     }
 
-	// Enemy update
+	// Enemy logic update
     for ( u32 i = 0; i < Mode->Enemies.Used; ++i )
 	{
         enemy* Enemy = &Mode->Enemies[i];
 
         // Tick all timers
-        Enemy->FireTimer += DeltaTime;
-        Enemy->LifeTimer += DeltaTime;
 
         // Movement
         switch( Enemy->MovementType ) {
@@ -307,6 +291,7 @@ Update(game_mode_main* Mode,
         }
 
         // Fire
+        Enemy->FireTimer += DeltaTime;
 		if (Enemy->FireTimer > Enemy->FireDuration) {       
             mmm_v2f Dir = Player->Position - Enemy->Position;
             switch (Enemy->FiringPatternType) {
@@ -320,9 +305,11 @@ Update(game_mode_main* Mode,
             Enemy->FireTimer = 0.f;
 		}
 
-        // Life
+        // Life time
+        Enemy->LifeTimer += DeltaTime;
         if (Enemy->LifeTimer > Enemy->LifeDuration) {
-            mmrrp_Return(&Mode->Enemies, Enemy); 
+            mmsrp_Return(&Mode->Enemies, Enemy);
+            --i;
         }
 
 	}
@@ -332,20 +319,32 @@ Update(game_mode_main* Mode,
 		// Player vs every bullet
 		for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
             bullet* Bullet = &Mode->Bullets[i];
-			Collide(Mode, Player, Bullet);
+            mmm_circle2f PlayerCircle = Player->HitCircle;
+            PlayerCircle.Origin += Player->Position;
+
+            mmm_circle2f BulletCircle = Bullet->HitCircle;
+            BulletCircle.Origin += Bullet->Position;
+
+            if (mmm_IsIntersecting(PlayerCircle, BulletCircle)) {
+                 if (Player->MoodType == Bullet->MoodType ) {
+                    mmsrp_Return(&Mode->Bullets, Bullet);
+                    --i;
+                 }
+            }
 		}
 	}
 
 
-#define ZLay_Player 0.f
-#define ZLay_Bullet 50.f
-#define ZLay_Enemy  100.f
+    constexpr static f32 ZLayPlayer =  0.f;
+    constexpr static f32 ZLayDotBullet = 100.f;
+    constexpr static f32 ZLayCircleBullet = 200.f;
+    constexpr static f32 ZLayEnemy = 300.f;
     // NOTE(Momo): Player Rendering
     {
         mmm_m44f S = mmm_Scale(mmm_V3F(Player->Size));
         
 		mmm_v3f RenderPos = mmm_V3F(Player->Position);
-        RenderPos.Z = ZLay_Player;
+        RenderPos.Z = ZLayPlayer;
 
         mmm_m44f T = mmm_Translation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
@@ -367,11 +366,18 @@ Update(game_mode_main* Mode,
 	for( u32 i = 0; i < Mode->Bullets.Used; ++i) 
 	{
 		bullet* Bullet = &Mode->Bullets[i];
-
+    
 		mmm_m44f S = mmm_Scale(mmm_V3F(Bullet->Size));
 		mmm_v3f RenderPos = mmm_V3F(Bullet->Position);
-		RenderPos.Z = ZLay_Bullet + (f32)i * 0.01f;
-		mmm_m44f T = mmm_Translation(RenderPos);
+        switch(Bullet->MoodType) {
+            case MoodType_White:
+                RenderPos.Z = ZLayDotBullet + (f32)i * 0.01f;
+                break;
+            case MoodType_Black:
+                RenderPos.Z = ZLayCircleBullet + (f32)i * 0.01f; 
+                break;
+        }
+        mmm_m44f T = mmm_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
@@ -386,7 +392,7 @@ Update(game_mode_main* Mode,
 	    enemy* Enemy = &Mode->Enemies[i];
 		mmm_m44f S = mmm_Scale(mmm_V3F(Enemy->Size));
 		mmm_v3f RenderPos = mmm_V3F(Enemy->Position);
-		RenderPos.Z = ZLay_Enemy; 
+		RenderPos.Z = ZLayEnemy; 
 		mmm_m44f T = mmm_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },

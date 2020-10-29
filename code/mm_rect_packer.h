@@ -1,5 +1,5 @@
-#ifndef RYY_RECTPACK_H
-#define RYY_RECTPACK_H
+#ifndef __MM_RECT_PACKER__
+#define __MM_RECT_PACKER__
 
 #include <stdlib.h>
 #include "mm_core.h"
@@ -224,4 +224,4 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
     return true;
 }
 
-#endif //RYOJI_RECTPACK_H
+#endif //RYOJI_rect_packer_H
