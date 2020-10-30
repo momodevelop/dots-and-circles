@@ -376,7 +376,7 @@ int main(int argc, char* argv[]) {
             SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
         }
         
-        SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
+//        SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
     }
     
     

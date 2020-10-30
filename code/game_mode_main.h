@@ -3,35 +3,70 @@
 
 #include "mm_easing.h"
 #include "mm_maths.h"
-#include "mm_swap_remove_pool.h"
+#include "mm_random.h"
+#include "mm_unordered_list.h"
 #include "game.h"
 
-enum mood_type : b32 {
-    MoodType_White,
-    MoodType_Black,
+enum mood_type : u32 {
+    MoodType_Dot,
+    MoodType_Circle,
+
+    MoodType_Count,
 };
 
 enum enemy_mood_pattern_type : u32 {
-    EnemyMoodPatternType_White,
-    EnemyMoodPatternType_Black,
+    EnemyMoodPatternType_Dot,
+    EnemyMoodPatternType_Circle,
+    EnemyMoodPatternType_Both,
+    
+    EnemyMoodPatternType_Count,
 };
 
 enum enemy_firing_pattern_type : u32 {
     EnemyFiringPatternType_Homing,
+
+    EnemyFiringPatternType_Count,
 };
 
 enum enemy_movement_type : u32 {
     EnemyMovementType_Static,
+
+    EnemyMovementType_Count,
 };
+
+
+// Wave
+enum wave_pattern_type : u32 {
+    WavePatternType_SpawnNForDuration,   // Spawns N enemies at a time
+};
+
+struct wave_pattern_spawn_n_for_duration {
+    u32 EnemiesPerSpawn;
+    f32 SpawnTimer;
+    f32 SpawnDuration;
+    f32 Timer;
+    f32 Duration;
+};
+
+struct wave {
+    wave_pattern_type Type;
+    union {
+        wave_pattern_spawn_n_for_duration PatternSpawnNForDuration;    
+    };
+    b32 IsDone;
+};
+
+
+
 
 struct player {
     // NOTE(Momo): Rendering
-    atlas_rect* WhiteImageRect;
-    atlas_rect* BlackImageRect;
-    f32 WhiteImageAlpha;
-    f32 WhiteImageAlphaTarget;
-    f32 WhiteImageTransitionTimer;
-    f32 WhiteImageTransitionDuration;
+    atlas_rect* DotImageRect;
+    atlas_rect* CircleImageRect;
+    f32 DotImageAlpha;
+    f32 DotImageAlphaTarget;
+    f32 DotImageTransitionTimer;
+    f32 DotImageTransitionDuration;
     
     mmm_v2f Size;
    
@@ -79,15 +114,14 @@ struct game_mode_main {
 
     player Player;
 
-    mmsrp_pool<bullet> Bullets;
-    mmsrp_pool<enemy> Enemies;
+    mmul_list<bullet> Bullets;
+    mmul_list<enemy> Enemies;
 
-    f32 WaveTimer;
-    f32 WaveDuration;
-
+    wave Wave;
+    mmrng_series Rng;
 };
 
-static inline enemy*
+static inline void
 SpawnEnemy(game_mode_main* Mode, 
         game_assets* Assets, 
         mmm_v2f Position,
@@ -97,45 +131,45 @@ SpawnEnemy(game_mode_main* Mode,
         f32 FireRate,
         f32 LifeDuration) 
 {
-    enemy* Ret = mmsrp_Borrow<enemy>(&Mode->Enemies);
-    
-    Ret->Position = Position;
-    Ret->Size = { 32.f, 32.f };
+    Log("Enemy spawned at: %f, %f!", Position.X, Position.Y);
+    enemy Enemy = {}; 
+    Enemy.Position = Position;
+    Enemy.Size = { 32.f, 32.f };
 
-    Ret->FireTimer = 0.f;
-    Ret->FireDuration = FireRate; 
-    Ret->LifeDuration = LifeDuration;
+    Enemy.FireTimer = 0.f;
+    Enemy.FireDuration = FireRate; 
+    Enemy.LifeDuration = LifeDuration;
 
-    Ret->FiringPatternType = FiringPatternType;
-    Ret->MoodPatternType = MoodPatternType;
-    Ret->MovementType = MovementType;
+    Enemy.FiringPatternType = FiringPatternType;
+    Enemy.MoodPatternType = MoodPatternType;
+    Enemy.MovementType = MovementType;
 
     // TODO: Change to appropriate enemy
-    Ret->ImageRect = Assets->AtlasRects + AtlasRect_PlayerWhite;
+    Enemy.ImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
     
-    return Ret;
+    mmul_Add<enemy>(&Mode->Enemies, Enemy);
 
 }
 
-static inline bullet*
+
+static inline void
 SpawnBullet(game_mode_main* Mode, game_assets* Assets, mmm_v2f Position, mmm_v2f Direction, f32 Speed, mood_type Mood) {
-    bullet* Ret = mmsrp_Borrow<bullet>(&Mode->Bullets);
-    
-    Ret->Position = Position;
-	Ret->Speed = Speed;
-    Ret->Size = { 16.f, 16.f };
-    Ret->HitCircle = {
+    bullet Bullet = {}; 
+    Bullet.Position = Position;
+	Bullet.Speed = Speed;
+    Bullet.Size = { 16.f, 16.f };
+    Bullet.HitCircle = {
         { 0.f, 0.f }, 
-        Ret->Size.X * 0.5f 
+        Bullet.Size.X * 0.5f 
     };
 
     if (mmm_LengthSq(Direction) > 0.f)
-	    Ret->Direction = mmm_Normalize(Direction);
+	    Bullet.Direction = mmm_Normalize(Direction);
 	
-    Ret->MoodType = Mood;
-	Ret->ImageRect = Assets->AtlasRects + ((Ret->MoodType == MoodType_White) ? AtlasRect_PlayerWhite : AtlasRect_PlayerBlack);
+    Bullet.MoodType = Mood;
+	Bullet.ImageRect = Assets->AtlasRects + ((Bullet.MoodType == MoodType_Dot) ? AtlasRect_PlayerDot : AtlasRect_PlayerCircle);
 		
-	return Ret;
+    mmul_Add(&Mode->Bullets, Bullet);
 }
 	
 
@@ -144,26 +178,31 @@ Init(game_mode_main* Mode, game_state* GameState) {
     Log("Main state initialized!");
     
     Mode->Arena = mmarn_PushArenaAll(&GameState->ModeArena);
-    Mode->Bullets = mmsrp_PushPool<bullet>(&Mode->Arena, 128);
-    Mode->Enemies = mmsrp_PushPool<enemy>(&Mode->Arena, 128);
+    Mode->Bullets = mmul_PushList<bullet>(&Mode->Arena, 128);
+    Mode->Enemies = mmul_PushList<enemy>(&Mode->Arena, 128);
+    Mode->Wave.IsDone = true;
+    Mode->Rng = mmrng_Seed(0); // TODO: Used system clock for seed.
 
     auto* Assets = GameState->Assets;
     auto* Player = &Mode->Player;
     Player->Speed = 250.f;
-    Player->WhiteImageRect = Assets->AtlasRects + AtlasRect_PlayerWhite;
-    Player->BlackImageRect = Assets->AtlasRects + AtlasRect_PlayerBlack;
+    Player->DotImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
+    Player->CircleImageRect = Assets->AtlasRects + AtlasRect_PlayerCircle;
     Player->Position = {};
     Player->Direction = {};
     Player->Size = { 64.f, 64.f };
 	Player->HitCircle = {{0.f, 0.f}, 28.f};
     
-    // NOTE(Momo): We start as White
-    Player->MoodType = MoodType_White;
-    Player->WhiteImageAlpha = 1.f;
-    Player->WhiteImageAlphaTarget = 1.f;
+    // NOTE(Momo): We start as Dot
+    Player->MoodType = MoodType_Dot;
+    Player->DotImageAlpha = 1.f;
+    Player->DotImageAlphaTarget = 1.f;
     
-    Player->WhiteImageTransitionDuration = 0.05f;
-    Player->WhiteImageTransitionTimer = Player->WhiteImageTransitionDuration;
+    Player->DotImageTransitionDuration = 0.05f;
+    Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
+    
+    Mode->Wave.IsDone = true;
+
 }
 
 
@@ -179,8 +218,12 @@ Update(game_mode_main* Mode,
         return;
     }
 #endif
+    constexpr static f32 DesignWidth = 1600.f;
+    constexpr static f32 DesignHeight = 900.f;
+    constexpr static f32 DesignDepth = 1000.f;
+
     PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
-    PushCommandSetOrthoBasis(RenderCommands, {}, { 1600.f, 900.f, 1000.f });
+    PushCommandSetOrthoBasis(RenderCommands, {}, { DesignWidth, DesignHeight, DesignDepth });
     
     auto* Assets = GameState->Assets;
     auto* Player = &Mode->Player;
@@ -217,72 +260,104 @@ Update(game_mode_main* Mode,
         
         // NOTE(Momo): Absorb Mode Switch
         if(IsPoked(Input->ButtonSwitch)) {
-            Player->MoodType = (Player->MoodType == MoodType_White) ? MoodType_Black : MoodType_White;
+            Player->MoodType = (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
             
             switch(Player->MoodType) {
-                case MoodType_White: {
-                    Player->WhiteImageAlphaTarget = 1.f;
+                case MoodType_Dot: {
+                    Player->DotImageAlphaTarget = 1.f;
                 } break;
-                case MoodType_Black: {
-                    Player->WhiteImageAlphaTarget = 0.f;
+                case MoodType_Circle: {
+                    Player->DotImageAlphaTarget = 0.f;
                 }break;
-                
+                default:
+                    Assert(false);
             }
-            Player->WhiteImageTransitionTimer = 0.f;
+            Player->DotImageTransitionTimer = 0.f;
         }
     }
     
     // NOTE(Momo): Player Update
     {
         
-        Player->WhiteImageAlpha = Lerp(1.f - Player->WhiteImageAlphaTarget, 
-                                       Player->WhiteImageAlphaTarget, Player->WhiteImageTransitionTimer / Player->WhiteImageTransitionDuration);
+        Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
+                                       Player->DotImageAlphaTarget, Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
         
-        Player->WhiteImageTransitionTimer += DeltaTime;
-        Player->WhiteImageTransitionTimer = Clamp(Player->WhiteImageTransitionTimer, 0.f, Player->WhiteImageTransitionDuration);
+        Player->DotImageTransitionTimer += DeltaTime;
+        Player->DotImageTransitionTimer = Clamp(Player->DotImageTransitionTimer, 0.f, Player->DotImageTransitionDuration);
         
         Player->Position += Player->Direction * Player->Speed * DeltaTime;
     }
 
 
 	// Bullet Update
-	for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
-		bullet* Bullet = &Mode->Bullets[i];
-		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
+	for( auto It = mmul_Begin(&Mode->Bullets); It != mmul_End(&Mode->Bullets); ++It) {
+		It->Position += It->Direction * It->Speed * DeltaTime;
 	}
 
 
-    // Spawning logic Update
+    // Wave logic Update
     {
-        // TODO: Wave logic
-        Mode->WaveTimer += DeltaTime;
-        if (Mode->WaveTimer >= Mode->WaveDuration) {
-            // randomize a wave logic
-            // For now just create an enemy at a location
-            SpawnEnemy(Mode, 
-                    Assets, 
-                    {}, 
-                    EnemyMoodPatternType_White,
-                    EnemyFiringPatternType_Homing,
-                    EnemyMovementType_Static,
-                    3.0f,
-                    10.f);
-            
-            Mode->WaveTimer = 0.f;
+        if (Mode->Wave.IsDone) {
+            // TODO: Random wave type
+            Mode->Wave.Type = WavePatternType_SpawnNForDuration;
+            Log("Wave started!"); 
+            // Initialize the wave
+            switch (Mode->Wave.Type) {
+                case WavePatternType_SpawnNForDuration: {
+                    auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
+                    Pattern->EnemiesPerSpawn = 1;
+                    Pattern->SpawnTimer = 0.f;
+                    Pattern->SpawnDuration = 3.f;
+                    Pattern->Timer = 0.f;
+                    Pattern->Duration = 30.f;
+                } break;
+                default: 
+                    Assert(false);
+            }
+            Mode->Wave.IsDone = false;
         }
+        else {
+            // Update the wave.
+            switch(Mode->Wave.Type) {
+                case WavePatternType_SpawnNForDuration: {
+                    auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
+                    Pattern->SpawnTimer += DeltaTime;
+                    Pattern->Timer += DeltaTime;
+                    if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
+                        mmm_v2f Pos = {
+                            mmrng_Bilateral(&Mode->Rng) * DesignWidth * 0.5f,
+                            mmrng_Bilateral(&Mode->Rng) * DesignHeight * 0.5f
+                        };
+                        auto MoodType = (enemy_mood_pattern_type)mmrng_Choice(&Mode->Rng, MoodType_Count);
+                        Log("%d\n", MoodType);
+                        SpawnEnemy(Mode, Assets,
+                                Pos,
+                                MoodType,
+                                EnemyFiringPatternType_Homing,
+                                EnemyMovementType_Static,
+                                1.5f, 10.f);
 
+                        Pattern->SpawnTimer = 0.f;
+                    }
+                    
+                    if (Pattern->Timer >= Pattern->Duration) {
+                        Mode->Wave.IsDone = true;
+                    }
+
+                } break;
+                default:
+                    Assert(false);
+            }
+            
+        }
 
     }
 
 	// Enemy logic update
-    for ( u32 i = 0; i < Mode->Enemies.Used; ++i )
-	{
-        enemy* Enemy = &Mode->Enemies[i];
-
-        // Tick all timers
-
+    for ( auto It = mmul_Begin(&Mode->Enemies); It != mmul_End(&Mode->Enemies);) 
+    {
         // Movement
-        switch( Enemy->MovementType ) {
+        switch( It->MovementType ) {
             case EnemyMovementType_Static:
                 // Do nothing
                 break;
@@ -291,46 +366,62 @@ Update(game_mode_main* Mode,
         }
 
         // Fire
-        Enemy->FireTimer += DeltaTime;
-		if (Enemy->FireTimer > Enemy->FireDuration) {       
-            mmm_v2f Dir = Player->Position - Enemy->Position;
-            switch (Enemy->FiringPatternType) {
+        It->FireTimer += DeltaTime;
+		if (It->FireTimer > It->FireDuration) {       
+            mood_type MoodType = {};
+            switch (It->MoodPatternType) {
+                case EnemyMoodPatternType_Dot: 
+                    MoodType = MoodType_Dot;
+                    break;
+                case EnemyMoodPatternType_Circle:
+                    MoodType = MoodType_Circle;
+                    break;
+                default:
+                    Assert(false);
+            }
+
+            mmm_v2f Dir = {};
+            switch (It->FiringPatternType) {
 		    	case EnemyFiringPatternType_Homing: 
-					SpawnBullet(Mode, Assets, Enemy->Position, Dir, 100.f, MoodType_White);
+                    Dir = Player->Position - It->Position;
 			        break;
                 default:
                     Assert(false);
 		    }
-
-            Enemy->FireTimer = 0.f;
+            SpawnBullet(Mode, Assets, It->Position, Dir, 100.f, MoodType);
+            It->FireTimer = 0.f;
 		}
 
         // Life time
-        Enemy->LifeTimer += DeltaTime;
-        if (Enemy->LifeTimer > Enemy->LifeDuration) {
-            mmsrp_Return(&Mode->Enemies, Enemy);
-            --i;
+        It->LifeTimer += DeltaTime;
+        if (It->LifeTimer > It->LifeDuration) {
+            It = mmul_Remove(&Mode->Enemies, It);
+            continue;
         }
-
+        ++It;
 	}
    
 	// Collision 
 	{
-		// Player vs every bullet
-		for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
-            bullet* Bullet = &Mode->Bullets[i];
-            mmm_circle2f PlayerCircle = Player->HitCircle;
-            PlayerCircle.Origin += Player->Position;
+        mmm_circle2f PlayerCircle = Player->HitCircle;
+        PlayerCircle.Origin += Player->Position;
 
-            mmm_circle2f BulletCircle = Bullet->HitCircle;
-            BulletCircle.Origin += Bullet->Position;
+		// Player vs every bullet
+		//for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
+        mmul_list<bullet>* Bullets = &Mode->Bullets;
+        for ( auto It = mmul_Begin(Bullets); It != mmul_End(Bullets);) 
+        {
+            mmm_circle2f BulletCircle = It->HitCircle;
+            BulletCircle.Origin += It->Position;
 
             if (mmm_IsIntersecting(PlayerCircle, BulletCircle)) {
-                 if (Player->MoodType == Bullet->MoodType ) {
-                    mmsrp_Return(&Mode->Bullets, Bullet);
-                    --i;
+                 if (Player->MoodType == It->MoodType ) {
+                    It = mmul_Remove(&Mode->Bullets, It);
+                    continue;
                  }
             }
+
+            ++It;
 		}
 	}
 
@@ -350,55 +441,60 @@ Update(game_mode_main* Mode,
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, 1.f }, 
                                     T*S, 
-                                    Player->BlackImageRect->BitmapId,
-                                    GetAtlasUV(Assets, Player->BlackImageRect));
+                                    Player->CircleImageRect->BitmapId,
+                                    GetAtlasUV(Assets, Player->CircleImageRect));
         
 		RenderPos.Z += 0.1f;
         T = mmm_Translation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
-                                    {1.f, 1.f, 1.f, Player->WhiteImageAlpha}, 
+                                    {1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                                     T*S, 
-                                    Player->WhiteImageRect->BitmapId,
-                                    GetAtlasUV(Assets, Player->WhiteImageRect));
+                                    Player->DotImageRect->BitmapId,
+                                    GetAtlasUV(Assets, Player->DotImageRect));
     }
 
 	// Bullet Rendering 
-	for( u32 i = 0; i < Mode->Bullets.Used; ++i) 
-	{
-		bullet* Bullet = &Mode->Bullets[i];
-    
-		mmm_m44f S = mmm_Scale(mmm_V3F(Bullet->Size));
-		mmm_v3f RenderPos = mmm_V3F(Bullet->Position);
-        switch(Bullet->MoodType) {
-            case MoodType_White:
-                RenderPos.Z = ZLayDotBullet + (f32)i * 0.01f;
+    f32 DotLayerOffset = 0.f;
+    f32 CircleLayerOffset = 0.f;
+	for( auto&& Bullet : Mode->Bullets) 
+    {
+		mmm_m44f S = mmm_Scale(mmm_V3F(Bullet.Size));
+		mmm_v3f RenderPos = mmm_V3F(Bullet.Position);
+        switch(Bullet.MoodType) {
+            case MoodType_Dot:
+                RenderPos.Z = ZLayDotBullet + DotLayerOffset;
+                DotLayerOffset += 0.01f;
                 break;
-            case MoodType_Black:
-                RenderPos.Z = ZLayCircleBullet + (f32)i * 0.01f; 
+            case MoodType_Circle:
+                RenderPos.Z = ZLayCircleBullet + CircleLayerOffset;
+                CircleLayerOffset += 0.01f;
                 break;
+            default: 
+                Assert(false);
         }
         mmm_m44f T = mmm_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
-									Bullet->ImageRect->BitmapId,
-									GetAtlasUV(Assets, Bullet->ImageRect));
+									Bullet.ImageRect->BitmapId,
+									GetAtlasUV(Assets, Bullet.ImageRect));
+
+    
 	}
 
 
 	// Enemy Rendering
-    for( u32 i = 0; i < Mode->Enemies.Used; ++i )
+    for(auto&& Enemy : Mode->Enemies )
 	{
-	    enemy* Enemy = &Mode->Enemies[i];
-		mmm_m44f S = mmm_Scale(mmm_V3F(Enemy->Size));
-		mmm_v3f RenderPos = mmm_V3F(Enemy->Position);
+		mmm_m44f S = mmm_Scale(mmm_V3F(Enemy.Size));
+		mmm_v3f RenderPos = mmm_V3F(Enemy.Position);
 		RenderPos.Z = ZLayEnemy; 
 		mmm_m44f T = mmm_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
-									Enemy->ImageRect->BitmapId,
-									GetAtlasUV(Assets, Enemy->ImageRect));
+									Enemy.ImageRect->BitmapId,
+									GetAtlasUV(Assets, Enemy.ImageRect));
 	}
 
 

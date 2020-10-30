@@ -23,11 +23,11 @@ pushd %BuildDir%
 
 copy %CodeDir%\thirdparty\sdl2\lib\x64\SDL2.dll %cd%
 
-rmdir %cd%\assets
-mkdir %cd%\assets
-copy %RootDir%\assets\* %cd%\assets
-
 IF "%Opt%"=="assets" (
+    rmdir %cd%\assets
+    mkdir %cd%\assets
+    copy %RootDir%\assets\* %cd%\assets
+
 	cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cpp
 	GOTO End
 )

@@ -37,8 +37,8 @@ enum atlas_rect_id : u32 {
     AtlasRect_Karu31,
     AtlasRect_Karu32,
     
-    AtlasRect_PlayerWhite,
-    AtlasRect_PlayerBlack,
+    AtlasRect_PlayerDot,
+    AtlasRect_PlayerCircle,
     
     AtlasRect_Count,
 };
