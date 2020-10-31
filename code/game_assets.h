@@ -197,6 +197,4 @@ Init(game_assets* Assets,
 }
 
 
-
-
 #endif  

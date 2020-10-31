@@ -280,7 +280,8 @@ Update(game_mode_main* Mode,
     {
         
         Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
-                                       Player->DotImageAlphaTarget, Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
+                Player->DotImageAlphaTarget, 
+                Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
         
         Player->DotImageTransitionTimer += DeltaTime;
         Player->DotImageTransitionTimer = Clamp(Player->DotImageTransitionTimer, 0.f, Player->DotImageTransitionDuration);

@@ -20,7 +20,8 @@ typedef void game_update(game_memory* GameMemory,
                          platform_api* Platform, 
                          mmcmd_commands* RenderCommands, 
                          game_input* Input, 
-                         f32 DeltaTime);
+                         f32 DeltaTime,
+                         u64 TicksElapsed);
 typedef void platform_log(const char* Format, ...);
 typedef u32  platform_get_file_size(const char* Path);
 typedef void platform_read_file(void* Dest, u32 DestSize, const char* Path);

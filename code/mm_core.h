@@ -58,6 +58,33 @@ StrCopy(char * Dest, const char* Str) {
     (*Dest) = 0;
 }
 
+static inline void
+StrConcat(char* Dest, const char* Str) {
+    // Go to the end of Dest
+    for (; (*Dest) != 0; ++Dest);
+    for (; (*Str) != 0; ++Str, ++Dest) {
+        (*Dest) = (*Str);
+    }
+    (*Dest) = 0;
+}
+
+
+static inline void 
+StrClear(char* Dest) {
+    (*Dest) = 0;
+}
+
+static inline void
+StrReverse(char* Dest) {
+    char* BackPtr = Dest;
+    for (; *(BackPtr+1) != 0; ++BackPtr);
+    for (;Dest < BackPtr; ++Dest, --BackPtr) {
+        Swap((*Dest), (*BackPtr));
+    }
+}
+
+
+
 static inline void 
 MemCopy(void* dest, void* src, usize size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
@@ -70,6 +97,36 @@ MemZero(void *mem, usize size) {
     for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
         *p = 0;
     }
+}
+
+static inline void 
+Itoa(char* Dest, i32 Num) {
+    // Naive method. 
+    // Extract each number starting from the back and fill the buffer. 
+    // Then reverse it.
+    
+    // Special case for 0
+    if (Num == 0) {
+        Dest[0] = '0';
+        Dest[1] = 0;
+        return;
+    }
+
+    b32 Negative = Num < 0;
+    Num = Abs(Num);
+
+    char* It = Dest;
+    for(; Num != 0; Num /= 10) {
+        i32 DigitToConvert = Num % 10;
+        *(It++) = (char)(DigitToConvert + '0');
+    }
+
+    if (Negative) {
+        *(It++) = '-';
+    }
+    (*It) = 0;
+
+    StrReverse(Dest);
 }
 
 #define ZeroMem(m, s) MemZero(m, s)

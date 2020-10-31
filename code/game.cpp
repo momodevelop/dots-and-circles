@@ -4,7 +4,7 @@
 #include "game_mode_menu.h"
 #include "game_mode_main.h"
 #include "game_mode_atlas_test.h"
-
+#include "game_text.h"
 
 #if INTERNAL
 static  b32
@@ -70,7 +70,8 @@ GameUpdate(game_memory* GameMemory,
            platform_api* Platform, 
            mmcmd_commands* RenderCommands, 
            game_input* Input, 
-           f32 DeltaTime)
+           f32 DeltaTime,
+           u64 TicksElapsed)
 {
 #if INTERNAL
     gLog = Platform->Log;
@@ -105,9 +106,20 @@ GameUpdate(game_memory* GameMemory,
         } break;
         case GameModeType_Main: {
             Update(GameState->MainMode, GameState, RenderCommands, Input, DeltaTime);
-        } break;
+        } break; 
         case GameModeType_AtlasTest: {
             Update(GameState->AtlasTestMode, GameState, RenderCommands, Input, DeltaTime);
         } break;
     }
+
+#if INTERNAL
+    // System display
+    {
+        char buffer[128];
+        Itoa(buffer, (i32)TicksElapsed);
+        StrConcat(buffer, "ms");
+        PushCommandSetOrthoBasis(RenderCommands, {}, { 1600.f, 900.f, 100.f });
+        DrawText(RenderCommands, GameState->Assets, { -800.f, -440.f }, Font_Default, 32.f, buffer);  
+    }
+#endif
 }

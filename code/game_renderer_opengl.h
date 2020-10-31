@@ -285,8 +285,6 @@ Render(renderer_opengl* Renderer, mmcmd_commands* Commands)
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    
-    
     for (u32 i = 0; i < Commands->EntryCount; ++i) {
         auto* Entry = mmcmd_GetEntry(Commands, i);
         

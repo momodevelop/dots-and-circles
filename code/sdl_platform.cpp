@@ -204,7 +204,7 @@ int main(int argc, char* argv[]) {
     f32 TimeStepMultiplier = 1.f;
     u64 TargetTicksElapsed = 16; // 60FPS
     f32 TargetDeltaTime = TargetTicksElapsed / 1000.f;
-    
+    u64 ActualTicksElapsed = 0;
     // NOTE(Momo): Timer
     sdl_timer timer;
     Start(&timer);
@@ -340,7 +340,7 @@ int main(int argc, char* argv[]) {
                         }break;
                         case SDLK_6: {
                             GameInput.ButtonDebug[6].Now = false;
-                        }break;
+                     }break;
                         case SDLK_7: {
                             GameInput.ButtonDebug[7].Now = false;
                         }break;
@@ -362,17 +362,17 @@ int main(int argc, char* argv[]) {
         
         
         if (GameCode.Update) {
-            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, TargetDeltaTime); 
+            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, TargetDeltaTime, ActualTicksElapsed); 
         }
-        
+       
         Render(&RendererOpenGL, &RenderCommands); 
         mmcmd_Clear(&RenderCommands);
         
         // NOTE(Momo): Timer update
         SDL_GL_SwapWindow(window);
-        u64 ActualTicksElapsed = GetTicksElapsed(&timer);
+
+        ActualTicksElapsed = GetTicksElapsed(&timer);
         if (TargetTicksElapsed > ActualTicksElapsed) {
-            //SDL_Log("%lld  ms\n", TicksElapsed);
             SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
         }
         

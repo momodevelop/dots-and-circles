@@ -18,9 +18,8 @@ Ground rules about this renderer.
 #define GAME_RENDERER_H
 
 #include "mm_commands.h"
-
-
 #include "mm_maths.h"
+
 
 struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
