@@ -6,36 +6,7 @@
 #include "game_mode_atlas_test.h"
 #include "game_text.h"
 
-#if INTERNAL
-static  b32
-ProcessMetaInput(game_state* GameState, game_input* Input) {
-    if (IsPoked(Input->ButtonDebug[1])) {
-        SetGameMode(GameState, GameModeType_Splash);
-        Log("Jumping to splash state");
-        return true;
-    }
-    else if (IsPoked(Input->ButtonDebug[2])) {
-        SetGameMode(GameState, GameModeType_Menu);
-        Log("Jumping to menu state");
-        return true;
-    }
-    else if (IsPoked(Input->ButtonDebug[9])) {
-        SetGameMode(GameState, GameModeType_AtlasTest);
-        Log("Jumping to atlas test state");
-        return true;
-    }
-    
-    else if (IsPoked(Input->ButtonDebug[0])) {
-        SetGameMode(GameState, GameModeType_Main);
-        Log("Jumping to main state");
-        return true;
-    }
-    
-    return false;
-}
-#endif
-
-static void
+static inline void
 SetGameMode(game_state* GameState, game_mode_type ModeType) {
     mmarn_Clear(&GameState->ModeArena);
     mmarn_arena* ModeArena = &GameState->ModeArena;
@@ -73,12 +44,12 @@ GameUpdate(game_memory* GameMemory,
            f32 DeltaTime,
            u64 TicksElapsed)
 {
-#if INTERNAL
-    gLog = Platform->Log;
-#endif
     game_state* GameState = (game_state*)GameMemory->MainMemory;
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
+#if INTERNAL
+        gLog = Platform->Log;
+#endif
         // NOTE(Momo): Arenas
         GameState->MainArena = mmarn_CreateArena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
         mmarn_arena* MainArena = &GameState->MainArena;
@@ -113,7 +84,7 @@ GameUpdate(game_memory* GameMemory,
     }
 
 #if INTERNAL
-    // System display
+    // System Debug
     {
         char buffer[128];
         Itoa(buffer, (i32)TicksElapsed);

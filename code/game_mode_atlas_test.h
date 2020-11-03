@@ -61,12 +61,6 @@ Update(game_mode_atlas_test* Mode,
        game_input* Input,
        f32 DeltaTime) 
 {
-    
-#if INTERNAL
-    if (ProcessMetaInput(GameState, Input)) {
-        return;
-    }
-#endif
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     

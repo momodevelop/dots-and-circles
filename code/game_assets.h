@@ -7,7 +7,7 @@
 #include "mm_arena.h"
 #include "mm_commands.h"
 
-#include "game_platform.h"
+#include "platform.h"
 #include "game_assets_file_formats.h"
 #include "game_renderer.h"
 

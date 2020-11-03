@@ -12,14 +12,14 @@ static constexpr u64 TotalMemorySize = GameMainMemorySize + RenderCommandsMemory
 struct mmcmd_commands;
 struct game_memory;
 struct platform_api;
-struct platform_read_file_result;
+struct game_debug_keyboard;
 struct game_input;
 
 // NOTE(Momo): Function typedefs and helpers
 typedef void game_update(game_memory* GameMemory,  
                          platform_api* Platform, 
                          mmcmd_commands* RenderCommands, 
-                         game_input* Input, 
+                         game_input* Input,
                          f32 DeltaTime,
                          u64 TicksElapsed);
 typedef void platform_log(const char* Format, ...);
@@ -36,10 +36,9 @@ struct platform_api {
 struct game_memory {
     void* MainMemory;
     usize MainMemorySize;
-#if INTERNAL
+    
     void* DebugMemory;
     usize DebugMemorySize;
-#endif
 };
 
 

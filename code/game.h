@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "game_platform.h"
+#include "platform.h"
 
 #ifdef  INTERNAL
 static platform_log* gLog;
@@ -12,6 +12,7 @@ static platform_log* gLog;
 
 
 #include "game_input.h"
+
 #include "game_renderer.h"
 #include "game_assets.h"
 
@@ -42,10 +43,5 @@ struct game_state {
 };
 
 static void SetGameMode(game_state* GameState, game_mode_type ModeType);
-
-#if INTERNAL
-static b32 ProcessMetaInput(game_state* GameState, game_input* Input);
-#endif
-
 
 #endif //GAME_H

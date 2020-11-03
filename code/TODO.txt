@@ -1,6 +1,5 @@
-[] Rng
-[] Enemy pool
 [] Waves
+[] Debug console
 [] Hot swapping code
 [] Fixed framerate (target framerate)
 

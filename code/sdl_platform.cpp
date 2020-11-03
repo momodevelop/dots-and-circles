@@ -7,7 +7,7 @@
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
-#include "game_platform.h"
+#include "platform.h"
 #include "game_renderer_opengl.h"
 #include "game_input.h"
 
@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): Memory Arena for platform
     mmarn_arena PlatformArena = mmarn_CreateArena(ProgramMemory, TotalMemorySize);
     
-    // NOTE(Momo): Game Init
+    // NOTE(Momo): Game
     game_memory GameMemory = {};
     GameMemory.MainMemory = mmarn_PushBlock(&PlatformArena, GameMainMemorySize);
     GameMemory.MainMemorySize = GameMainMemorySize;
@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
     mmcmd_commands RenderCommands = mmcmd_Create(RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
-    game_input GameInput = {};
+    game_input Input = {};
     
     // NOTE(Momo): Timestep related
     // TODO(Momo): What if we can't hit 60fps?
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
-        Update(&GameInput);
+        Update(&Input);
         
         SDL_Event e;
         while(SDL_PollEvent(&e)) {
@@ -234,126 +234,45 @@ int main(int argc, char* argv[]) {
                 case SDL_KEYDOWN: {
                     switch(e.key.keysym.sym) {
                         case SDLK_w: {
-                            GameInput.ButtonUp.Now = true; 
+                            Input.ButtonUp.Now = true; 
                         }break;
                         case SDLK_a: {
-                            GameInput.ButtonLeft.Now = true;
+                            Input.ButtonLeft.Now = true;
                         }break;
                         case SDLK_s: {
-                            GameInput.ButtonDown.Now = true;
+                            Input.ButtonDown.Now = true;
                         }break;
                         case SDLK_d: {
-                            GameInput.ButtonRight.Now = true;
+                            Input.ButtonRight.Now = true;
                         }break;
                         case SDLK_RETURN: {
-                            GameInput.ButtonConfirm.Now = true;
+                            Input.ButtonConfirm.Now = true;
                         }break;
                         case SDLK_SPACE: {
-                            GameInput.ButtonSwitch.Now = true;
+                            Input.ButtonSwitch.Now = true;
                         }break;
-#if INTERNAL
-                        case SDLK_1: {
-                            GameInput.ButtonDebug[1].Now = true; 
-                        }break;
-                        case SDLK_2: {
-                            GameInput.ButtonDebug[2].Now = true;
-                        }break;
-                        case SDLK_3: {
-                            GameInput.ButtonDebug[3].Now = true;
-                        }break;
-                        case SDLK_4: {
-                            GameInput.ButtonDebug[4].Now = true;
-                        }break;
-                        case SDLK_5: {
-                            GameInput.ButtonDebug[5].Now = true;
-                        }break;
-                        case SDLK_6: {
-                            GameInput.ButtonDebug[6].Now = true;
-                        }break;
-                        case SDLK_7: {
-                            GameInput.ButtonDebug[7].Now = true;
-                        }break;
-                        case SDLK_8: {
-                            GameInput.ButtonDebug[8].Now = true;
-                        }break;
-                        case SDLK_9: {
-                            GameInput.ButtonDebug[9].Now = true;
-                        }break;
-                        case SDLK_0: {
-                            GameInput.ButtonDebug[0].Now = true;
-                        }break;
-                        
-                        // NOTE(Momo): platform specific debugging
-                        case SDLK_F1: {
-                            // NOTE(Momo): Global pausing
-                            gIsPaused = !gIsPaused;
-                            if (gIsPaused) {
-                                TimeStepMultiplier = 0.f;
-                            }
-                            else {
-                                TimeStepMultiplier = 1.f;
-                            }
-                        }break;
-                        case SDLK_F2: {
-                            // NOTE(Momo): Hot reloading (
-                            Unload(&GameCode);
-                            Load(&GameCode);
-                        }break;
-#endif
                     }
                 } break;
                 case SDL_KEYUP: {
                     switch(e.key.keysym.sym) {
                         case SDLK_w: {
-                            GameInput.ButtonUp.Now = false;
+                            Input.ButtonUp.Now = false;
                         }break;
                         case SDLK_a: {
-                            GameInput.ButtonLeft.Now = false;
+                            Input.ButtonLeft.Now = false;
                         }break;
                         case SDLK_s: {
-                            GameInput.ButtonDown.Now = false;
+                            Input.ButtonDown.Now = false;
                         }break;
                         case SDLK_d: {
-                            GameInput.ButtonRight.Now = false;
+                            Input.ButtonRight.Now = false;
                         }break;
                         case SDLK_RETURN: {
-                            GameInput.ButtonConfirm.Now = false;
+                            Input.ButtonConfirm.Now = false;
                         }break;
                         case SDLK_SPACE: {
-                            GameInput.ButtonSwitch.Now = false;
+                            Input.ButtonSwitch.Now = false;
                         }break;
-#if INTERNAL
-                        case SDLK_1: {
-                            GameInput.ButtonDebug[1].Now = false; 
-                        }break;
-                        case SDLK_2: {
-                            GameInput.ButtonDebug[2].Now = false;
-                        }break;
-                        case SDLK_3: {
-                            GameInput.ButtonDebug[3].Now = false;
-                        }break;
-                        case SDLK_4: {
-                            GameInput.ButtonDebug[4].Now = false;
-                        }break;
-                        case SDLK_5: {
-                            GameInput.ButtonDebug[5].Now = false;
-                        }break;
-                        case SDLK_6: {
-                            GameInput.ButtonDebug[6].Now = false;
-                     }break;
-                        case SDLK_7: {
-                            GameInput.ButtonDebug[7].Now = false;
-                        }break;
-                        case SDLK_8: {
-                            GameInput.ButtonDebug[8].Now = false;
-                        }break;
-                        case SDLK_9: {
-                            GameInput.ButtonDebug[9].Now = false;
-                        }break;
-                        case SDLK_0: {
-                            GameInput.ButtonDebug[0].Now = false;
-                        }break;
-#endif
                     } break;
                 }
             }
@@ -362,7 +281,7 @@ int main(int argc, char* argv[]) {
         
         
         if (GameCode.Update) {
-            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &GameInput, TargetDeltaTime, ActualTicksElapsed); 
+            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetDeltaTime, ActualTicksElapsed); 
         }
        
         Render(&RendererOpenGL, &RenderCommands); 

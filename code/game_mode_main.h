@@ -56,9 +56,6 @@ struct wave {
     b32 IsDone;
 };
 
-
-
-
 struct player {
     // NOTE(Momo): Rendering
     atlas_rect* DotImageRect;
@@ -148,7 +145,6 @@ SpawnEnemy(game_mode_main* Mode,
     Enemy.ImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
     
     mmul_Add<enemy>(&Mode->Enemies, Enemy);
-
 }
 
 
@@ -213,11 +209,6 @@ Update(game_mode_main* Mode,
        game_input* Input,
        f32 DeltaTime) 
 {
-#if INTERNAL
-    if (ProcessMetaInput(GameState, Input)) {
-        return;
-    }
-#endif
     constexpr static f32 DesignWidth = 1600.f;
     constexpr static f32 DesignHeight = 900.f;
     constexpr static f32 DesignDepth = 1000.f;
