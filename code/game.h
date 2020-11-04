@@ -20,10 +20,13 @@ enum game_mode_type : u32 {
     GameModeType_Main,
     GameModeType_Menu,
     GameModeType_AtlasTest,
+
+    GameModeType_None
 };
 	
 struct game_state {
     game_mode_type ModeType;
+    game_mode_type NextModeType;
     union {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
@@ -39,7 +42,5 @@ struct game_state {
     b32 IsInitialized;
     
 };
-
-static void SetGameMode(game_state* GameState, game_mode_type ModeType);
 
 #endif //GAME_H

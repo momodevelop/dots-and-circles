@@ -130,6 +130,8 @@ Update(game_mode_splash* Mode,
 {
     // Debug commands
     {
+        if (StrLen(Input->DebugTextInputBuffer))
+            Log("%s", Input->DebugTextInputBuffer);
     }
 
 
@@ -151,7 +153,7 @@ Update(game_mode_splash* Mode,
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         Log("Splash state exit");
-        SetGameMode(GameState, GameModeType_Splash);
+        GameState->NextModeType = GameModeType_Splash;
     }
 }
 

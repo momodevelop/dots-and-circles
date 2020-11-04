@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 
+#include "mm_core.h"
 #include "mm_maths.h"
 #include "mm_arena.h"
 
@@ -118,6 +119,7 @@ SdlGlDebugCallback(GLenum source,
             id, _type, _severity, _source, msg);
     
 };
+#endif
 
 // Timer
 struct sdl_timer {
@@ -346,7 +348,7 @@ int main(int argc, char* argv[]) {
     sdl_timer timer;
     Start(&timer);
     
-    
+    b32 IsLeftShiftDown = false;
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
         Update(&Input);
@@ -365,8 +367,13 @@ int main(int argc, char* argv[]) {
                         
                     }
                 } break;
-                
-                
+               
+#if INTERNAL
+                case SDL_TEXTINPUT: {
+                    StrConcat(Input.DebugTextInputBuffer, e.text.text);
+                } break;
+#endif                
+
                 // NOTE(Momo): Handle keyboard
                 case SDL_KEYDOWN: {
                     switch(e.key.keysym.sym) {
@@ -389,6 +396,50 @@ int main(int argc, char* argv[]) {
                             Input.ButtonSwitch.Now = true;
                         }break;
                     }
+                    // Cries
+#if INTERNAL
+                    switch(e.key.keysym.sym) {
+                        case SDLK_F1:
+                            Input.DebugKeys[GameDebugKey_F1].Now = true;
+                            break;
+                        case SDLK_F2:
+                            Input.DebugKeys[GameDebugKey_F2].Now = true;
+                            break;
+                        case SDLK_F3:
+                            Input.DebugKeys[GameDebugKey_F3].Now = true;
+                            break;
+                        case SDLK_F4:
+                            Input.DebugKeys[GameDebugKey_F4].Now = true;
+                            break;
+                        case SDLK_F5:
+                            Input.DebugKeys[GameDebugKey_F5].Now = true;
+                            break;
+                        case SDLK_F6:
+                            Input.DebugKeys[GameDebugKey_F6].Now = true;
+                            break;
+                        case SDLK_F7:
+                            Input.DebugKeys[GameDebugKey_F7].Now = true;
+                            break;
+                        case SDLK_F8:
+                            Input.DebugKeys[GameDebugKey_F8].Now = true;
+                            break;
+                        case SDLK_F9:
+                            Input.DebugKeys[GameDebugKey_F9].Now = true;
+                            break;
+                        case SDLK_F10:
+                            Input.DebugKeys[GameDebugKey_F10].Now = true;
+                            break;
+                        case SDLK_F11:
+                            Input.DebugKeys[GameDebugKey_F11].Now = true;
+                            break;
+                        case SDLK_F12:
+                            Input.DebugKeys[GameDebugKey_F12].Now = true;
+                            break;
+                        case SDLK_RETURN:
+                            Input.DebugKeys[GameDebugKey_Return].Now = true;
+                            break;
+                    }
+#endif
                 } break;
                 case SDL_KEYUP: {
                     switch(e.key.keysym.sym) {
@@ -411,6 +462,50 @@ int main(int argc, char* argv[]) {
                             Input.ButtonSwitch.Now = false;
                         }break;
                     } break;
+#if INTERNAL
+                    switch(e.key.keysym.sym) {
+                        case SDLK_F1:
+                            Input.DebugKeys[GameDebugKey_F1].Now = false;
+                            break;
+                        case SDLK_F2:
+                            Input.DebugKeys[GameDebugKey_F2].Now = false;
+                            break;
+                        case SDLK_F3:
+                            Input.DebugKeys[GameDebugKey_F3].Now = false;
+                            break;
+                        case SDLK_F4:
+                            Input.DebugKeys[GameDebugKey_F4].Now = false;
+                            break;
+                        case SDLK_F5:
+                            Input.DebugKeys[GameDebugKey_F5].Now = false;
+                            break;
+                        case SDLK_F6:
+                            Input.DebugKeys[GameDebugKey_F6].Now = false;
+                            break;
+                        case SDLK_F7:
+                            Input.DebugKeys[GameDebugKey_F7].Now = false;
+                            break;
+                        case SDLK_F8:
+                            Input.DebugKeys[GameDebugKey_F8].Now = false;
+                            break;
+                        case SDLK_F9:
+                            Input.DebugKeys[GameDebugKey_F9].Now = false;
+                            break;
+                        case SDLK_F10:
+                            Input.DebugKeys[GameDebugKey_F10].Now = false;
+                            break;
+                        case SDLK_F11:
+                            Input.DebugKeys[GameDebugKey_F11].Now = false;
+                            break;
+                        case SDLK_F12:
+                            Input.DebugKeys[GameDebugKey_F12].Now = false;
+                            break;
+                        case SDLK_RETURN:
+                            Input.DebugKeys[GameDebugKey_Return].Now = false;
+                            break;
+                    }
+#endif
+
                 }
             }
             

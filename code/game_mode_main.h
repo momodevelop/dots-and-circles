@@ -143,8 +143,7 @@ SpawnEnemy(game_mode_main* Mode,
 
     // TODO: Change to appropriate enemy
     Enemy.ImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
-    
-    mmul_Add<enemy>(&Mode->Enemies, Enemy);
+    mmul_Add(&Mode->Enemies, Enemy);
 }
 
 
