@@ -1,0 +1,13 @@
+[
+    {
+        "directory": "D:\\Stuff\\Repos\\c\\dots-and-circles\\code",
+        "command": "clang-cl -DSLOW -DINTERNAL -MT -W4 -wd4100 -wd4189 -wd4702 -wd4201 -wd4505 -wd4996 -wd4100 -Zi -Oi -GR- -EHa -Gm- -std:c++17 sdl_platform.cpp",
+        "file": "sdl_platform.cpp"
+    }
+	
+	   {
+        "directory": "D:\\Stuff\\Repos\\c\\dots-and-circles\\code",
+        "command": "clang-cl -DSLOW -DINTERNAL -MT -W4 -wd4100 -wd4189 -wd4702 -wd4201 -wd4505 -wd4996 -wd4100 -Zi -Oi -GR- -EHa -Gm- -std:c++17 game.cpp",
+        "file": "game.cpp"
+    }
+]

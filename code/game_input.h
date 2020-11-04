@@ -1,6 +1,7 @@
 #ifndef __GAME_INPUT__
 #define __GAME_INPUT__
 
+#include "mm_core.h"
 
 enum game_debug_key {
     GameDebugKey_F1,

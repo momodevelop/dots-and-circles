@@ -1,7 +1,8 @@
 #include "../code/mm_core.h"
-
+#include "test.h"
 #include <iostream>
 #include <vector>
+
 
 
 struct test {
@@ -9,6 +10,7 @@ struct test {
 };
 
 int main() {
+    foo();
     using namespace std;
     char buffer[128];
     
