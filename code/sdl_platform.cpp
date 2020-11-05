@@ -318,11 +318,23 @@ int main(int argc, char* argv[]) {
     game_memory GameMemory = {};
     GameMemory.MainMemory = mmarn_PushBlock(&PlatformArena, GameMainMemorySize);
     GameMemory.MainMemorySize = GameMainMemorySize;
+
+#if INTERNAL
+    GameMemory.DebugMemory = mmarn_PushBlock(&PlatformArena, DebugMemorySize);
+    GameMemory.DebugMemorySize = DebugMemorySize;
+#endif
     
     if ( !GameMemory.MainMemory ) {
         SDL_Log("Cannot allocate game memory");
         return 1;
     }
+
+#if INTERNAL
+    if ( !GameMemory.DebugMemory) {
+        SDL_Log("Cannot allocate debug memory");
+        return 1;
+    }
+#endif
     
     // NOTE(Momo): PlatformAPI
     platform_api PlatformApi;
@@ -337,6 +349,10 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Input
     game_input Input = {};
+#if INTERNAL
+    char DebugTextInputBuffer[10];
+    Input.DebugTextInputBuffer = mms_CreateString(DebugTextInputBuffer, 10);
+#endif 
     
     // NOTE(Momo): Timestep related
     // TODO(Momo): What if we can't hit 60fps?
@@ -370,7 +386,7 @@ int main(int argc, char* argv[]) {
                
 #if INTERNAL
                 case SDL_TEXTINPUT: {
-                    PushDebugTextInputBuffer(&Input, e.text.text);
+                    mms_Concat(&Input.DebugTextInputBuffer, e.text.text);
                 } break;
 #endif                
 

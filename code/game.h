@@ -13,6 +13,7 @@ static platform_log* gLog;
 
 #include "game_renderer.h"
 #include "game_assets.h"
+#include "mm_string.h"
 
 // NOTE(Momo): How much do we care to make this generic and use CRTP + std::variant?
 enum game_mode_type : u32 {
@@ -45,10 +46,14 @@ struct game_state {
     b32 IsDebug;
     b32 IsShowTicksElapsed;
 
-    char DebugInfoBuffer[5][110];
-    char DebugInputBuffer[110];
+    mms_string DebugInfoBuffer[5];
+    mms_string DebugInputBuffer;
+
+    mmarn_arena DebugArena;
 #endif
-    
+
+
 };
+
 
 #endif //GAME_H

@@ -2,6 +2,7 @@
 #define __GAME_INPUT__
 
 #include "mm_core.h"
+#include "mm_string.h"
 
 enum game_debug_key {
     GameDebugKey_F1,
@@ -41,24 +42,10 @@ struct game_input {
         };
     };
 #if INTERNAL
-    char DebugTextInputBuffer[11]; // How many fingers can a person have??
-    usize DebugTextInputBufferLength;
+    mms_string DebugTextInputBuffer;
     game_input_button DebugKeys[GameDebugKey_Count];
 #endif
 };
-
-#if INTERNAL
-static inline void
-PushDebugTextInputBuffer(game_input* Input, const char* Str) {
-    
-    for(; *Str != 0 && Input->DebugTextInputBufferLength < ArrayCount(Input->DebugTextInputBuffer) - 1; 
-            ++Str, ++Input->DebugTextInputBufferLength) 
-    {
-        Input->DebugTextInputBuffer[Input->DebugTextInputBufferLength] = (*Str); 
-    }
-    Input->DebugTextInputBuffer[Input->DebugTextInputBufferLength] = 0;
-}
-#endif
 
 static inline void
 Update(game_input* Input) {
@@ -67,8 +54,7 @@ Update(game_input* Input) {
     }
 
 #if INTERNAL
-    Input->DebugTextInputBuffer[0] = 0;
-    Input->DebugTextInputBufferLength = 0;
+    mms_Clear(&Input->DebugTextInputBuffer);
     for (auto&& itr : Input->DebugKeys) {
         itr.Before = itr.Now;
     }

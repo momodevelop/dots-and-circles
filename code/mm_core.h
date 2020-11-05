@@ -51,19 +51,19 @@ StrLen(const char* Str) {
 }
 
 static inline void
-StrCopy(char * Dest, const char* Str) {
-    for(; (*Str) != 0 ; ++Str, ++Dest) {
-        (*Dest) = (*Str);
+StrCopy(char * Dest, const char* Src) {
+    for(; (*Src) != 0 ; ++Src, ++Dest) {
+        (*Dest) = (*Src);
     }
     (*Dest) = 0;
 }
 
 static inline void
-StrConcat(char* Dest, const char* Str) {
+StrConcat(char* Dest, const char* Src) {
     // Go to the end of Dest
     for (; (*Dest) != 0; ++Dest);
-    for (; (*Str) != 0; ++Str, ++Dest) {
-        (*Dest) = (*Str);
+    for (; (*Src) != 0; ++Src, ++Dest) {
+        (*Dest) = (*Src);
     }
     (*Dest) = 0;
 }

@@ -6,7 +6,13 @@
 // NOTE(Momo): Global Settings
 static constexpr u64 GameMainMemorySize = Gigabytes(1);
 static constexpr u64 RenderCommandsMemorySize = Megabytes(64);
+
+#if INTERNAL
+static constexpr u64 DebugMemorySize = Megabytes(64);
+static constexpr u64 TotalMemorySize = GameMainMemorySize + RenderCommandsMemorySize + DebugMemorySize;
+#else 
 static constexpr u64 TotalMemorySize = GameMainMemorySize + RenderCommandsMemorySize;
+#endif 
 
 // NOTE(Momo): Forward declarations 
 struct mmcmd_commands;

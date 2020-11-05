@@ -17,30 +17,41 @@ GameUpdate(game_memory* GameMemory,
            u64 TicksElapsed)
 {
     game_state* GameState = (game_state*)GameMemory->MainMemory;
-    // NOTE(Momo): Initialization of the game
+       // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
 #if INTERNAL
         gLog = Platform->Log;
 #endif
-        // NOTE(Momo): Arenas
+       // NOTE(Momo): Arenas
         GameState->MainArena = mmarn_CreateArena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
-        mmarn_arena* MainArena = &GameState->MainArena;
 
         // NOTE(Momo): Assets
-        game_assets* GameAssets = mmarn_PushStruct<game_assets>(MainArena);
+        game_assets* GameAssets = mmarn_PushStruct<game_assets>(&GameState->MainArena);
         GameState->Assets = GameAssets;
-        Init(GameAssets, MainArena, Platform, RenderCommands, "yuu");
+        Init(GameAssets, &GameState->MainArena, Platform, RenderCommands, "yuu");
         
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = mmarn_PushArenaAll(MainArena);
+        GameState->ModeArena = mmarn_PushArenaAll(&GameState->MainArena);
         GameState->ModeType = GameModeType_None;
         GameState->NextModeType = GameModeType_Splash;
         GameState->IsInitialized = true;
-        
+
+
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 1600, 900);
-    }
+        
 #if INTERNAL
+        
+        GameState->DebugArena = mmarn_CreateArena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
+        GameState->DebugInputBuffer = mms_CreateString(mmarn_PushArray<char>(&GameState->DebugArena, 110), 110);
+        for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffer); ++i) {
+            char* Buffer = mmarn_PushArray<char>(&GameState->DebugArena, 110);
+            GameState->DebugInfoBuffer[i] = mms_CreateString(Buffer, 110);
+        }
+#endif
+    }
+
+
     // System Debug
     {
         // F1 to toggle debug console
@@ -48,7 +59,7 @@ GameUpdate(game_memory* GameMemory,
             GameState->IsDebug = !GameState->IsDebug; 
             if( GameState->IsDebug ) {
                 // Init the console
-                GameState->DebugInputBuffer[0] = 0;
+                mms_Clear(&GameState->DebugInputBuffer);
             }
         }
 
@@ -74,26 +85,25 @@ GameUpdate(game_memory* GameMemory,
             }
 
 
-            if (StrLen(Input->DebugTextInputBuffer) > 0) {
-                StrConcat(GameState->DebugInputBuffer, Input->DebugTextInputBuffer);
+            if (Input->DebugTextInputBuffer.Length > 0) {
+                mms_Concat(&GameState->DebugInputBuffer, &Input->DebugTextInputBuffer);
             }
             
             // Remove character
             if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
                 // TODO: God i need my own string object...
-                usize Len = StrLen(GameState->DebugInputBuffer);
-                GameState->DebugInputBuffer[Len-1] = 0;
+                mms_Pop(&GameState->DebugInputBuffer);
             }
 
             if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
                 for(i32 i = ArrayCount(GameState->DebugInfoBuffer) - 2; i >= 0 ; --i) {
-                    StrCopy(GameState->DebugInfoBuffer[i+1], GameState->DebugInfoBuffer[i]);
+                    mms_Copy(&GameState->DebugInfoBuffer[i+1], &GameState->DebugInfoBuffer[i]);
                 }
 
                 // Feed the text into info window
-                GameState->DebugInfoBuffer[0][0] = 0;
-                StrCopy(GameState->DebugInfoBuffer[0], GameState->DebugInputBuffer);
-                GameState->DebugInputBuffer[0] = 0;
+                mms_Clear(&GameState->DebugInfoBuffer[0]);
+                mms_Copy(&GameState->DebugInfoBuffer[0], &GameState->DebugInputBuffer);
+                mms_Clear(&GameState->DebugInputBuffer);
             }
              
             // Draw text
@@ -126,7 +136,6 @@ GameUpdate(game_memory* GameMemory,
         }
 
     }
-#endif
 
     // Clean state/Switch states
     if (GameState->NextModeType != GameModeType_None) {

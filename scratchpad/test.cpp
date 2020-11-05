@@ -1,22 +1,21 @@
 #include "../code/mm_core.h"
+#include "../code/mm_string.h"
+
 #include "test.h"
 #include <iostream>
 #include <vector>
+using namespace std;
 
-
-
-struct test {
-    u32 I;
-};
 
 int main() {
-    foo();
-    using namespace std;
-    char buffer[128];
+
     
-    for ( i32 i = -128; i < 128; ++i) { 
-        Itoa(buffer, i);
-        cout << buffer << endl;
-    }
-    
+    char buffer[11];
+    mms_string Text = mms_CreateString(buffer, 12);
+    mms_Copy(&Text, "Hello World");
+    mms_NullTerm(&Text);
+
+    cout << Text.Length << endl;
+    cout << Text.Buffer << endl;
+
 }
