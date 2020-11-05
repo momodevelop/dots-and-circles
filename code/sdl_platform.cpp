@@ -370,7 +370,7 @@ int main(int argc, char* argv[]) {
                
 #if INTERNAL
                 case SDL_TEXTINPUT: {
-                    StrConcat(Input.DebugTextInputBuffer, e.text.text);
+                    PushDebugTextInputBuffer(&Input, e.text.text);
                 } break;
 #endif                
 
@@ -438,6 +438,9 @@ int main(int argc, char* argv[]) {
                         case SDLK_RETURN:
                             Input.DebugKeys[GameDebugKey_Return].Now = true;
                             break;
+                        case SDLK_BACKSPACE:
+                            Input.DebugKeys[GameDebugKey_Backspace].Now = true;
+                            break;
                     }
 #endif
                 } break;
@@ -461,12 +464,12 @@ int main(int argc, char* argv[]) {
                         case SDLK_SPACE: {
                             Input.ButtonSwitch.Now = false;
                         }break;
-                    } break;
+                    }
 #if INTERNAL
                     switch(e.key.keysym.sym) {
-                        case SDLK_F1:
+                        case SDLK_F1: {
                             Input.DebugKeys[GameDebugKey_F1].Now = false;
-                            break;
+                        } break;
                         case SDLK_F2:
                             Input.DebugKeys[GameDebugKey_F2].Now = false;
                             break;
@@ -502,7 +505,11 @@ int main(int argc, char* argv[]) {
                             break;
                         case SDLK_RETURN:
                             Input.DebugKeys[GameDebugKey_Return].Now = false;
+                            break; 
+                        case SDLK_BACKSPACE:
+                            Input.DebugKeys[GameDebugKey_Backspace].Now = false;
                             break;
+
                     }
 #endif
 

@@ -128,13 +128,6 @@ Update(game_mode_splash* Mode,
        game_input* Input,
        f32 DeltaTime)
 {
-    // Debug commands
-    {
-        if (StrLen(Input->DebugTextInputBuffer))
-            Log("%s", Input->DebugTextInputBuffer);
-    }
-
-
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
     
@@ -149,7 +142,7 @@ Update(game_mode_splash* Mode,
            GameState->Assets,
            RenderCommands,
            DeltaTime);
-    
+        
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         Log("Splash state exit");

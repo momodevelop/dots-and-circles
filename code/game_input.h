@@ -17,6 +17,7 @@ enum game_debug_key {
     GameDebugKey_F11,
     GameDebugKey_F12,
     GameDebugKey_Return,
+    GameDebugKey_Backspace,
 
     GameDebugKey_Count
 };
@@ -40,16 +41,22 @@ struct game_input {
         };
     };
 #if INTERNAL
-    char DebugTextInputBuffer[10]; // How many fingers can a person have??
+    char DebugTextInputBuffer[11]; // How many fingers can a person have??
+    usize DebugTextInputBufferLength;
     game_input_button DebugKeys[GameDebugKey_Count];
 #endif
 };
 
 #if INTERNAL
 static inline void
-SetDebugKeyByAscii(game_input* Input, char Ascii) {
+PushDebugTextInputBuffer(game_input* Input, const char* Str) {
     
-
+    for(; *Str != 0 && Input->DebugTextInputBufferLength < ArrayCount(Input->DebugTextInputBuffer) - 1; 
+            ++Str, ++Input->DebugTextInputBufferLength) 
+    {
+        Input->DebugTextInputBuffer[Input->DebugTextInputBufferLength] = (*Str); 
+    }
+    Input->DebugTextInputBuffer[Input->DebugTextInputBufferLength] = 0;
 }
 #endif
 
@@ -61,6 +68,7 @@ Update(game_input* Input) {
 
 #if INTERNAL
     Input->DebugTextInputBuffer[0] = 0;
+    Input->DebugTextInputBufferLength = 0;
     for (auto&& itr : Input->DebugKeys) {
         itr.Before = itr.Now;
     }

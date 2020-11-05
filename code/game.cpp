@@ -1,5 +1,6 @@
 #include "game.h"
 #include "game_assets.h"
+#include "game_input.h"
 #include "game_mode_splash.h"
 #include "game_mode_menu.h"
 #include "game_mode_main.h"
@@ -39,7 +40,94 @@ GameUpdate(game_memory* GameMemory,
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 1600, 900);
     }
-    
+#if INTERNAL
+    // System Debug
+    {
+        // F1 to toggle debug console
+        if (IsPoked(Input->DebugKeys[GameDebugKey_F1])) {
+            GameState->IsDebug = !GameState->IsDebug; 
+            if( GameState->IsDebug ) {
+                // Init the console
+                GameState->DebugInputBuffer[0] = 0;
+            }
+        }
+
+        if (IsPoked(Input->DebugKeys[GameDebugKey_F2])) {
+            GameState->IsShowTicksElapsed = !GameState->IsShowTicksElapsed;
+        }
+
+
+        if (GameState->IsDebug) {
+            PushCommandSetBasis(RenderCommands, 
+                    mmm_Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
+                                      0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true));
+            // Background
+            {
+                mmm_m44f A = mmm_Translation(0.5f, 0.5f, 0.f);
+                mmm_m44f S = mmm_Scale(1600.f, 240.f, 1.f);
+                mmm_m44f T = mmm_Translation(0.f, 0.f, 500.f);
+                PushCommandDrawQuad(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f }, T*S*A);
+                
+                S = mmm_Scale(1600.f, 40.f, 1.f);
+                T = mmm_Translation(0.f, 0.f, 501.f);
+                PushCommandDrawQuad(RenderCommands, { 0.2f, 0.2f, 0.2f, 1.f }, T*S*A);
+            }
+
+
+            if (StrLen(Input->DebugTextInputBuffer) > 0) {
+                StrConcat(GameState->DebugInputBuffer, Input->DebugTextInputBuffer);
+            }
+            
+            // Remove character
+            if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
+                // TODO: God i need my own string object...
+                usize Len = StrLen(GameState->DebugInputBuffer);
+                GameState->DebugInputBuffer[Len-1] = 0;
+            }
+
+            if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
+                for(i32 i = ArrayCount(GameState->DebugInfoBuffer) - 2; i >= 0 ; --i) {
+                    StrCopy(GameState->DebugInfoBuffer[i+1], GameState->DebugInfoBuffer[i]);
+                }
+
+                // Feed the text into info window
+                GameState->DebugInfoBuffer[0][0] = 0;
+                StrCopy(GameState->DebugInfoBuffer[0], GameState->DebugInputBuffer);
+                GameState->DebugInputBuffer[0] = 0;
+            }
+             
+            // Draw text
+            {
+                for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffer); ++i ) {
+                    DrawText(RenderCommands,
+                            GameState->Assets,
+                            { 10.f, 50.f + i * 40.f, 502.f },
+                            Font_Default, 32.f,
+                            GameState->DebugInfoBuffer[i]);
+                }
+
+                DrawText(RenderCommands, 
+                    GameState->Assets, 
+                    { 10.f, 10.f, 600.f }, 
+                    Font_Default, 32.f, 
+                    GameState->DebugInputBuffer);
+                
+
+
+            }
+        }
+
+
+        if (GameState->IsShowTicksElapsed) {
+            char buffer[128];
+            Itoa(buffer, (i32)TicksElapsed);
+            StrConcat(buffer, "ms");
+            DrawText(RenderCommands, GameState->Assets, { 0.f, 900.f, 501.f }, Font_Default, 32.f, buffer);  
+        }
+
+    }
+#endif
+
     // Clean state/Switch states
     if (GameState->NextModeType != GameModeType_None) {
         mmarn_Clear(&GameState->ModeArena);
@@ -91,22 +179,4 @@ GameUpdate(game_memory* GameMemory,
 
 
 
-#if INTERNAL
-    // System Debug
-    {
-        PushCommandSetBasis(RenderCommands, mmm_Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
-                0.f, 1600.f, 0.f, 900.f, -100.f, 100.f, true));
-        {
-            mmm_m44f A = mmm_Translation(0.5f, 0.5f, 0.f);
-            mmm_m44f S = mmm_Scale(1600.f, 100.f, 1.f);
-            mmm_m44f T = mmm_Translation(0.f, 0.f, 1.f);
-            PushCommandDrawQuad(RenderCommands, {0.3f, 0.3f, 0.3f, 1.f}, T*S*A);
-        }
-        // Black background
-        char buffer[128];
-        Itoa(buffer, (i32)TicksElapsed);
-        StrConcat(buffer, "ms");
-        DrawText(RenderCommands, GameState->Assets, {}, Font_Default, 32.f, buffer);  
-    }
-#endif
 }

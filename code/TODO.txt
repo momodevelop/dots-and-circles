@@ -1,8 +1,8 @@
-[] Waves
+[] String object?
 [] Debug console
+    [] Hooks?
 [] Hot swapping code
-[] Fixed framerate (target framerate)
-
+[] Simple string struct + ops to avoid iterating to 0? Maybe can even remove 0?
 [] Circle debug lines?
 [] Quaternion
 [] Profiling? 

@@ -40,6 +40,14 @@ struct game_state {
     mmarn_arena ModeArena;
     
     b32 IsInitialized;
+
+#if INTERNAL
+    b32 IsDebug;
+    b32 IsShowTicksElapsed;
+
+    char DebugInfoBuffer[5][110];
+    char DebugInputBuffer[110];
+#endif
     
 };
 

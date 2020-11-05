@@ -78,7 +78,7 @@ GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
 
 
 static inline b32
-CheckAssetSignature(void *Memory, const char* Signature) {
+CheckAssetSignature(void* Memory, const char* Signature) {
     u8* MemoryU8 = (u8*)Memory;
     u32 SigLen = StrLen(Signature);
     for (u32 i = 0; i < SigLen; ++i) {
