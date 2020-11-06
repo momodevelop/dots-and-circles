@@ -11,7 +11,7 @@ struct mmarn_arena {
 };
 
 static inline mmarn_arena 
-mmarn_CreateArena(void* Memory, usize Capacity) {
+mmarn_Arena(void* Memory, usize Capacity) {
     Assert(Capacity);
     return { (u8*)Memory, 0, Capacity};
 }

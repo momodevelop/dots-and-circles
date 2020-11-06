@@ -90,7 +90,7 @@ mmul_Clear(mmul_list<T>* List) {
 
 template<typename T>
 static inline mmul_list<T>
-mmul_CreateList(T* Arr, usize Capacity) {
+mmul_List(T* Arr, usize Capacity) {
     mmul_list<T> Ret = {};
     Ret.Objects = Arr;
     Ret.Capacity= Capacity;

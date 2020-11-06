@@ -36,7 +36,7 @@ mmcmd_Clear(mmcmd_commands* Commands) {
 }
 
 static inline mmcmd_commands
-mmcmd_Create(void* Memory, u32 MemorySize) {
+mmcmd_Commands(void* Memory, u32 MemorySize) {
     mmcmd_commands Ret = {};
     Ret.Memory = (u8*)Memory;
     Ret.MemorySize = MemorySize;
