@@ -8,6 +8,11 @@
 #include "game_text.h"
 #include "mm_maths.h"
 
+static inline void TestDebugCallback(void* Context) {
+    Log("Hello");
+}
+
+
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
            platform_api* Platform, 
@@ -23,7 +28,7 @@ GameUpdate(game_memory* GameMemory,
         gLog = Platform->Log;
 #endif
        // NOTE(Momo): Arenas
-        GameState->MainArena = mmarn_CreateArena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
+        GameState->MainArena = mmarn_Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
         game_assets* GameAssets = mmarn_PushStruct<game_assets>(&GameState->MainArena);
@@ -42,12 +47,18 @@ GameUpdate(game_memory* GameMemory,
         
 #if INTERNAL
         
-        GameState->DebugArena = mmarn_CreateArena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
-        GameState->DebugInputBuffer = mms_CreateString(mmarn_PushArray<char>(&GameState->DebugArena, 110), 110);
+        GameState->DebugArena = mmarn_Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
+        GameState->DebugInputBuffer = mms_PushString(&GameState->DebugArena, 110);
+
         for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffer); ++i) {
-            char* Buffer = mmarn_PushArray<char>(&GameState->DebugArena, 110);
-            GameState->DebugInfoBuffer[i] = mms_CreateString(Buffer, 110);
+            char* Memory = mmarn_PushArray<char>(&GameState->DebugArena, 110);
+            GameState->DebugInfoBuffer[i] = mms_StringBuffer(Memory, 110);
         }
+
+        // Temp, set some simple callbacks to debug callbacks
+        GameState->DebugCallbacks[0].Key = mms_String("Test");
+        GameState->DebugCallbacks[0].Callback = TestDebugCallback;
+        GameState->DebugCallbacks[0].Context = nullptr;
 #endif
     }
 
@@ -86,7 +97,7 @@ GameUpdate(game_memory* GameMemory,
 
 
             if (Input->DebugTextInputBuffer.Length > 0) {
-                mms_Concat(&GameState->DebugInputBuffer, &Input->DebugTextInputBuffer);
+                mms_Concat(&GameState->DebugInputBuffer, Input->DebugTextInputBuffer.String);
             }
             
             // Remove character
@@ -97,13 +108,29 @@ GameUpdate(game_memory* GameMemory,
 
             if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
                 for(i32 i = ArrayCount(GameState->DebugInfoBuffer) - 2; i >= 0 ; --i) {
-                    mms_Copy(&GameState->DebugInfoBuffer[i+1], &GameState->DebugInfoBuffer[i]);
+                    mms_string_buffer* Dest = GameState->DebugInfoBuffer + i + 1;
+                    mms_string_buffer* Src = GameState->DebugInfoBuffer + i;
+                    mms_Copy(Dest, Src->String);
                 }
 
                 // Feed the text into info window
                 mms_Clear(&GameState->DebugInfoBuffer[0]);
-                mms_Copy(&GameState->DebugInfoBuffer[0], &GameState->DebugInputBuffer);
+                mms_Copy(&GameState->DebugInfoBuffer[0], GameState->DebugInputBuffer.String);
                 mms_Clear(&GameState->DebugInputBuffer);
+
+                // Send a command to a callback
+                //for (u32 i = 0; i < ArrayCount(GameState->DebugCallbacks); ++i) {
+                    mms_string Key = GameState->DebugCallbacks[0].Key;
+                    mms_string_buffer CommandName = GameState->DebugInfoBuffer[0];
+                    if (mms_Compare(Key, CommandName.String)) {
+                         GameState->DebugCallbacks[0].Callback(GameState->DebugCallbacks[0].Context);
+                    }
+
+                //}
+
+
+
+
             }
              
             // Draw text
@@ -113,14 +140,14 @@ GameUpdate(game_memory* GameMemory,
                             GameState->Assets,
                             { 10.f, 50.f + i * 40.f, 502.f },
                             Font_Default, 32.f,
-                            GameState->DebugInfoBuffer[i]);
+                            GameState->DebugInfoBuffer[i].String);
                 }
 
                 DrawText(RenderCommands, 
                     GameState->Assets, 
                     { 10.f, 10.f, 600.f }, 
                     Font_Default, 32.f, 
-                    GameState->DebugInputBuffer);
+                    GameState->DebugInputBuffer.String);
                 
 
 
@@ -131,8 +158,8 @@ GameUpdate(game_memory* GameMemory,
         if (GameState->IsShowTicksElapsed) {
             char buffer[128];
             Itoa(buffer, (i32)TicksElapsed);
-            StrConcat(buffer, "ms");
-            DrawText(RenderCommands, GameState->Assets, { 0.f, 900.f, 501.f }, Font_Default, 32.f, buffer);  
+            CstrConcat(buffer, "ms");
+            DrawText(RenderCommands, GameState->Assets, { 0.f, 900.f, 501.f }, Font_Default, 32.f, mms_String(buffer));  
         }
 
     }

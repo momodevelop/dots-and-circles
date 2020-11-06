@@ -31,8 +31,6 @@ union mmm_v2f {
         f32 W;
         f32 H;
     };
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
 };
 
 union mmm_v3f {
@@ -60,8 +58,6 @@ union mmm_v3f {
     struct {
         f32 R, G, B;
     };
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
 };
 
 union mmm_v4f {
@@ -92,8 +88,6 @@ union mmm_v4f {
         
         f32 A;
     };
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index]; }
 };
 
 union mmm_v2u {
@@ -736,7 +730,7 @@ mmm_Translation(f32 x, f32 y, f32 z) {
 
 static inline mmm_m44f 
 mmm_Translation(mmm_v3f Vec) {
-    return mmm_Translation(Vec[0], Vec[1], Vec[2]);
+    return mmm_Translation(Vec.X, Vec.Y, Vec.Z);
 }
 
 
@@ -792,7 +786,7 @@ mmm_Scale(f32 x, f32 y, f32 z) {
 
 static inline mmm_m44f
 mmm_Scale(mmm_v3f Vec) {
-    return mmm_Scale(Vec[0], Vec[1], Vec[2]);
+    return mmm_Scale(Vec.X, Vec.Y, Vec.Z);
 }
 
 

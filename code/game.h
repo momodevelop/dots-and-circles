@@ -24,7 +24,15 @@ enum game_mode_type : u32 {
 
     GameModeType_None
 };
-	
+
+
+typedef void (*debug_callback)(void* Context);
+struct debug_command {
+    mms_string Key;
+    debug_callback Callback;
+    void* Context;
+};
+
 struct game_state {
     game_mode_type ModeType;
     game_mode_type NextModeType;
@@ -46,14 +54,15 @@ struct game_state {
     b32 IsDebug;
     b32 IsShowTicksElapsed;
 
-    mms_string DebugInfoBuffer[5];
-    mms_string DebugInputBuffer;
+    mms_string_buffer DebugInfoBuffer[5];
+    mms_string_buffer DebugInputBuffer;
 
     mmarn_arena DebugArena;
+    debug_command DebugCallbacks[10];
+    
 #endif
-
-
 };
+
 
 
 #endif //GAME_H
