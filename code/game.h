@@ -14,6 +14,8 @@ static platform_log* gLog;
 #include "game_renderer.h"
 #include "game_assets.h"
 #include "mm_string.h"
+#include "mm_list.h"
+
 
 // NOTE(Momo): How much do we care to make this generic and use CRTP + std::variant?
 enum game_mode_type : u32 {
@@ -28,9 +30,14 @@ enum game_mode_type : u32 {
 
 typedef void (*debug_callback)(void* Context);
 struct debug_command {
-    mms_string Key;
+    mms_const_string Key;
     debug_callback Callback;
     void* Context;
+};
+
+struct debug_string {
+    mms_string_buffer Buffer;
+    mmm_v4f Color;
 };
 
 struct game_state {
@@ -54,15 +61,28 @@ struct game_state {
     b32 IsDebug;
     b32 IsShowTicksElapsed;
 
-    mms_string_buffer DebugInfoBuffer[5];
+    debug_string DebugInfoBuffers[5];
     mms_string_buffer DebugInputBuffer;
 
     mmarn_arena DebugArena;
-    debug_command DebugCallbacks[10];
-    
+
+    // TODO: Implement a Hashmap??
+    mml_list<debug_command> DebugCallbacks;
 #endif
 };
 
+static inline void
+PushDebugInfo(game_state* GameState, mms_const_string String, mmm_v4f Color) {
+    for(i32 i = ArrayCount(GameState->DebugInfoBuffers) - 2; i >= 0 ; --i) {
+        debug_string* Dest = GameState->DebugInfoBuffers + i + 1;
+        debug_string* Src = GameState->DebugInfoBuffers + i;
+        mms_Copy(&Dest->Buffer, Src->Buffer.String);
+        Dest->Color = Src->Color;
 
+    }
+    GameState->DebugInfoBuffers[0].Color = Color;
+    mms_Clear(&GameState->DebugInfoBuffers[0].Buffer);
+    mms_Copy(&GameState->DebugInfoBuffers[0].Buffer, String);
+}
 
 #endif //GAME_H

@@ -8,10 +8,27 @@
 // TODO: Is it worth writing a struct to contain 'const' strings such that we do not have to deal with const char* anymore in our code base?
 
 
-struct mms_string {
+struct mms_const_string {
     usize Length;
-    char* E;
+    const char* E;
 };
+
+union mms_string {
+    mms_const_string Const;
+    struct { 
+        usize Length;
+        char* E;
+    };
+};
+
+static inline mms_const_string 
+mms_ConstString(const char* Cstr) {
+    return mms_const_string {
+        StrLen(Cstr),
+        Cstr
+    };
+}
+
 
 static inline mms_string 
 mms_String(char* Cstr) {
@@ -21,14 +38,6 @@ mms_String(char* Cstr) {
     };
 }
 
-
-static inline mms_string
-mms_String(const char* Literal) {
-    return mms_string {
-        StrLen(Literal),
-        (char*)Literal
-    };
-}
 
 struct mms_string_buffer {
     union {
@@ -62,13 +71,19 @@ mms_Clear(mms_string_buffer* Dest) {
 }
 
 static inline void
-mms_Copy(mms_string_buffer* Dest, mms_string Src) {
-    Assert(Dest->Length <= Src.Length);
+mms_Copy(mms_string_buffer* Dest, mms_const_string Src) {
+    Assert(Src.Length <= Dest->Capacity);
     for (u32 i = 0; i < Src.Length; ++i ) {
         Dest->E[i] = Src.E[i];
     }
     Dest->Length = Src.Length;
 }
+
+static inline void
+mms_Copy(mms_string_buffer* Dest, mms_string Src) {
+    mms_Copy(Dest, Src.Const);
+}
+
 
 static inline void
 mms_Push(mms_string_buffer* Dest, char Char) {
@@ -83,11 +98,15 @@ mms_Pop(mms_string_buffer* Dest) {
 }
 
 static inline void
-mms_Concat(mms_string_buffer* Dest, mms_string Src) {
+mms_Concat(mms_string_buffer* Dest, mms_const_string Src) {
     Assert(Dest->Length + Src.Length <= Dest->Capacity);
     for ( u32 i = 0; i < Src.Length; ++i ) {
         Dest->E[Dest->Length++] = Src.E[i];
     }
+}
+static inline void
+mms_Concat(mms_string_buffer* Dest, mms_string Src ) {
+    mms_Concat(Dest, Src.Const);
 }
 
 static inline void
@@ -97,7 +116,7 @@ mms_NullTerm(mms_string_buffer* Dest) {
 }
 
 static inline b32
-mms_Compare(mms_string Lhs, mms_string Rhs) { 
+mms_Compare(mms_const_string Lhs, mms_const_string Rhs) { 
     if(Lhs.Length != Rhs.Length) {
         return false;
     }
@@ -108,6 +127,20 @@ mms_Compare(mms_string Lhs, mms_string Rhs) {
     }
     return true;
 }
+
+static inline b32
+mms_Compare(mms_string Lhs, mms_string Rhs) {
+    return mms_Compare(Lhs.Const, Rhs.Const);    
+}
+static inline b32
+mms_Compare(mms_const_string Lhs, mms_string Rhs) {
+    return mms_Compare(Lhs, Rhs.Const);
+}
+static inline b32
+mms_Compare(mms_string Lhs, mms_const_string Rhs) {
+    return mms_Compare(Lhs.Const, Rhs);
+}
+
 
 #include "mm_arena.h"
 static inline mms_string_buffer

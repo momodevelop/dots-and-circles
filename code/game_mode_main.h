@@ -212,7 +212,7 @@ Update(game_mode_main* Mode,
     constexpr static f32 DesignHeight = 900.f;
     constexpr static f32 DesignDepth = 1000.f;
 
-    PushCommandClearColor(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f });
+    PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushCommandSetOrthoBasis(RenderCommands, {}, { DesignWidth, DesignHeight, DesignDepth });
     
     auto* Assets = GameState->Assets;

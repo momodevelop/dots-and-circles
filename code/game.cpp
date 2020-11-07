@@ -7,10 +7,10 @@
 #include "game_mode_atlas_test.h"
 #include "game_text.h"
 #include "mm_maths.h"
+#include "mm_colors.h"
 
-static inline void TestDebugCallback(void* Context) {
-    Log("Hello");
-}
+static inline void TestDebugCallback2(void* Context) {
+   }
 
 
 extern "C" void
@@ -44,21 +44,28 @@ GameUpdate(game_memory* GameMemory,
 
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 1600, 900);
-        
+
 #if INTERNAL
         
         GameState->DebugArena = mmarn_Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
         GameState->DebugInputBuffer = mms_PushString(&GameState->DebugArena, 110);
 
-        for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffer); ++i) {
+        for (auto&& DebugInfoBuffer : GameState->DebugInfoBuffers) {
             char* Memory = mmarn_PushArray<char>(&GameState->DebugArena, 110);
-            GameState->DebugInfoBuffer[i] = mms_StringBuffer(Memory, 110);
+            DebugInfoBuffer.Buffer = mms_StringBuffer(Memory, 110);
+            DebugInfoBuffer.Color = { 1.f, 1.f, 1.f, 1.f };
         }
 
         // Temp, set some simple callbacks to debug callbacks
-        GameState->DebugCallbacks[0].Key = mms_String("Test");
-        GameState->DebugCallbacks[0].Callback = TestDebugCallback;
-        GameState->DebugCallbacks[0].Context = nullptr;
+        GameState->DebugCallbacks = mml_PushList<debug_command>(&GameState->DebugArena, 32);
+        mml_Push(&GameState->DebugCallbacks, {  mms_ConstString("jump"), [](void* Context) {
+            game_state* GameState = (game_state*)Context;
+            PushDebugInfo(GameState, mms_ConstString("Jumping to game!"), mmc_ColorYellow);
+            GameState->NextModeType = GameModeType_Main;
+        }, GameState });
+        
+
+    
 #endif
     }
 
@@ -96,56 +103,49 @@ GameUpdate(game_memory* GameMemory,
             }
 
 
-            if (Input->DebugTextInputBuffer.Length > 0) {
-                mms_Concat(&GameState->DebugInputBuffer, Input->DebugTextInputBuffer.String);
+            if (Input->DebugTextInputBuffer.Length > 0) { 
+                if (GameState->DebugInputBuffer.Length + Input->DebugTextInputBuffer.Length <= 
+                        GameState->DebugInputBuffer.Capacity)  {
+                    mms_Concat(&GameState->DebugInputBuffer, Input->DebugTextInputBuffer.String);
+                }
             }
             
             // Remove character
             if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
-                // TODO: God i need my own string object...
-                mms_Pop(&GameState->DebugInputBuffer);
+                // TODO: Create an pop safely function? 
+                // Returns an iterator? Returns a tuple? Returns an Option?
+                if (GameState->DebugInputBuffer.Length > 0)
+                    mms_Pop(&GameState->DebugInputBuffer);
             }
 
             if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
-                for(i32 i = ArrayCount(GameState->DebugInfoBuffer) - 2; i >= 0 ; --i) {
-                    mms_string_buffer* Dest = GameState->DebugInfoBuffer + i + 1;
-                    mms_string_buffer* Src = GameState->DebugInfoBuffer + i;
-                    mms_Copy(Dest, Src->String);
-                }
-
-                // Feed the text into info window
-                mms_Clear(&GameState->DebugInfoBuffer[0]);
-                mms_Copy(&GameState->DebugInfoBuffer[0], GameState->DebugInputBuffer.String);
+                PushDebugInfo(GameState, GameState->DebugInputBuffer.String.Const, mmc_ColorWhite);
                 mms_Clear(&GameState->DebugInputBuffer);
 
                 // Send a command to a callback
-                //for (u32 i = 0; i < ArrayCount(GameState->DebugCallbacks); ++i) {
-                    mms_string Key = GameState->DebugCallbacks[0].Key;
-                    mms_string_buffer CommandName = GameState->DebugInfoBuffer[0];
-                    if (mms_Compare(Key, CommandName.String)) {
-                         GameState->DebugCallbacks[0].Callback(GameState->DebugCallbacks[0].Context);
+                for (auto&& Command : GameState->DebugCallbacks) {
+                    if (mms_Compare(Command.Key, GameState->DebugInfoBuffers[0].Buffer.String)) {
+                         Command.Callback(Command.Context);
+                         break;
                     }
-
-                //}
-
-
-
-
+                }
             }
              
             // Draw text
             {
-                for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffer); ++i ) {
+                for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffers); ++i) {
                     DrawText(RenderCommands,
                             GameState->Assets,
                             { 10.f, 50.f + i * 40.f, 502.f },
+                            GameState->DebugInfoBuffers[i].Color,
                             Font_Default, 32.f,
-                            GameState->DebugInfoBuffer[i].String);
+                            GameState->DebugInfoBuffers[i].Buffer.String);
                 }
 
                 DrawText(RenderCommands, 
                     GameState->Assets, 
                     { 10.f, 10.f, 600.f }, 
+                    mmc_ColorWhite,
                     Font_Default, 32.f, 
                     GameState->DebugInputBuffer.String);
                 
@@ -159,7 +159,12 @@ GameUpdate(game_memory* GameMemory,
             char buffer[128];
             Itoa(buffer, (i32)TicksElapsed);
             CstrConcat(buffer, "ms");
-            DrawText(RenderCommands, GameState->Assets, { 0.f, 900.f, 501.f }, Font_Default, 32.f, mms_String(buffer));  
+            DrawText(RenderCommands, 
+                    GameState->Assets, 
+                    { 0.f, 900.f, 501.f }, 
+                    mmc_ColorWhite,
+                    Font_Default, 
+                    32.f, mms_String(buffer));  
         }
 
     }

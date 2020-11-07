@@ -10,6 +10,7 @@ static inline void
 DrawText(mmcmd_commands* RenderCommands, 
            game_assets* Assets,
            mmm_v3f Position,
+           mmm_v4f Color, 
            font_id FontId,
            f32 Size, 
            mms_string String) 
@@ -17,7 +18,6 @@ DrawText(mmcmd_commands* RenderCommands,
     mms_string& StringRef = String;
 
     mmm_v3f CurPosition = Position;
-    mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
     
     for(u32 i = 0; i < String.Length; ++i) {
         font* Font = Assets->Fonts + FontId;
