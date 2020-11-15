@@ -905,7 +905,7 @@ struct mmm_ray2f {
 };
 
 static inline mmm_ray2f
-Ray2F(mmm_line2f Line) {
+mmm_Ray2F(mmm_line2f Line) {
     mmm_ray2f Ret = {};
     Ret.Origin = Line.Min;
     Ret.Direction = Line.Max - Line.Min;

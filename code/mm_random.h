@@ -533,7 +533,7 @@ struct mmrng_series
 static inline mmrng_series 
 mmrng_Seed(u32 Value)
 {
-    mmrng_series Series;
+    mmrng_series Series = {};
     Series.Index = Value % ArrayCount(mmrng_Table);
     return Series;
 }

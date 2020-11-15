@@ -23,8 +23,6 @@ struct mml_it {
 };
 
 
-template<typename T>
-using mml_unary_compare_cb = b32 (*)(const T*);
 
 // Iterators
 template<typename T>
@@ -89,9 +87,9 @@ mml_Pop(mml_list<T>* List) {
     --List->Used;
 }
 
-template<typename T>
+template<typename T, typename unary_comparer>
 static inline mml_it<T>
-mml_Find(mml_list<T>* List, mml_unary_compare_cb<T> UnaryComparer) {
+mml_Find(mml_list<T>* List, unary_comparer UnaryComparer) {
     for(usize i = 0; i < List->Used; ++i) {
         if(UnaryComparer(&List->Objects[i])) {
             return { List, i };
@@ -110,9 +108,9 @@ mml_Remove(mml_list<T>* List, mml_it<T> It) {
     return It; 
 }
 
-template<typename T> 
+template<typename T, typename unary_comparer> 
 static inline mml_it<T>
-mml_RemoveIf(mml_list<T>* List, mml_unary_compare_cb<T> UnaryComparer) {
+mml_RemoveIf(mml_list<T>* List, unary_comparer UnaryComparer) {
     return mml_Remove(List, mml_Find(List, UnaryComparer));
 }
 
@@ -133,7 +131,7 @@ end(mml_list<T>& List) {
 #include "mm_arena.h"
 template<typename T>
 static inline mml_list<T>
-mml_PushList(mmarn_arena* Arena, usize Capacity) {
+mml_List(mmarn_arena* Arena, usize Capacity) {
     mml_list<T> Ret = {};
     Ret.Objects = mmarn_PushArray<T>(Arena, Capacity);
     Ret.Capacity = Capacity;

@@ -213,9 +213,9 @@ int main() {
     u32 AtlasHeight = 1024;
     {
         constexpr usize NodeCount = ArrayCount(PackedRects) + 1;
-        mmrp_context RectPackContext;
+        
         mmrp_node RectPackNodes[NodeCount];
-        mmrp_Init(&RectPackContext, AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
+        mmrp_context RectPackContext = mmrp_CreateRectPacker(AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
         if (!mmrp_Pack(&RectPackContext, PackedRects, PackedRectCount, MmrpSort_Height)) {
             printf("Failed to generate bitmap\n");
             Assert(false);

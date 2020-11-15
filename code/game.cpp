@@ -20,51 +20,44 @@ GameUpdate(game_memory* GameMemory,
     game_state* GameState = (game_state*)GameMemory->MainMemory;
        // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
-#if INTERNAL
-        gLog = Platform->Log;
-#endif
        // NOTE(Momo): Arenas
         GameState->MainArena = mmarn_Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
-        game_assets* GameAssets = mmarn_PushStruct<game_assets>(&GameState->MainArena);
-        GameState->Assets = GameAssets;
-        Init(GameAssets, &GameState->MainArena, Platform, RenderCommands, "yuu");
-        
+        GameState->Assets = CreateAssets(&GameState->MainArena, Platform, RenderCommands, "yuu");
+   
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = mmarn_PushArenaAll(&GameState->MainArena);
+        GameState->ModeArena = mmarn_SubArena(&GameState->MainArena, mmarn_Remaining(&GameState->MainArena));
         GameState->ModeType = GameModeType_None;
         GameState->NextModeType = GameModeType_Splash;
         GameState->IsInitialized = true;
-
 
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 1600, 900);
 
 #if INTERNAL
-        
-        GameState->DebugArena = mmarn_Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
-        GameState->DebugInputBuffer = mms_PushString(&GameState->DebugArena, 110);
 
-        for (auto&& DebugInfoBuffer : GameState->DebugInfoBuffers) {
-            char* Memory = mmarn_PushArray<char>(&GameState->DebugArena, 110);
-            DebugInfoBuffer.Buffer = mms_StringBuffer(Memory, 110);
-            DebugInfoBuffer.Color = { 1.f, 1.f, 1.f, 1.f };
-        }
+        GameState->DebugArena = mmarn_Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
+        GameState->DebugConsole = CreateDebugConsole(&GameState->DebugArena);
 
         // Temp, set some simple callbacks to debug callbacks
-        GameState->DebugCallbacks = mml_PushList<debug_command>(&GameState->DebugArena, 32);
-        mml_Push(&GameState->DebugCallbacks, {  mms_ConstString("jump"), [](void* Context) {
-            game_state* GameState = (game_state*)Context;
-            PushDebugInfo(GameState, mms_ConstString("Jumping to game!"), mmc_ColorYellow);
-            GameState->NextModeType = GameModeType_Main;
-        }, GameState });
+        Register(&GameState->DebugConsole, 
+            mms_ConstString("jump"), 
+            [](void* Context) {
+                game_state* GameState = (game_state*)Context;
+                PushDebugInfo(&GameState->DebugConsole, mms_ConstString("Jumping to game!"), mmc_ColorYellow);
+                GameState->NextModeType = GameModeType_Main;
+            }, GameState);
+
+
+
         
 
     
 #endif
     }
 
+    // Remove this?
 #if INTERNAL
     gLog = Platform->Log;
 #endif
@@ -75,10 +68,6 @@ GameUpdate(game_memory* GameMemory,
         // F1 to toggle debug console
         if (IsPoked(Input->DebugKeys[GameDebugKey_F1])) {
             GameState->IsDebug = !GameState->IsDebug; 
-            if( GameState->IsDebug ) {
-                // Init the console
-                mms_Clear(&GameState->DebugInputBuffer);
-            }
         }
 
         if (IsPoked(Input->DebugKeys[GameDebugKey_F2])) {
@@ -87,67 +76,8 @@ GameUpdate(game_memory* GameMemory,
 
 
         if (GameState->IsDebug) {
-            PushCommandSetBasis(RenderCommands, 
-                    mmm_Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
-                                      0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true));
-            // Background
-            {
-                mmm_m44f A = mmm_Translation(0.5f, 0.5f, 0.f);
-                mmm_m44f S = mmm_Scale(1600.f, 240.f, 1.f);
-                mmm_m44f T = mmm_Translation(0.f, 0.f, 500.f);
-                PushCommandDrawQuad(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f }, T*S*A);
-                
-                S = mmm_Scale(1600.f, 40.f, 1.f);
-                T = mmm_Translation(0.f, 0.f, 501.f);
-                PushCommandDrawQuad(RenderCommands, { 0.2f, 0.2f, 0.2f, 1.f }, T*S*A);
-            }
-
-
-            if (Input->DebugTextInputBuffer.Length > 0) { 
-                 mms_ConcatSafely(&GameState->DebugInputBuffer, Input->DebugTextInputBuffer.String);
-            }
-            
-            // Remove character
-            if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
-                // TODO: Create an pop safely function? 
-                // Returns an iterator? Returns a tuple? Returns an Option?
-                mms_PopSafely(&GameState->DebugInputBuffer);
-            }
-
-            if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
-                PushDebugInfo(GameState, GameState->DebugInputBuffer.String, mmc_ColorWhite);
-                mms_Clear(&GameState->DebugInputBuffer);
-
-                // Send a command to a callback
-                for (auto&& Command : GameState->DebugCallbacks) {
-                    if (mms_Compare(Command.Key, GameState->DebugInfoBuffers[0].Buffer.String)) {
-                         Command.Callback(Command.Context);
-                         break;
-                    }
-                }
-            }
-             
-            // Draw text
-            {
-                for (u32 i = 0; i < ArrayCount(GameState->DebugInfoBuffers); ++i) {
-                    DrawText(RenderCommands,
-                            GameState->Assets,
-                            { 10.f, 50.f + i * 40.f, 502.f },
-                            GameState->DebugInfoBuffers[i].Color,
-                            Font_Default, 32.f,
-                            GameState->DebugInfoBuffers[i].Buffer.String);
-                }
-
-                DrawText(RenderCommands, 
-                    GameState->Assets, 
-                    { 10.f, 10.f, 600.f }, 
-                    mmc_ColorWhite,
-                    Font_Default, 32.f, 
-                    GameState->DebugInputBuffer.String);
-                
-
-
-            }
+            Update(&GameState->DebugConsole, Input);
+            Render(&GameState->DebugConsole, RenderCommands, &GameState->Assets);  
         }
 
 
@@ -156,13 +86,13 @@ GameUpdate(game_memory* GameMemory,
     if (GameState->IsShowTicksElapsed) {
         auto Scratch = mmarn_BeginScratch(&GameState->DebugArena);
         Defer { mmarn_EndScratch(&Scratch); };
-        mms_string TempBuffer = mms_PushString(Scratch.Arena, 32);
+        mms_string TempBuffer = mms_String(Scratch.Arena, 32);
         mms_Itoa(&TempBuffer, (i32)TicksElapsed);
         mms_Concat(&TempBuffer, mms_ConstString("ms"));
         mms_NullTerm(&TempBuffer);
 
         DrawText(RenderCommands, 
-                GameState->Assets, 
+                &GameState->Assets, 
                 { 10.f, 880.f, 700.f }, 
                 mmc_ColorWhite,
                 Font_Default, 

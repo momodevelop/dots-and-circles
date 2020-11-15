@@ -174,13 +174,13 @@ static inline void
 Init(game_mode_main* Mode, game_state* GameState) {
     Log("Main state initialized!");
     
-    Mode->Arena = mmarn_PushArenaAll(&GameState->ModeArena);
+    Mode->Arena = mmarn_SubArena(&GameState->ModeArena, mmarn_Remaining(&GameState->ModeArena));
     Mode->Bullets = mmul_PushList<bullet>(&Mode->Arena, 128);
     Mode->Enemies = mmul_PushList<enemy>(&Mode->Arena, 128);
     Mode->Wave.IsDone = true;
     Mode->Rng = mmrng_Seed(0); // TODO: Used system clock for seed.
 
-    auto* Assets = GameState->Assets;
+    auto* Assets = &GameState->Assets;
     auto* Player = &Mode->Player;
     Player->Speed = 300.f;
     Player->DotImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
@@ -218,7 +218,7 @@ Update(game_mode_main* Mode,
     PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushCommandSetOrthoBasis(RenderCommands, {}, { DesignWidth, DesignHeight, DesignDepth });
     
-    auto* Assets = GameState->Assets;
+    auto* Assets = &GameState->Assets;
     auto* Player = &Mode->Player;
     
     // NOTE(Momo): Input

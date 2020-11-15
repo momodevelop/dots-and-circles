@@ -36,7 +36,7 @@ struct mms_string {
 
 
 static inline mms_string
-mms_StringBuffer(char* Memory, usize Capacity) {
+mms_String(char* Memory, usize Capacity) {
     Assert(Capacity > 0);
     Assert(Memory);
 
@@ -166,9 +166,9 @@ mms_Itoa(mms_string* Dest, i32 Num) {
 
 #include "mm_arena.h"
 static inline mms_string
-mms_PushString(mmarn_arena* Arena, usize Capacity) {
+mms_String(mmarn_arena* Arena, usize Capacity) {
     char* Buffer = mmarn_PushArray<char>(Arena, Capacity); 
-    mms_string Ret = mms_StringBuffer(Buffer, Capacity);
+    mms_string Ret = mms_String(Buffer, Capacity);
     return Ret;
 }
 

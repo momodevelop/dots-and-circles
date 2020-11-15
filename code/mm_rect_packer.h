@@ -36,16 +36,17 @@ struct mmrp_context {
     usize NodeCount;
 };
 
-static inline void
-mmrp_Init(mmrp_context* Context, u32 Width, u32 Height, mmrp_node* Nodes, usize NodeCount) 
+static inline mmrp_context
+mmrp_CreateRectPacker(u32 Width, u32 Height, mmrp_node* Nodes, usize NodeCount) 
 {
-    Context->Width = Width;
-    Context->Height = Height;
-    Context->Nodes = Nodes;
-    Context->NodeCount = NodeCount;
+    mmrp_context Ret = {};
+    Ret.Width = Width;
+    Ret.Height = Height;
+    Ret.Nodes = Nodes;
+    Ret.NodeCount = NodeCount;
+
+    return Ret;
 }
-
-
 
 static inline i32 
 mmrp__SortWidth(const void* Lhs, const void* Rhs) {

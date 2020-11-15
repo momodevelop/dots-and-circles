@@ -99,7 +99,7 @@ mmarn_PushArray(mmarn_scratch* TempArena, usize Count) {
 }
 
 static inline mmarn_arena
-mmarn_PushArena(mmarn_arena* SrcArena, usize Capacity) {
+mmarn_SubArena(mmarn_arena* SrcArena, usize Capacity) {
     Assert(Capacity);
     mmarn_arena Ret = {};
     Ret.Memory = (u8*)mmarn_PushBlock(SrcArena, Capacity);
@@ -108,10 +108,5 @@ mmarn_PushArena(mmarn_arena* SrcArena, usize Capacity) {
     return Ret;
 }
 
-// Creates a sub arena with all remaining memory
-static inline mmarn_arena
-mmarn_PushArenaAll(mmarn_arena* SrcArena) { 
-    return mmarn_PushArena(SrcArena, mmarn_Remaining(SrcArena));
-}
 
 #endif

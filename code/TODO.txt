@@ -1,3 +1,4 @@
+[] Refactor how initializing assets work
 [] Debug console
     [] Compress
     [] Argument parser

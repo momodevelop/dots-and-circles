@@ -25,7 +25,7 @@ DrawString(mmcmd_commands* RenderCommands,
     
     u32 Strlen = CstrLen(String);
     for(u32 i = 0; i < Strlen; ++i) {
-        auto* Glyph = Font->Glyphs + GetGlyphIndexFromCodepoint(String[i]);
+        auto* Glyph = Font->Glyphs + HashCodepoint(String[i]);
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
@@ -70,19 +70,19 @@ Update(game_mode_atlas_test* Mode,
     {
         mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
         mmm_m44f Transform = mmm_Scale(5.f, 5.f, 1.f);
-        auto* AtlasRect = GameState->Assets->AtlasRects + AtlasRect_Ryoji;
+        auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_Ryoji;
         
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color, 
                                     Transform, 
                                     AtlasRect->BitmapId,
-                                    GetAtlasUV(GameState->Assets, AtlasRect));
+                                    GetAtlasUV(&GameState->Assets, AtlasRect));
     }
 #endif
     // NOTE(Momo): Font test
     {
         DrawString(RenderCommands, 
-                   GameState->Assets, 
+                   &GameState->Assets, 
                    //{ -250.f, -320.f, 0.f }, 
                    {},
                    72.f, 

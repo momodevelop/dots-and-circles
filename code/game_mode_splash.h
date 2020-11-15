@@ -133,15 +133,15 @@ Update(game_mode_splash* Mode,
     
     for (u32 i = 0; i < 2; ++i) {
         Update(&Mode->SplashImg[i], 
-               GameState->Assets, 
+               &GameState->Assets, 
                RenderCommands, 
                DeltaTime);
     }
     
     Update(&Mode->SplashBlackout,
-           GameState->Assets,
-           RenderCommands,
-           DeltaTime);
+            &GameState->Assets,
+            RenderCommands,
+            DeltaTime);
         
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {

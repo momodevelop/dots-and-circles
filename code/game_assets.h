@@ -47,7 +47,7 @@ struct font {
 
 
 static inline usize
-GetGlyphIndexFromCodepoint(u32 Codepoint) {
+HashCodepoint(u32 Codepoint) {
     Assert(Codepoint >= Codepoint_Start);
     Assert(Codepoint <= Codepoint_End);
     return Codepoint - Codepoint_Start;
@@ -91,17 +91,18 @@ CheckAssetSignature(void* Memory, const char* Signature) {
 
 
 // TODO(Momo): Perhaps remove render_commands and replace with platform call for linking textures?
-static inline void
-Init(game_assets* Assets, 
-     mmarn_arena* Arena, 
+// TODO(Momo): Change to CreateAssets() structure to align convention
+static inline game_assets
+CreateAssets(mmarn_arena* Arena, 
      platform_api* Platform,
      mmcmd_commands* RenderCommands,
      const char* Filename)
 {
-    Assets->Arena = mmarn_PushArena(Arena, Megabytes(100));
-    Assets->Platform = Platform;
+    game_assets Assets = {};
+    Assets.Arena = mmarn_SubArena(Arena, Megabytes(100));
+    Assets.Platform = Platform;
     
-    mmarn_scratch Scratch = mmarn_BeginScratch(&Assets->Arena);
+    mmarn_scratch Scratch = mmarn_BeginScratch(&Assets.Arena);
     Defer{ mmarn_EndScratch(&Scratch); };
     
     // NOTE(Momo): File read into temp mmarn_arena
@@ -137,14 +138,14 @@ Init(game_assets* Assets,
                 auto* YuuBitmap = mmbw_Read<yuu_bitmap>(&FileMemoryItr);
                 
                 // NOTE(Momo): Allocate Image
-                auto* Bitmap = Assets->Bitmaps + YuuBitmap->Id;
+                auto* Bitmap = Assets.Bitmaps + YuuBitmap->Id;
                 Bitmap->Width = YuuBitmap->Width;
                 Bitmap->Height = YuuBitmap->Height;
                 Bitmap->Channels = YuuBitmap->Channels;
                 
                 // NOTE(Momo): Allocate pixel data
                 usize BitmapSize = Bitmap->Width * Bitmap->Height * Bitmap->Channels;
-                Bitmap->Pixels = mmarn_PushBlock(&Assets->Arena, BitmapSize, 1);
+                Bitmap->Pixels = mmarn_PushBlock(&Assets.Arena, BitmapSize, 1);
                 Assert(Bitmap->Pixels);
                 MemCopy(Bitmap->Pixels, FileMemoryItr, BitmapSize);
                 FileMemoryItr += BitmapSize;
@@ -158,19 +159,19 @@ Init(game_assets* Assets,
             } break;
             case AssetType_AtlasRect: { 
                 auto* YuuAtlasRect = mmbw_Read<yuu_atlas_rect>(&FileMemoryItr);
-                auto* AtlasRect = Assets->AtlasRects + YuuAtlasRect->Id;
+                auto* AtlasRect = Assets.AtlasRects + YuuAtlasRect->Id;
                 AtlasRect->Rect = YuuAtlasRect->Rect;
                 AtlasRect->BitmapId = YuuAtlasRect->BitmapId;
             } break;
             case AssetType_Font: {
                 auto* YuuFont = mmbw_Read<yuu_font>(&FileMemoryItr);
-                auto* Font = Assets->Fonts + YuuFont->Id;
+                auto* Font = Assets.Fonts + YuuFont->Id;
                 Font->LineGap = YuuFont->LineGap;
             } break;
             case AssetType_FontGlyph: {
                 auto* YuuFontGlyph = mmbw_Read<yuu_font_glyph>(&FileMemoryItr);
-                auto* Font = Assets->Fonts + YuuFontGlyph->FontId;
-                usize GlyphIndex = GetGlyphIndexFromCodepoint(YuuFontGlyph->Codepoint);
+                auto* Font = Assets.Fonts + YuuFontGlyph->FontId;
+                usize GlyphIndex = HashCodepoint(YuuFontGlyph->Codepoint);
                 auto* Glyph = Font->Glyphs + GlyphIndex;
                 
                 Glyph->AtlasRect = YuuFontGlyph->AtlasRect;
@@ -181,8 +182,8 @@ Init(game_assets* Assets,
             } break;
             case AssetType_FontKerning: {
                 auto* YuuFontKerning = mmbw_Read<yuu_font_kerning>(&FileMemoryItr);
-                auto* Font = Assets->Fonts + YuuFontKerning->FontId;
-                Font->Kernings[YuuFontKerning->CodepointA][YuuFontKerning->CodepointB] = YuuFontKerning->Kerning;
+                auto* Font = Assets.Fonts + YuuFontKerning->FontId;
+                Font->Kernings[HashCodepoint(YuuFontKerning->CodepointA)][HashCodepoint(YuuFontKerning->CodepointB)] = YuuFontKerning->Kerning;
                 
             } break;
             default: {
@@ -194,6 +195,7 @@ Init(game_assets* Assets,
         
     }
     
+    return Assets;
 }
 
 

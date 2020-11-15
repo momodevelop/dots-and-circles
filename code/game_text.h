@@ -19,7 +19,7 @@ DrawText(mmcmd_commands* RenderCommands,
     
     for(u32 i = 0; i < String.Length; ++i) {
         font* Font = Assets->Fonts + FontId;
-        auto* Glyph = Font->Glyphs + GetGlyphIndexFromCodepoint(String.E[i]);
+        auto* Glyph = Font->Glyphs + HashCodepoint(String.E[i]);
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
@@ -40,7 +40,7 @@ DrawText(mmcmd_commands* RenderCommands,
         
         CurPosition.X += Glyph->Advance * Size;
         if (i != String.Length - 1 ) {
-            CurPosition.X += Font->Kernings[String.E[i]][String.E[i+1]] * Size;
+            CurPosition.X += Font->Kernings[HashCodepoint(String.E[i])][HashCodepoint(String.E[i+1])] * Size;
         }
     }
     
