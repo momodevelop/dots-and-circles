@@ -80,7 +80,7 @@ GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
 static inline b32
 CheckAssetSignature(void* Memory, const char* Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    u32 SigLen = StrLen(Signature);
+    u32 SigLen = CstrLen(Signature);
     for (u32 i = 0; i < SigLen; ++i) {
         if (MemoryU8[i] != Signature[i]) {
             return false;
@@ -120,7 +120,7 @@ Init(game_assets* Assets,
     {
         const char* Signature = "MOMO";
         Assert(CheckAssetSignature(FileMemoryItr, Signature));
-        FileMemoryItr+= StrLen(Signature);
+        FileMemoryItr+= CstrLen(Signature);
         
         // NOTE(Momo): Read the counts in order
         FileEntryCount = *(mmbw_Read<u32>(&FileMemoryItr));

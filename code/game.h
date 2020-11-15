@@ -36,7 +36,7 @@ struct debug_command {
 };
 
 struct debug_string {
-    mms_string_buffer Buffer;
+    mms_string Buffer;
     mmm_v4f Color;
 };
 
@@ -62,7 +62,7 @@ struct game_state {
     b32 IsShowTicksElapsed;
 
     debug_string DebugInfoBuffers[5];
-    mms_string_buffer DebugInputBuffer;
+    mms_string DebugInputBuffer;
 
     mmarn_arena DebugArena;
 
@@ -76,7 +76,7 @@ PushDebugInfo(game_state* GameState, mms_const_string String, mmm_v4f Color) {
     for(i32 i = ArrayCount(GameState->DebugInfoBuffers) - 2; i >= 0 ; --i) {
         debug_string* Dest = GameState->DebugInfoBuffers + i + 1;
         debug_string* Src = GameState->DebugInfoBuffers + i;
-        mms_Copy(&Dest->Buffer, Src->Buffer.String);
+        mms_Copy(&Dest->Buffer, &Src->Buffer);
         Dest->Color = Src->Color;
 
     }

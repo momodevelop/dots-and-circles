@@ -9,10 +9,6 @@
 #include "mm_maths.h"
 #include "mm_colors.h"
 
-static inline void TestDebugCallback2(void* Context) {
-   }
-
-
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
            platform_api* Platform, 
@@ -69,6 +65,10 @@ GameUpdate(game_memory* GameMemory,
 #endif
     }
 
+#if INTERNAL
+    gLog = Platform->Log;
+#endif
+
 
     // System Debug
     {
@@ -104,22 +104,18 @@ GameUpdate(game_memory* GameMemory,
 
 
             if (Input->DebugTextInputBuffer.Length > 0) { 
-                if (GameState->DebugInputBuffer.Length + Input->DebugTextInputBuffer.Length <= 
-                        GameState->DebugInputBuffer.Capacity)  {
-                    mms_Concat(&GameState->DebugInputBuffer, Input->DebugTextInputBuffer.String);
-                }
+                 mms_ConcatSafely(&GameState->DebugInputBuffer, Input->DebugTextInputBuffer.String);
             }
             
             // Remove character
             if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
                 // TODO: Create an pop safely function? 
                 // Returns an iterator? Returns a tuple? Returns an Option?
-                if (GameState->DebugInputBuffer.Length > 0)
-                    mms_Pop(&GameState->DebugInputBuffer);
+                mms_PopSafely(&GameState->DebugInputBuffer);
             }
 
             if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
-                PushDebugInfo(GameState, GameState->DebugInputBuffer.String.Const, mmc_ColorWhite);
+                PushDebugInfo(GameState, GameState->DebugInputBuffer.String, mmc_ColorWhite);
                 mms_Clear(&GameState->DebugInputBuffer);
 
                 // Send a command to a callback
@@ -155,18 +151,23 @@ GameUpdate(game_memory* GameMemory,
         }
 
 
-        if (GameState->IsShowTicksElapsed) {
-            char buffer[128];
-            Itoa(buffer, (i32)TicksElapsed);
-            CstrConcat(buffer, "ms");
-            DrawText(RenderCommands, 
-                    GameState->Assets, 
-                    { 0.f, 900.f, 501.f }, 
-                    mmc_ColorWhite,
-                    Font_Default, 
-                    32.f, mms_String(buffer));  
-        }
+    }
 
+    if (GameState->IsShowTicksElapsed) {
+        auto Scratch = mmarn_BeginScratch(&GameState->DebugArena);
+        Defer { mmarn_EndScratch(&Scratch); };
+        mms_string TempBuffer = mms_PushString(Scratch.Arena, 32);
+        mms_Itoa(&TempBuffer, (i32)TicksElapsed);
+        mms_Concat(&TempBuffer, mms_ConstString("ms"));
+        mms_NullTerm(&TempBuffer);
+
+        DrawText(RenderCommands, 
+                GameState->Assets, 
+                { 10.f, 880.f, 700.f }, 
+                mmc_ColorWhite,
+                Font_Default, 
+                32.f, 
+                TempBuffer.String);  
     }
 
     // Clean state/Switch states

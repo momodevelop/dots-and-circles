@@ -13,6 +13,10 @@
 #include "game_input.h"
 
 
+static const char* GameDllFilename = "game.dll";
+static const char* TempGameDllFilename = "temp_game.dll"; 
+
+
 #if INTERNAL
 static inline void
 SdlGlDebugCallback(GLenum source,
@@ -121,6 +125,35 @@ SdlGlDebugCallback(GLenum source,
 };
 #endif
 
+// TODO: This is INTERNAL only?
+static inline b32
+CopyFile(const char* DestFilename, const char* SrcFilename) {
+    SDL_RWops* DestFile = SDL_RWFromFile(DestFilename, "wb");
+    SDL_RWops* SrcFile = SDL_RWFromFile(SrcFilename, "rb");
+    if (DestFile == nullptr) {
+        SDL_Log("Cannot open DestFilename: %s", DestFilename);
+        return false;
+    }
+    Defer { SDL_RWclose(DestFile); };
+    if (SrcFile == nullptr) {
+        SDL_Log("Cannot open SrcFilename: %s", SrcFilename);
+        return false;
+    }
+    Defer {SDL_RWclose(SrcFile); };
+
+    SDL_RWseek(SrcFile, 0, RW_SEEK_END);
+    auto SrcFilesize = SDL_RWtell(SrcFile);
+    SDL_RWseek(SrcFile, 0, RW_SEEK_SET);
+
+    void* FileMemory = malloc(SrcFilesize);    
+    Defer { free(FileMemory); };
+
+    SDL_RWread(SrcFile, FileMemory, 1, SrcFilesize);
+    SDL_RWwrite(DestFile, FileMemory, 1, SrcFilesize);
+
+    return true;
+}
+
 // Timer
 struct sdl_timer {
     u64 CountFrequency;
@@ -157,34 +190,43 @@ u64 GetTicksElapsed(sdl_timer* Timer) {
 
 // NOTE(Momo): sdl_game_code
 struct sdl_game_code {
+    void* DLL; 
     game_update* Update;
 };
 
 static inline void
 Unload(sdl_game_code* GameCode) {
+    SDL_UnloadObject(GameCode->DLL);
     GameCode->Update = nullptr;
 }
 
-static inline bool
-Load(sdl_game_code* GameCode)
-{
-    Unload(GameCode);
-    
-    void* GameCodeDLL = SDL_LoadObject("game.dll");
-    if (!GameCodeDLL) {
-        SDL_Log("Failed to open game.dll");
+static inline b32
+Load(sdl_game_code* GameCode, const char* SrcDllFilename, const char* TempDllFilename)
+{    
+    // TODO: Check src file last written time?
+    if (!CopyFile(TempDllFilename, SrcDllFilename)) {
+        return false;
+    }
+
+    GameCode->DLL = SDL_LoadObject(TempDllFilename);
+    if (!GameCode->DLL) {
+        SDL_Log("Failed to open %s", TempDllFilename);
         return false;
     }
     
-    GameCode->Update = (game_update*)SDL_LoadFunction(GameCodeDLL, "GameUpdate");
+    GameCode->Update = (game_update*)SDL_LoadFunction(GameCode->DLL, "GameUpdate");
     
     return true;
 }
+
+
+
 
 static bool gIsRunning = true;
 static bool gIsPaused = false;
 constexpr u64 ScreenTicks60FPS = 1000/60;
 constexpr u64 ScreenTicks30FPS = 1000/30;
+
 
 
 // NOTE(Momo): Platform API code
@@ -267,7 +309,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Load game code
     sdl_game_code GameCode;
-    Load(&GameCode);
+    Load(&GameCode, GameDllFilename, TempGameDllFilename);
     
     // NOTE(Momo) Initialize OpenGL context  core)
     SDL_Log("SDL creating context\n");
@@ -386,7 +428,7 @@ int main(int argc, char* argv[]) {
                
 #if INTERNAL
                 case SDL_TEXTINPUT: {
-                    mms_Concat(&Input.DebugTextInputBuffer, mms_String(e.text.text));
+                    mms_Concat(&Input.DebugTextInputBuffer, mms_ConstString(e.text.text));
                 } break;
 #endif                
 
@@ -450,6 +492,11 @@ int main(int argc, char* argv[]) {
                             break;
                         case SDLK_F12:
                             Input.DebugKeys[GameDebugKey_F12].Now = true;
+                            SDL_Log("Reloading game code...");
+                            
+                            // TODO: Shift this to game loop?
+                            Unload(&GameCode);
+                            Load(&GameCode, GameDllFilename, TempGameDllFilename);
                             break;
                         case SDLK_RETURN:
                             Input.DebugKeys[GameDebugKey_Return].Now = true;

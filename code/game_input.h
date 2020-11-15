@@ -42,7 +42,7 @@ struct game_input {
         };
     };
 #if INTERNAL
-    mms_string_buffer DebugTextInputBuffer;
+    mms_string DebugTextInputBuffer;
     game_input_button DebugKeys[GameDebugKey_Count];
 #endif
 };

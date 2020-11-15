@@ -64,7 +64,7 @@ mmbw_Write(asset_builder<N>* Assets, const char* Filename, const char* Signature
     
     
     // NOTE(Momo): Write signature
-    fwrite(Signature, sizeof(u8), StrLen(Signature), OutFile);
+    fwrite(Signature, sizeof(u8), CstrLen(Signature), OutFile);
     
     // NOTE(Momo): Write the amount of items
     u32 EntryCount = Assets->EntryCount;
@@ -99,7 +99,7 @@ Begin(ab_context* Context, const char* Filename, const char* Signature)
     Assert(Context->File);
     
     // NOTE(Momo): Write signature
-    fwrite(Signature, sizeof(u8), StrLen(Signature), Context->File);
+    fwrite(Signature, sizeof(u8), CstrLen(Signature), Context->File);
     Context->EntryCountAt = ftell(Context->File);
     
     // NOTE(Momo): Reserve space for EntryCount

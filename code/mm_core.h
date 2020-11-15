@@ -43,8 +43,9 @@ using uptr = uintptr_t;
 #define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
 #define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 
+// C-string
 static inline u32
-StrLen(const char* Str) {
+CstrLen(const char* Str) {
     u32 Count = 0;
     for(; (*Str) != 0 ; ++Count, ++Str);
     return Count;
@@ -70,12 +71,12 @@ CstrConcat(char* Dest, const char* Src) {
 
 
 static inline void 
-StrClear(char* Dest) {
+CstrClear(char* Dest) {
     (*Dest) = 0;
 }
 
 static inline void
-StrReverse(char* Dest) {
+CstrReverse(char* Dest) {
     char* BackPtr = Dest;
     for (; *(BackPtr+1) != 0; ++BackPtr);
     for (;Dest < BackPtr; ++Dest, --BackPtr) {
@@ -84,7 +85,7 @@ StrReverse(char* Dest) {
 }
 
 
-
+// Memory manipulation
 static inline void 
 MemCopy(void* dest, void* src, usize size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
@@ -126,7 +127,7 @@ Itoa(char* Dest, i32 Num) {
     }
     (*It) = 0;
 
-    StrReverse(Dest);
+    CstrReverse(Dest);
 }
 
 #define ZeroMem(m, s) MemZero(m, s)

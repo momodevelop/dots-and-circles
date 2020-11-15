@@ -7,6 +7,8 @@
 #include "mm_unordered_list.h"
 #include "game.h"
 
+
+
 enum mood_type : u32 {
     MoodType_Dot,
     MoodType_Circle,
@@ -180,9 +182,10 @@ Init(game_mode_main* Mode, game_state* GameState) {
 
     auto* Assets = GameState->Assets;
     auto* Player = &Mode->Player;
-    Player->Speed = 250.f;
+    Player->Speed = 300.f;
     Player->DotImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
     Player->CircleImageRect = Assets->AtlasRects + AtlasRect_PlayerCircle;
+    
     Player->Position = {};
     Player->Direction = {};
     Player->Size = { 64.f, 64.f };
@@ -379,7 +382,7 @@ Update(game_mode_main* Mode,
                 default:
                     Assert(false);
 		    }
-            SpawnBullet(Mode, Assets, It->Position, Dir, 100.f, MoodType);
+            SpawnBullet(Mode, Assets, It->Position, Dir, 200.f, MoodType);
             It->FireTimer = 0.f;
 		}
 

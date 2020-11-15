@@ -23,7 +23,7 @@ DrawString(mmcmd_commands* RenderCommands,
     mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
     auto* Font = Assets->Fonts + Font_Default;
     
-    u32 Strlen = StrLen(String);
+    u32 Strlen = CstrLen(String);
     for(u32 i = 0; i < Strlen; ++i) {
         auto* Glyph = Font->Glyphs + GetGlyphIndexFromCodepoint(String[i]);
         auto Box = Glyph->Box; 

@@ -13,35 +13,18 @@ struct mms_const_string {
     const char* E;
 };
 
-union mms_string {
-    mms_const_string Const;
-    struct { 
-        usize Length;
-        char* E;
-    };
-};
-
 static inline mms_const_string 
 mms_ConstString(const char* Cstr) {
     return mms_const_string {
-        StrLen(Cstr),
+        CstrLen(Cstr),
         Cstr
     };
 }
 
 
-static inline mms_string 
-mms_String(char* Cstr) {
-    return mms_string {
-        StrLen(Cstr),
-        Cstr
-    };
-}
-
-
-struct mms_string_buffer {
+struct mms_string {
     union {
-        mms_string String;
+        mms_const_string String;
         struct {
             usize Length;
             char* E;
@@ -52,12 +35,12 @@ struct mms_string_buffer {
 
 
 
-static inline mms_string_buffer
+static inline mms_string
 mms_StringBuffer(char* Memory, usize Capacity) {
     Assert(Capacity > 0);
     Assert(Memory);
 
-    mms_string_buffer Ret = {};
+    mms_string Ret = {};
     Ret.E = Memory;
     Ret.Capacity = Capacity;
 
@@ -66,12 +49,12 @@ mms_StringBuffer(char* Memory, usize Capacity) {
 
 
 static inline void
-mms_Clear(mms_string_buffer* Dest) {
+mms_Clear(mms_string* Dest) {
     Dest->Length = 0;
 }
 
 static inline void
-mms_Copy(mms_string_buffer* Dest, mms_const_string Src) {
+mms_Copy(mms_string* Dest, mms_const_string Src) {
     Assert(Src.Length <= Dest->Capacity);
     for (u32 i = 0; i < Src.Length; ++i ) {
         Dest->E[i] = Src.E[i];
@@ -80,37 +63,54 @@ mms_Copy(mms_string_buffer* Dest, mms_const_string Src) {
 }
 
 static inline void
-mms_Copy(mms_string_buffer* Dest, mms_string Src) {
-    mms_Copy(Dest, Src.Const);
+mms_Copy(mms_string* Dest, mms_string* Src) {
+    mms_Copy(Dest, Src->String);
 }
 
 
 static inline void
-mms_Push(mms_string_buffer* Dest, char Char) {
+mms_Push(mms_string* Dest, char Char) {
     Assert(Dest->Length < Dest->Capacity);
     Dest->E[Dest->Length++] = Char;
 }
 
-static inline char
-mms_Pop(mms_string_buffer* Dest) {
+static inline void
+mms_Pop(mms_string* Dest) {
     Assert(Dest->Length > 0);
-    return Dest->E[--Dest->Length];
+    --Dest->Length;
 }
 
+static inline b32
+mms_PopSafely(mms_string* Dest) {
+    if (Dest->Length > 0 ){
+        --Dest->Length;
+        return true;
+    }
+    return false;
+}
+
+
 static inline void
-mms_Concat(mms_string_buffer* Dest, mms_const_string Src) {
+mms_Concat(mms_string* Dest, mms_const_string Src) {
     Assert(Dest->Length + Src.Length <= Dest->Capacity);
     for ( u32 i = 0; i < Src.Length; ++i ) {
         Dest->E[Dest->Length++] = Src.E[i];
     }
 }
-static inline void
-mms_Concat(mms_string_buffer* Dest, mms_string Src ) {
-    mms_Concat(Dest, Src.Const);
+
+static inline b32
+mms_ConcatSafely(mms_string* Dest, mms_const_string Src) {
+    if (Dest->Length + Src.Length <= Dest->Capacity) {
+        for ( u32 i = 0; i < Src.Length; ++i ) {
+            Dest->E[Dest->Length++] = Src.E[i];
+        }
+        return true;
+    }
+    return false;
 }
 
 static inline void
-mms_NullTerm(mms_string_buffer* Dest) {
+mms_NullTerm(mms_string* Dest) {
     Assert(Dest->Length < Dest->Capacity);
     Dest->E[Dest->Length] = 0;
 }
@@ -128,25 +128,47 @@ mms_Compare(mms_const_string Lhs, mms_const_string Rhs) {
     return true;
 }
 
-static inline b32
-mms_Compare(mms_string Lhs, mms_string Rhs) {
-    return mms_Compare(Lhs.Const, Rhs.Const);    
+static inline void
+mms_Reverse(mms_string* Dest) {
+    for (usize i = 0; i < Dest->Length/2; ++i) {
+        Swap(Dest->E[i], Dest->E[Dest->Length-1-i]);
+    }
 }
-static inline b32
-mms_Compare(mms_const_string Lhs, mms_string Rhs) {
-    return mms_Compare(Lhs, Rhs.Const);
+
+static inline void
+mms_Itoa(mms_string* Dest, i32 Num) {
+    // Naive method. 
+    // Extract each number starting from the back and fill the buffer. 
+    // Then reverse it.
+    
+    // Special case for 0
+    if (Num == 0) {
+        mms_Push(Dest, '0');
+        return;
+    }
+
+    b32 Negative = Num < 0;
+    Num = Abs(Num);
+
+    for(; Num != 0; Num /= 10) {
+        i32 DigitToConvert = Num % 10;
+        mms_Push(Dest, (char)(DigitToConvert + '0'));
+    }
+
+    if (Negative) {
+        mms_Push(Dest, '-');
+    }
+
+    mms_Reverse(Dest);
 }
-static inline b32
-mms_Compare(mms_string Lhs, mms_const_string Rhs) {
-    return mms_Compare(Lhs.Const, Rhs);
-}
+
 
 
 #include "mm_arena.h"
-static inline mms_string_buffer
+static inline mms_string
 mms_PushString(mmarn_arena* Arena, usize Capacity) {
     char* Buffer = mmarn_PushArray<char>(Arena, Capacity); 
-    mms_string_buffer Ret = mms_StringBuffer(Buffer, Capacity);
+    mms_string Ret = mms_StringBuffer(Buffer, Capacity);
     return Ret;
 }
 

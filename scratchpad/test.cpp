@@ -11,8 +11,8 @@ struct foo {
 };
 
 static inline b32
-Compare(const foo* Foo) {
-    return Foo->I == 7;
+Compare(const foo* gFoo) {
+    return gFoo->I == 7;
 }
 
 

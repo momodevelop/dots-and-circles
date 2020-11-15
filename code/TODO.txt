@@ -1,8 +1,8 @@
-[] String object?
 [] Debug console
-    [] Hooks?
-[] Hot swapping code
-[] Simple string struct + ops to avoid iterating to 0? Maybe can even remove 0?
+    [] Compress
+    [] Argument parser
+[] Hot Swapping code
+    [] Reload every frame 
 [] Circle debug lines?
 [] Quaternion
 [] Profiling? 

@@ -13,10 +13,8 @@ DrawText(mmcmd_commands* RenderCommands,
            mmm_v4f Color, 
            font_id FontId,
            f32 Size, 
-           mms_string String) 
+           mms_const_string String) 
 {
-    mms_string& StringRef = String;
-
     mmm_v3f CurPosition = Position;
     
     for(u32 i = 0; i < String.Length; ++i) {
