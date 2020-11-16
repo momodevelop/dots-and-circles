@@ -12,7 +12,7 @@ struct mms_const_string {
     usize Length;
     const char* Elements;
 
-    inline const auto& operator[](usize I) const {
+    inline const auto operator[](usize I) const {
         Assert(I < Length);
         return Elements[I];
     }
@@ -38,11 +38,6 @@ struct mms_string {
     usize Capacity;
 
     inline auto& operator[](usize I) {
-        Assert(I < Length);
-        return Elements[I];
-    }
-
-    inline const auto& operator[](usize I) const {
         Assert(I < Length);
         return Elements[I];
     }

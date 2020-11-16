@@ -40,12 +40,6 @@ struct mmul_list {
         Assert(I < Used);
         return Elements[I];
     }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < Used);
-        return Elements[I];
-    }
-
 };
 
 template<typename T>

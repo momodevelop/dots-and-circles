@@ -304,7 +304,7 @@ Render(renderer_opengl* Renderer, mmcmd_commands* Commands)
                 
                 auto Result = mmm_Transpose(Data->Basis);
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
-                glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0]);
+                glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0].Elements);
                 
             } break;
             case render_command_link_texture::TypeId: {

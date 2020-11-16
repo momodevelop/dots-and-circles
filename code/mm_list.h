@@ -16,11 +16,6 @@ struct mml_list {
         return Elements[I];
     }
 
-    inline const auto& operator[](usize I) const {
-        Assert(I < Used);
-        return Elements[I];
-    }
-
 };
 
 template<typename T>

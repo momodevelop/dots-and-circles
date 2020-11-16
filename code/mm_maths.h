@@ -36,11 +36,6 @@ union mmm_v2f {
         Assert(I < 2); 
         return Elements[I]; 
     }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < 2); 
-        return Elements[I]; 
-    }
 };
 
 union mmm_v3f {
@@ -72,11 +67,6 @@ union mmm_v3f {
     inline auto& operator[](usize I) {
         Assert(I < 3); 
         return Elements[I]; 
-    }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < 3);
-        return Elements[I];
     }
 };
 
@@ -114,11 +104,6 @@ union mmm_v4f {
         Assert(I < 3); 
         return Elements[I]; 
     }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < 3);
-        return Elements[I];
-    }
 };
 
 union mmm_v2u {
@@ -131,12 +116,6 @@ union mmm_v2u {
         Assert(I < 2); 
         return Elements[I]; 
     }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < 2);
-        return Elements[I];
-    }
-
 };
 
 union mmm_v2i {
@@ -145,25 +124,15 @@ union mmm_v2i {
         i32 X, Y;
     };
 
-
     inline auto& operator[](usize I) {
         Assert(I < 2); 
         return Elements[I]; 
     }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < 2);
-        return Elements[I];
-    }
-
 };
 
 struct mmm_m44f {
-    f32 Elements[4][4];
-    inline const auto& operator[](usize I) const { 
-        Assert(I < 4);
-        return Elements[I]; 
-    }
+    mmm_v4f Elements[4];
+
     inline auto& operator[](usize I) { 
         Assert(I < 4);
         return Elements[I];
@@ -224,10 +193,6 @@ struct mmm_line3f {
 
 struct mmm_quad2f {
     mmm_v2f Points[4];
-    inline const auto& operator[](usize I) const { 
-        Assert(I < 4);
-        return Points[I]; 
-    }
     inline auto& operator[](usize I) { 
         Assert(I < 4);
         return Points[I];
@@ -238,10 +203,6 @@ struct mmm_quad2f {
 
 struct mmm_quad3f {
     mmm_v3f Points[4];
-    inline const auto& operator[](usize I) const { 
-        Assert(I < 4);
-        return Points[I]; 
-    }
     inline auto& operator[](usize I) { 
         Assert(I < 4);
         return Points[I];

@@ -17,11 +17,6 @@ struct mma_array {
         Assert(I < Capacity);
         return Elements[I];
     }
-
-    inline const auto& operator[](usize I) const {
-        Assert(I < Capacity);
-        return Elements[I];
-    }
 };
 
 template<typename type>
