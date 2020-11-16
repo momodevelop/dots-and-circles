@@ -32,9 +32,20 @@
 
 template<typename T>
 struct mmul_list {
-    T* Objects;     // Expects pointer to object
+    T* Elements;     // Expects pointer to object
     usize Used;     // Amount of objects currently borrowed
     usize Capacity; // Total number of borrowable objects.
+
+    inline auto& operator[](usize I) {
+        Assert(I < Used);
+        return Elements[I];
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < Used);
+        return Elements[I];
+    }
+
 };
 
 template<typename T>
@@ -43,8 +54,10 @@ struct mmul_it {
     usize Index;
 
     T* operator->() {
-        return &List->Objects[Index];
+        return &List->Elements[Index];
     }
+
+
 };
 
 
@@ -77,7 +90,7 @@ operator++(mmul_it<T>& L) {
 template<typename T>
 static inline T& 
 operator*(mmul_it<T>& L) {
-    return L.List->Objects[L.Index];
+    return L.List->Elements[L.Index];
 }
 
 // Functions
@@ -92,7 +105,7 @@ template<typename T>
 static inline mmul_list<T>
 mmul_List(T* Arr, usize Capacity) {
     mmul_list<T> Ret = {};
-    Ret.Objects = Arr;
+    Ret.Elements = Arr;
     Ret.Capacity= Capacity;
     return Ret;
 }
@@ -101,15 +114,15 @@ template<typename T>
 static inline void
 mmul_Add(mmul_list<T>* List, T Obj) {
     Assert(List->Used < List->Capacity);
-    List->Objects[List->Used++] = Obj;
+    List->Elements[List->Used++] = Obj;
 }
 
 // This might actually be faster than the one above?
 template<typename T>
 static inline mmul_it<T>
 mmul_Remove(mmul_list<T>* List, mmul_it<T> It) {
-    //(*Obj) = List->Objects[List->Used - 1];
-    List->Objects[It.Index] = List->Objects[List->Used - 1];
+    //(*Obj) = List->Elements[List->Used - 1];
+    List->Elements[It.Index] = List->Elements[List->Used - 1];
     --List->Used;
     return It; //lol?
 }
@@ -132,7 +145,7 @@ template<typename T>
 static inline mmul_list<T>
 mmul_PushList(mmarn_arena* Arena, usize Capacity) {
     mmul_list<T> Ret = {};
-    Ret.Objects = mmarn_PushArray<T>(Arena, Capacity);
+    Ret.Elements = mmarn_PushArray<T>(Arena, Capacity);
     Ret.Capacity = Capacity;
     return Ret;
 }

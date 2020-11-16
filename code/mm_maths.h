@@ -18,7 +18,7 @@ static constexpr f32 mmm_Epsilon32  = 1.19209290E-07f;
 static constexpr f32 mmm_Tau32  = mmm_Pi32 * 2.f;
 
 union mmm_v2f {
-    f32 E[2];
+    f32 Elements[2];
     struct {
         f32 X;
         f32 Y;
@@ -31,10 +31,20 @@ union mmm_v2f {
         f32 W;
         f32 H;
     };
+
+    inline auto& operator[](usize I) {
+        Assert(I < 2); 
+        return Elements[I]; 
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < 2); 
+        return Elements[I]; 
+    }
 };
 
 union mmm_v3f {
-    f32 E[3];
+    f32 Elements[3];
     struct {
         union {
             mmm_v2f XY;
@@ -58,10 +68,20 @@ union mmm_v3f {
     struct {
         f32 R, G, B;
     };
+
+    inline auto& operator[](usize I) {
+        Assert(I < 3); 
+        return Elements[I]; 
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < 3);
+        return Elements[I];
+    }
 };
 
 union mmm_v4f {
-    f32 E[4];
+    f32 Elements[4];
     struct
     {
         union
@@ -88,26 +108,66 @@ union mmm_v4f {
         
         f32 A;
     };
+
+
+    inline auto& operator[](usize I) {
+        Assert(I < 3); 
+        return Elements[I]; 
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < 3);
+        return Elements[I];
+    }
 };
 
 union mmm_v2u {
-    u32 E[2];
+    u32 Elements[2];
     struct {
         u32 X, Y;
     };
+
+    inline auto& operator[](usize I) {
+        Assert(I < 2); 
+        return Elements[I]; 
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < 2);
+        return Elements[I];
+    }
+
 };
 
 union mmm_v2i {
-    i32 E[2];
+    i32 Elements[2];
     struct {
         i32 X, Y;
     };
+
+
+    inline auto& operator[](usize I) {
+        Assert(I < 2); 
+        return Elements[I]; 
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < 2);
+        return Elements[I];
+    }
+
 };
 
 struct mmm_m44f {
-    f32 E[4][4];
-    inline const auto& operator[](usize index) const { return E[index]; }
-    inline auto& operator[](usize index) { return E[index];}
+    f32 Elements[4][4];
+    inline const auto& operator[](usize I) const { 
+        Assert(I < 4);
+        return Elements[I]; 
+    }
+    inline auto& operator[](usize I) { 
+        Assert(I < 4);
+        return Elements[I];
+    }
 };
 
 
@@ -162,13 +222,32 @@ struct mmm_line3f {
     mmm_v3f Max;
 };
 
-
 struct mmm_quad2f {
     mmm_v2f Points[4];
+    inline const auto& operator[](usize I) const { 
+        Assert(I < 4);
+        return Points[I]; 
+    }
+    inline auto& operator[](usize I) { 
+        Assert(I < 4);
+        return Points[I];
+    }
+
 };
+
 
 struct mmm_quad3f {
     mmm_v3f Points[4];
+    inline const auto& operator[](usize I) const { 
+        Assert(I < 4);
+        return Points[I]; 
+    }
+    inline auto& operator[](usize I) { 
+        Assert(I < 4);
+        return Points[I];
+    }
+
+
 };
 
 
@@ -624,7 +703,7 @@ mmm_LengthSq(mmm_v3f V) {
 }
 
 
-static inline f32 
+static inline f32
 Distance(mmm_v3f L, mmm_v3f R)  { 
     return mmm_Sqrt(mmm_DistanceSq(L, R)); 
 }

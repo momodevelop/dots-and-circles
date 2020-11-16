@@ -53,13 +53,15 @@ HashCodepoint(u32 Codepoint) {
     return Codepoint - Codepoint_Start;
 }
 
+#include "mm_array.h"
+
 struct game_assets {
     mmarn_arena Arena;
     
-    bitmap Bitmaps[Bitmap_Count];
-    atlas_rect AtlasRects[AtlasRect_Count];
-    font Fonts[Font_Count];
-    
+    mma_array<bitmap> Bitmaps;
+    mma_array<atlas_rect> AtlasRects;
+    mma_array<font> Fonts;
+
     platform_api* Platform;
 };
 
@@ -101,6 +103,9 @@ CreateAssets(mmarn_arena* Arena,
     game_assets Assets = {};
     Assets.Arena = mmarn_SubArena(Arena, Megabytes(100));
     Assets.Platform = Platform;
+    Assets.Bitmaps = mma_Array<bitmap>(Arena, Bitmap_Count);
+    Assets.AtlasRects = mma_Array<atlas_rect>(Arena, AtlasRect_Count);
+    Assets.Fonts = mma_Array<font>(Arena, Font_Count);
     
     mmarn_scratch Scratch = mmarn_BeginScratch(&Assets.Arena);
     Defer{ mmarn_EndScratch(&Scratch); };
@@ -112,7 +117,7 @@ CreateAssets(mmarn_arena* Arena,
     {
         u32 Filesize = Platform->GetFileSize(Filename);
         Assert(Filesize);
-        FileMemory = FileMemoryItr = (u8*)mmarn_PushBlock(&Scratch, Filesize);
+        FileMemory = FileMemoryItr = (u8*)mmarn_PushBlock(Scratch, Filesize);
         Platform->ReadFile(FileMemory, Filesize, Filename);
     }
     
@@ -197,6 +202,7 @@ CreateAssets(mmarn_arena* Arena,
     
     return Assets;
 }
+
 
 
 #endif  

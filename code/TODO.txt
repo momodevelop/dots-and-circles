@@ -1,6 +1,4 @@
-[] Refactor how initializing assets work
 [] Debug console
-    [] Compress
     [] Argument parser
 [] Hot Swapping code
     [] Reload every frame 

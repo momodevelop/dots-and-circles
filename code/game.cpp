@@ -24,7 +24,12 @@ GameUpdate(game_memory* GameMemory,
         GameState->MainArena = mmarn_Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
-        GameState->Assets = CreateAssets(&GameState->MainArena, Platform, RenderCommands, "yuu");
+        GameState->Assets = CreateAssets(
+                &GameState->MainArena, 
+                Platform, 
+                RenderCommands, 
+                "yuu"
+        );
    
         // NOTE(Momo): Arena for modes
         GameState->ModeArena = mmarn_SubArena(&GameState->MainArena, mmarn_Remaining(&GameState->MainArena));
@@ -48,11 +53,6 @@ GameUpdate(game_memory* GameMemory,
                 PushDebugInfo(&GameState->DebugConsole, mms_ConstString("Jumping to game!"), mmc_ColorYellow);
                 GameState->NextModeType = GameModeType_Main;
             }, GameState);
-
-
-
-        
-
     
 #endif
     }

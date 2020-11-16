@@ -10,7 +10,12 @@
 
 struct mms_const_string {
     usize Length;
-    const char* E;
+    const char* Elements;
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < Length);
+        return Elements[I];
+    }
 };
 
 static inline mms_const_string 
@@ -27,10 +32,20 @@ struct mms_string {
         mms_const_string String;
         struct {
             usize Length;
-            char* E;
+            char* Elements;
         };
     };
     usize Capacity;
+
+    inline auto& operator[](usize I) {
+        Assert(I < Length);
+        return Elements[I];
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < Length);
+        return Elements[I];
+    }
 };
 
 
@@ -41,7 +56,7 @@ mms_String(char* Memory, usize Capacity) {
     Assert(Memory);
 
     mms_string Ret = {};
-    Ret.E = Memory;
+    Ret.Elements = Memory;
     Ret.Capacity = Capacity;
 
     return Ret;
@@ -57,7 +72,7 @@ static inline void
 mms_Copy(mms_string* Dest, mms_const_string Src) {
     Assert(Src.Length <= Dest->Capacity);
     for (u32 i = 0; i < Src.Length; ++i ) {
-        Dest->E[i] = Src.E[i];
+        Dest->Elements[i] = Src.Elements[i];
     }
     Dest->Length = Src.Length;
 }
@@ -71,7 +86,7 @@ mms_Copy(mms_string* Dest, mms_string* Src) {
 static inline void
 mms_Push(mms_string* Dest, char Char) {
     Assert(Dest->Length < Dest->Capacity);
-    Dest->E[Dest->Length++] = Char;
+    Dest->Elements[Dest->Length++] = Char;
 }
 
 static inline void
@@ -94,7 +109,7 @@ static inline void
 mms_Concat(mms_string* Dest, mms_const_string Src) {
     Assert(Dest->Length + Src.Length <= Dest->Capacity);
     for ( u32 i = 0; i < Src.Length; ++i ) {
-        Dest->E[Dest->Length++] = Src.E[i];
+        Dest->Elements[Dest->Length++] = Src.Elements[i];
     }
 }
 
@@ -102,7 +117,7 @@ static inline b32
 mms_ConcatSafely(mms_string* Dest, mms_const_string Src) {
     if (Dest->Length + Src.Length <= Dest->Capacity) {
         for ( u32 i = 0; i < Src.Length; ++i ) {
-            Dest->E[Dest->Length++] = Src.E[i];
+            Dest->Elements[Dest->Length++] = Src.Elements[i];
         }
         return true;
     }
@@ -112,7 +127,7 @@ mms_ConcatSafely(mms_string* Dest, mms_const_string Src) {
 static inline void
 mms_NullTerm(mms_string* Dest) {
     Assert(Dest->Length < Dest->Capacity);
-    Dest->E[Dest->Length] = 0;
+    Dest->Elements[Dest->Length] = 0;
 }
 
 static inline b32
@@ -121,7 +136,7 @@ mms_Compare(mms_const_string Lhs, mms_const_string Rhs) {
         return false;
     }
     for (u32 i = 0; i < Lhs.Length; ++i) {
-        if (Lhs.E[i] != Rhs.E[i]) {
+        if (Lhs.Elements[i] != Rhs.Elements[i]) {
             return false;
         }
     }
@@ -131,7 +146,7 @@ mms_Compare(mms_const_string Lhs, mms_const_string Rhs) {
 static inline void
 mms_Reverse(mms_string* Dest) {
     for (usize i = 0; i < Dest->Length/2; ++i) {
-        Swap(Dest->E[i], Dest->E[Dest->Length-1-i]);
+        Swap(Dest->Elements[i], Dest->Elements[Dest->Length-1-i]);
     }
 }
 
@@ -168,7 +183,13 @@ mms_Itoa(mms_string* Dest, i32 Num) {
 static inline mms_string
 mms_String(mmarn_arena* Arena, usize Capacity) {
     char* Buffer = mmarn_PushArray<char>(Arena, Capacity); 
-    mms_string Ret = mms_String(Buffer, Capacity);
+    return mms_String(Buffer, Capacity);
+}
+
+static inline mms_string* 
+mms_PushString(mmarn_arena* Arena, usize Capacity) {
+    mms_string* Ret = mmarn_PushStruct<mms_string>(Arena);
+    (*Ret) = mms_String(Arena, Capacity);
     return Ret;
 }
 

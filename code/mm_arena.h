@@ -28,37 +28,64 @@ mmarn_Remaining(mmarn_arena* Arena) {
 
 
 static inline void* 
-mmarn_PushBlock(mmarn_arena* Arena, usize size, u8 alignment = alignof(void*)) {
-    Assert(size && alignment);
-    u8 adjust = mmbw_AlignForwardDiff(Arena->Memory, alignment);
+mmarn_PushBlock(mmarn_arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
+    Assert(Size && Alignment);
+    u8 Adjust = mmbw_AlignForwardDiff(Arena->Memory, Alignment);
     
     // if not enough space, return 
-    if ((u8*)Arena->Memory + Arena->Used + adjust + size > (u8*)Arena->Memory + Arena->Capacity ) {
+    if ((u8*)Arena->Memory + Arena->Used + Adjust + Size > (u8*)Arena->Memory + Arena->Capacity ) {
         return nullptr;
     }
     
-    void* ret = (u8*)Arena->Memory + Arena->Used + adjust;
-    Arena->Used += adjust + size;
+    void* ret = (u8*)Arena->Memory + Arena->Used + Adjust;
+    Arena->Used += Adjust + Size;
     return ret;
 }
 
-template<typename T>
-static inline T*
+template<typename type>
+static inline type*
 mmarn_PushStruct(mmarn_arena* Arena) {
-    return (T*)mmarn_PushBlock(Arena, sizeof(T), alignof(T));
+    return (type*)mmarn_PushBlock(Arena, sizeof(type), alignof(type));
 }
 
+// Push with a given constructor function
+template<typename type, typename ctr, typename... args>
+static inline type*
+mmarn_PushCtr(mmarn_arena* Arena, ctr Constructor, args&&... Args) {
+    type* Ret = mmarn_PushStruct<type>(Arena);
+    
+    // Perfect forwarding!
+    (*Ret) = Constructor(static_cast<args&&>(Args)...);
 
-template<typename T>
-static inline T*
+    return Ret;
+}
+
+// Same as PushConstruct, but passes the Arena down as first variable.
+// This is because there are many cases where you want to allocate with the same
+// allocator.
+template<typename type, typename ctr, typename... args>
+static inline type*
+mmarn_PushCtrPassThru(mmarn_arena* Arena, ctr Constructor, args&&... Args) {
+    type* Ret = mmarn_PushStruct<type>(Arena);
+    (*Ret) = Constructor(Arena, static_cast<args&&>(Args)...);
+    return Ret;
+}
+
+template<typename type>
+static inline type*
 mmarn_PushArray(mmarn_arena* Arena, usize Count) {
-    return (T*)mmarn_PushBlock(Arena, sizeof(T) * Count, alignof(T));
+    return (type*)mmarn_PushBlock(Arena, sizeof(type) * Count, alignof(type));
 }
 
 // NOTE(Momo): temporary memory API
 struct mmarn_scratch {
     mmarn_arena* Arena;
     usize OldUsed;
+
+    // Allow conversion to mmarn_arena* to use functions associated with it
+    operator mmarn_arena*() const { 
+        return Arena; 
+    }
 };
 
 static inline mmarn_scratch
@@ -80,33 +107,18 @@ mmarn_EndScratch(mmarn_scratch* TempMemory) {
 }
 
 
-static inline void* 
-mmarn_PushBlock(mmarn_scratch* TempArena, usize size, u8 alignment = alignof(void*)) {
-    return mmarn_PushBlock(TempArena->Arena, size, alignment);
-}
-
-template<typename T>
-static inline T*
-mmarn_PushStruct(mmarn_scratch* TempArena) {
-    return PushStruct<T>(TempArena->Arena, sizeof(T), alignof(T));
-}
-
-
-template<typename T>
-static inline T*
-mmarn_PushArray(mmarn_scratch* TempArena, usize Count) {
-    return PushArray<T>(TempArena->Arena, Count);
-}
-
 static inline mmarn_arena
 mmarn_SubArena(mmarn_arena* SrcArena, usize Capacity) {
     Assert(Capacity);
     mmarn_arena Ret = {};
-    Ret.Memory = (u8*)mmarn_PushBlock(SrcArena, Capacity);
+
+    // We don't care about alignment, so it should be 1.
+    Ret.Memory = (u8*)mmarn_PushBlock(SrcArena, Capacity, 1);
     Assert(Ret.Memory);
     Ret.Capacity = Capacity;
     return Ret;
 }
+
 
 
 #endif

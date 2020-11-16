@@ -7,9 +7,20 @@
 
 template<typename T>
 struct mml_list {
-    T* Objects;     // Expects pointer to object
+    T* Elements;     // Expects pointer to object
     usize Used;     // Amount of objects currently borrowed
     usize Capacity; // Total number of borrowable objects.
+    
+    inline auto& operator[](usize I) {
+        Assert(I < Used);
+        return Elements[I];
+    }
+
+    inline const auto& operator[](usize I) const {
+        Assert(I < Used);
+        return Elements[I];
+    }
+
 };
 
 template<typename T>
@@ -18,7 +29,7 @@ struct mml_it {
     usize Index;
 
     T* operator->() {
-        return &List->Objects[Index];
+        return &List->Elements[Index];
     }
 };
 
@@ -53,7 +64,7 @@ operator++(mml_it<T>& L) {
 template<typename T>
 static inline T& 
 operator*(mml_it<T>& L) {
-    return L.List->Objects[L.Index];
+    return L.List->Elements[L.Index];
 }
 
 // Functions
@@ -68,7 +79,7 @@ template<typename T>
 static inline mml_list<T>
 mml_List(T* Arr, usize Capacity) {
     mml_list<T> Ret = {};
-    Ret.Objects = Arr;
+    Ret.Elements = Arr;
     Ret.Capacity= Capacity;
     return Ret;
 }
@@ -77,7 +88,7 @@ template<typename T>
 static inline void
 mml_Push(mml_list<T>* List, T Obj) {
     Assert(List->Used < List->Capacity);
-    List->Objects[List->Used++] = Obj;
+    List->Elements[List->Used++] = Obj;
 }
 
 template<typename T>
@@ -91,7 +102,7 @@ template<typename T, typename unary_comparer>
 static inline mml_it<T>
 mml_Find(mml_list<T>* List, unary_comparer UnaryComparer) {
     for(usize i = 0; i < List->Used; ++i) {
-        if(UnaryComparer(&List->Objects[i])) {
+        if(UnaryComparer(&List->Elements[i])) {
             return { List, i };
         }
     }
@@ -102,7 +113,7 @@ template<typename T>
 static inline mml_it<T>
 mml_Remove(mml_list<T>* List, mml_it<T> It) {
     for (usize Index = It.Index; Index < List->Used - 1; ++Index) {
-        List->Objects[Index] = List->Objects[Index + 1];
+        List->Elements[Index] = List->Elements[Index + 1];
     }
     --List->Used;
     return It; 
@@ -133,7 +144,7 @@ template<typename T>
 static inline mml_list<T>
 mml_List(mmarn_arena* Arena, usize Capacity) {
     mml_list<T> Ret = {};
-    Ret.Objects = mmarn_PushArray<T>(Arena, Capacity);
+    Ret.Elements = mmarn_PushArray<T>(Arena, Capacity);
     Ret.Capacity = Capacity;
     return Ret;
 }
