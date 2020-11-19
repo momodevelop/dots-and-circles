@@ -10,7 +10,6 @@ struct game_mode_menu {
 
 static inline void 
 Init(game_mode_menu* Mode, game_state* GameState) {
-    Log("Menu state initialized!");
 }
 
 static inline void

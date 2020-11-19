@@ -9,7 +9,6 @@ struct game_mode_atlas_test {
 
 static inline void 
 Init(game_mode_atlas_test* Mode, game_state* GameState) {
-    Log("Atlas Test state initialized!");
 }
 
 static inline void

@@ -46,7 +46,7 @@ mma_PushArray(mmarn_arena* Arena, usize Capacity) {
 
 template<typename type>
 static inline type*
-operator+(const mma_array<type>& L, usize I) {
+operator+(mma_array<type> L, usize I) {
     return L.Elements + I;
 }
 

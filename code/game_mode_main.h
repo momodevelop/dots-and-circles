@@ -130,7 +130,6 @@ SpawnEnemy(game_mode_main* Mode,
         f32 FireRate,
         f32 LifeDuration) 
 {
-    Log("Enemy spawned at: %f, %f!", Position.X, Position.Y);
     enemy Enemy = {}; 
     Enemy.Position = Position;
     Enemy.Size = { 32.f, 32.f };
@@ -172,9 +171,8 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, mmm_v2f Position, mmm_v2f
 
 static inline void 
 Init(game_mode_main* Mode, game_state* GameState) {
-    Log("Main state initialized!");
     
-    Mode->Arena = mmarn_SubArena(&GameState->ModeArena, mmarn_Remaining(&GameState->ModeArena));
+    Mode->Arena = mmarn_SubArena(&GameState->ModeArena, mmarn_Remaining(GameState->ModeArena));
     Mode->Bullets = mmul_PushList<bullet>(&Mode->Arena, 128);
     Mode->Enemies = mmul_PushList<enemy>(&Mode->Arena, 128);
     Mode->Wave.IsDone = true;
@@ -294,7 +292,6 @@ Update(game_mode_main* Mode,
         if (Mode->Wave.IsDone) {
             // TODO: Random wave type
             Mode->Wave.Type = WavePatternType_SpawnNForDuration;
-            Log("Wave started!"); 
             // Initialize the wave
             switch (Mode->Wave.Type) {
                 case WavePatternType_SpawnNForDuration: {
@@ -323,7 +320,6 @@ Update(game_mode_main* Mode,
                             mmrng_Bilateral(&Mode->Rng) * DesignHeight * 0.5f
                         };
                         auto MoodType = (enemy_mood_pattern_type)mmrng_Choice(&Mode->Rng, MoodType_Count);
-                        Log("%d\n", MoodType);
                         SpawnEnemy(Mode, Assets,
                                 Pos,
                                 MoodType,

@@ -12,19 +12,19 @@
 
 typedef void (*debug_callback)(void* Context);
 struct debug_command {
-    mms_const_string Key;
+    mms_string Key;
     debug_callback Callback;
     void* Context;
 };
 
 struct debug_string {
-    mms_string Buffer;
+    mms_string_buffer Buffer;
     mmm_v4f Color;
 };
 
 struct debug_console {
     debug_string InfoBuffers[5];
-    mms_string InputBuffer;
+    mms_string_buffer InputBuffer;
 
     mml_list<debug_command> Commands;
 };
@@ -33,11 +33,11 @@ static inline debug_console
 CreateDebugConsole(mmarn_arena* Arena) {
     debug_console Ret = {};
 
-    Ret.InputBuffer = mms_String(Arena, 110);
+    Ret.InputBuffer = mms_StringBuffer(Arena, 110);
 
     for (auto&& DebugInfoBuffer : Ret.InfoBuffers) {
         char* Memory = mmarn_PushArray<char>(Arena, 110);
-        DebugInfoBuffer.Buffer = mms_String(Memory, 110);
+        DebugInfoBuffer.Buffer = mms_StringBuffer(Memory, 110);
         DebugInfoBuffer.Color = { 1.f, 1.f, 1.f, 1.f };
     }
 
@@ -47,11 +47,11 @@ CreateDebugConsole(mmarn_arena* Arena) {
 
 
 static inline void
-PushDebugInfo(debug_console* DebugConsole, mms_const_string String, mmm_v4f Color) {
+PushDebugInfo(debug_console* DebugConsole, mms_string String, mmm_v4f Color) {
     for(i32 i = ArrayCount(DebugConsole->InfoBuffers) - 2; i >= 0 ; --i) {
         debug_string* Dest = DebugConsole->InfoBuffers + i + 1;
         debug_string* Src = DebugConsole->InfoBuffers + i;
-        mms_Copy(&Dest->Buffer, &Src->Buffer);
+        mms_Copy(&Dest->Buffer, Src->Buffer.String);
         Dest->Color = Src->Color;
 
     }
@@ -62,13 +62,13 @@ PushDebugInfo(debug_console* DebugConsole, mms_const_string String, mmm_v4f Colo
 
 
 static inline void 
-Register(debug_console* DebugConsole, mms_const_string Key, debug_callback Callback, void* Context)
+Register(debug_console* DebugConsole, mms_string Key, debug_callback Callback, void* Context)
 {
     mml_Push(&DebugConsole->Commands, { Key, Callback, Context } );
 }
 
 static inline void 
-Unregister(debug_console* DebugConsole, mms_const_string Key) {
+Unregister(debug_console* DebugConsole, mms_string Key) {
     mml_RemoveIf(&DebugConsole->Commands, [Key](const debug_command* Cmd) { 
         return mms_Compare(Cmd->Key, Key); 
     });
@@ -92,15 +92,26 @@ Update(debug_console* DebugConsole, game_input* Input) {
 
     if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
         PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.String, mmc_ColorWhite);
-        mms_Clear(&DebugConsole->InputBuffer);
+        
+        mms_string StringToParse = DebugConsole->InputBuffer.String;
+        {
+            // strtok and strsep is nice, but it modifies the existing string. 
+            range Slice = {};
+            while(Slice.OnePastEnd < StringToParse.Length) {
+                Slice = mms_FindNextToken(StringToParse, ' ', Slice); 
+            }
+
+        }
 
         // Send a command to a callback
         for (auto&& Command : DebugConsole->Commands) {
-            if (mms_Compare(Command.Key, DebugConsole->InfoBuffers[0].Buffer.String)) {
+            if (mms_Compare(Command.Key, DebugConsole->InputBuffer.String)) {
                  Command.Callback(Command.Context);
                  break;
             }
         }
+
+        mms_Clear(&DebugConsole->InputBuffer);
     }
 
 }

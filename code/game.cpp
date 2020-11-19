@@ -32,7 +32,7 @@ GameUpdate(game_memory* GameMemory,
         );
    
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = mmarn_SubArena(&GameState->MainArena, mmarn_Remaining(&GameState->MainArena));
+        GameState->ModeArena = mmarn_SubArena(&GameState->MainArena, mmarn_Remaining(GameState->MainArena));
         GameState->ModeType = GameModeType_None;
         GameState->NextModeType = GameModeType_Splash;
         GameState->IsInitialized = true;
@@ -47,21 +47,15 @@ GameUpdate(game_memory* GameMemory,
 
         // Temp, set some simple callbacks to debug callbacks
         Register(&GameState->DebugConsole, 
-            mms_ConstString("jump"), 
+            mms_String("jump"), 
             [](void* Context) {
                 game_state* GameState = (game_state*)Context;
-                PushDebugInfo(&GameState->DebugConsole, mms_ConstString("Jumping to game!"), mmc_ColorYellow);
+                PushDebugInfo(&GameState->DebugConsole, mms_String("Jumping to game!"), mmc_ColorYellow);
                 GameState->NextModeType = GameModeType_Main;
             }, GameState);
     
 #endif
     }
-
-    // Remove this?
-#if INTERNAL
-    gLog = Platform->Log;
-#endif
-
 
     // System Debug
     {
@@ -86,9 +80,9 @@ GameUpdate(game_memory* GameMemory,
     if (GameState->IsShowTicksElapsed) {
         auto Scratch = mmarn_BeginScratch(&GameState->DebugArena);
         Defer { mmarn_EndScratch(&Scratch); };
-        mms_string TempBuffer = mms_String(Scratch.Arena, 32);
+        mms_string_buffer TempBuffer = mms_StringBuffer(Scratch.Arena, 32);
         mms_Itoa(&TempBuffer, (i32)TicksElapsed);
-        mms_Concat(&TempBuffer, mms_ConstString("ms"));
+        mms_Concat(&TempBuffer, mms_String("ms"));
         mms_NullTerm(&TempBuffer);
 
         DrawText(RenderCommands, 

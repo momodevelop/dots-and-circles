@@ -393,7 +393,7 @@ int main(int argc, char* argv[]) {
     game_input Input = {};
 #if INTERNAL
     char DebugTextInputBuffer[10];
-    Input.DebugTextInputBuffer = mms_String(DebugTextInputBuffer, 10);
+    Input.DebugTextInputBuffer = mms_StringBuffer(DebugTextInputBuffer, 10);
 #endif 
     
     // NOTE(Momo): Timestep related
@@ -428,7 +428,7 @@ int main(int argc, char* argv[]) {
                
 #if INTERNAL
                 case SDL_TEXTINPUT: {
-                    mms_Concat(&Input.DebugTextInputBuffer, mms_ConstString(e.text.text));
+                    mms_Concat(&Input.DebugTextInputBuffer, mms_String(e.text.text));
                 } break;
 #endif                
 
@@ -586,7 +586,7 @@ int main(int argc, char* argv[]) {
             GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetDeltaTime, ActualTicksElapsed); 
         }
        
-        Render(&RendererOpenGL, &RenderCommands); 
+        Render(&RendererOpenGL, RenderCommands); 
         mmcmd_Clear(&RenderCommands);
         
         // NOTE(Momo): Timer update

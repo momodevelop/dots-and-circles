@@ -58,7 +58,7 @@ operator++(mml_it<T>& L) {
 
 template<typename T>
 static inline T& 
-operator*(mml_it<T>& L) {
+operator*(mml_it<T> L) {
     return L.List->Elements[L.Index];
 }
 

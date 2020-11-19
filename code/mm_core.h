@@ -169,6 +169,4 @@ namespace zawarudo {
 #define Defer auto zawarudo_VARANON(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
 
-
-
 #endif

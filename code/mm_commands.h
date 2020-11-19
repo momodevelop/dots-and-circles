@@ -46,16 +46,16 @@ mmcmd_Commands(void* Memory, u32 MemorySize) {
 
 
 // NOTE(Momo): Accessors and Iterators
-static inline mmcmd_entry_header* 
-mmcmd_GetEntry(mmcmd_commands* Commands, usize Index) {
-    Assert(Index < Commands->EntryCount);
-    return (mmcmd_entry_header*)(Commands->EntryMemoryStart - Index * sizeof(mmcmd_entry_header));
+static inline mmcmd_entry_header 
+mmcmd_GetEntry(mmcmd_commands Commands, usize Index) {
+    Assert(Index < Commands.EntryCount);
+    return *(mmcmd_entry_header*)(Commands.EntryMemoryStart - Index * sizeof(mmcmd_entry_header));
 }
 
 
 static inline void*
-mmcmd_GetDataFromEntry(mmcmd_commands* Commands, mmcmd_entry_header* Entry) {
-    return (Commands->Memory + Entry->OffsetToData);
+mmcmd_GetDataFromEntry(mmcmd_commands Commands, mmcmd_entry_header Entry) {
+    return (Commands.Memory + Entry.OffsetToData);
 }
 
 

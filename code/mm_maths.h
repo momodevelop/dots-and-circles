@@ -101,7 +101,7 @@ union mmm_v4f {
 
 
     inline auto& operator[](usize I) {
-        Assert(I < 3); 
+        Assert(I < 4); 
         return Elements[I]; 
     }
 };

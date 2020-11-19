@@ -13,7 +13,7 @@ DrawText(mmcmd_commands* RenderCommands,
            mmm_v4f Color, 
            font_id FontId,
            f32 Size, 
-           mms_const_string String) 
+           mms_string String) 
 {
     mmm_v3f CurPosition = Position;
     

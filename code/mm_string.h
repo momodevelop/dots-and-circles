@@ -8,34 +8,48 @@
 // TODO: Is it worth writing a struct to contain 'const' strings such that we do not have to deal with const char* anymore in our code base?
 
 
-struct mms_const_string {
-    usize Length;
-    const char* Elements;
 
-    inline const auto operator[](usize I) const {
+struct mms_string {
+    struct {
+        usize Length;
+        char* Elements;
+    };
+    inline auto& operator[](usize I) const {
         Assert(I < Length);
         return Elements[I];
     }
 };
 
-static inline mms_const_string 
-mms_ConstString(const char* Cstr) {
-    return mms_const_string {
-        CstrLen(Cstr),
-        Cstr
-    };
+
+static inline mms_string 
+mms_String(char* Elements, usize Length) {
+    Assert(Elements != nullptr);
+    mms_string Ret = {};
+    Ret.Elements = Elements;
+    Ret.Length = Length;
+    return Ret;
 }
 
 
-struct mms_string {
-    union {
-        mms_const_string String;
-        struct {
-            usize Length;
-            char* Elements;
-        };
-    };
+// Assumes C-String
+static inline mms_string 
+mms_String(char* Cstr) {
+    return mms_String(Cstr, CstrLen(Cstr));
+}
+
+// Assumes C-String
+static inline mms_string 
+mms_String(const char* Cstr) {
+    return mms_String((char*)Cstr);
+}
+
+struct mms_string_buffer {
+    mms_string String;
     usize Capacity;
+    struct {
+        usize Length;
+        char* Elements;
+    };
 
     inline auto& operator[](usize I) {
         Assert(I < Length);
@@ -45,12 +59,12 @@ struct mms_string {
 
 
 
-static inline mms_string
-mms_String(char* Memory, usize Capacity) {
+static inline mms_string_buffer
+mms_StringBuffer(char* Memory, usize Capacity) {
     Assert(Capacity > 0);
     Assert(Memory);
 
-    mms_string Ret = {};
+    mms_string_buffer Ret = {};
     Ret.Elements = Memory;
     Ret.Capacity = Capacity;
 
@@ -59,12 +73,12 @@ mms_String(char* Memory, usize Capacity) {
 
 
 static inline void
-mms_Clear(mms_string* Dest) {
+mms_Clear(mms_string_buffer* Dest) {
     Dest->Length = 0;
 }
 
 static inline void
-mms_Copy(mms_string* Dest, mms_const_string Src) {
+mms_Copy(mms_string_buffer* Dest, mms_string Src) {
     Assert(Src.Length <= Dest->Capacity);
     for (u32 i = 0; i < Src.Length; ++i ) {
         Dest->Elements[i] = Src.Elements[i];
@@ -72,26 +86,22 @@ mms_Copy(mms_string* Dest, mms_const_string Src) {
     Dest->Length = Src.Length;
 }
 
-static inline void
-mms_Copy(mms_string* Dest, mms_string* Src) {
-    mms_Copy(Dest, Src->String);
-}
 
 
 static inline void
-mms_Push(mms_string* Dest, char Char) {
+mms_Push(mms_string_buffer* Dest, char Char) {
     Assert(Dest->Length < Dest->Capacity);
     Dest->Elements[Dest->Length++] = Char;
 }
 
 static inline void
-mms_Pop(mms_string* Dest) {
+mms_Pop(mms_string_buffer* Dest) {
     Assert(Dest->Length > 0);
     --Dest->Length;
 }
 
 static inline b32
-mms_PopSafely(mms_string* Dest) {
+mms_PopSafely(mms_string_buffer* Dest) {
     if (Dest->Length > 0 ){
         --Dest->Length;
         return true;
@@ -101,7 +111,7 @@ mms_PopSafely(mms_string* Dest) {
 
 
 static inline void
-mms_Concat(mms_string* Dest, mms_const_string Src) {
+mms_Concat(mms_string_buffer* Dest, mms_string Src) {
     Assert(Dest->Length + Src.Length <= Dest->Capacity);
     for ( u32 i = 0; i < Src.Length; ++i ) {
         Dest->Elements[Dest->Length++] = Src.Elements[i];
@@ -109,7 +119,7 @@ mms_Concat(mms_string* Dest, mms_const_string Src) {
 }
 
 static inline b32
-mms_ConcatSafely(mms_string* Dest, mms_const_string Src) {
+mms_ConcatSafely(mms_string_buffer* Dest, mms_string Src) {
     if (Dest->Length + Src.Length <= Dest->Capacity) {
         for ( u32 i = 0; i < Src.Length; ++i ) {
             Dest->Elements[Dest->Length++] = Src.Elements[i];
@@ -120,13 +130,13 @@ mms_ConcatSafely(mms_string* Dest, mms_const_string Src) {
 }
 
 static inline void
-mms_NullTerm(mms_string* Dest) {
+mms_NullTerm(mms_string_buffer* Dest) {
     Assert(Dest->Length < Dest->Capacity);
     Dest->Elements[Dest->Length] = 0;
 }
 
 static inline b32
-mms_Compare(mms_const_string Lhs, mms_const_string Rhs) { 
+mms_Compare(mms_string Lhs, mms_string Rhs) { 
     if(Lhs.Length != Rhs.Length) {
         return false;
     }
@@ -139,14 +149,14 @@ mms_Compare(mms_const_string Lhs, mms_const_string Rhs) {
 }
 
 static inline void
-mms_Reverse(mms_string* Dest) {
+mms_Reverse(mms_string_buffer* Dest) {
     for (usize i = 0; i < Dest->Length/2; ++i) {
         Swap(Dest->Elements[i], Dest->Elements[Dest->Length-1-i]);
     }
 }
 
 static inline void
-mms_Itoa(mms_string* Dest, i32 Num) {
+mms_Itoa(mms_string_buffer* Dest, i32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -171,21 +181,48 @@ mms_Itoa(mms_string* Dest, i32 Num) {
 
     mms_Reverse(Dest);
 }
+struct range {
+    usize Start;
+    usize OnePastEnd;
+};
 
 
+static inline range
+mms_FindNextToken(mms_string String, char Delimiter, range Slice = {}) {
+  
+    if (Slice.OnePastEnd != 0) {
+        Slice.Start = Slice.OnePastEnd + 1;
+        if (Slice.Start >= String.Length) {
+            return Slice;
+        }
+
+    }
+    for (usize i = Slice.Start; ; ++i) {
+         if (i == String.Length || String[i] == Delimiter) {
+            Slice.OnePastEnd = i;
+            return Slice;
+         }
+    }
+
+    return Slice;
+
+
+}
 
 #include "mm_arena.h"
-static inline mms_string
-mms_String(mmarn_arena* Arena, usize Capacity) {
+static inline mms_string_buffer
+mms_StringBuffer(mmarn_arena* Arena, usize Capacity) {
     char* Buffer = mmarn_PushArray<char>(Arena, Capacity); 
-    return mms_String(Buffer, Capacity);
+    return mms_StringBuffer(Buffer, Capacity);
 }
 
-static inline mms_string* 
-mms_PushString(mmarn_arena* Arena, usize Capacity) {
-    mms_string* Ret = mmarn_PushStruct<mms_string>(Arena);
-    (*Ret) = mms_String(Arena, Capacity);
+static inline mms_string_buffer* 
+mms_PushStringBuffer(mmarn_arena* Arena, usize Capacity) {
+    mms_string_buffer* Ret = mmarn_PushStruct<mms_string_buffer>(Arena);
+    (*Ret) = mms_StringBuffer(Arena, Capacity);
     return Ret;
 }
+
+
 
 #endif

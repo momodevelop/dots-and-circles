@@ -118,7 +118,6 @@ Init(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashBlackout.Timer = 0.f;
         Mode->SplashBlackout.Duration = 1.f;
     }
-    Log("Splash state initialized!");
 }
 
 static inline void
@@ -145,7 +144,6 @@ Update(game_mode_splash* Mode,
         
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
-        Log("Splash state exit");
         GameState->NextModeType = GameModeType_Splash;
     }
 }

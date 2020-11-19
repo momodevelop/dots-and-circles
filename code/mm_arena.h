@@ -22,8 +22,8 @@ mmarn_Clear(mmarn_arena* Arena) {
 }
 
 static inline usize 
-mmarn_Remaining(mmarn_arena* Arena) {
-    return Arena->Capacity - Arena->Used;
+mmarn_Remaining(mmarn_arena Arena) {
+    return Arena.Capacity - Arena.Used;
 }
 
 
@@ -94,11 +94,6 @@ mmarn_BeginScratch(mmarn_arena* Arena) {
     Ret.Arena = Arena;
     Ret.OldUsed = Arena->Used;
     return Ret;
-}
-
-static inline mmarn_scratch
-mmarn_BeginScratch(mmarn_scratch* TempMemory) {
-    return mmarn_BeginScratch(TempMemory->Arena);
 }
 
 static inline void

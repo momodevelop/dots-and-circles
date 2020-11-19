@@ -275,7 +275,7 @@ DrawInstances(renderer_opengl* Renderer, GLint Texture, u32 InstancesToDraw, u32
 
 
 static inline void
-Render(renderer_opengl* Renderer, mmcmd_commands* Commands) 
+Render(renderer_opengl* Renderer, mmcmd_commands Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -285,10 +285,10 @@ Render(renderer_opengl* Renderer, mmcmd_commands* Commands)
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    for (u32 i = 0; i < Commands->EntryCount; ++i) {
-        auto* Entry = mmcmd_GetEntry(Commands, i);
+    for (u32 i = 0; i < Commands.EntryCount; ++i) {
+        auto Entry = mmcmd_GetEntry(Commands, i);
         
-        switch(Entry->Type) {
+        switch(Entry.Type) {
             case render_command_set_design_resolution::TypeId: {
                 using data_t = render_command_set_design_resolution;
                 auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);

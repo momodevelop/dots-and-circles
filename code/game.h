@@ -2,12 +2,6 @@
 #define GAME_H
 
 #include "platform.h"
-#ifdef INTERNAL
-static platform_log* gLog;
-#define Log(fmt, ...) gLog(fmt, __VA_ARGS__);
-#else 
-#define Log(fmt, ...)
-#endif
 
 #include "game_input.h"
 
