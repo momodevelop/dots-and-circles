@@ -5,7 +5,7 @@
 #include "mm_core.h"
 
 
-enum mmrp_sort_type {
+enum rp_sort_type {
     MmrpSort_Width,
     MmrpSort_Height,
     MmrpSort_Area,
@@ -14,11 +14,11 @@ enum mmrp_sort_type {
     MmrpSort_BiggerSide,
 };
 
-struct mmrp_node {
+struct rp_node {
     u32 X, Y, W, H;
 };
 
-struct mmrp_rect {
+struct rp_rect {
     // NOTE(Momo): Input
     u32 W, H; 
     
@@ -29,17 +29,17 @@ struct mmrp_rect {
     u32 X, Y;
 };
 
-struct mmrp_context {
+struct rp_context {
     u32 Width;
     u32 Height;
-    mmrp_node* Nodes;
+    rp_node* Nodes;
     usize NodeCount;
 };
 
-static inline mmrp_context
-mmrp_CreateRectPacker(u32 Width, u32 Height, mmrp_node* Nodes, usize NodeCount) 
+static inline rp_context
+rp_CreateRectPacker(u32 Width, u32 Height, rp_node* Nodes, usize NodeCount) 
 {
-    mmrp_context Ret = {};
+    rp_context Ret = {};
     Ret.Width = Width;
     Ret.Height = Height;
     Ret.Nodes = Nodes;
@@ -49,51 +49,51 @@ mmrp_CreateRectPacker(u32 Width, u32 Height, mmrp_node* Nodes, usize NodeCount)
 }
 
 static inline i32 
-mmrp__SortWidth(const void* Lhs, const void* Rhs) {
-    auto L = (*(mmrp_rect*)(Lhs));
-    auto R = (*(mmrp_rect*)(Rhs));
+rp__SortWidth(const void* Lhs, const void* Rhs) {
+    auto L = (*(rp_rect*)(Lhs));
+    auto R = (*(rp_rect*)(Rhs));
     return R.W - L.W ;
 }
 
 
 static inline i32 
-mmrp__SortHeight(const void* Lhs, const void* Rhs) {
-    auto L = (*(mmrp_rect*)(Lhs));
-    auto R = (*(mmrp_rect*)(Rhs));
+rp__SortHeight(const void* Lhs, const void* Rhs) {
+    auto L = (*(rp_rect*)(Lhs));
+    auto R = (*(rp_rect*)(Rhs));
     return R.H - L.H;
 }
 
 static inline i32 
-mmrp__SortPerimeter(const void* Lhs, const void* Rhs) {
-    auto L = (*(mmrp_rect*)(Lhs));
-    auto R = (*(mmrp_rect*)(Rhs));
+rp__SortPerimeter(const void* Lhs, const void* Rhs) {
+    auto L = (*(rp_rect*)(Lhs));
+    auto R = (*(rp_rect*)(Rhs));
     auto LhsPerimeter = L.W + L.H;
     auto RhsPerimeter = R.W + R.H;
     return RhsPerimeter - LhsPerimeter;
 }
 
 static inline i32 
-mmrp__SortArea(const void* Lhs, const void* Rhs) {
-    auto L = (*(mmrp_rect*)(Lhs));
-    auto R = (*(mmrp_rect*)(Rhs));
+rp__SortArea(const void* Lhs, const void* Rhs) {
+    auto L = (*(rp_rect*)(Lhs));
+    auto R = (*(rp_rect*)(Rhs));
     auto LhsArea = L.W * L.H;
     auto RhsArea = R.W * R.H;
     return  RhsArea - LhsArea;
 }
 
 static inline i32
-mmrp__SortBiggerSide(const void* Lhs, const void* Rhs) {
-    auto L = (*(mmrp_rect*)(Lhs));
-    auto R = (*(mmrp_rect*)(Rhs));
+rp__SortBiggerSide(const void* Lhs, const void* Rhs) {
+    auto L = (*(rp_rect*)(Lhs));
+    auto R = (*(rp_rect*)(Rhs));
     auto LhsBiggerSide = Maximum(L.W, L.H);
     auto RhsBiggerSide = Maximum(R.W, R.H);
     return RhsBiggerSide - LhsBiggerSide;
 }
 
 static inline i32
-mmrp__SortPathological(const void* Lhs, const void* Rhs) {
-    auto L = (*(mmrp_rect*)(Lhs));
-    auto R = (*(mmrp_rect*)(Rhs));
+rp__SortPathological(const void* Lhs, const void* Rhs) {
+    auto L = (*(rp_rect*)(Lhs));
+    auto R = (*(rp_rect*)(Rhs));
     auto LhsMultipler = Maximum(L.W, L.H)/Minimum(L.W, L.H) * L.W * L.H;
     auto RhsMultipler = Maximum(R.W, R.H)/Minimum(R.W, R.H) * R.W * R.H;
     return RhsMultipler - LhsMultipler;
@@ -101,22 +101,22 @@ mmrp__SortPathological(const void* Lhs, const void* Rhs) {
 
 
 static inline void 
-mmrp__Sort(mmrp_rect* Rects, usize RectCount, mmrp_sort_type SortType) {
+rp__Sort(rp_rect* Rects, usize RectCount, rp_sort_type SortType) {
     switch(SortType) {
         case MmrpSort_Width: {
-            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortWidth);
+            qsort(Rects, RectCount, sizeof(rp_rect), rp__SortWidth);
         } break;
         case MmrpSort_Height: {
-            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortHeight);
+            qsort(Rects, RectCount, sizeof(rp_rect), rp__SortHeight);
         } break;
         case MmrpSort_Area: {
-            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortArea);
+            qsort(Rects, RectCount, sizeof(rp_rect), rp__SortArea);
         } break;
         case MmrpSort_Perimeter: {
-            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortPerimeter);
+            qsort(Rects, RectCount, sizeof(rp_rect), rp__SortPerimeter);
         } break;
         case MmrpSort_Pathological: {
-            qsort(Rects, RectCount, sizeof(mmrp_rect), mmrp__SortPathological);
+            qsort(Rects, RectCount, sizeof(rp_rect), rp__SortPathological);
         } break;
         default: {
             Assert(false);
@@ -128,9 +128,9 @@ mmrp__Sort(mmrp_rect* Rects, usize RectCount, mmrp_sort_type SortType) {
 
 // NOTE(Momo): Rects WILL be sorted after this function
 static inline b32
-mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_type SortType = MmrpSort_Area) 
+rp_Pack(rp_context* Context, rp_rect* Rects, usize RectCount, rp_sort_type SortType = MmrpSort_Area) 
 {
-    mmrp__Sort(Rects, RectCount, SortType);
+    rp__Sort(Rects, RectCount, SortType);
     
     usize CurrentNodeCount = 0;
     Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };
@@ -143,7 +143,7 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
         {
             for (usize  j = 0; j < ChosenSpaceIndex ; ++j ) {
                 usize Index = ChosenSpaceIndex - j - 1;
-                mmrp_node Space = Context->Nodes[Index];
+                rp_node Space = Context->Nodes[Index];
                 // NOTE(Momo): Check if the image fits
                 if (Rect.W <= Space.W && Rect.H <= Space.H) {
                     ChosenSpaceIndex = Index;
@@ -159,7 +159,7 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
         }
         
         // NOTE(Momo): Swap and pop the chosen space
-        mmrp_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
+        rp_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
         if (CurrentNodeCount > 0) {
             Context->Nodes[ChosenSpaceIndex] = Context->Nodes[CurrentNodeCount-1];
             --CurrentNodeCount;
@@ -168,7 +168,7 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
         // NOTE(Momo): Split if not perfect fit
         if (ChosenSpace.W != Rect.W && ChosenSpace.H == Rect.H) {
             // Split right
-            mmrp_node SplitSpaceRight = {
+            rp_node SplitSpaceRight = {
                 ChosenSpace.X + Rect.W,
                 ChosenSpace.Y,
                 ChosenSpace.W - Rect.W,
@@ -178,7 +178,7 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
         }
         else if (ChosenSpace.W == Rect.W && ChosenSpace.H != Rect.H) {
             // Split down
-            mmrp_node SplitSpaceDown = {
+            rp_node SplitSpaceDown = {
                 ChosenSpace.X,
                 ChosenSpace.Y + Rect.H,
                 ChosenSpace.W,
@@ -188,7 +188,7 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
         }
         else if (ChosenSpace.W != Rect.W && ChosenSpace.H != Rect.H) {
             // Split right
-            mmrp_node SplitSpaceRight = {
+            rp_node SplitSpaceRight = {
                 ChosenSpace.X + Rect.W,
                 ChosenSpace.Y,
                 ChosenSpace.W - Rect.W,
@@ -196,7 +196,7 @@ mmrp_Pack(mmrp_context* Context, mmrp_rect* Rects, usize RectCount, mmrp_sort_ty
             };
             
             // Split down
-            mmrp_node SplitSpaceDown = {
+            rp_node SplitSpaceDown = {
                 ChosenSpace.X,
                 ChosenSpace.Y + Rect.H,
                 ChosenSpace.W,

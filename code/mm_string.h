@@ -9,7 +9,7 @@
 
 
 
-struct mms_string {
+struct string {
     struct {
         usize Length;
         char* Elements;
@@ -21,10 +21,10 @@ struct mms_string {
 };
 
 
-static inline mms_string 
-mms_String(char* Elements, usize Length) {
+static inline string 
+String(char* Elements, usize Length) {
     Assert(Elements != nullptr);
-    mms_string Ret = {};
+    string Ret = {};
     Ret.Elements = Elements;
     Ret.Length = Length;
     return Ret;
@@ -32,19 +32,19 @@ mms_String(char* Elements, usize Length) {
 
 
 // Assumes C-String
-static inline mms_string 
-mms_String(char* Cstr) {
-    return mms_String(Cstr, CstrLen(Cstr));
+static inline string 
+String(char* SiStr) {
+    return String(SiStr, SiStrLen(SiStr));
 }
 
 // Assumes C-String
-static inline mms_string 
-mms_String(const char* Cstr) {
-    return mms_String((char*)Cstr);
+static inline string 
+String(const char* SiStr) {
+    return String((char*)SiStr);
 }
 
-struct mms_string_buffer {
-    mms_string String;
+struct string_buffer {
+    string String;
     usize Capacity;
     struct {
         usize Length;
@@ -59,12 +59,12 @@ struct mms_string_buffer {
 
 
 
-static inline mms_string_buffer
-mms_StringBuffer(char* Memory, usize Capacity) {
+static inline string_buffer
+StringBuffer(char* Memory, usize Capacity) {
     Assert(Capacity > 0);
     Assert(Memory);
 
-    mms_string_buffer Ret = {};
+    string_buffer Ret = {};
     Ret.Elements = Memory;
     Ret.Capacity = Capacity;
 
@@ -73,12 +73,12 @@ mms_StringBuffer(char* Memory, usize Capacity) {
 
 
 static inline void
-mms_Clear(mms_string_buffer* Dest) {
+Clear(string_buffer* Dest) {
     Dest->Length = 0;
 }
 
 static inline void
-mms_Copy(mms_string_buffer* Dest, mms_string Src) {
+Copy(string_buffer* Dest, string Src) {
     Assert(Src.Length <= Dest->Capacity);
     for (u32 i = 0; i < Src.Length; ++i ) {
         Dest->Elements[i] = Src.Elements[i];
@@ -89,19 +89,19 @@ mms_Copy(mms_string_buffer* Dest, mms_string Src) {
 
 
 static inline void
-mms_Push(mms_string_buffer* Dest, char Char) {
+Push(string_buffer* Dest, char Char) {
     Assert(Dest->Length < Dest->Capacity);
     Dest->Elements[Dest->Length++] = Char;
 }
 
 static inline void
-mms_Pop(mms_string_buffer* Dest) {
+Pop(string_buffer* Dest) {
     Assert(Dest->Length > 0);
     --Dest->Length;
 }
 
 static inline b32
-mms_PopSafely(mms_string_buffer* Dest) {
+PopSafely(string_buffer* Dest) {
     if (Dest->Length > 0 ){
         --Dest->Length;
         return true;
@@ -111,7 +111,7 @@ mms_PopSafely(mms_string_buffer* Dest) {
 
 
 static inline void
-mms_Concat(mms_string_buffer* Dest, mms_string Src) {
+Concat(string_buffer* Dest, string Src) {
     Assert(Dest->Length + Src.Length <= Dest->Capacity);
     for ( u32 i = 0; i < Src.Length; ++i ) {
         Dest->Elements[Dest->Length++] = Src.Elements[i];
@@ -119,7 +119,7 @@ mms_Concat(mms_string_buffer* Dest, mms_string Src) {
 }
 
 static inline b32
-mms_ConcatSafely(mms_string_buffer* Dest, mms_string Src) {
+ConcatSafely(string_buffer* Dest, string Src) {
     if (Dest->Length + Src.Length <= Dest->Capacity) {
         for ( u32 i = 0; i < Src.Length; ++i ) {
             Dest->Elements[Dest->Length++] = Src.Elements[i];
@@ -130,13 +130,13 @@ mms_ConcatSafely(mms_string_buffer* Dest, mms_string Src) {
 }
 
 static inline void
-mms_NullTerm(mms_string_buffer* Dest) {
+NullTerm(string_buffer* Dest) {
     Assert(Dest->Length < Dest->Capacity);
     Dest->Elements[Dest->Length] = 0;
 }
 
 static inline b32
-mms_Compare(mms_string Lhs, mms_string Rhs) { 
+Compare(string Lhs, string Rhs) { 
     if(Lhs.Length != Rhs.Length) {
         return false;
     }
@@ -149,21 +149,21 @@ mms_Compare(mms_string Lhs, mms_string Rhs) {
 }
 
 static inline void
-mms_Reverse(mms_string_buffer* Dest) {
+Reverse(string_buffer* Dest) {
     for (usize i = 0; i < Dest->Length/2; ++i) {
         Swap(Dest->Elements[i], Dest->Elements[Dest->Length-1-i]);
     }
 }
 
 static inline void
-mms_Itoa(mms_string_buffer* Dest, i32 Num) {
+Itoa(string_buffer* Dest, i32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
     
     // Special case for 0
     if (Num == 0) {
-        mms_Push(Dest, '0');
+        Push(Dest, '0');
         return;
     }
 
@@ -172,14 +172,14 @@ mms_Itoa(mms_string_buffer* Dest, i32 Num) {
 
     for(; Num != 0; Num /= 10) {
         i32 DigitToConvert = Num % 10;
-        mms_Push(Dest, (char)(DigitToConvert + '0'));
+        Push(Dest, (char)(DigitToConvert + '0'));
     }
 
     if (Negative) {
-        mms_Push(Dest, '-');
+        Push(Dest, '-');
     }
 
-    mms_Reverse(Dest);
+    Reverse(Dest);
 }
 struct range {
     usize Start;
@@ -188,7 +188,7 @@ struct range {
 
 
 static inline range
-mms_FindNextToken(mms_string String, char Delimiter, range Slice = {}) {
+FindNextToken(string String, char Delimiter, range Slice = {}) {
   
     if (Slice.OnePastEnd != 0) {
         Slice.Start = Slice.OnePastEnd + 1;
@@ -210,16 +210,16 @@ mms_FindNextToken(mms_string String, char Delimiter, range Slice = {}) {
 }
 
 #include "mm_arena.h"
-static inline mms_string_buffer
-mms_StringBuffer(mmarn_arena* Arena, usize Capacity) {
-    char* Buffer = mmarn_PushArray<char>(Arena, Capacity); 
-    return mms_StringBuffer(Buffer, Capacity);
+static inline string_buffer
+StringBuffer(arena* Arena, usize Capacity) {
+    char* Buffer = PushSiArray<char>(Arena, Capacity); 
+    return StringBuffer(Buffer, Capacity);
 }
 
-static inline mms_string_buffer* 
-mms_PushStringBuffer(mmarn_arena* Arena, usize Capacity) {
-    mms_string_buffer* Ret = mmarn_PushStruct<mms_string_buffer>(Arena);
-    (*Ret) = mms_StringBuffer(Arena, Capacity);
+static inline string_buffer* 
+PushStringBuffer(arena* Arena, usize Capacity) {
+    string_buffer* Ret = PushStruct<string_buffer>(Arena);
+    (*Ret) = StringBuffer(Arena, Capacity);
     return Ret;
 }
 

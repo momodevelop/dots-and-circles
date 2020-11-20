@@ -42,7 +42,7 @@ struct game_input {
         };
     };
 #if INTERNAL
-    mms_string_buffer DebugTextInputBuffer;
+    string_buffer DebugTextInputBuffer;
     game_input_button DebugKeys[GameDebugKey_Count];
 #endif
 };
@@ -54,7 +54,7 @@ Update(game_input* Input) {
     }
 
 #if INTERNAL
-    mms_Clear(&Input->DebugTextInputBuffer);
+    Clear(&Input->DebugTextInputBuffer);
     for (auto&& itr : Input->DebugKeys) {
         itr.Before = itr.Now;
     }

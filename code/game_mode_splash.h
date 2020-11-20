@@ -5,9 +5,9 @@
 #include "mm_easing.h"
 
 struct splash_image_entity {
-    mmm_v3f Scale;
-    mmm_v3f Position;
-    mmm_v4f Colors;
+    v3f Scale;
+    v3f Position;
+    v4f Colors;
     
     bitmap_id BitmapHandle;
     
@@ -31,23 +31,23 @@ Update(splash_image_entity* Entity,
         return;
     
     // NOTE(Momo): Update
-    f32 ease = mmes_EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    f32 ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     
     Entity->Position.X = Entity->StartX + (Entity->EndX - Entity->StartX) * ease; 
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    mmm_m44f T = mmm_Translation(Entity->Position);
-    mmm_m44f S = mmm_Scale(Entity->Scale);
+    m44f T = Translation(Entity->Position);
+    m44f S = Scale(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S,  Entity->BitmapHandle);
 }
 
 struct splash_blackout_entity {
-    mmm_v3f Scale;
-    mmm_v3f Position;
-    mmm_v4f Colors;
+    v3f Scale;
+    v3f Position;
+    v4f Colors;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -66,12 +66,12 @@ Update(splash_blackout_entity* Entity,
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
-    Entity->Colors.A = mmes_EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    Entity->Colors.A = EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    mmm_m44f T = mmm_Translation(Entity->Position);
-    mmm_m44f S = mmm_Scale(Entity->Scale);
+    m44f T = Translation(Entity->Position);
+    m44f S = Scale(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandDrawQuad(RenderCommands, Entity->Colors, T*S);

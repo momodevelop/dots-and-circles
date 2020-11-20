@@ -5,57 +5,57 @@
 #include "mm_maths.h"
 
 static inline
-f32 mmes_EaseInSine(f32 t)  {
-    return mmm_Sin(mmm_Pi32 * 0.5f * t);
+f32 EaseInSine(f32 t)  {
+    return Sin(Pi32 * 0.5f * t);
 }
 
 
 static inline
-f32 mmes_EaseOutSine(f32 t) {
-    return 1.0f + mmm_Sin(mmm_Pi32 * 0.5f * (--t));
+f32 EaseOutSine(f32 t) {
+    return 1.0f + Sin(Pi32 * 0.5f * (--t));
 }
 
 static inline
-f32 mmes_EaseInOutSine(f32 t)  {
-    return 0.5f * (1.f + mmm_Sin(mmm_Pi32 * (t - 0.5f)));
+f32 EaseInOutSine(f32 t)  {
+    return 0.5f * (1.f + Sin(Pi32 * (t - 0.5f)));
 }
 
 static inline 
-f32 mmes_EaseInQuad(f32 t)  {
+f32 EaseInQuad(f32 t)  {
     return t * t;
 }
 
-static inline f32 mmes_EaseOutQuad(f32 t)  {
+static inline f32 EaseOutQuad(f32 t)  {
     return t * (2.f -t);
 }
 
-static inline f32 mmes_EaseInOutQuad(f32 t)  {
+static inline f32 EaseInOutQuad(f32 t)  {
     return t < 0.5f ? 2.f * t * t : t * (4.f -2.f * t) - 1.f;
 }
 
-static inline f32 mmes_EaseInCubic(f32 t)  {
+static inline f32 EaseInCubic(f32 t)  {
     return t * t * t;
 }
 
-static inline f32 mmes_EaseOutCubic(f32 t)  {
+static inline f32 EaseOutCubic(f32 t)  {
     return 1.f +(--t) * t * t;
 }
 
-static inline f32 mmes_EaseInOutCubic(f32 t)  {
+static inline f32 EaseInOutCubic(f32 t)  {
     return t < 0.5f ? 4.f * t * t * t : 1.f +(--t) * (2.f * (--t)) * (2.f * t);
 }
 
-static inline f32 mmes_EaseInQuart(f32 t)  {
+static inline f32 EaseInQuart(f32 t)  {
     t *= t;
     return t * t;
 }
 
-static inline f32 mmes_EaseOutQuart(f32 t)  {
+static inline f32 EaseOutQuart(f32 t)  {
     t = (--t) * t;
     return 1.f -t * t;
 }
 
-static inline f32 mmes_EaseInOutQuart(f32 t)  {
+static inline f32 EaseInOutQuart(f32 t)  {
     if (t < 0.5f) {
         t *= t;
         return 8.f * t * t;
@@ -66,17 +66,17 @@ static inline f32 mmes_EaseInOutQuart(f32 t)  {
     }
 }
 
-static inline f32 mmes_EaseInQuint(f32 t)  {
+static inline f32 EaseInQuint(f32 t)  {
     f32 t2 = t * t;
     return t * t2 * t2;
 }
 
-static inline f32 mmes_EaseOutQuint(f32 t)  {
+static inline f32 EaseOutQuint(f32 t)  {
     f32 t2 = (--t) * t;
     return 1.f +t * t2 * t2;
 }
 
-static inline f32 mmes_EaseInOutQuint(f32 t)  {
+static inline f32 EaseInOutQuint(f32 t)  {
     f32 t2;
     if (t < 0.5f) {
         t2 = t * t;
@@ -90,34 +90,34 @@ static inline f32 mmes_EaseInOutQuint(f32 t)  {
 
 
 
-static inline f32 mmes_EaseInCirc(f32 t)  {
-    return 1.f -mmm_Sqrt(1.f -t);
+static inline f32 EaseInCirc(f32 t)  {
+    return 1.f -Sqrt(1.f -t);
 }
 
-static inline f32 mmes_EaseOutCirc(f32 t)  {
-    return mmm_Sqrt(t);
+static inline f32 EaseOutCirc(f32 t)  {
+    return Sqrt(t);
 }
 
-static inline f32 mmes_EaseInOutCirc(f32 t)  {
+static inline f32 EaseInOutCirc(f32 t)  {
     if (t < 0.5f) {
-        return (1.f -mmm_Sqrt(1.f -2.f * t)) * 0.5f;
+        return (1.f -Sqrt(1.f -2.f * t)) * 0.5f;
     }
     else {
-        return (1.f +mmm_Sqrt(2.f * t - 1.f)) * 0.5f;
+        return (1.f +Sqrt(2.f * t - 1.f)) * 0.5f;
     }
 }
 
-static inline f32 mmes_EaseInBack(f32 t)  {
+static inline f32 EaseInBack(f32 t)  {
     return t * t * (2.7f * t - 1.7f);
 }
 
 static inline 
-f32 mmes_EaseOutBack(f32 t)  {
+f32 EaseOutBack(f32 t)  {
     return 1.f +(--t) * t * (2.7f * t + 1.7f);
 }
 
 static inline 
-f32 mmes_EaseInOutBack(f32 t)  {
+f32 EaseInOutBack(f32 t)  {
     if (t < 0.5f) {
         return t * t * (7.f * t - 2.5f) * 2.f;
     }
@@ -127,30 +127,30 @@ f32 mmes_EaseInOutBack(f32 t)  {
 }
 
 static inline 
-f32 mmes_EaseInElastic(f32 t)  {
+f32 EaseInElastic(f32 t)  {
     f32 t2 = t * t;
-    return t2 * t2 * mmm_Sin(t * mmm_Pi32 * 4.5f);
+    return t2 * t2 * Sin(t * Pi32 * 4.5f);
 }
 
 static inline 
-f32 mmes_EaseOutElastic(f32 t)  {
+f32 EaseOutElastic(f32 t)  {
     f32 t2 = (t - 1.f) * (t - 1.f);
-    return 1.f -t2 * t2 * mmm_Cos(t * mmm_Pi32 * 4.5f);
+    return 1.f -t2 * t2 * Cos(t * Pi32 * 4.5f);
 }
 
 static inline
-f32 mmes_EaseInOutElastic(f32 t)  {
+f32 EaseInOutElastic(f32 t)  {
     f32 t2;
     if (t < 0.45f) {
         t2 = t * t;
-        return 8.f * t2 * t2 * mmm_Sin(t * mmm_Pi32 * 9.f);
+        return 8.f * t2 * t2 * Sin(t * Pi32 * 9.f);
     }
     else if (t < 0.55f) {
-        return 0.5f +0.75f * mmm_Sin(t * mmm_Pi32 * 4.f);
+        return 0.5f +0.75f * Sin(t * Pi32 * 4.f);
     }
     else {
         t2 = (t - 1.f) * (t - 1.f);
-        return 1.f -8.f * t2 * t2 * mmm_Sin(t * mmm_Pi32 * 9.f);
+        return 1.f -8.f * t2 * t2 * Sin(t * Pi32 * 9.f);
     }
 }
 
@@ -158,40 +158,40 @@ f32 mmes_EaseInOutElastic(f32 t)  {
 
 // NOTE(Momo): These require power function. 
 static inline f32 
-mmes_EaseInBounce(f32 t)  {
-    return mmm_Pow(2.f, 6.f * (t - 1.f)) * Abs(mmm_Sin(t * mmm_Pi32 * 3.5f));
+EaseInBounce(f32 t)  {
+    return Pow(2.f, 6.f * (t - 1.f)) * Abs(Sin(t * Pi32 * 3.5f));
 }
 
 
 static inline 
-f32 mmes_EaseOutBounce(f32 t) {
-    return 1.f -mmm_Pow(2.f, -6.f * t) * Abs(mmm_Cos(t * mmm_Pi32 * 3.5f));
+f32 EaseOutBounce(f32 t) {
+    return 1.f -Pow(2.f, -6.f * t) * Abs(Cos(t * Pi32 * 3.5f));
 }
 
 static inline 
-f32 mmes_EaseInOutBounce(f32 t) {
+f32 EaseInOutBounce(f32 t) {
     if (t < 0.5f) {
-        return 8.f * mmm_Pow(2.f, 8.f * (t - 1.f)) * Abs(mmm_Sin(t * mmm_Pi32 * 7.f));
+        return 8.f * Pow(2.f, 8.f * (t - 1.f)) * Abs(Sin(t * Pi32 * 7.f));
     }
     else {
-        return 1.f -8.f * mmm_Pow(2.f, -8.f * t) * Abs(mmm_Sin(t * mmm_Pi32 * 7.f));
+        return 1.f -8.f * Pow(2.f, -8.f * t) * Abs(Sin(t * Pi32 * 7.f));
     }
 }
 
-static inline f32 mmes_EaseInExpo(f32 t)  {
-    return (mmm_Pow(2.f, 8.f * t) - 1.f) / 255.f;
+static inline f32 EaseInExpo(f32 t)  {
+    return (Pow(2.f, 8.f * t) - 1.f) / 255.f;
 }
 
-static inline f32 mmes_EaseOutExpo(f32 t)  {
-    return t == 1.f ? 1.f : 1.f -mmm_Pow(2.f, -10.f * t);
+static inline f32 EaseOutExpo(f32 t)  {
+    return t == 1.f ? 1.f : 1.f -Pow(2.f, -10.f * t);
 }
 
-static inline f32 mmes_EaseInOutExpo(f32 t)  {
+static inline f32 EaseInOutExpo(f32 t)  {
     if (t < 0.5f) {
-        return (mmm_Pow(2.f, 16.f * t) - 1.f) / 510.f;
+        return (Pow(2.f, 16.f * t) - 1.f) / 510.f;
     }
     else {
-        return 1.f -0.5f * mmm_Pow(2.f, -16.f * (t - 0.5f));
+        return 1.f -0.5f * Pow(2.f, -16.f * (t - 0.5f));
     }
 }
 

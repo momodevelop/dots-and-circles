@@ -18,22 +18,22 @@ struct bitmap {
 };
 
 struct atlas_rect {
-    mmm_rect2u Rect;
+    rect2u Rect;
     bitmap_id BitmapId;
 };
 
 
 struct font_glyph {
-    mmm_rect2u AtlasRect;
-    mmm_rect2f Box; 
+    rect2u AtlasRect;
+    rect2f Box; 
     bitmap_id BitmapId;
     f32 Advance;
     f32 LeftBearing;
 };
 
 static inline f32 
-mmm_AspectRatio(font_glyph* Glyph) {
-    return mmm_AspectRatio(Glyph->Box);
+AspectRatio(font_glyph* Glyph) {
+    return AspectRatio(Glyph->Box);
 }
 
 struct font {
@@ -56,33 +56,33 @@ HashCodepoint(u32 Codepoint) {
 #include "mm_array.h"
 
 struct game_assets {
-    mmarn_arena Arena;
+    arena Arena;
     
-    mma_array<bitmap> Bitmaps;
-    mma_array<atlas_rect> AtlasRects;
-    mma_array<font> Fonts;
+    array<bitmap> Bitmaps;
+    array<atlas_rect> AtlasRects;
+    array<font> Fonts;
 
     platform_api* Platform;
 };
 
 
-static inline mmm_quad2f
+static inline quad2f
 GetAtlasUV(game_assets* Assets, atlas_rect* AtlasRect) {
     auto Bitmap = Assets->Bitmaps[AtlasRect->BitmapId];
-    return mmm_Quad2F(mmm_RatioRect(AtlasRect->Rect, {0, 0, Bitmap.Width, Bitmap.Height}));
+    return Quad2F(RatioRect(AtlasRect->Rect, {0, 0, Bitmap.Width, Bitmap.Height}));
 }
 
-static inline mmm_quad2f
+static inline quad2f
 GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
     auto Bitmap = Assets->Bitmaps[Glyph->BitmapId];
-    return mmm_Quad2F(mmm_RatioRect(Glyph->AtlasRect, {0, 0, Bitmap.Width, Bitmap.Height}));
+    return Quad2F(RatioRect(Glyph->AtlasRect, {0, 0, Bitmap.Width, Bitmap.Height}));
 }
 
 
 static inline b32
 CheckAssetSignature(void* Memory, const char* Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    u32 SigLen = CstrLen(Signature);
+    u32 SigLen = SiStrLen(Signature);
     for (u32 i = 0; i < SigLen; ++i) {
         if (MemoryU8[i] != Signature[i]) {
             return false;
@@ -95,29 +95,29 @@ CheckAssetSignature(void* Memory, const char* Signature) {
 // TODO(Momo): Perhaps remove render_commands and replace with platform call for linking textures?
 // TODO(Momo): Change to CreateAssets() structure to align convention
 static inline game_assets
-CreateAssets(mmarn_arena* Arena, 
+CreateAssets(arena* Arena, 
      platform_api* Platform,
      mmcmd_commands* RenderCommands,
      const char* Filename)
 {
     game_assets Assets = {};
-    Assets.Arena = mmarn_SubArena(Arena, Megabytes(100));
+    Assets.Arena = SubArena(Arena, Megabytes(100));
     Assets.Platform = Platform;
-    Assets.Bitmaps = mma_Array<bitmap>(Arena, Bitmap_Count);
-    Assets.AtlasRects = mma_Array<atlas_rect>(Arena, AtlasRect_Count);
-    Assets.Fonts = mma_Array<font>(Arena, Font_Count);
+    Assets.Bitmaps = Array<bitmap>(Arena, Bitmap_Count);
+    Assets.AtlasRects = Array<atlas_rect>(Arena, AtlasRect_Count);
+    Assets.Fonts = Array<font>(Arena, Font_Count);
     
-    mmarn_scratch Scratch = mmarn_BeginScratch(&Assets.Arena);
-    Defer{ mmarn_EndScratch(&Scratch); };
+    scratch Scratch = BeginScratch(&Assets.Arena);
+    Defer{ EndScratch(&Scratch); };
     
-    // NOTE(Momo): File read into temp mmarn_arena
+    // NOTE(Momo): File read into temp arena
     // TODO(Momo): We could just create the assets as we read.
     u8* FileMemory = nullptr;
     u8* FileMemoryItr = nullptr;
     {
         u32 Filesize = Platform->GetFileSize(Filename);
         Assert(Filesize);
-        FileMemory = FileMemoryItr = (u8*)mmarn_PushBlock(Scratch, Filesize);
+        FileMemory = FileMemoryItr = (u8*)PushBlock(Scratch, Filesize);
         Platform->ReadFile(FileMemory, Filesize, Filename);
     }
     
@@ -126,21 +126,21 @@ CreateAssets(mmarn_arena* Arena,
     {
         const char* Signature = "MOMO";
         Assert(CheckAssetSignature(FileMemoryItr, Signature));
-        FileMemoryItr+= CstrLen(Signature);
+        FileMemoryItr+= SiStrLen(Signature);
         
         // NOTE(Momo): Read the counts in order
-        FileEntryCount = *(mmbw_Read<u32>(&FileMemoryItr));
+        FileEntryCount = *(Read<u32>(&FileMemoryItr));
     }
     
     // NOTE(Momo): Allocate Assets
     
     for (u32 i = 0; i < FileEntryCount; ++i) {
         // NOTE(Momo): Read header
-        auto* YuuEntry = mmbw_Read<yuu_entry>(&FileMemoryItr);
+        auto* YuuEntry = Read<yuu_entry>(&FileMemoryItr);
         
         switch(YuuEntry->Type) {
             case AssetType_Bitmap: {
-                auto* YuuBitmap = mmbw_Read<yuu_bitmap>(&FileMemoryItr);
+                auto* YuuBitmap = Read<yuu_bitmap>(&FileMemoryItr);
                 
                 // NOTE(Momo): Allocate Image
                 auto* Bitmap = Assets.Bitmaps + YuuBitmap->Id;
@@ -150,7 +150,7 @@ CreateAssets(mmarn_arena* Arena,
                 
                 // NOTE(Momo): Allocate pixel data
                 usize BitmapSize = Bitmap->Width * Bitmap->Height * Bitmap->Channels;
-                Bitmap->Pixels = mmarn_PushBlock(&Assets.Arena, BitmapSize, 1);
+                Bitmap->Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
                 Assert(Bitmap->Pixels);
                 MemCopy(Bitmap->Pixels, FileMemoryItr, BitmapSize);
                 FileMemoryItr += BitmapSize;
@@ -163,18 +163,18 @@ CreateAssets(mmarn_arena* Arena,
                 
             } break;
             case AssetType_AtlasRect: { 
-                auto* YuuAtlasRect = mmbw_Read<yuu_atlas_rect>(&FileMemoryItr);
+                auto* YuuAtlasRect = Read<yuu_atlas_rect>(&FileMemoryItr);
                 auto* AtlasRect = Assets.AtlasRects + YuuAtlasRect->Id;
                 AtlasRect->Rect = YuuAtlasRect->Rect;
                 AtlasRect->BitmapId = YuuAtlasRect->BitmapId;
             } break;
             case AssetType_Font: {
-                auto* YuuFont = mmbw_Read<yuu_font>(&FileMemoryItr);
+                auto* YuuFont = Read<yuu_font>(&FileMemoryItr);
                 auto* Font = Assets.Fonts + YuuFont->Id;
                 Font->LineGap = YuuFont->LineGap;
             } break;
             case AssetType_FontGlyph: {
-                auto* YuuFontGlyph = mmbw_Read<yuu_font_glyph>(&FileMemoryItr);
+                auto* YuuFontGlyph = Read<yuu_font_glyph>(&FileMemoryItr);
                 auto* Font = Assets.Fonts + YuuFontGlyph->FontId;
                 usize GlyphIndex = HashCodepoint(YuuFontGlyph->Codepoint);
                 auto* Glyph = Font->Glyphs + GlyphIndex;
@@ -186,7 +186,7 @@ CreateAssets(mmarn_arena* Arena,
                 Glyph->Box = YuuFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                auto* YuuFontKerning = mmbw_Read<yuu_font_kerning>(&FileMemoryItr);
+                auto* YuuFontKerning = Read<yuu_font_kerning>(&FileMemoryItr);
                 auto* Font = Assets.Fonts + YuuFontKerning->FontId;
                 Font->Kernings[HashCodepoint(YuuFontKerning->CodepointA)][HashCodepoint(YuuFontKerning->CodepointB)] = YuuFontKerning->Kerning;
                 

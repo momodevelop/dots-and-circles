@@ -9,13 +9,13 @@
 static inline void
 DrawText(mmcmd_commands* RenderCommands, 
            game_assets* Assets,
-           mmm_v3f Position,
-           mmm_v4f Color, 
+           v3f Position,
+           v4f Color, 
            font_id FontId,
            f32 Size, 
-           mms_string String) 
+           string String) 
 {
-    mmm_v3f CurPosition = Position;
+    v3f CurPosition = Position;
     
     for(u32 i = 0; i < String.Length; ++i) {
         font* Font = Assets->Fonts + FontId;
@@ -23,12 +23,12 @@ DrawText(mmcmd_commands* RenderCommands,
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        mmm_m44f O = mmm_Translation(0.5f, 0.5f, 0.f); 
-        mmm_m44f S = mmm_Scale(mmm_Width(Box) * Size, 
-                             mmm_Height(Box) * Size, 
+        m44f O = Translation(0.5f, 0.5f, 0.f); 
+        m44f S = Scale(Width(Box) * Size, 
+                             Height(Box) * Size, 
                              1.f);
         
-        mmm_m44f T = mmm_Translation(CurPosition.X + Box.Min.X * Size, 
+        m44f T = Translation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         

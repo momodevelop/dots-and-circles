@@ -354,15 +354,15 @@ int main(int argc, char* argv[]) {
     Defer { free(ProgramMemory); };
     
     // NOTE(Momo): Memory Arena for platform
-    mmarn_arena PlatformArena = mmarn_Arena(ProgramMemory, TotalMemorySize);
+    arena PlatformArena = Arena(ProgramMemory, TotalMemorySize);
     
     // NOTE(Momo): Game
     game_memory GameMemory = {};
-    GameMemory.MainMemory = mmarn_PushBlock(&PlatformArena, GameMainMemorySize);
+    GameMemory.MainMemory = PushBlock(&PlatformArena, GameMainMemorySize);
     GameMemory.MainMemorySize = GameMainMemorySize;
 
 #if INTERNAL
-    GameMemory.DebugMemory = mmarn_PushBlock(&PlatformArena, DebugMemorySize);
+    GameMemory.DebugMemory = PushBlock(&PlatformArena, DebugMemorySize);
     GameMemory.DebugMemorySize = DebugMemorySize;
 #endif
     
@@ -386,14 +386,14 @@ int main(int argc, char* argv[]) {
     
     
     // NOTE(Momo): Render commands/queue
-    void* RenderCommandsMemory = mmarn_PushBlock(&PlatformArena, RenderCommandsMemorySize);
+    void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
     mmcmd_commands RenderCommands = mmcmd_Commands(RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input Input = {};
 #if INTERNAL
     char DebugTextInputBuffer[10];
-    Input.DebugTextInputBuffer = mms_StringBuffer(DebugTextInputBuffer, 10);
+    Input.DebugTextInputBuffer = StringBuffer(DebugTextInputBuffer, 10);
 #endif 
     
     // NOTE(Momo): Timestep related
@@ -428,7 +428,7 @@ int main(int argc, char* argv[]) {
                
 #if INTERNAL
                 case SDL_TEXTINPUT: {
-                    mms_Concat(&Input.DebugTextInputBuffer, mms_String(e.text.text));
+                    Concat(&Input.DebugTextInputBuffer, String(e.text.text));
                 } break;
 #endif                
 

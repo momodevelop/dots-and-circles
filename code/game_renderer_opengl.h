@@ -17,7 +17,7 @@ constexpr static inline u8 QuadIndices[] = {
     0, 2, 3,
 };
 
-constexpr static inline mmm_quad2f QuadUV[] = {
+constexpr static inline quad2f QuadUV[] = {
     0.0f, 1.0f,  // top left
     1.0f, 1.0f, // top right
     1.0f, 0.f, // bottom right
@@ -90,8 +90,8 @@ static inline void AlignViewport(renderer_opengl* Renderer) {
     GLuint x, y, w, h;
     x = Region.Min.X;
     y = Region.Min.Y;
-    w = mmm_Width(Region);
-    h = mmm_Height(Region);
+    w = Width(Region);
+    h = Height(Region);
     
     glViewport(x, y, w, h);
     glScissor(x, y, w, h);
@@ -140,17 +140,17 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Model], sizeof(QuadModel), QuadModel, 0);
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Indices], sizeof(QuadIndices), QuadIndices, 0);
     
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Texture], sizeof(mmm_v2f) * 4 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(mmm_v4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Transform], sizeof(mmm_m44f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Texture], sizeof(v2f) * 4 * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Colors], sizeof(v4f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Transform], sizeof(m44f) * MaxEntities, nullptr, GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
     glCreateVertexArrays(1, &Renderer->Blueprint);
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Model, Renderer->Buffers[renderer_vbo_Model], 0, sizeof(f32)*3);
     glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Texture, Renderer->Buffers[renderer_vbo_Texture], 0, sizeof(f32) * 8);
-    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(mmm_v4f));
-    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Transform, Renderer->Buffers[renderer_vbo_Transform], 0, sizeof(mmm_m44f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Colors, Renderer->Buffers[renderer_vbo_Colors],  0, sizeof(v4f));
+    glVertexArrayVertexBuffer(Renderer->Blueprint, renderer_vaobind_Transform, Renderer->Buffers[renderer_vbo_Transform], 0, sizeof(m44f));
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
@@ -166,13 +166,13 @@ Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei
     
     // aTexCoord
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture1); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture1, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 0);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture1, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 0);
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture2); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture2, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 1);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture2, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 1);
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture3); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture3, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 2);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture3, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 2);
     glEnableVertexArrayAttrib(Renderer->Blueprint, renderer_atb_Texture4); 
-    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture4, 2, GL_FLOAT, GL_FALSE, sizeof(mmm_v2f) * 3);
+    glVertexArrayAttribFormat(Renderer->Blueprint, renderer_atb_Texture4, 2, GL_FLOAT, GL_FALSE, sizeof(v2f) * 3);
     
     glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Texture1, renderer_vaobind_Texture);
     glVertexArrayAttribBinding(Renderer->Blueprint, renderer_atb_Texture2, renderer_vaobind_Texture);
@@ -302,7 +302,7 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
                 LastDrawnInstanceIndex += InstancesToDrawCount;
                 InstancesToDrawCount = 0;
                 
-                auto Result = mmm_Transpose(Data->Basis);
+                auto Result = Transpose(Data->Basis);
                 GLint uProjectionLoc = glGetUniformLocation(Renderer->Shader, "uProjection");
                 glProgramUniformMatrix4fv(Renderer->Shader, uProjectionLoc, 1, GL_FALSE, Result[0].Elements);
                 
@@ -346,20 +346,20 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
-                                     CurrentInstanceIndex * sizeof(mmm_v4f),
-                                     sizeof(mmm_v4f), 
+                                     CurrentInstanceIndex * sizeof(v4f),
+                                     sizeof(v4f), 
                                      &Data->Colors);
                 
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
-                                     CurrentInstanceIndex * sizeof(mmm_quad2f),
-                                     sizeof(mmm_quad2f),
+                                     CurrentInstanceIndex * sizeof(quad2f),
+                                     sizeof(quad2f),
                                      &QuadUV);
                 
-                // NOTE(Momo): mmm_Transpose; game is row-major
-                mmm_m44f Transform = mmm_Transpose(Data->Transform);
+                // NOTE(Momo): Transpose; game is row-major
+                m44f Transform = Transpose(Data->Transform);
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Transform], 
-                                     CurrentInstanceIndex* sizeof(mmm_m44f), 
-                                     sizeof(mmm_m44f), 
+                                     CurrentInstanceIndex* sizeof(m44f), 
+                                     sizeof(m44f), 
                                      &Transform);
                 
                 // NOTE(Momo): Update Bookkeeping
@@ -389,20 +389,20 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Colors], 
-                                     CurrentInstanceIndex * sizeof(mmm_v4f),
-                                     sizeof(mmm_v4f), 
+                                     CurrentInstanceIndex * sizeof(v4f),
+                                     sizeof(v4f), 
                                      &Data->Colors);
                 
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Texture],
-                                     CurrentInstanceIndex * sizeof(mmm_quad2f),
-                                     sizeof(mmm_quad2f),
+                                     CurrentInstanceIndex * sizeof(quad2f),
+                                     sizeof(quad2f),
                                      &Data->TextureCoords);
                 
-                // NOTE(Momo): mmm_Transpose; game is row-major
-                mmm_m44f Transform = mmm_Transpose(Data->Transform);
+                // NOTE(Momo): Transpose; game is row-major
+                m44f Transform = Transpose(Data->Transform);
                 glNamedBufferSubData(Renderer->Buffers[renderer_vbo_Transform], 
-                                     CurrentInstanceIndex* sizeof(mmm_m44f), 
-                                     sizeof(mmm_m44f), 
+                                     CurrentInstanceIndex* sizeof(m44f), 
+                                     sizeof(m44f), 
                                      &Transform);
                 
                 // NOTE(Momo): Update Bookkeeping

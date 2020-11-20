@@ -21,7 +21,7 @@ GameUpdate(game_memory* GameMemory,
        // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
        // NOTE(Momo): Arenas
-        GameState->MainArena = mmarn_Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
+        GameState->MainArena = Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
         GameState->Assets = CreateAssets(
@@ -32,7 +32,7 @@ GameUpdate(game_memory* GameMemory,
         );
    
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = mmarn_SubArena(&GameState->MainArena, mmarn_Remaining(GameState->MainArena));
+        GameState->ModeArena = SubArena(&GameState->MainArena, Remaining(GameState->MainArena));
         GameState->ModeType = GameModeType_None;
         GameState->NextModeType = GameModeType_Splash;
         GameState->IsInitialized = true;
@@ -42,15 +42,15 @@ GameUpdate(game_memory* GameMemory,
 
 #if INTERNAL
 
-        GameState->DebugArena = mmarn_Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
+        GameState->DebugArena = Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
         GameState->DebugConsole = CreateDebugConsole(&GameState->DebugArena);
 
         // Temp, set some simple callbacks to debug callbacks
         Register(&GameState->DebugConsole, 
-            mms_String("jump"), 
+            String("jump"), 
             [](void* Context) {
                 game_state* GameState = (game_state*)Context;
-                PushDebugInfo(&GameState->DebugConsole, mms_String("Jumping to game!"), mmc_ColorYellow);
+                PushDebugInfo(&GameState->DebugConsole, String("Jumping to game!"), ColorYellow);
                 GameState->NextModeType = GameModeType_Main;
             }, GameState);
     
@@ -78,17 +78,17 @@ GameUpdate(game_memory* GameMemory,
     }
 
     if (GameState->IsShowTicksElapsed) {
-        auto Scratch = mmarn_BeginScratch(&GameState->DebugArena);
-        Defer { mmarn_EndScratch(&Scratch); };
-        mms_string_buffer TempBuffer = mms_StringBuffer(Scratch.Arena, 32);
-        mms_Itoa(&TempBuffer, (i32)TicksElapsed);
-        mms_Concat(&TempBuffer, mms_String("ms"));
-        mms_NullTerm(&TempBuffer);
+        auto Scratch = BeginScratch(&GameState->DebugArena);
+        Defer { EndScratch(&Scratch); };
+        string_buffer TempBuffer = StringBuffer(Scratch.Arena, 32);
+        Itoa(&TempBuffer, (i32)TicksElapsed);
+        Concat(&TempBuffer, String("ms"));
+        NullTerm(&TempBuffer);
 
         DrawText(RenderCommands, 
                 &GameState->Assets, 
                 { 10.f, 880.f, 700.f }, 
-                mmc_ColorWhite,
+                ColorWhite,
                 Font_Default, 
                 32.f, 
                 TempBuffer.String);  
@@ -96,23 +96,23 @@ GameUpdate(game_memory* GameMemory,
 
     // Clean state/Switch states
     if (GameState->NextModeType != GameModeType_None) {
-        mmarn_Clear(&GameState->ModeArena);
-        mmarn_arena* ModeArena = &GameState->ModeArena;
+        Clear(&GameState->ModeArena);
+        arena* ModeArena = &GameState->ModeArena;
         switch(GameState->NextModeType) {
             case GameModeType_Splash: {
-                GameState->SplashMode = mmarn_PushStruct<game_mode_splash>(ModeArena); 
+                GameState->SplashMode = PushStruct<game_mode_splash>(ModeArena); 
                 Init(GameState->SplashMode, GameState);
             } break;
             case GameModeType_Main: {
-                GameState->MainMode = mmarn_PushStruct<game_mode_main>(ModeArena); 
+                GameState->MainMode = PushStruct<game_mode_main>(ModeArena); 
                 Init(GameState->MainMode, GameState);
             } break;
             case GameModeType_Menu: {
-                GameState->MenuMode = mmarn_PushStruct<game_mode_menu>(ModeArena); 
+                GameState->MenuMode = PushStruct<game_mode_menu>(ModeArena); 
                 Init(GameState->MenuMode, GameState);
             } break;
             case GameModeType_AtlasTest: {
-                GameState->AtlasTestMode = mmarn_PushStruct<game_mode_atlas_test>(ModeArena); 
+                GameState->AtlasTestMode = PushStruct<game_mode_atlas_test>(ModeArena); 
                 Init(GameState->AtlasTestMode, GameState);
             } break;
             default: {

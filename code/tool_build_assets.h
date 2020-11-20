@@ -55,7 +55,7 @@ AddEntry(asset_builder<N>* Builder,
 
 template<usize N> 
 static inline b32 
-mmbw_Write(asset_builder<N>* Assets, const char* Filename, const char* Signature) {
+Write(asset_builder<N>* Assets, const char* Filename, const char* Signature) {
     FILE* OutFile = fopen(Filename, "wb");
     if (OutFile == nullptr) {
         return false;
@@ -64,7 +64,7 @@ mmbw_Write(asset_builder<N>* Assets, const char* Filename, const char* Signature
     
     
     // NOTE(Momo): Write signature
-    fwrite(Signature, sizeof(u8), CstrLen(Signature), OutFile);
+    fwrite(Signature, sizeof(u8), SiStrLen(Signature), OutFile);
     
     // NOTE(Momo): Write the amount of items
     u32 EntryCount = Assets->EntryCount;
@@ -99,7 +99,7 @@ Begin(ab_context* Context, const char* Filename, const char* Signature)
     Assert(Context->File);
     
     // NOTE(Momo): Write signature
-    fwrite(Signature, sizeof(u8), CstrLen(Signature), Context->File);
+    fwrite(Signature, sizeof(u8), SiStrLen(Signature), Context->File);
     Context->EntryCountAt = ftell(Context->File);
     
     // NOTE(Momo): Reserve space for EntryCount
@@ -159,7 +159,7 @@ WriteBitmap(ab_context* Context, bitmap_id Id, const char* Filename) {
 
 
 static inline void 
-WriteAtlasRect(ab_context* Context, atlas_rect_id Id, bitmap_id TargetBitmapId, mmm_rect2u Rect) 
+WriteAtlasRect(ab_context* Context, atlas_rect_id Id, bitmap_id TargetBitmapId, rect2u Rect) 
 {
     WriteEntry(Context,  AssetType_AtlasRect);
     
@@ -182,7 +182,7 @@ WriteFont(ab_context* Context, font_id Id, f32 LineGap)
 }
 
 static inline void 
-WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, f32 Advance, f32 LeftBearing, mmm_rect2u AtlasRect, mmm_rect2f Box) 
+WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, f32 Advance, f32 LeftBearing, rect2u AtlasRect, rect2f Box) 
 {
     WriteEntry(Context, AssetType_FontGlyph);
     

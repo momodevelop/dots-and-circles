@@ -40,8 +40,8 @@ struct game_state {
     
     game_assets Assets;
     
-    mmarn_arena MainArena;
-    mmarn_arena ModeArena;
+    arena MainArena;
+    arena ModeArena;
     
     b32 IsInitialized;
 
@@ -49,7 +49,7 @@ struct game_state {
     b32 IsDebug;
     b32 IsShowTicksElapsed;
 
-    mmarn_arena DebugArena;
+    arena DebugArena;
     debug_console DebugConsole;
 #endif
 };

@@ -45,14 +45,14 @@ using uptr = uintptr_t;
 
 // C-string
 static inline u32
-CstrLen(const char* Str) {
+SiStrLen(const char* Str) {
     u32 Count = 0;
     for(; (*Str) != 0 ; ++Count, ++Str);
     return Count;
 }
 
 static inline void
-CstrCopy(char * Dest, const char* Src) {
+SiStrCopy(char * Dest, const char* Src) {
     for(; (*Src) != 0 ; ++Src, ++Dest) {
         (*Dest) = (*Src);
     }
@@ -60,7 +60,7 @@ CstrCopy(char * Dest, const char* Src) {
 }
 
 static inline void
-CstrConcat(char* Dest, const char* Src) {
+SiStrConcat(char* Dest, const char* Src) {
     // Go to the end of Dest
     for (; (*Dest) != 0; ++Dest);
     for (; (*Src) != 0; ++Src, ++Dest) {
@@ -71,12 +71,12 @@ CstrConcat(char* Dest, const char* Src) {
 
 
 static inline void 
-CstrClear(char* Dest) {
+SiStrClear(char* Dest) {
     (*Dest) = 0;
 }
 
 static inline void
-CstrReverse(char* Dest) {
+SiStrReverse(char* Dest) {
     char* BackPtr = Dest;
     for (; *(BackPtr+1) != 0; ++BackPtr);
     for (;Dest < BackPtr; ++Dest, --BackPtr) {
@@ -101,7 +101,7 @@ MemZero(void *mem, usize size) {
 }
 
 static inline void 
-Itoa(char* Dest, i32 Num) {
+SiItoa(char* Dest, i32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -127,7 +127,7 @@ Itoa(char* Dest, i32 Num) {
     }
     (*It) = 0;
 
-    CstrReverse(Dest);
+    SiStrReverse(Dest);
 }
 
 #define ZeroMem(m, s) MemZero(m, s)

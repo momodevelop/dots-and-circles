@@ -2,8 +2,8 @@
 #include "mm_bitwise.h"
 #include "mm_rect_packer.h"
 
-static inline mmm_rect2u
-Rect2U(mmrp_rect Rect) {
+static inline rect2u
+Rect2U(rp_rect Rect) {
 	return { 
         Rect.X, 
         Rect.Y, 
@@ -70,7 +70,7 @@ struct atlas_context_font {
 
 
 static inline void  
-Init(mmrp_rect* Rect, atlas_context_image* Context){
+Init(rp_rect* Rect, atlas_context_image* Context){
     i32 W, H, C;
     stbi_info(Context->Filename, &W, &H, &C);
     Rect->W = (u32)W;
@@ -79,7 +79,7 @@ Init(mmrp_rect* Rect, atlas_context_image* Context){
 }
 
 static inline void
-Init(mmrp_rect* Rect, atlas_context_font* Context){
+Init(rp_rect* Rect, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
     stbtt_GetCodepointBitmapBox(&Context->LoadedFont.Info, 
 			Context->Codepoint, 
@@ -95,7 +95,7 @@ Init(mmrp_rect* Rect, atlas_context_font* Context){
 
 static inline void 
 WriteSubBitmapToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                      u8* BitmapMemory, mmrp_rect BitmapRect) 
+                      u8* BitmapMemory, rp_rect BitmapRect) 
 {
     i32 j = 0;
     for (u32 y = BitmapRect.Y; y < BitmapRect.Y + BitmapRect.H; ++y) {
@@ -111,7 +111,7 @@ WriteSubBitmapToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-GenerateAtlas(const mmrp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
+GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)malloc(AtlasSize);
     
@@ -189,7 +189,7 @@ int main() {
     
     constexpr usize TotalRects = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
-    mmrp_rect PackedRects[TotalRects];
+    rp_rect PackedRects[TotalRects];
     
     usize PackedRectCount = 0;
     {
@@ -214,9 +214,9 @@ int main() {
     {
         constexpr usize NodeCount = ArrayCount(PackedRects) + 1;
         
-        mmrp_node RectPackNodes[NodeCount];
-        mmrp_context RectPackContext = mmrp_CreateRectPacker(AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
-        if (!mmrp_Pack(&RectPackContext, PackedRects, PackedRectCount, MmrpSort_Height)) {
+        rp_node RectPackNodes[NodeCount];
+        rp_context RectPackContext = rp_CreateRectPacker(AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
+        if (!rp_Pack(&RectPackContext, PackedRects, PackedRectCount, MmrpSort_Height)) {
             printf("Failed to generate bitmap\n");
             Assert(false);
         }
@@ -245,7 +245,7 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Rect.UserData;
-                    mmm_rect2u AtlasRect = Rect2U(Rect);
+                    rect2u AtlasRect = Rect2U(Rect);
                     WriteAtlasRect(AssetBuilder, Image->Id, Image->BitmapId, AtlasRect);
                     
                 } break;
@@ -256,14 +256,14 @@ int main() {
                     i32 LeftSideBearing; 
                     stbtt_GetCodepointHMetrics(&LoadedFont.Info, Font->Codepoint, &Advance, &LeftSideBearing);
                     
-                    mmm_rect2i Box;
+                    rect2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
                     
                     
                     WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
                                    Rect2U(Rect), 
-                                   mmm_Rect2F(Box) * FontPixelScale);
+                                   Rect2F(Box) * FontPixelScale);
                     
                 } break;
                 

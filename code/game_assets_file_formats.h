@@ -73,7 +73,7 @@ u8 Pixels[Width * Height * Channels];
 struct yuu_atlas_rect {
     atlas_rect_id Id;
     bitmap_id BitmapId;
-    mmm_rect2u Rect;
+    rect2u Rect;
     
 };
 
@@ -88,8 +88,8 @@ struct yuu_font_glyph {
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;
-    mmm_rect2f Box; 
-    mmm_rect2u AtlasRect;
+    rect2f Box; 
+    rect2u AtlasRect;
     
 };
 

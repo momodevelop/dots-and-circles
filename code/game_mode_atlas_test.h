@@ -14,26 +14,26 @@ Init(game_mode_atlas_test* Mode, game_state* GameState) {
 static inline void
 DrawString(mmcmd_commands* RenderCommands, 
            game_assets* Assets,
-           mmm_v3f Position, f32 Size, const char* String) 
+           v3f Position, f32 Size, const char* String) 
 {
-    mmm_v3f CurPosition = Position;
+    v3f CurPosition = Position;
     
     
-    mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
+    v4f Color = { 1.f, 1.f, 1.f, 1.f };
     auto* Font = Assets->Fonts + Font_Default;
     
-    u32 Strlen = CstrLen(String);
+    u32 Strlen = SiStrLen(String);
     for(u32 i = 0; i < Strlen; ++i) {
         auto* Glyph = Font->Glyphs + HashCodepoint(String[i]);
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        mmm_m44f BLT = mmm_Translation(0.5f, 0.5f, 0.f); 
-        mmm_m44f S = mmm_Scale(mmm_Width(Box) * Size, 
-                             mmm_Height(Box) * Size, 
+        m44f BLT = Translation(0.5f, 0.5f, 0.f); 
+        m44f S = Scale(Width(Box) * Size, 
+                             Height(Box) * Size, 
                              1.f);
         
-        mmm_m44f T = mmm_Translation(CurPosition.X + Box.Min.X * Size, 
+        m44f T = Translation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         
@@ -67,8 +67,8 @@ Update(game_mode_atlas_test* Mode,
 #if 1
     // NOTE(Momo): Image Test
     {
-        mmm_v4f Color = { 1.f, 1.f, 1.f, 1.f };
-        mmm_m44f Transform = mmm_Scale(5.f, 5.f, 1.f);
+        v4f Color = { 1.f, 1.f, 1.f, 1.f };
+        m44f Transform = Scale(5.f, 5.f, 1.f);
         auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_Ryoji;
         
         PushCommandDrawTexturedQuad(RenderCommands, 

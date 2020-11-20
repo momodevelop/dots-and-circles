@@ -25,19 +25,19 @@ Update(game_mode_menu* Mode,
     game_assets* Assets = GameState->Assets;
     {
         
-        mmm_v4f Color = {1.f, 1.f, 1.f, 1.f};
+        v4f Color = {1.f, 1.f, 1.f, 1.f};
         font_id Font = GetFont(Assets, Asset_FontDefault);
         
         
         f32 Size = 36.f;
         f32 OffsetX = 0.f;
         for ( u32 i = 0; i < 5; ++i ){
-            mmm_quad2f Quad = Quad2(GetFontCharacterUV(Assets, Font, i));
+            quad2f Quad = Quad2(GetFontCharacterUV(Assets, Font, i));
             f32 Aspect = GetFontCharacterAspect(Assets, Font, i);
             
             
             u32 TextureHandle = GetBitmapId(Assets, Font);
-            mmm_m44f Transform = mmm_Translation(OffsetX, 1.f, 0.f) *mmm_Scale(Size * Aspect, Size, 1.f); 
+            m44f Transform = Translation(OffsetX, 1.f, 0.f) *Scale(Size * Aspect, Size, 1.f); 
             
             OffsetX += Size * Aspect;
             PushCommandDrawTexturedQuad(RenderCommands, 

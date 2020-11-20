@@ -9,7 +9,7 @@
 //
 
 template<typename type>
-struct mma_array {
+struct array {
     usize Capacity;
     type* Elements;
 
@@ -20,34 +20,29 @@ struct mma_array {
 };
 
 template<typename type>
-static inline mma_array<type>
-mma_Array(type* Elements, usize Capacity) {
-    mma_array<type> Ret = {};
+static inline array<type>
+Array(type* Elements, usize Capacity) {
+    array<type> Ret = {};
     Ret.Elements = Elements;
     Ret.Capacity = Capacity;
 
     return Ret;
 }
 
-#include "mm_arena.h"
-template<typename type>
-static inline mma_array<type> 
-mma_Array(mmarn_arena* Arena, usize Capacity) {
-    type* Buffer = mmarn_PushArray<type>(Arena, Capacity);
-    return mma_Array(Buffer, Capacity);
-    
-}
-
-template<typename type>
-static inline mma_array<type>*
-mma_PushArray(mmarn_arena* Arena, usize Capacity) {
-    return mmarn_PushConstruct(Arena, mma_Array, Capacity);
-}
 
 template<typename type>
 static inline type*
-operator+(mma_array<type> L, usize I) {
+operator+(array<type> L, usize I) {
     return L.Elements + I;
+}
+
+#include "mm_arena.h"
+template<typename type>
+static inline array<type> 
+Array(arena* Arena, usize Capacity) {
+    type* Buffer = PushSiArray<type>(Arena, Capacity);
+    return Array(Buffer, Capacity);
+    
 }
 
 #endif

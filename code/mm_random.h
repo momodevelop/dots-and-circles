@@ -6,10 +6,10 @@
 
 #include "mm_core.h"
 
-#define mmrng_MaxNumber 0x05f5c21f
-#define mmrng_MinNumber 0x000025a0
+#define MaxNumber 0x05f5c21f
+#define MinNumber 0x000025a0
 
-constexpr static u32 mmrng_Table[] =
+constexpr static u32 Table[] =
 {
     0x4f0143b, 0x3402005, 0x26f2b01, 0x22796b6, 0x57343bb, 0x2d9954e, 0x06f9425, 0x1789180,
     0x57d8fab, 0x5365d9c, 0x0e9ec55, 0x2a623e0, 0x366e05d, 0x3759f45, 0x1b4d151, 0x35a5411,
@@ -525,24 +525,24 @@ constexpr static u32 mmrng_Table[] =
     0x0d5d155, 0x4363005, 0x2cbd064, 0x5c18f03, 0x214bedd, 0x42ef202, 0x41827cd, 0x27a8fe9,
 };
 
-struct mmrng_series
+struct rng_series
 {
     u32 Index;
 };
 
-static inline mmrng_series 
-mmrng_Seed(u32 Value)
+static inline rng_series 
+Seed(u32 Value)
 {
-    mmrng_series Series = {};
-    Series.Index = Value % ArrayCount(mmrng_Table);
+    rng_series Series = {};
+    Series.Index = Value % ArrayCount(Table);
     return Series;
 }
 
 static inline u32 
-mmrng_Next(mmrng_series *Series)
+Next(rng_series *Series)
 {
-    u32 Result = mmrng_Table[Series->Index++];
-    if(Series->Index >= ArrayCount(mmrng_Table)) {
+    u32 Result = Table[Series->Index++];
+    if(Series->Index >= ArrayCount(Table)) {
         Series->Index = 0;
     }
 
@@ -550,16 +550,16 @@ mmrng_Next(mmrng_series *Series)
 }
 
 static inline u32 
-mmrng_Choice(mmrng_series *Series, u32 ChoiceCount) {
-    return mmrng_Next(Series) % ChoiceCount;
+Choice(rng_series *Series, u32 ChoiceCount) {
+    return Next(Series) % ChoiceCount;
 }
 
 // Get number within [0, 1]
 static inline f32 
-mmrng_Unilateral(mmrng_series *Series)
+Unilateral(rng_series *Series)
 {
-    f32 Divisor = 1.0f / (f32)mmrng_MaxNumber;
-    f32 Result = Divisor*(f32)mmrng_Next(Series);
+    f32 Divisor = 1.0f / (f32)MaxNumber;
+    f32 Result = Divisor*(f32)Next(Series);
 
     return(Result);
 }
@@ -567,25 +567,25 @@ mmrng_Unilateral(mmrng_series *Series)
 
 // Get number within [-1, 1]
 static inline f32 
-mmrng_Bilateral(mmrng_series *Series)
+Bilateral(rng_series *Series)
 {
-    f32 Result = 2.0f * mmrng_Unilateral(Series) - 1.0f;
+    f32 Result = 2.0f * Unilateral(Series) - 1.0f;
 
     return(Result);
 }
 
 static inline f32 
-mmrng_Between(mmrng_series *Series, f32 Min, f32 Max)
+Between(rng_series *Series, f32 Min, f32 Max)
 {
-    f32 Result = Lerp(Min, mmrng_Unilateral(Series), Max);
+    f32 Result = Lerp(Min, Unilateral(Series), Max);
 
     return(Result);
 }
 
 static inline i32 
-mmrng_Between(mmrng_series *Series, i32 Min, i32 Max)
+Between(rng_series *Series, i32 Min, i32 Max)
 {
-    i32 Result = Min + (i32)(mmrng_Next(Series)%((Max + 1) - Min));
+    i32 Result = Min + (i32)(Next(Series)%((Max + 1) - Min));
 
     return(Result);
 }

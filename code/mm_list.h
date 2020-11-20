@@ -1,26 +1,24 @@
 #ifndef __LIST__
 #define __LIST__
 
-// This is an ordered list, means removal is O(N);
-
 #include "mm_core.h"
 
 template<typename T>
-struct mml_list {
+struct list {
     T* Elements;     // Expects pointer to object
-    usize Used;     // Amount of objects currently borrowed
+    usize Count;     // Amount of objects currently borrowed
     usize Capacity; // Total number of borrowable objects.
     
     inline auto& operator[](usize I) {
-        Assert(I < Used);
+        Assert(I < Count);
         return Elements[I];
     }
 
 };
 
 template<typename T>
-struct mml_it {
-    mml_list<T>* List;
+struct list_it {
+    list<T>* List;
     usize Index;
 
     T* operator->() {
@@ -32,48 +30,48 @@ struct mml_it {
 
 // Iterators
 template<typename T>
-static inline mml_it<T>
-mml_Begin(mml_list<T>* List) {
+static inline list_it<T>
+Begin(list<T>* List) {
     return { List, 0 };
 }
     
 template<typename T>
-static inline mml_it<T>
-mml_End(mml_list<T>* List) {
-    return { List, List->Used };
+static inline list_it<T>
+End(list<T>* List) {
+    return { List, List->Count };
 }
 
 template<typename T>
 static inline b32
-operator!=(mml_it<T> L, mml_it<T> R) {
+operator!=(list_it<T> L, list_it<T> R) {
     return L.Index != R.Index;
 }
 
 template<typename T>
-static inline mml_it<T>&
-operator++(mml_it<T>& L) {
+static inline list_it<T>&
+operator++(list_it<T>& L) {
     ++L.Index;
     return L;
 }
 
 template<typename T>
 static inline T& 
-operator*(mml_it<T> L) {
+operator*(list_it<T> L) {
     return L.List->Elements[L.Index];
 }
 
 // Functions
 template<typename T>
 static inline void 
-mml_Clear(mml_list<T>* List) {
-    List->Used = 0;
+Clear(list<T>* List) {
+    List->Count = 0;
 }
 
 
 template<typename T>
-static inline mml_list<T>
-mml_List(T* Arr, usize Capacity) {
-    mml_list<T> Ret = {};
+static inline list<T>
+List(T* Arr, usize Capacity) {
+    list<T> Ret = {};
     Ret.Elements = Arr;
     Ret.Capacity= Capacity;
     return Ret;
@@ -81,65 +79,75 @@ mml_List(T* Arr, usize Capacity) {
 
 template<typename T>
 static inline void
-mml_Push(mml_list<T>* List, T Obj) {
-    Assert(List->Used < List->Capacity);
-    List->Elements[List->Used++] = Obj;
+Push(list<T>* List, T Obj) {
+    Assert(List->Count < List->Capacity);
+    List->Elements[List->Count++] = Obj;
 }
 
 template<typename T>
 static inline void
-mml_Pop(mml_list<T>* List) {
-    Assert(List->Used > 0);
-    --List->Used;
+Pop(list<T>* List) {
+    Assert(List->Count > 0);
+    --List->Count;
 }
 
 template<typename T, typename unary_comparer>
-static inline mml_it<T>
-mml_Find(mml_list<T>* List, unary_comparer UnaryComparer) {
-    for(usize i = 0; i < List->Used; ++i) {
+static inline list_it<T>
+Find(list<T>* List, unary_comparer UnaryComparer) {
+    for(usize i = 0; i < List->Count; ++i) {
         if(UnaryComparer(&List->Elements[i])) {
             return { List, i };
         }
     }
-    return mml_End(List);
+    return End(List);
 }
 
 template<typename T>
-static inline mml_it<T>
-mml_Remove(mml_list<T>* List, mml_it<T> It) {
-    for (usize Index = It.Index; Index < List->Used - 1; ++Index) {
+static inline list_it<T>
+Remove(list<T>* List, list_it<T> It) {
+    for (usize Index = It.Index; Index < List->Count - 1; ++Index) {
         List->Elements[Index] = List->Elements[Index + 1];
     }
-    --List->Used;
+    --List->Count;
     return It; 
 }
 
 template<typename T, typename unary_comparer> 
-static inline mml_it<T>
-mml_RemoveIf(mml_list<T>* List, unary_comparer UnaryComparer) {
-    return mml_Remove(List, mml_Find(List, UnaryComparer));
+static inline list_it<T>
+RemoveIf(list<T>* List, unary_comparer UnaryComparer) {
+    return Remove(List, Find(List, UnaryComparer));
 }
 
+// Faster version of Remove by swapping the last element into the current element
+// This is O(1), but usually messes up the order of the list. 
+template<typename T>
+static inline list_it<T>
+SwapRemove(list<T>* List, list_it<T> It) {
+    //(*Obj) = List->Elements[List->Count - 1];
+    List->Elements[It.Index] = List->Elements[List->Count - 1];
+    --List->Count;
+    return It; //lol?
+}
 
 // C++11 range-base for loop support
 template<typename T>
-static inline mml_it<T>
-begin(mml_list<T>& List) {
-    return mml_Begin(&List);
+static inline list_it<T>
+begin(list<T>& List) {
+    return Begin(&List);
 }
     
 template<typename T>
-static inline mml_it<T>
-end(mml_list<T>& List) {
-    return mml_End(&List);
+static inline list_it<T>
+end(list<T>& List) {
+    return End(&List);
 }
 
 #include "mm_arena.h"
 template<typename T>
-static inline mml_list<T>
-mml_List(mmarn_arena* Arena, usize Capacity) {
-    mml_list<T> Ret = {};
-    Ret.Elements = mmarn_PushArray<T>(Arena, Capacity);
+static inline list<T>
+List(arena* Arena, usize Capacity) {
+    list<T> Ret = {};
+    Ret.Elements = PushSiArray<T>(Arena, Capacity);
     Ret.Capacity = Capacity;
     return Ret;
 }

@@ -26,7 +26,7 @@
 // e.g.  8 bytes -> ~(1000 - 1) = ~0111 = 1000
 // And thus, the forumla for backward alignment is: A & ~(N-1)
 static inline void* 
-mmbw_AlignBackward(void* ptr, u8 align) {
+AlignBackward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(uptr(ptr) & ~(align - 1));
 }
@@ -37,24 +37,24 @@ mmbw_AlignBackward(void* ptr, u8 align) {
 // Then the formula for the difference is the the original address minus the result: 
 // A - (A & ~(N-1))
 static inline void* 
-mmbw_AlignForward(void* ptr, u8 align) {
+AlignForward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
 }
 
 static inline u8 
-mmbw_AlignBackwardDiff(void* ptr, u8 align)  {
-    return u8((uptr)ptr - uptr(mmbw_AlignBackward(ptr, align)));
+AlignBackwardDiff(void* ptr, u8 align)  {
+    return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
 }
 
 static inline u8 
-mmbw_AlignForwardDiff(void* ptr, u8 align)  {
-    return u8(uptr(mmbw_AlignForward(ptr, align)) - uptr(ptr));
+AlignForwardDiff(void* ptr, u8 align)  {
+    return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 
 template<typename T>
 static inline T*
-mmbw_Peek(u8* P) {
+Peek(u8* P) {
     T* Ret = (T*)P;
     (*P) += sizeof(T);
     return Ret;
@@ -62,7 +62,7 @@ mmbw_Peek(u8* P) {
 
 template<typename T>
 static inline T*
-mmbw_Read(u8** P) {
+Read(u8** P) {
     T* Ret = (T*)(*P);
     (*P) += sizeof(T);
     return Ret;
@@ -71,7 +71,7 @@ mmbw_Read(u8** P) {
 
 template<typename T>
 static inline void
-mmbw_Write(u8** P, T Item) {
+Write(u8** P, T Item) {
     T* LocationAsT = (T*)(*P);
     (*LocationAsT) = Item;
     (*P) += sizeof(T);

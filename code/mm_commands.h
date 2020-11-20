@@ -26,7 +26,7 @@ mmcmd_Clear(mmcmd_commands* Commands) {
     Commands->DataMemoryAt = Commands->Memory;
     
     u8* EntryMemoryStart = Commands->Memory + Commands->MemorySize - sizeof(mmcmd_entry_header);
-    u8 Adjust = mmbw_AlignBackwardDiff(EntryMemoryStart, alignof(mmcmd_entry_header));
+    u8 Adjust = AlignBackwardDiff(EntryMemoryStart, alignof(mmcmd_entry_header));
     EntryMemoryStart -= Adjust;
     
     Commands->EntryMemoryStart = EntryMemoryStart;
@@ -64,11 +64,11 @@ static inline T*
 mmcmd_Push(mmcmd_commands* Commands) 
 {
     // Allocate Data
-    u8 DataAdjust = mmbw_AlignForwardDiff(Commands->DataMemoryAt, alignof(T));
+    u8 DataAdjust = AlignForwardDiff(Commands->DataMemoryAt, alignof(T));
     u32 DataSize = sizeof(T);
     
     // Allocate Entry
-    u8 EntryAdjust = mmbw_AlignBackwardDiff(Commands->EntryMemoryAt, alignof(mmcmd_entry_header));
+    u8 EntryAdjust = AlignBackwardDiff(Commands->EntryMemoryAt, alignof(mmcmd_entry_header));
     u32 EntrySize = sizeof(mmcmd_entry_header);
     
     if (Commands->EntryMemoryAt - EntrySize - EntryAdjust < Commands->DataMemoryAt + DataSize +  DataAdjust) {

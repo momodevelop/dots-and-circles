@@ -137,7 +137,7 @@
 //
 // ADDITIONAL DOCUMENTATION
 //
-//   Immediately after this block comment are a series of sample programs.
+//   Immediately after this block comment are a rng_series of sample programs.
 //
 //   After the sample programs is the "header file" section. This section
 //   includes documentation for each API function.
@@ -843,8 +843,8 @@ extern "C" {
     // returns # of vertices and fills *vertices with the pointer to them
     //   these are expressed in "unscaled" coordinates
     //
-    // The shape is a series of contours. Each one starts with
-    // a STBTT_moveto, then consists of a series of mixed
+    // The shape is a rng_series of contours. Each one starts with
+    // a STBTT_moveto, then consists of a rng_series of mixed
     // STBTT_lineto and STBTT_curveto segments. A lineto
     // draws a line from previous endpoint to its x,y; a curveto
     // draws a quadratic bezier from previous endpoint to

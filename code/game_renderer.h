@@ -23,27 +23,27 @@ Ground rules about this renderer.
 
 struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
-    mmm_v4f Colors;
+    v4f Colors;
 };
 
 struct render_command_set_basis {
     static constexpr u32 TypeId = __LINE__;
-    mmm_m44f Basis;
+    m44f Basis;
 };
 
 struct render_command_draw_textured_quad {
     static constexpr u32 TypeId = __LINE__;
     u32 TextureHandle;
-    mmm_v4f Colors;
-    mmm_m44f Transform;
-    mmm_quad2f TextureCoords; 
+    v4f Colors;
+    m44f Transform;
+    quad2f TextureCoords; 
 };
 
 
 struct render_command_draw_quad {
     static constexpr u32 TypeId = __LINE__;
-    mmm_v4f Colors;
-    mmm_m44f Transform;
+    v4f Colors;
+    m44f Transform;
 };
 
 struct render_command_link_texture {
@@ -64,13 +64,13 @@ struct render_command_set_design_resolution {
 };
 
 
-static inline mmm_rect2u 
+static inline rect2u 
 GetRenderRegion(u32 WindowWidth, 
                 u32 WindowHeight, 
                 u32 RenderWidth, 
                 u32 RenderHeight) {
     Assert(RenderWidth > 0 && RenderHeight > 0 && WindowWidth > 0 && WindowHeight > 0);
-    mmm_rect2u Ret = {};
+    rect2u Ret = {};
     
     f32 OptimalWindowWidth = (f32)WindowHeight * ((f32)RenderWidth / (f32)RenderHeight);
     f32 OptimalWindowHeight = (f32)WindowWidth * ((f32)RenderHeight / (f32)RenderWidth);
@@ -103,7 +103,7 @@ GetRenderRegion(u32 WindowWidth,
 
 
 static inline void
-PushCommandSetBasis(mmcmd_commands* Commands, mmm_m44f Basis) {
+PushCommandSetBasis(mmcmd_commands* Commands, m44f Basis) {
     using data_t = render_command_set_basis;
     auto* Data = mmcmd_Push<data_t>(Commands);
     Data->Basis = Basis;
@@ -111,13 +111,13 @@ PushCommandSetBasis(mmcmd_commands* Commands, mmm_m44f Basis) {
 
 static inline void
 PushCommandSetOrthoBasis(mmcmd_commands* Commands, 
-                         mmm_v3f Origin,
-                         mmm_v3f Dimensions)   
+                         v3f Origin,
+                         v3f Dimensions)   
 {
     using data_t = render_command_set_basis;
     auto* Data = mmcmd_Push<data_t>(Commands);
     
-    auto P  = mmm_Orthographic(-1.f, 1.f,
+    auto P  = Orthographic(-1.f, 1.f,
                                  -1.f, 1.f,
                                  -1.f, 1.f,
                                  -Dimensions.W * 0.5f,  
@@ -128,12 +128,12 @@ PushCommandSetOrthoBasis(mmcmd_commands* Commands,
                                  Dimensions.D * 0.5f,
                                  true);
     
-    mmm_m44f V = mmm_Translation(-Origin.X, -Origin.Y, 0.f);
+    m44f V = Translation(-Origin.X, -Origin.Y, 0.f);
     Data->Basis = P*V;
 }
 
 static inline void
-PushCommandClearColor(mmcmd_commands* Commands, mmm_v4f Colors) {
+PushCommandClearColor(mmcmd_commands* Commands, v4f Colors) {
     using data_t = render_command_clear_color;
     auto* Data = mmcmd_Push<data_t>(Commands);
     Data->Colors = Colors;
@@ -143,10 +143,10 @@ PushCommandClearColor(mmcmd_commands* Commands, mmm_v4f Colors) {
 
 static inline void
 PushCommandDrawTexturedQuad(mmcmd_commands* Commands, 
-                            mmm_v4f Colors, 
-                            mmm_m44f Transform, 
+                            v4f Colors, 
+                            m44f Transform, 
                             u32 TextureHandle,
-                            mmm_quad2f TextureCoords = {
+                            quad2f TextureCoords = {
                                 0.0f, 1.0f,  // top left
                                 1.0f, 1.0f, // top right
                                 1.0f, 0.f, // bottom right
@@ -165,10 +165,10 @@ PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
 
 static inline void
 PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
-                            mmm_v4f Colors, 
-                            mmm_m44f Transform, 
+                            v4f Colors, 
+                            m44f Transform, 
                             u32 TextureHandle,
-                            mmm_rect2f TextureCoords) 
+                            rect2f TextureCoords) 
 {
     using data_t = render_command_draw_textured_quad;
     auto* Data = mmcmd_Push<data_t>(Commands);
@@ -176,14 +176,14 @@ PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
     Data->Colors = Colors;
     Data->Transform = Transform;
     Data->TextureHandle = TextureHandle;
-    Data->TextureCoords = mmm_Quad2F(TextureCoords);
+    Data->TextureCoords = Quad2F(TextureCoords);
 }
 
 
 static inline void
 PushCommandDrawQuad(mmcmd_commands* Commands, 
-                    mmm_v4f Colors, 
-                    mmm_m44f Transform) 
+                    v4f Colors, 
+                    m44f Transform) 
 {
     using data_t = render_command_draw_quad;
     auto* Data = mmcmd_Push<data_t>(Commands);
@@ -209,36 +209,36 @@ PushCommandLinkTexture(mmcmd_commands* Commands,
 
 static inline void 
 PushCommandDrawLine(mmcmd_commands* Payload, 
-                    mmm_line2f Line, 
+                    line2f Line, 
                     f32 Thickness = 2.f,
-                    mmm_v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+                    v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
         Swap(Line.Min, Line.Max);
     }
     
-    f32 LineLength = mmm_Length(Line.Max - Line.Min);
-    mmm_v2f LineMiddle = mmm_Midpoint(Line.Max, Line.Min);
+    f32 LineLength = Length(Line.Max - Line.Min);
+    v2f LineMiddle = Midpoint(Line.Max, Line.Min);
     
-    mmm_v2f LineVector = Line.Max - Line.Min;
-    f32 Angle = mmm_AngleBetween(LineVector, { 1.f, 0.f });
+    v2f LineVector = Line.Max - Line.Min;
+    f32 Angle = AngleBetween(LineVector, { 1.f, 0.f });
     
     
-    mmm_m44f T = mmm_Translation(LineMiddle.X, LineMiddle.Y, 100.f);
-    mmm_m44f R = mmm_RotationZ(Angle);
-    mmm_m44f S = mmm_Scale(LineLength, Thickness, 1.f) ;
+    m44f T = Translation(LineMiddle.X, LineMiddle.Y, 100.f);
+    m44f R = RotationZ(Angle);
+    m44f S = Scale(LineLength, Thickness, 1.f) ;
     
-    mmm_m44f Transform = T*R*S;
+    m44f Transform = T*R*S;
     
     PushCommandDrawQuad(Payload, Colors, Transform);
 }
 
 static inline void 
 PushCommandDrawLineRect(mmcmd_commands* Commands, 
-                        mmm_rect2f Rect,
+                        rect2f Rect,
                         f32 Thickness = 1.f,
-                        mmm_v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+                        v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     //Bottom
     PushCommandDrawLine(Commands, 
