@@ -43,6 +43,19 @@ using uptr = uintptr_t;
 #define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
 #define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 
+template<typename T>
+union range {
+    struct {
+        T Start;
+        T End;
+    };
+    struct {
+        T Min; 
+        T Max;
+    };
+};
+
+
 // C-string
 static inline u32
 SiStrLen(const char* Str) {

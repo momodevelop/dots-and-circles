@@ -6,6 +6,7 @@
 #include "mm_maths.h"
 #include "mm_arena.h"
 #include "mm_commands.h"
+#include "mm_string.h"
 
 #include "platform.h"
 #include "game_assets_file_formats.h"
@@ -98,7 +99,7 @@ static inline game_assets
 CreateAssets(arena* Arena, 
      platform_api* Platform,
      mmcmd_commands* RenderCommands,
-     const char* Filename)
+     string Filename)
 {
     game_assets Assets = {};
     Assets.Arena = SubArena(Arena, Megabytes(100));
@@ -115,10 +116,10 @@ CreateAssets(arena* Arena,
     u8* FileMemory = nullptr;
     u8* FileMemoryItr = nullptr;
     {
-        u32 Filesize = Platform->GetFileSize(Filename);
+        u32 Filesize = Platform->GetFileSize(Filename.Elements);
         Assert(Filesize);
         FileMemory = FileMemoryItr = (u8*)PushBlock(Scratch, Filesize);
-        Platform->ReadFile(FileMemory, Filesize, Filename);
+        Platform->ReadFile(FileMemory, Filesize, Filename.Elements);
     }
     
     // NOTE(Momo): Read and check file header

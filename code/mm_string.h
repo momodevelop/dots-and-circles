@@ -21,12 +21,23 @@ struct string {
 };
 
 
+struct string_it {
+    string* String;
+    usize Index;
+
+    char* operator->() {
+        return &String->Elements[Index];
+    }
+};
+
 static inline string 
 String(char* Elements, usize Length) {
     Assert(Elements != nullptr);
+    
     string Ret = {};
     Ret.Elements = Elements;
     Ret.Length = Length;
+    
     return Ret;
 }
 
@@ -43,13 +54,21 @@ String(const char* SiStr) {
     return String((char*)SiStr);
 }
 
+static inline string 
+String(string Src, range<usize> Slice) {
+    return String(Src.Elements + Slice.Start, Slice.End - Slice.Start);
+};
+
 struct string_buffer {
-    string String;
-    usize Capacity;
-    struct {
-        usize Length;
-        char* Elements;
+    union {
+        string String;
+        struct {
+            usize Length;
+            char* Elements;
+        };
     };
+
+    usize Capacity;
 
     inline auto& operator[](usize I) {
         Assert(I < Length);
@@ -57,7 +76,10 @@ struct string_buffer {
     }
 };
 
-
+static inline b32
+IsEmpty(string String) {
+    return String.Length == 0;
+}
 
 static inline string_buffer
 StringBuffer(char* Memory, usize Capacity) {
@@ -71,6 +93,10 @@ StringBuffer(char* Memory, usize Capacity) {
     return Ret;
 }
 
+static inline  usize
+Remaining(string_buffer Buffer) {
+    return Buffer.Capacity - Buffer.Length;
+}
 
 static inline void
 Clear(string_buffer* Dest) {
@@ -100,15 +126,6 @@ Pop(string_buffer* Dest) {
     --Dest->Length;
 }
 
-static inline b32
-PopSafely(string_buffer* Dest) {
-    if (Dest->Length > 0 ){
-        --Dest->Length;
-        return true;
-    }
-    return false;
-}
-
 
 static inline void
 Concat(string_buffer* Dest, string Src) {
@@ -118,16 +135,6 @@ Concat(string_buffer* Dest, string Src) {
     }
 }
 
-static inline b32
-ConcatSafely(string_buffer* Dest, string Src) {
-    if (Dest->Length + Src.Length <= Dest->Capacity) {
-        for ( u32 i = 0; i < Src.Length; ++i ) {
-            Dest->Elements[Dest->Length++] = Src.Elements[i];
-        }
-        return true;
-    }
-    return false;
-}
 
 static inline void
 NullTerm(string_buffer* Dest) {
@@ -181,33 +188,25 @@ Itoa(string_buffer* Dest, i32 Num) {
 
     Reverse(Dest);
 }
-struct range {
-    usize Start;
-    usize OnePastEnd;
-};
 
 
-static inline range
-FindNextToken(string String, char Delimiter, range Slice = {}) {
-  
-    if (Slice.OnePastEnd != 0) {
-        Slice.Start = Slice.OnePastEnd + 1;
-        if (Slice.Start >= String.Length) {
-            return Slice;
-        }
+static inline usize
+Find(string String, char Delimiter, usize From = 0) { 
+    for (;;++From) {
+         if (From >= String.Length) {
+            return String.Length;
+         }
 
-    }
-    for (usize i = Slice.Start; ; ++i) {
-         if (i == String.Length || String[i] == Delimiter) {
-            Slice.OnePastEnd = i;
-            return Slice;
+         if (String[From] == Delimiter) {
+            return From;
          }
     }
 
-    return Slice;
-
-
+    // There shouldn't be a case where this happens?
+    Assert(false);
+    return From;
 }
+
 
 #include "mm_arena.h"
 static inline string_buffer

@@ -10,7 +10,7 @@
 #include "game_text.h"
 #include "game_input.h"
 
-typedef void (*debug_callback)(void* Context);
+using debug_callback = void (*)(void* Context, string Arguments);
 struct debug_command {
     string Key;
     debug_callback Callback;
@@ -78,34 +78,32 @@ Unregister(debug_console* DebugConsole, string Key) {
 static inline void 
 Update(debug_console* DebugConsole, game_input* Input) {
 
-    if (Input->DebugTextInputBuffer.Length > 0) { 
-         ConcatSafely(&DebugConsole->InputBuffer, Input->DebugTextInputBuffer.String);
+    if (Input->DebugTextInputBuffer.Length > 0 && 
+        Input->DebugTextInputBuffer.Length <= Remaining(DebugConsole->InputBuffer)) 
+    {  
+        Concat(&DebugConsole->InputBuffer, Input->DebugTextInputBuffer.String);
     }
     
     // Remove character
     if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
-        // TODO: Create an pop safely function? 
-        // Returns an iterator? Returns a tuple? Returns an Option?
-        PopSafely(&DebugConsole->InputBuffer);
+        if (!IsEmpty(DebugConsole->InputBuffer.String))
+            Pop(&DebugConsole->InputBuffer);
     }
 
     if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
         PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.String, ColorWhite);
         
-        string StringToParse = DebugConsole->InputBuffer.String;
-        {
-            // strtok and strsep is nice, but it modifies the existing string. 
-            range Slice = {};
-            while(Slice.OnePastEnd < StringToParse.Length) {
-                Slice = FindNextToken(StringToParse, ' ', Slice); 
-            }
-
-        }
+        // Assume that the first token is the command 
+        string StrToParse = DebugConsole->InputBuffer.String;
+        
+        range<usize> Slice = { 0, Find(StrToParse, ' ') };
+        string CommandStr = String(StrToParse, Slice); 
+            
 
         // Send a command to a callback
         for (auto&& Command : DebugConsole->Commands) {
-            if (Compare(Command.Key, DebugConsole->InputBuffer.String)) {
-                 Command.Callback(Command.Context);
+            if (Compare(Command.Key, CommandStr)) {
+                 Command.Callback(Command.Context, DebugConsole->InputBuffer.String);
                  break;
             }
         }

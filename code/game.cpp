@@ -9,6 +9,22 @@
 #include "mm_maths.h"
 #include "mm_colors.h"
 
+// cmd: jump main/menu/atlas_test/etc...
+static inline void 
+CmdJump(void * Context, string Arguments) {
+    game_state* GameState = (game_state*)Context;
+
+    for (usize Start = 0, End = 0; End < Arguments.Length; Start = End + 1) {
+        End = Find(Arguments, ' ', Start);
+        string Arg = String(Arguments, { Start, End });
+        PushDebugInfo(&GameState->DebugConsole, Arg, ColorYellow);
+        Start = End + 1;
+
+    }
+    GameState->NextModeType = GameModeType_Main;
+}
+
+
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
            platform_api* Platform, 
@@ -28,7 +44,7 @@ GameUpdate(game_memory* GameMemory,
                 &GameState->MainArena, 
                 Platform, 
                 RenderCommands, 
-                "yuu"
+                String("yuu\0")
         );
    
         // NOTE(Momo): Arena for modes
@@ -46,13 +62,7 @@ GameUpdate(game_memory* GameMemory,
         GameState->DebugConsole = CreateDebugConsole(&GameState->DebugArena);
 
         // Temp, set some simple callbacks to debug callbacks
-        Register(&GameState->DebugConsole, 
-            String("jump"), 
-            [](void* Context) {
-                game_state* GameState = (game_state*)Context;
-                PushDebugInfo(&GameState->DebugConsole, String("Jumping to game!"), ColorYellow);
-                GameState->NextModeType = GameModeType_Main;
-            }, GameState);
+        Register(&GameState->DebugConsole, String("jump"), CmdJump, GameState);
     
 #endif
     }
