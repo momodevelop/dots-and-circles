@@ -99,7 +99,7 @@ Update(debug_console* DebugConsole, game_input* Input) {
             }) 
         };
 
-        string CommandStr = Slice(StrToParse, Range); 
+        string CommandStr = SubString(StrToParse, Range); 
             
         // Send a command to a callback
         for (usize i = 0; i < DebugConsole->Commands.Length; ++i) {

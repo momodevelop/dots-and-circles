@@ -277,11 +277,12 @@ Update(game_mode_main* Mode,
         
         Player->Position += Player->Direction * Player->Speed * DeltaTime;
     }
-
+ 
 
 	// Bullet Update
-	for( auto It = Begin(&Mode->Bullets); It != End(&Mode->Bullets); ++It) {
-		It->Position += It->Direction * It->Speed * DeltaTime;
+	for(usize i = 0; i < Mode->Bullets.Length; ++i) {
+        bullet* Bullet = Mode->Bullets + i;
+		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
 	}
 
 
@@ -342,10 +343,12 @@ Update(game_mode_main* Mode,
     }
 
 	// Enemy logic update
-    for ( auto It = Begin(&Mode->Enemies); It != End(&Mode->Enemies);) 
+    for (usize I = 0; I < Mode->Enemies.Length; ++I) 
     {
+        enemy* Enemy = Mode->Enemies + I;
+
         // Movement
-        switch( It->MovementType ) {
+        switch( Enemy->MovementType ) {
             case EnemyMovementType_Static:
                 // Do nothing
                 break;
@@ -354,10 +357,10 @@ Update(game_mode_main* Mode,
         }
 
         // Fire
-        It->FireTimer += DeltaTime;
-		if (It->FireTimer > It->FireDuration) {       
+        Enemy->FireTimer += DeltaTime;
+		if (Enemy->FireTimer > Enemy->FireDuration) {       
             mood_type MoodType = {};
-            switch (It->MoodPatternType) {
+            switch (Enemy->MoodPatternType) {
                 case EnemyMoodPatternType_Dot: 
                     MoodType = MoodType_Dot;
                     break;
@@ -369,24 +372,24 @@ Update(game_mode_main* Mode,
             }
 
             v2f Dir = {};
-            switch (It->FiringPatternType) {
+            switch (Enemy->FiringPatternType) {
 		    	case EnemyFiringPatternType_Homing: 
-                    Dir = Player->Position - It->Position;
+                    Dir = Player->Position - Enemy->Position;
 			        break;
                 default:
                     Assert(false);
 		    }
-            SpawnBullet(Mode, Assets, It->Position, Dir, 200.f, MoodType);
-            It->FireTimer = 0.f;
+            SpawnBullet(Mode, Assets, Enemy->Position, Dir, 200.f, MoodType);
+            Enemy->FireTimer = 0.f;
 		}
 
         // Life time
-        It->LifeTimer += DeltaTime;
-        if (It->LifeTimer > It->LifeDuration) {
-            It = SwapRemove(&Mode->Enemies, It);
+        Enemy->LifeTimer += DeltaTime;
+        if (Enemy->LifeTimer > Enemy->LifeDuration) {
+            SwapRemove(&Mode->Enemies, I);
             continue;
         }
-        ++It;
+        ++Enemy;
 	}
    
 	// Collision 
@@ -395,21 +398,20 @@ Update(game_mode_main* Mode,
         PlayerCircle.Origin += Player->Position;
 
 		// Player vs every bullet
-		//for( u32 i = 0; i < Mode->Bullets.Used; ++i) {
-        list<bullet>* Bullets = &Mode->Bullets;
-        for ( auto It = Begin(Bullets); It != End(Bullets);) 
+        for (usize I = 0; I < Mode->Bullets.Length; ++I) 
         {
-            circle2f BulletCircle = It->HitCircle;
-            BulletCircle.Origin += It->Position;
+            bullet* Bullet = Mode->Bullets + I;
+            circle2f BulletCircle = Bullet->HitCircle;
+            BulletCircle.Origin += Bullet->Position;
 
             if (IsIntersecting(PlayerCircle, BulletCircle)) {
-                 if (Player->MoodType == It->MoodType ) {
-                    It = SwapRemove(&Mode->Bullets, It);
+                 if (Player->MoodType == Bullet->MoodType ) {
+                    SwapRemove(&Mode->Bullets, I);
                     continue;
                  }
             }
 
-            ++It;
+            ++Bullet;
 		}
 	}
 
@@ -444,11 +446,13 @@ Update(game_mode_main* Mode,
 	// Bullet Rendering 
     f32 DotLayerOffset = 0.f;
     f32 CircleLayerOffset = 0.f;
-	for( auto&& Bullet : Mode->Bullets) 
+    for (usize I = 0; I < Mode->Bullets.Length; ++I) 
     {
-		m44f S = Scale(V3F(Bullet.Size));
-		v3f RenderPos = V3F(Bullet.Position);
-        switch(Bullet.MoodType) {
+        bullet* Bullet = Mode->Bullets + I;
+
+		m44f S = Scale(V3F(Bullet->Size));
+		v3f RenderPos = V3F(Bullet->Position);
+        switch(Bullet->MoodType) {
             case MoodType_Dot:
                 RenderPos.Z = ZLayDotBullet + DotLayerOffset;
                 DotLayerOffset += 0.01f;
@@ -464,25 +468,26 @@ Update(game_mode_main* Mode,
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
-									Bullet.ImageRect->BitmapId,
-									GetAtlasUV(Assets, Bullet.ImageRect));
+									Bullet->ImageRect->BitmapId,
+									GetAtlasUV(Assets, Bullet->ImageRect));
 
     
 	}
 
 
 	// Enemy Rendering
-    for(auto&& Enemy : Mode->Enemies )
+    for(usize I = 0; I < Mode->Enemies.Length; ++I )
 	{
-		m44f S = Scale(V3F(Enemy.Size));
-		v3f RenderPos = V3F(Enemy.Position);
+        enemy* Enemy = Mode->Enemies + I;
+		m44f S = Scale(V3F(Enemy->Size));
+		v3f RenderPos = V3F(Enemy->Position);
 		RenderPos.Z = ZLayEnemy; 
 		m44f T = Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
-									Enemy.ImageRect->BitmapId,
-									GetAtlasUV(Assets, Enemy.ImageRect));
+									Enemy->ImageRect->BitmapId,
+									GetAtlasUV(Assets, Enemy->ImageRect));
 	}
 
 

@@ -1,7 +1,7 @@
 #ifndef __GAME_TEXT__
 #define __GAME_TEXT__
 
-#include "mm_string.h"
+#include "mm_array.h"
 
 #include "game_renderer.h"
 #include "game_assets.h"

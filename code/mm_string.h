@@ -39,17 +39,21 @@ String(const char* SiStr) {
     return String((char*)SiStr);
 }
 
+static inline string
+SubString(string Src, range<usize> Range) {
+    return SubArray(Src, Range);
+}
 
-
+// Maybe this can be moved to Array?
 static inline dlink_list<string>
-Split(string Str, arena* Arena, char Delimiter) {
+DelimitSplit(string Str, arena* Arena, char Delimiter) {
     dlink_list<string> Ret ={}; 
     range<usize> Range = {};
 
     while (Range.End != Str.Length) {
         Range.End = Find(Str, ' ', Range.Start); 
 
-        auto* Link = PushCtr<dlink<string>>(Arena, DLink<string>, Slice(Str, Range));
+        auto* Link = PushCtr<dlink<string>>(Arena, DLink<string>, SubString(Str, Range));
         PushBack(&Ret, Link);
  
         Range.Start = Range.End + 1;

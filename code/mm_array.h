@@ -40,7 +40,7 @@ Array(arena* Arena, usize Length) {
 
 template<typename type>
 static inline array<type>
-Slice(array<type> Src, range<usize> Slice) {
+SubArray(array<type> Src, range<usize> Slice) {
     Assert(Slice.Start <= Slice.End);
     return Array(Src.Elements + Slice.Start, Slice.End - Slice.Start);
 };

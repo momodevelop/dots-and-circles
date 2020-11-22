@@ -428,7 +428,7 @@ int main(int argc, char* argv[]) {
                
 #if INTERNAL
                 case SDL_TEXTINPUT: {
-                    Concat(&Input.DebugTextInputBuffer, String(e.text.text));
+                    Push(&Input.DebugTextInputBuffer, String(e.text.text));
                 } break;
 #endif                
 

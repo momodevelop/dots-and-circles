@@ -13,7 +13,6 @@
 
 #include "game_renderer.h"
 #include "game_assets.h"
-#include "mm_string.h"
 #include "mm_list.h"
 
 

@@ -18,7 +18,7 @@ CmdJump(void * Context, string Arguments) {
     auto Scratch = BeginScratch(&GameState->DebugArena);
     Defer {  EndScratch(&Scratch); };
 
-    dlink_list<string> ArgList = Split(Arguments, Scratch, ' ');
+    dlink_list<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
     if ( ArgList.Length != 2 ) {
         // Expect two arguments
         PushDebugInfo(&GameState->DebugConsole, String("Expected only 2 arguments"), ColorRed);
