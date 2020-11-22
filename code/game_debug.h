@@ -21,32 +21,61 @@ struct debug_string {
     v4f Color;
 };
 
+
 struct debug_console {
-    debug_string InfoBuffers[5];
+    m44f Basis;
+    m44f InfoBgTransform;
+    m44f InputBgTransform;
+    v4f InfoBgColor;
+    v4f InputBgColor;
+
+    // Buffers
+    array<debug_string> InfoBuffers;
     string_buffer InputBuffer;
 
     list<debug_command> Commands;
 };
 
+
+
+
 static inline debug_console
-CreateDebugConsole(arena* Arena) {
+CreateDebugConsole(arena* Arena, 
+        usize InfoBufferLines, 
+        usize BufferCapacity, 
+        usize CommandsCapacity,
+        m44f Basis,
+        m44f InfoBgTransform,
+        m44f InputBgTransform,
+        v4f InfoBgColor,
+        v4f InputBgColor) 
+{
     debug_console Ret = {};
 
-    Ret.InputBuffer = StringBuffer(Arena, 110);
+    Ret.InputBuffer = StringBuffer(Arena, BufferCapacity);
+    Ret.Basis = Basis;
+    Ret.InfoBgTransform = InfoBgTransform;
+    Ret.InputBgTransform = InputBgTransform;
+    Ret.InfoBgColor = InfoBgColor;
+    Ret.InputBgColor = InputBgColor;
+    
 
-    for (auto&& DebugInfoBuffer : Ret.InfoBuffers) {
-        DebugInfoBuffer.Buffer = StringBuffer(Arena, 110);
-        DebugInfoBuffer.Color = { 1.f, 1.f, 1.f, 1.f };
+    
+    Ret.InfoBuffers = Array<debug_string>(Arena, InfoBufferLines);
+    for (usize I = 0; I < Ret.InfoBuffers.Length; ++I) {
+        debug_string* InfoBuffer = Ret.InfoBuffers + I;
+        InfoBuffer->Buffer = StringBuffer(Arena, BufferCapacity);
+        InfoBuffer->Color = { 1.f, 1.f, 1.f, 1.f };
     }
 
-    Ret.Commands = List<debug_command>(Arena, 32);
+    Ret.Commands = List<debug_command>(Arena, CommandsCapacity);
     return Ret;
 }
 
 
 static inline void
 PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
-    for(i32 i = ArrayCount(DebugConsole->InfoBuffers) - 2; i >= 0 ; --i) {
+    for(usize i = DebugConsole->InfoBuffers.Length - 2; i >= 0 ; --i) {
         debug_string* Dest = DebugConsole->InfoBuffers + i + 1;
         debug_string* Src = DebugConsole->InfoBuffers + i;
         Copy(&Dest->Buffer, Src->Buffer.Array);
@@ -93,11 +122,7 @@ Update(debug_console* DebugConsole, game_input* Input) {
         // Assume that the first token is the command 
         string StrToParse = DebugConsole->InputBuffer.Array;
         
-        range<usize> Range = { 0, 
-            Find(StrToParse, [](char* Item) { 
-                return (*Item) == ' '; 
-            }) 
-        };
+        range<usize> Range = { 0, Find(StrToParse, ' ') };
 
         string CommandStr = SubString(StrToParse, Range); 
             
@@ -117,32 +142,23 @@ Update(debug_console* DebugConsole, game_input* Input) {
 
 
 static inline void
-Render(debug_console* DebugConsole, mmcmd_commands* RenderCommands, game_assets* Assets) {
-    PushCommandSetBasis(RenderCommands, 
-            Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
-                        0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true));
-
+Render(debug_console* Console, mmcmd_commands* RenderCommands, game_assets* Assets) {
+    PushCommandSetBasis(RenderCommands, Console->Basis);
+    
     // Background
-    {
-        m44f A = Translation(0.5f, 0.5f, 0.f);
-        m44f S = Scale(1600.f, 240.f, 1.f);
-        m44f T = Translation(0.f, 0.f, 500.f);
-        PushCommandDrawQuad(RenderCommands, { 0.3f, 0.3f, 0.3f, 1.f }, T*S*A);
-        
-        S = Scale(1600.f, 40.f, 1.f);
-        T = Translation(0.f, 0.f, 501.f);
-        PushCommandDrawQuad(RenderCommands, { 0.2f, 0.2f, 0.2f, 1.f }, T*S*A);
-    }
+    PushCommandDrawQuad(RenderCommands, Console->InfoBgColor, Console->InfoBgTransform);
+    PushCommandDrawQuad(RenderCommands, Console->InputBgColor, Console->InputBgTransform);
+    
 
     // Draw text
     {
-        for (u32 i = 0; i < ArrayCount(DebugConsole->InfoBuffers); ++i) {
+        for (u32 I = 0; I < Console->InfoBuffers.Length ; ++I) {
             DrawText(RenderCommands,
                     Assets,
-                    { 10.f, 50.f + i * 40.f, 502.f },
-                    DebugConsole->InfoBuffers[i].Color,
+                    { 10.f, 50.f + I * 40.f, 502.f },
+                    Console->InfoBuffers[I].Color,
                     Font_Default, 32.f,
-                    DebugConsole->InfoBuffers[i].Buffer.Array);
+                    Console->InfoBuffers[I].Buffer.Array);
         }
 
         DrawText(RenderCommands, 
@@ -150,7 +166,7 @@ Render(debug_console* DebugConsole, mmcmd_commands* RenderCommands, game_assets*
             { 10.f, 10.f, 600.f }, 
             ColorWhite,
             Font_Default, 32.f, 
-            DebugConsole->InputBuffer.Array);
+            Console->InputBuffer.Array);
         
 
 

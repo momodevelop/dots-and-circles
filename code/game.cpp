@@ -86,7 +86,38 @@ GameUpdate(game_memory* GameMemory,
 #if INTERNAL
 
         GameState->DebugArena = Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
-        GameState->DebugConsole = CreateDebugConsole(&GameState->DebugArena);
+        
+        // Debug Console Init
+        {
+            m44f Basis = Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
+                        0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true);
+            m44f InfoBgTransform = 
+                Translation(0.5f, 0.5f, 0.f) *
+                Scale(1600.f, 240.f, 1.f) *
+                Translation(0.f, 0.f, 500.f);
+ 
+
+            m44f InputBgTransform =  
+                Translation(0.5f, 0.5f, 0.f) * 
+                Scale(1600.f, 40.f, 1.f) *
+                Translation(0.f, 0.f, 501.f);
+ 
+            v4f InfoBgColor = { 0.3f, 0.3f, 0.3f, 1.f };
+            v4f InputBgColor = { 0.2f, 0.2f, 0.2f, 1.f };
+            
+
+            GameState->DebugConsole = CreateDebugConsole(
+                    &GameState->DebugArena, 
+                    5, 110, 32, 
+                    Basis,
+                    InfoBgTransform,
+                    InputBgTransform,
+                    InfoBgColor,
+                    InputBgColor);
+            debug_console* Console = &GameState->DebugConsole;
+        
+        }
+
 
         // Temp, set some simple callbacks to debug callbacks
         Register(&GameState->DebugConsole, String("jump"), CmdJump, GameState);
@@ -178,8 +209,4 @@ GameUpdate(game_memory* GameMemory,
             Assert(false);
         }
     }
-
-
-
-
 }
