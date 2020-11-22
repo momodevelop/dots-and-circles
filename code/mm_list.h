@@ -2,152 +2,124 @@
 #define __LIST__
 
 #include "mm_core.h"
+#include "mm_array.h"
 
-template<typename T>
+template<typename type>
 struct list {
-    T* Elements;     // Expects pointer to object
-    usize Count;     // Amount of objects currently borrowed
+    union {
+        struct {
+            usize Length;     // Amount of objects currently borrowed
+            type* Elements;     // Expects pointer to object
+        };
+        array<type> Array;
+    };
+
+
     usize Capacity; // Total number of borrowable objects.
     
     inline auto& operator[](usize I) {
-        Assert(I < Count);
+        Assert(I < Length);
         return Elements[I];
     }
-
 };
 
-template<typename T>
-struct list_it {
-    list<T>* List;
-    usize Index;
-
-    T* operator->() {
-        return &List->Elements[Index];
-    }
-};
-
-
-
-// Iterators
-template<typename T>
-static inline list_it<T>
-Begin(list<T>* List) {
-    return { List, 0 };
-}
-    
-template<typename T>
-static inline list_it<T>
-End(list<T>* List) {
-    return { List, List->Count };
-}
-
-template<typename T>
-static inline b32
-operator!=(list_it<T> L, list_it<T> R) {
-    return L.Index != R.Index;
-}
-
-template<typename T>
-static inline list_it<T>&
-operator++(list_it<T>& L) {
-    ++L.Index;
-    return L;
-}
-
-template<typename T>
-static inline T& 
-operator*(list_it<T> L) {
-    return L.List->Elements[L.Index];
-}
-
-// Functions
-template<typename T>
-static inline void 
-Clear(list<T>* List) {
-    List->Count = 0;
-}
-
-
-template<typename T>
-static inline list<T>
-List(T* Arr, usize Capacity) {
-    list<T> Ret = {};
+// Constructors
+template<typename type>
+static inline list<type>
+List(type* Arr, usize Capacity) {
+    list<type> Ret = {};
     Ret.Elements = Arr;
     Ret.Capacity= Capacity;
     return Ret;
 }
 
-template<typename T>
-static inline void
-Push(list<T>* List, T Obj) {
-    Assert(List->Count < List->Capacity);
-    List->Elements[List->Count++] = Obj;
+// Functions
+template<typename type>
+static inline void 
+Clear(list<type>* List) {
+    List->Length = 0;
 }
 
-template<typename T>
+template<typename type>
 static inline void
-Pop(list<T>* List) {
-    Assert(List->Count > 0);
-    --List->Count;
-}
-
-template<typename T, typename unary_comparer>
-static inline list_it<T>
-Find(list<T>* List, unary_comparer UnaryComparer) {
-    for(usize i = 0; i < List->Count; ++i) {
-        if(UnaryComparer(&List->Elements[i])) {
-            return { List, i };
-        }
+Copy(list<type>* Dest, array<type> Src) {
+    Assert(Src.Length <= Dest->Capacity);
+    for (u32 i = 0; i < Src.Length; ++i ) {
+        Dest->Elements[i] = Src.Elements[i];
     }
-    return End(List);
+    Dest->Length = Src.Length;
 }
 
-template<typename T>
-static inline list_it<T>
-Remove(list<T>* List, list_it<T> It) {
-    for (usize Index = It.Index; Index < List->Count - 1; ++Index) {
+template<typename type>
+static inline usize
+Remaining(list<type> List) {
+    return List.Capacity - List.Length;
+}
+
+template<typename type>
+static inline void
+Push(list<type>* List, type Obj) {
+    Assert(List->Length < List->Capacity);
+    List->Elements[List->Length++] = Obj;
+}
+
+template<typename type>
+static inline void
+Push(list<type>* Dest, array<type> Src) {
+    Assert(Dest->Length + Src.Length <= Dest->Capacity);
+    for ( u32 i = 0; i < Src.Length; ++i ) {
+        Dest->Elements[Dest->Length++] = Src.Elements[i];
+    }
+}
+
+
+template<typename type>
+static inline void
+Pop(list<type>* List) {
+    Assert(List->Length > 0);
+    --List->Length;
+}
+
+template<typename type>
+static inline void
+Remove(list<type>* List, usize Index) {
+    Assert(Index < List->Length);
+    for (; Index < List->Length - 1; ++Index) {
         List->Elements[Index] = List->Elements[Index + 1];
     }
-    --List->Count;
-    return It; 
+    --List->Length;
 }
 
-template<typename T, typename unary_comparer> 
-static inline list_it<T>
-RemoveIf(list<T>* List, unary_comparer UnaryComparer) {
-    return Remove(List, Find(List, UnaryComparer));
+template<typename type, typename unary_comparer> 
+static inline usize
+RemoveIf(list<type>* List, unary_comparer UnaryComparer) {
+    Remove(List, Find(List->Array, UnaryComparer));
 }
 
 // Faster version of Remove by swapping the last element into the current element
 // This is O(1), but usually messes up the order of the list. 
-template<typename T>
-static inline list_it<T>
-SwapRemove(list<T>* List, list_it<T> It) {
-    //(*Obj) = List->Elements[List->Count - 1];
-    List->Elements[It.Index] = List->Elements[List->Count - 1];
-    --List->Count;
-    return It; //lol?
+template<typename type>
+static inline usize
+SwapRemove(list<type>* List, usize Index) {
+    //(*Obj) = List->Elements[List->Length - 1];
+    List->Elements[Index] = List->Elements[List->Length - 1];
+    --List->Length;
+    return Index;
 }
 
-// C++11 range-base for loop support
-template<typename T>
-static inline list_it<T>
-begin(list<T>& List) {
-    return Begin(&List);
-}
-    
-template<typename T>
-static inline list_it<T>
-end(list<T>& List) {
-    return End(&List);
+// Specialized struct and functions for ascii string
+template<typename type>
+static inline type*
+operator+(list<type> L, usize I) {
+    return L.Elements + I;
 }
 
 #include "mm_arena.h"
-template<typename T>
-static inline list<T>
+template<typename type>
+static inline list<type>
 List(arena* Arena, usize Capacity) {
-    list<T> Ret = {};
-    Ret.Elements = PushSiArray<T>(Arena, Capacity);
+    list<type> Ret = {};
+    Ret.Elements = PushSiArray<type>(Arena, Capacity);
     Ret.Capacity = Capacity;
     return Ret;
 }

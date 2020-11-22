@@ -6,22 +6,48 @@
 #include "game_mode_main.h"
 #include "game_mode_atlas_test.h"
 #include "game_text.h"
+#include "mm_arena.h"
 #include "mm_maths.h"
 #include "mm_colors.h"
-
+#include "mm_link_list.h"
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
 CmdJump(void * Context, string Arguments) {
     game_state* GameState = (game_state*)Context;
+    
+    auto Scratch = BeginScratch(&GameState->DebugArena);
+    Defer {  EndScratch(&Scratch); };
 
-    for (usize Start = 0, End = 0; End < Arguments.Length; Start = End + 1) {
-        End = Find(Arguments, ' ', Start);
-        string Arg = String(Arguments, { Start, End });
-        PushDebugInfo(&GameState->DebugConsole, Arg, ColorYellow);
-        Start = End + 1;
-
+    dlink_list<string> ArgList = Split(Arguments, Scratch, ' ');
+    if ( ArgList.Length != 2 ) {
+        // Expect two arguments
+        PushDebugInfo(&GameState->DebugConsole, String("Expected only 2 arguments"), ColorRed);
+        return;
     }
-    GameState->NextModeType = GameModeType_Main;
+
+    string StateToChangeTo = ArgList[1];
+    if (StateToChangeTo == String("main")) {
+        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Main"), ColorYellow);
+        GameState->NextModeType = GameModeType_Main;
+    }
+    else if (StateToChangeTo == String("splash")) {
+        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Splash"), ColorYellow);
+        GameState->NextModeType = GameModeType_Splash;
+    }
+    else if (StateToChangeTo == String("menu")) {
+        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Menu"), ColorYellow);
+        GameState->NextModeType = GameModeType_Menu;
+    }
+    else if (StateToChangeTo == String("atlas_test")) {
+        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Atlas Test"), ColorYellow);
+        GameState->NextModeType = GameModeType_AtlasTest;
+    }
+    else {
+        PushDebugInfo(&GameState->DebugConsole, String("Invalid state to jump to"), ColorRed);
+    }
+    
+    
+
 }
 
 
@@ -34,9 +60,10 @@ GameUpdate(game_memory* GameMemory,
            u64 TicksElapsed)
 {
     game_state* GameState = (game_state*)GameMemory->MainMemory;
-       // NOTE(Momo): Initialization of the game
+       
+    // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
-       // NOTE(Momo): Arenas
+        // NOTE(Momo): Arenas
         GameState->MainArena = Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
@@ -92,7 +119,7 @@ GameUpdate(game_memory* GameMemory,
         Defer { EndScratch(&Scratch); };
         string_buffer TempBuffer = StringBuffer(Scratch.Arena, 32);
         Itoa(&TempBuffer, (i32)TicksElapsed);
-        Concat(&TempBuffer, String("ms"));
+        Push(&TempBuffer, String("ms"));
         NullTerm(&TempBuffer);
 
         DrawText(RenderCommands, 
@@ -101,7 +128,7 @@ GameUpdate(game_memory* GameMemory,
                 ColorWhite,
                 Font_Default, 
                 32.f, 
-                TempBuffer.String);  
+                TempBuffer.Array);  
     }
 
     // Clean state/Switch states

@@ -1,7 +1,6 @@
 #ifndef GAME_DEBUG
 #define GAME_DEBUG
 
-#include "mm_string.h"
 #include "mm_list.h"
 #include "mm_colors.h"
 
@@ -50,7 +49,7 @@ PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
     for(i32 i = ArrayCount(DebugConsole->InfoBuffers) - 2; i >= 0 ; --i) {
         debug_string* Dest = DebugConsole->InfoBuffers + i + 1;
         debug_string* Src = DebugConsole->InfoBuffers + i;
-        Copy(&Dest->Buffer, Src->Buffer.String);
+        Copy(&Dest->Buffer, Src->Buffer.Array);
         Dest->Color = Src->Color;
 
     }
@@ -69,11 +68,9 @@ Register(debug_console* DebugConsole, string Key, debug_callback Callback, void*
 static inline void 
 Unregister(debug_console* DebugConsole, string Key) {
     RemoveIf(&DebugConsole->Commands, [Key](const debug_command* Cmd) { 
-        return Compare(Cmd->Key, Key); 
+        return Cmd->Key == Key; 
     });
 }
-
-
 
 static inline void 
 Update(debug_console* DebugConsole, game_input* Input) {
@@ -81,29 +78,34 @@ Update(debug_console* DebugConsole, game_input* Input) {
     if (Input->DebugTextInputBuffer.Length > 0 && 
         Input->DebugTextInputBuffer.Length <= Remaining(DebugConsole->InputBuffer)) 
     {  
-        Concat(&DebugConsole->InputBuffer, Input->DebugTextInputBuffer.String);
+        Push(&DebugConsole->InputBuffer, Input->DebugTextInputBuffer.Array);
     }
     
     // Remove character
     if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
-        if (!IsEmpty(DebugConsole->InputBuffer.String))
+        if (!IsEmpty(DebugConsole->InputBuffer.Array))
             Pop(&DebugConsole->InputBuffer);
     }
 
     if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
-        PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.String, ColorWhite);
+        PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.Array, ColorWhite);
         
         // Assume that the first token is the command 
-        string StrToParse = DebugConsole->InputBuffer.String;
+        string StrToParse = DebugConsole->InputBuffer.Array;
         
-        range<usize> Slice = { 0, Find(StrToParse, ' ') };
-        string CommandStr = String(StrToParse, Slice); 
-            
+        range<usize> Range = { 0, 
+            Find(StrToParse, [](char* Item) { 
+                return (*Item) == ' '; 
+            }) 
+        };
 
+        string CommandStr = Slice(StrToParse, Range); 
+            
         // Send a command to a callback
-        for (auto&& Command : DebugConsole->Commands) {
-            if (Compare(Command.Key, CommandStr)) {
-                 Command.Callback(Command.Context, DebugConsole->InputBuffer.String);
+        for (usize i = 0; i < DebugConsole->Commands.Length; ++i) {
+            auto* Command = DebugConsole->Commands + i;
+            if (Command->Key == CommandStr) {
+                 Command->Callback(Command->Context, DebugConsole->InputBuffer.Array);
                  break;
             }
         }
@@ -140,7 +142,7 @@ Render(debug_console* DebugConsole, mmcmd_commands* RenderCommands, game_assets*
                     { 10.f, 50.f + i * 40.f, 502.f },
                     DebugConsole->InfoBuffers[i].Color,
                     Font_Default, 32.f,
-                    DebugConsole->InfoBuffers[i].Buffer.String);
+                    DebugConsole->InfoBuffers[i].Buffer.Array);
         }
 
         DrawText(RenderCommands, 
@@ -148,7 +150,7 @@ Render(debug_console* DebugConsole, mmcmd_commands* RenderCommands, game_assets*
             { 10.f, 10.f, 600.f }, 
             ColorWhite,
             Font_Default, 32.f, 
-            DebugConsole->InputBuffer.String);
+            DebugConsole->InputBuffer.Array);
         
 
 

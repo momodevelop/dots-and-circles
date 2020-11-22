@@ -2,6 +2,7 @@
 #define __GAME_INPUT__
 
 #include "mm_core.h"
+#include "mm_list.h"
 #include "mm_string.h"
 
 enum game_debug_key {
