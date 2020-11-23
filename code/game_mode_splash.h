@@ -37,8 +37,8 @@ Update(splash_image_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = Translation(Entity->Position);
-    m44f S = Scale(Entity->Scale);
+    m44f T = M44F_Translation(Entity->Position);
+    m44f S = M44F_Scale(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S,  Entity->BitmapHandle);
@@ -70,8 +70,8 @@ Update(splash_blackout_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = Translation(Entity->Position);
-    m44f S = Scale(Entity->Scale);
+    m44f T = M44F_Translation(Entity->Position);
+    m44f S = M44F_Scale(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandDrawQuad(RenderCommands, Entity->Colors, T*S);

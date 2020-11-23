@@ -23,11 +23,12 @@ struct debug_string {
 
 
 struct debug_console {
-    m44f Basis;
-    m44f InfoBgTransform;
-    m44f InputBgTransform;
     v4f InfoBgColor;
     v4f InputBgColor;
+    v4f InputColor;
+    v4f InfoDefaultColor;
+    v3f Position;
+    v2f Dimensions;
 
     // Buffers
     array<debug_string> InfoBuffers;
@@ -40,32 +41,36 @@ struct debug_console {
 
 
 static inline debug_console
-CreateDebugConsole(arena* Arena, 
+CreateDebugConsole(
+        arena* Arena, 
         usize InfoBufferLines, 
         usize BufferCapacity, 
         usize CommandsCapacity,
-        m44f Basis,
-        m44f InfoBgTransform,
-        m44f InputBgTransform,
         v4f InfoBgColor,
-        v4f InputBgColor) 
+        v4f InputBgColor,
+        v4f InputColor,
+        v4f InfoDefaultColor,
+        v2f Dimensions,
+        v3f Position) 
 {
     debug_console Ret = {};
 
+
     Ret.InputBuffer = StringBuffer(Arena, BufferCapacity);
-    Ret.Basis = Basis;
-    Ret.InfoBgTransform = InfoBgTransform;
-    Ret.InputBgTransform = InputBgTransform;
     Ret.InfoBgColor = InfoBgColor;
     Ret.InputBgColor = InputBgColor;
-    
+    Ret.InfoDefaultColor = InfoDefaultColor;
+    Ret.InputColor = InputColor;
+    Ret.Position = Position;
+    Ret.Dimensions = Dimensions;
 
+   
     
     Ret.InfoBuffers = Array<debug_string>(Arena, InfoBufferLines);
     for (usize I = 0; I < Ret.InfoBuffers.Length; ++I) {
         debug_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = StringBuffer(Arena, BufferCapacity);
-        InfoBuffer->Color = { 1.f, 1.f, 1.f, 1.f };
+        InfoBuffer->Color = InfoDefaultColor;
     }
 
     Ret.Commands = List<debug_command>(Arena, CommandsCapacity);
@@ -75,9 +80,10 @@ CreateDebugConsole(arena* Arena,
 
 static inline void
 PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
-    for(usize i = DebugConsole->InfoBuffers.Length - 2; i >= 0 ; --i) {
-        debug_string* Dest = DebugConsole->InfoBuffers + i + 1;
-        debug_string* Src = DebugConsole->InfoBuffers + i;
+    for (usize I = 0; I < DebugConsole->InfoBuffers.Length - 1; ++I) {
+        usize J = DebugConsole->InfoBuffers.Length - 1 - I;
+        debug_string* Dest = DebugConsole->InfoBuffers + J;
+        debug_string* Src = DebugConsole->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, Src->Buffer.Array);
         Dest->Color = Src->Color;
 
@@ -143,32 +149,69 @@ Update(debug_console* DebugConsole, game_input* Input) {
 
 static inline void
 Render(debug_console* Console, mmcmd_commands* RenderCommands, game_assets* Assets) {
-    PushCommandSetBasis(RenderCommands, Console->Basis);
+    font* Font = Assets->Fonts + Font_Default;
     
-    // Background
-    PushCommandDrawQuad(RenderCommands, Console->InfoBgColor, Console->InfoBgTransform);
-    PushCommandDrawQuad(RenderCommands, Console->InputBgColor, Console->InputBgTransform);
-    
+    f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;
+    f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
+    f32 LineHeight = Console->Dimensions.H / (Console->InfoBuffers.Length + 1);
+    f32 FontSize = LineHeight * 0.9f;
+    f32 FontHeight = Height(Font) * FontSize;
+    f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + Abs(Font->Descent) * FontSize; 
+    f32 PaddingWidth = Console->Dimensions.W * 0.005f;
+    {
+        m44f ScaleMatrix = M44F_Scale(Console->Dimensions);
+        m44f PositionMatrix = M44F_Translation(Console->Position);
+        m44f InfoBgTransform = PositionMatrix * ScaleMatrix;
+        PushCommandDrawQuad(RenderCommands, Console->InfoBgColor, InfoBgTransform);
+    }
+
+    {
+        m44f ScaleMatrix = M44F_Scale(V2F(Console->Dimensions.W, LineHeight));
+        m44f PositionMatrix = M44F_Translation(
+                Console->Position.X, 
+                Bottom + LineHeight * 0.5f,
+                Console->Position.Z + 0.01f
+        );
+
+        m44f InputBgTransform = PositionMatrix * ScaleMatrix;
+        PushCommandDrawQuad(RenderCommands, Console->InputBgColor, InputBgTransform);
+    }
 
     // Draw text
     {
+
+
         for (u32 I = 0; I < Console->InfoBuffers.Length ; ++I) {
+            v3f Position = {};
+            Position.X = Left + PaddingWidth;
+            Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
+            Position.Z = Console->Position.Z + 0.02f;
+
             DrawText(RenderCommands,
                     Assets,
-                    { 10.f, 50.f + I * 40.f, 502.f },
+                    Position,
                     Console->InfoBuffers[I].Color,
-                    Font_Default, 32.f,
+                    Font_Default, 
+                    FontSize,
                     Console->InfoBuffers[I].Buffer.Array);
         }
 
-        DrawText(RenderCommands, 
-            Assets, 
-            { 10.f, 10.f, 600.f }, 
-            ColorWhite,
-            Font_Default, 32.f, 
-            Console->InputBuffer.Array);
-        
+        {
+            v3f Position = {};
+            Position.X = Left + PaddingWidth;
+            Position.Y = Bottom + PaddingHeight;
+            Position.Z = Console->Position.Z + 0.02f;
 
+            DrawText(
+                RenderCommands, 
+                Assets, 
+                Position,
+                Console->InputColor,
+                Font_Default, FontSize, 
+                Console->InputBuffer.Array
+            );
+        
+        }
 
     }
 }

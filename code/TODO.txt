@@ -1,5 +1,6 @@
+[] Flip atlas UV to start from bottom left
 [] Debug console
-    [] Argument parser
+    [] Modular UI
 [] Hot Swapping code
     [] Reload every frame 
 [] Circle debug lines?

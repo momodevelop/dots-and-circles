@@ -3,6 +3,7 @@
 
 #include "mm_core.h"
 
+#include "mm_array.h"
 #include "mm_maths.h"
 #include "mm_arena.h"
 #include "mm_commands.h"
@@ -42,9 +43,12 @@ struct font {
     // ASCII 32 to 126 
     // Worry about sparseness next time.
     f32 LineGap;
+    f32 Ascent;
+    f32 Descent;
     font_glyph Glyphs[Codepoint_Count];
     u32 Kernings[Codepoint_Count][Codepoint_Count];
 };
+
 
 
 static inline usize
@@ -54,7 +58,11 @@ HashCodepoint(u32 Codepoint) {
     return Codepoint - Codepoint_Start;
 }
 
-#include "mm_array.h"
+static inline f32 
+Height(font* Font) {
+    return Abs(Font->Ascent) + Abs(Font->Descent);
+}
+
 
 struct game_assets {
     arena Arena;
@@ -66,7 +74,7 @@ struct game_assets {
     platform_api* Platform;
 };
 
-
+// TODO: Consider fixing this on asset builder side
 static inline quad2f
 GetAtlasUV(game_assets* Assets, atlas_rect* AtlasRect) {
     auto Bitmap = Assets->Bitmaps[AtlasRect->BitmapId];
@@ -173,6 +181,8 @@ CreateAssets(arena* Arena,
                 auto* YuuFont = Read<yuu_font>(&FileMemoryItr);
                 auto* Font = Assets.Fonts + YuuFont->Id;
                 Font->LineGap = YuuFont->LineGap;
+                Font->Ascent = YuuFont->Ascent;
+                Font->Descent = YuuFont->Descent;
             } break;
             case AssetType_FontGlyph: {
                 auto* YuuFontGlyph = Read<yuu_font_glyph>(&FileMemoryItr);

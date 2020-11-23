@@ -89,31 +89,16 @@ GameUpdate(game_memory* GameMemory,
         
         // Debug Console Init
         {
-            m44f Basis = Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
-                        0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true);
-            m44f InfoBgTransform = 
-                Translation(0.5f, 0.5f, 0.f) *
-                Scale(1600.f, 240.f, 1.f) *
-                Translation(0.f, 0.f, 500.f);
- 
-
-            m44f InputBgTransform =  
-                Translation(0.5f, 0.5f, 0.f) * 
-                Scale(1600.f, 40.f, 1.f) *
-                Translation(0.f, 0.f, 501.f);
- 
-            v4f InfoBgColor = { 0.3f, 0.3f, 0.3f, 1.f };
-            v4f InputBgColor = { 0.2f, 0.2f, 0.2f, 1.f };
-            
-
             GameState->DebugConsole = CreateDebugConsole(
                     &GameState->DebugArena, 
                     5, 110, 32, 
-                    Basis,
-                    InfoBgTransform,
-                    InputBgTransform,
-                    InfoBgColor,
-                    InputBgColor);
+                    { 0.3f, 0.3f, 0.3f, 1.f },
+                    { 0.2f, 0.2f, 0.2f, 1.f },
+                    ColorWhite,
+                    ColorWhite,
+                    { 1600.f, 240.f }, 
+                    { 800.f, 120.f }
+            );
             debug_console* Console = &GameState->DebugConsole;
         
         }
@@ -136,11 +121,20 @@ GameUpdate(game_memory* GameMemory,
             GameState->IsShowTicksElapsed = !GameState->IsShowTicksElapsed;
         }
 
-
+#if INTERNAL
         if (GameState->IsDebug) {
-            Update(&GameState->DebugConsole, Input);
+            
+                      Update(&GameState->DebugConsole, Input);
+
+
+            // Render
+            m44f Basis = M44F_Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
+                0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true);
+            PushCommandSetBasis(RenderCommands, Basis);
+
             Render(&GameState->DebugConsole, RenderCommands, &GameState->Assets);  
         }
+#endif
 
 
     }

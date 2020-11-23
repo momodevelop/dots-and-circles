@@ -293,10 +293,14 @@ Pow(f32 b, f32 e) {
 
 // NOTE(Momo): v2f functions
 static inline v2f
+V2F(f32 X, f32 Y) {
+    return { X, Y };
+}
+
+static inline v2f 
 V2F(v3f V) {
     return { V.X, V.Y };
 }
-
 
 static inline v2f
 V2F(v2u V) {
@@ -759,7 +763,7 @@ Transpose(m44f M) {
 
 
 static inline m44f 
-Translation(f32 x, f32 y, f32 z) {
+M44F_Translation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, x,
         0.f, 1.f, 0.f, y,
@@ -769,13 +773,18 @@ Translation(f32 x, f32 y, f32 z) {
 }
 
 static inline m44f 
-Translation(v3f Vec) {
-    return Translation(Vec.X, Vec.Y, Vec.Z);
+M44F_Translation(v2f Vec) {
+    return M44F_Translation(Vec.X, Vec.Y, 0);
+}
+
+static inline m44f 
+M44F_Translation(v3f Vec) {
+    return M44F_Translation(Vec.X, Vec.Y, Vec.Z);
 }
 
 
 static inline m44f 
-RotationX(f32 rad) {
+M44F_RotationX(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -787,7 +796,7 @@ RotationX(f32 rad) {
 }
 
 static inline m44f 
-RotationY(f32 rad) {
+M44F_RotationY(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -801,7 +810,7 @@ RotationY(f32 rad) {
 
 
 static inline m44f 
-RotationZ(f32 rad) {
+M44F_RotationZ(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -813,7 +822,7 @@ RotationZ(f32 rad) {
 }
 
 static inline m44f
-Scale(f32 x, f32 y, f32 z) {
+M44F_Scale(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f,   0.f,
         0.f, y, 0.f,   0.f,
@@ -822,16 +831,19 @@ Scale(f32 x, f32 y, f32 z) {
     };
 }
 
-
+static inline m44f
+M44F_Scale(v2f Vec) {
+    return M44F_Scale(Vec.X, Vec.Y, 0.f);
+}
 
 static inline m44f
-Scale(v3f Vec) {
-    return Scale(Vec.X, Vec.Y, Vec.Z);
+M44F_Scale(v3f Vec) {
+    return M44F_Scale(Vec.X, Vec.Y, Vec.Z);
 }
 
 
 static inline m44f 
-Orthographic(f32 NdcLeft, f32 NdcRight,
+M44F_Orthographic(f32 NdcLeft, f32 NdcRight,
                    f32 NdcBottom, f32 NdcTop,
                    f32 NdcNear, f32 NdcFar,
                    f32 Left, f32 Right, 
@@ -853,7 +865,7 @@ Orthographic(f32 NdcLeft, f32 NdcRight,
 
 
 static inline m44f 
-IdentityMatrix() {
+M44F_Identity() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,

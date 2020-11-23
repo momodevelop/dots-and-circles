@@ -134,7 +134,8 @@ GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
                 
                 i32 W, H;
                 u8* FontBitmapOneCh = stbtt_GetCodepointBitmap(&Context->LoadedFont.Info, 
-                                                               Context->RasterScale, Context->RasterScale, 
+                                                               Context->RasterScale,
+                                                               Context->RasterScale, 
                                                                Context->Codepoint, 
                                                                &W, &H, nullptr, nullptr);
                 Defer { stbtt_FreeBitmap( FontBitmapOneCh, nullptr ); };
@@ -221,8 +222,7 @@ int main() {
             Assert(false);
         }
     }
-    
-    
+   
     // NOTE(Momo): Generate atlas from rects
     u8* AtlasBitmap = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
     Defer { free(AtlasBitmap); };
@@ -232,6 +232,7 @@ int main() {
     printf("Written test atlas: test.png\n");
 #endif
     
+                    
     ab_context AssetBuilder_ = {};
     auto* AssetBuilder = &AssetBuilder_;
     Begin(AssetBuilder, "yuu", "MOMO");
@@ -259,7 +260,6 @@ int main() {
                     rect2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
                     
-                    
                     WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
                                    Rect2U(Rect), 
@@ -272,7 +272,20 @@ int main() {
         
         i32 Ascent, Descent, LineGap;
         stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
-        WriteFont(AssetBuilder, Font_Default, (f32)LineGap); 
+        
+        rect2i BoundingBox = {}; 
+        stbtt_GetFontBoundingBox(&LoadedFont.Info, 
+            &BoundingBox.Min.X,
+            &BoundingBox.Min.Y,
+            &BoundingBox.Max.X,
+            &BoundingBox.Max.Y
+        );
+
+        WriteFont(AssetBuilder, Font_Default, 
+                Ascent * FontPixelScale, 
+                Descent * FontPixelScale, 
+                LineGap * FontPixelScale
+        ); 
         
         for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
             for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {

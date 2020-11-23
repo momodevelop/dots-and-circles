@@ -37,7 +37,7 @@ Update(game_mode_menu* Mode,
             
             
             u32 TextureHandle = GetBitmapId(Assets, Font);
-            m44f Transform = Translation(OffsetX, 1.f, 0.f) *Scale(Size * Aspect, Size, 1.f); 
+            m44f Transform = TranslationMtxOffsetX, 1.f, 0.f) *M44F_Scale(Size * Aspect, Size, 1.f); 
             
             OffsetX += Size * Aspect;
             PushCommandDrawTexturedQuad(RenderCommands, 

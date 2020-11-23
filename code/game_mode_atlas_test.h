@@ -28,12 +28,12 @@ DrawString(mmcmd_commands* RenderCommands,
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f BLT = Translation(0.5f, 0.5f, 0.f); 
-        m44f S = Scale(Width(Box) * Size, 
+        m44f BLT = M44F_Translation(0.5f, 0.5f, 0.f); 
+        m44f S = M44F_Scale(Width(Box) * Size, 
                              Height(Box) * Size, 
                              1.f);
         
-        m44f T = Translation(CurPosition.X + Box.Min.X * Size, 
+        m44f T = M44F_Translation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         
@@ -68,7 +68,7 @@ Update(game_mode_atlas_test* Mode,
     // NOTE(Momo): Image Test
     {
         v4f Color = { 1.f, 1.f, 1.f, 1.f };
-        m44f Transform = Scale(5.f, 5.f, 1.f);
+        m44f Transform = M44F_Scale(5.f, 5.f, 1.f);
         auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_Ryoji;
         
         PushCommandDrawTexturedQuad(RenderCommands, 

@@ -422,12 +422,12 @@ Update(game_mode_main* Mode,
     constexpr static f32 ZLayEnemy = 300.f;
     // NOTE(Momo): Player Rendering
     {
-        m44f S = Scale(V3F(Player->Size));
+        m44f S = M44F_Scale(V3F(Player->Size));
         
 		v3f RenderPos = V3F(Player->Position);
         RenderPos.Z = ZLayPlayer;
 
-        m44f T = Translation(RenderPos);
+        m44f T = M44F_Translation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, 1.f }, 
                                     T*S, 
@@ -435,7 +435,7 @@ Update(game_mode_main* Mode,
                                     GetAtlasUV(Assets, Player->CircleImageRect));
         
 		RenderPos.Z += 0.1f;
-        T = Translation(RenderPos);
+        T = M44F_Translation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                                     T*S, 
@@ -450,7 +450,7 @@ Update(game_mode_main* Mode,
     {
         bullet* Bullet = Mode->Bullets + I;
 
-		m44f S = Scale(V3F(Bullet->Size));
+		m44f S = M44F_Scale(V3F(Bullet->Size));
 		v3f RenderPos = V3F(Bullet->Position);
         switch(Bullet->MoodType) {
             case MoodType_Dot:
@@ -464,7 +464,7 @@ Update(game_mode_main* Mode,
             default: 
                 Assert(false);
         }
-        m44f T = Translation(RenderPos);
+        m44f T = M44F_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
@@ -479,10 +479,10 @@ Update(game_mode_main* Mode,
     for(usize I = 0; I < Mode->Enemies.Length; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
-		m44f S = Scale(V3F(Enemy->Size));
+		m44f S = M44F_Scale(V3F(Enemy->Size));
 		v3f RenderPos = V3F(Enemy->Position);
 		RenderPos.Z = ZLayEnemy; 
-		m44f T = Translation(RenderPos);
+		m44f T = M44F_Translation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
