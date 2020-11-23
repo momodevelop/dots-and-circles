@@ -64,11 +64,9 @@ struct yuu_bitmap {
     u32 Height;
     u32 Channels;
     // NOTE(Momo): Data is:
-    /* 
-u8 Pixels[Width * Height * Channels]; 
-*/
+    // u8 Pixels[Width * Height * Channels]; 
+    
 };
-
 
 struct yuu_atlas_rect {
     atlas_rect_id Id;
@@ -79,6 +77,8 @@ struct yuu_atlas_rect {
 
 struct yuu_font {
     font_id Id;
+    f32 Ascent;
+    f32 Descent;
     f32 LineGap;
 };
 

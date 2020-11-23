@@ -117,7 +117,7 @@ PushCommandSetOrthoBasis(mmcmd_commands* Commands,
     using data_t = render_command_set_basis;
     auto* Data = mmcmd_Push<data_t>(Commands);
     
-    auto P  = Orthographic(-1.f, 1.f,
+    auto P  = M44F_Orthographic(-1.f, 1.f,
                                  -1.f, 1.f,
                                  -1.f, 1.f,
                                  -Dimensions.W * 0.5f,  
@@ -128,7 +128,7 @@ PushCommandSetOrthoBasis(mmcmd_commands* Commands,
                                  Dimensions.D * 0.5f,
                                  true);
     
-    m44f V = Translation(-Origin.X, -Origin.Y, 0.f);
+    m44f V = M44F_Translation(-Origin.X, -Origin.Y, 0.f);
     Data->Basis = P*V;
 }
 
@@ -225,9 +225,9 @@ PushCommandDrawLine(mmcmd_commands* Payload,
     f32 Angle = AngleBetween(LineVector, { 1.f, 0.f });
     
     
-    m44f T = Translation(LineMiddle.X, LineMiddle.Y, 100.f);
-    m44f R = RotationZ(Angle);
-    m44f S = Scale(LineLength, Thickness, 1.f) ;
+    m44f T = M44F_Translation(LineMiddle.X, LineMiddle.Y, 100.f);
+    m44f R = M44F_RotationZ(Angle);
+    m44f S = M44F_Scale(LineLength, Thickness, 1.f) ;
     
     m44f Transform = T*R*S;
     

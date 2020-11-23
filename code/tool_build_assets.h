@@ -171,12 +171,14 @@ WriteAtlasRect(ab_context* Context, atlas_rect_id Id, bitmap_id TargetBitmapId, 
 }
 
 static inline void
-WriteFont(ab_context* Context, font_id Id, f32 LineGap) 
+WriteFont(ab_context* Context, font_id Id, f32 Ascent, f32 Descent, f32 LineGap) 
 {
     WriteEntry(Context, AssetType_Font);
     
     yuu_font Font = {};
     Font.Id = Id;
+    Font.Ascent = Ascent;
+    Font.Descent = Descent;
     Font.LineGap = LineGap;
     fwrite(&Font, sizeof(Font), 1, Context->File);
 }
