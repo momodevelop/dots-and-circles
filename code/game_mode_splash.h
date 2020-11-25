@@ -85,7 +85,8 @@ struct game_mode_splash {
 
 
 static inline void
-Init(game_mode_splash* Mode, game_state* GameState) {
+InitSplashMode(game_state* GameState) {
+    game_mode_splash* Mode = GameState->SplashMode;
     // NOTE(Momo): Create entities
     {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
@@ -117,21 +118,30 @@ Init(game_mode_splash* Mode, game_state* GameState) {
         Mode->SplashBlackout.CountdownDuration = 3.f;
         Mode->SplashBlackout.Timer = 0.f;
         Mode->SplashBlackout.Duration = 1.f;
+
+#if INTERNAL
+        
+
+#endif 
     }
 }
 
 static inline void
-Update(game_mode_splash* Mode,
-       game_state* GameState, 
+UpdateSplashMode(game_state* GameState, 
        mmcmd_commands* RenderCommands,
        game_input* Input,
        f32 DeltaTime)
 {
+    game_mode_splash* Mode = GameState->SplashMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
+
+    PushCommandOrthoCamera(RenderCommands, 
+            V3F(), 
+            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+    );
     
-    for (u32 i = 0; i < 2; ++i) {
-        Update(&Mode->SplashImg[i], 
+    for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
+        Update(Mode->SplashImg + I, 
                &GameState->Assets, 
                RenderCommands, 
                DeltaTime);
@@ -146,6 +156,7 @@ Update(game_mode_splash* Mode,
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         GameState->NextModeType = GameModeType_Splash;
     }
+
 }
 
-#endif //GAME_MODE_SPLASH_iH
+#endif //GAME_MODE_SPLASH_H

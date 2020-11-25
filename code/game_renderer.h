@@ -110,9 +110,9 @@ PushCommandSetBasis(mmcmd_commands* Commands, m44f Basis) {
 }
 
 static inline void
-PushCommandSetOrthoBasis(mmcmd_commands* Commands, 
-                         v3f Origin,
-                         v3f Dimensions)   
+PushCommandOrthoCamera(mmcmd_commands* Commands, 
+                         v3f Position,
+                         rect3f Frustum)   
 {
     using data_t = render_command_set_basis;
     auto* Data = mmcmd_Push<data_t>(Commands);
@@ -120,15 +120,15 @@ PushCommandSetOrthoBasis(mmcmd_commands* Commands,
     auto P  = M44F_Orthographic(-1.f, 1.f,
                                  -1.f, 1.f,
                                  -1.f, 1.f,
-                                 -Dimensions.W * 0.5f,  
-                                 Dimensions.W * 0.5f, 
-                                 -Dimensions.H * 0.5f, 
-                                 Dimensions.H* 0.5f,
-                                 -Dimensions.D * 0.5f, 
-                                 Dimensions.D * 0.5f,
+                                 Frustum.Min.X,  
+                                 Frustum.Max.X, 
+                                 Frustum.Min.Y, 
+                                 Frustum.Max.Y,
+                                 Frustum.Min.Z, 
+                                 Frustum.Max.Z,
                                  true);
     
-    m44f V = M44F_Translation(-Origin.X, -Origin.Y, 0.f);
+    m44f V = M44F_Translation(-Position.X, -Position.Y, -Position.Z);
     Data->Basis = P*V;
 }
 

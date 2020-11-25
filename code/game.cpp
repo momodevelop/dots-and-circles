@@ -7,9 +7,12 @@
 #include "game_mode_atlas_test.h"
 #include "game_text.h"
 #include "mm_arena.h"
+#include "mm_list.h"
 #include "mm_maths.h"
 #include "mm_colors.h"
 #include "mm_link_list.h"
+
+#if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
 CmdJump(void * Context, string Arguments) {
@@ -45,11 +48,8 @@ CmdJump(void * Context, string Arguments) {
     else {
         PushDebugInfo(&GameState->DebugConsole, String("Invalid state to jump to"), ColorRed);
     }
-    
-    
-
 }
-
+#endif
 
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
@@ -73,7 +73,7 @@ GameUpdate(game_memory* GameMemory,
                 RenderCommands, 
                 String("yuu\0")
         );
-   
+
         // NOTE(Momo): Arena for modes
         GameState->ModeArena = SubArena(&GameState->MainArena, Remaining(GameState->MainArena));
         GameState->ModeType = GameModeType_None;
@@ -81,35 +81,34 @@ GameUpdate(game_memory* GameMemory,
         GameState->IsInitialized = true;
 
         // NOTE(Momo): Set design resolution for game
-        PushCommandSetDesignResolution(RenderCommands, 1600, 900);
+        PushCommandSetDesignResolution(RenderCommands, (u32)DesignWidth, (u32)DesignHeight);
 
 #if INTERNAL
-
         GameState->DebugArena = Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
-        
+        GameState->DebugCommands = List<debug_command>(&GameState->DebugArena, 1);
+
         // Debug Console Init
         {
-            GameState->DebugConsole = CreateDebugConsole(
-                    &GameState->DebugArena, 
-                    5, 110, 32, 
-                    { 0.3f, 0.3f, 0.3f, 1.f },
-                    { 0.2f, 0.2f, 0.2f, 1.f },
-                    ColorWhite,
-                    ColorWhite,
-                    { 1600.f, 240.f }, 
-                    { 800.f, 120.f }
-            );
-            debug_console* Console = &GameState->DebugConsole;
+            debug_console Console = CreateDebugConsole(&GameState->DebugArena, 5, 110, 32);
+            Console.InfoBgColor = { 0.3f, 0.3f, 0.3f, 1.f };
+            Console.InfoDefaultColor = ColorWhite;
+            Console.InputBgColor = { 0.2f, 0.2f, 0.2f, 1.f };
+            Console.InputColor = ColorWhite;
+            Console.Dimensions = { DesignWidth, 240.f };
+            Console.Position = { 
+                -DesignWidth * 0.5f + Console.Dimensions.W * 0.5f, 
+                -DesignHeight * 0.5f + Console.Dimensions.H * 0.5f, 
+                DesignDepth * 0.5f - 1.f
+            };
+
+            GameState->DebugConsole = Console;
         
         }
-
-
-        // Temp, set some simple callbacks to debug callbacks
-        Register(&GameState->DebugConsole, String("jump"), CmdJump, GameState);
-    
+        Register(&GameState->DebugCommands, String("jump"), CmdJump, GameState);
 #endif
     }
 
+#if INTERNAL
     // System Debug
     {
         // F1 to toggle debug console
@@ -121,40 +120,17 @@ GameUpdate(game_memory* GameMemory,
             GameState->IsShowTicksElapsed = !GameState->IsShowTicksElapsed;
         }
 
-#if INTERNAL
         if (GameState->IsDebug) {
-            
-                      Update(&GameState->DebugConsole, Input);
-
-
-            // Render
-            m44f Basis = M44F_Orthographic(-1.f, 1.f, -1.f, 1.f, -1.f, 1.f, 
-                0.f, 1600.f, 0.f, 900.f, -1000.f, 1000.f, true);
-            PushCommandSetBasis(RenderCommands, Basis);
-
-            Render(&GameState->DebugConsole, RenderCommands, &GameState->Assets);  
+            debug_console* Console = &GameState->DebugConsole;
+            if (Update(Console, Input)){ 
+                Execute(GameState->DebugCommands, GetCommandString(Console));
+            }
         }
+
+    }
+
 #endif
 
-
-    }
-
-    if (GameState->IsShowTicksElapsed) {
-        auto Scratch = BeginScratch(&GameState->DebugArena);
-        Defer { EndScratch(&Scratch); };
-        string_buffer TempBuffer = StringBuffer(Scratch.Arena, 32);
-        Itoa(&TempBuffer, (i32)TicksElapsed);
-        Push(&TempBuffer, String("ms"));
-        NullTerm(&TempBuffer);
-
-        DrawText(RenderCommands, 
-                &GameState->Assets, 
-                { 10.f, 880.f, 700.f }, 
-                ColorWhite,
-                Font_Default, 
-                32.f, 
-                TempBuffer.Array);  
-    }
 
     // Clean state/Switch states
     if (GameState->NextModeType != GameModeType_None) {
@@ -163,19 +139,19 @@ GameUpdate(game_memory* GameMemory,
         switch(GameState->NextModeType) {
             case GameModeType_Splash: {
                 GameState->SplashMode = PushStruct<game_mode_splash>(ModeArena); 
-                Init(GameState->SplashMode, GameState);
+                InitSplashMode(GameState);
             } break;
             case GameModeType_Main: {
                 GameState->MainMode = PushStruct<game_mode_main>(ModeArena); 
-                Init(GameState->MainMode, GameState);
+                InitMainMode(GameState);
             } break;
             case GameModeType_Menu: {
                 GameState->MenuMode = PushStruct<game_mode_menu>(ModeArena); 
-                Init(GameState->MenuMode, GameState);
+                InitMenuMode(GameState);
             } break;
             case GameModeType_AtlasTest: {
                 GameState->AtlasTestMode = PushStruct<game_mode_atlas_test>(ModeArena); 
-                Init(GameState->AtlasTestMode, GameState);
+                InitAtlasTestMode(GameState);
             } break;
             default: {
             }
@@ -188,19 +164,42 @@ GameUpdate(game_memory* GameMemory,
     // State update
     switch(GameState->ModeType) {
         case GameModeType_Splash: {
-            Update(GameState->SplashMode, GameState, RenderCommands, Input, DeltaTime);
+            UpdateSplashMode(GameState, RenderCommands, Input, DeltaTime);
         } break;
         case GameModeType_Menu: {
-            Update(GameState->MenuMode, GameState, RenderCommands, Input, DeltaTime);
+            UpdateMenuMode(GameState, RenderCommands, Input, DeltaTime);
         } break;
         case GameModeType_Main: {
-            Update(GameState->MainMode, GameState, RenderCommands, Input, DeltaTime);
+            UpdateMainMode(GameState, RenderCommands, Input, DeltaTime);
         } break; 
         case GameModeType_AtlasTest: {
-            Update(GameState->AtlasTestMode, GameState, RenderCommands, Input, DeltaTime);
+            UpdateAtlasTestMode(GameState, RenderCommands, Input, DeltaTime);
         } break;
         default: {
             Assert(false);
         }
     }
+
+#if INTERNAL
+    // Debug Rendering
+    if (GameState->IsDebug) {
+        Render(&GameState->DebugConsole, RenderCommands, &GameState->Assets);
+    }
+    if (GameState->IsShowTicksElapsed) {
+        auto Scratch = BeginScratch(&GameState->DebugArena);
+        Defer { EndScratch(&Scratch); };
+        string_buffer TempBuffer = StringBuffer(Scratch.Arena, 32);
+        Itoa(&TempBuffer, (i32)TicksElapsed);
+        Push(&TempBuffer, String("ms"));
+        NullTerm(&TempBuffer);
+
+        DrawText(RenderCommands, 
+                &GameState->Assets, 
+                { -DesignWidth * 0.5f + 5.f , DesignHeight * 0.5f - 28.f, 99.5f }, 
+                ColorWhite,
+                Font_Default, 
+                32.f, 
+                TempBuffer.Array);  
+    }
+#endif
 }

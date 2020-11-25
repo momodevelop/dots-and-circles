@@ -168,8 +168,9 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
 	
 
 static inline void 
-Init(game_mode_main* Mode, game_state* GameState) {
-    
+InitMainMode(game_state* GameState) {
+    game_mode_main* Mode = GameState->MainMode;
+
     Mode->Arena = SubArena(&GameState->ModeArena, Remaining(GameState->ModeArena));
     Mode->Bullets = List<bullet>(&Mode->Arena, 128);
     Mode->Enemies = List<enemy>(&Mode->Arena, 128);
@@ -201,18 +202,17 @@ Init(game_mode_main* Mode, game_state* GameState) {
 
 
 static inline void
-Update(game_mode_main* Mode,
-       game_state* GameState, 
+UpdateMainMode(game_state* GameState, 
        mmcmd_commands* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
-    constexpr static f32 DesignWidth = 1600.f;
-    constexpr static f32 DesignHeight = 900.f;
-    constexpr static f32 DesignDepth = 1000.f;
-
+    game_mode_main* Mode = GameState->MainMode;
     PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
-    PushCommandSetOrthoBasis(RenderCommands, {}, { DesignWidth, DesignHeight, DesignDepth });
+    PushCommandOrthoCamera(RenderCommands, 
+            V3F(), 
+            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+    );
     
     auto* Assets = &GameState->Assets;
     auto* Player = &Mode->Player;
@@ -415,12 +415,13 @@ Update(game_mode_main* Mode,
 		}
 	}
 
-
+    // Rendering Logic
     constexpr static f32 ZLayPlayer =  0.f;
-    constexpr static f32 ZLayDotBullet = 100.f;
-    constexpr static f32 ZLayCircleBullet = 200.f;
-    constexpr static f32 ZLayEnemy = 300.f;
-    // NOTE(Momo): Player Rendering
+    constexpr static f32 ZLayDotBullet = 10.f;
+    constexpr static f32 ZLayCircleBullet = 20.f;
+    constexpr static f32 ZLayEnemy = 30.f;
+    
+    // Player Rendering
     {
         m44f S = M44F_Scale(V3F(Player->Size));
         

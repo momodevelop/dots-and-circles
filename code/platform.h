@@ -7,6 +7,10 @@
 static constexpr u64 GameMainMemorySize = Gigabytes(1);
 static constexpr u64 RenderCommandsMemorySize = Megabytes(64);
 
+constexpr static f32 DesignWidth = 1600.f;
+constexpr static f32 DesignHeight = 900.f;
+constexpr static f32 DesignDepth = 200.f;
+
 #if INTERNAL
 static constexpr u64 DebugMemorySize = Megabytes(64);
 static constexpr u64 TotalMemorySize = GameMainMemorySize + RenderCommandsMemorySize + DebugMemorySize;

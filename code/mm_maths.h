@@ -508,6 +508,11 @@ Project(v2f from, v2f to) {
 
 
 // NOTE(Momo): v3f functions
+static inline v3f
+V3F(f32 X = 0.f, f32 Y = 0.f, f32 Z = 0.f) {
+    return { X, Y, Z }; 
+}
+
 static inline v3f 
 V3F(v2f V) {
     return { V.X, V.Y, 0.f };
@@ -921,6 +926,21 @@ Rect3F(rect2f Rect) {
         V3F(Rect.Min),
         V3F(Rect.Max),
     };
+}
+
+static inline rect3f
+Rect3F(v3f Dimensions, v3f Anchor) {
+    rect3f Ret = {};
+    Ret.Min.X = Lerp(0, -Dimensions.W, Anchor.X);
+    Ret.Max.X = Lerp(Dimensions.W, 0, Anchor.X);
+
+    Ret.Min.Y = Lerp(0, -Dimensions.H, Anchor.Y);
+    Ret.Max.Y = Lerp(Dimensions.H, 0, Anchor.Y);
+
+    Ret.Min.Z = Lerp(0, -Dimensions.D, Anchor.Z);
+    Ret.Max.Z = Lerp(Dimensions.D, 0, Anchor.Z);
+
+    return Ret; 
 }
 
 static inline f32 

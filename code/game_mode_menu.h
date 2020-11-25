@@ -9,18 +9,21 @@ struct game_mode_menu {
 };
 
 static inline void 
-Init(game_mode_menu* Mode, game_state* GameState) {
+InitMenuMode(game_state* GameState) {
 }
 
 static inline void
-Update(game_mode_menu* Mode,
-       game_state* GameState, 
+UpdateMenuMode(game_state* GameState, 
        mmcmd_commands* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
+    game_mode_menu* Mode = GameState->MenuMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
+    PushCommandOrthoCamera(RenderCommands, 
+            V3F(), 
+            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+    );
 #if 0
     game_assets* Assets = GameState->Assets;
     {

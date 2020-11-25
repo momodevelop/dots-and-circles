@@ -50,6 +50,7 @@ struct game_state {
 
     arena DebugArena;
     debug_console DebugConsole;
+    list<debug_command> DebugCommands;
 #endif
 };
 

@@ -8,7 +8,7 @@ struct game_mode_atlas_test {
 };
 
 static inline void 
-Init(game_mode_atlas_test* Mode, game_state* GameState) {
+InitAtlasTestMode(game_state* GameState) {
 }
 
 static inline void
@@ -28,7 +28,7 @@ DrawString(mmcmd_commands* RenderCommands,
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f BLT = M44F_Translation(0.5f, 0.5f, 0.f); 
+        m44f A = M44F_Translation(0.5f, 0.5f, 0.f); 
         m44f S = M44F_Scale(Width(Box) * Size, 
                              Height(Box) * Size, 
                              1.f);
@@ -39,7 +39,7 @@ DrawString(mmcmd_commands* RenderCommands,
         
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color, 
-                                    T*S*BLT, 
+                                    T*S*A, 
                                     Glyph->BitmapId,
                                     GetAtlasUV(Assets, Glyph));
         
@@ -54,15 +54,18 @@ DrawString(mmcmd_commands* RenderCommands,
 }
 
 static inline void
-Update(game_mode_atlas_test* Mode,
-       game_state* GameState, 
+UpdateAtlasTestMode(game_state* GameState, 
        mmcmd_commands* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
+    game_mode_atlas_test* Mode = GameState->AtlasTestMode;
+
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    PushCommandSetOrthoBasis(RenderCommands, { 0.f, 0.f, 0.f }, { 1600.f, 900.f, 200.f });
-    
+    PushCommandOrthoCamera(RenderCommands, 
+            V3F(), 
+            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+    );
     
 #if 1
     // NOTE(Momo): Image Test

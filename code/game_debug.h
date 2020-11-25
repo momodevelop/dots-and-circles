@@ -1,3 +1,5 @@
+#if INTERNAL
+
 #ifndef GAME_DEBUG
 #define GAME_DEBUG
 
@@ -33,11 +35,42 @@ struct debug_console {
     // Buffers
     array<debug_string> InfoBuffers;
     string_buffer InputBuffer;
-
-    list<debug_command> Commands;
+    string_buffer CommandBuffer;
+    b32 IsCommandRead;
 };
 
 
+
+static inline void 
+Register(list<debug_command>* Commands, string Key, debug_callback Callback, void* Context)
+{
+    Push(Commands, { Key, Callback, Context } );
+}
+
+static inline void 
+Unregister(list<debug_command>* Commands, string Key) {
+    RemoveIf(Commands, [Key](const debug_command* Cmd) { 
+        return Cmd->Key == Key; 
+    });
+}
+
+static inline b32 
+Execute(list<debug_command> Commands, string Arguments) {
+    // Assume that the first token is the command     
+    range<usize> Range = { 0, Find(Arguments, ' ') };
+    string CommandStr = SubString(Arguments, Range); 
+
+    // Send a command to a callback
+    for (usize i = 0; i < Commands.Length; ++i) {
+        debug_command* Command = Commands + i;
+        if (Command->Key == CommandStr) {
+             Command->Callback(Command->Context, Arguments);
+             return true;
+        }
+    }
+
+    return false;
+}
 
 
 static inline debug_console
@@ -45,35 +78,19 @@ CreateDebugConsole(
         arena* Arena, 
         usize InfoBufferLines, 
         usize BufferCapacity, 
-        usize CommandsCapacity,
-        v4f InfoBgColor,
-        v4f InputBgColor,
-        v4f InputColor,
-        v4f InfoDefaultColor,
-        v2f Dimensions,
-        v3f Position) 
+        usize CommandsCapacity)
 {
     debug_console Ret = {};
 
-
-    Ret.InputBuffer = StringBuffer(Arena, BufferCapacity);
-    Ret.InfoBgColor = InfoBgColor;
-    Ret.InputBgColor = InputBgColor;
-    Ret.InfoDefaultColor = InfoDefaultColor;
-    Ret.InputColor = InputColor;
-    Ret.Position = Position;
-    Ret.Dimensions = Dimensions;
-
-   
-    
     Ret.InfoBuffers = Array<debug_string>(Arena, InfoBufferLines);
     for (usize I = 0; I < Ret.InfoBuffers.Length; ++I) {
         debug_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = StringBuffer(Arena, BufferCapacity);
-        InfoBuffer->Color = InfoDefaultColor;
     }
 
-    Ret.Commands = List<debug_command>(Arena, CommandsCapacity);
+    Ret.InputBuffer = StringBuffer(Arena, BufferCapacity);
+    Ret.CommandBuffer = StringBuffer(Arena, BufferCapacity);
+
     return Ret;
 }
 
@@ -85,7 +102,7 @@ PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
         debug_string* Dest = DebugConsole->InfoBuffers + J;
         debug_string* Src = DebugConsole->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, Src->Buffer.Array);
-        Dest->Color = Src->Color;
+        Dest->Color = DebugConsole->InfoDefaultColor;
 
     }
     DebugConsole->InfoBuffers[0].Color = Color;
@@ -93,21 +110,13 @@ PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
     Copy(&DebugConsole->InfoBuffers[0].Buffer, String);
 }
 
-
-static inline void 
-Register(debug_console* DebugConsole, string Key, debug_callback Callback, void* Context)
-{
-    Push(&DebugConsole->Commands, { Key, Callback, Context } );
+static inline string
+GetCommandString(debug_console* DebugConsole) {
+    return DebugConsole->CommandBuffer.Array;
 }
 
-static inline void 
-Unregister(debug_console* DebugConsole, string Key) {
-    RemoveIf(&DebugConsole->Commands, [Key](const debug_command* Cmd) { 
-        return Cmd->Key == Key; 
-    });
-}
-
-static inline void 
+// Returns true if there is a new command
+static inline b32 
 Update(debug_console* DebugConsole, game_input* Input) {
 
     if (Input->DebugTextInputBuffer.Length > 0 && 
@@ -124,25 +133,12 @@ Update(debug_console* DebugConsole, game_input* Input) {
 
     if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
         PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.Array, ColorWhite);
-        
-        // Assume that the first token is the command 
-        string StrToParse = DebugConsole->InputBuffer.Array;
-        
-        range<usize> Range = { 0, Find(StrToParse, ' ') };
-
-        string CommandStr = SubString(StrToParse, Range); 
-            
-        // Send a command to a callback
-        for (usize i = 0; i < DebugConsole->Commands.Length; ++i) {
-            auto* Command = DebugConsole->Commands + i;
-            if (Command->Key == CommandStr) {
-                 Command->Callback(Command->Context, DebugConsole->InputBuffer.Array);
-                 break;
-            }
-        }
-
+        Copy(&DebugConsole->CommandBuffer, DebugConsole->InputBuffer.Array);
         Clear(&DebugConsole->InputBuffer);
+        return true;
     }
+
+    return false;
 
 }
 
@@ -219,5 +215,7 @@ Render(debug_console* Console, mmcmd_commands* RenderCommands, game_assets* Asse
 
 
 
+
+#endif
 
 #endif
