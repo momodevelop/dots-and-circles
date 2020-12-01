@@ -24,6 +24,8 @@ enum font_id : u32 {
 enum atlas_rect_id : u32 {
     AtlasRect_Ryoji,
     AtlasRect_Yuu,
+    AtlasRect_BulletDot,
+    AtlasRect_BulletCircle,
     AtlasRect_Karu00,
     AtlasRect_Karu01,
     AtlasRect_Karu02,

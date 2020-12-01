@@ -1,6 +1,8 @@
-[] Flip atlas UV to start from bottom left
-[] Debug console
-    [] Modular UI
+[] Art assets
+    [] Enemy (...32x32?)
+    [] Bullets (16x16)
+    [] Player (32x32?)
+[] Animation?
 [] Hot Swapping code
     [] Reload every frame 
 [] Circle debug lines?
@@ -8,5 +10,4 @@
 [] Profiling? 
 [] Introspection?
 [] Consider making link texture a platform function?
-[] Consider seperating the assets into their own type arrays
-    
+[] Flip atlas UV to start from bottom left
