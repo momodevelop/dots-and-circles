@@ -9,7 +9,7 @@
 #include "thirdparty/glad/glad.c"
 
 #include "platform.h"
-#include "platform_sdl_renderer_ogl.h"
+#include "game_renderer_opengl.h"
 #include "game_input.h"
 
 
@@ -188,20 +188,20 @@ u64 GetTicksElapsed(sdl_timer* Timer) {
 }
 
 
-// NOTE(Momo): game_code
-struct game_code {
+// NOTE(Momo): sdl_game_code
+struct sdl_game_code {
     void* DLL; 
     game_update* Update;
 };
 
 static inline void
-Unload(game_code* GameCode) {
+Unload(sdl_game_code* GameCode) {
     SDL_UnloadObject(GameCode->DLL);
     GameCode->Update = nullptr;
 }
 
 static inline b32
-Load(game_code* GameCode, const char* SrcDllFilename, const char* TempDllFilename)
+Load(sdl_game_code* GameCode, const char* SrcDllFilename, const char* TempDllFilename)
 {    
     // TODO: Check src file last written time?
     if (!CopyFile(TempDllFilename, SrcDllFilename)) {
@@ -308,7 +308,7 @@ int main(int argc, char* argv[]) {
     
     
     // NOTE(Momo): Load game code
-    game_code GameCode;
+    sdl_game_code GameCode;
     Load(&GameCode, GameDllFilename, TempGameDllFilename);
     
     // NOTE(Momo) Initialize OpenGL context  core)
@@ -331,12 +331,21 @@ int main(int argc, char* argv[]) {
     SDL_Log("[OpenGL] Renderer: %s\n", glGetString(GL_RENDERER));
     SDL_Log("[OpenGL] Version:  %s\n", glGetString(GL_VERSION));
     
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
+#ifdef INTERNAL
+    glDebugMessageCallback(SdlGlDebugCallback, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
+#endif
     
     // NOTE(Momo): Renderer Init
-    renderer_opengl* RendererOpenGL = InitOpengl(window, 10000);
-   
-    //
+    i32 windowWidth, windowHeight;
+    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+
+    renderer_opengl RendererOpenGL = {};
+    Init(&RendererOpenGL, windowWidth, windowHeight, 1000000);
+    
     void* ProgramMemory = calloc(TotalMemorySize, sizeof(u8));
     if (ProgramMemory == nullptr){
         SDL_Log("Cannot allocate memory");
@@ -412,7 +421,8 @@ int main(int argc, char* argv[]) {
                 case SDL_WINDOWEVENT: {
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                         SDL_Log("Resizing: %d %d", e.window.data1, e.window.data2);
-                        SetWindowResolution(RendererOpenGL, e.window.data1, e.window.data2); 
+                        SetWindowResolution(&RendererOpenGL, e.window.data1, e.window.data2);
+                        
                     }
                 } break;
                
@@ -576,7 +586,7 @@ int main(int argc, char* argv[]) {
             GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetDeltaTime, ActualTicksElapsed); 
         }
        
-        Render(RendererOpenGL, RenderCommands); 
+        Render(&RendererOpenGL, RenderCommands); 
         Clear(&RenderCommands);
         
         // NOTE(Momo): Timer update

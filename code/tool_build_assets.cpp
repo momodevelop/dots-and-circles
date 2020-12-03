@@ -115,6 +115,7 @@ GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)malloc(AtlasSize);
     
+    
     for (u32 i = 0; i < RectCount; ++i) {
         auto Rect = Rects[i];
         
@@ -183,9 +184,9 @@ int main() {
         { AtlasContextType_Image, "assets/karu31.png", AtlasRect_Karu31, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Bitmap_AtlasDefault }
-        //{ AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
-        //{ AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
+        { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
     

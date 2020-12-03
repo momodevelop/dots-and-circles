@@ -1,8 +1,6 @@
 #ifndef __GAME_RENDERER_OPENGL__
 #define __GAME_RENDERER_OPENGL__
 
-#include <stdlib.h>
-#include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.h"
 #include "game_renderer.h"
 #include "game_renderer_opengl_shaders.inl"
@@ -73,15 +71,12 @@ struct renderer_opengl {
     // NOTE(Momo): A table mapping 'game texture handler' <-> 'opengl texture handler'  
     // TODO(Momo): Make this dynamic? 
     GLuint GameToRendererTextureTable[0xFF] = {};
-
     GLuint WindowWidth, WindowHeight;
     GLuint RenderWidth, RenderHeight;
-
-    mailbox Commands;
 };
 
 static inline void 
-AttachShader(GLuint program, GLenum type, const GLchar* code) {
+GlAttachShader(GLuint program, GLenum type, const GLchar* code) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &code, NULL);
     glCompileShader(shader);
@@ -89,13 +84,8 @@ AttachShader(GLuint program, GLenum type, const GLchar* code) {
     glDeleteShader(shader);
 }
 
-static inline void 
-AlignViewport(renderer_opengl* Renderer) 
-{
-    auto Region = GetRenderRegion(Renderer->WindowWidth,
-            Renderer->WindowHeight, 
-            Renderer->RenderWidth, 
-            Renderer->RenderHeight);
+static inline void AlignViewport(renderer_opengl* Renderer) {
+    auto Region = GetRenderRegion(Renderer->WindowWidth, Renderer->WindowHeight, Renderer->RenderWidth, Renderer->RenderHeight);
     
     GLuint x, y, w, h;
     x = Region.Min.X;
@@ -122,11 +112,15 @@ SetWindowResolution(renderer_opengl* Renderer, GLuint WindowWidth, GLuint Window
     AlignViewport(Renderer);
 }
 
-static inline renderer_opengl*
-InitOpengl(SDL_Window* Window, GLsizei MaxEntities) 
+static inline bool
+Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei MaxEntities) 
 {
-    renderer_opengl* Renderer = (renderer_opengl*)malloc(sizeof(renderer_opengl));
     Renderer->MaxEntities = MaxEntities;
+    Renderer->RenderWidth = WindowWidth;
+    Renderer->RenderHeight = WindowHeight;
+    Renderer->WindowWidth = WindowWidth;
+    Renderer->WindowHeight = WindowHeight;
+    
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_SCISSOR_TEST);
@@ -138,14 +132,9 @@ InitOpengl(SDL_Window* Window, GLsizei MaxEntities)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     
-    int W, H;
-    SDL_GetWindowSize(Window, &W, &H);
-
-    Renderer->WindowWidth = Renderer->RenderWidth = (GLuint)W;
-    Renderer->WindowHeight = Renderer->RenderHeight = (GLuint)H;
     AlignViewport(Renderer);
     
-
+    
     // NOTE(Momo): Setup VBO
     glCreateBuffers(renderer_vbo_Max, Renderer->Buffers);
     glNamedBufferStorage(Renderer->Buffers[renderer_vbo_Model], sizeof(QuadModel), QuadModel, 0);
@@ -219,15 +208,16 @@ InitOpengl(SDL_Window* Window, GLsizei MaxEntities)
     
     // NOTE(Momo): Setup Shader Program
     Renderer->Shader = glCreateProgram();
-    AttachShader(Renderer->Shader, GL_VERTEX_SHADER, RendererOpenGLVertexShader);
-    AttachShader(Renderer->Shader, GL_FRAGMENT_SHADER, RendererOpenGLVFragmentShader);
+    GlAttachShader(Renderer->Shader, GL_VERTEX_SHADER, RendererOpenGLVertexShader);
+    GlAttachShader(Renderer->Shader, GL_FRAGMENT_SHADER, RendererOpenGLVFragmentShader);
     glLinkProgram(Renderer->Shader);
     GLint result;
     glGetProgramiv(Renderer->Shader, GL_LINK_STATUS, &result);
     if (result != GL_TRUE) {
         char msg[Kilobyte];
         glGetProgramInfoLog(Renderer->Shader, Kilobyte, nullptr, msg);
-        return nullptr;
+        // TODO(Momo): Log?
+        return false;
     }
     
     // NOTE(Momo): Blank texture setup
@@ -259,8 +249,8 @@ InitOpengl(SDL_Window* Window, GLsizei MaxEntities)
                             GL_RGBA, GL_UNSIGNED_BYTE, 
                             &Pixels);
     }
-
-    return Renderer;
+    
+    return true;
 }
 
 static inline void 

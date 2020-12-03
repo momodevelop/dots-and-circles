@@ -186,7 +186,7 @@ InitMainMode(game_state* GameState) {
     Player->Position = {};
     Player->Direction = {};
     Player->Size = { 32.f, 32.f };
-	Player->HitCircle = { {0.f, 0.f}, 14.f};
+	Player->HitCircle = {{0.f, 0.f}, 28.f};
     
     // NOTE(Momo): We start as Dot
     Player->MoodType = MoodType_Dot;
@@ -250,6 +250,7 @@ UpdateMainMode(game_state* GameState,
         // NOTE(Momo): Absorb Mode Switch
         if(IsPoked(Input->ButtonSwitch)) {
             Player->MoodType = (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
+            
             switch(Player->MoodType) {
                 case MoodType_Dot: {
                     Player->DotImageAlphaTarget = 1.f;
