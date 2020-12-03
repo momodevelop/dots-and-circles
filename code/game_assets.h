@@ -163,12 +163,12 @@ CreateAssets(arena* Arena,
                 Assert(Bitmap->Pixels);
                 MemCopy(Bitmap->Pixels, FileMemoryItr, BitmapSize);
                 FileMemoryItr += BitmapSize;
-                
-                PushCommandLinkTexture(RenderCommands, 
-                                       Bitmap->Width, 
-                                       Bitmap->Height,
-                                       Bitmap->Pixels,
-                                       YuuBitmap->Id);
+               
+                PushCommandLinkTexture(RenderCommands,
+                                        Bitmap->Width, 
+                                        Bitmap->Height,
+                                        Bitmap->Pixels,
+                                        YuuBitmap->Id);
                 
             } break;
             case AssetType_AtlasRect: { 
