@@ -10,6 +10,8 @@ static constexpr u64 RenderCommandsMemorySize = Megabytes(64);
 constexpr static f32 DesignWidth = 1600.f;
 constexpr static f32 DesignHeight = 900.f;
 constexpr static f32 DesignDepth = 200.f;
+constexpr static u32 StartWindowWidth = 1600;
+constexpr static u32 StartWindowHeight = 900;
 
 #if INTERNAL
 static constexpr u64 DebugMemorySize = Megabytes(64);
