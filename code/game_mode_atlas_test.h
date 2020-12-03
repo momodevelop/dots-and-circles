@@ -12,7 +12,7 @@ InitAtlasTestMode(game_state* GameState) {
 }
 
 static inline void
-DrawString(mmcmd_commands* RenderCommands, 
+DrawString(mailbox* RenderCommands, 
            game_assets* Assets,
            v3f Position, f32 Size, const char* String) 
 {
@@ -55,7 +55,7 @@ DrawString(mmcmd_commands* RenderCommands,
 
 static inline void
 UpdateAtlasTestMode(game_state* GameState, 
-       mmcmd_commands* RenderCommands, 
+       mailbox* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {

@@ -14,7 +14,7 @@ InitMenuMode(game_state* GameState) {
 
 static inline void
 UpdateMenuMode(game_state* GameState, 
-       mmcmd_commands* RenderCommands, 
+       mailbox* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {

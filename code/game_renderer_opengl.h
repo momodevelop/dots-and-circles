@@ -275,7 +275,7 @@ DrawInstances(renderer_opengl* Renderer, GLint Texture, u32 InstancesToDraw, u32
 
 
 static inline void
-Render(renderer_opengl* Renderer, mmcmd_commands Commands) 
+Render(renderer_opengl* Renderer, mailbox Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -286,17 +286,17 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     for (u32 i = 0; i < Commands.EntryCount; ++i) {
-        auto Entry = mmcmd_GetEntry(Commands, i);
+        auto Entry = GetEntry(Commands, i);
         
         switch(Entry.Type) {
             case render_command_set_design_resolution::TypeId: {
                 using data_t = render_command_set_design_resolution;
-                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 SetRenderResolution(Renderer, Data->Width, Data->Height);
             } break;
             case render_command_set_basis::TypeId: {
                 using data_t = render_command_set_basis;
-                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 DrawInstances(Renderer, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
                 LastDrawnInstanceIndex += InstancesToDrawCount;
@@ -309,7 +309,7 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
             } break;
             case render_command_link_texture::TypeId: {
                 using data_t = render_command_link_texture;
-                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 if (Renderer->GameToRendererTextureTable[Data->TextureHandle] != 0) {
                     // TODO(Momo): unload and reload texture
@@ -326,12 +326,12 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
             } break;
             case render_command_clear_color::TypeId: {
                 using data_t = render_command_clear_color;
-                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 glClearColor(Data->Colors.R, Data->Colors.G, Data->Colors.B, Data->Colors.A);
             } break;
             case render_command_draw_quad::TypeId: {
                 using data_t = render_command_draw_quad;
-                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
                 GLuint RendererTextureHandle = Renderer->BlankTexture;
@@ -368,7 +368,7 @@ Render(renderer_opengl* Renderer, mmcmd_commands Commands)
             } break;
             case render_command_draw_textured_quad::TypeId: {
                 using data_t = render_command_draw_textured_quad;
-                auto* Data = (data_t*)mmcmd_GetDataFromEntry(Commands, Entry);
+                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, add texture to renderer and register it into the lookup table
                 u32 GameBitmapHandle = Data->TextureHandle;

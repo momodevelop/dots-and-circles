@@ -38,7 +38,7 @@ IF "%Opt%"=="game" (
 )
 
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
-cl %CommonCompilerFlags%  %CodeDir%\sdl_platform.cpp -link %CommonLinkerFlags%
+cl %CommonCompilerFlags%  %CodeDir%\platform_sdl.cpp -link %CommonLinkerFlags%
 
 
 :End

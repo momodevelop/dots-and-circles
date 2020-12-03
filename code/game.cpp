@@ -54,7 +54,7 @@ CmdJump(void * Context, string Arguments) {
 extern "C" void
 GameUpdate(game_memory* GameMemory,  
            platform_api* Platform, 
-           mmcmd_commands* RenderCommands, 
+           mailbox* RenderCommands, 
            game_input* Input, 
            f32 DeltaTime,
            u64 TicksElapsed)

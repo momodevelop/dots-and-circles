@@ -19,7 +19,7 @@ static constexpr u64 TotalMemorySize = GameMainMemorySize + RenderCommandsMemory
 #endif 
 
 // NOTE(Momo): Forward declarations 
-struct mmcmd_commands;
+struct mailbox;
 struct game_memory;
 struct platform_api;
 struct game_debug_keyboard;
@@ -28,7 +28,7 @@ struct game_input;
 // NOTE(Momo): Function typedefs and helpers
 typedef void game_update(game_memory* GameMemory,  
                          platform_api* Platform, 
-                         mmcmd_commands* RenderCommands, 
+                         mailbox* RenderCommands, 
                          game_input* Input,
                          f32 DeltaTime,
                          u64 TicksElapsed);

@@ -24,7 +24,7 @@ struct splash_image_entity {
 static inline void
 Update(splash_image_entity* Entity, 
        game_assets* Assets,
-       mmcmd_commands* RenderCommands, 
+       mailbox* RenderCommands, 
        f32 DeltaTime) {
     Entity->CountdownTimer += DeltaTime;
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
@@ -59,7 +59,7 @@ struct splash_blackout_entity {
 static inline void
 Update(splash_blackout_entity* Entity, 
        game_assets* Assets, 
-       mmcmd_commands* RenderCommands,
+       mailbox* RenderCommands,
        f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
@@ -128,7 +128,7 @@ InitSplashMode(game_state* GameState) {
 
 static inline void
 UpdateSplashMode(game_state* GameState, 
-       mmcmd_commands* RenderCommands,
+       mailbox* RenderCommands,
        game_input* Input,
        f32 DeltaTime)
 {

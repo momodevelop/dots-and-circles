@@ -7,7 +7,7 @@
 #include "game_assets.h"
 
 static inline void
-DrawText(mmcmd_commands* RenderCommands, 
+DrawText(mailbox* RenderCommands, 
            game_assets* Assets,
            v3f Position,
            v4f Color, 

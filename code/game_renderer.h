@@ -17,7 +17,7 @@ Ground rules about this renderer.
 #ifndef GAME_RENDERER_H
 #define GAME_RENDERER_H
 
-#include "mm_commands.h"
+#include "mm_mailbox.h"
 #include "mm_maths.h"
 
 
@@ -103,19 +103,19 @@ GetRenderRegion(u32 WindowWidth,
 
 
 static inline void
-PushCommandSetBasis(mmcmd_commands* Commands, m44f Basis) {
+PushCommandSetBasis(mailbox* Commands, m44f Basis) {
     using data_t = render_command_set_basis;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     Data->Basis = Basis;
 }
 
 static inline void
-PushCommandOrthoCamera(mmcmd_commands* Commands, 
+PushCommandOrthoCamera(mailbox* Commands, 
                          v3f Position,
                          rect3f Frustum)   
 {
     using data_t = render_command_set_basis;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     
     auto P  = M44F_Orthographic(-1.f, 1.f,
                                  -1.f, 1.f,
@@ -133,16 +133,16 @@ PushCommandOrthoCamera(mmcmd_commands* Commands,
 }
 
 static inline void
-PushCommandClearColor(mmcmd_commands* Commands, v4f Colors) {
+PushCommandClearColor(mailbox* Commands, v4f Colors) {
     using data_t = render_command_clear_color;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
 }
 
 
 
 static inline void
-PushCommandDrawTexturedQuad(mmcmd_commands* Commands, 
+PushCommandDrawTexturedQuad(mailbox* Commands, 
                             v4f Colors, 
                             m44f Transform, 
                             u32 TextureHandle,
@@ -155,7 +155,7 @@ PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
                             }) 
 {
     using data_t = render_command_draw_textured_quad;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     
     Data->Colors = Colors;
     Data->Transform = Transform;
@@ -164,14 +164,14 @@ PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
 }
 
 static inline void
-PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
+PushCommandDrawTexturedQuad(mailbox* Commands,
                             v4f Colors, 
                             m44f Transform, 
                             u32 TextureHandle,
                             rect2f TextureCoords) 
 {
     using data_t = render_command_draw_textured_quad;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     
     Data->Colors = Colors;
     Data->Transform = Transform;
@@ -181,25 +181,25 @@ PushCommandDrawTexturedQuad(mmcmd_commands* Commands,
 
 
 static inline void
-PushCommandDrawQuad(mmcmd_commands* Commands, 
+PushCommandDrawQuad(mailbox* Commands, 
                     v4f Colors, 
                     m44f Transform) 
 {
     using data_t = render_command_draw_quad;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
     Data->Transform = Transform;
 }
 
 
 static inline void 
-PushCommandLinkTexture(mmcmd_commands* Commands, 
+PushCommandLinkTexture(mailbox* Commands, 
                        u32 Width,
                        u32 Height,
                        void* Pixels,
                        u32 TextureHandle) {
     using data_t = render_command_link_texture;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     Data->Width = Width;
     Data->Height = Height;
     Data->Pixels = Pixels;
@@ -208,7 +208,7 @@ PushCommandLinkTexture(mmcmd_commands* Commands,
 
 
 static inline void 
-PushCommandDrawLine(mmcmd_commands* Payload, 
+PushCommandDrawLine(mailbox* Payload, 
                     line2f Line, 
                     f32 Thickness = 2.f,
                     v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
@@ -235,7 +235,7 @@ PushCommandDrawLine(mmcmd_commands* Payload,
 }
 
 static inline void 
-PushCommandDrawLineRect(mmcmd_commands* Commands, 
+PushCommandDrawLineRect(mailbox* Commands, 
                         rect2f Rect,
                         f32 Thickness = 1.f,
                         v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
@@ -277,10 +277,10 @@ PushCommandDrawLineRect(mmcmd_commands* Commands,
 }
 
 static inline void 
-PushCommandSetDesignResolution(mmcmd_commands* Commands, u32 Width, u32 Height)  
+PushCommandSetDesignResolution(mailbox* Commands, u32 Width, u32 Height)  
 {
     using data_t = render_command_set_design_resolution;
-    auto* Data = mmcmd_Push<data_t>(Commands);
+    auto* Data = Push<data_t>(Commands);
     Data->Width = Width;
     Data->Height = Height;
 }

@@ -6,7 +6,7 @@
 #include "mm_array.h"
 #include "mm_maths.h"
 #include "mm_arena.h"
-#include "mm_commands.h"
+#include "mm_mailbox.h"
 #include "mm_string.h"
 
 #include "platform.h"
@@ -106,7 +106,7 @@ CheckAssetSignature(void* Memory, const char* Signature) {
 static inline game_assets
 CreateAssets(arena* Arena, 
      platform_api* Platform,
-     mmcmd_commands* RenderCommands,
+     mailbox* RenderCommands,
      string Filename)
 {
     game_assets Assets = {};

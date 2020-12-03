@@ -387,7 +387,7 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Render commands/queue
     void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
-    mmcmd_commands RenderCommands = mmcmd_Commands(RenderCommandsMemory, RenderCommandsMemorySize);
+    mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
     game_input Input = {};
@@ -587,7 +587,7 @@ int main(int argc, char* argv[]) {
         }
        
         Render(&RendererOpenGL, RenderCommands); 
-        mmcmd_Clear(&RenderCommands);
+        Clear(&RenderCommands);
         
         // NOTE(Momo): Timer update
         SDL_GL_SwapWindow(window);
