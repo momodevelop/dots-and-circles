@@ -20,6 +20,8 @@ Ground rules about this renderer.
 #include "mm_mailbox.h"
 #include "mm_maths.h"
 
+// "Inherited" by all renderers
+struct renderer {};
 
 struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;

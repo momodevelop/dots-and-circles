@@ -16,7 +16,7 @@ IF "%Opt%"=="assets" (
 	GOTO End
 )
 
-call devenv sdl_platform.exe
+call devenv platform_sdl.exe
 
 :End 
 

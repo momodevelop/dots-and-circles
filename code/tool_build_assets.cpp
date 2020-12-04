@@ -18,11 +18,14 @@ struct loaded_font {
     void* Data;
 };
 
-static inline loaded_font
+static inline option<loaded_font>
 AllocateFontFromFile(const char* Filename) {
 	stbtt_fontinfo Font;
     FILE* FontFile = nullptr; 
 	fopen_s(&FontFile, Filename, "rb");
+    if (FontFile == nullptr) {
+        return None<loaded_font>();
+    }
     Defer { fclose(FontFile); };
 	    
     fseek(FontFile, 0, SEEK_END);
@@ -33,7 +36,9 @@ AllocateFontFromFile(const char* Filename) {
     fread(Buffer, Size, 1, FontFile);
     stbtt_InitFont(&Font, (u8*)Buffer, 0);
     
-    return { Font, Buffer };
+    loaded_font Ret = { Font, Buffer };
+
+    return Some(Ret);
 }
 
 static inline void
@@ -163,10 +168,16 @@ GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
 }
 
 int main() {
-    loaded_font LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
-    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f);
+    printf("tool_build_assets start!\n");
+
+    option<loaded_font> LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
+    if (!LoadedFont) {
+        printf("Failed to load font\n");
+        return 1; 
+    }
+    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Item.Info, 1.f);
     
-    Defer { FreeFont(LoadedFont); };
+    Defer { FreeFont(LoadedFont.Item); };
     
     atlas_context_image AtlasImageContexts[] = {
         { AtlasContextType_Image, "assets/ryoji.png",  AtlasRect_Ryoji, Bitmap_AtlasDefault },
@@ -185,16 +196,15 @@ int main() {
         { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
+        //{ AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
+        //{ AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
-    
+
     constexpr usize TotalRects = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
     rp_rect PackedRects[TotalRects];
-    
-    usize PackedRectCount = 0;
+       usize PackedRectCount = 0;
     {
         for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
             Init(PackedRects + PackedRectCount++, AtlasImageContexts + i);
@@ -202,9 +212,9 @@ int main() {
         for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
             auto* Font = AtlasFontContexts + i;
             Font->Type = AtlasContextType_Font;
-            Font->LoadedFont = LoadedFont;
+            Font->LoadedFont = LoadedFont.Item;
             Font->Codepoint = Codepoint_Start + i;
-            Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
+            Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Item.Info, 72.f);
             Font->FontId = Font_Default;
             Font->BitmapId = Bitmap_AtlasDefault;
             Init(PackedRects + PackedRectCount++, Font);
@@ -221,15 +231,12 @@ int main() {
         rp_context RectPackContext = rp_CreateRectPacker(AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
         if (!rp_Pack(&RectPackContext, PackedRects, PackedRectCount, MmrpSort_Height)) {
             printf("Failed to generate bitmap\n");
-            Assert(false);
             return 1;
         }
     }
    
     // NOTE(Momo): Generate atlas from rects
     u8* AtlasBitmap = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
-    Defer { free(AtlasBitmap); };
-    
 #if 1
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasBitmap, AtlasWidth*4);
     printf("Written test atlas: test.png\n");
@@ -258,10 +265,10 @@ int main() {
                     
                     i32 Advance;
                     i32 LeftSideBearing; 
-                    stbtt_GetCodepointHMetrics(&LoadedFont.Info, Font->Codepoint, &Advance, &LeftSideBearing);
+                    stbtt_GetCodepointHMetrics(&LoadedFont.Item.Info, Font->Codepoint, &Advance, &LeftSideBearing);
                     
                     rect2i Box;
-                    stbtt_GetCodepointBox(&LoadedFont.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
+                    stbtt_GetCodepointBox(&LoadedFont.Item.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
                     
                     WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
@@ -274,10 +281,10 @@ int main() {
         }
         
         i32 Ascent, Descent, LineGap;
-        stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
+        stbtt_GetFontVMetrics(&LoadedFont.Item.Info, &Ascent, &Descent, &LineGap); 
         
         rect2i BoundingBox = {}; 
-        stbtt_GetFontBoundingBox(&LoadedFont.Info, 
+        stbtt_GetFontBoundingBox(&LoadedFont.Item.Info, 
             &BoundingBox.Min.X,
             &BoundingBox.Min.Y,
             &BoundingBox.Max.X,
@@ -292,7 +299,7 @@ int main() {
         
         for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
             for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {
-                i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
+                i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Item.Info, (i32)i, (i32)j);
                 WriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }
@@ -302,7 +309,7 @@ int main() {
     }
     End(AssetBuilder);
     
-    printf("Done!\n");
+    printf("tool_build_assets done!\n");
     
     return 0;
     

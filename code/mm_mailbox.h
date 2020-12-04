@@ -44,16 +44,16 @@ Mailbox(void* Memory, u32 MemorySize) {
 
 
 // NOTE(Momo): Accessors and Iterators
-static inline mailbox_entry_header 
-GetEntry(mailbox Mailbox, usize Index) {
-    Assert(Index < Mailbox.EntryCount);
-    return *(mailbox_entry_header*)(Mailbox.EntryMemoryStart - Index * sizeof(mailbox_entry_header));
+static inline mailbox_entry_header*
+GetEntry(mailbox* Mailbox, usize Index) {
+    Assert(Index < Mailbox->EntryCount);
+    return (mailbox_entry_header*)(Mailbox->EntryMemoryStart - Index * sizeof(mailbox_entry_header));
 }
 
 
 static inline void*
-GetDataFromEntry(mailbox Mailbox, mailbox_entry_header Entry) {
-    return (Mailbox.Memory + Entry.OffsetToData);
+GetDataFromEntry(mailbox* Mailbox, mailbox_entry_header* Entry) {
+    return (Mailbox->Memory + Entry->OffsetToData);
 }
 
 

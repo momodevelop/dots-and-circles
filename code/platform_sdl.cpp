@@ -9,6 +9,8 @@
 #include "thirdparty/glad/glad.c"
 
 #include "platform.h"
+#include "platform_sdl_renderer.h"
+#include "platform_sdl_renderer_opengl.h"
 #include "game_renderer_opengl.h"
 #include "game_input.h"
 
@@ -283,8 +285,8 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = SDL_CreateWindow("Vigil", 
                                           SDL_WINDOWPOS_UNDEFINED, 
                                           SDL_WINDOWPOS_UNDEFINED, 
-                                          1600, 
-                                          900, 
+                                          (u32)DesignWidth, 
+                                          (u32)DesignHeight, 
                                           SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == nullptr) {
         SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -339,13 +341,18 @@ int main(int argc, char* argv[]) {
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
 #endif
     
-    // NOTE(Momo): Renderer Init
-    i32 windowWidth, windowHeight;
-    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 
-    renderer_opengl RendererOpenGL = {};
-    Init(&RendererOpenGL, windowWidth, windowHeight, 1000000);
-    
+    // TODO: for now we'll just do OpenGL. We might expose this to DLL one day.
+    renderer_api RendererApi = {};
+    RendererApi.Load = SdlOpenglLoad;
+    RendererApi.Unload = SdlOpenglUnload;
+    RendererApi.Resize = SdlOpenglResize;
+    RendererApi.Render = SdlOpenglRender;
+
+    renderer* Renderer = RendererApi.Load(window);
+    Defer { RendererApi.Unload(Renderer); };
+
+       
     void* ProgramMemory = calloc(TotalMemorySize, sizeof(u8));
     if (ProgramMemory == nullptr){
         SDL_Log("Cannot allocate memory");
@@ -421,7 +428,7 @@ int main(int argc, char* argv[]) {
                 case SDL_WINDOWEVENT: {
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                         SDL_Log("Resizing: %d %d", e.window.data1, e.window.data2);
-                        SetWindowResolution(&RendererOpenGL, e.window.data1, e.window.data2);
+                        RendererApi.Resize(Renderer, e.window.data1, e.window.data2);
                         
                     }
                 } break;
@@ -586,9 +593,8 @@ int main(int argc, char* argv[]) {
             GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetDeltaTime, ActualTicksElapsed); 
         }
        
-        Render(&RendererOpenGL, RenderCommands); 
-        Clear(&RenderCommands);
-        
+        RendererApi.Render(Renderer, &RenderCommands);
+                
         // NOTE(Momo): Timer update
         SDL_GL_SwapWindow(window);
 
@@ -597,7 +603,7 @@ int main(int argc, char* argv[]) {
             SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
         }
         
-//        SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
+        SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
     }
     
     

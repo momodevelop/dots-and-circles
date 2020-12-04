@@ -58,6 +58,8 @@ enum {
 };
 
 struct renderer_opengl {
+    renderer Header;
+
     GLuint Buffers[renderer_vbo_Max]; 
     GLuint Shader;
     
@@ -73,6 +75,7 @@ struct renderer_opengl {
     GLuint GameToRendererTextureTable[0xFF] = {};
     GLuint WindowWidth, WindowHeight;
     GLuint RenderWidth, RenderHeight;
+
 };
 
 static inline void 
@@ -99,21 +102,17 @@ static inline void AlignViewport(renderer_opengl* Renderer) {
 
 
 static inline void 
-SetRenderResolution(renderer_opengl* Renderer, GLuint RenderWidth, GLuint RenderHeight){
-    Renderer->RenderWidth = RenderWidth;
-    Renderer->RenderHeight = RenderHeight;
-    AlignViewport(Renderer);
-}
-
-static inline void 
-SetWindowResolution(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight) {
+OpenglResize(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight) {
     Renderer->WindowWidth = WindowWidth;
     Renderer->WindowHeight = WindowHeight;
     AlignViewport(Renderer);
 }
 
 static inline bool
-Init(renderer_opengl* Renderer, GLuint WindowWidth, GLuint WindowHeight, GLsizei MaxEntities) 
+Init(renderer_opengl* Renderer, 
+        GLuint WindowWidth, 
+        GLuint WindowHeight, 
+        GLsizei MaxEntities) 
 {
     Renderer->MaxEntities = MaxEntities;
     Renderer->RenderWidth = WindowWidth;
@@ -273,9 +272,8 @@ DrawInstances(renderer_opengl* Renderer, GLint Texture, u32 InstancesToDraw, u32
     }
 }
 
-
 static inline void
-Render(renderer_opengl* Renderer, mailbox Commands) 
+OpenglRender(renderer_opengl* Renderer, mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -285,14 +283,16 @@ Render(renderer_opengl* Renderer, mailbox Commands)
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    for (u32 i = 0; i < Commands.EntryCount; ++i) {
+    for (u32 i = 0; i < Commands->EntryCount; ++i) {
         auto Entry = GetEntry(Commands, i);
         
-        switch(Entry.Type) {
+        switch(Entry->Type) {
             case render_command_set_design_resolution::TypeId: {
                 using data_t = render_command_set_design_resolution;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
-                SetRenderResolution(Renderer, Data->Width, Data->Height);
+                Renderer->RenderWidth = Data->Width;
+                Renderer->RenderHeight = Data->Height;
+                AlignViewport(Renderer);
             } break;
             case render_command_set_basis::TypeId: {
                 using data_t = render_command_set_basis;

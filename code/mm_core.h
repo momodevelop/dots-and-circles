@@ -55,6 +55,33 @@ union range {
     };
 };
 
+template<typename T>
+struct option {
+    T Item;
+    b32 IsNone;
+
+    operator bool() {
+        return !IsNone;
+    }
+};
+
+template<typename T>
+static inline option<T>
+Some(T Item) {
+    option<T> Ret;
+    Ret.Item = Item;
+    Ret.IsNone = false;
+    return Ret;
+}
+
+template<typename T>
+static inline option<T>
+None() {
+    option<T> Ret;
+    Ret.IsNone = true;
+    return Ret;
+}
+
 
 // C-string
 static inline u32

@@ -16,7 +16,7 @@ IF "%Opt%"=="atlas" (
 	GOTO End
 ) 
 
-call sdl_platform.exe
+call platform_sdl.exe
 
 :End
 
