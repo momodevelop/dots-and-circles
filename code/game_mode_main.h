@@ -161,7 +161,7 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
 	    Bullet.Direction = Normalize(Direction);
 	
     Bullet.MoodType = Mood;
-	Bullet.ImageRect = Assets->AtlasRects + ((Bullet.MoodType == MoodType_Dot) ? AtlasRect_PlayerDot : AtlasRect_PlayerCircle);
+	Bullet.ImageRect = Assets->AtlasRects + ((Bullet.MoodType == MoodType_Dot) ? AtlasRect_BulletDot : AtlasRect_BulletCircle);
 		
     Push(&Mode->Bullets, Bullet);
 }
@@ -210,8 +210,8 @@ UpdateMainMode(game_state* GameState,
     game_mode_main* Mode = GameState->MainMode;
     PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushCommandOrthoCamera(RenderCommands, 
-            V3F(), 
-            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+            V3f(), 
+            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
     );
     
     auto* Assets = &GameState->Assets;
@@ -423,12 +423,12 @@ UpdateMainMode(game_state* GameState,
     
     // Player Rendering
     {
-        m44f S = M44F_Scale(V3F(Player->Size));
+        m44f S = M44fScale(V3f(Player->Size));
         
-		v3f RenderPos = V3F(Player->Position);
+		v3f RenderPos = V3f(Player->Position);
         RenderPos.Z = ZLayPlayer;
 
-        m44f T = M44F_Translation(RenderPos);
+        m44f T = M44fTranslation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, 1.f }, 
                                     T*S, 
@@ -436,7 +436,7 @@ UpdateMainMode(game_state* GameState,
                                     GetAtlasUV(Assets, Player->CircleImageRect));
         
 		RenderPos.Z += 0.1f;
-        T = M44F_Translation(RenderPos);
+        T = M44fTranslation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     {1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                                     T*S, 
@@ -451,8 +451,8 @@ UpdateMainMode(game_state* GameState,
     {
         bullet* Bullet = Mode->Bullets + I;
 
-		m44f S = M44F_Scale(V3F(Bullet->Size));
-		v3f RenderPos = V3F(Bullet->Position);
+		m44f S = M44fScale(V3f(Bullet->Size));
+		v3f RenderPos = V3f(Bullet->Position);
         switch(Bullet->MoodType) {
             case MoodType_Dot:
                 RenderPos.Z = ZLayDotBullet + DotLayerOffset;
@@ -465,7 +465,7 @@ UpdateMainMode(game_state* GameState,
             default: 
                 Assert(false);
         }
-        m44f T = M44F_Translation(RenderPos);
+        m44f T = M44fTranslation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
@@ -480,10 +480,10 @@ UpdateMainMode(game_state* GameState,
     for(usize I = 0; I < Mode->Enemies.Length; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
-		m44f S = M44F_Scale(V3F(Enemy->Size));
-		v3f RenderPos = V3F(Enemy->Position);
+		m44f S = M44fScale(V3f(Enemy->Size));
+		v3f RenderPos = V3f(Enemy->Position);
 		RenderPos.Z = ZLayEnemy; 
-		m44f T = M44F_Translation(RenderPos);
+		m44f T = M44fTranslation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
 									{ 1.f, 1.f, 1.f, 1.f },
 									T*S,

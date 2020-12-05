@@ -293,22 +293,22 @@ Pow(f32 b, f32 e) {
 
 // NOTE(Momo): v2f functions
 static inline v2f
-V2F(f32 X, f32 Y) {
+V2f(f32 X, f32 Y) {
     return { X, Y };
 }
 
 static inline v2f 
-V2F(v3f V) {
+V2f(v3f V) {
     return { V.X, V.Y };
 }
 
 static inline v2f
-V2F(v2u V) {
+V2f(v2u V) {
     return { (f32)V.X, (f32)V.Y };
 }
 
 static inline v2f
-V2F(v2i V) {
+V2f(v2i V) {
     return { (f32)V.X, (f32)V.Y };
 }
 
@@ -509,12 +509,12 @@ Project(v2f from, v2f to) {
 
 // NOTE(Momo): v3f functions
 static inline v3f
-V3F(f32 X = 0.f, f32 Y = 0.f, f32 Z = 0.f) {
+V3f(f32 X = 0.f, f32 Y = 0.f, f32 Z = 0.f) {
     return { X, Y, Z }; 
 }
 
 static inline v3f 
-V3F(v2f V) {
+V3f(v2f V) {
     return { V.X, V.Y, 0.f };
 }
 
@@ -768,7 +768,7 @@ Transpose(m44f M) {
 
 
 static inline m44f 
-M44F_Translation(f32 x, f32 y, f32 z) {
+M44fTranslation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, x,
         0.f, 1.f, 0.f, y,
@@ -778,18 +778,18 @@ M44F_Translation(f32 x, f32 y, f32 z) {
 }
 
 static inline m44f 
-M44F_Translation(v2f Vec) {
-    return M44F_Translation(Vec.X, Vec.Y, 0);
+M44fTranslation(v2f Vec) {
+    return M44fTranslation(Vec.X, Vec.Y, 0);
 }
 
 static inline m44f 
-M44F_Translation(v3f Vec) {
-    return M44F_Translation(Vec.X, Vec.Y, Vec.Z);
+M44fTranslation(v3f Vec) {
+    return M44fTranslation(Vec.X, Vec.Y, Vec.Z);
 }
 
 
 static inline m44f 
-M44F_RotationX(f32 rad) {
+M44fRotationX(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -801,7 +801,7 @@ M44F_RotationX(f32 rad) {
 }
 
 static inline m44f 
-M44F_RotationY(f32 rad) {
+M44fRotationY(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -815,7 +815,7 @@ M44F_RotationY(f32 rad) {
 
 
 static inline m44f 
-M44F_RotationZ(f32 rad) {
+M44fRotationZ(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -827,7 +827,7 @@ M44F_RotationZ(f32 rad) {
 }
 
 static inline m44f
-M44F_Scale(f32 x, f32 y, f32 z) {
+M44fScale(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f,   0.f,
         0.f, y, 0.f,   0.f,
@@ -837,18 +837,18 @@ M44F_Scale(f32 x, f32 y, f32 z) {
 }
 
 static inline m44f
-M44F_Scale(v2f Vec) {
-    return M44F_Scale(Vec.X, Vec.Y, 0.f);
+M44fScale(v2f Vec) {
+    return M44fScale(Vec.X, Vec.Y, 0.f);
 }
 
 static inline m44f
-M44F_Scale(v3f Vec) {
-    return M44F_Scale(Vec.X, Vec.Y, Vec.Z);
+M44fScale(v3f Vec) {
+    return M44fScale(Vec.X, Vec.Y, Vec.Z);
 }
 
 
 static inline m44f 
-M44F_Orthographic(f32 NdcLeft, f32 NdcRight,
+M44fOrthographic(f32 NdcLeft, f32 NdcRight,
                    f32 NdcBottom, f32 NdcTop,
                    f32 NdcNear, f32 NdcFar,
                    f32 Left, f32 Right, 
@@ -870,7 +870,7 @@ M44F_Orthographic(f32 NdcLeft, f32 NdcRight,
 
 
 static inline m44f 
-M44F_Identity() {
+M44fIdentity() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -880,56 +880,56 @@ M44F_Identity() {
 }
 
 static inline line2f
-Line2F(line3f Line) {
+Line2f(line3f Line) {
     return {
-        V2F(Line.Min),
-        V2F(Line.Max),
+        V2f(Line.Min),
+        V2f(Line.Max),
     };
 }
 
 static inline line3f
-Line3F(line2f Line) {
+Line3f(line2f Line) {
     return {
-        V3F(Line.Min),
-        V3F(Line.Max),
+        V3f(Line.Min),
+        V3f(Line.Max),
     };
 }
 
 
 static inline rect2f
-Rect2F(rect3f Rect) {
+Rect2f(rect3f Rect) {
     return {
-        V2F(Rect.Min),
-        V2F(Rect.Max),
+        V2f(Rect.Min),
+        V2f(Rect.Max),
     };
 }
 
 static inline rect2f 
-Rect2F(rect2u Rect) {
+Rect2f(rect2u Rect) {
     return {
-        V2F(Rect.Min),
-        V2F(Rect.Max),
+        V2f(Rect.Min),
+        V2f(Rect.Max),
     };
 }
 
 static inline rect2f 
-Rect2F(rect2i Rect) {
+Rect2f(rect2i Rect) {
     return {
-        V2F(Rect.Min),
-        V2F(Rect.Max),
+        V2f(Rect.Min),
+        V2f(Rect.Max),
     };
 }
 
 static inline rect3f
-Rect3F(rect2f Rect) {
+Rect3f(rect2f Rect) {
     return {
-        V3F(Rect.Min),
-        V3F(Rect.Max),
+        V3f(Rect.Min),
+        V3f(Rect.Max),
     };
 }
 
 static inline rect3f
-Rect3F(v3f Dimensions, v3f Anchor) {
+Rect3f(v3f Dimensions, v3f Anchor) {
     rect3f Ret = {};
     Ret.Min.X = Lerp(0, -Dimensions.W, Anchor.X);
     Ret.Max.X = Lerp(Dimensions.W, 0, Anchor.X);
@@ -967,7 +967,7 @@ RatioRect(rect2f A, rect2f B) {
 
 static inline rect2f 
 RatioRect(rect2u A, rect2u B) {
-    return RatioRect(Rect2F(A), Rect2F(B));
+    return RatioRect(Rect2f(A), Rect2f(B));
 }
 
 
@@ -977,7 +977,7 @@ struct ray2f {
 };
 
 static inline ray2f
-Ray2F(line2f Line) {
+Ray2f(line2f Line) {
     ray2f Ret = {};
     Ret.Origin = Line.Min;
     Ret.Direction = Line.Max - Line.Min;

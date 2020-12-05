@@ -21,8 +21,8 @@ UpdateMenuMode(game_state* GameState,
     game_mode_menu* Mode = GameState->MenuMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandOrthoCamera(RenderCommands, 
-            V3F(), 
-            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+            V3f(), 
+            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
     );
 #if 0
     game_assets* Assets = GameState->Assets;
@@ -40,7 +40,7 @@ UpdateMenuMode(game_state* GameState,
             
             
             u32 TextureHandle = GetBitmapId(Assets, Font);
-            m44f Transform = TranslationMtxOffsetX, 1.f, 0.f) *M44F_Scale(Size * Aspect, Size, 1.f); 
+            m44f Transform = TranslationMtxOffsetX, 1.f, 0.f) *M44fScale(Size * Aspect, Size, 1.f); 
             
             OffsetX += Size * Aspect;
             PushCommandDrawTexturedQuad(RenderCommands, 

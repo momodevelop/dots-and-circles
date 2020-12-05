@@ -37,8 +37,8 @@ Update(splash_image_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44F_Translation(Entity->Position);
-    m44f S = M44F_Scale(Entity->Scale);
+    m44f T = M44fTranslation(Entity->Position);
+    m44f S = M44fScale(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S,  Entity->BitmapHandle);
@@ -70,8 +70,8 @@ Update(splash_blackout_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44F_Translation(Entity->Position);
-    m44f S = M44F_Scale(Entity->Scale);
+    m44f T = M44fTranslation(Entity->Position);
+    m44f S = M44fScale(Entity->Scale);
     
     // TODO(Momo): This part should be done by renderer?
     PushCommandDrawQuad(RenderCommands, Entity->Colors, T*S);
@@ -136,8 +136,8 @@ UpdateSplashMode(game_state* GameState,
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
 
     PushCommandOrthoCamera(RenderCommands, 
-            V3F(), 
-            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+            V3f(), 
+            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
     );
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {

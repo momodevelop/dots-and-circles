@@ -155,15 +155,15 @@ Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
     f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + Abs(Font->Descent) * FontSize; 
     f32 PaddingWidth = Console->Dimensions.W * 0.005f;
     {
-        m44f ScaleMatrix = M44F_Scale(Console->Dimensions);
-        m44f PositionMatrix = M44F_Translation(Console->Position);
+        m44f ScaleMatrix = M44fScale(Console->Dimensions);
+        m44f PositionMatrix = M44fTranslation(Console->Position);
         m44f InfoBgTransform = PositionMatrix * ScaleMatrix;
         PushCommandDrawQuad(RenderCommands, Console->InfoBgColor, InfoBgTransform);
     }
 
     {
-        m44f ScaleMatrix = M44F_Scale(V2F(Console->Dimensions.W, LineHeight));
-        m44f PositionMatrix = M44F_Translation(
+        m44f ScaleMatrix = M44fScale(V2f(Console->Dimensions.W, LineHeight));
+        m44f PositionMatrix = M44fTranslation(
                 Console->Position.X, 
                 Bottom + LineHeight * 0.5f,
                 Console->Position.Z + 0.01f

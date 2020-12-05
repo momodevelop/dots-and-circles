@@ -23,12 +23,12 @@ DrawText(mailbox* RenderCommands,
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f A = M44F_Translation(0.5f, 0.5f, 0.f); 
-        m44f S = M44F_Scale(Width(Box) * Size, 
+        m44f A = M44fTranslation(0.5f, 0.5f, 0.f); 
+        m44f S = M44fScale(Width(Box) * Size, 
                              Height(Box) * Size, 
                              1.f);
         
-        m44f T = M44F_Translation(CurPosition.X + Box.Min.X * Size, 
+        m44f T = M44fTranslation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         

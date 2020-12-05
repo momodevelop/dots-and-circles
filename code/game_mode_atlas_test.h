@@ -28,12 +28,12 @@ DrawString(mailbox* RenderCommands,
         auto Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f A = M44F_Translation(0.5f, 0.5f, 0.f); 
-        m44f S = M44F_Scale(Width(Box) * Size, 
+        m44f A = M44fTranslation(0.5f, 0.5f, 0.f); 
+        m44f S = M44fScale(Width(Box) * Size, 
                              Height(Box) * Size, 
                              1.f);
         
-        m44f T = M44F_Translation(CurPosition.X + Box.Min.X * Size, 
+        m44f T = M44fTranslation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
         
@@ -63,15 +63,15 @@ UpdateAtlasTestMode(game_state* GameState,
 
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandOrthoCamera(RenderCommands, 
-            V3F(), 
-            Rect3F( V3F(DesignWidth, DesignHeight, DesignDepth), V3F(0.5f, 0.5f, 0.5f))
+            V3f(), 
+            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
     );
     
 #if 1
     // NOTE(Momo): Image Test
     {
         v4f Color = { 1.f, 1.f, 1.f, 1.f };
-        m44f Transform = M44F_Scale(5.f, 5.f, 1.f);
+        m44f Transform = M44fScale(5.f, 5.f, 1.f);
         auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_Ryoji;
         
         PushCommandDrawTexturedQuad(RenderCommands, 

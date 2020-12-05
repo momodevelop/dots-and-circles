@@ -3,7 +3,7 @@
 #include "mm_rect_packer.h"
 
 static inline rect2u
-Rect2U(rp_rect Rect) {
+Rect2u(rp_rect Rect) {
 	return { 
         Rect.X, 
         Rect.Y, 
@@ -196,8 +196,8 @@ int main() {
         { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Bitmap_AtlasDefault },
-        //{ AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
-        //{ AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
+        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
 
@@ -256,7 +256,7 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Rect.UserData;
-                    rect2u AtlasRect = Rect2U(Rect);
+                    rect2u AtlasRect = Rect2u(Rect);
                     WriteAtlasRect(AssetBuilder, Image->Id, Image->BitmapId, AtlasRect);
                     
                 } break;
@@ -272,8 +272,8 @@ int main() {
                     
                     WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
-                                   Rect2U(Rect), 
-                                   Rect2F(Box) * FontPixelScale);
+                                   Rect2u(Rect), 
+                                   Rect2f(Box) * FontPixelScale);
                     
                 } break;
                 

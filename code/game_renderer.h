@@ -119,7 +119,7 @@ PushCommandOrthoCamera(mailbox* Commands,
     using data_t = render_command_set_basis;
     auto* Data = Push<data_t>(Commands);
     
-    auto P  = M44F_Orthographic(-1.f, 1.f,
+    auto P  = M44fOrthographic(-1.f, 1.f,
                                  -1.f, 1.f,
                                  -1.f, 1.f,
                                  Frustum.Min.X,  
@@ -130,7 +130,7 @@ PushCommandOrthoCamera(mailbox* Commands,
                                  Frustum.Max.Z,
                                  true);
     
-    m44f V = M44F_Translation(-Position.X, -Position.Y, -Position.Z);
+    m44f V = M44fTranslation(-Position.X, -Position.Y, -Position.Z);
     Data->Basis = P*V;
 }
 
@@ -227,9 +227,9 @@ PushCommandDrawLine(mailbox* Payload,
     f32 Angle = AngleBetween(LineVector, { 1.f, 0.f });
     
     
-    m44f T = M44F_Translation(LineMiddle.X, LineMiddle.Y, 100.f);
-    m44f R = M44F_RotationZ(Angle);
-    m44f S = M44F_Scale(LineLength, Thickness, 1.f) ;
+    m44f T = M44fTranslation(LineMiddle.X, LineMiddle.Y, 100.f);
+    m44f R = M44fRotationZ(Angle);
+    m44f S = M44fScale(LineLength, Thickness, 1.f) ;
     
     m44f Transform = T*R*S;
     
