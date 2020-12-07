@@ -141,7 +141,7 @@ SpawnEnemy(game_mode_main* Mode,
     Enemy.MovementType = MovementType;
 
     // TODO: Change to appropriate enemy
-    Enemy.ImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
+    Enemy.ImageRect = Assets->AtlasRects + AtlasRect_Enemy;
     Push(&Mode->Enemies, Enemy);
 }
 

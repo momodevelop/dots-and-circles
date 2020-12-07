@@ -594,16 +594,17 @@ int main(int argc, char* argv[]) {
         }
        
         RendererApi.Render(Renderer, &RenderCommands);
-                
-        // NOTE(Momo): Timer update
-        SDL_GL_SwapWindow(window);
-
+               
         ActualTicksElapsed = GetTicksElapsed(&timer);
         if (TargetTicksElapsed > ActualTicksElapsed) {
             SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
         }
-        
-        //SDL_Log("%lld vs %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed);
+
+    //    SDL_Log("%lld vs %lld: %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed, TargetTicksElapsed - ActualTicksElapsed);
+
+        // NOTE(Momo): Timer update
+        SDL_GL_SwapWindow(window);
+
     }
     
     
