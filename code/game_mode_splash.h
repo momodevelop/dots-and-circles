@@ -136,8 +136,11 @@ UpdateSplashMode(game_state* GameState,
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
 
     PushCommandOrthoCamera(RenderCommands, 
-            V3f(), 
-            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
+            v3f{}, 
+            CenteredRect( 
+                v3f{ DesignWidth, DesignHeight, DesignDepth }, 
+                v3f{ 0.5f, 0.5f, 0.5f }
+            )
     );
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {

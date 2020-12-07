@@ -1,6 +1,5 @@
 [] Art assets
     [] Enemy (...32x32?)
-    [] Bullets (16x16)
     [] Player (32x32?)
 [] Animation?
 [] Hot Swapping code

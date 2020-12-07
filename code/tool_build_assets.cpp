@@ -197,7 +197,8 @@ int main() {
         { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Bitmap_AtlasDefault },
         { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault }
+        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/enemy.png", AtlasRect_Enemy, Bitmap_AtlasDefault },
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
 

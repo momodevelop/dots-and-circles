@@ -292,10 +292,6 @@ Pow(f32 b, f32 e) {
 }
 
 // NOTE(Momo): v2f functions
-static inline v2f
-V2f(f32 X, f32 Y) {
-    return { X, Y };
-}
 
 static inline v2f 
 V2f(v3f V) {
@@ -508,11 +504,6 @@ Project(v2f from, v2f to) {
 
 
 // NOTE(Momo): v3f functions
-static inline v3f
-V3f(f32 X = 0.f, f32 Y = 0.f, f32 Z = 0.f) {
-    return { X, Y, Z }; 
-}
-
 static inline v3f 
 V3f(v2f V) {
     return { V.X, V.Y, 0.f };
@@ -554,7 +545,7 @@ IsEqual(v3f L, v3f R) {
     return 
         IsEqual(L.X, R.X) &&
         IsEqual(L.Y, R.Y) &&
-        IsEqual(L.Z, R.Z) ;
+        IsEqual(L.Z, R.Z);
 }
 
 
@@ -810,9 +801,7 @@ M44fRotationY(f32 rad) {
         -s,  0.f, c,    0.f,
         0.f, 0.f, 0.f,  1.f
     };
-    
 }
-
 
 static inline m44f 
 M44fRotationZ(f32 rad) {
@@ -882,8 +871,8 @@ M44fIdentity() {
 static inline line2f
 Line2f(line3f Line) {
     return {
-        V2f(Line.Min),
-        V2f(Line.Max),
+        Line.Min.XY,
+        Line.Max.XY,
     };
 }
 
@@ -899,8 +888,8 @@ Line3f(line2f Line) {
 static inline rect2f
 Rect2f(rect3f Rect) {
     return {
-        V2f(Rect.Min),
-        V2f(Rect.Max),
+        Rect.Min.XY,
+        Rect.Max.XY,
     };
 }
 
@@ -929,7 +918,7 @@ Rect3f(rect2f Rect) {
 }
 
 static inline rect3f
-Rect3f(v3f Dimensions, v3f Anchor) {
+CenteredRect(v3f Dimensions, v3f Anchor) {
     rect3f Ret = {};
     Ret.Min.X = Lerp(0, -Dimensions.W, Anchor.X);
     Ret.Max.X = Lerp(Dimensions.W, 0, Anchor.X);
@@ -977,7 +966,7 @@ struct ray2f {
 };
 
 static inline ray2f
-Ray2f(line2f Line) {
+LineToRay(line2f Line) {
     ray2f Ret = {};
     Ret.Origin = Line.Min;
     Ret.Direction = Line.Max - Line.Min;

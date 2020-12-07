@@ -210,8 +210,11 @@ UpdateMainMode(game_state* GameState,
     game_mode_main* Mode = GameState->MainMode;
     PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushCommandOrthoCamera(RenderCommands, 
-            V3f(), 
-            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
+            v3f{}, 
+            CenteredRect( 
+                v3f{ DesignWidth, DesignHeight, DesignDepth }, 
+                v3f{ 0.5f, 0.5f, 0.5f }
+            )
     );
     
     auto* Assets = &GameState->Assets;
@@ -430,7 +433,7 @@ UpdateMainMode(game_state* GameState,
 
         m44f T = M44fTranslation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
-                                    {1.f, 1.f, 1.f, 1.f }, 
+                                    v4f{ 1.f, 1.f, 1.f, 1.f }, 
                                     T*S, 
                                     Player->CircleImageRect->BitmapId,
                                     GetAtlasUV(Assets, Player->CircleImageRect));
@@ -438,7 +441,7 @@ UpdateMainMode(game_state* GameState,
 		RenderPos.Z += 0.1f;
         T = M44fTranslation(RenderPos);
         PushCommandDrawTexturedQuad(RenderCommands, 
-                                    {1.f, 1.f, 1.f, Player->DotImageAlpha}, 
+                                    v4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                                     T*S, 
                                     Player->DotImageRect->BitmapId,
                                     GetAtlasUV(Assets, Player->DotImageRect));
@@ -467,7 +470,7 @@ UpdateMainMode(game_state* GameState,
         }
         m44f T = M44fTranslation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
-									{ 1.f, 1.f, 1.f, 1.f },
+									v4f{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
 									Bullet->ImageRect->BitmapId,
 									GetAtlasUV(Assets, Bullet->ImageRect));
@@ -485,7 +488,7 @@ UpdateMainMode(game_state* GameState,
 		RenderPos.Z = ZLayEnemy; 
 		m44f T = M44fTranslation(RenderPos);
 		PushCommandDrawTexturedQuad(RenderCommands,
-									{ 1.f, 1.f, 1.f, 1.f },
+									v4f{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
 									Enemy->ImageRect->BitmapId,
 									GetAtlasUV(Assets, Enemy->ImageRect));

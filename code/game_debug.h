@@ -162,7 +162,7 @@ Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
     }
 
     {
-        m44f ScaleMatrix = M44fScale(V2f(Console->Dimensions.W, LineHeight));
+        m44f ScaleMatrix = M44fScale(v2f{ Console->Dimensions.W, LineHeight });
         m44f PositionMatrix = M44fTranslation(
                 Console->Position.X, 
                 Bottom + LineHeight * 0.5f,

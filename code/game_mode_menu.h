@@ -21,8 +21,11 @@ UpdateMenuMode(game_state* GameState,
     game_mode_menu* Mode = GameState->MenuMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandOrthoCamera(RenderCommands, 
-            V3f(), 
-            Rect3f( V3f(DesignWidth, DesignHeight, DesignDepth), V3f(0.5f, 0.5f, 0.5f))
+            v3f{}, 
+            CenteredRect( 
+                v3f{ DesignWidth, DesignHeight, DesignDepth }, 
+                v3f{ 0.5f, 0.5f, 0.5f }
+            )
     );
 #if 0
     game_assets* Assets = GameState->Assets;
