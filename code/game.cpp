@@ -56,8 +56,7 @@ GameUpdate(game_memory* GameMemory,
            platform_api* Platform, 
            mailbox* RenderCommands, 
            game_input* Input, 
-           f32 DeltaTime,
-           u64 TicksElapsed)
+           f32 DeltaTime)
 {
     game_state* GameState = (game_state*)GameMemory->MainMemory;
        
@@ -184,22 +183,6 @@ GameUpdate(game_memory* GameMemory,
     // Debug Rendering
     if (GameState->IsDebug) {
         Render(&GameState->DebugConsole, RenderCommands, &GameState->Assets);
-    }
-    if (GameState->IsShowTicksElapsed) {
-        auto Scratch = BeginScratch(&GameState->DebugArena);
-        Defer { EndScratch(&Scratch); };
-        string_buffer TempBuffer = StringBuffer(Scratch.Arena, 32);
-        Itoa(&TempBuffer, (i32)TicksElapsed);
-        Push(&TempBuffer, String("ms"));
-        NullTerm(&TempBuffer);
-
-        DrawText(RenderCommands, 
-                &GameState->Assets, 
-                { -DesignWidth * 0.5f + 5.f , DesignHeight * 0.5f - 28.f, 99.5f }, 
-                ColorWhite,
-                Font_Default, 
-                32.f, 
-                TempBuffer.Array);  
     }
 #endif
 }

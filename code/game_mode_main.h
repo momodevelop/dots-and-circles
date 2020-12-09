@@ -185,8 +185,8 @@ InitMainMode(game_state* GameState) {
     
     Player->Position = {};
     Player->Direction = {};
-    Player->Size = { 32.f, 32.f };
-	Player->HitCircle = {{0.f, 0.f}, 28.f};
+    Player->Size = v2f{ 32.f, 32.f };
+	Player->HitCircle = { v2f{}, 16.f};
     
     // NOTE(Momo): We start as Dot
     Player->MoodType = MoodType_Dot;

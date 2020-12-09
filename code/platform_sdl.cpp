@@ -13,119 +13,13 @@
 #include "platform_sdl_renderer_opengl.h"
 #include "game_renderer_opengl.h"
 #include "game_input.h"
+#include "thirdparty/sdl2/include/SDL_timer.h"
 
 
 static const char* GameDllFilename = "game.dll";
 static const char* TempGameDllFilename = "temp_game.dll"; 
 
 
-#if INTERNAL
-static inline void
-SdlGlDebugCallback(GLenum source,
-                   GLenum type,
-                   GLuint id,
-                   GLenum severity,
-                   GLsizei length,
-                   const GLchar* msg,
-                   const void* userParam) {
-    // Ignore NOTIFICATION severity
-    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) 
-        return;
-    
-    const char* _source;
-    const char* _type;
-    const char* _severity;
-    switch (source) {
-        case GL_DEBUG_SOURCE_API:
-        _source = "API";
-        break;
-        
-        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        _source = "WINDOW SYSTEM";
-        break;
-        
-        case GL_DEBUG_SOURCE_SHADER_COMPILER:
-        _source = "SHADER COMPILER";
-        break;
-        
-        case GL_DEBUG_SOURCE_THIRD_PARTY:
-        _source = "THIRD PARTY";
-        break;
-        
-        case GL_DEBUG_SOURCE_APPLICATION:
-        _source = "APPLICATION";
-        break;
-        
-        case GL_DEBUG_SOURCE_OTHER:
-        _source = "UNKNOWN";
-        break;
-        
-        default:
-        _source = "UNKNOWN";
-        break;
-    }
-    
-    switch (type) {
-        case GL_DEBUG_TYPE_ERROR:
-        _type = "ERROR";
-        break;
-        
-        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        _type = "DEPRECATED BEHAVIOR";
-        break;
-        
-        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        _type = "UDEFINED BEHAVIOR";
-        break;
-        
-        case GL_DEBUG_TYPE_PORTABILITY:
-        _type = "PORTABILITY";
-        break;
-        
-        case GL_DEBUG_TYPE_PERFORMANCE:
-        _type = "PERFORMANCE";
-        break;
-        
-        case GL_DEBUG_TYPE_OTHER:
-        _type = "OTHER";
-        break;
-        
-        case GL_DEBUG_TYPE_MARKER:
-        _type = "MARKER";
-        break;
-        
-        default:
-        _type = "UNKNOWN";
-        break;
-    }
-    
-    switch (severity) {
-        case GL_DEBUG_SEVERITY_HIGH:
-        _severity = "HIGH";
-        break;
-        
-        case GL_DEBUG_SEVERITY_MEDIUM:
-        _severity = "MEDIUM";
-        break;
-        
-        case GL_DEBUG_SEVERITY_LOW:
-        //_severity = "LOW";
-        return;
-        
-        case GL_DEBUG_SEVERITY_NOTIFICATION:
-        //_severity = "NOTIFICATION";
-        return;
-        
-        default:
-        _severity = "UNKNOWN";
-        break;
-    }
-    
-    SDL_Log("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
-            id, _type, _severity, _source, msg);
-    
-};
-#endif
 
 // TODO: This is INTERNAL only?
 static inline b32
@@ -155,40 +49,6 @@ CopyFile(const char* DestFilename, const char* SrcFilename) {
 
     return true;
 }
-
-// Timer
-struct sdl_timer {
-    u64 CountFrequency;
-    u64 PrevFrameCounter;
-    u64 EndFrameCounter;
-    u64 CountsElapsed;
-};
-
-
-
-static inline 
-void Start(sdl_timer* Timer) {
-    Timer->CountFrequency = SDL_GetPerformanceFrequency();
-    Timer->PrevFrameCounter = SDL_GetPerformanceCounter();
-    Timer->EndFrameCounter = 0;
-    Timer->CountsElapsed = 0;
-}
-
-
-static inline 
-u64 GetTicksElapsed(sdl_timer* Timer) {
-    Timer->EndFrameCounter = SDL_GetPerformanceCounter();
-    Timer->CountsElapsed = Timer->EndFrameCounter - Timer->PrevFrameCounter;
-    
-    Timer->PrevFrameCounter = Timer->EndFrameCounter; 
-    
-    // NOTE(Momo): 
-    // PerformanceCounter(C) gives how many count has elapsed.
-    // PerformanceFrequency(F) gives how many counts/second.
-    // Thus: seconds = C / F, and milliseconds = seconds * 1000
-    return (1000 * Timer->CountsElapsed) / Timer->CountFrequency;
-}
-
 
 // NOTE(Momo): sdl_game_code
 struct sdl_game_code {
@@ -267,12 +127,15 @@ PlatformReadFile(void* Dest, u32 DestSize, const char* Path) {
 }
 
 
+f32 GetMsElapsed(u64 Start, u64 End) {
+    return (End - Start)/(f32)SDL_GetPerformanceFrequency() * 1000.f;
+}
+
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
-    
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
-        SDL_Log("SDL could not initialize! SDL_Errgor: %s\n", SDL_GetError());
+        SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
     Defer{
@@ -280,79 +143,30 @@ int main(int argc, char* argv[]) {
         SDL_Quit();
     };
     
-    // NOTE(Momo): Create Window
-    SDL_Log("SDL creating Window\n");
-    SDL_Window* window = SDL_CreateWindow("Vigil", 
-                                          SDL_WINDOWPOS_UNDEFINED, 
-                                          SDL_WINDOWPOS_UNDEFINED, 
-                                          (u32)DesignWidth, 
-                                          (u32)DesignHeight, 
-                                          SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-    if (window == nullptr) {
-        SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-        return 1;
-    }
-    Defer{
-        SDL_Log("SDL destroying window\n");
-        SDL_DestroyWindow(window);
-    };
-    
-    // NOTE(Momo): Set OpenGL attributes
-    SDL_GL_LoadLibrary(nullptr);
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    //SDL_GL_SetSwapInterval(1);    
-#if INTERNAL
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-#endif  
-    
     
     // NOTE(Momo): Load game code
     sdl_game_code GameCode;
     Load(&GameCode, GameDllFilename, TempGameDllFilename);
     
-    // NOTE(Momo) Initialize OpenGL context  core)
-    SDL_Log("SDL creating context\n");
-    SDL_GLContext context = SDL_GL_CreateContext(window);
-    
-    if (context == nullptr) { 
-        SDL_Log("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
-        return 1;
-    }
-    Defer {
-        SDL_Log("SDL deleting context\b");
-        SDL_GL_DeleteContext(context);
-    };
-    
-    gladLoadGLLoader(SDL_GL_GetProcAddress);
-    
-    SDL_Log("OpenGL loaded!\n");
-    SDL_Log("[OpenGL] Vendor:   %s\n", glGetString(GL_VENDOR));
-    SDL_Log("[OpenGL] Renderer: %s\n", glGetString(GL_RENDERER));
-    SDL_Log("[OpenGL] Version:  %s\n", glGetString(GL_VERSION));
-    
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-#ifdef INTERNAL
-    glDebugMessageCallback(SdlGlDebugCallback, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, true);
-#endif
-    
 
     // TODO: for now we'll just do OpenGL. We might expose this to DLL one day.
-    renderer_api RendererApi = {};
-    RendererApi.Load = SdlOpenglLoad;
-    RendererApi.Unload = SdlOpenglUnload;
-    RendererApi.Resize = SdlOpenglResize;
-    RendererApi.Render = SdlOpenglRender;
+    sdl_renderer_api SdlRendererApi = {};
+    SdlRendererApi.Load = SdlOpenglLoad;
+    SdlRendererApi.Unload = SdlOpenglUnload;
+    SdlRendererApi.Resize = SdlOpenglResize;
+    SdlRendererApi.Render = SdlOpenglRender;
 
-    renderer* Renderer = RendererApi.Load(window);
-    Defer { RendererApi.Unload(Renderer); };
+    sdl_renderer_context SdlRendererContext;
+    {
+        option<sdl_renderer_context> Op = SdlRendererApi.Load((u32)DesignWidth, (u32)DesignHeight);
+        if( Op.IsNone ) {
+            return 1;
+        }
+        SdlRendererContext = Op.Item;
+    }
+    Defer { SdlRendererApi.Unload(SdlRendererContext); };
 
-       
+         
     void* ProgramMemory = calloc(TotalMemorySize, sizeof(u8));
     if (ProgramMemory == nullptr){
         SDL_Log("Cannot allocate memory");
@@ -405,17 +219,17 @@ int main(int argc, char* argv[]) {
     
     // NOTE(Momo): Timestep related
     // TODO(Momo): What if we can't hit 60fps?
+    SDL_DisplayMode DisplayMode = {};
+    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(SdlRendererContext.Window), &DisplayMode);
+    u32 RefreshRate = DisplayMode.refresh_rate == 0 ? 60 : DisplayMode.refresh_rate;
+    SDL_Log("Monitor Refresh Rate: %d", RefreshRate);
+
     f32 TimeStepMultiplier = 1.f;
-    u64 TargetTicksElapsed = 16; // 60FPS
-    f32 TargetDeltaTime = TargetTicksElapsed / 1000.f;
-    u64 ActualTicksElapsed = 0;
-    // NOTE(Momo): Timer
-    sdl_timer timer;
-    Start(&timer);
-    
-    b32 IsLeftShiftDown = false;
+    f32 TargetMsForFrame = 1.f/RefreshRate * 1000.f;
+
     // NOTE(Momo): Game Loop
     while(gIsRunning) {
+        u64 StartCount = SDL_GetPerformanceCounter();
         Update(&Input);
         
         SDL_Event e;
@@ -428,7 +242,7 @@ int main(int argc, char* argv[]) {
                 case SDL_WINDOWEVENT: {
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                         SDL_Log("Resizing: %d %d", e.window.data1, e.window.data2);
-                        RendererApi.Resize(Renderer, e.window.data1, e.window.data2);
+                        SdlRendererApi.Resize(SdlRendererContext.Renderer, e.window.data1, e.window.data2);
                         
                     }
                 } break;
@@ -588,23 +402,32 @@ int main(int argc, char* argv[]) {
             
         }
         
-        
+       
+
         if (GameCode.Update) {
-            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetDeltaTime, ActualTicksElapsed); 
+            GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetMsForFrame/1000.f); 
         }
        
-        RendererApi.Render(Renderer, &RenderCommands);
-               
-        ActualTicksElapsed = GetTicksElapsed(&timer);
-        if (TargetTicksElapsed > ActualTicksElapsed) {
-            SDL_Delay((Uint32)(TargetTicksElapsed - ActualTicksElapsed)); // 60fps?
+        SdlRendererApi.Render(SdlRendererContext.Renderer, &RenderCommands);
+
+
+
+        u64 EndCount = SDL_GetPerformanceCounter();
+        
+        f32 CurrentMsForFrame = GetMsElapsed(StartCount, EndCount);
+        if (TargetMsForFrame > CurrentMsForFrame) {
+            SDL_Delay((Uint32)(TargetMsForFrame - CurrentMsForFrame)); // 60fps?
+            //f32 RemainingMsForFrame = GetMsElapsed(EndCount, SDL_GetPerformanceCounter());
         }
+        else {
+            SDL_Log("Frame rate missed! Target: %f, Current: %f", TargetMsForFrame, CurrentMsForFrame);
+        }
+        
+       
+    
+        SDL_GL_SwapWindow(SdlRendererContext.Window);
 
-    //    SDL_Log("%lld vs %lld: %lld  ms\n", TargetTicksElapsed, ActualTicksElapsed, TargetTicksElapsed - ActualTicksElapsed);
-
-        // NOTE(Momo): Timer update
-        SDL_GL_SwapWindow(window);
-
+        
     }
     
     

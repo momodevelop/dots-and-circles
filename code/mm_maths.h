@@ -937,7 +937,7 @@ AspectRatio(rect2f R) {
     return Width(R)/Height(R);
 }
 
-static inline f32 
+static inline f32
 AspectRatio(rect2u R) {
     return (f32)Width(R)/Height(R);
 }
