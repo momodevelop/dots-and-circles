@@ -5,15 +5,24 @@
 #include "game_renderer.h"
 #include "mm_core.h"
 
-typedef renderer* renderer_load(SDL_Window* Window);
+
+struct sdl_renderer_context {
+    SDL_Window* Window;
+    union {
+        SDL_GLContext GlContext;
+    };
+    renderer* Renderer;
+};
+
+typedef option<sdl_renderer_context> sdl_renderer_load(u32 WindowWidth, u32 WindowHeight);
 typedef void renderer_resize(renderer* Renderer, u32 Width, u32 Height);
 typedef void renderer_render(renderer* Renderer, mailbox* Commands);
-typedef void renderer_unload(renderer* Renderer);
-struct renderer_api {
-    renderer_load* Load;
+typedef void sdl_renderer_unload(sdl_renderer_context Renderer);
+struct sdl_renderer_api {
+    sdl_renderer_load* Load;
     renderer_resize* Resize;
     renderer_render* Render;
-    renderer_unload* Unload;
+    sdl_renderer_unload* Unload;
 };
 
 #endif
