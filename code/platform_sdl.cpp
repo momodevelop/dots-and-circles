@@ -145,21 +145,22 @@ int main(int argc, char* argv[]) {
     
 
     // TODO: for now we'll just do OpenGL. We might expose this to DLL one day.
-    sdl_api SdlRendererApi = {};
-    SdlRendererApi.Load = SdlOpenglLoad;
-    SdlRendererApi.Unload = SdlOpenglUnload;
-    SdlRendererApi.Resize = SdlOpenglResize;
-    SdlRendererApi.Render = SdlOpenglRender;
+    sdl_api SdlApi = {};
+    SdlApi.Load = SdlOpenglLoad;
+    SdlApi.Unload = SdlOpenglUnload;
+    SdlApi.Resize = SdlOpenglResize;
+    SdlApi.Render = SdlOpenglRender;
+    SdlApi.SwapBuffer = SdlOpenglSwapBuffer;
 
-    sdl_context SdlRendererContext;
+    sdl_context SdlContext;
     {
-        option<sdl_context> Op = SdlRendererApi.Load((u32)DesignWidth, (u32)DesignHeight);
+        option<sdl_context> Op = SdlApi.Load((u32)DesignWidth, (u32)DesignHeight);
         if( Op.IsNone ) {
             return 1;
         }
-        SdlRendererContext = Op.Item;
+        SdlContext = Op.Item;
     }
-    Defer { SdlRendererApi.Unload(SdlRendererContext); };
+    Defer { SdlApi.Unload(SdlContext); };
 
          
     void* ProgramMemory = calloc(TotalMemorySize, sizeof(u8));
@@ -215,7 +216,7 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): Timestep related
     // TODO(Momo): What if we can't hit 60fps?
     SDL_DisplayMode DisplayMode = {};
-    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(SdlRendererContext.Window), &DisplayMode);
+    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(SdlContext.Window), &DisplayMode);
     u32 RefreshRate = DisplayMode.refresh_rate == 0 ? 60 : DisplayMode.refresh_rate;
     SDL_Log("Monitor Refresh Rate: %d", RefreshRate);
 
@@ -237,7 +238,7 @@ int main(int argc, char* argv[]) {
                 case SDL_WINDOWEVENT: {
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
                         SDL_Log("Resizing: %d %d", e.window.data1, e.window.data2);
-                        SdlRendererApi.Resize(SdlRendererContext.Renderer, e.window.data1, e.window.data2);
+                        SdlApi.Resize(SdlContext.Renderer, e.window.data1, e.window.data2);
                         
                     }
                 } break;
@@ -403,7 +404,7 @@ int main(int argc, char* argv[]) {
             GameCode.Update(&GameMemory, &PlatformApi, &RenderCommands, &Input, TargetMsForFrame/1000.f); 
         }
        
-        SdlRendererApi.Render(SdlRendererContext.Renderer, &RenderCommands);
+        SdlApi.Render(SdlContext.Renderer, &RenderCommands);
 
 
 
@@ -420,8 +421,8 @@ int main(int argc, char* argv[]) {
         
        
     
-        SDL_GL_SwapWindow(SdlRendererContext.Window);
 
+        SdlApi.SwapBuffer(SdlContext);
         
     }
     

@@ -205,7 +205,6 @@ SdlOpenglUnload(sdl_context Context) {
     free(Context.Renderer);
     SDL_GL_DeleteContext(Context.GlContext);
     SDL_DestroyWindow(Context.Window);
-
 }
 
 
@@ -221,5 +220,9 @@ SdlOpenglRender(renderer* Renderer, mailbox* Commands) {
     Clear(Commands);
 }
 
+static inline void 
+SdlOpenglSwapBuffer(sdl_context Context) {
+    SDL_GL_SwapWindow(Context.Window);
+}
 
 #endif
