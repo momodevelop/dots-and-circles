@@ -1,19 +1,14 @@
 #include <stdlib.h>
 
-
 #include "mm_core.h"
 #include "mm_maths.h"
 #include "mm_arena.h"
 
-#include "thirdparty/sdl2/include/SDL.h"
-#include "thirdparty/glad/glad.c"
-
 #include "platform.h"
-#include "platform_sdl_renderer.h"
-#include "platform_sdl_renderer_opengl.h"
+#include "platform_sdl.h"
+#include "platform_sdl_opengl.h"
 #include "game_renderer_opengl.h"
 #include "game_input.h"
-#include "thirdparty/sdl2/include/SDL_timer.h"
 
 
 static const char* GameDllFilename = "game.dll";
@@ -150,15 +145,15 @@ int main(int argc, char* argv[]) {
     
 
     // TODO: for now we'll just do OpenGL. We might expose this to DLL one day.
-    sdl_renderer_api SdlRendererApi = {};
+    sdl_api SdlRendererApi = {};
     SdlRendererApi.Load = SdlOpenglLoad;
     SdlRendererApi.Unload = SdlOpenglUnload;
     SdlRendererApi.Resize = SdlOpenglResize;
     SdlRendererApi.Render = SdlOpenglRender;
 
-    sdl_renderer_context SdlRendererContext;
+    sdl_context SdlRendererContext;
     {
-        option<sdl_renderer_context> Op = SdlRendererApi.Load((u32)DesignWidth, (u32)DesignHeight);
+        option<sdl_context> Op = SdlRendererApi.Load((u32)DesignWidth, (u32)DesignHeight);
         if( Op.IsNone ) {
             return 1;
         }

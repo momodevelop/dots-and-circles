@@ -1,9 +1,11 @@
-#ifndef PLATFORM_SDL_RENDERER_OPENGL
-#define PLATFORM_SDL_RENDERER_OPENGL
+#ifndef PLATFORM_SDL_OPENGL
+#define PLATFORM_SDL_OPENGL
 
 #include <stdlib.h>
+#include "thirdparty/sdl2/include/SDL.h"
+#include "thirdparty/glad/glad.c"
 #include "game_renderer_opengl.h"
-#include "platform_sdl_renderer.h"
+#include "platform_sdl.h"
 #include "mm_mailbox.h"
 #include "mm_arena.h"
 
@@ -116,9 +118,9 @@ SdlGlDebugCallback(GLenum source,
 };
 #endif
 
-static inline option<sdl_renderer_context>
+static inline option<sdl_context>
 SdlOpenglLoad(u32 WindowWidth, u32 WindowHeight) {
-    sdl_renderer_context Ret = {};
+    sdl_context Ret = {};
 
     // NOTE(Momo): Create Window
     SDL_GL_LoadLibrary(nullptr);
@@ -142,7 +144,7 @@ SdlOpenglLoad(u32 WindowWidth, u32 WindowHeight) {
     
     if (Window == nullptr) {
         SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-        return None<sdl_renderer_context>();
+        return None<sdl_context>();
     }
 
     SDL_Log("SDL creating Opengl context\n");
@@ -150,7 +152,7 @@ SdlOpenglLoad(u32 WindowWidth, u32 WindowHeight) {
     
     if (Context == nullptr) { 
         SDL_Log("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
-        return None<sdl_renderer_context>();
+        return None<sdl_context>();
     }
     gladLoadGLLoader(SDL_GL_GetProcAddress);
 
@@ -199,7 +201,7 @@ SdlOpenglLoad(u32 WindowWidth, u32 WindowHeight) {
 }
 
 static inline void
-SdlOpenglUnload(sdl_renderer_context Context) {
+SdlOpenglUnload(sdl_context Context) {
     free(Context.Renderer);
     SDL_GL_DeleteContext(Context.GlContext);
     SDL_DestroyWindow(Context.Window);
