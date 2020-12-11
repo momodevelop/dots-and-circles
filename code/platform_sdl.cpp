@@ -178,22 +178,21 @@ int main(int argc, char* argv[]) {
     GameMemory.MainMemory = PushBlock(&PlatformArena, GameMainMemorySize);
     GameMemory.MainMemorySize = GameMainMemorySize;
 
-#if INTERNAL
-    GameMemory.DebugMemory = PushBlock(&PlatformArena, DebugMemorySize);
-    GameMemory.DebugMemorySize = DebugMemorySize;
-#endif
-    
     if ( !GameMemory.MainMemory ) {
         SDL_Log("Cannot allocate game memory");
         return 1;
     }
 
 #if INTERNAL
+    GameMemory.DebugMemory = PushBlock(&PlatformArena, DebugMemorySize);
+    GameMemory.DebugMemorySize = DebugMemorySize; 
     if ( !GameMemory.DebugMemory) {
         SDL_Log("Cannot allocate debug memory");
         return 1;
     }
+
 #endif
+    
     
     // NOTE(Momo): PlatformAPI
     platform_api PlatformApi;
