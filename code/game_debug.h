@@ -142,7 +142,6 @@ Update(debug_console* DebugConsole, game_input* Input) {
 
 }
 
-
 static inline void
 Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
     font* Font = Assets->Fonts + Font_Default;

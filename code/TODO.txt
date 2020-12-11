@@ -1,3 +1,4 @@
+[] Change array Length to Count
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)

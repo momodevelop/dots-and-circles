@@ -118,6 +118,14 @@ struct game_mode_main {
     rng_series Rng;
 };
 
+
+
+// Helper function to draw text easily
+static inline void
+DrawDebugText(mailbox* RenderCommands, game_assets* Assets, v3f Position, string String) {
+    DrawText(RenderCommands, Assets, Position, ColorWhite, Font_Default, 32.f, String);
+}
+
 static inline void
 SpawnEnemy(game_mode_main* Mode, 
         game_assets* Assets, 
@@ -423,6 +431,7 @@ UpdateMainMode(game_state* GameState,
     constexpr static f32 ZLayDotBullet = 10.f;
     constexpr static f32 ZLayCircleBullet = 20.f;
     constexpr static f32 ZLayEnemy = 30.f;
+    constexpr static f32 ZLayDebug = 40.f;
     
     // Player Rendering
     {
@@ -494,6 +503,29 @@ UpdateMainMode(game_state* GameState,
 									GetAtlasUV(Assets, Enemy->ImageRect));
 	}
 
+
+
+    // Debug Rendering 
+    {
+        scratch Scratch = BeginScratch(&Mode->Arena);
+        Defer { EndScratch(&Scratch); };
+        string_buffer Buffer = StringBuffer(Scratch, 256);
+        string_buffer ItoaBuffer = StringBuffer(Scratch, 32);
+        Push(&Buffer, String("Bullets: "));
+        Itoa(&ItoaBuffer, (i32)Mode->Bullets.Length);
+        Push(&Buffer, ItoaBuffer.Array);
+
+        // Number of dot bullets
+        DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
+        Clear(&Buffer);
+        Clear(&ItoaBuffer);
+
+        Push(&Buffer, String("Enemies: "));
+        Itoa(&ItoaBuffer, (i32)Mode->Enemies.Length);
+        Push(&Buffer, ItoaBuffer.Array);
+        
+        DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 64.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
+    }
 
 }
 
