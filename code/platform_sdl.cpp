@@ -9,6 +9,7 @@
 #include "platform_sdl_opengl.h"
 #include "game_renderer_opengl.h"
 #include "game_input.h"
+#include "thirdparty/sdl2/include/SDL_video.h"
 
 
 static const char* GameDllFilename = "game.dll";
@@ -137,7 +138,9 @@ int main(int argc, char* argv[]) {
         SDL_Log("SDL shutting down\n");
         SDL_Quit();
     };
+   
     
+
     
     // NOTE(Momo): Load game code
     sdl_game_code GameCode;
@@ -152,14 +155,59 @@ int main(int argc, char* argv[]) {
     SdlApi.Render = SdlOpenglRender;
     SdlApi.SwapBuffer = SdlOpenglSwapBuffer;
 
+    // Creating the initial window
     sdl_context SdlContext;
     {
-        option<sdl_context> Op = SdlApi.Load((u32)DesignWidth, (u32)DesignHeight);
-        if( Op.IsNone ) {
+        SDL_DisplayMode DisplayMode = {};
+        f32 Ddpi = 1, Hdpi = 1, Vdpi = 1;
+        if (SDL_GetDesktopDisplayMode(0, &DisplayMode) != 0) {
+           SDL_Log("Problems getting display mode: %s", SDL_GetError());
+           return 1;
+        }
+        SDL_GetDisplayDPI(0, &Ddpi, &Hdpi, &Vdpi);
+        
+            
+        SDL_Log("Resolution detected: %d x %d", DisplayMode.w, DisplayMode.h);
+        u32 WindowWidth = 0, WindowHeight = 0;
+        if constexpr(DesignWidth > DesignHeight) {
+            
+            if (DisplayMode.w >= DesignWidth) {
+                WindowWidth = (u32)DesignWidth;
+                WindowHeight = (u32)DesignHeight;
+            }
+
+            // If we can't fit the width, then we need to 'try our best'.
+            else {
+                if (DisplayMode.w > DisplayMode.h) {
+                    // If the resolution is too small, guess a size will show the entire window.
+                    // For now, the guess is 85% of the height.
+                    f32 DesignAspect = DesignWidth / DesignHeight;
+                    WindowHeight = (u32)(DisplayMode.h - (DisplayMode.h * 0.15f));
+                    WindowWidth = (u32)(WindowHeight * DesignAspect);
+                }
+                else {
+                    f32 InvDesignAspect = DesignHeight / DesignWidth;
+                    WindowWidth = (u32)(DisplayMode.w - (DisplayMode.w * 0.15f));
+                    WindowHeight = (u32)(WindowWidth * InvDesignAspect);
+                }
+            }
+       
+        }
+        else {
+            // TODO
+            SDL_Log("Not implemented");
+            return 1;
+        }
+         
+        SDL_Log("Creating %d x %d resolution window", WindowWidth, WindowHeight); 
+        option<sdl_context> Op = SdlApi.Load(WindowWidth, WindowHeight);
+        if( !Op ) {
             return 1;
         }
         SdlContext = Op.Item;
     }
+
+    SDL_Log("Hello World"); 
     Defer { SdlApi.Unload(SdlContext); };
 
          
@@ -192,7 +240,6 @@ int main(int argc, char* argv[]) {
     }
 
 #endif
-    
     
     // NOTE(Momo): PlatformAPI
     platform_api PlatformApi;
