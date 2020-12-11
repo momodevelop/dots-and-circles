@@ -1206,7 +1206,7 @@ extern DECLSPEC int SDLCALL SDL_HapticRumbleInit(SDL_Haptic * haptic);
  *
  *  \param haptic Haptic device to play rumble effect on.
  *  \param strength Strength of the rumble to play as a 0-1 float value.
- *  \param length Count of the rumble to play in milliseconds.
+ *  \param length Length of the rumble to play in milliseconds.
  *  \return 0 on success or -1 on error.
  *
  *  \sa SDL_HapticRumbleSupported
