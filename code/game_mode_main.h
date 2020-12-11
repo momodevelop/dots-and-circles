@@ -291,10 +291,19 @@ UpdateMainMode(game_state* GameState,
  
 
 	// Bullet Update
-	for(usize i = 0; i < Mode->Bullets.Count; ++i) {
-        bullet* Bullet = Mode->Bullets + i;
+	for(usize I = 0; I < Mode->Bullets.Count;) {
+        bullet* Bullet = Mode->Bullets + I;
 		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
-	}
+        // Out of bounds self-destruction
+        if (Bullet->Position.X <= -DesignWidth * 0.5f - Bullet->HitCircle.Radius || 
+            Bullet->Position.X >= DesignWidth * 0.5f + Bullet->HitCircle.Radius ||
+            Bullet->Position.Y <= -DesignHeight * 0.5f - Bullet->HitCircle.Radius ||
+            Bullet->Position.Y >= DesignHeight * 0.5f + Bullet->HitCircle.Radius) {
+            SwapRemove(&Mode->Bullets, I);
+            continue;
+        }
+        ++I;
+    }
 
 
     // Wave logic Update
@@ -409,7 +418,7 @@ UpdateMainMode(game_state* GameState,
         PlayerCircle.Origin += Player->Position;
 
 		// Player vs every bullet
-        for (usize I = 0; I < Mode->Bullets.Count; ++I) 
+        for (usize I = 0; I < Mode->Bullets.Count;) 
         {
             bullet* Bullet = Mode->Bullets + I;
             circle2f BulletCircle = Bullet->HitCircle;
@@ -421,8 +430,7 @@ UpdateMainMode(game_state* GameState,
                     continue;
                  }
             }
-
-            ++Bullet;
+            ++I;
 		}
 	}
 

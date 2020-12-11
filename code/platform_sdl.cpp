@@ -1,3 +1,10 @@
+#if _WIN32
+#pragma comment(lib, "User32.lib")
+#include <windows.h>
+#include <ShellScalingAPI.h>
+#endif
+
+
 #include <stdlib.h>
 
 #include "mm_core.h"
@@ -16,8 +23,6 @@ static const char* GameDllFilename = "game.dll";
 static const char* TempGameDllFilename = "temp_game.dll"; 
 
 
-
-// TODO: This is INTERNAL only?
 static inline b32
 CopyFile(const char* DestFilename, const char* SrcFilename) {
     SDL_RWops* DestFile = SDL_RWFromFile(DestFilename, "wb");
@@ -77,16 +82,6 @@ Load(sdl_game_code* GameCode, const char* SrcDllFilename, const char* TempDllFil
     return true;
 }
 
-
-
-
-static bool gIsRunning = true;
-static bool gIsPaused = false;
-constexpr u64 ScreenTicks60FPS = 1000/60;
-constexpr u64 ScreenTicks30FPS = 1000/30;
-
-
-
 // NOTE(Momo): Platform API code
 static inline void
 PlatformLog(const char* Format, ...) {
@@ -127,8 +122,17 @@ f32 GetMsElapsed(u64 Start, u64 End) {
     return (End - Start)/(f32)SDL_GetPerformanceFrequency() * 1000.f;
 }
 
+
+
 // NOTE(Momo): entry point
 int main(int argc, char* argv[]) {
+
+#if _WIN32
+    // https://seabird.handmade.network/blogs/p/2460-be_aware_of_high_dpi
+    // Handling high dpi
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+#endif 
+
     SDL_Log("SDL initializing\n");
     if (SDL_Init(SDL_INIT_VIDEO) < 0 ) {
         SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -159,13 +163,10 @@ int main(int argc, char* argv[]) {
     sdl_context SdlContext;
     {
         SDL_DisplayMode DisplayMode = {};
-        f32 Ddpi = 1, Hdpi = 1, Vdpi = 1;
         if (SDL_GetDesktopDisplayMode(0, &DisplayMode) != 0) {
            SDL_Log("Problems getting display mode: %s", SDL_GetError());
            return 1;
         }
-        SDL_GetDisplayDPI(0, &Ddpi, &Hdpi, &Vdpi);
-        
             
         SDL_Log("Resolution detected: %d x %d", DisplayMode.w, DisplayMode.h);
         u32 WindowWidth = 0, WindowHeight = 0;
@@ -210,7 +211,8 @@ int main(int argc, char* argv[]) {
     SDL_Log("Hello World"); 
     Defer { SdlApi.Unload(SdlContext); };
 
-         
+
+    // Allocation of memory
     void* ProgramMemory = calloc(TotalMemorySize, sizeof(u8));
     if (ProgramMemory == nullptr){
         SDL_Log("Cannot allocate memory");
@@ -270,7 +272,8 @@ int main(int argc, char* argv[]) {
     f32 TargetMsForFrame = 1.f/RefreshRate * 1000.f;
 
     // NOTE(Momo): Game Loop
-    while(gIsRunning) {
+    b32 IsRunning = true;
+    while(IsRunning) {
         u64 StartCount = SDL_GetPerformanceCounter();
         Update(&Input);
         
@@ -278,7 +281,7 @@ int main(int argc, char* argv[]) {
         while(SDL_PollEvent(&e)) {
             switch(e.type) {
                 case SDL_QUIT: {
-                    gIsRunning = false;
+                    IsRunning = false;
                     SDL_Log("Quit triggered\n");
                 } break; 
                 case SDL_WINDOWEVENT: {
@@ -317,7 +320,6 @@ int main(int argc, char* argv[]) {
                             Input.ButtonSwitch.Now = true;
                         }break;
                     }
-                    // Cries
 #if INTERNAL
                     switch(e.key.keysym.sym) {
                         case SDLK_F1:
@@ -456,8 +458,9 @@ int main(int argc, char* argv[]) {
         
         f32 CurrentMsForFrame = GetMsElapsed(StartCount, EndCount);
         if (TargetMsForFrame > CurrentMsForFrame) {
-            SDL_Delay((Uint32)(TargetMsForFrame - CurrentMsForFrame)); // 60fps?
-            f32 RemainingMsForFrame = CurrentMsForFrame - GetMsElapsed(EndCount, SDL_GetPerformanceCounter());
+            SDL_Delay((Uint32)(TargetMsForFrame - CurrentMsForFrame) - 1); // -1 because there is a chance we might overshoot the frame...
+#if 0
+            f32 RemainingMsForFrame = TargetMsForFrame - GetMsElapsed(StartCount, SDL_GetPerformanceCounter());
             if (RemainingMsForFrame > 0.f ){
                 // Didn't sleep enough, so sleep some more?                
                 SDL_Log("Target: %f, Remaining: %f", TargetMsForFrame, RemainingMsForFrame);
@@ -465,6 +468,7 @@ int main(int argc, char* argv[]) {
             else {
                 SDL_Log("Overslept?! Remaining: %f", RemainingMsForFrame);
             }
+#endif 
         }
         else {
             SDL_Log("Frame rate missed! Target: %f, Current: %f", TargetMsForFrame, CurrentMsForFrame);

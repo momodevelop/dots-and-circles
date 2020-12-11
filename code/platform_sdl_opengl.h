@@ -121,7 +121,7 @@ SdlGlDebugCallback(GLenum source,
 static inline option<sdl_context>
 SdlOpenglLoad(u32 WindowWidth, u32 WindowHeight) {
     sdl_context Ret = {};
-
+   
     // NOTE(Momo): Create Window
     SDL_GL_LoadLibrary(nullptr);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
@@ -139,7 +139,7 @@ SdlOpenglLoad(u32 WindowWidth, u32 WindowHeight) {
                                           SDL_WINDOWPOS_UNDEFINED, 
                                           WindowWidth, 
                                           WindowHeight, 
-                                          SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+                                          SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
    
     
     if (Window == nullptr) {
@@ -205,6 +205,7 @@ SdlOpenglUnload(sdl_context Context) {
     free(Context.Renderer);
     SDL_GL_DeleteContext(Context.GlContext);
     SDL_DestroyWindow(Context.Window);
+    SDL_Quit();
 }
 
 
