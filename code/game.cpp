@@ -22,7 +22,7 @@ CmdJump(void * Context, string Arguments) {
     Defer {  EndScratch(&Scratch); };
 
     dlink_list<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
-    if ( ArgList.Length != 2 ) {
+    if ( ArgList.Count != 2 ) {
         // Expect two arguments
         PushDebugInfo(&GameState->DebugConsole, String("Expected only 2 arguments"), ColorRed);
         return;

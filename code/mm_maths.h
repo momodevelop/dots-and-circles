@@ -459,7 +459,7 @@ Distance(v2f L, v2f R)  {
 
 
 static inline f32 
-Length(v2f L)  { 
+Count(v2f L)  { 
     return Sqrt(LengthSq(L));
 }
 
@@ -467,7 +467,7 @@ Length(v2f L)  {
 static inline v2f 
 Normalize(v2f L)  {
     v2f ret = L;
-    f32 len = Length(L);
+    f32 len = Count(L);
     ret /= len;
     return ret;
 }
@@ -475,7 +475,7 @@ Normalize(v2f L)  {
 
 static inline f32 
 AngleBetween(v2f L, v2f R) {
-    return ACos((L * R) / (Length(L) * Length(R)));
+    return ACos((L * R) / (Count(L) * Count(R)));
 }
 
 
@@ -671,7 +671,7 @@ Distance(v3f L, v3f R)  {
 
 
 static inline f32 
-Length(v3f L)  { 
+Count(v3f L)  { 
     return Sqrt(LengthSq(L));
 }
 
@@ -679,7 +679,7 @@ Length(v3f L)  {
 static inline v3f 
 Normalize(v3f L)  {
     v3f ret = L;
-    f32 len = Length(L);
+    f32 len = Count(L);
     ret /= len;
     return ret;
 }
@@ -687,7 +687,7 @@ Normalize(v3f L)  {
 
 static inline f32 
 AngleBetween(v3f L, v3f R) {
-    return ACos((L * R) / (Length(L) * Length(R)));
+    return ACos((L * R) / (Count(L) * Count(R)));
 }
 
 

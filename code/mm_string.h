@@ -22,8 +22,8 @@ StringBuffer(arena* Arena, usize Capacity) {
 
 
 static inline string
-String(char* Elements, usize Length) {
-    return Array<char>(Elements, Length);
+String(char* Elements, usize Count) {
+    return Array<char>(Elements, Count);
 }
 
 
@@ -50,7 +50,7 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
     dlink_list<string> Ret ={}; 
     range<usize> Range = {};
 
-    while (Range.End != Str.Length) {
+    while (Range.End != Str.Count) {
         Range.End = Find(Str, ' ', Range.Start); 
 
         auto* Link = PushCtr<dlink<string>>(Arena, DLink<string>, SubString(Str, Range));
@@ -63,8 +63,8 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
 
 static inline void
 NullTerm(string_buffer* Dest) {
-    Assert(Dest->Length < Dest->Capacity);
-    Dest->Elements[Dest->Length] = 0;
+    Assert(Dest->Count < Dest->Capacity);
+    Dest->Elements[Dest->Count] = 0;
 }
 
 

@@ -17,7 +17,7 @@ DrawText(mailbox* RenderCommands,
 {
     v3f CurPosition = Position;
     
-    for(u32 i = 0; i < String.Length; ++i) {
+    for(u32 i = 0; i < String.Count; ++i) {
         font* Font = Assets->Fonts + FontId;
         auto* Glyph = Font->Glyphs + HashCodepoint(String[i]);
         auto Box = Glyph->Box; 
@@ -39,7 +39,7 @@ DrawText(mailbox* RenderCommands,
                                     GetAtlasUV(Assets, Glyph));
         
         CurPosition.X += Glyph->Advance * Size;
-        if (i != String.Length - 1 ) {
+        if (i != String.Count - 1 ) {
             CurPosition.X += Font->Kernings[HashCodepoint(String[i])][HashCodepoint(String[i+1])] * Size;
         }
     }

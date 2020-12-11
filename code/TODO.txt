@@ -1,11 +1,10 @@
-[] Change array Length to Count
+[] Change array Count to Count
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)
 [] Animation?
 [] Hot Swapping code
     [] Reload every frame 
-[] Circle debug lines?
 [] Quaternion
 [] Profiling? 
 [] Introspection?

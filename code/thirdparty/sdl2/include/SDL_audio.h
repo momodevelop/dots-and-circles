@@ -230,8 +230,8 @@ typedef struct SDL_AudioCVT
     SDL_AudioFormat dst_format; /**< Target audio format */
     double rate_incr;           /**< Rate conversion increment */
     Uint8 *buf;                 /**< Buffer to hold entire audio data */
-    int len;                    /**< Length of original audio buffer */
-    int len_cvt;                /**< Length of converted audio buffer */
+    int len;                    /**< Count of original audio buffer */
+    int len_cvt;                /**< Count of converted audio buffer */
     int len_mult;               /**< buffer must be len*len_mult big */
     double len_ratio;           /**< Given len, final size is len*len_ratio */
     SDL_AudioFilter filters[SDL_AUDIOCVT_MAX_FILTERS + 1]; /**< NULL-terminated list of filter functions */

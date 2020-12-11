@@ -61,7 +61,7 @@ Execute(list<debug_command> Commands, string Arguments) {
     string CommandStr = SubString(Arguments, Range); 
 
     // Send a command to a callback
-    for (usize i = 0; i < Commands.Length; ++i) {
+    for (usize i = 0; i < Commands.Count; ++i) {
         debug_command* Command = Commands + i;
         if (Command->Key == CommandStr) {
              Command->Callback(Command->Context, Arguments);
@@ -83,7 +83,7 @@ CreateDebugConsole(
     debug_console Ret = {};
 
     Ret.InfoBuffers = Array<debug_string>(Arena, InfoBufferLines);
-    for (usize I = 0; I < Ret.InfoBuffers.Length; ++I) {
+    for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
         debug_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = StringBuffer(Arena, BufferCapacity);
     }
@@ -97,8 +97,8 @@ CreateDebugConsole(
 
 static inline void
 PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
-    for (usize I = 0; I < DebugConsole->InfoBuffers.Length - 1; ++I) {
-        usize J = DebugConsole->InfoBuffers.Length - 1 - I;
+    for (usize I = 0; I < DebugConsole->InfoBuffers.Count - 1; ++I) {
+        usize J = DebugConsole->InfoBuffers.Count - 1 - I;
         debug_string* Dest = DebugConsole->InfoBuffers + J;
         debug_string* Src = DebugConsole->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, Src->Buffer.Array);
@@ -119,8 +119,8 @@ GetCommandString(debug_console* DebugConsole) {
 static inline b32 
 Update(debug_console* DebugConsole, game_input* Input) {
 
-    if (Input->DebugTextInputBuffer.Length > 0 && 
-        Input->DebugTextInputBuffer.Length <= Remaining(DebugConsole->InputBuffer)) 
+    if (Input->DebugTextInputBuffer.Count > 0 && 
+        Input->DebugTextInputBuffer.Count <= Remaining(DebugConsole->InputBuffer)) 
     {  
         Push(&DebugConsole->InputBuffer, Input->DebugTextInputBuffer.Array);
     }
@@ -148,7 +148,7 @@ Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
     
     f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
-    f32 LineHeight = Console->Dimensions.H / (Console->InfoBuffers.Length + 1);
+    f32 LineHeight = Console->Dimensions.H / (Console->InfoBuffers.Count + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Height(Font) * FontSize;
     f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + Abs(Font->Descent) * FontSize; 
@@ -176,7 +176,7 @@ Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
     {
 
 
-        for (u32 I = 0; I < Console->InfoBuffers.Length ; ++I) {
+        for (u32 I = 0; I < Console->InfoBuffers.Count ; ++I) {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;

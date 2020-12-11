@@ -8,7 +8,7 @@ template<typename type>
 struct list {
     union {
         struct {
-            usize Length;     // Amount of objects currently borrowed
+            usize Count;     // Amount of objects currently borrowed
             type* Elements;     // Expects pointer to object
         };
         array<type> Array;
@@ -18,7 +18,7 @@ struct list {
     usize Capacity; // Total number of borrowable objects.
     
     inline auto& operator[](usize I) {
-        Assert(I < Length);
+        Assert(I < Count);
         return Elements[I];
     }
 };
@@ -37,38 +37,38 @@ List(type* Arr, usize Capacity) {
 template<typename type>
 static inline void 
 Clear(list<type>* List) {
-    List->Length = 0;
+    List->Count = 0;
 }
 
 template<typename type>
 static inline void
 Copy(list<type>* Dest, array<type> Src) {
-    Assert(Src.Length <= Dest->Capacity);
-    for (u32 i = 0; i < Src.Length; ++i ) {
+    Assert(Src.Count <= Dest->Capacity);
+    for (u32 i = 0; i < Src.Count; ++i ) {
         Dest->Elements[i] = Src.Elements[i];
     }
-    Dest->Length = Src.Length;
+    Dest->Count = Src.Count;
 }
 
 template<typename type>
 static inline usize
 Remaining(list<type> List) {
-    return List.Capacity - List.Length;
+    return List.Capacity - List.Count;
 }
 
 template<typename type>
 static inline void
 Push(list<type>* List, type Obj) {
-    Assert(List->Length < List->Capacity);
-    List->Elements[List->Length++] = Obj;
+    Assert(List->Count < List->Capacity);
+    List->Elements[List->Count++] = Obj;
 }
 
 template<typename type>
 static inline void
 Push(list<type>* Dest, array<type> Src) {
-    Assert(Dest->Length + Src.Length <= Dest->Capacity);
-    for ( u32 i = 0; i < Src.Length; ++i ) {
-        Dest->Elements[Dest->Length++] = Src.Elements[i];
+    Assert(Dest->Count + Src.Count <= Dest->Capacity);
+    for ( u32 i = 0; i < Src.Count; ++i ) {
+        Dest->Elements[Dest->Count++] = Src.Elements[i];
     }
 }
 
@@ -76,18 +76,18 @@ Push(list<type>* Dest, array<type> Src) {
 template<typename type>
 static inline void
 Pop(list<type>* List) {
-    Assert(List->Length > 0);
-    --List->Length;
+    Assert(List->Count > 0);
+    --List->Count;
 }
 
 template<typename type>
 static inline void
 Remove(list<type>* List, usize Index) {
-    Assert(Index < List->Length);
-    for (; Index < List->Length - 1; ++Index) {
+    Assert(Index < List->Count);
+    for (; Index < List->Count - 1; ++Index) {
         List->Elements[Index] = List->Elements[Index + 1];
     }
-    --List->Length;
+    --List->Count;
 }
 
 template<typename type, typename unary_comparer> 
@@ -101,9 +101,9 @@ RemoveIf(list<type>* List, unary_comparer UnaryComparer) {
 template<typename type>
 static inline usize
 SwapRemove(list<type>* List, usize Index) {
-    //(*Obj) = List->Elements[List->Length - 1];
-    List->Elements[Index] = List->Elements[List->Length - 1];
-    --List->Length;
+    //(*Obj) = List->Elements[List->Count - 1];
+    List->Elements[Index] = List->Elements[List->Count - 1];
+    --List->Count;
     return Index;
 }
 

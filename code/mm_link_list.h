@@ -29,11 +29,11 @@ template<typename type>
 struct dlink_list {
     dlink<type>* Head;
     dlink<type>* Tail;
-    usize Length;
+    usize Count;
 
     // Careful, it's O(N)
     inline auto& operator[](usize Index) {
-        Assert(Index < Length); 
+        Assert(Index < Count); 
         dlink<type>* Itr = Head;
         for (usize I = 0; I < Index; ++I) {
             Itr = Itr->Next;
@@ -57,7 +57,7 @@ PushBack(dlink_list<type>* Dest, dlink<type>* Element) {
         Element->Prev = Dest->Tail;
         Element->Next = nullptr;    
     }
-    ++Dest->Length;
+    ++Dest->Count;
 }
 
 

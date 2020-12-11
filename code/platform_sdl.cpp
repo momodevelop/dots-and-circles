@@ -452,24 +452,25 @@ int main(int argc, char* argv[]) {
        
         SdlApi.Render(SdlContext.Renderer, &RenderCommands);
 
-
-
         u64 EndCount = SDL_GetPerformanceCounter();
         
         f32 CurrentMsForFrame = GetMsElapsed(StartCount, EndCount);
         if (TargetMsForFrame > CurrentMsForFrame) {
             SDL_Delay((Uint32)(TargetMsForFrame - CurrentMsForFrame)); // 60fps?
-            //f32 RemainingMsForFrame = GetMsElapsed(EndCount, SDL_GetPerformanceCounter());
+            f32 RemainingMsForFrame = CurrentMsForFrame - GetMsElapsed(EndCount, SDL_GetPerformanceCounter());
+            if (RemainingMsForFrame > 0.f ){
+                // Didn't sleep enough, so sleep some more?                
+                SDL_Log("Target: %f, Remaining: %f", TargetMsForFrame, RemainingMsForFrame);
+            }
+            else {
+                SDL_Log("Overslept?! Remaining: %f", RemainingMsForFrame);
+            }
         }
         else {
             SDL_Log("Frame rate missed! Target: %f, Current: %f", TargetMsForFrame, CurrentMsForFrame);
         }
-        
-       
-    
 
         SdlApi.SwapBuffer(SdlContext);
-        
     }
     
     

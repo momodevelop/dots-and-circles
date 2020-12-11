@@ -291,7 +291,7 @@ UpdateMainMode(game_state* GameState,
  
 
 	// Bullet Update
-	for(usize i = 0; i < Mode->Bullets.Length; ++i) {
+	for(usize i = 0; i < Mode->Bullets.Count; ++i) {
         bullet* Bullet = Mode->Bullets + i;
 		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
 	}
@@ -354,7 +354,7 @@ UpdateMainMode(game_state* GameState,
     }
 
 	// Enemy logic update
-    for (usize I = 0; I < Mode->Enemies.Length; ++I) 
+    for (usize I = 0; I < Mode->Enemies.Count; ++I) 
     {
         enemy* Enemy = Mode->Enemies + I;
 
@@ -409,7 +409,7 @@ UpdateMainMode(game_state* GameState,
         PlayerCircle.Origin += Player->Position;
 
 		// Player vs every bullet
-        for (usize I = 0; I < Mode->Bullets.Length; ++I) 
+        for (usize I = 0; I < Mode->Bullets.Count; ++I) 
         {
             bullet* Bullet = Mode->Bullets + I;
             circle2f BulletCircle = Bullet->HitCircle;
@@ -459,7 +459,7 @@ UpdateMainMode(game_state* GameState,
 	// Bullet Rendering 
     f32 DotLayerOffset = 0.f;
     f32 CircleLayerOffset = 0.f;
-    for (usize I = 0; I < Mode->Bullets.Length; ++I) 
+    for (usize I = 0; I < Mode->Bullets.Count; ++I) 
     {
         bullet* Bullet = Mode->Bullets + I;
 
@@ -489,7 +489,7 @@ UpdateMainMode(game_state* GameState,
 
 
 	// Enemy Rendering
-    for(usize I = 0; I < Mode->Enemies.Length; ++I )
+    for(usize I = 0; I < Mode->Enemies.Count; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
 		m44f S = M44fScale(V3f(Enemy->Size));
@@ -512,7 +512,7 @@ UpdateMainMode(game_state* GameState,
         string_buffer Buffer = StringBuffer(Scratch, 256);
         string_buffer ItoaBuffer = StringBuffer(Scratch, 32);
         Push(&Buffer, String("Bullets: "));
-        Itoa(&ItoaBuffer, (i32)Mode->Bullets.Length);
+        Itoa(&ItoaBuffer, (i32)Mode->Bullets.Count);
         Push(&Buffer, ItoaBuffer.Array);
 
         // Number of dot bullets
@@ -521,7 +521,7 @@ UpdateMainMode(game_state* GameState,
         Clear(&ItoaBuffer);
 
         Push(&Buffer, String("Enemies: "));
-        Itoa(&ItoaBuffer, (i32)Mode->Enemies.Length);
+        Itoa(&ItoaBuffer, (i32)Mode->Enemies.Count);
         Push(&Buffer, ItoaBuffer.Array);
         
         DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 64.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
