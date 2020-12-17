@@ -276,7 +276,6 @@ int main(int argc, char* argv[]) {
     u32 RefreshRate = DisplayMode.refresh_rate == 0 ? 60 : DisplayMode.refresh_rate;
     SDL_Log("Monitor Refresh Rate: %d", RefreshRate);
 
-    f32 TimeStepMultiplier = 1.f;
     f32 TargetMsPerFrame = 1.f/RefreshRate * 1000.f;
     SDL_Log("Target Ms Per Frame: %.2f", TargetMsPerFrame);
 
@@ -435,7 +434,7 @@ int main(int argc, char* argv[]) {
     // NOTE(Momo): Game Loop
     b32 IsRunning = true;
     u64 LastCounter = SDL_GetPerformanceCounter();
-
+    f32 TimeStepMultiplier = 1.f;
     while(IsRunning) {
                 
         Update(&Input);
@@ -558,19 +557,19 @@ int main(int argc, char* argv[]) {
             // -1 because there is a chance we might overshoot the frame...
             f32 TimeToSleep = TargetMsPerFrame - SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) - 1;
             if (TimeToSleep > 0) {
-                SDL_Delay((i32)TimeToSleep);             }
+                SDL_Delay((i32)TimeToSleep);
+            }
             //Assert(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);
             while(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);
         }
         else {
             SDL_Log("Frame rate missed!");
         }
-        u64 EndCounter = SDL_GetPerformanceCounter();
 
         SDL_GL_SwapWindow(Window);
 
 
-        LastCounter = EndCounter;
+        LastCounter = SDL_GetPerformanceCounter();
     }
     
     
