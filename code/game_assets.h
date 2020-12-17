@@ -74,7 +74,9 @@ struct game_assets {
     platform_api* Platform;
 };
 
-// TODO: Consider fixing this on asset builder side
+
+// TODO: Maybe we should just pass in ID instead of pointer.
+// Should be waaaay cleaner
 static inline quad2f
 GetAtlasUV(game_assets* Assets, atlas_rect* AtlasRect) {
     auto Bitmap = Assets->Bitmaps[AtlasRect->BitmapId];
@@ -85,6 +87,12 @@ static inline quad2f
 GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
     auto Bitmap = Assets->Bitmaps[Glyph->BitmapId];
     return Quad2F(RatioRect(Glyph->AtlasRect, {0, 0, Bitmap.Width, Bitmap.Height}));
+}
+
+static inline quad2f 
+GetAtlasUV(game_assets* Assets, atlas_rect_id AtlasRectId) {
+    return GetAtlasUV(Assets, Assets->AtlasRects + AtlasRectId);
+
 }
 
 

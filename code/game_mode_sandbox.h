@@ -4,12 +4,20 @@
 #include "game.h"
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
-struct game_mode_atlas_test {
+struct game_mode_sandbox_entity {
+    v3f Position;
+};
+
+struct game_mode_sandbox {
+    game_mode_sandbox_entity Entity;
 };
 
 static inline void 
-InitAtlasTestMode(game_state* GameState) {
+InitSandboxMode(game_state* GameState) {
+    game_mode_sandbox* Mode = GameState->SandboxMode;     
+    Mode->Entity.Position = v3f{ -800.f, 0.f };
 }
+
 
 static inline void
 DrawString(mailbox* RenderCommands, 
@@ -54,12 +62,12 @@ DrawString(mailbox* RenderCommands,
 }
 
 static inline void
-UpdateAtlasTestMode(game_state* GameState, 
+UpdateSandboxMode(game_state* GameState, 
        mailbox* RenderCommands, 
        game_input* Input,
        f32 DeltaTime) 
 {
-    game_mode_atlas_test* Mode = GameState->AtlasTestMode;
+    game_mode_sandbox* Mode = GameState->SandboxMode;
 
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandOrthoCamera(RenderCommands, 
@@ -70,20 +78,25 @@ UpdateAtlasTestMode(game_state* GameState,
             )
     );
     
-#if 1
     // NOTE(Momo): Image Test
     {
-        v4f Color = { 1.f, 1.f, 1.f, 1.f };
-        m44f Transform = M44fScale(5.f, 5.f, 1.f);
-        auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_Ryoji;
-        
+        game_mode_sandbox_entity * Entity = &Mode->Entity;
+        m44f Transform = M44fTranslation(Mode->Entity.Position) * M44fScale(64.f, 64.f, 1.f);
+        auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_PlayerDot;
+       
+        v3f Speed = { 50.f, 0.f, 0.f };
+        Entity->Position += Speed * DeltaTime;
+
         PushCommandDrawTexturedQuad(RenderCommands, 
-                                    Color, 
+                                    ColorWhite, 
                                     Transform, 
                                     AtlasRect->BitmapId,
                                     GetAtlasUV(&GameState->Assets, AtlasRect));
     }
-#endif
+
+
+
+#if 0
     // NOTE(Momo): Font test
     {
         DrawString(RenderCommands, 
@@ -94,7 +107,7 @@ UpdateAtlasTestMode(game_state* GameState,
                    //"Hello! I'm Ryoji!");
                    "The quick brown fox jump");
     }
-    
+#endif 
     
     
 }

@@ -21,7 +21,7 @@ enum game_mode_type : u32 {
     GameModeType_Splash,
     GameModeType_Main,
     GameModeType_Menu,
-    GameModeType_AtlasTest,
+    GameModeType_Sandbox,
 
     GameModeType_None
 };
@@ -34,7 +34,7 @@ struct game_state {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
         struct game_mode_menu* MenuMode;
-        struct game_mode_atlas_test* AtlasTestMode;
+        struct game_mode_sandbox* SandboxMode;
     };
     
     game_assets Assets;

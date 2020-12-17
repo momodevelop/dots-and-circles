@@ -4,7 +4,7 @@
 #include "game_mode_splash.h"
 #include "game_mode_menu.h"
 #include "game_mode_main.h"
-#include "game_mode_atlas_test.h"
+#include "game_mode_sandbox.h"
 #include "game_text.h"
 #include "mm_arena.h"
 #include "mm_list.h"
@@ -41,9 +41,9 @@ CmdJump(void * Context, string Arguments) {
         PushDebugInfo(&GameState->DebugConsole, String("Jumping to Menu"), ColorYellow);
         GameState->NextModeType = GameModeType_Menu;
     }
-    else if (StateToChangeTo == String("atlas_test")) {
-        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Atlas Test"), ColorYellow);
-        GameState->NextModeType = GameModeType_AtlasTest;
+    else if (StateToChangeTo == String("sandbox")) {
+        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Sandbox"), ColorYellow);
+        GameState->NextModeType = GameModeType_Sandbox;
     }
     else {
         PushDebugInfo(&GameState->DebugConsole, String("Invalid state to jump to"), ColorRed);
@@ -148,9 +148,9 @@ GameUpdate(game_memory* GameMemory,
                 GameState->MenuMode = PushStruct<game_mode_menu>(ModeArena); 
                 InitMenuMode(GameState);
             } break;
-            case GameModeType_AtlasTest: {
-                GameState->AtlasTestMode = PushStruct<game_mode_atlas_test>(ModeArena); 
-                InitAtlasTestMode(GameState);
+            case GameModeType_Sandbox: {
+                GameState->SandboxMode = PushStruct<game_mode_sandbox>(ModeArena); 
+                InitSandboxMode(GameState);
             } break;
             default: {
             }
@@ -171,8 +171,8 @@ GameUpdate(game_memory* GameMemory,
         case GameModeType_Main: {
             UpdateMainMode(GameState, RenderCommands, Input, DeltaTime);
         } break; 
-        case GameModeType_AtlasTest: {
-            UpdateAtlasTestMode(GameState, RenderCommands, Input, DeltaTime);
+        case GameModeType_Sandbox: {
+            UpdateSandboxMode(GameState, RenderCommands, Input, DeltaTime);
         } break;
         default: {
             Assert(false);
