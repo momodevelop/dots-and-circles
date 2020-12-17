@@ -551,6 +551,7 @@ int main(int argc, char* argv[]) {
         }
        
         OpenglRender(&Renderer, &RenderCommands);
+        Clear(&RenderCommands);
 
         if (TargetMsPerFrame > SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter())) {
 
@@ -566,10 +567,10 @@ int main(int argc, char* argv[]) {
             SDL_Log("Frame rate missed!");
         }
 
+        LastCounter = SDL_GetPerformanceCounter();
         SDL_GL_SwapWindow(Window);
 
 
-        LastCounter = SDL_GetPerformanceCounter();
     }
     
     

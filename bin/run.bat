@@ -16,7 +16,7 @@ IF "%Opt%"=="atlas" (
 	GOTO End
 ) 
 
-call platform_sdl.exe
+call platform_sdl_opengl.exe
 
 :End
 
