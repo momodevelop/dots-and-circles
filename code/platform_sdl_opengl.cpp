@@ -12,12 +12,10 @@
 #include "mm_maths.h"
 #include "mm_arena.h"
 
-#include "game_renderer_opengl.h"
+#include "renderer_opengl.h"
 #include "platform.h"
-#include "platform_sdl.h"
-#include "game_renderer_opengl.h"
 #include "game_input.h"
-#include "thirdparty/sdl2/include/SDL_video.h"
+#include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
 

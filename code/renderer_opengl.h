@@ -1,9 +1,9 @@
-#ifndef __GAME_RENDERER_OPENGL__
-#define __GAME_RENDERER_OPENGL__
+#ifndef __RENDERER_OPENGL__
+#define __RENDERER_OPENGL__
 
 #include "thirdparty/glad/glad.h"
 #include "game_renderer.h"
-#include "game_renderer_opengl_shaders.inl"
+#include "renderer_opengl_shaders.inl"
 
 constexpr static inline f32 QuadModel[] = {
     -0.5f, -0.5f, 0.0f,  // bottom left
