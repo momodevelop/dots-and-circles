@@ -67,9 +67,38 @@ NullTerm(string_buffer* Dest) {
     Dest->Elements[Dest->Count] = 0;
 }
 
+static inline void 
+PushI32(string_buffer* Dest, i32 Num) {
+    if (Num == 0) {
+        Push(Dest, '0');
+        return;
+    }
 
+    usize StartPoint = Dest->Count; 
+
+    b32 Negative = Num < 0;
+    Num = Abs(Num);
+
+    for(; Num != 0; Num /= 10) {
+        i32 DigitToConvert = Num % 10;
+        Push(Dest, (char)(DigitToConvert + '0'));
+    }
+
+    if (Negative) {
+        Push(Dest, '-');
+    }
+
+    // Reverse starting from start point to count
+    usize SubStrLen = Dest->Count - StartPoint;
+    for(usize I = 0; I < SubStrLen/2; ++I) {
+        Swap(Dest->Elements[StartPoint + I], Dest->Elements[Dest->Count-1-I]);
+    }
+}
+
+// TODO: Deprecate this
 static inline void
 Itoa(string_buffer* Dest, i32 Num) {
+    Clear(Dest);
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -94,6 +123,5 @@ Itoa(string_buffer* Dest, i32 Num) {
 
     Reverse(&Dest->Array);
 }
-
 
 #endif

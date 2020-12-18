@@ -339,12 +339,14 @@ UpdateMainMode(game_state* GameState,
                             Bilateral(&Mode->Rng) * DesignHeight * 0.5f
                         };
                         auto MoodType = (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
-                        SpawnEnemy(Mode, Assets,
+                        SpawnEnemy(Mode, 
+                                Assets,
                                 Pos,
                                 MoodType,
                                 EnemyFiringPatternType_Homing,
                                 EnemyMovementType_Static,
-                                1.5f, 10.f);
+                                0.5f, 
+                                10.f);
 
                         Pattern->SpawnTimer = 0.f;
                     }
@@ -518,19 +520,15 @@ UpdateMainMode(game_state* GameState,
         scratch Scratch = BeginScratch(&Mode->Arena);
         Defer { EndScratch(&Scratch); };
         string_buffer Buffer = StringBuffer(Scratch, 256);
-        string_buffer ItoaBuffer = StringBuffer(Scratch, 32);
         Push(&Buffer, String("Bullets: "));
-        Itoa(&ItoaBuffer, (i32)Mode->Bullets.Count);
-        Push(&Buffer, ItoaBuffer.Array);
+        PushI32(&Buffer, (i32)Mode->Bullets.Count);
 
         // Number of dot bullets
         DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
         Clear(&Buffer);
-        Clear(&ItoaBuffer);
 
         Push(&Buffer, String("Enemies: "));
-        Itoa(&ItoaBuffer, (i32)Mode->Enemies.Count);
-        Push(&Buffer, ItoaBuffer.Array);
+        PushI32(&Buffer, (i32)Mode->Enemies.Count);
         
         DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 64.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
     }

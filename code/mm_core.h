@@ -20,7 +20,6 @@ using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
 
-
 #define Kilobyte (1 << 10)
 #define Megabyte (1 << 20)
 #define Gigabyte (1 << 30)

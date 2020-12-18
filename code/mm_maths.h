@@ -150,6 +150,10 @@ struct circle3f {
     v3f Origin;
     f32 Radius;
 };
+struct aabb2u {
+    v2u Origin;
+    v2u Radius;
+};
 
 struct aabb2f {
     v2f Origin;
@@ -213,6 +217,17 @@ struct quad3f {
 
 
 // rect2u
+static inline rect2u
+Rect2u(u32 X, u32 Y, u32 Width, u32 Height) {
+    rect2u Ret = {};
+    Ret.Min.X = X;
+    Ret.Min.Y = Y;
+    Ret.Max.X = X + Width;
+    Ret.Max.Y = Y + Height;
+    return Ret;
+}
+
+
 static inline u32
 Width(rect2u Rect) {
     return Rect.Max.X - Rect.Min.X; 
