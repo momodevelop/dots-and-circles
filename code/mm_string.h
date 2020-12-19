@@ -95,33 +95,5 @@ PushI32(string_buffer* Dest, i32 Num) {
     }
 }
 
-// TODO: Deprecate this
-static inline void
-Itoa(string_buffer* Dest, i32 Num) {
-    Clear(Dest);
-    // Naive method. 
-    // Extract each number starting from the back and fill the buffer. 
-    // Then reverse it.
-    
-    // Special case for 0
-    if (Num == 0) {
-        Push(Dest, '0');
-        return;
-    }
-
-    b32 Negative = Num < 0;
-    Num = Abs(Num);
-
-    for(; Num != 0; Num /= 10) {
-        i32 DigitToConvert = Num % 10;
-        Push(Dest, (char)(DigitToConvert + '0'));
-    }
-
-    if (Negative) {
-        Push(Dest, '-');
-    }
-
-    Reverse(&Dest->Array);
-}
 
 #endif

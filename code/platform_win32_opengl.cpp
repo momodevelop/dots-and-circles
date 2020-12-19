@@ -5,13 +5,13 @@
 #include "mm_maths.h"
 #include "mm_string.h"
 #include "platform.h"
-#include "stb_sprintf.h"
-#include <stdio.h>
+#include "game_input.h"
 
+#define STB_SPRINTF_IMPLEMENTATION
+#include "stb_sprintf.h"
 
 #if INTERNAL
 HANDLE GlobalStdOut;
-
 static inline void
 Win32WriteConsole(const char* Message) {
     WriteConsoleA(GlobalStdOut, Message, SiStrLen(Message), 0, NULL);
@@ -24,7 +24,8 @@ Win32Log(const char* Message, ...) {
 
     va_list VaList;
     va_start(VaList, Message);
-    
+   
+    // TODO: Change to stb_sprintf
     stbsp_vsprintf(Buffer, Message, VaList);
 
 #if INTERNAL
@@ -36,6 +37,91 @@ Win32Log(const char* Message, ...) {
 
 }
 
+struct win32_state {
+    char ExeFullPath[MAX_PATH];
+    char* OnePastLastExePathSlash;
+};
+
+static inline void
+Win32BuildExePath(win32_state* State) {
+    GetModuleFileNameA(0, State->ExeFullPath, sizeof(State->ExeFullPath));
+
+    char* OnePastLastExePathSlash;
+    for( char* Itr = State->ExeFullPath; *Itr; ++Itr) {
+        if (*Itr == '\\') {
+            OnePastLastExePathSlash = Itr + 1;
+        }
+    }
+}
+
+static inline void
+Win32BuildExePathFilename(win32_state* State, char* Dest, const char* Filename) {
+    for(const char *Itr = State->ExeFullPath; 
+        Itr != State->OnePastLastExePathSlash; 
+        ++Itr, ++Dest) 
+    {
+        (*Dest) = (*Itr);
+    }
+    
+    for (const char* Itr = Filename;
+         (*Itr) != 0;
+         ++Itr, ++Dest) 
+    {
+        (*Dest) = (*Filename);
+    }
+
+    (*Dest) = 0;
+}
+
+
+struct win32_game_code {
+    HMODULE Dll;
+    game_update* GameUpdate;
+    FILETIME LastWriteTime;
+    b32 IsValid;
+};
+
+
+static inline FILETIME 
+Win32GetLastWriteTime(const char* Filename) {
+    WIN32_FILE_ATTRIBUTE_DATA Data;
+    FILETIME LastWriteTime = {};
+
+    if(GetFileAttributesEx(Filename, GetFileExInfoStandard, &Data)) {
+        LastWriteTime = Data.ftLastWriteTime;
+    }
+    return LastWriteTime; 
+}
+
+
+static inline win32_game_code
+Win32LoadGameCode(const char* SourceDllFilename,
+                  const char* TempDllFilename,
+                  const char* LockFilename) 
+{
+    win32_game_code Ret = {};
+    WIN32_FILE_ATTRIBUTE_DATA Ignored; 
+    if(!GetFileAttributesEx(LockFilename, GetFileExInfoStandard, &Ignored)) {
+        Ret.LastWriteTime = Win32GetLastWriteTime(SourceDllFilename);
+        CopyFile(SourceDllFilename, TempDllFilename, FALSE);    
+        Ret.Dll = LoadLibraryA(TempDllFilename);
+        if(Ret.Dll) {
+            Ret.GameUpdate = (game_update*)GetProcAddress(Ret.Dll, "GameUpdate");
+            Ret.IsValid = Ret.GameUpdate != 0;
+        }
+    }
+    return Ret;
+}
+
+static inline void 
+Win32UnloadGameCode(win32_game_code* GameCode) {
+    if (GameCode->Dll) {
+        FreeLibrary(GameCode->Dll);
+        GameCode->Dll = 0;
+    }
+    GameCode->IsValid = false;
+    GameCode->GameUpdate = 0;
+}
 
 LRESULT CALLBACK
 Win32WindowCallback(HWND Window, 
@@ -74,7 +160,6 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    char Buffer[256] = {};
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
  
     WNDCLASSA WindowClass = {};
@@ -134,11 +219,31 @@ WinMain(HINSTANCE Instance,
                 RefreshRate = DisplayRefreshRate;
             }
         }
-        f32 TargetMsPerFrame = 1.f / RefreshRate * 1000.f;
         
-        sprintf(Buffer, "Target Ms Per Frame: %.2f", TargetMsPerFrame);
-        Win32Log(Buffer);
+        f32 TargetMsPerFrame = 1.f / RefreshRate * 1000.f; 
+        Win32Log("Target Ms Per Frame: %.2f", TargetMsPerFrame);
+
+        // Create and initialize game related stuff
+        win32_state Win32State = {};
+        Win32BuildExePath(&Win32State);
+
+        char SourceGameCodeDllFullPath[MAX_PATH];
+        Win32BuildExePathFilename(&Win32State, SourceGameCodeDllFullPath, "game.dll");
+
+        char TempGameCodeDllFullPath[MAX_PATH];        
+        Win32BuildExePathFilename(&Win32State, SourceGameCodeDllFullPath, "temp_game.dll");
+
+        char GameCodeLockFullPath[MAX_PATH];
+        Win32BuildExePathFilename(&Win32State, SourceGameCodeDllFullPath, "lock");
+
+        Win32Log("%s\n%s\n%s\n", 
+                SourceGameCodeDllFullPath,
+                TempGameCodeDllFullPath,
+                GameCodeLockFullPath);
+        
+
     }
+
      
     return 0;
 }
