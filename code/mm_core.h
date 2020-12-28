@@ -5,6 +5,7 @@
 #include <cstdint>
 
 // Types
+using c8 = char;
 using b8 = bool;
 using b32 = uint32_t;
 using u8 = uint8_t;
@@ -19,6 +20,7 @@ using f32 = float;
 using f64 = double;
 using usize = size_t;
 using uptr = uintptr_t;
+using iptr = ptrdiff_t;
 
 #define Kilobyte (1 << 10)
 #define Megabyte (1 << 20)
@@ -54,10 +56,17 @@ union range {
     };
 };
 
+
+// TODO: rename to 'maybe'
+struct no {}; 
 template<typename T>
-struct option {
+struct maybe {
     T Item;
     b32 IsNone;
+    
+    maybe(no) { 
+        IsNone = true;
+    }
 
     operator bool() {
         return !IsNone;
@@ -65,20 +74,17 @@ struct option {
 };
 
 template<typename T>
-static inline option<T>
-Some(T Item) {
-    option<T> Ret;
+static inline maybe<T>
+Yes(T Item) {
+    maybe<T> Ret = {};
     Ret.Item = Item;
     Ret.IsNone = false;
     return Ret;
 }
 
-template<typename T>
-static inline option<T>
-None() {
-    option<T> Ret;
-    Ret.IsNone = true;
-    return Ret;
+static inline no
+No() {
+    return no{};
 }
 
 
@@ -207,5 +213,11 @@ namespace zawarudo {
 #define zawarudo_VARANON(counter) zawarudo_VARANON_IMPL(counter)
 #define Defer auto zawarudo_VARANON(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
+// Safe Truncation
+static inline u32
+SafeTruncateU64ToU32(u64 Src) {
+    Assert(Src <= 0xFFFFFFFF);
+    return (u32)Src;
+}
 
 #endif

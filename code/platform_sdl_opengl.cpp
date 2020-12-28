@@ -219,14 +219,15 @@ SdlGetFileSize(const char* Path) {
     return Ret;
 }
 
-static inline void
+static inline b32
 SdlReadFile(void* Dest, u32 DestSize, const char* Path) {
     SDL_RWops * File = SDL_RWFromFile(Path, "rb");
     if (File == nullptr) {
-        return;
+        return false;
     }
     Defer{ SDL_RWclose(File); };
     SDL_RWread(File, Dest, 1, DestSize);
+    return true;
 }
 
 

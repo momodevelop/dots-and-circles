@@ -111,6 +111,9 @@ union v2u {
     struct {
         u32 X, Y;
     };
+    struct {
+        u32 W, H;
+    };
 
     inline auto& operator[](usize I) {
         Assert(I < 2); 
