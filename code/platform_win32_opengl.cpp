@@ -52,10 +52,16 @@ static wgl_swap_interval_ext*  wglSwapIntervalEXT;
 static wgl_get_extensions_string_ext* wglGetExtensionsStringEXT;
 
 // Globals
-b32 Win32Global_IsRunning;
-u64 Win32Global_PerformanceFrequency;
-char Win32Global_ExeFullPath[MAX_PATH];
-char* Win32Global_OnePastExeDirectory;
+static const char* Global_GameCodeDllFileName = "game.dll";
+static const char* Global_TempGameCodeDllFileName = "temp_game.dll";
+static const char* Global_GameCodeLockFileName = "lock";
+struct win32_state {
+    b32 IsRunning;
+    u32 PerformanceFrequency;
+    char ExeFullPath[MAX_PATH];
+    char* OnePastExeDirectory;
+} Global_Win32State;
+
 game_input Win32Global_GameInput;
 
 
@@ -94,8 +100,11 @@ Win32GetCurrentCounter(void) {
 }
 
 static inline f32
-Win32GetSecondsElapsed(LARGE_INTEGER Start, LARGE_INTEGER End) {
-    return (f32(End.QuadPart - Start.QuadPart)) / Win32Global_PerformanceFrequency; 
+Win32GetSecondsElapsed(win32_state* State, 
+                       LARGE_INTEGER Start, 
+                       LARGE_INTEGER End) 
+{
+    return (f32(End.QuadPart - Start.QuadPart)) / State->PerformanceFrequency; 
 }
 
 static inline b32
@@ -168,27 +177,27 @@ Win32GetFileSize(const char* Path) {
 
 
 static inline void
-Win32InitGlobals() {
-    GetModuleFileNameA(0, Win32Global_ExeFullPath, sizeof(Win32Global_ExeFullPath));
+InitWin32State(win32_state* State) {
+    GetModuleFileNameA(0, State->ExeFullPath, sizeof(State->ExeFullPath));
 
-    Win32Global_OnePastExeDirectory = Win32Global_ExeFullPath;
-    for( char* Itr = Win32Global_ExeFullPath; *Itr; ++Itr) {
+    State->OnePastExeDirectory = State->ExeFullPath;
+    for( char* Itr = State->ExeFullPath; *Itr; ++Itr) {
         if (*Itr == '\\') {
-            Win32Global_OnePastExeDirectory = Itr + 1;
+            State->OnePastExeDirectory = Itr + 1;
         }
     }
 
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    Win32Global_PerformanceFrequency = (u64)PerfCountFreq.QuadPart;
-    Win32Global_IsRunning = true;
+    State->PerformanceFrequency = (u64)PerfCountFreq.QuadPart;
+    State->IsRunning = true;
 }
 
 static inline void
-Win32BuildExePathFilename(char* Dest, const char* Filename) {
-    Assert(Win32Global_OnePastExeDirectory);
-    for(const char *Itr = Win32Global_ExeFullPath; 
-        Itr != Win32Global_OnePastExeDirectory; 
+Win32BuildExePathFilename(win32_state* State, char* Dest, const char* Filename) {
+    Assert(State->OnePastExeDirectory);
+    for(const char *Itr = State->ExeFullPath; 
+        Itr != State->OnePastExeDirectory; 
         ++Itr, ++Dest) 
     {
         (*Dest) = (*Itr);
@@ -506,10 +515,10 @@ Win32WindowCallback(HWND Window,
     LRESULT Result = 0;
     switch(Message) {
         case WM_CLOSE: {
-            Win32Global_IsRunning = false;
+            Global_Win32State.IsRunning = false;
         } break;
         case WM_DESTROY: {
-            Win32Global_IsRunning = false;
+            Global_Win32State.IsRunning = false;
             // Error?
         } break;
         case WM_KEYDOWN:
@@ -603,7 +612,7 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    Win32InitGlobals();
+    InitWin32State(&Global_Win32State);
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
  
@@ -661,13 +670,19 @@ WinMain(HINSTANCE Instance,
 
         // Create and initialize game code and DLL file paths
         char SourceGameCodeDllFullPath[MAX_PATH];
-        Win32BuildExePathFilename(SourceGameCodeDllFullPath, Global_GameCodeDllFileName);
+        Win32BuildExePathFilename(&Global_Win32State,
+                                  SourceGameCodeDllFullPath, 
+                                  Global_GameCodeDllFileName);
 
         char TempGameCodeDllFullPath[MAX_PATH];        
-        Win32BuildExePathFilename(TempGameCodeDllFullPath, Global_TempGameCodeDllFileName);
+        Win32BuildExePathFilename(&Global_Win32State,
+                                  TempGameCodeDllFullPath, 
+                                  Global_TempGameCodeDllFileName);
 
         char GameCodeLockFullPath[MAX_PATH];
-        Win32BuildExePathFilename(GameCodeLockFullPath, Global_GameCodeLockFileName);
+        Win32BuildExePathFilename(&Global_Win32State,
+                                  GameCodeLockFullPath, 
+                                  Global_GameCodeLockFileName);
 
         Win32Log("Src Game Code DLL: %s\n", SourceGameCodeDllFullPath);
         Win32Log("Tmp Game Code DLL: %s\n", TempGameCodeDllFullPath);
@@ -734,7 +749,7 @@ WinMain(HINSTANCE Instance,
 
         // Game Loop
         LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
-        while (Win32Global_IsRunning) {
+        while (Global_Win32State.IsRunning) {
             if (GameCode.GameUpdate) {
                 GameCode.GameUpdate(&GameMemory,
                            &PlatformApi,
@@ -746,7 +761,8 @@ WinMain(HINSTANCE Instance,
             OpenglRender(&Opengl, &RenderCommands);
             Clear(&RenderCommands);
             
-            f32 SecondsElapsed = Win32GetSecondsElapsed(LastCount, 
+            f32 SecondsElapsed = Win32GetSecondsElapsed(&Global_Win32State,
+                                                        LastCount, 
                                                         Win32GetCurrentCounter());
             if (TargetSecsPerFrame > SecondsElapsed) {
                 if (SleepIsGranular) {
@@ -755,7 +771,9 @@ WinMain(HINSTANCE Instance,
                         Sleep(MsToSleep);
                     }
                 }
-                while(TargetSecsPerFrame > Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter()));
+                while(TargetSecsPerFrame > Win32GetSecondsElapsed(&Global_Win32State,
+                                                                  LastCount, 
+                                                                  Win32GetCurrentCounter()));
 
             }
             else {

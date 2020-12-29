@@ -7,9 +7,6 @@
 #include "mm_core.h"
 
 // NOTE(Momo): Global Settings
-static const char* Global_GameCodeDllFileName = "game.dll";
-static const char* Global_TempGameCodeDllFileName = "tmp_game.dll";
-static const char* Global_GameCodeLockFileName = "lock";
 static constexpr u64 Global_GameMainMemorySize = Gigabytes(1);
 static constexpr u64 Global_RenderCommandsMemorySize = Megabytes(64);
 static constexpr u32 Global_DefaultRefreshRate = 60;
