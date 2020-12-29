@@ -66,10 +66,10 @@ game_input Win32Global_GameInput;
 
 
 #if INTERNAL
-HANDLE GlobalStdOut;
+HANDLE Global_StdOut;
 static inline void
 Win32WriteConsole(const char* Message) {
-    WriteConsoleA(GlobalStdOut, Message, SiStrLen(Message), 0, NULL);
+    WriteConsoleA(Global_StdOut, Message, SiStrLen(Message), 0, NULL);
 }
 #endif
 
@@ -627,7 +627,7 @@ WinMain(HINSTANCE Instance,
     // Not exactly sure what to do on release
     AllocConsole();    
     Defer { FreeConsole(); };
-    GlobalStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     Win32Log("Hello Windows!\n");
 
     if (RegisterClassA(&WindowClass)) {
