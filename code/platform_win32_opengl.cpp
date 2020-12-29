@@ -48,7 +48,7 @@ typedef const char* WINAPI wgl_get_extensions_string_ext();
 
 static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
 static wgl_choose_pixel_format_arb* wglChoosePixelFormatARB;
-static wgl_swap_interval_ext*  wglSwapIntervalExt;
+static wgl_swap_interval_ext*  wglSwapIntervalEXT;
 static wgl_get_extensions_string_ext* wglGetExtensionsStringEXT;
 
 // Globals
@@ -356,10 +356,10 @@ Win32OpenglLoadWglExtensions() {
             if (!wglCreateContextAttribsARB) {
                 Win32Log("[OpenGL] Cannot load: wglCreateContextAttribsARB\n");
             }
-            wglSwapIntervalExt =
-                (wgl_swap_interval_ext*)wglGetProcAddress("wglSwapIntervalExt");
-            if (!wglSwapIntervalExt) {
-                Win32Log("[OpenGL] Cannot load: wglSwapIntervalExt\n");
+            wglSwapIntervalEXT =
+                (wgl_swap_interval_ext*)wglGetProcAddress("wglSwapIntervalEXT");
+            if (!wglSwapIntervalEXT) {
+                Win32Log("[OpenGL] Cannot load: wglSwapIntervalEXT\n");
             }
             wglMakeCurrent(0, 0);
         }
@@ -404,7 +404,11 @@ Win32TryGetOpenglFunction(const char* Name, HMODULE FallbackModule)
 }
 // TODO: Maybe return the context?
 static inline b32
-Win32OpenglInit(renderer_opengl* Opengl, HDC DeviceContext) {
+Win32OpenglInit(renderer_opengl* Opengl, 
+                HDC DeviceContext, 
+                u32 WindowWidth, 
+                u32 WindowHeight) 
+{
 
     if (!Win32OpenglLoadWglExtensions()) {
         return false;
@@ -477,7 +481,20 @@ Win32OpenglInit(renderer_opengl* Opengl, HDC DeviceContext) {
         Win32SetOpenglFunction(glNamedBufferSubData);
         Win32SetOpenglFunction(glUseProgram);
     }
+    OpenglInit(Opengl, WindowWidth, WindowHeight, 128);
+
     return true;
+}
+
+static inline v2u
+Win32GetWindowDimensions(HWND Window) {
+    RECT Rect = {};
+    GetClientRect(Window, &Rect);
+    return v2u { 
+        u32(Rect.right - Rect.left),
+        u32(Rect.bottom - Rect.top)
+    };
+
 }
 
 LRESULT CALLBACK
@@ -491,13 +508,9 @@ Win32WindowCallback(HWND Window,
         case WM_CLOSE: {
             Win32Global_IsRunning = false;
         } break;
-        case WM_SETCURSOR: {
-        } break;
         case WM_DESTROY: {
             Win32Global_IsRunning = false;
             // Error?
-        } break;
-        case WM_WINDOWPOSCHANGING: {
         } break;
         case WM_KEYDOWN:
         case WM_KEYUP: {
@@ -571,16 +584,9 @@ Win32WindowCallback(HWND Window,
 
 
         } break;
-        case WM_CHAR: {
-                      
-        } break;
-        case WM_PAINT: {
-#if 0
-            PAINTSTRUCT Paint;
-            HDC DeviceContext = BeginPaint(Window, &Paint);
-            EndPaint(Window, &Paint);
-#endif       
-        } break;
+//        case WM_CHAR: {                    
+//        } break;
+
         default: {
             // Log message?
             Result = DefWindowProcA(Window, Message, WParam, LParam);
@@ -588,6 +594,8 @@ Win32WindowCallback(HWND Window,
     }
     return Result;
 }
+
+
 
 int CALLBACK
 WinMain(HINSTANCE Instance,
@@ -712,13 +720,19 @@ WinMain(HINSTANCE Instance,
         // Initialize OpenGL
         renderer_opengl Opengl = {};
         {
-            b32 Success = Win32OpenglInit(&Opengl, DeviceContext);
+            v2u WindowWH = Win32GetWindowDimensions(Window);
+
+            b32 Success = Win32OpenglInit(&Opengl, DeviceContext, WindowWH.W, WindowWH.H);
             if (!Success) {
                 Win32Log("Cannot initialize Opengl");
                 return 1;
             }
         }
 
+        // Set sleep granularity to 1ms
+        b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
+
+        // Game Loop
         LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
         while (Win32Global_IsRunning) {
             if (GameCode.GameUpdate) {
@@ -729,15 +743,17 @@ WinMain(HINSTANCE Instance,
                            TargetSecsPerFrame);
             }
 
-            //OpenglRender(&Renderer, &RenderCommands);
+            OpenglRender(&Opengl, &RenderCommands);
             Clear(&RenderCommands);
             
             f32 SecondsElapsed = Win32GetSecondsElapsed(LastCount, 
                                                         Win32GetCurrentCounter());
             if (TargetSecsPerFrame > SecondsElapsed) {
-                DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecondsElapsed));
-                if (MsToSleep > 0) {
-                    Sleep(MsToSleep);
+                if (SleepIsGranular) {
+                    DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecondsElapsed)) - 1;
+                    if (MsToSleep > 0) {
+                        Sleep(MsToSleep);
+                    }
                 }
                 while(TargetSecsPerFrame > Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter()));
 
@@ -750,8 +766,8 @@ WinMain(HINSTANCE Instance,
             // Swap buffers
             {
                 HDC Dc = GetDC(Window);
-                Defer { ReleaseDC(Window, Dc); };
                 SwapBuffers(Dc);
+                ReleaseDC(Window, Dc); 
             }
             
         }

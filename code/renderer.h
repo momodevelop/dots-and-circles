@@ -14,8 +14,8 @@ Ground rules about this renderer.
  * |/|
  * ---
 */
-#ifndef GAME_RENDERER_H
-#define GAME_RENDERER_H
+#ifndef RENDERER_H
+#define RENDERER_H
 
 #include "mm_mailbox.h"
 #include "mm_maths.h"

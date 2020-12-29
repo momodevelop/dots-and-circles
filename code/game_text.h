@@ -3,7 +3,7 @@
 
 #include "mm_array.h"
 
-#include "game_renderer.h"
+#include "renderer.h"
 #include "game_assets.h"
 
 static inline void

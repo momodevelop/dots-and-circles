@@ -11,7 +11,7 @@
 
 #include "platform.h"
 #include "game_assets_file_formats.h"
-#include "game_renderer.h"
+#include "renderer.h"
 
 // NOTE(Momo): Asset types
 struct bitmap {

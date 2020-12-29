@@ -1,7 +1,7 @@
 #ifndef __RENDERER_OPENGL__
 #define __RENDERER_OPENGL__
 
-#include "game_renderer.h"
+#include "renderer.h"
 
 // Opengl typedefs
 #define GL_TRUE                 1
