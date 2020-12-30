@@ -91,6 +91,9 @@ Win32Log(const char* Message, ...) {
     va_end(VaList);
 
 }
+#define Win32RuntimeAssert(Cond, Msg) if(!(Cond)) { Win32Log(Msg); ExitProcess(1); }
+
+
 
 static inline LARGE_INTEGER
 Win32GetCurrentCounter(void) {
@@ -189,7 +192,7 @@ InitWin32State(win32_state* State) {
 
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = (u64)PerfCountFreq.QuadPart;
+    State->PerformanceFrequency = SafeTruncateI64ToU32(PerfCountFreq.QuadPart);
     State->IsRunning = true;
 }
 
@@ -506,6 +509,23 @@ Win32GetWindowDimensions(HWND Window) {
 
 }
 
+static inline void
+Win32ProcessMessages(HWND Window, win32_state* State, game_input* Input) {
+    MSG Msg = {};
+    while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
+        switch(Msg.message) {
+            case WM_CLOSE: {
+                State->IsRunning = false;
+            } break;
+            default: 
+            {
+                TranslateMessage(&Msg);
+                DispatchMessage(&Msg);
+            } break;
+        }
+    }
+}
+
 LRESULT CALLBACK
 Win32WindowCallback(HWND Window, 
                     UINT Message, 
@@ -605,7 +625,6 @@ Win32WindowCallback(HWND Window,
 }
 
 
-
 int CALLBACK
 WinMain(HINSTANCE Instance,
         HINSTANCE PrevInstance,
@@ -630,167 +649,158 @@ WinMain(HINSTANCE Instance,
     Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     Win32Log("Hello Windows!\n");
 
-    if (RegisterClassA(&WindowClass)) {
-        Win32Log("Registering class\n");
-        HWND Window;
-        {
-            i32 WindowW = (i32)Global_DesignWidth;
-            i32 WindowH = (i32)Global_DesignHeight;
-            i32 WindowX = GetSystemMetrics(SM_CXSCREEN) / 2 - WindowW / 2;
-            i32 WindowY = GetSystemMetrics(SM_CYSCREEN) / 2 - WindowH / 2;
-           
-            // TODO: Adaptively create 'best' window resolution based on desktop reso.
-            Window = CreateWindowExA(
-                        0,
-                        WindowClass.lpszClassName,
-                        "Dots And Circles",
-                        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                        WindowX,
-                        WindowY,
-                        WindowW,
-                        WindowH,
-                        0,
-                        0,
-                        Instance,
-                        0);
-        }
+    Win32RuntimeAssert(RegisterClassA(&WindowClass), "Failed to register class");
 
-        if (!Window) {
-            Win32Log("Window failed to initialize\n");
-            return 1;
-        }
-        
-        Win32Log("Window Initialized\n");
-        HDC DeviceContext = GetDC(Window); 
-
-        u32 RefreshRate = Win32DetermineIdealRefreshRate(DeviceContext); 
-        f32 TargetSecsPerFrame = 1.f / RefreshRate; 
-        Win32Log("Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
-        Win32Log("Monitor Refresh Rate: %d", RefreshRate);
-
-        // Create and initialize game code and DLL file paths
-        char SourceGameCodeDllFullPath[MAX_PATH];
-        Win32BuildExePathFilename(&Global_Win32State,
-                                  SourceGameCodeDllFullPath, 
-                                  Global_GameCodeDllFileName);
-
-        char TempGameCodeDllFullPath[MAX_PATH];        
-        Win32BuildExePathFilename(&Global_Win32State,
-                                  TempGameCodeDllFullPath, 
-                                  Global_TempGameCodeDllFileName);
-
-        char GameCodeLockFullPath[MAX_PATH];
-        Win32BuildExePathFilename(&Global_Win32State,
-                                  GameCodeLockFullPath, 
-                                  Global_GameCodeLockFileName);
-
-        Win32Log("Src Game Code DLL: %s\n", SourceGameCodeDllFullPath);
-        Win32Log("Tmp Game Code DLL: %s\n", TempGameCodeDllFullPath);
-        Win32Log("Game Code Lock: %s\n", GameCodeLockFullPath);
-
-        // Load the game code DLL
-        // TODO: Make game code global?
-        win32_game_code GameCode = 
-            Win32LoadGameCode(
-                SourceGameCodeDllFullPath,
-                TempGameCodeDllFullPath,
-                GameCodeLockFullPath);
-
-        // Allocate memory for the entire program
-        void* ProgramMemory = VirtualAllocEx(GetCurrentProcess(),
-                                             0, TotalMemorySize, 
-                                             MEM_RESERVE | MEM_COMMIT, 
-                                             PAGE_READWRITE);
-        if (!ProgramMemory) {
-            Win32Log("Cannot allocate program memory\n");
-            return 1;
-        }
-        Defer { VirtualFreeEx(GetCurrentProcess(), ProgramMemory, 0, MEM_RELEASE); }; 
-        arena Win32Arena = Arena(ProgramMemory, Global_TotalMemorySize);
-        
-        // Initialize game memory
-        game_memory GameMemory = {};
-        GameMemory.MainMemory = PushBlock(&Win32Arena, Global_GameMainMemorySize);
-        if (!GameMemory.MainMemory) {
-            Win32Log("Cannot allocate game main memory\n");
-            return 1;
-        }
-        GameMemory.MainMemorySize = Global_GameMainMemorySize;
-#if INTERNAL
-        GameMemory.DebugMemory = PushBlock(&Win32Arena, Global_GameDebugMemorySize);
-        if (!GameMemory.DebugMemory) {
-            Win32Log("Cannot allocate game debug memory\n");
-            return 1;
-        }
-        GameMemory.DebugMemorySize = Global_GameDebugMemorySize;
-#endif
-        
-        // Intialize Render commands
-        void* RenderCommandsMemory = PushBlock(&Win32Arena, Global_RenderCommandsMemorySize);
-        mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
-        
-        // Initialize Platform API for game to use
-        platform_api PlatformApi = Win32LoadPlatformApi();
-
-        // Initialize OpenGL
-        renderer_opengl Opengl = {};
-        {
-            v2u WindowWH = Win32GetWindowDimensions(Window);
-
-            b32 Success = Win32OpenglInit(&Opengl, DeviceContext, WindowWH.W, WindowWH.H);
-            if (!Success) {
-                Win32Log("Cannot initialize Opengl");
-                return 1;
-            }
-        }
-
-        // Set sleep granularity to 1ms
-        b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
-
-        // Game Loop
-        LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
-        while (Global_Win32State.IsRunning) {
-            if (GameCode.GameUpdate) {
-                GameCode.GameUpdate(&GameMemory,
-                           &PlatformApi,
-                           &RenderCommands,
-                           &Win32Global_GameInput,
-                           TargetSecsPerFrame);
-            }
-
-            OpenglRender(&Opengl, &RenderCommands);
-            Clear(&RenderCommands);
-            
-            f32 SecondsElapsed = Win32GetSecondsElapsed(&Global_Win32State,
-                                                        LastCount, 
-                                                        Win32GetCurrentCounter());
-            if (TargetSecsPerFrame > SecondsElapsed) {
-                if (SleepIsGranular) {
-                    DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecondsElapsed)) - 1;
-                    if (MsToSleep > 0) {
-                        Sleep(MsToSleep);
-                    }
-                }
-                while(TargetSecsPerFrame > Win32GetSecondsElapsed(&Global_Win32State,
-                                                                  LastCount, 
-                                                                  Win32GetCurrentCounter()));
-
-            }
-            else {
-                Win32Log("Frame rate missed!\n");
-            }
-    
-            LastCount = Win32GetCurrentCounter();
-            // Swap buffers
-            {
-                HDC Dc = GetDC(Window);
-                SwapBuffers(Dc);
-                ReleaseDC(Window, Dc); 
-            }
-            
-        }
-
+    Win32Log("Window class registered\n");
+    HWND Window;
+    {
+        i32 WindowW = (i32)Global_DesignWidth;
+        i32 WindowH = (i32)Global_DesignHeight;
+        i32 WindowX = GetSystemMetrics(SM_CXSCREEN) / 2 - WindowW / 2;
+        i32 WindowY = GetSystemMetrics(SM_CYSCREEN) / 2 - WindowH / 2;
+       
+        // TODO: Adaptively create 'best' window resolution based on desktop reso.
+        Window = CreateWindowExA(
+                    0,
+                    WindowClass.lpszClassName,
+                    "Dots And Circles",
+                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                    WindowX,
+                    WindowY,
+                    WindowW,
+                    WindowH,
+                    0,
+                    0,
+                    Instance,
+                    0);
     }
+
+    Win32RuntimeAssert(Window, "Window failed to initialize\n");
+
+    Win32Log("Window Initialized\n");
+    HDC DeviceContext = GetDC(Window); 
+
+    u32 RefreshRate = Win32DetermineIdealRefreshRate(DeviceContext); 
+    f32 TargetSecsPerFrame = 1.f / RefreshRate; 
+    Win32Log("Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
+    Win32Log("Monitor Refresh Rate: %d", RefreshRate);
+
+    // Create and initialize game code and DLL file paths
+    char SourceGameCodeDllFullPath[MAX_PATH];
+    Win32BuildExePathFilename(&Global_Win32State,
+                              SourceGameCodeDllFullPath, 
+                              Global_GameCodeDllFileName);
+
+    char TempGameCodeDllFullPath[MAX_PATH];        
+    Win32BuildExePathFilename(&Global_Win32State,
+                              TempGameCodeDllFullPath, 
+                              Global_TempGameCodeDllFileName);
+
+    char GameCodeLockFullPath[MAX_PATH];
+    Win32BuildExePathFilename(&Global_Win32State,
+                              GameCodeLockFullPath, 
+                              Global_GameCodeLockFileName);
+
+    Win32Log("Src Game Code DLL: %s\n", SourceGameCodeDllFullPath);
+    Win32Log("Tmp Game Code DLL: %s\n", TempGameCodeDllFullPath);
+    Win32Log("Game Code Lock: %s\n", GameCodeLockFullPath);
+
+    // Load the game code DLL
+    // TODO: Make game code global?
+    win32_game_code GameCode = 
+        Win32LoadGameCode(
+            SourceGameCodeDllFullPath,
+            TempGameCodeDllFullPath,
+            GameCodeLockFullPath);
+
+    // Allocate memory for the entire program
+    void* ProgramMemory = VirtualAllocEx(GetCurrentProcess(),
+                                         0, TotalMemorySize, 
+                                         MEM_RESERVE | MEM_COMMIT, 
+                                         PAGE_READWRITE);
+
+    
+    Win32RuntimeAssert(ProgramMemory, "Cannot allocate program memory\n");
+    Defer { VirtualFreeEx(GetCurrentProcess(), ProgramMemory, 0, MEM_RELEASE); }; 
+    arena Win32Arena = Arena(ProgramMemory, Global_TotalMemorySize);
+    
+    // Initialize game memory
+    game_memory GameMemory = {};
+    GameMemory.MainMemory = PushBlock(&Win32Arena, Global_GameMainMemorySize);
+    
+    Win32RuntimeAssert(GameMemory.MainMemory, "Cannot allocate game main memory\n");
+
+    GameMemory.MainMemorySize = Global_GameMainMemorySize;
+#if INTERNAL
+    GameMemory.DebugMemory = PushBlock(&Win32Arena, Global_GameDebugMemorySize); 
+    Win32RuntimeAssert(GameMemory.DebugMemory, "Cannot allocate game debug memory\n");
+    GameMemory.DebugMemorySize = Global_GameDebugMemorySize;
+#endif
+    
+    // Intialize Render commands
+    void* RenderCommandsMemory = PushBlock(&Win32Arena, Global_RenderCommandsMemorySize);
+    mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
+    
+    // Initialize Platform API for game to use
+    platform_api PlatformApi = Win32LoadPlatformApi();
+
+    // Initialize OpenGL
+    renderer_opengl Opengl = {};
+    {
+        v2u WindowWH = Win32GetWindowDimensions(Window);
+
+        b32 Success = Win32OpenglInit(&Opengl, DeviceContext, WindowWH.W, WindowWH.H);
+        Win32RuntimeAssert(Success, "Cannot initialize Opengl");
+    }
+
+    // Set sleep granularity to 1ms
+    b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
+
+    // Game Loop
+    LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
+    while (Global_Win32State.IsRunning) {
+        Win32ProcessMessages(Window, &Global_Win32State, &Win32Global_GameInput);
+
+        if (GameCode.GameUpdate) {
+            GameCode.GameUpdate(&GameMemory,
+                       &PlatformApi,
+                       &RenderCommands,
+                       &Win32Global_GameInput,
+                       TargetSecsPerFrame);
+        }
+
+        OpenglRender(&Opengl, &RenderCommands);
+        Clear(&RenderCommands);
+        
+        f32 SecondsElapsed = Win32GetSecondsElapsed(&Global_Win32State,
+                                                    LastCount, 
+                                                    Win32GetCurrentCounter());
+        if (TargetSecsPerFrame > SecondsElapsed) {
+            if (SleepIsGranular) {
+                DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecondsElapsed)) - 1;
+                if (MsToSleep > 0) {
+                    Sleep(MsToSleep);
+                }
+            }
+            while(TargetSecsPerFrame > Win32GetSecondsElapsed(&Global_Win32State,
+                                                              LastCount, 
+                                                              Win32GetCurrentCounter()));
+
+        }
+        else {
+            Win32Log("Frame rate missed!\n");
+        }
+
+        LastCount = Win32GetCurrentCounter();
+        // Swap buffers
+        {
+            HDC Dc = GetDC(Window);
+            SwapBuffers(Dc);
+            ReleaseDC(Window, Dc); 
+        }
+        
+    }
+
 
     return 0;
 }

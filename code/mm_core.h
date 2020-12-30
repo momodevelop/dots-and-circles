@@ -220,4 +220,9 @@ SafeTruncateU64ToU32(u64 Src) {
     return (u32)Src;
 }
 
+static inline u32
+SafeTruncateI64ToU32(i64 Src) {
+    Assert(Src <= 0xFFFFFFFF && Src >= 0);
+    return (u32)Src;
+}
 #endif
