@@ -55,14 +55,20 @@ static wgl_get_extensions_string_ext* wglGetExtensionsStringEXT;
 static const char* Global_GameCodeDllFileName = "game.dll";
 static const char* Global_TempGameCodeDllFileName = "temp_game.dll";
 static const char* Global_GameCodeLockFileName = "lock";
+
+
 struct win32_state {
     b32 IsRunning;
     u32 PerformanceFrequency;
     char ExeFullPath[MAX_PATH];
     char* OnePastExeDirectory;
-} Global_Win32State;
 
-game_input Win32Global_GameInput;
+    char SourceGameCodeDllFullPath[MAX_PATH];
+    char GameCodeLockFullPath[MAX_PATH];
+    char TempGameCodeDllFullPath[MAX_PATH];        
+
+};
+
 
 
 #if INTERNAL
@@ -180,25 +186,7 @@ Win32GetFileSize(const char* Path) {
 
 
 static inline void
-InitWin32State(win32_state* State) {
-    GetModuleFileNameA(0, State->ExeFullPath, sizeof(State->ExeFullPath));
-
-    State->OnePastExeDirectory = State->ExeFullPath;
-    for( char* Itr = State->ExeFullPath; *Itr; ++Itr) {
-        if (*Itr == '\\') {
-            State->OnePastExeDirectory = Itr + 1;
-        }
-    }
-
-    LARGE_INTEGER PerfCountFreq;
-    QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = SafeTruncateI64ToU32(PerfCountFreq.QuadPart);
-    State->IsRunning = true;
-}
-
-static inline void
 Win32BuildExePathFilename(win32_state* State, char* Dest, const char* Filename) {
-    Assert(State->OnePastExeDirectory);
     for(const char *Itr = State->ExeFullPath; 
         Itr != State->OnePastExeDirectory; 
         ++Itr, ++Dest) 
@@ -325,7 +313,7 @@ Win32OpenglSetPixelFormat(HDC DeviceContext) {
 static inline b32
 Win32OpenglLoadWglExtensions() {
     WNDCLASSA WindowClass = {};
-
+    game_input GameInput = {};
     // Er yeah...we have to create a 'fake' Opengl context to load the extensions lol.
     WindowClass.lpfnWndProc = DefWindowProcA;
     WindowClass.hInstance = GetModuleHandle(0);
@@ -407,7 +395,11 @@ static inline void*
 Win32TryGetOpenglFunction(const char* Name, HMODULE FallbackModule)
 {
     void* p = (void*)wglGetProcAddress(Name);
-    if (p == 0 || (p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) || (p == (void*)-1))
+    if ((p == 0) || 
+        (p == (void*)0x1) || 
+        (p == (void*)0x2) || 
+        (p == (void*)0x3) || 
+        (p == (void*)-1))
     {
         p = (void*)GetProcAddress(FallbackModule, Name);
     }
@@ -517,6 +509,81 @@ Win32ProcessMessages(HWND Window, win32_state* State, game_input* Input) {
             case WM_CLOSE: {
                 State->IsRunning = false;
             } break;
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+            case WM_KEYDOWN:
+            case WM_KEYUP: {
+                u32 KeyCode = (u32)Msg.wParam;
+                bool IsDown = Msg.message == WM_KEYDOWN;
+                switch(KeyCode) {
+                    case 'W':
+                        Input->ButtonUp.Now = IsDown;
+                        break;
+                    case 'A':
+                        Input->ButtonLeft.Now = IsDown;
+                        break;
+                    case 'S':
+                        Input->ButtonDown.Now = IsDown;
+                        break;
+                    case 'D':
+                        Input->ButtonRight.Now = IsDown;
+                        break;
+                    case VK_SPACE:
+                        Input->ButtonSwitch.Now = IsDown;
+                        break;
+                    case VK_RETURN:
+                        Input->ButtonConfirm.Now = IsDown;
+                        break;
+               }
+#if INTERNAL
+                switch(KeyCode){
+                    case VK_F1:
+                        Input->DebugKeys[GameDebugKey_F1].Now = IsDown;
+                        break;
+                    case VK_F2:
+                        Input->DebugKeys[GameDebugKey_F2].Now = IsDown;
+                        break;
+                    case VK_F3:
+                        Input->DebugKeys[GameDebugKey_F3].Now = IsDown;
+                        break;
+                    case VK_F4:
+                        Input->DebugKeys[GameDebugKey_F4].Now = IsDown;
+                        break;
+                    case VK_F5:
+                        Input->DebugKeys[GameDebugKey_F5].Now = IsDown;
+                        break;
+                    case VK_F6:
+                        Input->DebugKeys[GameDebugKey_F6].Now = IsDown;
+                        break;
+                    case VK_F7:
+                        Input->DebugKeys[GameDebugKey_F7].Now = IsDown;
+                        break;
+                    case VK_F8:
+                        Input->DebugKeys[GameDebugKey_F8].Now = IsDown;
+                        break;
+                    case VK_F9:
+                        Input->DebugKeys[GameDebugKey_F9].Now = IsDown;
+                        break;
+                    case VK_F10:
+                        Input->DebugKeys[GameDebugKey_F10].Now = IsDown;
+                        break;
+                    case VK_F11:
+                        Input->DebugKeys[GameDebugKey_F11].Now = IsDown;
+                        break;
+                    case VK_F12:
+                        Input->DebugKeys[GameDebugKey_F12].Now = IsDown;
+                        break;
+                    case VK_RETURN:
+                        Input->DebugKeys[GameDebugKey_Return].Now = IsDown;
+                        break;
+                    case VK_BACK:
+                        Input->DebugKeys[GameDebugKey_Backspace].Now = IsDown;
+                        break;
+                }
+#endif
+
+
+            } break;
             default: 
             {
                 TranslateMessage(&Msg);
@@ -532,86 +599,24 @@ Win32WindowCallback(HWND Window,
                     WPARAM WParam,
                     LPARAM LParam) 
 {
+    win32_state* State = 0;
+    if (Message == WM_CREATE) {
+        CREATESTRUCT* CreateStruct = (CREATESTRUCT*)LParam;
+        State = (win32_state*)CreateStruct->lpCreateParams;
+        SetWindowLongPtr(Window, GWLP_USERDATA, (LONG_PTR)State);
+    }
+    else {
+        State = (win32_state*)GetWindowLongPtr(Window, GWLP_USERDATA);
+    }
+    
+
     LRESULT Result = 0;
     switch(Message) {
         case WM_CLOSE: {
-            Global_Win32State.IsRunning = false;
+            State->IsRunning = false;
         } break;
         case WM_DESTROY: {
-            Global_Win32State.IsRunning = false;
-            // Error?
-        } break;
-        case WM_KEYDOWN:
-        case WM_KEYUP: {
-            bool IsDown = Message == WM_KEYDOWN;
-            switch(WParam) {
-                case 'W':
-                    Win32Global_GameInput.ButtonUp.Now = IsDown;
-                    break;
-                case 'A':
-                    Win32Global_GameInput.ButtonLeft.Now = IsDown;
-                    break;
-                case 'S':
-                    Win32Global_GameInput.ButtonDown.Now = IsDown;
-                    break;
-                case 'D':
-                    Win32Global_GameInput.ButtonRight.Now = IsDown;
-                    break;
-                case VK_SPACE:
-                    Win32Global_GameInput.ButtonSwitch.Now = IsDown;
-                    break;
-                case VK_RETURN:
-                    Win32Global_GameInput.ButtonConfirm.Now = IsDown;
-                    break;
-           }
-#if INTERNAL
-            switch(WParam) {
-                case VK_F1:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F1].Now = IsDown;
-                    break;
-                case VK_F2:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F2].Now = IsDown;
-                    break;
-                case VK_F3:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F3].Now = IsDown;
-                    break;
-                case VK_F4:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F4].Now = IsDown;
-                    break;
-                case VK_F5:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F5].Now = IsDown;
-                    break;
-                case VK_F6:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F6].Now = IsDown;
-                    break;
-                case VK_F7:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F7].Now = IsDown;
-                    break;
-                case VK_F8:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F8].Now = IsDown;
-                    break;
-                case VK_F9:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F9].Now = IsDown;
-                    break;
-                case VK_F10:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F10].Now = IsDown;
-                    break;
-                case VK_F11:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F11].Now = IsDown;
-                    break;
-                case VK_F12:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_F12].Now = IsDown;
-                    break;
-                case VK_RETURN:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_Return].Now = IsDown;
-                    break;
-                case VK_BACK:
-                    Win32Global_GameInput.DebugKeys[GameDebugKey_Backspace].Now = IsDown;
-                    break;
-            }
-#endif
-
-
+            State->IsRunning = false;
         } break;
 //        case WM_CHAR: {                    
 //        } break;
@@ -631,7 +636,45 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    InitWin32State(&Global_Win32State);
+    win32_state State = {};
+    game_input GameInput = {};
+    
+    // Initialize performance frequency
+    {
+        LARGE_INTEGER PerfCountFreq;
+        QueryPerformanceFrequency(&PerfCountFreq);
+        State.PerformanceFrequency = SafeTruncateI64ToU32(PerfCountFreq.QuadPart);
+        State.IsRunning = true;
+    }
+
+    // Initialize paths
+    {
+        GetModuleFileNameA(0, State.ExeFullPath, sizeof(State.ExeFullPath));
+
+        State.OnePastExeDirectory = State.ExeFullPath;
+        for( char* Itr = State.ExeFullPath; *Itr; ++Itr) {
+            if (*Itr == '\\') {
+                State.OnePastExeDirectory = Itr + 1;
+            }
+        }
+
+        Win32BuildExePathFilename(&State,
+                                  State.SourceGameCodeDllFullPath, 
+                                  Global_GameCodeDllFileName);
+
+        Win32BuildExePathFilename(&State,
+                                  State.TempGameCodeDllFullPath, 
+                                  Global_TempGameCodeDllFileName);
+        Win32BuildExePathFilename(&State,
+                                  State.GameCodeLockFullPath, 
+                                  Global_GameCodeLockFileName);
+
+        Win32Log("Src Game Code DLL: %s\n", State.SourceGameCodeDllFullPath);
+        Win32Log("Tmp Game Code DLL: %s\n", State.TempGameCodeDllFullPath);
+        Win32Log("Game Code Lock: %s\n", State.GameCodeLockFullPath);
+
+    }
+
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
  
@@ -672,7 +715,7 @@ WinMain(HINSTANCE Instance,
                     0,
                     0,
                     Instance,
-                    0);
+                    &State);
     }
 
     Win32RuntimeAssert(Window, "Window failed to initialize\n");
@@ -686,32 +729,13 @@ WinMain(HINSTANCE Instance,
     Win32Log("Monitor Refresh Rate: %d", RefreshRate);
 
     // Create and initialize game code and DLL file paths
-    char SourceGameCodeDllFullPath[MAX_PATH];
-    Win32BuildExePathFilename(&Global_Win32State,
-                              SourceGameCodeDllFullPath, 
-                              Global_GameCodeDllFileName);
-
-    char TempGameCodeDllFullPath[MAX_PATH];        
-    Win32BuildExePathFilename(&Global_Win32State,
-                              TempGameCodeDllFullPath, 
-                              Global_TempGameCodeDllFileName);
-
-    char GameCodeLockFullPath[MAX_PATH];
-    Win32BuildExePathFilename(&Global_Win32State,
-                              GameCodeLockFullPath, 
-                              Global_GameCodeLockFileName);
-
-    Win32Log("Src Game Code DLL: %s\n", SourceGameCodeDllFullPath);
-    Win32Log("Tmp Game Code DLL: %s\n", TempGameCodeDllFullPath);
-    Win32Log("Game Code Lock: %s\n", GameCodeLockFullPath);
-
     // Load the game code DLL
     // TODO: Make game code global?
     win32_game_code GameCode = 
         Win32LoadGameCode(
-            SourceGameCodeDllFullPath,
-            TempGameCodeDllFullPath,
-            GameCodeLockFullPath);
+            State.SourceGameCodeDllFullPath,
+            State.TempGameCodeDllFullPath,
+            State.GameCodeLockFullPath);
 
     // Allocate memory for the entire program
     void* ProgramMemory = VirtualAllocEx(GetCurrentProcess(),
@@ -758,21 +782,22 @@ WinMain(HINSTANCE Instance,
 
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
-    while (Global_Win32State.IsRunning) {
-        Win32ProcessMessages(Window, &Global_Win32State, &Win32Global_GameInput);
+    while (State.IsRunning) {
+        GameInputUpdate(&GameInput);
+        Win32ProcessMessages(Window, &State, &GameInput);
 
         if (GameCode.GameUpdate) {
             GameCode.GameUpdate(&GameMemory,
                        &PlatformApi,
                        &RenderCommands,
-                       &Win32Global_GameInput,
+                       &GameInput,
                        TargetSecsPerFrame);
         }
 
         OpenglRender(&Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
-        f32 SecondsElapsed = Win32GetSecondsElapsed(&Global_Win32State,
+        f32 SecondsElapsed = Win32GetSecondsElapsed(&State,
                                                     LastCount, 
                                                     Win32GetCurrentCounter());
         if (TargetSecsPerFrame > SecondsElapsed) {
@@ -782,7 +807,7 @@ WinMain(HINSTANCE Instance,
                     Sleep(MsToSleep);
                 }
             }
-            while(TargetSecsPerFrame > Win32GetSecondsElapsed(&Global_Win32State,
+            while(TargetSecsPerFrame > Win32GetSecondsElapsed(&State,
                                                               LastCount, 
                                                               Win32GetCurrentCounter()));
 

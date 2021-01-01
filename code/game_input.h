@@ -49,7 +49,7 @@ struct game_input {
 };
 
 static inline void
-Update(game_input* Input) {
+GameInputUpdate(game_input* Input) {
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
     }

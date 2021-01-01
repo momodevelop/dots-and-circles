@@ -18,13 +18,13 @@ struct loaded_font {
     void* Data;
 };
 
-static inline option<loaded_font>
+static inline maybe<loaded_font>
 AllocateFontFromFile(const char* Filename) {
 	stbtt_fontinfo Font;
     FILE* FontFile = nullptr; 
 	fopen_s(&FontFile, Filename, "rb");
     if (FontFile == nullptr) {
-        return None<loaded_font>();
+        return No();
     }
     Defer { fclose(FontFile); };
 	    
@@ -38,7 +38,7 @@ AllocateFontFromFile(const char* Filename) {
     
     loaded_font Ret = { Font, Buffer };
 
-    return Some(Ret);
+    return Yes(Ret);
 }
 
 static inline void
@@ -170,7 +170,7 @@ GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
 int main() {
     printf("tool_build_assets start!\n");
 
-    option<loaded_font> LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
+    maybe<loaded_font> LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
     if (!LoadedFont) {
         printf("Failed to load font\n");
         return 1; 

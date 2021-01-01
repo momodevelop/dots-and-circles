@@ -63,10 +63,9 @@ template<typename T>
 struct maybe {
     T Item;
     b32 IsNone;
-    
-    maybe(no) { 
-        IsNone = true;
-    }
+  
+    maybe(T Item) : Item(Item), IsNone(false) {}
+    maybe(no) : IsNone(true) {}
 
     operator bool() {
         return !IsNone;
@@ -76,10 +75,7 @@ struct maybe {
 template<typename T>
 static inline maybe<T>
 Yes(T Item) {
-    maybe<T> Ret = {};
-    Ret.Item = Item;
-    Ret.IsNone = false;
-    return Ret;
+    return maybe<T>(Item);
 }
 
 static inline no
