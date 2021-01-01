@@ -586,7 +586,10 @@ OpenglInit(renderer_opengl* Opengl,
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
-    } 
+    }
+
+
+    Opengl->Header.IsInitialized = true;
     return true;
 }
 

@@ -67,10 +67,12 @@ struct win32_state {
     char GameCodeLockFullPath[MAX_PATH];
     char TempGameCodeDllFullPath[MAX_PATH];        
 
+    renderer_opengl Opengl;
+
 };
 
 
-
+// TODO: Shift this into win32 state?
 #if INTERNAL
 HANDLE Global_StdOut;
 static inline void
@@ -78,6 +80,7 @@ Win32WriteConsole(const char* Message) {
     WriteConsoleA(Global_StdOut, Message, SiStrLen(Message), 0, NULL);
 }
 #endif
+
 
 static inline void 
 Win32Log(const char* Message, ...) {
@@ -493,7 +496,7 @@ Win32OpenglInit(renderer_opengl* Opengl,
 static inline v2u
 Win32GetWindowDimensions(HWND Window) {
     RECT Rect = {};
-    GetClientRect(Window, &Rect);
+    GetWindowRect(Window, &Rect);
     return v2u { 
         u32(Rect.right - Rect.left),
         u32(Rect.bottom - Rect.top)
@@ -501,6 +504,16 @@ Win32GetWindowDimensions(HWND Window) {
 
 }
 
+static inline v2u
+Win32GetClientDimensions(HWND Window) {
+    RECT Rect = {};
+    GetClientRect(Window, &Rect);
+    return v2u { 
+        u32(Rect.right - Rect.left),
+        u32(Rect.bottom - Rect.top)
+    };
+
+}
 static inline void
 Win32ProcessMessages(HWND Window, win32_state* State, game_input* Input) {
     MSG Msg = {};
@@ -618,8 +631,17 @@ Win32WindowCallback(HWND Window,
         case WM_DESTROY: {
             State->IsRunning = false;
         } break;
-//        case WM_CHAR: {                    
-//        } break;
+        case WM_WINDOWPOSCHANGED: {
+            if(State->Opengl.Header.IsInitialized) {
+                v2u WindowWH = Win32GetWindowDimensions(Window);
+                v2u ClientWH = Win32GetClientDimensions(Window);
+
+                Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
+                Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
+
+                OpenglResize(&State->Opengl, (u32)ClientWH.W, (u32)ClientWH.H);
+            }
+        } break;
 
         default: {
             // Log message?
@@ -701,7 +723,9 @@ WinMain(HINSTANCE Instance,
         i32 WindowH = (i32)Global_DesignHeight;
         i32 WindowX = GetSystemMetrics(SM_CXSCREEN) / 2 - WindowW / 2;
         i32 WindowY = GetSystemMetrics(SM_CYSCREEN) / 2 - WindowH / 2;
-       
+      
+
+
         // TODO: Adaptively create 'best' window resolution based on desktop reso.
         Window = CreateWindowExA(
                     0,
@@ -721,6 +745,17 @@ WinMain(HINSTANCE Instance,
     Win32RuntimeAssert(Window, "Window failed to initialize\n");
 
     Win32Log("Window Initialized\n");
+    // Log the dimensions of window and client area
+    {
+        v2u WindowWH = Win32GetWindowDimensions(Window);
+        v2u ClientWH = Win32GetClientDimensions(Window);
+        Win32Log("Window Dimensions: %d x %d\n", WindowWH.W, WindowWH.H);
+        Win32Log("Client Dimensions: %d x %d\n", ClientWH.W, ClientWH.H);
+    }
+    
+
+
+
     HDC DeviceContext = GetDC(Window); 
 
     u32 RefreshRate = Win32DetermineIdealRefreshRate(DeviceContext); 
@@ -769,11 +804,12 @@ WinMain(HINSTANCE Instance,
     platform_api PlatformApi = Win32LoadPlatformApi();
 
     // Initialize OpenGL
-    renderer_opengl Opengl = {};
     {
-        v2u WindowWH = Win32GetWindowDimensions(Window);
-
-        b32 Success = Win32OpenglInit(&Opengl, DeviceContext, WindowWH.W, WindowWH.H);
+        v2u Dimensions = Win32GetClientDimensions(Window);
+        b32 Success = Win32OpenglInit(&State.Opengl, 
+                                      DeviceContext, 
+                                      Dimensions.W, 
+                                      Dimensions.H);
         Win32RuntimeAssert(Success, "Cannot initialize Opengl");
     }
 
@@ -794,7 +830,7 @@ WinMain(HINSTANCE Instance,
                        TargetSecsPerFrame);
         }
 
-        OpenglRender(&Opengl, &RenderCommands);
+        OpenglRender(&State.Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
         f32 SecondsElapsed = Win32GetSecondsElapsed(&State,
@@ -808,8 +844,8 @@ WinMain(HINSTANCE Instance,
                 }
             }
             while(TargetSecsPerFrame > Win32GetSecondsElapsed(&State,
-                                                              LastCount, 
-                                                              Win32GetCurrentCounter()));
+                        LastCount, 
+                        Win32GetCurrentCounter()));
 
         }
         else {
@@ -823,7 +859,7 @@ WinMain(HINSTANCE Instance,
             SwapBuffers(Dc);
             ReleaseDC(Window, Dc); 
         }
-        
+
     }
 
 
