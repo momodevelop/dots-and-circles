@@ -33,7 +33,7 @@
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x0002
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
 
-
+// TODO: Use defines for better readability
 typedef BOOL WINAPI wgl_choose_pixel_format_arb(HDC hdc,
                                                 const int* piAttribIList,
                                                 const FLOAT* pfAttribFList,
@@ -70,6 +70,19 @@ struct win32_state {
     renderer_opengl Opengl;
 
 };
+
+
+static inline LONG
+Width(RECT Value) {
+    return Value.right - Value.left;
+}
+
+static inline LONG
+Height(RECT Value) {
+    return Value.bottom - Value.top;
+}
+    
+
 
 
 // TODO: Shift this into win32 state?
@@ -136,7 +149,7 @@ Win32ReadFile(void* Dest, u32 DestSize, const char* Path) {
     } else {
         LARGE_INTEGER FileSize;
         if (GetFileSizeEx(FileHandle, &FileSize)) {
-            u32 FileSize32 = SafeTruncateU64ToU32(FileSize.QuadPart);
+            u32 FileSize32 = SafeCastU64ToU32(FileSize.QuadPart);
             if (FileSize.QuadPart > DestSize) {
                 Win32Log("[Win32ReadFile] DestSize too smol for file: %s!\n", Path); 
                 return false;
@@ -494,6 +507,14 @@ Win32OpenglInit(renderer_opengl* Opengl,
 }
 
 static inline v2u
+Win32GetMonitorDimensions() {
+    v2u Ret = {};
+    Ret.W = SafeCastI32ToU32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = SafeCastI32ToU32(GetSystemMetrics(SM_CYSCREEN));
+    return Ret;
+}
+
+static inline v2u
 Win32GetWindowDimensions(HWND Window) {
     RECT Rect = {};
     GetWindowRect(Window, &Rect);
@@ -665,7 +686,7 @@ WinMain(HINSTANCE Instance,
     {
         LARGE_INTEGER PerfCountFreq;
         QueryPerformanceFrequency(&PerfCountFreq);
-        State.PerformanceFrequency = SafeTruncateI64ToU32(PerfCountFreq.QuadPart);
+        State.PerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
         State.IsRunning = true;
     }
 
@@ -719,23 +740,30 @@ WinMain(HINSTANCE Instance,
     Win32Log("Window class registered\n");
     HWND Window;
     {
-        i32 WindowW = (i32)Global_DesignWidth;
-        i32 WindowH = (i32)Global_DesignHeight;
-        i32 WindowX = GetSystemMetrics(SM_CXSCREEN) / 2 - WindowW / 2;
-        i32 WindowY = GetSystemMetrics(SM_CYSCREEN) / 2 - WindowH / 2;
-      
-
+        RECT WindowRect = {};
+        v2u MonitorDimensions = Win32GetMonitorDimensions();
+        WindowRect.left = MonitorDimensions.W / 2 - (u32)Global_DesignWidth / 2;
+        WindowRect.right = MonitorDimensions.W / 2 + (u32)Global_DesignWidth / 2;
+        WindowRect.top = MonitorDimensions.H / 2 - (u32)Global_DesignHeight / 2;
+        WindowRect.bottom = MonitorDimensions.H / 2 + (u32)Global_DesignHeight / 2;
+        
+        DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+        AdjustWindowRectEx(&WindowRect,
+                           Style,
+                           FALSE,
+                           0);
+        
 
         // TODO: Adaptively create 'best' window resolution based on desktop reso.
         Window = CreateWindowExA(
                     0,
                     WindowClass.lpszClassName,
                     "Dots And Circles",
-                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                    WindowX,
-                    WindowY,
-                    WindowW,
-                    WindowH,
+                    Style,
+                    WindowRect.left,
+                    WindowRect.top,
+                    Width(WindowRect),
+                    Height(WindowRect),
                     0,
                     0,
                     Instance,
