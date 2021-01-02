@@ -34,22 +34,26 @@
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
 
 // TODO: Use defines for better readability
-typedef BOOL WINAPI wgl_choose_pixel_format_arb(HDC hdc,
-                                                const int* piAttribIList,
-                                                const FLOAT* pfAttribFList,
-                                                UINT nMaxFormats,
-                                                int* piFormats,
-                                                UINT* nNumFormats);
-typedef BOOL WINAPI wgl_swap_interval_ext(int interval);
-typedef HGLRC WINAPI wgl_create_context_attribs_arb(HDC hdc, HGLRC hShareContext,
-                                                    const int* attribList);
-typedef const char* WINAPI wgl_get_extensions_string_ext();
+#define WglFunction(Name) wgl_func_##Name
+#define WglFunctionPtr(Name) WglFunction(Name)* Name
+typedef BOOL WINAPI WglFunction(wglChoosePixelFormatARB)(HDC hdc,
+                                                         const int* piAttribIList,
+                                                         const FLOAT* pfAttribFList,
+                                                         UINT nMaxFormats,
+                                                         int* piFormats,
+                                                         UINT* nNumFormats);
+typedef BOOL WINAPI WglFunction(wglSwapIntervalEXT)(int interval);
+typedef HGLRC WINAPI WglFunction(wglCreateContextAttribsARB)(HDC hdc, 
+                                                             HGLRC hShareContext,
+                                                            const int* attribList);
+typedef const char* WINAPI WglFunction(wglGetExtensionsStringEXT)();
 
 
-static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
-static wgl_choose_pixel_format_arb* wglChoosePixelFormatARB;
-static wgl_swap_interval_ext*  wglSwapIntervalEXT;
-static wgl_get_extensions_string_ext* wglGetExtensionsStringEXT;
+
+static WglFunctionPtr(wglCreateContextAttribsARB);
+static WglFunctionPtr(wglChoosePixelFormatARB);
+static WglFunctionPtr(wglSwapIntervalEXT);
+static WglFunctionPtr(wglGetExtensionsStringEXT);
 
 // Globals
 static const char* Global_GameCodeDllFileName = "game.dll";
@@ -361,22 +365,13 @@ Win32OpenglLoadWglExtensions() {
 
 
         if (wglMakeCurrent(Dc, OpenglContext)) {
-            wglChoosePixelFormatARB = 
-                (wgl_choose_pixel_format_arb*)wglGetProcAddress("wglChoosePixelFormatARB");
-            if (!wglChoosePixelFormatARB) {
-                Win32Log("[OpenGL] Cannot load: wglChoosePixelFormatARB\n");
-            }
 
-            wglCreateContextAttribsARB = 
-                (wgl_create_context_attribs_arb*)wglGetProcAddress("wglCreateContextAttribsARB");
-            if (!wglCreateContextAttribsARB) {
-                Win32Log("[OpenGL] Cannot load: wglCreateContextAttribsARB\n");
-            }
-            wglSwapIntervalEXT =
-                (wgl_swap_interval_ext*)wglGetProcAddress("wglSwapIntervalEXT");
-            if (!wglSwapIntervalEXT) {
-                Win32Log("[OpenGL] Cannot load: wglSwapIntervalEXT\n");
-            }
+#define Win32SetWglFunction(Name) Name = (WglFunction(Name)*)wglGetProcAddress(#Name); if (!Name) { Win32Log("[OpenGL] Cannot load: " #Name " \n"); }
+
+            Win32SetWglFunction(wglChoosePixelFormatARB);
+            Win32SetWglFunction(wglCreateContextAttribsARB);
+            Win32SetWglFunction(wglSwapIntervalEXT);
+
             wglMakeCurrent(0, 0);
         }
         else {
@@ -462,7 +457,8 @@ Win32OpenglInit(renderer_opengl* Opengl,
     if(wglMakeCurrent(DeviceContext, OpenglContext)) {
         HMODULE Module = LoadLibraryA("opengl32.dll");
 
-#define Win32SetOpenglFunction(Name) Opengl->Name = (opengl_func_##Name*)Win32TryGetOpenglFunction(#Name, Module); 
+        // TODO: Log functions that are not loaded
+#define Win32SetOpenglFunction(Name) Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); 
 
         Win32SetOpenglFunction(glEnable);
         Win32SetOpenglFunction(glDisable); 
