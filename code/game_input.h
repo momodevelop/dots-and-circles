@@ -48,8 +48,20 @@ struct game_input {
 #endif
 };
 
+#if INTERNAL
+static inline b32
+TryPushDebugTextInputBuffer(game_input* Input, char C) {
+    if (C != '\r') {
+        Push(&Input->DebugTextInputBuffer, C);
+        return true;
+    }
+    return false;
+}
+#endif
+
+
 static inline void
-GameInputUpdate(game_input* Input) {
+Update(game_input* Input) {
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
     }

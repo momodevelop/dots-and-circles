@@ -458,7 +458,8 @@ Win32OpenglInit(renderer_opengl* Opengl,
         HMODULE Module = LoadLibraryA("opengl32.dll");
 
         // TODO: Log functions that are not loaded
-#define Win32SetOpenglFunction(Name) Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); 
+#define Win32SetOpenglFunction(Name) Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
+        if (!Opengl->Name) { Win32Log("[Opengl] Cannot load " #Name " \n"); return false; }
 
         Win32SetOpenglFunction(glEnable);
         Win32SetOpenglFunction(glDisable); 
@@ -539,6 +540,12 @@ Win32ProcessMessages(HWND Window, win32_state* State, game_input* Input) {
             case WM_CLOSE: {
                 State->IsRunning = false;
             } break;
+#if INTERNAL
+            case WM_CHAR: {
+                char C = (char)Msg.wParam;
+                TryPushDebugTextInputBuffer(Input, C);
+            } break;
+#endif
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
@@ -611,7 +618,7 @@ Win32ProcessMessages(HWND Window, win32_state* State, game_input* Input) {
                         break;
                 }
 #endif
-
+                TranslateMessage(&Msg);
 
             } break;
             default: 
@@ -675,8 +682,15 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    win32_state State = {};
     game_input GameInput = {};
+#if INTERNAL 
+    // argh lol, can we not do this?
+    char DebugTextInputBuffer[10];
+    GameInput.DebugTextInputBuffer = StringBuffer(DebugTextInputBuffer, 10);
+#endif
+
+
+    win32_state State = {};
     
     // Initialize performance frequency
     {
@@ -843,7 +857,7 @@ WinMain(HINSTANCE Instance,
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (State.IsRunning) {
-        GameInputUpdate(&GameInput);
+        Update(&GameInput);
         Win32ProcessMessages(Window, &State, &GameInput);
 
         if (GameCode.GameUpdate) {
