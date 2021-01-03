@@ -138,7 +138,7 @@ UpdateSplashMode(game_state* GameState,
     PushCommandOrthoCamera(RenderCommands, 
             v3f{}, 
             CenteredRect( 
-                v3f{ DesignWidth, DesignHeight, DesignDepth }, 
+                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )
     );

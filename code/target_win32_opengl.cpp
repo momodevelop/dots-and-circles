@@ -60,21 +60,21 @@ static const char* Global_TempGameCodeDllFileName = "temp_game.dll";
 static const char* Global_GameCodeLockFileName = "lock";
 
 
-struct win32_state {
-    platform_state Header;
-    b32 IsRunning;
-    u32 PerformanceFrequency;
-    char ExeFullPath[MAX_PATH];
-    char* OnePastExeDirectory;
 
-    char SourceGameCodeDllFullPath[MAX_PATH];
-    char GameCodeLockFullPath[MAX_PATH];
-    char TempGameCodeDllFullPath[MAX_PATH];        
+b32 Global_IsRunning;
+u32 Global_PerformanceFrequency;
+char Global_ExeFullPath[MAX_PATH];
+char* Global_OnePastExeDirectory;
 
-    renderer_opengl Opengl;
+char Global_SourceGameCodeDllFullPath[MAX_PATH];
+char Global_GameCodeLockFullPath[MAX_PATH];
+char Global_TempGameCodeDllFullPath[MAX_PATH];        
 
-};
+renderer_opengl Global_Opengl;
 
+#if INTERNAL
+    HANDLE Global_StdOut;
+#endif
 
 static inline LONG
 Width(RECT Value) {
@@ -85,29 +85,23 @@ static inline LONG
 Height(RECT Value) {
     return Value.bottom - Value.top;
 }
-    
-
-
 
 // TODO: Shift this into win32 state?
 #if INTERNAL
-HANDLE Global_StdOut;
 static inline void
 Win32WriteConsole(const char* Message) {
     WriteConsoleA(Global_StdOut, Message, SiStrLen(Message), 0, NULL);
 }
 #endif
 
-
-static inline void 
-Win32Log(const char* Message, ...) {
+static inline
+PlatformLogFunc(Win32Log) {
     char Buffer[256];
 
     va_list VaList;
-    va_start(VaList, Message);
+    va_start(VaList, Format);
    
-    // TODO: Change to stb_sprintf
-    stbsp_vsprintf(Buffer, Message, VaList);
+    stbsp_vsprintf(Buffer, Format, VaList);
 
 #if INTERNAL
     Win32WriteConsole(Buffer);
@@ -119,8 +113,6 @@ Win32Log(const char* Message, ...) {
 }
 #define Win32RuntimeAssert(Cond, Msg) if(!(Cond)) { Win32Log(Msg); ExitProcess(1); }
 
-
-
 static inline LARGE_INTEGER
 Win32GetCurrentCounter(void) {
     LARGE_INTEGER Result;
@@ -129,15 +121,14 @@ Win32GetCurrentCounter(void) {
 }
 
 static inline f32
-Win32GetSecondsElapsed(win32_state* State, 
-                       LARGE_INTEGER Start, 
+Win32GetSecondsElapsed(LARGE_INTEGER Start, 
                        LARGE_INTEGER End) 
 {
-    return (f32(End.QuadPart - Start.QuadPart)) / State->PerformanceFrequency; 
+    return (f32(End.QuadPart - Start.QuadPart)) / Global_PerformanceFrequency; 
 }
 
-static inline b32
-Win32ReadFile(void* Dest, u32 DestSize, const char* Path) {
+static inline
+PlatformReadFileFunc(Win32ReadFile) {
     HANDLE FileHandle = CreateFileA(Path, 
                                     GENERIC_READ, 
                                     FILE_SHARE_READ,
@@ -180,7 +171,8 @@ Win32ReadFile(void* Dest, u32 DestSize, const char* Path) {
 }
 
 static inline u32
-Win32GetFileSize(const char* Path) {
+Win32GetFileSize(const char* Path) 
+{
     HANDLE FileHandle = CreateFileA(Path, 
                                     GENERIC_READ, 
                                     FILE_SHARE_READ,
@@ -206,9 +198,9 @@ Win32GetFileSize(const char* Path) {
 
 
 static inline void
-Win32BuildExePathFilename(win32_state* State, char* Dest, const char* Filename) {
-    for(const char *Itr = State->ExeFullPath; 
-        Itr != State->OnePastExeDirectory; 
+Win32BuildExePathFilename(char* Dest, const char* Filename) {
+    for(const char *Itr = Global_ExeFullPath; 
+        Itr != Global_OnePastExeDirectory; 
         ++Itr, ++Dest) 
     {
         (*Dest) = (*Itr);
@@ -275,12 +267,11 @@ Win32UnloadGameCode(win32_game_code* GameCode) {
 }
 
 static inline platform_api 
-Win32LoadPlatformApi(win32_state* State) {
+Win32LoadPlatformApi() {
     platform_api Ret = {};
     Ret.Log = Win32Log;
     Ret.ReadFile = Win32ReadFile;
     Ret.GetFileSize = Win32GetFileSize;
-    Ret.State = &State->Header; 
     return Ret;
 }
 
@@ -419,8 +410,7 @@ Win32TryGetOpenglFunction(const char* Name, HMODULE FallbackModule)
 }
 // TODO: Maybe return the context?
 static inline b32
-Win32OpenglInit(renderer_opengl* Opengl, 
-                HDC DeviceContext, 
+Win32OpenglInit(HDC DeviceContext, 
                 u32 WindowWidth, 
                 u32 WindowHeight) 
 {
@@ -456,10 +446,9 @@ Win32OpenglInit(renderer_opengl* Opengl,
 
     if(wglMakeCurrent(DeviceContext, OpenglContext)) {
         HMODULE Module = LoadLibraryA("opengl32.dll");
-
         // TODO: Log functions that are not loaded
-#define Win32SetOpenglFunction(Name) Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
-        if (!Opengl->Name) { Win32Log("[Opengl] Cannot load " #Name " \n"); return false; }
+#define Win32SetOpenglFunction(Name) Global_Opengl.Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
+        if (!Global_Opengl.Name) { Win32Log("[Opengl] Cannot load " #Name " \n"); return false; }
 
         Win32SetOpenglFunction(glEnable);
         Win32SetOpenglFunction(glDisable); 
@@ -498,7 +487,7 @@ Win32OpenglInit(renderer_opengl* Opengl,
         Win32SetOpenglFunction(glNamedBufferSubData);
         Win32SetOpenglFunction(glUseProgram);
     }
-    OpenglInit(Opengl, WindowWidth, WindowHeight, 128);
+    OpenglInit(&Global_Opengl, WindowWidth, WindowHeight, 128);
 
     return true;
 }
@@ -533,19 +522,19 @@ Win32GetClientDimensions(HWND Window) {
 
 }
 static inline void
-Win32ProcessMessages(HWND Window, win32_state* State, input* Input) {
+Win32ProcessMessages(HWND Window, 
+                     input* Input)
+{
     MSG Msg = {};
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
         switch(Msg.message) {
             case WM_CLOSE: {
-                State->IsRunning = false;
+                Global_IsRunning = false;
             } break;
-#if INTERNAL
             case WM_CHAR: {
                 char C = (char)Msg.wParam;
-                TryPushCharacterInput(&State->Header, C);
+                TryPushCharacterInput(Input, C);
             } break;
-#endif
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
@@ -571,55 +560,14 @@ Win32ProcessMessages(HWND Window, win32_state* State, input* Input) {
                     case VK_RETURN:
                         Input->ButtonConfirm.Now = IsDown;
                         break;
-               }
-                
-#if INTERNAL
-                // Such laziness. Much wow. Looks nice tho.
-                switch(KeyCode){
                     case VK_F1:
-                        State->Header.DebugKeys[GameDebugKey_F1].Now = IsDown;
-                        break;
-                    case VK_F2:
-                        State->Header.DebugKeys[GameDebugKey_F2].Now = IsDown;
-                        break;
-                    case VK_F3:
-                        State->Header.DebugKeys[GameDebugKey_F3].Now = IsDown;
-                        break;
-                    case VK_F4:
-                        State->Header.DebugKeys[GameDebugKey_F4].Now = IsDown;
-                        break;
-                    case VK_F5:
-                        State->Header.DebugKeys[GameDebugKey_F5].Now = IsDown;
-                        break;
-                    case VK_F6:
-                        State->Header.DebugKeys[GameDebugKey_F6].Now = IsDown;
-                        break;
-                    case VK_F7:
-                        State->Header.DebugKeys[GameDebugKey_F7].Now = IsDown;
-                        break;
-                    case VK_F8:
-                        State->Header.DebugKeys[GameDebugKey_F8].Now = IsDown;
-                        break;
-                    case VK_F9:
-                        State->Header.DebugKeys[GameDebugKey_F9].Now = IsDown;
-                        break;
-                    case VK_F10:
-                        State->Header.DebugKeys[GameDebugKey_F10].Now = IsDown;
-                        break;
-                    case VK_F11:
-                        State->Header.DebugKeys[GameDebugKey_F11].Now = IsDown;
-                        break;
-                    case VK_F12:
-                        State->Header.DebugKeys[GameDebugKey_F12].Now = IsDown;
-                        break;
-                    case VK_RETURN:
-                        State->Header.DebugKeys[GameDebugKey_Return].Now = IsDown;
+                        Input->ButtonConsole.Now = IsDown;
                         break;
                     case VK_BACK:
-                        State->Header.DebugKeys[GameDebugKey_Backspace].Now = IsDown;
+                        Input->ButtonBack.Now = IsDown;
                         break;
                 }
-#endif
+                
                 TranslateMessage(&Msg);
 
             } break;
@@ -638,34 +586,23 @@ Win32WindowCallback(HWND Window,
                     WPARAM WParam,
                     LPARAM LParam) 
 {
-    win32_state* State = 0;
-    if (Message == WM_CREATE) {
-        CREATESTRUCT* CreateStruct = (CREATESTRUCT*)LParam;
-        State = (win32_state*)CreateStruct->lpCreateParams;
-        SetWindowLongPtr(Window, GWLP_USERDATA, (LONG_PTR)State);
-    }
-    else {
-        State = (win32_state*)GetWindowLongPtr(Window, GWLP_USERDATA);
-    }
-    
-
     LRESULT Result = 0;
     switch(Message) {
         case WM_CLOSE: {
-            State->IsRunning = false;
+            Global_IsRunning = false;
         } break;
         case WM_DESTROY: {
-            State->IsRunning = false;
+            Global_IsRunning = false;
         } break;
         case WM_WINDOWPOSCHANGED: {
-            if(State->Opengl.Header.IsInitialized) {
+            if(Global_Opengl.Header.IsInitialized) {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);
 
                 Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
                 Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
 
-                OpenglResize(&State->Opengl, (u32)ClientWH.W, (u32)ClientWH.H);
+                OpenglResize(&Global_Opengl, (u32)ClientWH.W, (u32)ClientWH.H);
             }
         } break;
 
@@ -677,6 +614,42 @@ Win32WindowCallback(HWND Window,
     return Result;
 }
 
+static inline void
+Win32StateInit() {
+    // Initialize performance frequency
+    {
+        LARGE_INTEGER PerfCountFreq;
+        QueryPerformanceFrequency(&PerfCountFreq);
+        Global_PerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
+        Global_IsRunning = true;
+    }
+
+    // Initialize paths
+    {
+        GetModuleFileNameA(0, 
+                           Global_ExeFullPath, 
+                           sizeof(Global_ExeFullPath));
+
+        Global_OnePastExeDirectory = Global_ExeFullPath;
+        for( char* Itr = Global_ExeFullPath; *Itr; ++Itr) {
+            if (*Itr == '\\') {
+                Global_OnePastExeDirectory = Itr + 1;
+            }
+        }
+
+        Win32BuildExePathFilename(Global_SourceGameCodeDllFullPath, 
+                                  Global_GameCodeDllFileName);
+        Win32BuildExePathFilename(Global_TempGameCodeDllFullPath, 
+                                  Global_TempGameCodeDllFileName);
+        Win32BuildExePathFilename(Global_GameCodeLockFullPath, 
+                                  Global_GameCodeLockFileName);
+
+        Win32Log("Src Game Code DLL: %s\n", Global_SourceGameCodeDllFullPath);
+        Win32Log("Tmp Game Code DLL: %s\n", Global_TempGameCodeDllFullPath);
+        Win32Log("Game Code Lock: %s\n", Global_GameCodeLockFullPath);
+    }
+}
+
 
 int CALLBACK
 WinMain(HINSTANCE Instance,
@@ -685,50 +658,20 @@ WinMain(HINSTANCE Instance,
         int ShowCode)
 {
     input GameInput = {};
-    win32_state State = {};
-#if INTERNAL 
-    // TODO: We should really use an arena for this but I'm lazy af.
-    char DebugTextInputBuffer[10];
-    State.Header.DebugCharInput = StringBuffer(DebugTextInputBuffer, 10);
-#endif
-
-
-    
-    // Initialize performance frequency
     {
-        LARGE_INTEGER PerfCountFreq;
-        QueryPerformanceFrequency(&PerfCountFreq);
-        State.PerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
-        State.IsRunning = true;
+        // TODO: We should really use an arena for this but I'm lazy af.
+        char _Characters[10];
+        Init(&GameInput, _Characters, 10);
     }
 
-    // Initialize paths
-    {
-        GetModuleFileNameA(0, State.ExeFullPath, sizeof(State.ExeFullPath));
+#if INTERNAL
+    // Allocate game_console and stdout
+    AllocConsole();    
+    Defer { FreeConsole(); };
+    Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-        State.OnePastExeDirectory = State.ExeFullPath;
-        for( char* Itr = State.ExeFullPath; *Itr; ++Itr) {
-            if (*Itr == '\\') {
-                State.OnePastExeDirectory = Itr + 1;
-            }
-        }
-
-        Win32BuildExePathFilename(&State,
-                                  State.SourceGameCodeDllFullPath, 
-                                  Global_GameCodeDllFileName);
-
-        Win32BuildExePathFilename(&State,
-                                  State.TempGameCodeDllFullPath, 
-                                  Global_TempGameCodeDllFileName);
-        Win32BuildExePathFilename(&State,
-                                  State.GameCodeLockFullPath, 
-                                  Global_GameCodeLockFileName);
-
-        Win32Log("Src Game Code DLL: %s\n", State.SourceGameCodeDllFullPath);
-        Win32Log("Tmp Game Code DLL: %s\n", State.TempGameCodeDllFullPath);
-        Win32Log("Game Code Lock: %s\n", State.GameCodeLockFullPath);
-
-    }
+    platform_api PlatformApi = Win32LoadPlatformApi();
+#endif 
 
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -739,13 +682,6 @@ WinMain(HINSTANCE Instance,
     WindowClass.hInstance = Instance;
     WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
     WindowClass.lpszClassName = "DnCWindowClass";
-
-    // TODO: Console maybe for internal debug only?
-    // Not exactly sure what to do on release
-    AllocConsole();    
-    Defer { FreeConsole(); };
-    Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    Win32Log("Hello Windows!\n");
 
     Win32RuntimeAssert(RegisterClassA(&WindowClass), "Failed to register class");
 
@@ -779,7 +715,7 @@ WinMain(HINSTANCE Instance,
                     0,
                     0,
                     Instance,
-                    &State);
+                    0);
     }
 
     Win32RuntimeAssert(Window, "Window failed to initialize\n");
@@ -808,13 +744,13 @@ WinMain(HINSTANCE Instance,
     // TODO: Make game code global?
     win32_game_code GameCode = 
         Win32LoadGameCode(
-            State.SourceGameCodeDllFullPath,
-            State.TempGameCodeDllFullPath,
-            State.GameCodeLockFullPath);
+            Global_SourceGameCodeDllFullPath,
+            Global_TempGameCodeDllFullPath,
+            Global_GameCodeLockFullPath);
 
     // Allocate memory for the entire program
     void* ProgramMemory = VirtualAllocEx(GetCurrentProcess(),
-                                         0, TotalMemorySize, 
+                                         0, Global_TotalMemorySize, 
                                          MEM_RESERVE | MEM_COMMIT, 
                                          PAGE_READWRITE);
 
@@ -825,29 +761,21 @@ WinMain(HINSTANCE Instance,
     
     // Initialize game memory
     game_memory GameMemory = {};
-    GameMemory.MainMemory = PushBlock(&Win32Arena, Global_GameMainMemorySize);
-    
+    GameMemory.MainMemory = PushBlock(&Win32Arena, Global_GameMainMemorySize); 
     Win32RuntimeAssert(GameMemory.MainMemory, "Cannot allocate game main memory\n");
-
     GameMemory.MainMemorySize = Global_GameMainMemorySize;
-#if INTERNAL
-    GameMemory.DebugMemory = PushBlock(&Win32Arena, Global_GameDebugMemorySize); 
-    Win32RuntimeAssert(GameMemory.DebugMemory, "Cannot allocate game debug memory\n");
-    GameMemory.DebugMemorySize = Global_GameDebugMemorySize;
-#endif
     
     // Intialize Render commands
-    void* RenderCommandsMemory = PushBlock(&Win32Arena, Global_RenderCommandsMemorySize);
-    mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
+    void* RenderCommandsMemory = PushBlock(&Win32Arena, 
+                                           Global_RenderCommandsMemorySize);
+    mailbox RenderCommands = Mailbox(RenderCommandsMemory, 
+                                     Global_RenderCommandsMemorySize);
     
-    // Initialize Platform API for game to use
-    platform_api PlatformApi = Win32LoadPlatformApi(&State);
-
+ 
     // Initialize OpenGL
     {
         v2u Dimensions = Win32GetClientDimensions(Window);
-        b32 Success = Win32OpenglInit(&State.Opengl, 
-                                      DeviceContext, 
+        b32 Success = Win32OpenglInit(DeviceContext, 
                                       Dimensions.W, 
                                       Dimensions.H);
         Win32RuntimeAssert(Success, "Cannot initialize Opengl");
@@ -858,12 +786,10 @@ WinMain(HINSTANCE Instance,
 
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
-    while (State.IsRunning) {
+    while (Global_IsRunning) {
         Update(&GameInput);
-#if INTERNAL
-        UpdateDebugState(&State.Header); 
-#endif 
-        Win32ProcessMessages(Window, &State, &GameInput);
+        Win32ProcessMessages(Window, 
+                             &GameInput);
 
         if (GameCode.GameUpdate) {
             GameCode.GameUpdate(&GameMemory,
@@ -873,11 +799,10 @@ WinMain(HINSTANCE Instance,
                        TargetSecsPerFrame);
         }
 
-        OpenglRender(&State.Opengl, &RenderCommands);
+        OpenglRender(&Global_Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
-        f32 SecondsElapsed = Win32GetSecondsElapsed(&State,
-                                                    LastCount, 
+        f32 SecondsElapsed = Win32GetSecondsElapsed(LastCount, 
                                                     Win32GetCurrentCounter());
         if (TargetSecsPerFrame > SecondsElapsed) {
             if (SleepIsGranular) {
@@ -886,9 +811,8 @@ WinMain(HINSTANCE Instance,
                     Sleep(MsToSleep);
                 }
             }
-            while(TargetSecsPerFrame > Win32GetSecondsElapsed(&State,
-                        LastCount, 
-                        Win32GetCurrentCounter()));
+            while(TargetSecsPerFrame > Win32GetSecondsElapsed(LastCount, 
+                                                              Win32GetCurrentCounter()));
 
         }
         else {

@@ -1,7 +1,5 @@
-#if INTERNAL
-
-#ifndef GAME_DEBUG
-#define GAME_DEBUG
+#ifndef GAME_CONSOLE
+#define GAME_CONSOLE
 
 #include "mm_list.h"
 #include "mm_colors.h"
@@ -10,20 +8,20 @@
 #include "game_assets.h"
 #include "game_text.h"
 
-using debug_callback = void (*)(void* Context, string Arguments);
-struct debug_command {
+using game_console_callback = void (*)(void* Context, string Arguments);
+struct game_console_command {
     string Key;
-    debug_callback Callback;
+    game_console_callback Callback;
     void* Context;
 };
 
-struct debug_string {
+struct game_console_string {
     string_buffer Buffer;
     v4f Color;
 };
 
 
-struct debug_console {
+struct game_console {
     v4f InfoBgColor;
     v4f InputBgColor;
     v4f InputColor;
@@ -32,7 +30,7 @@ struct debug_console {
     v2f Dimensions;
 
     // Buffers
-    array<debug_string> InfoBuffers;
+    array<game_console_string> InfoBuffers;
     string_buffer InputBuffer;
     string_buffer CommandBuffer;
     b32 IsCommandRead;
@@ -41,30 +39,30 @@ struct debug_console {
 
 
 static inline void 
-Register(list<debug_command>* Commands, 
+Register(list<game_console_command>* Commands, 
          string Key, 
-         debug_callback Callback, 
+         game_console_callback Callback, 
          void* Context)
 {
     Push(Commands, { Key, Callback, Context } );
 }
 
 static inline void 
-Unregister(list<debug_command>* Commands, string Key) {
-    RemoveIf(Commands, [Key](const debug_command* Cmd) { 
+Unregister(list<game_console_command>* Commands, string Key) {
+    RemoveIf(Commands, [Key](const game_console_command* Cmd) { 
         return Cmd->Key == Key; 
     });
 }
 
 static inline b32 
-Execute(list<debug_command> Commands, string Arguments) {
+Execute(list<game_console_command> Commands, string Arguments) {
     // Assume that the first token is the command     
     range<usize> Range = { 0, Find(Arguments, ' ') };
     string CommandStr = SubString(Arguments, Range); 
 
     // Send a command to a callback
     for (usize i = 0; i < Commands.Count; ++i) {
-        debug_command* Command = Commands + i;
+        game_console_command* Command = Commands + i;
         if (Command->Key == CommandStr) {
              Command->Callback(Command->Context, Arguments);
              return true;
@@ -75,18 +73,17 @@ Execute(list<debug_command> Commands, string Arguments) {
 }
 
 
-static inline debug_console
-CreateDebugConsole(
-        arena* Arena, 
-        usize InfoBufferLines, 
-        usize BufferCapacity, 
-        usize CommandsCapacity)
+static inline game_console
+GameConsole(arena* Arena, 
+            usize InfoBufferLines, 
+            usize BufferCapacity, 
+            usize CommandsCapacity)
 {
-    debug_console Ret = {};
+    game_console Ret = {};
 
-    Ret.InfoBuffers = Array<debug_string>(Arena, InfoBufferLines);
+    Ret.InfoBuffers = Array<game_console_string>(Arena, InfoBufferLines);
     for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
-        debug_string* InfoBuffer = Ret.InfoBuffers + I;
+        game_console_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = StringBuffer(Arena, BufferCapacity);
     }
 
@@ -98,48 +95,47 @@ CreateDebugConsole(
 
 
 static inline void
-PushDebugInfo(debug_console* DebugConsole, string String, v4f Color) {
-    for (usize I = 0; I < DebugConsole->InfoBuffers.Count - 1; ++I) {
-        usize J = DebugConsole->InfoBuffers.Count - 1 - I;
-        debug_string* Dest = DebugConsole->InfoBuffers + J;
-        debug_string* Src = DebugConsole->InfoBuffers + J - 1;
+PushDebugInfo(game_console* Console, string String, v4f Color) {
+    for (usize I = 0; I < Console->InfoBuffers.Count - 1; ++I) {
+        usize J = Console->InfoBuffers.Count - 1 - I;
+        game_console_string* Dest = Console->InfoBuffers + J;
+        game_console_string* Src = Console->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, Src->Buffer.Array);
-        Dest->Color = DebugConsole->InfoDefaultColor;
+        Dest->Color = Console->InfoDefaultColor;
 
     }
-    DebugConsole->InfoBuffers[0].Color = Color;
-    Clear(&DebugConsole->InfoBuffers[0].Buffer);
-    Copy(&DebugConsole->InfoBuffers[0].Buffer, String);
+    Console->InfoBuffers[0].Color = Color;
+    Clear(&Console->InfoBuffers[0].Buffer);
+    Copy(&Console->InfoBuffers[0].Buffer, String);
 }
 
 static inline string
-GetCommandString(debug_console* DebugConsole) {
-    return DebugConsole->CommandBuffer.Array;
+GetCommandString(game_console* Console) {
+    return Console->CommandBuffer.Array;
 }
 
 // Returns true if there is a new command
 static inline b32 
-Update(debug_console* DebugConsole, 
-       string_buffer* DebugCharInput,
-       input_button* DebugKeys) 
+Update(game_console* Console, 
+       input* Input) 
 {
 
-    if (DebugCharInput->Count > 0 && 
-        DebugCharInput->Count <= Remaining(DebugConsole->InputBuffer)) 
+    if (Input->Characters.Count > 0 && 
+        Input->Characters.Count <= Remaining(Console->InputBuffer)) 
     {  
-        Push(&DebugConsole->InputBuffer, DebugCharInput->Array);
+        Push(&Console->InputBuffer, Input->Characters.Array);
     }
     
     // Remove character
-    if (IsPoked(DebugKeys[GameDebugKey_Backspace])) {
-        if (!IsEmpty(DebugConsole->InputBuffer.Array))
-            Pop(&DebugConsole->InputBuffer);
+    if (IsPoked(Input->ButtonBack)) {
+        if (!IsEmpty(Console->InputBuffer.Array))
+            Pop(&Console->InputBuffer);
     }
 
-    if (IsPoked(DebugKeys[GameDebugKey_Return])) {
-        PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.Array, ColorWhite);
-        Copy(&DebugConsole->CommandBuffer, DebugConsole->InputBuffer.Array);
-        Clear(&DebugConsole->InputBuffer);
+    if (IsPoked(Input->ButtonConfirm)) {
+        PushDebugInfo(Console, Console->InputBuffer.Array, ColorWhite);
+        Copy(&Console->CommandBuffer, Console->InputBuffer.Array);
+        Clear(&Console->InputBuffer);
         return true;
     }
 
@@ -148,7 +144,10 @@ Update(debug_console* DebugConsole,
 }
 
 static inline void
-Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
+Render(game_console* Console, 
+       mailbox* RenderCommands,
+       game_assets* Assets) 
+{
     font* Font = Assets->Fonts + Font_Default;
     
     f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;
@@ -179,8 +178,6 @@ Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
 
     // Draw text
     {
-
-
         for (u32 I = 0; I < Console->InfoBuffers.Count ; ++I) {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
@@ -219,7 +216,5 @@ Render(debug_console* Console, mailbox* RenderCommands, game_assets* Assets) {
 
 
 
-
-#endif
 
 #endif

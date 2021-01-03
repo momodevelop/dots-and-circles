@@ -17,41 +17,41 @@ static inline void
 CmdJump(void * Context, string Arguments) {
     game_state* GameState = (game_state*)Context;
     
-    auto Scratch = BeginScratch(&GameState->DebugArena);
+    auto Scratch = BeginScratch(&GameState->MainArena);
     Defer {  EndScratch(&Scratch); };
 
     dlink_list<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
-        PushDebugInfo(&GameState->DebugConsole, String("Expected only 2 arguments"), ColorRed);
+        PushDebugInfo(&GameState->Console, String("Expected only 2 arguments"), ColorRed);
         return;
     }
 
     string StateToChangeTo = ArgList[1];
     if (StateToChangeTo == String("main")) {
-        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Main"), ColorYellow);
+        PushDebugInfo(&GameState->Console, String("Jumping to Main"), ColorYellow);
         GameState->NextModeType = GameModeType_Main;
     }
     else if (StateToChangeTo == String("splash")) {
-        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Splash"), ColorYellow);
+        PushDebugInfo(&GameState->Console, String("Jumping to Splash"), ColorYellow);
         GameState->NextModeType = GameModeType_Splash;
     }
     else if (StateToChangeTo == String("menu")) {
-        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Menu"), ColorYellow);
+        PushDebugInfo(&GameState->Console, String("Jumping to Menu"), ColorYellow);
         GameState->NextModeType = GameModeType_Menu;
     }
     else if (StateToChangeTo == String("sandbox")) {
-        PushDebugInfo(&GameState->DebugConsole, String("Jumping to Sandbox"), ColorYellow);
+        PushDebugInfo(&GameState->Console, String("Jumping to Sandbox"), ColorYellow);
         GameState->NextModeType = GameModeType_Sandbox;
     }
     else {
-        PushDebugInfo(&GameState->DebugConsole, String("Invalid state to jump to"), ColorRed);
+        PushDebugInfo(&GameState->Console, String("Invalid state to jump to"), ColorRed);
     }
 }
 #endif
 
 extern "C" 
-GAME_UPDATE(GameUpdate) 
+GameUpdateFunc(GameUpdate) 
 {
     game_state* GameState = (game_state*)GameMemory->MainMemory;
        
@@ -78,57 +78,49 @@ GAME_UPDATE(GameUpdate)
 
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 
-                                       (u32)DesignWidth, 
-                                       (u32)DesignHeight);
+                                       (u32)Global_DesignWidth, 
+                                       (u32)Global_DesignHeight);
 
-#if INTERNAL
-        GameState->DebugArena = Arena(GameMemory->DebugMemory, 
-                                      GameMemory->DebugMemorySize);
-        GameState->DebugCommands = List<debug_command>(&GameState->DebugArena, 1);
-        // Debug Console Init
+        GameState->ConsoleCommands = List<game_console_command>(&GameState->MainArena, 1);
+        // Console Init
         {
-            debug_console Console = CreateDebugConsole(&GameState->DebugArena, 5, 110, 32);
+            game_console Console = GameConsole(&GameState->MainArena, 5, 110, 32);
             Console.InfoBgColor = { 0.3f, 0.3f, 0.3f, 1.f };
             Console.InfoDefaultColor = ColorWhite;
             Console.InputBgColor = { 0.2f, 0.2f, 0.2f, 1.f };
             Console.InputColor = ColorWhite;
-            Console.Dimensions = { DesignWidth, 240.f };
+            Console.Dimensions = { Global_DesignWidth, 240.f };
             Console.Position = { 
-                -DesignWidth * 0.5f + Console.Dimensions.W * 0.5f, 
-                -DesignHeight * 0.5f + Console.Dimensions.H * 0.5f, 
-                DesignDepth * 0.5f - 1.f
+                -Global_DesignWidth * 0.5f + Console.Dimensions.W * 0.5f, 
+                -Global_DesignHeight * 0.5f + Console.Dimensions.H * 0.5f, 
+                Global_DesignDepth * 0.5f - 1.f
             };
 
-            GameState->DebugConsole = Console;
+            GameState->Console = Console;
         
         }
-        Register(&GameState->DebugCommands, String("jump"), CmdJump, GameState);
-#endif
+        Register(&GameState->ConsoleCommands, String("jump"), CmdJump, GameState);
     }
 
-#if INTERNAL
-    // System Debug
-    {
-        // F1 to toggle debug console
-        platform_state* State = Platform->State;
-        if (IsPoked(State->DebugKeys[GameDebugKey_F1])) {
-            GameState->IsDebug = !GameState->IsDebug; 
-        }
 
-        if (IsPoked(State->DebugKeys[GameDebugKey_F2])) {
+
+    // Console
+    {
+        if (IsPoked(Input->ButtonConsole)) {
+            GameState->IsConsole = !GameState->IsConsole; 
+
+            // TODO: Seperate button or maybe settings?
             GameState->IsShowTicksElapsed = !GameState->IsShowTicksElapsed;
         }
-
-        if (GameState->IsDebug) {
-            debug_console* Console = &GameState->DebugConsole;
-            if (Update(Console, &State->DebugCharInput, State->DebugKeys)){ 
-                Execute(GameState->DebugCommands, GetCommandString(Console));
+        if (GameState->IsConsole) {
+            game_console* Console = &GameState->Console;
+            if (Update(Console, Input)){ 
+                Execute(GameState->ConsoleCommands, GetCommandString(Console));
             }
         }
 
     }
 
-#endif
 
 
     // Clean state/Switch states
@@ -179,10 +171,8 @@ GAME_UPDATE(GameUpdate)
         }
     }
 
-#if INTERNAL
-    // Debug Rendering
-    if (GameState->IsDebug) {
-        Render(&GameState->DebugConsole, RenderCommands, &GameState->Assets);
+    // Render Console
+    if (GameState->IsConsole) {
+        Render(&GameState->Console, RenderCommands, &GameState->Assets);
     }
-#endif
 }

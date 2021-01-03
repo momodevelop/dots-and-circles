@@ -5,7 +5,7 @@
 
 
 #if INTERNAL
-#include "game_debug.h"
+#include "game_console.h"
 #endif
 
 
@@ -42,14 +42,11 @@ struct game_state {
     
     b32 IsInitialized;
 
-#if INTERNAL
-    b32 IsDebug;
+    b32 IsConsole;
     b32 IsShowTicksElapsed;
+    game_console Console;
+    list<game_console_command> ConsoleCommands;
 
-    arena DebugArena;
-    debug_console DebugConsole;
-    list<debug_command> DebugCommands;
-#endif
 };
 
 #endif //GAME_H

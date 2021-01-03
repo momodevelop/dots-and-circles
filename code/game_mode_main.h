@@ -220,7 +220,7 @@ UpdateMainMode(game_state* GameState,
     PushCommandOrthoCamera(RenderCommands, 
             v3f{}, 
             CenteredRect( 
-                v3f{ DesignWidth, DesignHeight, DesignDepth }, 
+                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )
     );
@@ -295,10 +295,10 @@ UpdateMainMode(game_state* GameState,
         bullet* Bullet = Mode->Bullets + I;
 		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
         // Out of bounds self-destruction
-        if (Bullet->Position.X <= -DesignWidth * 0.5f - Bullet->HitCircle.Radius || 
-            Bullet->Position.X >= DesignWidth * 0.5f + Bullet->HitCircle.Radius ||
-            Bullet->Position.Y <= -DesignHeight * 0.5f - Bullet->HitCircle.Radius ||
-            Bullet->Position.Y >= DesignHeight * 0.5f + Bullet->HitCircle.Radius) {
+        if (Bullet->Position.X <= -Global_DesignWidth * 0.5f - Bullet->HitCircle.Radius || 
+            Bullet->Position.X >= Global_DesignWidth * 0.5f + Bullet->HitCircle.Radius ||
+            Bullet->Position.Y <= -Global_DesignHeight * 0.5f - Bullet->HitCircle.Radius ||
+            Bullet->Position.Y >= Global_DesignHeight * 0.5f + Bullet->HitCircle.Radius) {
             SwapRemove(&Mode->Bullets, I);
             continue;
         }
@@ -335,8 +335,8 @@ UpdateMainMode(game_state* GameState,
                     Pattern->Timer += DeltaTime;
                     if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
                         v2f Pos = {
-                            Bilateral(&Mode->Rng) * DesignWidth * 0.5f,
-                            Bilateral(&Mode->Rng) * DesignHeight * 0.5f
+                            Bilateral(&Mode->Rng) * Global_DesignWidth * 0.5f,
+                            Bilateral(&Mode->Rng) * Global_DesignHeight * 0.5f
                         };
                         auto MoodType = (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
                         SpawnEnemy(Mode, 
