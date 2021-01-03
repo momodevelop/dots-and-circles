@@ -55,14 +55,14 @@ Unregister(list<game_console_command>* Commands, string Key) {
 }
 
 static inline b32 
-Execute(list<game_console_command> Commands, string Arguments) {
+Execute(list<game_console_command>* Commands, string Arguments) {
     // Assume that the first token is the command     
     range<usize> Range = { 0, Find(Arguments, ' ') };
     string CommandStr = SubString(Arguments, Range); 
 
     // Send a command to a callback
-    for (usize i = 0; i < Commands.Count; ++i) {
-        game_console_command* Command = Commands + i;
+    for (usize I = 0; I < Commands->Count; ++I) {
+        game_console_command* Command = (*Commands) + I;
         if (Command->Key == CommandStr) {
              Command->Callback(Command->Context, Arguments);
              return true;

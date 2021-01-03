@@ -115,7 +115,7 @@ GameUpdateFunc(GameUpdate)
         if (GameState->IsConsole) {
             game_console* Console = &GameState->Console;
             if (Update(Console, Input)){ 
-                Execute(GameState->ConsoleCommands, GetCommandString(Console));
+                Execute(&GameState->ConsoleCommands, GetCommandString(Console));
             }
         }
 

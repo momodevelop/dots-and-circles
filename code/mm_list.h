@@ -17,7 +17,7 @@ struct list {
 
     usize Capacity; // Total number of borrowable objects.
     
-    inline auto& operator[](usize I) {
+    inline type& operator[](usize I) {
         Assert(I < Count);
         return Elements[I];
     }
