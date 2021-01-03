@@ -61,6 +61,7 @@ static const char* Global_GameCodeLockFileName = "lock";
 
 
 struct win32_state {
+    platform_state Header;
     b32 IsRunning;
     u32 PerformanceFrequency;
     char ExeFullPath[MAX_PATH];
@@ -274,12 +275,12 @@ Win32UnloadGameCode(win32_game_code* GameCode) {
 }
 
 static inline platform_api 
-Win32LoadPlatformApi() {
+Win32LoadPlatformApi(win32_state* State) {
     platform_api Ret = {};
     Ret.Log = Win32Log;
     Ret.ReadFile = Win32ReadFile;
     Ret.GetFileSize = Win32GetFileSize;
-    
+    Ret.State = &State->Header; 
     return Ret;
 }
 
@@ -542,7 +543,7 @@ Win32ProcessMessages(HWND Window, win32_state* State, input* Input) {
 #if INTERNAL
             case WM_CHAR: {
                 char C = (char)Msg.wParam;
-                TryPushDebugTextInputBuffer(Input, C);
+                TryPushCharacterInput(&State->Header, C);
             } break;
 #endif
             case WM_SYSKEYDOWN:
@@ -571,49 +572,51 @@ Win32ProcessMessages(HWND Window, win32_state* State, input* Input) {
                         Input->ButtonConfirm.Now = IsDown;
                         break;
                }
+                
 #if INTERNAL
+                // Such laziness. Much wow. Looks nice tho.
                 switch(KeyCode){
                     case VK_F1:
-                        Input->DebugKeys[GameDebugKey_F1].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F1].Now = IsDown;
                         break;
                     case VK_F2:
-                        Input->DebugKeys[GameDebugKey_F2].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F2].Now = IsDown;
                         break;
                     case VK_F3:
-                        Input->DebugKeys[GameDebugKey_F3].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F3].Now = IsDown;
                         break;
                     case VK_F4:
-                        Input->DebugKeys[GameDebugKey_F4].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F4].Now = IsDown;
                         break;
                     case VK_F5:
-                        Input->DebugKeys[GameDebugKey_F5].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F5].Now = IsDown;
                         break;
                     case VK_F6:
-                        Input->DebugKeys[GameDebugKey_F6].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F6].Now = IsDown;
                         break;
                     case VK_F7:
-                        Input->DebugKeys[GameDebugKey_F7].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F7].Now = IsDown;
                         break;
                     case VK_F8:
-                        Input->DebugKeys[GameDebugKey_F8].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F8].Now = IsDown;
                         break;
                     case VK_F9:
-                        Input->DebugKeys[GameDebugKey_F9].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F9].Now = IsDown;
                         break;
                     case VK_F10:
-                        Input->DebugKeys[GameDebugKey_F10].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F10].Now = IsDown;
                         break;
                     case VK_F11:
-                        Input->DebugKeys[GameDebugKey_F11].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F11].Now = IsDown;
                         break;
                     case VK_F12:
-                        Input->DebugKeys[GameDebugKey_F12].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_F12].Now = IsDown;
                         break;
                     case VK_RETURN:
-                        Input->DebugKeys[GameDebugKey_Return].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_Return].Now = IsDown;
                         break;
                     case VK_BACK:
-                        Input->DebugKeys[GameDebugKey_Backspace].Now = IsDown;
+                        State->Header.DebugKeys[GameDebugKey_Backspace].Now = IsDown;
                         break;
                 }
 #endif
@@ -682,14 +685,14 @@ WinMain(HINSTANCE Instance,
         int ShowCode)
 {
     input GameInput = {};
+    win32_state State = {};
 #if INTERNAL 
-    // argh lol, can we not do this?
+    // TODO: We should really use an arena for this but I'm lazy af.
     char DebugTextInputBuffer[10];
-    GameInput.DebugTextInputBuffer = StringBuffer(DebugTextInputBuffer, 10);
+    State.Header.DebugCharInput = StringBuffer(DebugTextInputBuffer, 10);
 #endif
 
 
-    win32_state State = {};
     
     // Initialize performance frequency
     {
@@ -838,7 +841,7 @@ WinMain(HINSTANCE Instance,
     mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
     
     // Initialize Platform API for game to use
-    platform_api PlatformApi = Win32LoadPlatformApi();
+    platform_api PlatformApi = Win32LoadPlatformApi(&State);
 
     // Initialize OpenGL
     {
@@ -857,6 +860,9 @@ WinMain(HINSTANCE Instance,
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (State.IsRunning) {
         Update(&GameInput);
+#if INTERNAL
+        UpdateDebugState(&State.Header); 
+#endif 
         Win32ProcessMessages(Window, &State, &GameInput);
 
         if (GameCode.GameUpdate) {

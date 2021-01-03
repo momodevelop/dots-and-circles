@@ -79,22 +79,8 @@ struct input {
             input_button ButtonSwitch;
         };
     };
-#if INTERNAL
-    string_buffer DebugTextInputBuffer;
-    input_button DebugKeys[GameDebugKey_Count];
-#endif
 };
 
-#if INTERNAL
-static inline b32
-TryPushDebugTextInputBuffer(input* Input, char C) {
-    if (C >= 32 && C <= 126) {
-        Push(&Input->DebugTextInputBuffer, C);
-        return true;
-    }
-    return false;
-}
-#endif
 
 
 static inline void
@@ -102,13 +88,6 @@ Update(input* Input) {
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
     }
-
-#if INTERNAL
-    Clear(&Input->DebugTextInputBuffer);
-    for (auto&& itr : Input->DebugKeys) {
-        itr.Before = itr.Now;
-    }
-#endif
 }
 
 // before: 0, now: 1
@@ -132,21 +111,44 @@ bool IsHeld(input_button Button) {
     return Button.Before && Button.Now;
 }
 
-// TODO: Debug state from platform required by game
-struct platform_debug_state {
-};
-
-
 // Platform Api ////////////////////////////////////////////////////
 typedef void platform_log(const char * Format, ...);
 typedef u32  platform_get_file_size(const char * Path);
 typedef b32 platform_read_file(void* Dest, u32 DestSize, const char* Path);
 
+struct platform_state {
+#if INTERNAL 
+    string_buffer DebugCharInput;
+    input_button DebugKeys[GameDebugKey_Count];
+#endif
+};
 struct platform_api {
+    platform_state* State;
+
     platform_log* Log;
     platform_get_file_size* GetFileSize;
     platform_read_file* ReadFile;
 };
+
+#if INTERNAL
+static inline void
+UpdateDebugState(platform_state* DebugState) {
+    Clear(&DebugState->DebugCharInput);
+    for (auto&& itr : DebugState->DebugKeys) {
+        itr.Before = itr.Now;
+    }
+}
+
+static inline b32
+TryPushCharacterInput(platform_state* Debug, char C) {
+    if (C >= 32 && C <= 126) {
+        Push(&Debug->DebugCharInput, C);
+        return true;
+    }
+    return false;
+}
+#endif 
+
 
 struct game_memory {
     void* MainMemory;
@@ -163,5 +165,6 @@ struct game_memory {
                                     input* Input, \
                                     f32 DeltaTime)
 typedef GAME_UPDATE(game_update);
+
 
 #endif //PLATFORM_H

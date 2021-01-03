@@ -1,6 +1,5 @@
 #include "game.h"
 #include "game_assets.h"
-#include "game_input.h"
 #include "game_mode_splash.h"
 #include "game_mode_menu.h"
 #include "game_mode_main.h"
@@ -111,17 +110,18 @@ GAME_UPDATE(GameUpdate)
     // System Debug
     {
         // F1 to toggle debug console
-        if (IsPoked(Input->DebugKeys[GameDebugKey_F1])) {
+        platform_state* State = Platform->State;
+        if (IsPoked(State->DebugKeys[GameDebugKey_F1])) {
             GameState->IsDebug = !GameState->IsDebug; 
         }
 
-        if (IsPoked(Input->DebugKeys[GameDebugKey_F2])) {
+        if (IsPoked(State->DebugKeys[GameDebugKey_F2])) {
             GameState->IsShowTicksElapsed = !GameState->IsShowTicksElapsed;
         }
 
         if (GameState->IsDebug) {
             debug_console* Console = &GameState->DebugConsole;
-            if (Update(Console, Input)){ 
+            if (Update(Console, &State->DebugCharInput, State->DebugKeys)){ 
                 Execute(GameState->DebugCommands, GetCommandString(Console));
             }
         }

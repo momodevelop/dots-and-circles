@@ -3,8 +3,6 @@
 
 #include "platform.h"
 
-#include "game_input.h"
-
 
 #if INTERNAL
 #include "game_debug.h"

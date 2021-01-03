@@ -5,7 +5,7 @@
 
 #include "mm_list.h"
 #include "mm_colors.h"
-
+#include "platform.h"
 #include "renderer.h"
 #include "game_assets.h"
 #include "game_text.h"
@@ -119,21 +119,24 @@ GetCommandString(debug_console* DebugConsole) {
 
 // Returns true if there is a new command
 static inline b32 
-Update(debug_console* DebugConsole, input* Input) {
+Update(debug_console* DebugConsole, 
+       string_buffer* DebugCharInput,
+       input_button* DebugKeys) 
+{
 
-    if (Input->DebugTextInputBuffer.Count > 0 && 
-        Input->DebugTextInputBuffer.Count <= Remaining(DebugConsole->InputBuffer)) 
+    if (DebugCharInput->Count > 0 && 
+        DebugCharInput->Count <= Remaining(DebugConsole->InputBuffer)) 
     {  
-        Push(&DebugConsole->InputBuffer, Input->DebugTextInputBuffer.Array);
+        Push(&DebugConsole->InputBuffer, DebugCharInput->Array);
     }
     
     // Remove character
-    if (IsPoked(Input->DebugKeys[GameDebugKey_Backspace])) {
+    if (IsPoked(DebugKeys[GameDebugKey_Backspace])) {
         if (!IsEmpty(DebugConsole->InputBuffer.Array))
             Pop(&DebugConsole->InputBuffer);
     }
 
-    if (IsPoked(Input->DebugKeys[GameDebugKey_Return])) {
+    if (IsPoked(DebugKeys[GameDebugKey_Return])) {
         PushDebugInfo(DebugConsole, DebugConsole->InputBuffer.Array, ColorWhite);
         Copy(&DebugConsole->CommandBuffer, DebugConsole->InputBuffer.Array);
         Clear(&DebugConsole->InputBuffer);
