@@ -128,9 +128,9 @@ InitSplashMode(game_state* GameState) {
 
 static inline void
 UpdateSplashMode(game_state* GameState, 
-       mailbox* RenderCommands,
-       game_input* Input,
-       f32 DeltaTime)
+                 mailbox* RenderCommands,
+                 input* Input,
+                 f32 DeltaTime)
 {
     game_mode_splash* Mode = GameState->SplashMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });

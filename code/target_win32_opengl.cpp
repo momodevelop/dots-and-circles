@@ -6,7 +6,6 @@
 #include "mm_string.h"
 #include "mm_mailbox.h"
 #include "platform.h"
-#include "game_input.h"
 #include "renderer_opengl.h"
 
 #define STB_SPRINTF_IMPLEMENTATION
@@ -333,7 +332,7 @@ Win32OpenglSetPixelFormat(HDC DeviceContext) {
 static inline b32
 Win32OpenglLoadWglExtensions() {
     WNDCLASSA WindowClass = {};
-    game_input GameInput = {};
+    input GameInput = {};
     // Er yeah...we have to create a 'fake' Opengl context to load the extensions lol.
     WindowClass.lpfnWndProc = DefWindowProcA;
     WindowClass.hInstance = GetModuleHandle(0);
@@ -533,7 +532,7 @@ Win32GetClientDimensions(HWND Window) {
 
 }
 static inline void
-Win32ProcessMessages(HWND Window, win32_state* State, game_input* Input) {
+Win32ProcessMessages(HWND Window, win32_state* State, input* Input) {
     MSG Msg = {};
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
         switch(Msg.message) {
@@ -682,7 +681,7 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    game_input GameInput = {};
+    input GameInput = {};
 #if INTERNAL 
     // argh lol, can we not do this?
     char DebugTextInputBuffer[10];

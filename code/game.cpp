@@ -51,19 +51,16 @@ CmdJump(void * Context, string Arguments) {
 }
 #endif
 
-extern "C" void
-GameUpdate(game_memory* GameMemory,  
-           platform_api* Platform, 
-           mailbox* RenderCommands, 
-           game_input* Input, 
-           f32 DeltaTime)
+extern "C" 
+GAME_UPDATE(GameUpdate) 
 {
     game_state* GameState = (game_state*)GameMemory->MainMemory;
        
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
         // NOTE(Momo): Arenas
-        GameState->MainArena = Arena((u8*)GameMemory->MainMemory + sizeof(game_state), GameMemory->MainMemorySize - sizeof(game_state));
+        GameState->MainArena = Arena((u8*)GameMemory->MainMemory + sizeof(game_state), 
+                                     GameMemory->MainMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
         GameState->Assets = CreateAssets(
@@ -74,18 +71,21 @@ GameUpdate(game_memory* GameMemory,
         );
 
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = SubArena(&GameState->MainArena, Remaining(GameState->MainArena));
+        GameState->ModeArena = SubArena(&GameState->MainArena, 
+                                        Remaining(GameState->MainArena));
         GameState->ModeType = GameModeType_None;
         GameState->NextModeType = GameModeType_Splash;
         GameState->IsInitialized = true;
 
         // NOTE(Momo): Set design resolution for game
-        PushCommandSetDesignResolution(RenderCommands, (u32)DesignWidth, (u32)DesignHeight);
+        PushCommandSetDesignResolution(RenderCommands, 
+                                       (u32)DesignWidth, 
+                                       (u32)DesignHeight);
 
 #if INTERNAL
-        GameState->DebugArena = Arena(GameMemory->DebugMemory, GameMemory->DebugMemorySize);
+        GameState->DebugArena = Arena(GameMemory->DebugMemory, 
+                                      GameMemory->DebugMemorySize);
         GameState->DebugCommands = List<debug_command>(&GameState->DebugArena, 1);
-
         // Debug Console Init
         {
             debug_console Console = CreateDebugConsole(&GameState->DebugArena, 5, 110, 32);

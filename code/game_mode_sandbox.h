@@ -64,7 +64,7 @@ DrawString(mailbox* RenderCommands,
 static inline void
 UpdateSandboxMode(game_state* GameState, 
        mailbox* RenderCommands, 
-       game_input* Input,
+       input* Input,
        f32 DeltaTime) 
 {
     game_mode_sandbox* Mode = GameState->SandboxMode;
@@ -81,7 +81,8 @@ UpdateSandboxMode(game_state* GameState,
     // NOTE(Momo): Image Test
     {
         game_mode_sandbox_entity * Entity = &Mode->Entity;
-        m44f Transform = M44fTranslation(Mode->Entity.Position) * M44fScale(64.f, 64.f, 1.f);
+        m44f Transform = M44fTranslation(Mode->Entity.Position) * 
+                         M44fScale(64.f, 64.f, 1.f);
         auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_PlayerDot;
        
         v3f Speed = { 50.f, 0.f, 0.f };

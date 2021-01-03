@@ -6,6 +6,6 @@ SET Opt=%1%
 
 pushd %BuildDir%
 
-call platform_win32_opengl.exe
+call target_win32_opengl.exe
 
 popd

@@ -24,7 +24,7 @@ pushd %BuildDir%
 copy %CodeDir%\thirdparty\sdl2\lib\x64\SDL2.dll %cd%
 
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
-cl %CommonCompilerFlags% %CodeDir%\platform_sdl_opengl.cpp -link %CommonLinkerFlags%
+cl %CommonCompilerFlags% %CodeDir%\target_sdl_opengl.cpp -link %CommonLinkerFlags%
 
 
 :End

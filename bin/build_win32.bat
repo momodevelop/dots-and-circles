@@ -19,7 +19,7 @@ SET CommonLinkerFlags=user32.lib opengl32.lib gdi32.lib winmm.lib %CommonLinkerF
 pushd %BuildDir%
 
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
-cl %CommonCompilerFlags% %CodeDir%\platform_win32_opengl.cpp -link %CommonLinkerFlags%
+cl %CommonCompilerFlags% %CodeDir%\target_win32_opengl.cpp -link %CommonLinkerFlags%
 
 
 :End

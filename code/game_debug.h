@@ -9,7 +9,6 @@
 #include "renderer.h"
 #include "game_assets.h"
 #include "game_text.h"
-#include "game_input.h"
 
 using debug_callback = void (*)(void* Context, string Arguments);
 struct debug_command {
@@ -42,7 +41,10 @@ struct debug_console {
 
 
 static inline void 
-Register(list<debug_command>* Commands, string Key, debug_callback Callback, void* Context)
+Register(list<debug_command>* Commands, 
+         string Key, 
+         debug_callback Callback, 
+         void* Context)
 {
     Push(Commands, { Key, Callback, Context } );
 }
@@ -117,7 +119,7 @@ GetCommandString(debug_console* DebugConsole) {
 
 // Returns true if there is a new command
 static inline b32 
-Update(debug_console* DebugConsole, game_input* Input) {
+Update(debug_console* DebugConsole, input* Input) {
 
     if (Input->DebugTextInputBuffer.Count > 0 && 
         Input->DebugTextInputBuffer.Count <= Remaining(DebugConsole->InputBuffer)) 

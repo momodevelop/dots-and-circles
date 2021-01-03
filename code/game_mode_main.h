@@ -212,7 +212,7 @@ InitMainMode(game_state* GameState) {
 static inline void
 UpdateMainMode(game_state* GameState, 
        mailbox* RenderCommands, 
-       game_input* Input,
+       input* Input,
        f32 DeltaTime) 
 {
     game_mode_main* Mode = GameState->MainMode;

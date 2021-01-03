@@ -15,7 +15,7 @@ InitMenuMode(game_state* GameState) {
 static inline void
 UpdateMenuMode(game_state* GameState, 
        mailbox* RenderCommands, 
-       game_input* Input,
+       input* Input,
        f32 DeltaTime) 
 {
     game_mode_menu* Mode = GameState->MenuMode;
