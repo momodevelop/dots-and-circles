@@ -39,11 +39,10 @@ struct game_state {
     
     arena MainArena;
     arena ModeArena;
-    
+
     b32 IsInitialized;
 
-    b32 IsConsole;
-    b32 IsShowTicksElapsed;
+    b32 IsShowInfo;
     game_console Console;
 
 };

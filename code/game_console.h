@@ -22,6 +22,7 @@ struct game_console_string {
 
 
 struct game_console {
+    b32 IsActive;
     v4f InfoBgColor;
     v4f InputBgColor;
     v4f InputTextColor;
@@ -33,7 +34,6 @@ struct game_console {
     array<game_console_string> InfoBuffers;
     string_buffer InputBuffer;
     string_buffer CommandBuffer;
-    b32 IsCommandRead;
 
     list<game_console_command> Commands;
 };
@@ -105,14 +105,13 @@ GameConsole(arena* Arena,
     Ret.Dimensions = Dimensions;
     Ret.Position = Position;
 
-
     Ret.Commands = List<game_console_command>(Arena, CommandsCapacity);
     return Ret;
 }
 
 
 static inline void
-PushDebugInfo(game_console* Console, string String, v4f Color) {
+PushInfo(game_console* Console, string String, v4f Color) {
     for (usize I = 0; I < Console->InfoBuffers.Count - 1; ++I) {
         usize J = Console->InfoBuffers.Count - 1 - I;
         game_console_string* Dest = Console->InfoBuffers + J;
@@ -126,16 +125,19 @@ PushDebugInfo(game_console* Console, string String, v4f Color) {
     Copy(&Console->InfoBuffers[0].Buffer, String);
 }
 
-static inline string
-GetCommandString(game_console* Console) {
-    return Console->CommandBuffer.Array;
-}
 
 // Returns true if there is a new command
-static inline b32 
+static inline void 
 Update(game_console* Console, 
        input* Input) 
 {
+    if (IsPoked(Input->ButtonConsole)) {
+        Console->IsActive = !Console->IsActive; 
+    }
+
+    if (Console->IsActive) {
+        return;
+    }
 
     if (Input->Characters.Count > 0 && 
         Input->Characters.Count <= Remaining(Console->InputBuffer)) 
@@ -150,13 +152,11 @@ Update(game_console* Console,
     }
 
     if (IsPoked(Input->ButtonConfirm)) {
-        PushDebugInfo(Console, Console->InputBuffer.Array, ColorWhite);
+        PushInfo(Console, Console->InputBuffer.Array, ColorWhite);
         Copy(&Console->CommandBuffer, Console->InputBuffer.Array);
         Clear(&Console->InputBuffer);
-        return true;
+        Execute(Console, Console->CommandBuffer.Array);
     }
-
-    return false;
 
 }
 
@@ -165,6 +165,9 @@ Render(game_console* Console,
        mailbox* RenderCommands,
        game_assets* Assets) 
 {
+    if (!Console->IsActive) {
+        return;
+    }
     font* Font = Assets->Fonts + Font_Default;
     
     f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;

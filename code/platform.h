@@ -28,7 +28,7 @@ struct input_button {
 struct input {
     string_buffer Characters;
     union {
-        input_button Buttons[6];
+        input_button Buttons[8];
         struct {
             input_button ButtonUp;
             input_button ButtonDown;
