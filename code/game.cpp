@@ -69,6 +69,31 @@ GameUpdateFunc(GameUpdate)
                 String("yuu\0")
         );
 
+        // Console Init
+        
+        {
+            v2f Dimensions = { Global_DesignWidth, 240.f };
+            v3f Position = { 
+                -Global_DesignWidth * 0.5f + Dimensions.W * 0.5f, 
+                -Global_DesignHeight * 0.5f + Dimensions.H * 0.5f, 
+                Global_DesignDepth * 0.5f - 1.f
+            };
+            GameState->Console = 
+                GameConsole(&GameState->MainArena, 
+                            5, 
+                            110, 
+                            1,
+                            v4f{ 0.3f, 0.3f, 0.3f, 1.f },
+                            ColorWhite,
+                            v4f{ 0.2f, 0.2f, 0.2f, 1.f },
+                            ColorWhite,
+                            Dimensions,
+                            Position); 
+
+            
+            RegisterCommand(&GameState->Console, String("jump"), CmdJump, GameState);
+        }
+
         // NOTE(Momo): Arena for modes
         GameState->ModeArena = SubArena(&GameState->MainArena, 
                                         Remaining(GameState->MainArena));
@@ -81,25 +106,6 @@ GameUpdateFunc(GameUpdate)
                                        (u32)Global_DesignWidth, 
                                        (u32)Global_DesignHeight);
 
-        GameState->ConsoleCommands = List<game_console_command>(&GameState->MainArena, 1);
-        // Console Init
-        {
-            game_console Console = GameConsole(&GameState->MainArena, 5, 110, 32);
-            Console.InfoBgColor = { 0.3f, 0.3f, 0.3f, 1.f };
-            Console.InfoDefaultColor = ColorWhite;
-            Console.InputBgColor = { 0.2f, 0.2f, 0.2f, 1.f };
-            Console.InputColor = ColorWhite;
-            Console.Dimensions = { Global_DesignWidth, 240.f };
-            Console.Position = { 
-                -Global_DesignWidth * 0.5f + Console.Dimensions.W * 0.5f, 
-                -Global_DesignHeight * 0.5f + Console.Dimensions.H * 0.5f, 
-                Global_DesignDepth * 0.5f - 1.f
-            };
-
-            GameState->Console = Console;
-        
-        }
-        Register(&GameState->ConsoleCommands, String("jump"), CmdJump, GameState);
     }
 
 
@@ -115,7 +121,7 @@ GameUpdateFunc(GameUpdate)
         if (GameState->IsConsole) {
             game_console* Console = &GameState->Console;
             if (Update(Console, Input)){ 
-                Execute(&GameState->ConsoleCommands, GetCommandString(Console));
+                Execute(&GameState->Console, GetCommandString(Console));
             }
         }
 

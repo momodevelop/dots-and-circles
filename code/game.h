@@ -45,7 +45,6 @@ struct game_state {
     b32 IsConsole;
     b32 IsShowTicksElapsed;
     game_console Console;
-    list<game_console_command> ConsoleCommands;
 
 };
 

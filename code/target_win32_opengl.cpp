@@ -615,7 +615,7 @@ Win32WindowCallback(HWND Window,
 }
 
 static inline void
-Win32StateInit() {
+Win32InitGlobals() {
     // Initialize performance frequency
     {
         LARGE_INTEGER PerfCountFreq;
@@ -657,6 +657,7 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
+    Win32InitGlobals();
     input GameInput = {};
     {
         // TODO: We should really use an arena for this but I'm lazy af.

@@ -24,8 +24,8 @@ struct game_console_string {
 struct game_console {
     v4f InfoBgColor;
     v4f InputBgColor;
-    v4f InputColor;
-    v4f InfoDefaultColor;
+    v4f InputTextColor;
+    v4f InfoTextDefaultColor;
     v3f Position;
     v2f Dimensions;
 
@@ -34,35 +34,38 @@ struct game_console {
     string_buffer InputBuffer;
     string_buffer CommandBuffer;
     b32 IsCommandRead;
+
+    list<game_console_command> Commands;
 };
 
 
 
 static inline void 
-Register(list<game_console_command>* Commands, 
-         string Key, 
-         game_console_callback Callback, 
-         void* Context)
+RegisterCommand(game_console* Console, 
+                string Key, 
+                game_console_callback Callback, 
+                void* Context)
 {
-    Push(Commands, { Key, Callback, Context } );
+    game_console_command Command = { Key, Callback, Context };
+    Push(&Console->Commands, Command);
 }
 
 static inline void 
-Unregister(list<game_console_command>* Commands, string Key) {
-    RemoveIf(Commands, [Key](const game_console_command* Cmd) { 
+UnregisterCommand(game_console* Console, string Key) {
+    RemoveIf(&Console->Commands, [Key](const game_console_command* Cmd) { 
         return Cmd->Key == Key; 
     });
 }
 
 static inline b32 
-Execute(list<game_console_command>* Commands, string Arguments) {
+Execute(game_console* Console, string Arguments) {
     // Assume that the first token is the command     
     range<usize> Range = { 0, Find(Arguments, ' ') };
     string CommandStr = SubString(Arguments, Range); 
 
     // Send a command to a callback
-    for (usize I = 0; I < Commands->Count; ++I) {
-        game_console_command* Command = (*Commands) + I;
+    for (usize I = 0; I < Console->Commands.Count; ++I) {
+        game_console_command* Command = &Console->Commands[I];
         if (Command->Key == CommandStr) {
              Command->Callback(Command->Context, Arguments);
              return true;
@@ -75,21 +78,35 @@ Execute(list<game_console_command>* Commands, string Arguments) {
 
 static inline game_console
 GameConsole(arena* Arena, 
-            usize InfoBufferLines, 
-            usize BufferCapacity, 
-            usize CommandsCapacity)
+            usize InfoLines, 
+            usize CharactersPerLine, 
+            usize CommandsCapacity,
+            v4f InfoBgColor,
+            v4f InfoTextDefaultColor,
+            v4f InputBgColor,
+            v4f InputTextColor,
+            v2f Dimensions,
+            v3f Position)
 {
     game_console Ret = {};
 
-    Ret.InfoBuffers = Array<game_console_string>(Arena, InfoBufferLines);
+    Ret.InfoBuffers = Array<game_console_string>(Arena, InfoLines);
     for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
         game_console_string* InfoBuffer = Ret.InfoBuffers + I;
-        InfoBuffer->Buffer = StringBuffer(Arena, BufferCapacity);
+        InfoBuffer->Buffer = StringBuffer(Arena, CharactersPerLine);
     }
 
-    Ret.InputBuffer = StringBuffer(Arena, BufferCapacity);
-    Ret.CommandBuffer = StringBuffer(Arena, BufferCapacity);
+    Ret.InputBuffer = StringBuffer(Arena, CharactersPerLine);
+    Ret.CommandBuffer = StringBuffer(Arena, CharactersPerLine);
+    Ret.InfoBgColor = InfoBgColor;
+    Ret.InfoTextDefaultColor = InfoTextDefaultColor;
+    Ret.InputBgColor = InputBgColor;
+    Ret.InputTextColor = InputTextColor;
+    Ret.Dimensions = Dimensions;
+    Ret.Position = Position;
 
+
+    Ret.Commands = List<game_console_command>(Arena, CommandsCapacity);
     return Ret;
 }
 
@@ -101,7 +118,7 @@ PushDebugInfo(game_console* Console, string String, v4f Color) {
         game_console_string* Dest = Console->InfoBuffers + J;
         game_console_string* Src = Console->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, Src->Buffer.Array);
-        Dest->Color = Console->InfoDefaultColor;
+        Dest->Color = Console->InfoTextDefaultColor;
 
     }
     Console->InfoBuffers[0].Color = Color;
@@ -203,7 +220,7 @@ Render(game_console* Console,
                 RenderCommands, 
                 Assets, 
                 Position,
-                Console->InputColor,
+                Console->InputTextColor,
                 Font_Default, FontSize, 
                 Console->InputBuffer.Array
             );

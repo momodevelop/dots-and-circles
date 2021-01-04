@@ -1,6 +1,5 @@
 
 [] Cleanup
-    [] Objectify game_console
     [] Remove aabb
     [] String Format
 [] Art assets
