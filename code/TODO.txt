@@ -1,10 +1,8 @@
 
 [] Cleanup
-    [] Win32 platform 
-    [] Add prefix to platform defaults in platform.h (e.g. PlatformDefaults_XXX)
+    [] Objectify game_console
     [] Remove aabb
     [] String Format
-    [] Deprecate Itoa
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)
