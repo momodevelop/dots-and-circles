@@ -9,16 +9,16 @@ struct game_mode_menu {
 };
 
 static inline void 
-InitMenuMode(game_state* GameState) {
+InitMenuMode(permanent_state* PermState) {
 }
 
 static inline void
-UpdateMenuMode(game_state* GameState, 
+UpdateMenuMode(permanent_state* PermState, 
        mailbox* RenderCommands, 
        input* Input,
        f32 DeltaTime) 
 {
-    game_mode_menu* Mode = GameState->MenuMode;
+    game_mode_menu* Mode = PermState->MenuMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandOrthoCamera(RenderCommands, 
             v3f{}, 
@@ -28,7 +28,7 @@ UpdateMenuMode(game_state* GameState,
             )
     );
 #if 0
-    game_assets* Assets = GameState->Assets;
+    game_assets* Assets = PermState->Assets;
     {
         
         v4f Color = {1.f, 1.f, 1.f, 1.f};

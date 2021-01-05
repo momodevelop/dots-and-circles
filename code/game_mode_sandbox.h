@@ -13,8 +13,8 @@ struct game_mode_sandbox {
 };
 
 static inline void 
-InitSandboxMode(game_state* GameState) {
-    game_mode_sandbox* Mode = GameState->SandboxMode;     
+InitSandboxMode(permanent_state* PermState) {
+    game_mode_sandbox* Mode = PermState->SandboxMode;     
     Mode->Entity.Position = v3f{ -800.f, 0.f };
 }
 
@@ -62,12 +62,12 @@ DrawString(mailbox* RenderCommands,
 }
 
 static inline void
-UpdateSandboxMode(game_state* GameState, 
+UpdateSandboxMode(permanent_state* PermState, 
        mailbox* RenderCommands, 
        input* Input,
        f32 DeltaTime) 
 {
-    game_mode_sandbox* Mode = GameState->SandboxMode;
+    game_mode_sandbox* Mode = PermState->SandboxMode;
 
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushCommandOrthoCamera(RenderCommands, 
@@ -83,16 +83,16 @@ UpdateSandboxMode(game_state* GameState,
         game_mode_sandbox_entity * Entity = &Mode->Entity;
         m44f Transform = M44fTranslation(Mode->Entity.Position) * 
                          M44fScale(64.f, 64.f, 1.f);
-        auto* AtlasRect = GameState->Assets.AtlasRects + AtlasRect_PlayerDot;
+        auto* AtlasRect = PermState->Assets.AtlasRects + AtlasRect_PlayerDot;
        
         v3f Speed = { 50.f, 0.f, 0.f };
         Entity->Position += Speed * DeltaTime;
 
         PushCommandDrawTexturedQuad(RenderCommands, 
-                                    ColorWhite, 
+                                    Color_White, 
                                     Transform, 
                                     AtlasRect->BitmapId,
-                                    GetAtlasUV(&GameState->Assets, AtlasRect));
+                                    GetAtlasUV(&PermState->Assets, AtlasRect));
     }
 
 
@@ -101,7 +101,7 @@ UpdateSandboxMode(game_state* GameState,
     // NOTE(Momo): Font test
     {
         DrawString(RenderCommands, 
-                   &GameState->Assets, 
+                   &PermState->Assets, 
                    //{ -250.f, -320.f, 0.f }, 
                    {},
                    72.f, 

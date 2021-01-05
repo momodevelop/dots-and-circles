@@ -24,10 +24,20 @@ enum game_mode_type : u32 {
     GameModeType_None
 };
 
+// Stuff in this state can be zero initialized with no problems
+// I.e. This state contains stuff that does not need to exist past a frame
+// TODO: Put game_arena in here
+struct transient_state {
+    b32 IsInitialized;
+   
+    arena TransArena;
+};
 
-struct game_state {
-    game_mode_type ModeType;
-    game_mode_type NextModeType;
+struct permanent_state {
+    b32 IsInitialized;
+
+    game_mode_type CurrentGameMode;
+    game_mode_type NextGameMode;
     union {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
@@ -40,7 +50,6 @@ struct game_state {
     arena MainArena;
     arena ModeArena;
 
-    b32 IsInitialized;
 
     b32 IsShowInfo;
     game_console Console;

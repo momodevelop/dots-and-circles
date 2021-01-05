@@ -16,6 +16,16 @@ Arena(void* Memory, usize Capacity) {
     return { (u8*)Memory, 0, Capacity};
 }
 
+// Constructs an arena directly onto a memory block used by T
+// and creates an arena out of the remaining memory.
+template<typename T>
+static inline arena 
+BootstrapArena(void* Memory, usize MemorySize) 
+{
+    return Arena((u8*)Memory + sizeof(T), 
+                 MemorySize - sizeof(T));
+}
+
 static inline void 
 Clear(arena* Arena) {
     Arena->Used = 0;

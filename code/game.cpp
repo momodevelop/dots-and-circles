@@ -15,49 +15,49 @@
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
 CmdJump(void * Context, string Arguments) {
-    game_state* GameState = (game_state*)Context;
+    auto* PermState = (permanent_state*)Context;
     
-    auto Scratch = BeginScratch(&GameState->ModeArena);
+    auto Scratch = BeginScratch(&PermState->ModeArena);
     Defer {  EndScratch(&Scratch); };
 
     dlink_list<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
-        PushInfo(&GameState->Console, 
+        PushInfo(&PermState->Console, 
                  String("Expected only 2 arguments"), 
-                 ColorRed);
+                 Color_Red);
         return;
     }
 
     string StateToChangeTo = ArgList[1];
     if (StateToChangeTo == String("main")) {
-        PushInfo(&GameState->Console, 
+        PushInfo(&PermState->Console, 
                  String("Jumping to Main"), 
-                 ColorYellow);
-        GameState->NextModeType = GameModeType_Main;
+                 Color_Yellow);
+        PermState->NextGameMode = GameModeType_Main;
     }
     else if (StateToChangeTo == String("splash")) {
-        PushInfo(&GameState->Console, 
+        PushInfo(&PermState->Console, 
                  String("Jumping to Splash"),  
-                 ColorYellow);
-        GameState->NextModeType = GameModeType_Splash;
+                 Color_Yellow);
+        PermState->NextGameMode = GameModeType_Splash;
     }
     else if (StateToChangeTo == String("menu")) {
-        PushInfo(&GameState->Console, 
+        PushInfo(&PermState->Console, 
                  String("Jumping to Menu"), 
-                 ColorYellow);
-        GameState->NextModeType = GameModeType_Menu;
+                 Color_Yellow);
+        PermState->NextGameMode = GameModeType_Menu;
     }
     else if (StateToChangeTo == String("sandbox")) {
-        PushInfo(&GameState->Console, 
+        PushInfo(&PermState->Console, 
                  String("Jumping to Sandbox"), 
-                 ColorYellow);
-        GameState->NextModeType = GameModeType_Sandbox;
+                 Color_Yellow);
+        PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
-        PushInfo(&GameState->Console, 
+        PushInfo(&PermState->Console, 
                  String("Invalid state to jump to"), 
-                 ColorRed);
+                 Color_Red);
     }
 }
 #endif
@@ -65,18 +65,19 @@ CmdJump(void * Context, string Arguments) {
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
-    game_state* GameState = (game_state*)GameMemory->PermanentMemory;
+    auto* PermState= (permanent_state*)GameMemory->PermanentMemory;
+    auto* TransientState = (transient_state*)GameMemory->TransientMemory;
        
-    // NOTE(Momo): Initialization of the game
-    if(!GameState->IsInitialized) {
+    //  Initialization of the game
+    if(!PermState->IsInitialized) {
         // NOTE(Momo): Arenas
-        GameState->MainArena = 
-            Arena((u8*)GameMemory->PermanentMemory + sizeof(game_state), 
-                  GameMemory->PermanentMemorySize - sizeof(game_state));
+        PermState->MainArena = 
+            BootstrapArena<permanent_state>(GameMemory->PermanentMemory, 
+                                            GameMemory->PermanentMemorySize);
 
         // NOTE(Momo): Assets
-        GameState->Assets = CreateAssets(
-                &GameState->MainArena, 
+        PermState->Assets = CreateAssets(
+                &PermState->MainArena, 
                 Platform, 
                 RenderCommands, 
                 String("yuu\0"));
@@ -89,96 +90,102 @@ GameUpdateFunc(GameUpdate)
                 -Global_DesignHeight * 0.5f + Dimensions.H * 0.5f, 
                 Global_DesignDepth * 0.5f - 1.f
             };
-            GameState->Console = 
-                GameConsole(&GameState->MainArena, 
+            PermState->Console = 
+                GameConsole(&PermState->MainArena, 
                             5, 
                             110, 
                             1,
-                            v4f{ 0.3f, 0.3f, 0.3f, 1.f },
-                            ColorWhite,
-                            v4f{ 0.2f, 0.2f, 0.2f, 1.f },
-                            ColorWhite,
+                            Color_Grey3,
+                            Color_White,
+                            Color_Grey2,
+                            Color_White,
                             Dimensions,
                             Position); 
-
             
-            RegisterCommand(&GameState->Console, String("jump"), CmdJump, GameState);
+            RegisterCommand(&PermState->Console, 
+                            String("jump"), 
+                            CmdJump, 
+                            PermState);
         }
 
         // NOTE(Momo): Arena for modes
-        GameState->ModeArena = SubArena(&GameState->MainArena, 
-                                        Remaining(GameState->MainArena));
-        GameState->ModeType = GameModeType_None;
-        GameState->NextModeType = GameModeType_Splash;
-        GameState->IsInitialized = true;
+        PermState->ModeArena = SubArena(&PermState->MainArena, 
+                                        Remaining(PermState->MainArena));
+        PermState->CurrentGameMode = GameModeType_None;
+        PermState->NextGameMode = GameModeType_Splash;
+        PermState->IsInitialized = true;
 
         // NOTE(Momo): Set design resolution for game
         PushCommandSetDesignResolution(RenderCommands, 
                                        (u32)Global_DesignWidth, 
                                        (u32)Global_DesignHeight);
+    }
+
+    if (!TransientState->IsInitialized) {
+        TransientState->TransArena =
+            BootstrapArena<transient_state>(GameMemory->TransientMemory,
+                                            GameMemory->TransientMemorySize);
 
     }
 
-
-
     // Console
-    Update(&GameState->Console, Input);
+    Update(&PermState->Console, Input);
 
     // Clean state/Switch states
-    if (GameState->NextModeType != GameModeType_None) {
-        Clear(&GameState->ModeArena);
-        arena* ModeArena = &GameState->ModeArena;
-        switch(GameState->NextModeType) {
+    if (PermState->NextGameMode != GameModeType_None) {
+        Clear(&PermState->ModeArena);
+        arena* ModeArena = &PermState->ModeArena;
+        switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
-                GameState->SplashMode = 
+                PermState->SplashMode = 
                     PushStruct<game_mode_splash>(ModeArena); 
-                InitSplashMode(GameState);
+                InitSplashMode(PermState);
             } break;
             case GameModeType_Main: {
-                GameState->MainMode = 
+                PermState->MainMode = 
                     PushStruct<game_mode_main>(ModeArena); 
-                InitMainMode(GameState);
+                InitMainMode(PermState);
             } break;
             case GameModeType_Menu: {
-                GameState->MenuMode = 
+                PermState->MenuMode = 
                     PushStruct<game_mode_menu>(ModeArena); 
-                InitMenuMode(GameState);
+                InitMenuMode(PermState);
             } break;
             case GameModeType_Sandbox: {
-                GameState->SandboxMode = 
+                PermState->SandboxMode = 
                     PushStruct<game_mode_sandbox>(ModeArena); 
-                InitSandboxMode(GameState);
+                InitSandboxMode(PermState);
             } break;
             default: {
             }
         }
         
-        GameState->ModeType = GameState->NextModeType;
-        GameState->NextModeType = GameModeType_None;
+        PermState->CurrentGameMode = PermState->NextGameMode;
+        PermState->NextGameMode = GameModeType_None;
     }
 
     // State update
-    switch(GameState->ModeType) {
+    switch(PermState->CurrentGameMode) {
         case GameModeType_Splash: {
-            UpdateSplashMode(GameState, 
+            UpdateSplashMode(PermState, 
                              RenderCommands, 
                              Input, 
                              DeltaTime);
         } break;
         case GameModeType_Menu: {
-            UpdateMenuMode(GameState, 
+            UpdateMenuMode(PermState, 
                            RenderCommands, 
                            Input, 
                            DeltaTime);
         } break;
         case GameModeType_Main: {
-            UpdateMainMode(GameState, 
+            UpdateMainMode(PermState, 
                            RenderCommands, 
                            Input, 
                            DeltaTime);
         } break; 
         case GameModeType_Sandbox: {
-            UpdateSandboxMode(GameState, 
+            UpdateSandboxMode(PermState, 
                               RenderCommands, 
                               Input, 
                               DeltaTime);
@@ -189,5 +196,5 @@ GameUpdateFunc(GameUpdate)
     }
 
     // Render Console
-    Render(&GameState->Console, RenderCommands, &GameState->Assets);
+    Render(&PermState->Console, RenderCommands, &PermState->Assets);
 }

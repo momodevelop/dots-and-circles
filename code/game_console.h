@@ -152,7 +152,7 @@ Update(game_console* Console,
     }
 
     if (IsPoked(Input->ButtonConfirm)) {
-        PushInfo(Console, Console->InputBuffer.Array, ColorWhite);
+        PushInfo(Console, Console->InputBuffer.Array, Color_White);
         Copy(&Console->CommandBuffer, Console->InputBuffer.Array);
         Clear(&Console->InputBuffer);
         Execute(Console, Console->CommandBuffer.Array);

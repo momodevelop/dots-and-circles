@@ -85,8 +85,8 @@ struct game_mode_splash {
 
 
 static inline void
-InitSplashMode(game_state* GameState) {
-    game_mode_splash* Mode = GameState->SplashMode;
+InitSplashMode(permanent_state* PermState) {
+    game_mode_splash* Mode = PermState->SplashMode;
     // NOTE(Momo): Create entities
     {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
@@ -127,12 +127,12 @@ InitSplashMode(game_state* GameState) {
 }
 
 static inline void
-UpdateSplashMode(game_state* GameState, 
+UpdateSplashMode(permanent_state* PermState, 
                  mailbox* RenderCommands,
                  input* Input,
                  f32 DeltaTime)
 {
-    game_mode_splash* Mode = GameState->SplashMode;
+    game_mode_splash* Mode = PermState->SplashMode;
     PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
 
     PushCommandOrthoCamera(RenderCommands, 
@@ -145,19 +145,19 @@ UpdateSplashMode(game_state* GameState,
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
         Update(Mode->SplashImg + I, 
-               &GameState->Assets, 
+               &PermState->Assets, 
                RenderCommands, 
                DeltaTime);
     }
     
     Update(&Mode->SplashBlackout,
-            &GameState->Assets,
+            &PermState->Assets,
             RenderCommands,
             DeltaTime);
         
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
-        GameState->NextModeType = GameModeType_Splash;
+        PermState->NextGameMode = GameModeType_Splash;
     }
 
 }

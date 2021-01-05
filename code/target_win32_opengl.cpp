@@ -827,8 +827,8 @@ WinMain(HINSTANCE Instance,
                     Sleep(MsToSleep);
                 }
             }
-            while(TargetSecsPerFrame > Win32GetSecondsElapsed(LastCount, 
-                                                              Win32GetCurrentCounter()));
+            while(TargetSecsPerFrame > 
+                    Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter()));
 
         }
         else {

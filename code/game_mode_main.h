@@ -123,7 +123,7 @@ struct game_mode_main {
 // Helper function to draw text easily
 static inline void
 DrawDebugText(mailbox* RenderCommands, game_assets* Assets, v3f Position, string String) {
-    DrawText(RenderCommands, Assets, Position, ColorWhite, Font_Default, 32.f, String);
+    DrawText(RenderCommands, Assets, Position, Color_White, Font_Default, 32.f, String);
 }
 
 static inline void
@@ -176,16 +176,16 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
 	
 
 static inline void 
-InitMainMode(game_state* GameState) {
-    game_mode_main* Mode = GameState->MainMode;
+InitMainMode(permanent_state* PermState) {
+    game_mode_main* Mode = PermState->MainMode;
 
-    Mode->Arena = SubArena(&GameState->ModeArena, Remaining(GameState->ModeArena));
+    Mode->Arena = SubArena(&PermState->ModeArena, Remaining(PermState->ModeArena));
     Mode->Bullets = List<bullet>(&Mode->Arena, 128);
     Mode->Enemies = List<enemy>(&Mode->Arena, 128);
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
 
-    auto* Assets = &GameState->Assets;
+    auto* Assets = &PermState->Assets;
     auto* Player = &Mode->Player;
     Player->Speed = 300.f;
     Player->DotImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
@@ -210,12 +210,12 @@ InitMainMode(game_state* GameState) {
 
 
 static inline void
-UpdateMainMode(game_state* GameState, 
+UpdateMainMode(permanent_state* PermState, 
        mailbox* RenderCommands, 
        input* Input,
        f32 DeltaTime) 
 {
-    game_mode_main* Mode = GameState->MainMode;
+    game_mode_main* Mode = PermState->MainMode;
     PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushCommandOrthoCamera(RenderCommands, 
             v3f{}, 
@@ -225,7 +225,7 @@ UpdateMainMode(game_state* GameState,
             )
     );
     
-    auto* Assets = &GameState->Assets;
+    auto* Assets = &PermState->Assets;
     auto* Player = &Mode->Player;
     
     // NOTE(Momo): Input
@@ -524,13 +524,25 @@ UpdateMainMode(game_state* GameState,
         PushI32(&Buffer, (i32)Mode->Bullets.Count);
 
         // Number of dot bullets
-        DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
+        DrawText(RenderCommands, 
+                 Assets, 
+                 v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
+                 Color_White, 
+                 Font_Default, 
+                 32.f, 
+                 Buffer.Array);
         Clear(&Buffer);
 
         Push(&Buffer, String("Enemies: "));
         PushI32(&Buffer, (i32)Mode->Enemies.Count);
         
-        DrawText(RenderCommands, Assets, v3f{ -800.f + 10.f, 450.f - 64.f, 0.f }, ColorWhite, Font_Default, 32.f, Buffer.Array);
+        DrawText(RenderCommands, 
+                 Assets, 
+                 v3f{ -800.f + 10.f, 450.f - 64.f, 0.f }, 
+                 Color_White, 
+                 Font_Default, 
+                 32.f, 
+                 Buffer.Array);
     }
 
 }
