@@ -10,13 +10,13 @@
 #include "mm_mailbox.h"
 
 // NOTE(Momo): Global Settings
-static constexpr u64 Global_GameMainMemorySize = Gigabytes(1);
-static constexpr u64 Global_RenderCommandsMemorySize = Megabytes(64);
+static constexpr usize Global_PermanentMemorySize = Gigabytes(1);
+static constexpr usize Global_RenderCommandsMemorySize = Megabytes(64);
+static constexpr usize Global_TransientMemorySize = Megabytes(256);
 static constexpr u32 Global_DefaultRefreshRate = 60;
 static constexpr f32 Global_DesignWidth = 1600.f;
 static constexpr f32 Global_DesignHeight = 900.f;
 static constexpr f32 Global_DesignDepth = 200.f;
-static constexpr u64 Global_TotalMemorySize = Global_GameMainMemorySize + Global_RenderCommandsMemorySize;
 
 
 // Input API /////////////////////////////////////////
@@ -118,11 +118,11 @@ struct platform_api {
 
 // Memory required by the game to get it running
 struct game_memory {
-    void* MainMemory;
-    usize MainMemorySize;
+    void* PermanentMemory;
+    usize PermanentMemorySize;
     
-    void* DebugMemory;
-    usize DebugMemorySize;
+    void* TransientMemory;
+    usize TransientMemorySize;
 };
 
 // NOTE(Momo): Function typedefs and helpers

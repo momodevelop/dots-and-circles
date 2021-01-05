@@ -24,7 +24,8 @@ CmdJump(void * Context, string Arguments) {
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
         PushInfo(&GameState->Console, 
-                 String("Expected only 2 arguments"), ColorRed);
+                 String("Expected only 2 arguments"), 
+                 ColorRed);
         return;
     }
 
@@ -64,24 +65,23 @@ CmdJump(void * Context, string Arguments) {
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
-    game_state* GameState = (game_state*)GameMemory->MainMemory;
+    game_state* GameState = (game_state*)GameMemory->PermanentMemory;
        
     // NOTE(Momo): Initialization of the game
     if(!GameState->IsInitialized) {
         // NOTE(Momo): Arenas
-        GameState->MainArena = Arena((u8*)GameMemory->MainMemory + sizeof(game_state), 
-                                     GameMemory->MainMemorySize - sizeof(game_state));
+        GameState->MainArena = 
+            Arena((u8*)GameMemory->PermanentMemory + sizeof(game_state), 
+                  GameMemory->PermanentMemorySize - sizeof(game_state));
 
         // NOTE(Momo): Assets
         GameState->Assets = CreateAssets(
                 &GameState->MainArena, 
                 Platform, 
                 RenderCommands, 
-                String("yuu\0")
-        );
+                String("yuu\0"));
 
         // Console Init
-        
         {
             v2f Dimensions = { Global_DesignWidth, 240.f };
             v3f Position = { 
@@ -160,16 +160,28 @@ GameUpdateFunc(GameUpdate)
     // State update
     switch(GameState->ModeType) {
         case GameModeType_Splash: {
-            UpdateSplashMode(GameState, RenderCommands, Input, DeltaTime);
+            UpdateSplashMode(GameState, 
+                             RenderCommands, 
+                             Input, 
+                             DeltaTime);
         } break;
         case GameModeType_Menu: {
-            UpdateMenuMode(GameState, RenderCommands, Input, DeltaTime);
+            UpdateMenuMode(GameState, 
+                           RenderCommands, 
+                           Input, 
+                           DeltaTime);
         } break;
         case GameModeType_Main: {
-            UpdateMainMode(GameState, RenderCommands, Input, DeltaTime);
+            UpdateMainMode(GameState, 
+                           RenderCommands, 
+                           Input, 
+                           DeltaTime);
         } break; 
         case GameModeType_Sandbox: {
-            UpdateSandboxMode(GameState, RenderCommands, Input, DeltaTime);
+            UpdateSandboxMode(GameState, 
+                              RenderCommands, 
+                              Input, 
+                              DeltaTime);
         } break;
         default: {
             Assert(false);

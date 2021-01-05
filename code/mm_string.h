@@ -53,7 +53,10 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
     while (Range.End != Str.Count) {
         Range.End = Find(Str, ' ', Range.Start); 
 
-        auto* Link = PushCtr<dlink<string>>(Arena, DLink<string>, SubString(Str, Range));
+        auto* Link = 
+            PushCtr<dlink<string>>(Arena, 
+                                   DLink<string>, 
+                                   SubString(Str, Range));
         PushBack(&Ret, Link);
  
         Range.Start = Range.End + 1;

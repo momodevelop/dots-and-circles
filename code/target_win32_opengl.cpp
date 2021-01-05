@@ -521,6 +521,23 @@ Win32GetClientDimensions(HWND Window) {
     };
 
 }
+
+static inline void*
+Win32AllocateMemory(usize MemorySize) {
+    return VirtualAllocEx(GetCurrentProcess(),
+                          0, 
+                          MemorySize,
+                          MEM_RESERVE | MEM_COMMIT, 
+                          PAGE_READWRITE);
+}
+
+static inline void
+Win32FreeMemory(void* Memory) {
+    VirtualFreeEx(GetCurrentProcess(), 
+                  Memory,    
+                  0, 
+                  MEM_RELEASE); 
+}
 static inline void
 Win32ProcessMessages(HWND Window, 
                      input* Input)
@@ -684,7 +701,8 @@ WinMain(HINSTANCE Instance,
     WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
     WindowClass.lpszClassName = "DnCWindowClass";
 
-    Win32RuntimeAssert(RegisterClassA(&WindowClass), "Failed to register class");
+    Win32RuntimeAssert(RegisterClassA(&WindowClass), 
+                      "Failed to register class");
 
     Win32Log("Window class registered\n");
     HWND Window;
@@ -749,27 +767,24 @@ WinMain(HINSTANCE Instance,
             Global_TempGameCodeDllFullPath,
             Global_GameCodeLockFullPath);
 
-    // Allocate memory for the entire program
-    void* ProgramMemory = VirtualAllocEx(GetCurrentProcess(),
-                                         0, Global_TotalMemorySize, 
-                                         MEM_RESERVE | MEM_COMMIT, 
-                                         PAGE_READWRITE);
-
-    
-    Win32RuntimeAssert(ProgramMemory, "Cannot allocate program memory\n");
-    Defer { VirtualFreeEx(GetCurrentProcess(), ProgramMemory, 0, MEM_RELEASE); }; 
-    arena Win32Arena = Arena(ProgramMemory, Global_TotalMemorySize);
-    
-    // Initialize game memory
+    // Initialize memory
     game_memory GameMemory = {};
-    GameMemory.MainMemory = PushBlock(&Win32Arena, Global_GameMainMemorySize); 
-    Win32RuntimeAssert(GameMemory.MainMemory, "Cannot allocate game main memory\n");
-    GameMemory.MainMemorySize = Global_GameMainMemorySize;
+    GameMemory.PermanentMemorySize = Global_PermanentMemorySize;
+    GameMemory.PermanentMemory = Win32AllocateMemory(GameMemory.PermanentMemorySize); 
+
+    Win32RuntimeAssert(GameMemory.PermanentMemory, 
+                       "Cannot allocate program memory\n");
+    Defer { Win32FreeMemory(GameMemory.PermanentMemory); };
+
+    GameMemory.TransientMemorySize = Global_TransientMemorySize;
+    GameMemory.TransientMemory = Win32AllocateMemory(GameMemory.TransientMemorySize);
+    Win32RuntimeAssert(GameMemory.TransientMemory, 
+                       "Cannot allocate program memory\n");
+    Defer { Win32FreeMemory(GameMemory.TransientMemory); };
     
     // Intialize Render commands
-    void* RenderCommandsMemory = PushBlock(&Win32Arena, 
-                                           Global_RenderCommandsMemorySize);
-    mailbox RenderCommands = Mailbox(RenderCommandsMemory, 
+    void* RenderCommandsMemory = Win32AllocateMemory(Global_RenderCommandsMemorySize); 
+    mailbox RenderCommands = Mailbox(RenderCommandsMemory,
                                      Global_RenderCommandsMemorySize);
     
  
