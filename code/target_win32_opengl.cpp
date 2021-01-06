@@ -139,6 +139,18 @@ Win32GetSecondsElapsed(LARGE_INTEGER Start,
     return (f32(End.QuadPart - Start.QuadPart)) / Global_PerformanceFrequency; 
 }
 
+#if REFACTOR
+static inline
+PlatformAddTexture(Win32AddTexture) {
+
+    return 0;    
+}
+
+static inline 
+PlatformClearTextures(Win32ClearTextures) {
+
+}
+#endif
 
 static inline
 PlatformReadFileFunc(Win32ReadFile) {
@@ -227,18 +239,6 @@ Win32BuildExePathFilename(char* Dest, const char* Filename) {
     (*Dest) = 0;
 }
 
-#if REFACTOR
-static inline void
-Win32AddTexture(u32 Width,
-                u32 Height,
-                void* Pixels) 
-{
-    // TODO:
-
-
-}
-#endif
-
 struct win32_game_code {
     HMODULE Dll;
     game_update* GameUpdate;
@@ -263,7 +263,7 @@ Win32GetLastWriteTime(const char* Filename) {
 }
 
 static inline win32_game_code 
-Win32InitGameCode(const char* SrcFileName,
+Win32GameCode(const char* SrcFileName,
                   const char* TempFileName,
                   const char* LockFileName) 
 {
@@ -817,7 +817,7 @@ WinMain(HINSTANCE Instance,
     // Load the game code DLL
     // TODO: Make game code global?
     win32_game_code GameCode = 
-        Win32InitGameCode(
+        Win32GameCode(
             Global_SourceGameCodeDllFullPath,
             Global_TempGameCodeDllFullPath,
             Global_GameCodeLockFullPath);
@@ -866,10 +866,10 @@ WinMain(HINSTANCE Instance,
 
         if (GameCode.GameUpdate) {
             GameCode.GameUpdate(&GameMemory,
-                       &PlatformApi,
-                       &RenderCommands,
-                       &GameInput,
-                       TargetSecsPerFrame);
+                                &PlatformApi,
+                                &RenderCommands,
+                                &GameInput,
+                                TargetSecsPerFrame);
         }
 
         OpenglRender(&Global_Opengl, &RenderCommands);

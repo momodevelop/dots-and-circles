@@ -16,7 +16,11 @@
 // NOTE(Momo): Asset types
 struct bitmap {
     u32 Width, Height, Channels;
+#if REFACTOR
+    platform_texture_handle PlatformHandle;
+#else
     void* Pixels;
+#endif
 };
 
 struct atlas_rect {
@@ -70,8 +74,6 @@ struct game_assets {
     array<bitmap> Bitmaps;
     array<atlas_rect> AtlasRects;
     array<font> Fonts;
-
-    platform_api* Platform;
 };
 
 
@@ -92,7 +94,6 @@ GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
 static inline quad2f 
 GetAtlasUV(game_assets* Assets, atlas_rect_id AtlasRectId) {
     return GetAtlasUV(Assets, Assets->AtlasRects + AtlasRectId);
-
 }
 
 
@@ -113,13 +114,18 @@ CheckAssetSignature(void* Memory, const char* Signature) {
 // replace with platform call for linking textures?
 static inline game_assets
 CreateAssets(arena* Arena, 
-     platform_api* Platform,
-     mailbox* RenderCommands,
-     string Filename)
+             platform_api* Platform,
+#if REFACTOR
+#else
+             mailbox* RenderCommands,
+#endif
+             string Filename)
 {
+#if REFACTOR 
+    Platform->ClearTextures();
+#endif
     game_assets Assets = {};
     Assets.Arena = SubArena(Arena, Megabytes(100));
-    Assets.Platform = Platform;
     Assets.Bitmaps = Array<bitmap>(Arena, Bitmap_Count);
     Assets.AtlasRects = Array<atlas_rect>(Arena, AtlasRect_Count);
     Assets.Fonts = Array<font>(Arena, Font_Count);
@@ -169,16 +175,24 @@ CreateAssets(arena* Arena,
                 usize BitmapSize = Bitmap->Width * 
                                    Bitmap->Height * 
                                    Bitmap->Channels;
+#if REFACTOR
+                void* Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
+                Bitmap->Id = 
+                    Platform->AddTexture(Bitmap->Width, 
+                                        Bitmap->Height,
+                                        Pixels);
+#else
                 Bitmap->Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
                 Assert(Bitmap->Pixels);
                 MemCopy(Bitmap->Pixels, FileMemoryItr, BitmapSize);
                 FileMemoryItr += BitmapSize;
-              
                 PushCommandLinkTexture(RenderCommands,
-                                        Bitmap->Width, 
-                                        Bitmap->Height,
-                                        Bitmap->Pixels,
-                                        YuuBitmap->Id);
+                                       Bitmap->Width, 
+                                       Bitmap->Height,
+                                       Bitmap->Pixels,
+                                       YuuBitmap->Id);
+#endif
+ 
             } break;
             case AssetType_AtlasRect: { 
                 auto* YuuAtlasRect = Read<yuu_atlas_rect>(&FileMemoryItr);
