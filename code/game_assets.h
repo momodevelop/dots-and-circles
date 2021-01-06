@@ -17,7 +17,7 @@
 struct bitmap {
     u32 Width, Height, Channels;
 #if REFACTOR
-    platform_texture_handle PlatformHandle;
+    u32 Handle;
 #else
     void* Pixels;
 #endif
@@ -177,7 +177,7 @@ CreateAssets(arena* Arena,
                                    Bitmap->Channels;
 #if REFACTOR
                 void* Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
-                Bitmap->Id = 
+                Bitmap->Handle = 
                     Platform->AddTexture(Bitmap->Width, 
                                         Bitmap->Height,
                                         Pixels);

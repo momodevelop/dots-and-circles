@@ -25,6 +25,12 @@ struct renderer {
     b32 IsInitialized;
 };
 
+struct renderer_texture {
+    u32 Index;
+    u16 Width;
+    u16 Height;
+};
+
 struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
     v4f Colors;

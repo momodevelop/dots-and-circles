@@ -279,13 +279,15 @@ struct renderer_opengl {
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
     // TODO(Momo): Make this dynamic? 
-    u32 GameToOpenglTextureTable[255];
+    GLuint Textures[255];
+    usize TexturesCount;
+
     v2u WindowDimensions;
     v2u RenderDimensions;
 };
 
 static inline void 
-OpenglAttachShader(renderer_opengl* Opengl, u32 Program, u32 Type, char* Code) {
+AttachShader(renderer_opengl* Opengl, u32 Program, u32 Type, char* Code) {
     GLuint Shader = Opengl->glCreateShader(Type);
     Opengl->glShaderSource(Shader, 1, &Code, NULL);
     Opengl->glCompileShader(Shader);
@@ -294,7 +296,7 @@ OpenglAttachShader(renderer_opengl* Opengl, u32 Program, u32 Type, char* Code) {
 }
 
 // TODO: Change name to OpenglAliugnViewport
-static inline void OpenglAlignViewport(renderer_opengl* Opengl) 
+static inline void AlignViewport(renderer_opengl* Opengl) 
 {
     auto Region = GetRenderRegion(Opengl->WindowDimensions.W, 
                                   Opengl->WindowDimensions.H, 
@@ -313,17 +315,17 @@ static inline void OpenglAlignViewport(renderer_opengl* Opengl)
 
 
 static inline void 
-OpenglResize(renderer_opengl* Opengl, u32 WindowWidth, u32 WindowHeight) {
+Resize(renderer_opengl* Opengl, u32 WindowWidth, u32 WindowHeight) {
     Opengl->WindowDimensions.W = WindowWidth;
     Opengl->WindowDimensions.H = WindowHeight;
-    OpenglAlignViewport(Opengl);
+    AlignViewport(Opengl);
 }
 
 static inline b32
-OpenglInit(renderer_opengl* Opengl,
-           u32 WindowWidth, 
-           u32 WindowHeight, 
-           i32 MaxEntities) 
+Init(renderer_opengl* Opengl,
+     u32 WindowWidth, 
+     u32 WindowHeight, 
+     i32 MaxEntities) 
 {
     Opengl->MaxEntities = MaxEntities;
     Opengl->RenderDimensions.W = WindowWidth;
@@ -341,7 +343,7 @@ OpenglInit(renderer_opengl* Opengl,
     Opengl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
     
-    OpenglAlignViewport(Opengl);
+    AlignViewport(Opengl);
     
     
     // NOTE(Momo): Setup VBO
@@ -357,19 +359,19 @@ OpenglInit(renderer_opengl* Opengl,
                                  0);
     
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Texture], 
-                        sizeof(v2f) * 4 * MaxEntities, 
-                        nullptr, 
-                        GL_DYNAMIC_STORAGE_BIT);
+                                 sizeof(v2f) * 4 * MaxEntities, 
+                                 nullptr, 
+                                 GL_DYNAMIC_STORAGE_BIT);
 
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Colors], 
-                         sizeof(v4f) * MaxEntities, 
-                         nullptr, 
-                         GL_DYNAMIC_STORAGE_BIT);
+                                 sizeof(v4f) * MaxEntities, 
+                                 nullptr, 
+                                 GL_DYNAMIC_STORAGE_BIT);
     
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Transform], 
-                         sizeof(m44f) * MaxEntities, 
-                         nullptr, 
-                         GL_DYNAMIC_STORAGE_BIT);
+                                 sizeof(m44f) * MaxEntities, 
+                                 nullptr, 
+                                 GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
@@ -537,14 +539,14 @@ OpenglInit(renderer_opengl* Opengl,
     
     // NOTE(Momo): Setup Shader Program
     Opengl->Shader = Opengl->glCreateProgram();
-    OpenglAttachShader(Opengl, 
-                       Opengl->Shader, 
-                       GL_VERTEX_SHADER, 
-                       (char*)OpenglVertexShader);
-    OpenglAttachShader(Opengl, 
-                       Opengl->Shader, 
-                       GL_FRAGMENT_SHADER, 
-                       (char*)OpenglFragmentShader);
+    AttachShader(Opengl, 
+                 Opengl->Shader, 
+                 GL_VERTEX_SHADER, 
+                 (char*)OpenglVertexShader);
+    AttachShader(Opengl, 
+                 Opengl->Shader, 
+                 GL_FRAGMENT_SHADER, 
+                 (char*)OpenglFragmentShader);
 
     Opengl->glLinkProgram(Opengl->Shader);
    
@@ -617,8 +619,47 @@ DrawInstances(renderer_opengl* Opengl,
     }
 }
 
+
+#if REFACTOR
+static inline renderer_texture
+AddTexture(renderer_opengl* Opengl,
+           u16 Width,
+           u16 Height,
+           void* Pixels) 
+{
+    u32* Entry = 
+        Opengl->Textures + Opengl->TexturesCount++;
+
+    Opengl->glCreateTextures(GL_TEXTURE_2D, 
+                             1, 
+                             Entry);
+
+    Opengl->glTextureStorage2D((*Entry), 
+                                1, 
+                                GL_RGBA8, 
+                                Width, 
+                                Height);
+    
+    Opengl->glTextureSubImage2D((*Entry), 
+                                0, 
+                                0, 
+                                0, 
+                                Width, 
+                                Height, 
+                                GL_RGBA, 
+                                GL_UNSIGNED_BYTE, 
+                                Pixels);
+    return (*Entry);
+}
+
 static inline void
-OpenglRender(renderer_opengl* Opengl, mailbox* Commands) 
+ClearTextures(renderer_opengl* Opengl) {
+    Opengl->TexturesCount = 0;
+}
+#endif
+
+static inline void
+Render(renderer_opengl* Opengl, mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     u32 CurrentTexture = 0;
@@ -637,7 +678,7 @@ OpenglRender(renderer_opengl* Opengl, mailbox* Commands)
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 Opengl->RenderDimensions.W = Data->Width;
                 Opengl->RenderDimensions.H = Data->Height;
-                OpenglAlignViewport(Opengl);
+                AlignViewport(Opengl);
             } break;
             case render_command_set_basis::TypeId: {
                 using data_t = render_command_set_basis;
@@ -659,6 +700,8 @@ OpenglRender(renderer_opengl* Opengl, mailbox* Commands)
                                           Result[0].Elements);
                 
             } break;
+#if REFACTOR
+#else
             case render_command_link_texture::TypeId: {
                 using data_t = render_command_link_texture;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
@@ -678,8 +721,8 @@ OpenglRender(renderer_opengl* Opengl, mailbox* Commands)
                                             GL_RGBA, 
                                             GL_UNSIGNED_BYTE, 
                                             Data->Pixels);
-                
             } break;
+#endif            
             case render_command_clear_color::TypeId: {
                 using data_t = render_command_clear_color;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);

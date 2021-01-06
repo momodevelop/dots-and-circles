@@ -71,8 +71,11 @@ GameUpdateFunc(GameUpdate)
         // NOTE(Momo): Assets
         PermState->Assets = CreateAssets(
                 &PermState->MainArena, 
-                Platform, 
+                Platform,
+#if REFACTOR
+#else
                 RenderCommands, 
+#endif
                 String("yuu\0"));
 
         // Console Init

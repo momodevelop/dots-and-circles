@@ -112,7 +112,6 @@ typedef PlatformAddTexture(platform_add_texture);
 #define PlatformClearTextures(Name) void Name()
 typedef PlatformClearTextures(platform_clear_textures);
 
-
 struct platform_api {
     platform_log* Log;
     platform_get_file_size* GetFileSize;

@@ -142,13 +142,13 @@ Win32GetSecondsElapsed(LARGE_INTEGER Start,
 #if REFACTOR
 static inline
 PlatformAddTexture(Win32AddTexture) {
-
-    return 0;    
+    return AddTexture(&Global_Opengl, 
+                      Width, Height, Pixels);  
 }
 
 static inline 
 PlatformClearTextures(Win32ClearTextures) {
-
+    ClearTextures(&Global_Opengl);
 }
 #endif
 
