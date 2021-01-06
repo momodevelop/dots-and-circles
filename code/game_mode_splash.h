@@ -18,14 +18,14 @@ struct splash_image_entity {
     f32 Duration;
     f32 StartX;
     f32 EndX;
-    
 };
 
 static inline void
 Update(splash_image_entity* Entity, 
        game_assets* Assets,
        mailbox* RenderCommands, 
-       f32 DeltaTime) {
+       f32 DeltaTime) 
+{
     Entity->CountdownTimer += DeltaTime;
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
@@ -40,8 +40,10 @@ Update(splash_image_entity* Entity,
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
     
-    // TODO(Momo): This part should be done by renderer?
-    PushCommandDrawTexturedQuad(RenderCommands, Entity->Colors, T*S,  Entity->BitmapHandle);
+    PushCommandDrawTexturedQuad(RenderCommands, 
+                                Entity->Colors, 
+                                T*S,  
+                                Entity->BitmapHandle);
 }
 
 struct splash_blackout_entity {
@@ -73,7 +75,6 @@ Update(splash_blackout_entity* Entity,
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
     
-    // TODO(Momo): This part should be done by renderer?
     PushCommandDrawQuad(RenderCommands, Entity->Colors, T*S);
     
 }
@@ -119,10 +120,6 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashBlackout.Timer = 0.f;
         Mode->SplashBlackout.Duration = 1.f;
 
-#if INTERNAL
-        
-
-#endif 
     }
 }
 
@@ -138,7 +135,11 @@ UpdateSplashMode(permanent_state* PermState,
     PushCommandOrthoCamera(RenderCommands, 
             v3f{}, 
             CenteredRect( 
-                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
+                v3f { 
+                    Global_DesignWidth, 
+                    Global_DesignHeight,
+                    Global_DesignDepth 
+                }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )
     );

@@ -35,19 +35,24 @@
 // TODO: Use defines for better readability
 #define WglFunction(Name) wgl_func_##Name
 #define WglFunctionPtr(Name) WglFunction(Name)* Name
-typedef BOOL WINAPI WglFunction(wglChoosePixelFormatARB)(HDC hdc,
-                                                         const int* piAttribIList,
-                                                         const FLOAT* pfAttribFList,
-                                                         UINT nMaxFormats,
-                                                         int* piFormats,
-                                                         UINT* nNumFormats);
-typedef BOOL WINAPI WglFunction(wglSwapIntervalEXT)(int interval);
-typedef HGLRC WINAPI WglFunction(wglCreateContextAttribsARB)(HDC hdc, 
-                                                             HGLRC hShareContext,
-                                                            const int* attribList);
-typedef const char* WINAPI WglFunction(wglGetExtensionsStringEXT)();
+typedef BOOL WINAPI 
+WglFunction(wglChoosePixelFormatARB)(HDC hdc,
+                                     const int* piAttribIList,
+                                     const FLOAT* pfAttribFList,
+                                     UINT nMaxFormats,
+                                     int* piFormats,
+                                     UINT* nNumFormats);
 
+typedef BOOL WINAPI 
+WglFunction(wglSwapIntervalEXT)(int interval);
 
+typedef HGLRC WINAPI 
+WglFunction(wglCreateContextAttribsARB)(HDC hdc, 
+                                        HGLRC hShareContext,
+                                        const int* attribList);
+
+typedef const char* WINAPI 
+WglFunction(wglGetExtensionsStringEXT)();
 
 static WglFunctionPtr(wglCreateContextAttribsARB);
 static WglFunctionPtr(wglChoosePixelFormatARB);
@@ -58,8 +63,6 @@ static WglFunctionPtr(wglGetExtensionsStringEXT);
 static const char* Global_GameCodeDllFileName = "game.dll";
 static const char* Global_TempGameCodeDllFileName = "temp_game.dll";
 static const char* Global_GameCodeLockFileName = "lock";
-
-
 
 b32 Global_IsRunning;
 u32 Global_PerformanceFrequency;
@@ -73,8 +76,17 @@ char Global_TempGameCodeDllFullPath[MAX_PATH];
 renderer_opengl Global_Opengl;
 
 #if INTERNAL
-    HANDLE Global_StdOut;
+HANDLE Global_StdOut;
 #endif
+
+static inline LARGE_INTEGER
+FiletimeToLargeInt(FILETIME Filetime) {
+    LARGE_INTEGER Ret = {};
+    Ret.LowPart = Filetime.dwLowDateTime;
+    Ret.HighPart = Filetime.dwHighDateTime;
+
+    return Ret;
+}
 
 static inline LONG
 Width(RECT Value) {
@@ -127,6 +139,7 @@ Win32GetSecondsElapsed(LARGE_INTEGER Start,
     return (f32(End.QuadPart - Start.QuadPart)) / Global_PerformanceFrequency; 
 }
 
+
 static inline
 PlatformReadFileFunc(Win32ReadFile) {
     HANDLE FileHandle = CreateFileA(Path, 
@@ -165,13 +178,11 @@ PlatformReadFileFunc(Win32ReadFile) {
             Win32Log("[Win32ReadFile] Cannot get file size: %s!\n", Path);
             return false;
         }
-    }
-
-    
+    }    
 }
 
-static inline u32
-Win32GetFileSize(const char* Path) 
+static inline
+PlatformGetFileSizeFunc(Win32GetFileSize) 
 {
     HANDLE FileHandle = CreateFileA(Path, 
                                     GENERIC_READ, 
@@ -216,12 +227,27 @@ Win32BuildExePathFilename(char* Dest, const char* Filename) {
     (*Dest) = 0;
 }
 
+#if REFACTOR
+static inline void
+Win32AddTexture(u32 Width,
+                u32 Height,
+                void* Pixels) 
+{
+    // TODO:
+
+
+}
+#endif
 
 struct win32_game_code {
     HMODULE Dll;
     game_update* GameUpdate;
     FILETIME LastWriteTime;
     b32 IsValid;
+
+    const char* SrcFileName;
+    const char* TempFileName;
+    const char* LockFileName;
 };
 
 
@@ -236,34 +262,61 @@ Win32GetLastWriteTime(const char* Filename) {
     return LastWriteTime; 
 }
 
-
-static inline win32_game_code
-Win32LoadGameCode(const char* SourceDllFilename,
-                  const char* TempDllFilename,
-                  const char* LockFilename) 
+static inline win32_game_code 
+Win32InitGameCode(const char* SrcFileName,
+                  const char* TempFileName,
+                  const char* LockFileName) 
 {
+    Assert(SrcFileName && TempFileName && LockFileName);
+
     win32_game_code Ret = {};
-    WIN32_FILE_ATTRIBUTE_DATA Ignored; 
-    if(!GetFileAttributesEx(LockFilename, GetFileExInfoStandard, &Ignored)) {
-        Ret.LastWriteTime = Win32GetLastWriteTime(SourceDllFilename);
-        CopyFile(SourceDllFilename, TempDllFilename, FALSE);    
-        Ret.Dll = LoadLibraryA(TempDllFilename);
-        if(Ret.Dll) {
-            Ret.GameUpdate = (game_update*)GetProcAddress(Ret.Dll, "GameUpdate");
-            Ret.IsValid = Ret.GameUpdate != 0;
-        }
-    }
+    Ret.SrcFileName = SrcFileName;
+    Ret.TempFileName = TempFileName;
+    Ret.LockFileName = LockFileName;
     return Ret;
 }
 
-static inline void 
-Win32UnloadGameCode(win32_game_code* GameCode) {
-    if (GameCode->Dll) {
-        FreeLibrary(GameCode->Dll);
-        GameCode->Dll = 0;
+static inline void
+Win32LoadGameCode(win32_game_code* Code) {
+    WIN32_FILE_ATTRIBUTE_DATA Ignored; 
+    if(!GetFileAttributesEx(Code->LockFileName, 
+                            GetFileExInfoStandard, 
+                            &Ignored)) 
+    {
+        Code->LastWriteTime = Win32GetLastWriteTime(Code->SrcFileName);
+        CopyFile(Code->SrcFileName, Code->TempFileName, FALSE);    
+        Code->Dll = LoadLibraryA(Code->TempFileName);
+        if(Code->Dll) {
+            Code->GameUpdate = 
+                (game_update*)GetProcAddress(Code->Dll, "GameUpdate");
+            Code->IsValid = (Code->GameUpdate != 0);
+        }
     }
-    GameCode->IsValid = false;
-    GameCode->GameUpdate = 0;
+}
+
+static inline void 
+Win32UnloadGameCode(win32_game_code* Code) {
+    if (Code->Dll) {
+        FreeLibrary(Code->Dll);
+        Code->Dll = 0;
+    }
+    Code->IsValid = false;
+    Code->GameUpdate = 0;
+}
+
+static inline void
+Win32ReloadGameCodeIfOutdated(win32_game_code* Code) 
+{
+    // Check last modified date
+    LARGE_INTEGER CurrentLastWriteTime = 
+        FiletimeToLargeInt(Win32GetLastWriteTime(Global_GameCodeDllFileName)); 
+    LARGE_INTEGER GameCodeLastWriteTime =
+        FiletimeToLargeInt(Code->LastWriteTime);
+
+    if (CurrentLastWriteTime.QuadPart > GameCodeLastWriteTime.QuadPart) {
+        Win32UnloadGameCode(Code);
+        Win32LoadGameCode(Code);
+    }
 }
 
 static inline platform_api 
@@ -308,16 +361,19 @@ Win32OpenglSetPixelFormat(HDC DeviceContext) {
         DesiredPixelFormat.cAlphaBits = 8;
         DesiredPixelFormat.iLayerType = PFD_MAIN_PLANE;
 
-        // Here, we ask windows to find the best supported pixel format based on our
-        // desired format.
-        SuggestedPixelFormatIndex = ChoosePixelFormat(DeviceContext, &DesiredPixelFormat);
+        // Here, we ask windows to find the best supported pixel 
+        // format based on our desired format.
+        SuggestedPixelFormatIndex = 
+            ChoosePixelFormat(DeviceContext, &DesiredPixelFormat);
     }
     PIXELFORMATDESCRIPTOR SuggestedPixelFormat = {};
     
     DescribePixelFormat(DeviceContext, SuggestedPixelFormatIndex, 
                         sizeof(SuggestedPixelFormat), 
                         &SuggestedPixelFormat);
-    SetPixelFormat(DeviceContext, SuggestedPixelFormatIndex, &SuggestedPixelFormat);
+    SetPixelFormat(DeviceContext, 
+                   SuggestedPixelFormatIndex, 
+                   &SuggestedPixelFormat);
 }
 
 
@@ -325,7 +381,8 @@ static inline b32
 Win32OpenglLoadWglExtensions() {
     WNDCLASSA WindowClass = {};
     input GameInput = {};
-    // Er yeah...we have to create a 'fake' Opengl context to load the extensions lol.
+    // Er yeah...we have to create a 'fake' Opengl context 
+    // to load the extensions lol.
     WindowClass.lpfnWndProc = DefWindowProcA;
     WindowClass.hInstance = GetModuleHandle(0);
     WindowClass.lpszClassName = "WGLLoader";
@@ -436,7 +493,10 @@ Win32OpenglInit(HDC DeviceContext,
     
     // Mordern
     if(wglCreateContextAttribsARB) {
-        OpenglContext = wglCreateContextAttribsARB(DeviceContext, 0, Win32OpenglAttribs); 
+        OpenglContext = 
+            wglCreateContextAttribsARB(DeviceContext, 
+                                       0, 
+                                       Win32OpenglAttribs); 
     }
 
     // Not modernw
@@ -615,10 +675,8 @@ Win32WindowCallback(HWND Window,
             if(Global_Opengl.Header.IsInitialized) {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);
-
-                Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
-                Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
-
+                //Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
+                //Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
                 OpenglResize(&Global_Opengl, (u32)ClientWH.W, (u32)ClientWH.H);
             }
         } break;
@@ -748,21 +806,18 @@ WinMain(HINSTANCE Instance,
         Win32Log("Client Dimensions: %d x %d\n", ClientWH.W, ClientWH.H);
     }
     
-
-
-
     HDC DeviceContext = GetDC(Window); 
 
     u32 RefreshRate = Win32DetermineIdealRefreshRate(DeviceContext); 
     f32 TargetSecsPerFrame = 1.f / RefreshRate; 
     Win32Log("Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
-    Win32Log("Monitor Refresh Rate: %d", RefreshRate);
+    Win32Log("Monitor Refresh Rate: %d\n", RefreshRate);
 
     // Create and initialize game code and DLL file paths
     // Load the game code DLL
     // TODO: Make game code global?
     win32_game_code GameCode = 
-        Win32LoadGameCode(
+        Win32InitGameCode(
             Global_SourceGameCodeDllFullPath,
             Global_TempGameCodeDllFullPath,
             Global_GameCodeLockFullPath);
@@ -803,6 +858,8 @@ WinMain(HINSTANCE Instance,
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (Global_IsRunning) {
+        Win32ReloadGameCodeIfOutdated(&GameCode);
+
         Update(&GameInput);
         Win32ProcessMessages(Window, 
                              &GameInput);
@@ -818,11 +875,12 @@ WinMain(HINSTANCE Instance,
         OpenglRender(&Global_Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
-        f32 SecondsElapsed = Win32GetSecondsElapsed(LastCount, 
-                                                    Win32GetCurrentCounter());
-        if (TargetSecsPerFrame > SecondsElapsed) {
+        f32 SecsElapsed = 
+            Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter());
+        
+        if (TargetSecsPerFrame > SecsElapsed) {
             if (SleepIsGranular) {
-                DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecondsElapsed)) - 1;
+                DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecsElapsed));
                 if (MsToSleep > 0) {
                     Sleep(MsToSleep);
                 }
@@ -831,9 +889,7 @@ WinMain(HINSTANCE Instance,
                     Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter()));
 
         }
-        else {
-            Win32Log("Frame rate missed!\n");
-        }
+        
 
         LastCount = Win32GetCurrentCounter();
         // Swap buffers

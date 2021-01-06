@@ -109,8 +109,8 @@ CheckAssetSignature(void* Memory, const char* Signature) {
 }
 
 
-// TODO(Momo): Perhaps remove render_commands and replace with platform call for linking textures?
-// TODO(Momo): Change to CreateAssets() structure to align convention
+// TODO(Momo): Perhaps remove render_commands and 
+// replace with platform call for linking textures?
 static inline game_assets
 CreateAssets(arena* Arena, 
      platform_api* Platform,
@@ -166,18 +166,19 @@ CreateAssets(arena* Arena,
                 Bitmap->Channels = YuuBitmap->Channels;
                 
                 // NOTE(Momo): Allocate pixel data
-                usize BitmapSize = Bitmap->Width * Bitmap->Height * Bitmap->Channels;
+                usize BitmapSize = Bitmap->Width * 
+                                   Bitmap->Height * 
+                                   Bitmap->Channels;
                 Bitmap->Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
                 Assert(Bitmap->Pixels);
                 MemCopy(Bitmap->Pixels, FileMemoryItr, BitmapSize);
                 FileMemoryItr += BitmapSize;
-               
+              
                 PushCommandLinkTexture(RenderCommands,
                                         Bitmap->Width, 
                                         Bitmap->Height,
                                         Bitmap->Pixels,
                                         YuuBitmap->Id);
-                
             } break;
             case AssetType_AtlasRect: { 
                 auto* YuuAtlasRect = Read<yuu_atlas_rect>(&FileMemoryItr);

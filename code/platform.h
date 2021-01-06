@@ -18,7 +18,6 @@ static constexpr f32 Global_DesignWidth = 1600.f;
 static constexpr f32 Global_DesignHeight = 900.f;
 static constexpr f32 Global_DesignDepth = 200.f;
 
-
 // Input API /////////////////////////////////////////
 struct input_button {
     bool Before : 1;
@@ -98,8 +97,6 @@ IsHeld(input_button Button) {
 }
 
 // Platform Api ////////////////////////////////////////////////////
-
-
 #define PlatformLogFunc(Name) void Name(const char* Format, ...)
 typedef PlatformLogFunc(platform_log);
 
@@ -113,6 +110,7 @@ struct platform_api {
     platform_log* Log;
     platform_get_file_size* GetFileSize;
     platform_read_file* ReadFile;
+
 };
 
 

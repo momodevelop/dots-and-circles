@@ -1,8 +1,9 @@
 #ifndef __RYOJI_H__
 #define __RYOJI_H__
 
-// Includes
+// Includes that I sadly cannot live without
 #include <cstdint>
+#define REFACTOR 1
 
 // Types
 using c8 = char;
@@ -243,4 +244,6 @@ SafeCastI64ToU32(i64 Value) {
     Assert(Value <= U32_MAX && Value >= 0);
     return (u32)Value;
 }
+
+
 #endif

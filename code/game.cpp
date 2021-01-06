@@ -1,7 +1,6 @@
 #include "game.h"
 #include "game_assets.h"
 #include "game_mode_splash.h"
-#include "game_mode_menu.h"
 #include "game_mode_main.h"
 #include "game_mode_sandbox.h"
 #include "game_text.h"
@@ -42,12 +41,6 @@ CmdJump(void * Context, string Arguments) {
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (StateToChangeTo == String("menu")) {
-        PushInfo(&PermState->Console, 
-                 String("Jumping to Menu"), 
-                 Color_Yellow);
-        PermState->NextGameMode = GameModeType_Menu;
-    }
     else if (StateToChangeTo == String("sandbox")) {
         PushInfo(&PermState->Console, 
                  String("Jumping to Sandbox"), 
@@ -65,7 +58,7 @@ CmdJump(void * Context, string Arguments) {
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
-    auto* PermState= (permanent_state*)GameMemory->PermanentMemory;
+    auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TransientState = (transient_state*)GameMemory->TransientMemory;
        
     //  Initialization of the game
@@ -146,11 +139,6 @@ GameUpdateFunc(GameUpdate)
                     PushStruct<game_mode_main>(ModeArena); 
                 InitMainMode(PermState);
             } break;
-            case GameModeType_Menu: {
-                PermState->MenuMode = 
-                    PushStruct<game_mode_menu>(ModeArena); 
-                InitMenuMode(PermState);
-            } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
                     PushStruct<game_mode_sandbox>(ModeArena); 
@@ -171,12 +159,6 @@ GameUpdateFunc(GameUpdate)
                              RenderCommands, 
                              Input, 
                              DeltaTime);
-        } break;
-        case GameModeType_Menu: {
-            UpdateMenuMode(PermState, 
-                           RenderCommands, 
-                           Input, 
-                           DeltaTime);
         } break;
         case GameModeType_Main: {
             UpdateMainMode(PermState, 

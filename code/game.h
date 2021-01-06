@@ -50,9 +50,9 @@ struct permanent_state {
     arena MainArena;
     arena ModeArena;
 
-
     b32 IsShowInfo;
     game_console Console;
+
 
 };
 

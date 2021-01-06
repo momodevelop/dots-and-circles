@@ -16,12 +16,9 @@ Arena(void* Memory, usize Capacity) {
     return { (u8*)Memory, 0, Capacity};
 }
 
-// Constructs an arena directly onto a memory block used by T
-// and creates an arena out of the remaining memory.
 template<typename T>
 static inline arena 
-BootstrapArena(void* Memory, usize MemorySize) 
-{
+BootstrapArena(void* Memory, usize MemorySize) {
     return Arena((u8*)Memory + sizeof(T), 
                  MemorySize - sizeof(T));
 }
@@ -43,7 +40,9 @@ PushBlock(arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
     u8 Adjust = AlignForwardDiff(Arena->Memory, Alignment);
     
     // if not enough space, return 
-    if ((u8*)Arena->Memory + Arena->Used + Adjust + Size > (u8*)Arena->Memory + Arena->Capacity ) {
+    u8* MemoryEnd = (u8*)Arena->Memory + Arena->Capacity;
+    u8* BlockEnd = (u8*)Arena->Memory + Arena->Used + Adjust + Size;
+    if (BlockEnd > MemoryEnd) {
         return nullptr;
     }
     
