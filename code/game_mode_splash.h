@@ -9,7 +9,7 @@ struct splash_image_entity {
     v3f Position;
     v4f Colors;
     
-    bitmap_id BitmapHandle;
+    texture_id TextureHandle;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -39,17 +39,11 @@ Update(splash_image_entity* Entity,
     // NOTE(Momo): Render
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
-#if REFACTOR 
-    PushCommandDrawTexturedQuad(RenderCommands, 
+    PushDrawTexturedQuad(RenderCommands, 
                                 Entity->Colors, 
                                 T*S,  
-                                GetRendererTextureHandle(Assets, Entity->BitmapHandle));
-#else
-    PushCommandDrawTexturedQuad(RenderCommands, 
-                                Entity->Colors, 
-                                T*S,  
-                                Entity->BitmapHandle);
-#endif
+                                GetRendererTextureHandle(Assets, Entity->TextureHandle));
+
 }
 
 struct splash_blackout_entity {
@@ -81,7 +75,7 @@ Update(splash_blackout_entity* Entity,
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
     
-    PushCommandDrawQuad(RenderCommands, Entity->Colors, T*S);
+    PushDrawQuad(RenderCommands, Entity->Colors, T*S);
     
 }
 
@@ -99,7 +93,7 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 400.f, 400.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].BitmapHandle = Bitmap_Ryoji;
+        Mode->SplashImg[0].TextureHandle = Texture_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 1.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -110,7 +104,7 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 400.f, 400.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].BitmapHandle = Bitmap_Yuu;
+        Mode->SplashImg[1].TextureHandle = Texture_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 1.f;
         Mode->SplashImg[1].Timer = 0.f;
@@ -136,9 +130,9 @@ UpdateSplashMode(permanent_state* PermState,
                  f32 DeltaTime)
 {
     game_mode_splash* Mode = PermState->SplashMode;
-    PushCommandClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
 
-    PushCommandOrthoCamera(RenderCommands, 
+    PushOrthoCamera(RenderCommands, 
             v3f{}, 
             CenteredRect( 
                 v3f { 

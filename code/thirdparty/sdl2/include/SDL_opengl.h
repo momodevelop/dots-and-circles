@@ -1262,10 +1262,10 @@ GLAPI void GLAPIENTRY glGetPixelMapfv( GLenum map, GLfloat *values );
 GLAPI void GLAPIENTRY glGetPixelMapuiv( GLenum map, GLuint *values );
 GLAPI void GLAPIENTRY glGetPixelMapusv( GLenum map, GLushort *values );
 
-GLAPI void GLAPIENTRY glBitmap( GLsizei width, GLsizei height,
+GLAPI void GLAPIENTRY glTexture( GLsizei width, GLsizei height,
                                 GLfloat xorig, GLfloat yorig,
                                 GLfloat xmove, GLfloat ymove,
-                                const GLubyte *bitmap );
+                                const GLubyte *texture );
 
 GLAPI void GLAPIENTRY glReadPixels( GLint x, GLint y,
                                     GLsizei width, GLsizei height,

@@ -631,7 +631,6 @@ DrawInstances(renderer_opengl* Opengl,
 }
 
 
-#if REFACTOR
 static inline renderer_texture_handle
 AddTexture(renderer_opengl* Opengl,
            u32 Width,
@@ -671,7 +670,7 @@ ClearTextures(renderer_opengl* Opengl) {
     Opengl->glDeleteTextures(Opengl->TexturesCount, Opengl->Textures);
     Opengl->TexturesCount = 0;
 }
-#endif
+
 
 static inline void
 Render(renderer_opengl* Opengl, mailbox* Commands) 
@@ -717,29 +716,6 @@ Render(renderer_opengl* Opengl, mailbox* Commands)
                                           Result[0].Elements);
                 
             } break;
-#if REFACTOR
-#else
-            case render_command_link_texture::TypeId: {
-                using data_t = render_command_link_texture;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
-                
-                if (Opengl->GameToOpenglTextureTable[Data->TextureHandle] != 0) {
-                    // TODO(Momo): unload and reload texture
-                }
-                u32* TextureTableEntry = &Opengl->GameToOpenglTextureTable[Data->TextureHandle];
-                Opengl->glCreateTextures(GL_TEXTURE_2D, 1, TextureTableEntry);
-                Opengl->glTextureStorage2D((*TextureTableEntry), 
-                                            1, GL_RGBA8, 
-                                            Data->Width, 
-                                            Data->Height);
-                Opengl->glTextureSubImage2D((*TextureTableEntry), 
-                                            0, 0, 0, 
-                                            Data->Width, Data->Height, 
-                                            GL_RGBA, 
-                                            GL_UNSIGNED_BYTE, 
-                                            Data->Pixels);
-            } break;
-#endif            
             case render_command_clear_color::TypeId: {
                 using data_t = render_command_clear_color;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
@@ -794,15 +770,7 @@ Render(renderer_opengl* Opengl, mailbox* Commands)
             case render_command_draw_textured_quad::TypeId: {
                 using data_t = render_command_draw_textured_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
-                
-#if REFACTOR
                 GLuint OpenglTextureHandle = (GLuint)Data->TextureHandle.Id; 
-#else
-                // If the game texture handle does not exist in the lookup table, 
-                // add texture to renderer and register it into the lookup table
-                u32 GameBitmapHandle = Data->TextureHandle;
-                GLuint OpenglTextureHandle = Opengl->GameToOpenglTextureTable[GameBitmapHandle];
-#endif
                 if (OpenglTextureHandle == 0) {
                     OpenglTextureHandle = Opengl->DummyTexture;
                 }

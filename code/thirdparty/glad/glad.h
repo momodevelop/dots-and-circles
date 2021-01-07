@@ -2710,9 +2710,9 @@ GLAPI PFNGLLISTBASEPROC glad_glListBase;
 typedef void (APIENTRYP PFNGLBEGINPROC)(GLenum mode);
 GLAPI PFNGLBEGINPROC glad_glBegin;
 #define glBegin glad_glBegin
-typedef void (APIENTRYP PFNGLBITMAPPROC)(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap);
-GLAPI PFNGLBITMAPPROC glad_glBitmap;
-#define glBitmap glad_glBitmap
+typedef void (APIENTRYP PFNGLBITMAPPROC)(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *texture);
+GLAPI PFNGLBITMAPPROC glad_glTexture;
+#define glTexture glad_glTexture
 typedef void (APIENTRYP PFNGLCOLOR3BPROC)(GLbyte red, GLbyte green, GLbyte blue);
 GLAPI PFNGLCOLOR3BPROC glad_glColor3b;
 #define glColor3b glad_glColor3b
@@ -16324,9 +16324,9 @@ GLAPI PFNGLSAMPLECOVERAGEXOESPROC glad_glSampleCoveragexOES;
 typedef void (APIENTRYP PFNGLACCUMXOESPROC)(GLenum op, GLfixed value);
 GLAPI PFNGLACCUMXOESPROC glad_glAccumxOES;
 #define glAccumxOES glad_glAccumxOES
-typedef void (APIENTRYP PFNGLBITMAPXOESPROC)(GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *bitmap);
-GLAPI PFNGLBITMAPXOESPROC glad_glBitmapxOES;
-#define glBitmapxOES glad_glBitmapxOES
+typedef void (APIENTRYP PFNGLBITMAPXOESPROC)(GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *texture);
+GLAPI PFNGLBITMAPXOESPROC glad_glTexturexOES;
+#define glTexturexOES glad_glTexturexOES
 typedef void (APIENTRYP PFNGLBLENDCOLORXOESPROC)(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 GLAPI PFNGLBLENDCOLORXOESPROC glad_glBlendColorxOES;
 #define glBlendColorxOES glad_glBlendColorxOES

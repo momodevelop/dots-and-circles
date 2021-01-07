@@ -72,10 +72,6 @@ GameUpdateFunc(GameUpdate)
         PermState->Assets = CreateAssets(
                 &PermState->MainArena, 
                 Platform,
-#if REFACTOR
-#else
-                RenderCommands, 
-#endif
                 String("yuu\0"));
 
         // Console Init
@@ -112,7 +108,7 @@ GameUpdateFunc(GameUpdate)
         PermState->IsInitialized = true;
 
         // NOTE(Momo): Set design resolution for game
-        PushCommandSetDesignResolution(RenderCommands, 
+        PushSetDesignResolution(RenderCommands, 
                                        (u32)Global_DesignWidth, 
                                        (u32)Global_DesignHeight);
     }

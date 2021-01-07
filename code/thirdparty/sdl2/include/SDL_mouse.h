@@ -200,7 +200,7 @@ extern DECLSPEC int SDLCALL SDL_CaptureMouse(SDL_bool enabled);
 extern DECLSPEC SDL_bool SDLCALL SDL_GetRelativeMouseMode(void);
 
 /**
- *  \brief Create a cursor, using the specified bitmap data and
+ *  \brief Create a cursor, using the specified texture data and
  *         mask (in MSB format).
  *
  *  The cursor width must be a multiple of 8 bits.

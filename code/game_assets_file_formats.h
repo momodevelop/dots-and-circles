@@ -3,12 +3,12 @@
 
 #include "mm_maths.h"
 
-enum bitmap_id : u32 {
-    Bitmap_Ryoji,
-    Bitmap_Yuu,
-    Bitmap_AtlasDefault,
+enum texture_id : u32 {
+    Texture_Ryoji,
+    Texture_Yuu,
+    Texture_AtlasDefault,
     
-    Bitmap_Count,
+    Texture_Count,
 };
 
 static constexpr u32 Codepoint_Start = 32;
@@ -48,7 +48,7 @@ enum atlas_rect_id : u32 {
 };
 
 enum asset_type : u32 {
-    AssetType_Bitmap,
+    AssetType_Texture,
     AssetType_AtlasRect,
     AssetType_Font,
     AssetType_FontGlyph,
@@ -62,8 +62,8 @@ struct yuu_entry {
     asset_type Type;
 };
 
-struct yuu_bitmap {
-    bitmap_id Id;
+struct yuu_texture {
+    texture_id Id;
     u32 Width;
     u32 Height;
     u32 Channels;
@@ -74,7 +74,7 @@ struct yuu_bitmap {
 
 struct yuu_atlas_rect {
     atlas_rect_id Id;
-    bitmap_id BitmapId;
+    texture_id TextureId;
     rect2u Rect;
     
 };
@@ -88,7 +88,7 @@ struct yuu_font {
 
 struct yuu_font_glyph {
     font_id FontId;
-    bitmap_id BitmapId;
+    texture_id TextureId;
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;

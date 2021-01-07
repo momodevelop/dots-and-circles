@@ -14,7 +14,6 @@
 
 #include "renderer_opengl.h"
 #include "platform.h"
-#include "game_input.h"
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 

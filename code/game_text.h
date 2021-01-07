@@ -30,19 +30,13 @@ DrawText(mailbox* RenderCommands,
         m44f T = M44fTranslation(CurPosition.X + Box.Min.X * Size, 
                                    CurPosition.Y + Box.Min.Y * Size,  
                                    CurPosition.Z);
-#if REFACTOR
-        PushCommandDrawTexturedQuad(RenderCommands, 
+
+        PushDrawTexturedQuad(RenderCommands, 
                                     Color, 
                                     T*S*A,
-                                    GetRendererTextureHandle(Assets, Glyph->BitmapId),
+                                    GetRendererTextureHandle(Assets, Glyph->TextureId),
                                     GetAtlasUV(Assets, Glyph));
-#else
-        PushCommandDrawTexturedQuad(RenderCommands, 
-                                    Color, 
-                                    T*S*A,
-                                    GetRendererTextureHandle(Assetsm, Glyph->BitmapId),
-                                    GetAtlasUV(Assets, Glyph));
-#endif   
+ 
         CurPosition.X += Glyph->Advance * Size;
         if (i != String.Count - 1 ) {
             CurPosition.X += Font->Kernings[HashCodepoint(String[i])][HashCodepoint(String[i+1])] * Size;

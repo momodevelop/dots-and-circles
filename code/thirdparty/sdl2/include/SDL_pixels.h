@@ -64,13 +64,13 @@ typedef enum
     SDL_PIXELTYPE_ARRAYF32
 } SDL_PixelType;
 
-/** Bitmap pixel order, high bit -> low bit. */
+/** Texture pixel order, high bit -> low bit. */
 typedef enum
 {
     SDL_BITMAPORDER_NONE,
     SDL_BITMAPORDER_4321,
     SDL_BITMAPORDER_1234
-} SDL_BitmapOrder;
+} SDL_TextureOrder;
 
 /** Packed component order, high bit -> low bit. */
 typedef enum

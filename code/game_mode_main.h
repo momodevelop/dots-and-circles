@@ -216,8 +216,8 @@ UpdateMainMode(permanent_state* PermState,
        f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;
-    PushCommandClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
-    PushCommandOrthoCamera(RenderCommands, 
+    PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
+    PushOrthoCamera(RenderCommands, 
             v3f{}, 
             CenteredRect( 
                 v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
@@ -449,37 +449,22 @@ UpdateMainMode(permanent_state* PermState,
         
 		v3f RenderPos = V3f(Player->Position);
         RenderPos.Z = ZLayPlayer;
-
         m44f T = M44fTranslation(RenderPos);
-#if REFACTOR
-        PushCommandDrawTexturedQuad(RenderCommands, 
-                                    v4f{ 1.f, 1.f, 1.f, 1.f }, 
+        PushDrawTexturedQuad(RenderCommands, 
+                                    Color_White, 
                                     T*S, 
-                                    GetRendererTextureHandle(Assets, Player->CircleImageRect->BitmapId),
+                                    GetRendererTextureHandle(Assets, Player->CircleImageRect->TextureId),
                                     GetAtlasUV(Assets, Player->CircleImageRect));
-#else
-        PushCommandDrawTexturedQuad(RenderCommands, 
-                                    v4f{ 1.f, 1.f, 1.f, 1.f }, 
-                                    T*S, 
-                                    Player->CircleImageRect->BitmapId,
-                                    GetAtlasUV(Assets, Player->CircleImageRect));
-#endif
+
         
 		RenderPos.Z += 0.1f;
         T = M44fTranslation(RenderPos);
-#if REFACTOR
-        PushCommandDrawTexturedQuad(RenderCommands, 
+        PushDrawTexturedQuad(RenderCommands, 
                                     v4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                                     T*S, 
-                                    GetRendererTextureHandle(Assets, Player->DotImageRect->BitmapId),
+                                    GetRendererTextureHandle(Assets, Player->DotImageRect->TextureId),
                                     GetAtlasUV(Assets, Player->DotImageRect));
-#else
-        PushCommandDrawTexturedQuad(RenderCommands, 
-                                    v4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
-                                    T*S, 
-                                    Player->DotImageRect->BitmapId,
-                                    GetAtlasUV(Assets, Player->DotImageRect));
-#endif
+
     }
 
 	// Bullet Rendering 
@@ -504,19 +489,12 @@ UpdateMainMode(permanent_state* PermState,
                 Assert(false);
         }
         m44f T = M44fTranslation(RenderPos);
-#if REFACTOR
-		PushCommandDrawTexturedQuad(RenderCommands,
-									v4f{ 1.f, 1.f, 1.f, 1.f },
-									T*S,
-									GetRendererTextureHandle(Assets, Bullet->ImageRect->BitmapId),
-									GetAtlasUV(Assets, Bullet->ImageRect));
-#else
-		PushCommandDrawTexturedQuad(RenderCommands,
-									v4f{ 1.f, 1.f, 1.f, 1.f },
-									T*S,
-									Bullet->ImageRect->BitmapId,
-									GetAtlasUV(Assets, Bullet->ImageRect));
-#endif
+		PushDrawTexturedQuad(RenderCommands,
+							 Color_White,
+							 T*S,
+							 GetRendererTextureHandle(Assets, Bullet->ImageRect->TextureId),
+							 GetAtlasUV(Assets, Bullet->ImageRect));
+
 
     
 	}
@@ -530,19 +508,12 @@ UpdateMainMode(permanent_state* PermState,
 		v3f RenderPos = V3f(Enemy->Position);
 		RenderPos.Z = ZLayEnemy; 
 		m44f T = M44fTranslation(RenderPos);
-#if REFACTOR
-		PushCommandDrawTexturedQuad(RenderCommands,
-									v4f{ 1.f, 1.f, 1.f, 1.f },
-									T*S,
-									GetRendererTextureHandle(Assets, Enemy->ImageRect->BitmapId),
-									GetAtlasUV(Assets, Enemy->ImageRect));
-#else
-		PushCommandDrawTexturedQuad(RenderCommands,
-									v4f{ 1.f, 1.f, 1.f, 1.f },
-									T*S,
-									Enemy->ImageRect->BitmapId,
-									GetAtlasUV(Assets, Enemy->ImageRect));
-#endif
+		PushDrawTexturedQuad(RenderCommands,
+							 Color_White,
+							 T*S,
+							 GetRendererTextureHandle(Assets, Enemy->ImageRect->TextureId),
+							 GetAtlasUV(Assets, Enemy->ImageRect));
+
 	}
 
 

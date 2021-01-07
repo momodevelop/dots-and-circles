@@ -181,7 +181,7 @@ Render(game_console* Console,
         m44f ScaleMatrix = M44fScale(Console->Dimensions);
         m44f PositionMatrix = M44fTranslation(Console->Position);
         m44f InfoBgTransform = PositionMatrix * ScaleMatrix;
-        PushCommandDrawQuad(RenderCommands, Console->InfoBgColor, InfoBgTransform);
+        PushDrawQuad(RenderCommands, Console->InfoBgColor, InfoBgTransform);
     }
 
     {
@@ -193,7 +193,7 @@ Render(game_console* Console,
         );
 
         m44f InputBgTransform = PositionMatrix * ScaleMatrix;
-        PushCommandDrawQuad(RenderCommands, Console->InputBgColor, InputBgTransform);
+        PushDrawQuad(RenderCommands, Console->InputBgColor, InputBgTransform);
     }
 
     // Draw text

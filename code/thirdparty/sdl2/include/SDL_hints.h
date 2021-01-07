@@ -1016,15 +1016,15 @@ extern "C" {
 #define SDL_HINT_WINDOWS_NO_CLOSE_ON_ALT_F4 "SDL_WINDOWS_NO_CLOSE_ON_ALT_F4"
 
 /**
- *  \brief Prevent SDL from using version 4 of the bitmap header when saving BMPs.
+ *  \brief Prevent SDL from using version 4 of the texture header when saving BMPs.
  *
- * The bitmap header version 4 is required for proper alpha channel support and
+ * The texture header version 4 is required for proper alpha channel support and
  * SDL will use it when required. Should this not be desired, this hint can
  * force the use of the 40 byte header version which is supported everywhere.
  *
  * The variable can be set to the following values:
  *   "0"       - Surfaces with a colorkey or an alpha channel are saved to a
- *               32-bit BMP file with an alpha mask. SDL will use the bitmap
+ *               32-bit BMP file with an alpha mask. SDL will use the texture
  *               header version 4 and set the alpha mask accordingly.
  *   "1"       - Surfaces with a colorkey or an alpha channel are saved to a
  *               32-bit BMP file without an alpha mask. The alpha channel data

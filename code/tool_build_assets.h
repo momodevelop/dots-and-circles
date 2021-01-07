@@ -57,26 +57,26 @@ WriteEntry(ab_context* Context, asset_type AssetType) {
 }
 
 static inline void 
-WriteBitmap(ab_context* Context, bitmap_id Id, u32 Width, u32 Height, u32 Channels, u8* Pixels) 
+WriteTexture(ab_context* Context, texture_id Id, u32 Width, u32 Height, u32 Channels, u8* Pixels) 
 {
-    WriteEntry(Context, AssetType_Bitmap);
+    WriteEntry(Context, AssetType_Texture);
     
-    yuu_bitmap Bitmap = {};
-    Bitmap.Id = Id;
-    Bitmap.Width = Width;
-    Bitmap.Height = Height;
-    Bitmap.Channels = Channels;
-    fwrite(&Bitmap, sizeof(Bitmap), 1, Context->File);
+    yuu_texture Texture = {};
+    Texture.Id = Id;
+    Texture.Width = Width;
+    Texture.Height = Height;
+    Texture.Channels = Channels;
+    fwrite(&Texture, sizeof(Texture), 1, Context->File);
     
     
-    u32 BitmapSize = Width * Height * Channels;
-    for(u32 i = 0; i < BitmapSize; ++i) {
+    u32 TextureSize = Width * Height * Channels;
+    for(u32 i = 0; i < TextureSize; ++i) {
         fwrite(Pixels + i, 1, 1, Context->File);
     }
 }
 
 static inline void 
-WriteBitmap(ab_context* Context, bitmap_id Id, const char* Filename) {
+WriteTexture(ab_context* Context, texture_id Id, const char* Filename) {
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
     {
@@ -89,18 +89,18 @@ WriteBitmap(ab_context* Context, bitmap_id Id, const char* Filename) {
         Channels = (u32)C;
     }
     Defer { stbi_image_free(LoadedImage); };
-    WriteBitmap(Context, Id, Width, Height, Channels, LoadedImage);
+    WriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
 }
 
 
 static inline void 
-WriteAtlasRect(ab_context* Context, atlas_rect_id Id, bitmap_id TargetBitmapId, rect2u Rect) 
+WriteAtlasRect(ab_context* Context, atlas_rect_id Id, texture_id TargetTextureId, rect2u Rect) 
 {
     WriteEntry(Context,  AssetType_AtlasRect);
     
     yuu_atlas_rect AtlasRect = {};
     AtlasRect.Id = Id;
-    AtlasRect.BitmapId = TargetBitmapId;
+    AtlasRect.TextureId = TargetTextureId;
     AtlasRect.Rect = Rect;
     fwrite(&AtlasRect, sizeof(AtlasRect), 1,  Context->File);
 }
@@ -119,13 +119,13 @@ WriteFont(ab_context* Context, font_id Id, f32 Ascent, f32 Descent, f32 LineGap)
 }
 
 static inline void 
-WriteFontGlyph(ab_context* Context, font_id FontId, bitmap_id TargetBitmapId, u32 Codepoint, f32 Advance, f32 LeftBearing, rect2u AtlasRect, rect2f Box) 
+WriteFontGlyph(ab_context* Context, font_id FontId, texture_id TargetTextureId, u32 Codepoint, f32 Advance, f32 LeftBearing, rect2u AtlasRect, rect2f Box) 
 {
     WriteEntry(Context, AssetType_FontGlyph);
     
     yuu_font_glyph FontGlyph = {};
     FontGlyph.FontId = FontId;
-    FontGlyph.BitmapId = TargetBitmapId;
+    FontGlyph.TextureId = TargetTextureId;
     FontGlyph.Codepoint = Codepoint;
     FontGlyph.AtlasRect = AtlasRect;
     FontGlyph.LeftBearing = LeftBearing;

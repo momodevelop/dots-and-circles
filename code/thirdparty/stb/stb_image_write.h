@@ -494,7 +494,7 @@ static int stbi_write_bmp_core(stbi__write_context *s, int x, int y, int comp, c
     return stbiw__outfile(s,-1,-1,x,y,comp,1,(void *) data,0,pad,
                           "11 4 22 4" "4 44 22 444444",
                           'B', 'M', 14+40+(x*3+pad)*y, 0,0, 14+40,  // file header
-                          40, x,y, 1,24, 0,0,0,0,0,0);             // bitmap header
+                          40, x,y, 1,24, 0,0,0,0,0,0);             // texture header
 }
 
 STBIWDEF int stbi_write_bmp_to_func(stbi_write_func *func, void *context, int x, int y, int comp, const void *data)

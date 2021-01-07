@@ -139,7 +139,7 @@ Win32GetSecondsElapsed(LARGE_INTEGER Start,
     return (f32(End.QuadPart - Start.QuadPart)) / Global_PerformanceFrequency; 
 }
 
-#if REFACTOR
+
 static inline
 PlatformAddTexture(Win32AddTexture) {
     return AddTexture(&Global_Opengl, Width, Height, Pixels);
@@ -147,9 +147,9 @@ PlatformAddTexture(Win32AddTexture) {
 
 static inline 
 PlatformClearTextures(Win32ClearTextures) {
-
+    return ClearTextures(&Global_Opengl);
 }
-#endif
+
 
 static inline
 PlatformReadFileFunc(Win32ReadFile) {
@@ -263,8 +263,8 @@ Win32GetLastWriteTime(const char* Filename) {
 
 static inline win32_game_code 
 Win32GameCode(const char* SrcFileName,
-                  const char* TempFileName,
-                  const char* LockFileName) 
+              const char* TempFileName,
+              const char* LockFileName) 
 {
     Assert(SrcFileName && TempFileName && LockFileName);
 

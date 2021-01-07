@@ -1,5 +1,5 @@
-#ifndef __RYOJI_H__
-#define __RYOJI_H__
+#ifndef __MM_CORE_H__
+#define __MM_CORE_H__
 
 // Includes that I sadly cannot live without
 #include <cstdint>

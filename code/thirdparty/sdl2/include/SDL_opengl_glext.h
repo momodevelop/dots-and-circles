@@ -4534,7 +4534,7 @@ typedef void (APIENTRYP PFNGLTEXPARAMETERXOESPROC) (GLenum target, GLenum pname,
 typedef void (APIENTRYP PFNGLTEXPARAMETERXVOESPROC) (GLenum target, GLenum pname, const GLfixed *params);
 typedef void (APIENTRYP PFNGLTRANSLATEXOESPROC) (GLfixed x, GLfixed y, GLfixed z);
 typedef void (APIENTRYP PFNGLACCUMXOESPROC) (GLenum op, GLfixed value);
-typedef void (APIENTRYP PFNGLBITMAPXOESPROC) (GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *bitmap);
+typedef void (APIENTRYP PFNGLBITMAPXOESPROC) (GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *texture);
 typedef void (APIENTRYP PFNGLBLENDCOLORXOESPROC) (GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 typedef void (APIENTRYP PFNGLCLEARACCUMXOESPROC) (GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 typedef void (APIENTRYP PFNGLCOLOR3XOESPROC) (GLfixed red, GLfixed green, GLfixed blue);
@@ -4639,7 +4639,7 @@ GLAPI void APIENTRY glTexParameterxOES (GLenum target, GLenum pname, GLfixed par
 GLAPI void APIENTRY glTexParameterxvOES (GLenum target, GLenum pname, const GLfixed *params);
 GLAPI void APIENTRY glTranslatexOES (GLfixed x, GLfixed y, GLfixed z);
 GLAPI void APIENTRY glAccumxOES (GLenum op, GLfixed value);
-GLAPI void APIENTRY glBitmapxOES (GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *bitmap);
+GLAPI void APIENTRY glTexturexOES (GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *texture);
 GLAPI void APIENTRY glBlendColorxOES (GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 GLAPI void APIENTRY glClearAccumxOES (GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 GLAPI void APIENTRY glColor3xOES (GLfixed red, GLfixed green, GLfixed blue);

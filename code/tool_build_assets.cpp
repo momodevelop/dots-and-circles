@@ -57,19 +57,19 @@ struct atlas_context_image {
     atlas_context_type Type;
     const char* Filename;
     atlas_rect_id Id;
-    bitmap_id BitmapId;
-    u8* Bitmap;
+    texture_id TextureId;
+    u8* Texture;
 };
 
 
 struct atlas_context_font {
     atlas_context_type Type;
     font_id FontId;
-    bitmap_id BitmapId;
+    texture_id TextureId;
     f32 RasterScale;
     u32 Codepoint;
     loaded_font LoadedFont;
-    u8* Bitmap;
+    u8* Texture;
 };    
 
 
@@ -86,7 +86,7 @@ Init(rp_rect* Rect, atlas_context_image* Context){
 static inline void
 Init(rp_rect* Rect, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
-    stbtt_GetCodepointBitmapBox(&Context->LoadedFont.Info, 
+    stbtt_GetCodepointTextureBox(&Context->LoadedFont.Info, 
 			Context->Codepoint, 
 			Context->RasterScale, 
 			Context->RasterScale, 
@@ -99,16 +99,16 @@ Init(rp_rect* Rect, atlas_context_font* Context){
 
 
 static inline void 
-WriteSubBitmapToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                      u8* BitmapMemory, rp_rect BitmapRect) 
+WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
+                      u8* TextureMemory, rp_rect TextureRect) 
 {
     i32 j = 0;
-    for (u32 y = BitmapRect.Y; y < BitmapRect.Y + BitmapRect.H; ++y) {
-        for (u32 x = BitmapRect.X; x < BitmapRect.X + BitmapRect.W; ++x) {
+    for (u32 y = TextureRect.Y; y < TextureRect.Y + TextureRect.H; ++y) {
+        for (u32 x = TextureRect.X; x < TextureRect.X + TextureRect.W; ++x) {
             u32 Index = TwoToOne(y, x, AtlasWidth) * 4;
             Assert(Index < (AtlasWidth * AtlasHeight * 4));
             for (u32 c = 0; c < 4; ++c) {
-                (*AtlasMemory)[Index + c] = BitmapMemory[j++];
+                (*AtlasMemory)[Index + c] = TextureMemory[j++];
             }
         }
     }
@@ -129,33 +129,33 @@ GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
             case AtlasContextType_Image: {
                 auto* Context = (atlas_context_image*)Rect.UserData;
                 i32 W, H, C;
-                u8* BitmapMemory = stbi_load(Context->Filename, &W, &H, &C, 0);
-                Defer { stbi_image_free(BitmapMemory); };
-                WriteSubBitmapToAtlas(&AtlasMemory, Width, Height, BitmapMemory, Rect);
+                u8* TextureMemory = stbi_load(Context->Filename, &W, &H, &C, 0);
+                Defer { stbi_image_free(TextureMemory); };
+                WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Rect);
             } break;
             case AtlasContextType_Font: {
                 auto* Context = (atlas_context_font*)Rect.UserData; 
                 constexpr u32 Channels = 4;
                 
                 i32 W, H;
-                u8* FontBitmapOneCh = stbtt_GetCodepointBitmap(&Context->LoadedFont.Info, 
+                u8* FontTextureOneCh = stbtt_GetCodepointTexture(&Context->LoadedFont.Info, 
                                                                Context->RasterScale,
                                                                Context->RasterScale, 
                                                                Context->Codepoint, 
                                                                &W, &H, nullptr, nullptr);
-                Defer { stbtt_FreeBitmap( FontBitmapOneCh, nullptr ); };
+                Defer { stbtt_FreeTexture( FontTextureOneCh, nullptr ); };
                 
-                u32 BitmapDimensions = (u32)(W * H);
-                u8* FontBitmap = (u8*)malloc(BitmapDimensions * Channels); 
-                Defer { free(FontBitmap); };
+                u32 TextureDimensions = (u32)(W * H);
+                u8* FontTexture = (u8*)malloc(TextureDimensions * Channels); 
+                Defer { free(FontTexture); };
                 
-                u8* FontBitmapItr = FontBitmap;
-                for (u32 j = 0, k = 0; j < BitmapDimensions; ++j ){
+                u8* FontTextureItr = FontTexture;
+                for (u32 j = 0, k = 0; j < TextureDimensions; ++j ){
                     for (u32 l = 0; l < Channels; ++l ) {
-                        FontBitmapItr[k++] = FontBitmapOneCh[j];
+                        FontTextureItr[k++] = FontTextureOneCh[j];
                     }
                 }
-                WriteSubBitmapToAtlas(&AtlasMemory, Width, Height, FontBitmap, Rect);
+                WriteSubTextureToAtlas(&AtlasMemory, Width, Height, FontTexture, Rect);
                 
             } break;
             
@@ -180,25 +180,25 @@ int main() {
     Defer { FreeFont(LoadedFont.Item); };
     
     atlas_context_image AtlasImageContexts[] = {
-        { AtlasContextType_Image, "assets/ryoji.png",  AtlasRect_Ryoji, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/yuu.png",    AtlasRect_Yuu,    Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu00.png", AtlasRect_Karu00, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu01.png", AtlasRect_Karu01, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu02.png", AtlasRect_Karu02, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu10.png", AtlasRect_Karu10, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu11.png", AtlasRect_Karu11, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu12.png", AtlasRect_Karu12, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu20.png", AtlasRect_Karu20, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu21.png", AtlasRect_Karu21, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu22.png", AtlasRect_Karu22, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu30.png", AtlasRect_Karu30, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu31.png", AtlasRect_Karu31, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Bitmap_AtlasDefault },
-        { AtlasContextType_Image, "assets/enemy.png", AtlasRect_Enemy, Bitmap_AtlasDefault },
+        { AtlasContextType_Image, "assets/ryoji.png",  AtlasRect_Ryoji, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/yuu.png",    AtlasRect_Yuu,    Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu00.png", AtlasRect_Karu00, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu01.png", AtlasRect_Karu01, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu02.png", AtlasRect_Karu02, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu10.png", AtlasRect_Karu10, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu11.png", AtlasRect_Karu11, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu12.png", AtlasRect_Karu12, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu20.png", AtlasRect_Karu20, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu21.png", AtlasRect_Karu21, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu22.png", AtlasRect_Karu22, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu30.png", AtlasRect_Karu30, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu31.png", AtlasRect_Karu31, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/enemy.png", AtlasRect_Enemy, Texture_AtlasDefault },
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
 
@@ -217,7 +217,7 @@ int main() {
             Font->Codepoint = Codepoint_Start + i;
             Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Item.Info, 72.f);
             Font->FontId = Font_Default;
-            Font->BitmapId = Bitmap_AtlasDefault;
+            Font->TextureId = Texture_AtlasDefault;
             Init(PackedRects + PackedRectCount++, Font);
         }
     }
@@ -231,15 +231,15 @@ int main() {
         rp_node RectPackNodes[NodeCount];
         rp_context RectPackContext = rp_CreateRectPacker(AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
         if (!rp_Pack(&RectPackContext, PackedRects, PackedRectCount, MmrpSort_Height)) {
-            printf("Failed to generate bitmap\n");
+            printf("Failed to generate texture\n");
             return 1;
         }
     }
    
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasBitmap = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
+    u8* AtlasTexture = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
 #if 1
-    stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasBitmap, AtlasWidth*4);
+    stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
     printf("Written test atlas: test.png\n");
 #endif
     
@@ -248,9 +248,9 @@ int main() {
     auto* AssetBuilder = &AssetBuilder_;
     Begin(AssetBuilder, "yuu", "MOMO");
     {
-        WriteBitmap(AssetBuilder, Bitmap_Ryoji, "assets/ryoji.png");
-        WriteBitmap(AssetBuilder, Bitmap_Yuu, "assets/yuu.png");
-        WriteBitmap(AssetBuilder, Bitmap_AtlasDefault, AtlasWidth, AtlasHeight, 4, AtlasBitmap);
+        WriteTexture(AssetBuilder, Texture_Ryoji, "assets/ryoji.png");
+        WriteTexture(AssetBuilder, Texture_Yuu, "assets/yuu.png");
+        WriteTexture(AssetBuilder, Texture_AtlasDefault, AtlasWidth, AtlasHeight, 4, AtlasTexture);
         for(u32 i = 0; i <  PackedRectCount; ++i) {
             auto Rect = PackedRects[i];
             auto Type = *(atlas_context_type*)Rect.UserData;
@@ -258,7 +258,7 @@ int main() {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Rect.UserData;
                     rect2u AtlasRect = Rect2u(Rect);
-                    WriteAtlasRect(AssetBuilder, Image->Id, Image->BitmapId, AtlasRect);
+                    WriteAtlasRect(AssetBuilder, Image->Id, Image->TextureId, AtlasRect);
                     
                 } break;
                 case AtlasContextType_Font: {
@@ -271,7 +271,7 @@ int main() {
                     rect2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Item.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
                     
-                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->BitmapId, Font->Codepoint, FontPixelScale * Advance,
+                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->TextureId, Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
                                    Rect2u(Rect), 
                                    Rect2f(Box) * FontPixelScale);
