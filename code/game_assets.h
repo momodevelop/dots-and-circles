@@ -33,11 +33,6 @@ struct font_glyph {
     f32 LeftBearing;
 };
 
-static inline f32 
-AspectRatio(font_glyph* Glyph) {
-    return AspectRatio(Glyph->Box);
-}
-
 struct font {
     // NOTE(Momo): We cater for a fixed set of codepoints. 
     // ASCII 32 to 126 
@@ -89,10 +84,6 @@ GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
     return Quad2F(RatioRect(Glyph->AtlasRect, Rect));
 }
 
-static inline quad2f 
-GetAtlasUV(game_assets* Assets, atlas_rect_id AtlasRectId) {
-    return GetAtlasUV(Assets, Assets->AtlasRects + AtlasRectId);
-}
 
 static inline renderer_texture_handle
 GetRendererTextureHandle(game_assets* Assets, texture_id TextureId) {

@@ -330,8 +330,8 @@ Resize(renderer_opengl* Opengl,
 
 static inline b32
 Init(renderer_opengl* Opengl,
-     u16 WindowWidth, 
-     u16 WindowHeight, 
+     u32 WindowWidth, 
+     u32 WindowHeight, 
      u32 MaxEntities) 
 {
     Opengl->MaxEntities = MaxEntities;

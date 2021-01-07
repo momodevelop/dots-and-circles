@@ -469,8 +469,8 @@ Win32TryGetOpenglFunction(const char* Name, HMODULE FallbackModule)
 // TODO: Maybe return the context?
 static inline b32
 Win32OpenglInit(HDC DeviceContext, 
-                u16 WindowWidth, 
-                u16 WindowHeight) 
+                u32 WindowWidth, 
+                u32 WindowHeight) 
 {
 
     if (!Win32OpenglLoadWglExtensions()) {
@@ -554,32 +554,32 @@ Win32OpenglInit(HDC DeviceContext,
     return true;
 }
 
-static inline v2u16
+static inline v2u
 Win32GetMonitorDimensions() {
-    v2u16 Ret = {};
-    Ret.W = SafeCastI32ToU16(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = SafeCastI32ToU16(GetSystemMetrics(SM_CYSCREEN));
+    v2u Ret = {};
+    Ret.W = SafeCastI32ToU32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = SafeCastI32ToU32(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
-static inline v2u16
+static inline v2u
 Win32GetWindowDimensions(HWND Window) {
     RECT Rect = {};
     GetWindowRect(Window, &Rect);
-    return v2u16 { 
+    return v2u{ 
         u16(Rect.right - Rect.left),
         u16(Rect.bottom - Rect.top)
     };
 
 }
 
-static inline v2u16
+static inline v2u
 Win32GetClientDimensions(HWND Window) {
     RECT Rect = {};
     GetClientRect(Window, &Rect);
-    return v2u16 { 
-        u16(Rect.right - Rect.left),
-        u16(Rect.bottom - Rect.top)
+    return v2u{ 
+        u32(Rect.right - Rect.left),
+        u32(Rect.bottom - Rect.top)
     };
 
 }
@@ -675,8 +675,8 @@ Win32WindowCallback(HWND Window,
         } break;
         case WM_WINDOWPOSCHANGED: {
             if(Global_Opengl.Header.IsInitialized) {
-                v2u16 WindowWH = Win32GetWindowDimensions(Window);
-                v2u16 ClientWH = Win32GetClientDimensions(Window);
+                v2u WindowWH = Win32GetWindowDimensions(Window);
+                v2u ClientWH = Win32GetClientDimensions(Window);
                 //Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
                 //Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
                 Resize(&Global_Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
@@ -768,7 +768,7 @@ WinMain(HINSTANCE Instance,
     HWND Window;
     {
         RECT WindowRect = {};
-        v2u16 MonitorDimensions = Win32GetMonitorDimensions();
+        v2u MonitorDimensions = Win32GetMonitorDimensions();
         WindowRect.left = MonitorDimensions.W / 2 - (u16)Global_DesignWidth / 2;
         WindowRect.right = MonitorDimensions.W / 2 + (u16)Global_DesignWidth / 2;
         WindowRect.top = MonitorDimensions.H / 2 - (u16)Global_DesignHeight / 2;
@@ -802,8 +802,8 @@ WinMain(HINSTANCE Instance,
     Win32Log("Window Initialized\n");
     // Log the dimensions of window and client area
     {
-        v2u16 WindowWH = Win32GetWindowDimensions(Window);
-        v2u16 ClientWH = Win32GetClientDimensions(Window);
+        v2u WindowWH = Win32GetWindowDimensions(Window);
+        v2u ClientWH = Win32GetClientDimensions(Window);
         Win32Log("Window Dimensions: %d x %d\n", WindowWH.W, WindowWH.H);
         Win32Log("Client Dimensions: %d x %d\n", ClientWH.W, ClientWH.H);
     }
@@ -847,7 +847,7 @@ WinMain(HINSTANCE Instance,
  
     // Initialize OpenGL
     {
-        v2u16 Dimensions = Win32GetClientDimensions(Window);
+        v2u Dimensions = Win32GetClientDimensions(Window);
         b32 Success = Win32OpenglInit(DeviceContext, 
                                       Dimensions.W, 
                                       Dimensions.H);
