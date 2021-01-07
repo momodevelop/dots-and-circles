@@ -8,6 +8,7 @@
 #include "mm_core.h"
 #include "mm_string.h"
 #include "mm_mailbox.h"
+#include "renderer.h"
 
 // NOTE(Momo): Global Settings
 static constexpr usize Global_PermanentMemorySize = Gigabytes(1);
@@ -106,7 +107,7 @@ typedef PlatformGetFileSizeFunc(platform_get_file_size);
 #define PlatformReadFileFunc(Name) b32 Name(void* Dest, u32 DestSize, const char* Path)
 typedef PlatformReadFileFunc(platform_read_file);
 
-#define PlatformAddTexture(Name) u32 Name(u32 Width, u32 Height, void* Pixels)
+#define PlatformAddTexture(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
 typedef PlatformAddTexture(platform_add_texture);
 
 #define PlatformClearTextures(Name) void Name()

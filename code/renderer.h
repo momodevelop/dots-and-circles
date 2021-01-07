@@ -25,11 +25,11 @@ struct renderer {
     b32 IsInitialized;
 };
 
-struct renderer_texture {
-    u32 Index;
-    u16 Width;
-    u16 Height;
+#if REFACTOR
+struct renderer_texture_handle {
+    u32 Id;
 };
+#endif
 
 struct render_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
@@ -43,7 +43,11 @@ struct render_command_set_basis {
 
 struct render_command_draw_textured_quad {
     static constexpr u32 TypeId = __LINE__;
+#if REFACTOR
+    renderer_texture_handle TextureHandle;
+#else
     u32 TextureHandle;
+#endif
     v4f Colors;
     m44f Transform;
     quad2f TextureCoords; 
@@ -56,6 +60,8 @@ struct render_command_draw_quad {
     m44f Transform;
 };
 
+#if REFACTOR
+#else
 struct render_command_link_texture {
     static constexpr u32 TypeId = __LINE__;
     u32 Width;
@@ -66,6 +72,7 @@ struct render_command_link_texture {
     // u32 Channels;
     u32 TextureHandle;
 };
+#endif
 
 struct render_command_set_design_resolution {
     static constexpr u32 TypeId = __LINE__;
@@ -155,7 +162,11 @@ static inline void
 PushCommandDrawTexturedQuad(mailbox* Commands, 
                             v4f Colors, 
                             m44f Transform, 
+#if REFACTOR
+                            renderer_texture_handle TextureHandle,
+#else
                             u32 TextureHandle,
+#endif
                             quad2f TextureCoords = {
                                 0.0f, 1.0f,  // top left
                                 1.0f, 1.0f, // top right
@@ -177,7 +188,11 @@ static inline void
 PushCommandDrawTexturedQuad(mailbox* Commands,
                             v4f Colors, 
                             m44f Transform, 
+#if REFACTOR
+                            renderer_texture_handle TextureHandle,
+#else
                             u32 TextureHandle,
+#endif
                             rect2f TextureCoords) 
 {
     using data_t = render_command_draw_textured_quad;
@@ -201,7 +216,8 @@ PushCommandDrawQuad(mailbox* Commands,
     Data->Transform = Transform;
 }
 
-
+#if REFACTOR
+#else
 static inline void 
 PushCommandLinkTexture(mailbox* Commands, 
                        u32 Width,
@@ -215,7 +231,7 @@ PushCommandLinkTexture(mailbox* Commands,
     Data->Pixels = Pixels;
     Data->TextureHandle = TextureHandle;
 }
-
+#endif
 
 static inline void 
 PushCommandDrawLine(mailbox* Payload, 

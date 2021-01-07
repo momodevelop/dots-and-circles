@@ -121,6 +121,21 @@ union v2u {
     }
 };
 
+union v2u16 {
+    u16 Elements[2];
+    struct {
+        u16 X, Y;
+    };
+    struct {
+        u16 W, H;
+    };
+
+    inline auto& operator[](usize I) {
+        Assert(I < 2); 
+        return Elements[I]; 
+    }
+};
+
 union v2i {
     i32 Elements[2];
     struct {

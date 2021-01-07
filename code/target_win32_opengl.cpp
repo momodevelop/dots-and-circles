@@ -142,13 +142,12 @@ Win32GetSecondsElapsed(LARGE_INTEGER Start,
 #if REFACTOR
 static inline
 PlatformAddTexture(Win32AddTexture) {
-    return AddTexture(&Global_Opengl, 
-                      Width, Height, Pixels);  
+    return AddTexture(&Global_Opengl, Width, Height, Pixels);
 }
 
 static inline 
 PlatformClearTextures(Win32ClearTextures) {
-    ClearTextures(&Global_Opengl);
+
 }
 #endif
 
@@ -325,6 +324,8 @@ Win32LoadPlatformApi() {
     Ret.Log = Win32Log;
     Ret.ReadFile = Win32ReadFile;
     Ret.GetFileSize = Win32GetFileSize;
+    Ret.ClearTextures = Win32ClearTextures;
+    Ret.AddTexture = Win32AddTexture;
     return Ret;
 }
 
@@ -468,8 +469,8 @@ Win32TryGetOpenglFunction(const char* Name, HMODULE FallbackModule)
 // TODO: Maybe return the context?
 static inline b32
 Win32OpenglInit(HDC DeviceContext, 
-                u32 WindowWidth, 
-                u32 WindowHeight) 
+                u16 WindowWidth, 
+                u16 WindowHeight) 
 {
 
     if (!Win32OpenglLoadWglExtensions()) {
@@ -546,38 +547,39 @@ Win32OpenglInit(HDC DeviceContext,
         Win32SetOpenglFunction(glProgramUniformMatrix4fv);
         Win32SetOpenglFunction(glNamedBufferSubData);
         Win32SetOpenglFunction(glUseProgram);
+        Win32SetOpenglFunction(glDeleteTextures);
     }
-    OpenglInit(&Global_Opengl, WindowWidth, WindowHeight, 128);
+    Init(&Global_Opengl, WindowWidth, WindowHeight, 128);
 
     return true;
 }
 
-static inline v2u
+static inline v2u16
 Win32GetMonitorDimensions() {
-    v2u Ret = {};
-    Ret.W = SafeCastI32ToU32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = SafeCastI32ToU32(GetSystemMetrics(SM_CYSCREEN));
+    v2u16 Ret = {};
+    Ret.W = SafeCastI32ToU16(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = SafeCastI32ToU16(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
-static inline v2u
+static inline v2u16
 Win32GetWindowDimensions(HWND Window) {
     RECT Rect = {};
     GetWindowRect(Window, &Rect);
-    return v2u { 
-        u32(Rect.right - Rect.left),
-        u32(Rect.bottom - Rect.top)
+    return v2u16 { 
+        u16(Rect.right - Rect.left),
+        u16(Rect.bottom - Rect.top)
     };
 
 }
 
-static inline v2u
+static inline v2u16
 Win32GetClientDimensions(HWND Window) {
     RECT Rect = {};
     GetClientRect(Window, &Rect);
-    return v2u { 
-        u32(Rect.right - Rect.left),
-        u32(Rect.bottom - Rect.top)
+    return v2u16 { 
+        u16(Rect.right - Rect.left),
+        u16(Rect.bottom - Rect.top)
     };
 
 }
@@ -673,11 +675,11 @@ Win32WindowCallback(HWND Window,
         } break;
         case WM_WINDOWPOSCHANGED: {
             if(Global_Opengl.Header.IsInitialized) {
-                v2u WindowWH = Win32GetWindowDimensions(Window);
-                v2u ClientWH = Win32GetClientDimensions(Window);
+                v2u16 WindowWH = Win32GetWindowDimensions(Window);
+                v2u16 ClientWH = Win32GetClientDimensions(Window);
                 //Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
                 //Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
-                OpenglResize(&Global_Opengl, (u32)ClientWH.W, (u32)ClientWH.H);
+                Resize(&Global_Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
 
@@ -766,11 +768,11 @@ WinMain(HINSTANCE Instance,
     HWND Window;
     {
         RECT WindowRect = {};
-        v2u MonitorDimensions = Win32GetMonitorDimensions();
-        WindowRect.left = MonitorDimensions.W / 2 - (u32)Global_DesignWidth / 2;
-        WindowRect.right = MonitorDimensions.W / 2 + (u32)Global_DesignWidth / 2;
-        WindowRect.top = MonitorDimensions.H / 2 - (u32)Global_DesignHeight / 2;
-        WindowRect.bottom = MonitorDimensions.H / 2 + (u32)Global_DesignHeight / 2;
+        v2u16 MonitorDimensions = Win32GetMonitorDimensions();
+        WindowRect.left = MonitorDimensions.W / 2 - (u16)Global_DesignWidth / 2;
+        WindowRect.right = MonitorDimensions.W / 2 + (u16)Global_DesignWidth / 2;
+        WindowRect.top = MonitorDimensions.H / 2 - (u16)Global_DesignHeight / 2;
+        WindowRect.bottom = MonitorDimensions.H / 2 + (u16)Global_DesignHeight / 2;
         
         DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
         AdjustWindowRectEx(&WindowRect,
@@ -800,8 +802,8 @@ WinMain(HINSTANCE Instance,
     Win32Log("Window Initialized\n");
     // Log the dimensions of window and client area
     {
-        v2u WindowWH = Win32GetWindowDimensions(Window);
-        v2u ClientWH = Win32GetClientDimensions(Window);
+        v2u16 WindowWH = Win32GetWindowDimensions(Window);
+        v2u16 ClientWH = Win32GetClientDimensions(Window);
         Win32Log("Window Dimensions: %d x %d\n", WindowWH.W, WindowWH.H);
         Win32Log("Client Dimensions: %d x %d\n", ClientWH.W, ClientWH.H);
     }
@@ -845,7 +847,7 @@ WinMain(HINSTANCE Instance,
  
     // Initialize OpenGL
     {
-        v2u Dimensions = Win32GetClientDimensions(Window);
+        v2u16 Dimensions = Win32GetClientDimensions(Window);
         b32 Success = Win32OpenglInit(DeviceContext, 
                                       Dimensions.W, 
                                       Dimensions.H);
@@ -872,7 +874,7 @@ WinMain(HINSTANCE Instance,
                                 TargetSecsPerFrame);
         }
 
-        OpenglRender(&Global_Opengl, &RenderCommands);
+        Render(&Global_Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
         f32 SecsElapsed = 

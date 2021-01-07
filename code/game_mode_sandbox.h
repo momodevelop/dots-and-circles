@@ -42,15 +42,23 @@ DrawString(mailbox* RenderCommands,
                              1.f);
         
         m44f T = M44fTranslation(CurPosition.X + Box.Min.X * Size, 
-                                   CurPosition.Y + Box.Min.Y * Size,  
-                                   CurPosition.Z);
+                                 CurPosition.Y + Box.Min.Y * Size,  
+                                 CurPosition.Z);
         
+#if REFACTOR
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    Color, 
+                                    T*S*A, 
+                                    GetRendererTextureHandle(Assets, Glyph->BitmapId),
+                                    GetAtlasUV(Assets, Glyph));
+#else
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color, 
                                     T*S*A, 
                                     Glyph->BitmapId,
                                     GetAtlasUV(Assets, Glyph));
-        
+#endif
+    
         CurPosition.X += Glyph->Advance * Size;
         if (String[i+1] != 0 ) {
             CurPosition.X += Font->Kernings[String[i]][String[i+1]] * Size;
@@ -88,11 +96,19 @@ UpdateSandboxMode(permanent_state* PermState,
         v3f Speed = { 50.f, 0.f, 0.f };
         Entity->Position += Speed * DeltaTime;
 
+#if REFACTOR 
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    Color_White, 
+                                    Transform, 
+                                    GetRendererTextureHandle(&PermState->Assets, AtlasRect->BitmapId),
+                                    GetAtlasUV(&PermState->Assets, AtlasRect));
+#else
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     Color_White, 
                                     Transform, 
                                     AtlasRect->BitmapId,
                                     GetAtlasUV(&PermState->Assets, AtlasRect));
+#endif
     }
 
 

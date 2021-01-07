@@ -451,19 +451,35 @@ UpdateMainMode(permanent_state* PermState,
         RenderPos.Z = ZLayPlayer;
 
         m44f T = M44fTranslation(RenderPos);
+#if REFACTOR
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    v4f{ 1.f, 1.f, 1.f, 1.f }, 
+                                    T*S, 
+                                    GetRendererTextureHandle(Assets, Player->CircleImageRect->BitmapId),
+                                    GetAtlasUV(Assets, Player->CircleImageRect));
+#else
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     v4f{ 1.f, 1.f, 1.f, 1.f }, 
                                     T*S, 
                                     Player->CircleImageRect->BitmapId,
                                     GetAtlasUV(Assets, Player->CircleImageRect));
+#endif
         
 		RenderPos.Z += 0.1f;
         T = M44fTranslation(RenderPos);
+#if REFACTOR
+        PushCommandDrawTexturedQuad(RenderCommands, 
+                                    v4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
+                                    T*S, 
+                                    GetRendererTextureHandle(Assets, Player->DotImageRect->BitmapId),
+                                    GetAtlasUV(Assets, Player->DotImageRect));
+#else
         PushCommandDrawTexturedQuad(RenderCommands, 
                                     v4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                                     T*S, 
                                     Player->DotImageRect->BitmapId,
                                     GetAtlasUV(Assets, Player->DotImageRect));
+#endif
     }
 
 	// Bullet Rendering 
@@ -488,11 +504,19 @@ UpdateMainMode(permanent_state* PermState,
                 Assert(false);
         }
         m44f T = M44fTranslation(RenderPos);
+#if REFACTOR
+		PushCommandDrawTexturedQuad(RenderCommands,
+									v4f{ 1.f, 1.f, 1.f, 1.f },
+									T*S,
+									GetRendererTextureHandle(Assets, Bullet->ImageRect->BitmapId),
+									GetAtlasUV(Assets, Bullet->ImageRect));
+#else
 		PushCommandDrawTexturedQuad(RenderCommands,
 									v4f{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
 									Bullet->ImageRect->BitmapId,
 									GetAtlasUV(Assets, Bullet->ImageRect));
+#endif
 
     
 	}
@@ -506,11 +530,19 @@ UpdateMainMode(permanent_state* PermState,
 		v3f RenderPos = V3f(Enemy->Position);
 		RenderPos.Z = ZLayEnemy; 
 		m44f T = M44fTranslation(RenderPos);
+#if REFACTOR
+		PushCommandDrawTexturedQuad(RenderCommands,
+									v4f{ 1.f, 1.f, 1.f, 1.f },
+									T*S,
+									GetRendererTextureHandle(Assets, Enemy->ImageRect->BitmapId),
+									GetAtlasUV(Assets, Enemy->ImageRect));
+#else
 		PushCommandDrawTexturedQuad(RenderCommands,
 									v4f{ 1.f, 1.f, 1.f, 1.f },
 									T*S,
 									Enemy->ImageRect->BitmapId,
 									GetAtlasUV(Assets, Enemy->ImageRect));
+#endif
 	}
 
 

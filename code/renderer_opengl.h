@@ -141,6 +141,9 @@ typedef void    OpenglFunction(glProgramUniformMatrix4fv)(GLuint program,
                                                           GLboolean transpose,
                                                           const GLfloat* value);
 typedef void    OpenglFunction(glUseProgram)(GLuint program);
+typedef void    OpenglFunction(glDeleteTextures)(GLsizei n, 
+                                                 const GLuint* textures);
+
 
 // Stuff to work with game
 constexpr static inline f32 QuadModel[] = {
@@ -264,24 +267,25 @@ struct renderer_opengl {
     OpenglFunctionPtr(glProgramUniformMatrix4fv);
     OpenglFunctionPtr(glNamedBufferSubData);
     OpenglFunctionPtr(glUseProgram);
+    OpenglFunctionPtr(glDeleteTextures);
 
 
     GLuint Buffers[OpenglVbo_Max]; 
     GLuint Shader;
     
     // NOTE(Momo): We only need one blueprint which is a 1x1 square.
-    GLuint Blueprint; 
-    i32 MaxEntities;
+    GLuint Model; 
+    u32 MaxEntities;
     
     GLuint BlankTexture;
     GLuint DummyTexture;
     
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
-    // TODO(Momo): Make this dynamic? 
+    // TODO(Momo): Make this dynamic. Renderer needs its own arena. 
     GLuint Textures[255];
-    usize TexturesCount;
-
+    GLsizei TexturesCount;
+    
     v2u WindowDimensions;
     v2u RenderDimensions;
 };
@@ -315,7 +319,10 @@ static inline void AlignViewport(renderer_opengl* Opengl)
 
 
 static inline void 
-Resize(renderer_opengl* Opengl, u32 WindowWidth, u32 WindowHeight) {
+Resize(renderer_opengl* Opengl,  
+       u16 WindowWidth, 
+       u16 WindowHeight) 
+{
     Opengl->WindowDimensions.W = WindowWidth;
     Opengl->WindowDimensions.H = WindowHeight;
     AlignViewport(Opengl);
@@ -323,9 +330,9 @@ Resize(renderer_opengl* Opengl, u32 WindowWidth, u32 WindowHeight) {
 
 static inline b32
 Init(renderer_opengl* Opengl,
-     u32 WindowWidth, 
-     u32 WindowHeight, 
-     i32 MaxEntities) 
+     u16 WindowWidth, 
+     u16 WindowHeight, 
+     u32 MaxEntities) 
 {
     Opengl->MaxEntities = MaxEntities;
     Opengl->RenderDimensions.W = WindowWidth;
@@ -375,26 +382,26 @@ Init(renderer_opengl* Opengl,
     
     
     // NOTE(Momo): Setup VAO
-    Opengl->glCreateVertexArrays(1, &Opengl->Blueprint);
-    Opengl->glVertexArrayVertexBuffer(Opengl->Blueprint, 
+    Opengl->glCreateVertexArrays(1, &Opengl->Model);
+    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Model, 
                                       Opengl->Buffers[OpenglVbo_Model], 
                                       0, 
                                       sizeof(f32)*3);
 
-    Opengl->glVertexArrayVertexBuffer(Opengl->Blueprint, 
+    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Texture, 
                                       Opengl->Buffers[OpenglVbo_Texture], 
                                       0, 
                                       sizeof(f32) * 8);
 
-    Opengl->glVertexArrayVertexBuffer(Opengl->Blueprint, 
+    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Colors, 
                                       Opengl->Buffers[OpenglVbo_Colors],  
                                       0, 
                                       sizeof(v4f));
 
-    Opengl->glVertexArrayVertexBuffer(Opengl->Blueprint, 
+    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Transform, 
                                       Opengl->Buffers[OpenglVbo_Transform], 
                                       0, 
@@ -402,128 +409,128 @@ Init(renderer_opengl* Opengl,
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Model); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Model); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Model, 
                                       3, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       0);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Model, 
                                        OpenglVaoBind_Model);
     
     // aColor
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Colors); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Colors); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Colors, 
                                       4, 
                                       GL_FLOAT, GL_FALSE, 0);
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Colors, 
                                        OpenglVaoBind_Colors);
 
-    Opengl->glVertexArrayBindingDivisor(Opengl->Blueprint, OpenglVaoBind_Colors, 1); 
+    Opengl->glVertexArrayBindingDivisor(Opengl->Model, OpenglVaoBind_Colors, 1); 
     
     // aTexCoord
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Texture1); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture1); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Texture1, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 0);
     
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Texture2); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture2); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Texture2, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 1);
     
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Texture3); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture3); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Texture3, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 2);
 
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Texture4); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture4); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Texture4, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 3);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture1, 
                                        OpenglVaoBind_Texture);
 
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture2, 
                                        OpenglVaoBind_Texture);
 
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture3, 
                                        OpenglVaoBind_Texture);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture4, 
                                        OpenglVaoBind_Texture);
     
-    Opengl->glVertexArrayBindingDivisor(Opengl->Blueprint, 
+    Opengl->glVertexArrayBindingDivisor(Opengl->Model, 
                                         OpenglVaoBind_Texture, 
                                         1); 
     
     
     // aTransform
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Transform1); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform1); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Transform1, 
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 0 * 4);
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Transform2);
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform2);
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Transform2, 
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 1 * 4);
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Transform3); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform3); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Transform3, 
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 2 * 4);
-    Opengl->glEnableVertexArrayAttrib(Opengl->Blueprint, OpenglAtb_Transform4); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Blueprint, 
+    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform4); 
+    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Transform4,
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 3 * 4);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Transform1, 
                                        OpenglVaoBind_Transform);
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Transform2, 
                                        OpenglVaoBind_Transform);
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Transform3, 
                                        OpenglVaoBind_Transform);
-    Opengl->glVertexArrayAttribBinding(Opengl->Blueprint, 
+    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Transform4, 
                                        OpenglVaoBind_Transform);
 
-    Opengl->glVertexArrayBindingDivisor(Opengl->Blueprint, 
+    Opengl->glVertexArrayBindingDivisor(Opengl->Model, 
                                         OpenglVaoBind_Transform, 
                                         1); 
     
@@ -532,7 +539,7 @@ Init(renderer_opengl* Opengl,
     Opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // NOTE(Momo): Setup indices
-    Opengl->glVertexArrayElementBuffer(Opengl->Blueprint, 
+    Opengl->glVertexArrayElementBuffer(Opengl->Model, 
                                        Opengl->Buffers[OpenglVbo_Indices]);
     
    
@@ -603,11 +610,15 @@ DrawInstances(renderer_opengl* Opengl,
 {
     if (InstancesToDraw > 0) {
         Opengl->glBindTexture(GL_TEXTURE_2D, Texture);
-        Opengl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        Opengl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        Opengl->glTexParameteri(GL_TEXTURE_2D, 
+                                GL_TEXTURE_MIN_FILTER, 
+                                GL_NEAREST);
+        Opengl->glTexParameteri(GL_TEXTURE_2D, 
+                                GL_TEXTURE_MAG_FILTER, 
+                                GL_NEAREST);
         Opengl->glEnable(GL_BLEND);
         Opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        Opengl->glBindVertexArray(Opengl->Blueprint);
+        Opengl->glBindVertexArray(Opengl->Model);
         Opengl->glUseProgram(Opengl->Shader);
         
         Opengl->glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
@@ -621,14 +632,16 @@ DrawInstances(renderer_opengl* Opengl,
 
 
 #if REFACTOR
-static inline renderer_texture
+static inline renderer_texture_handle
 AddTexture(renderer_opengl* Opengl,
-           u16 Width,
-           u16 Height,
+           u32 Width,
+           u32 Height,
            void* Pixels) 
 {
-    u32* Entry = 
-        Opengl->Textures + Opengl->TexturesCount++;
+    // TODO: remove hardcoded 255
+    Assert(Opengl->TexturesCount < 255);
+    renderer_texture_handle Ret = {};
+    GLuint* Entry = Opengl->Textures + Opengl->TexturesCount++;
 
     Opengl->glCreateTextures(GL_TEXTURE_2D, 
                              1, 
@@ -649,11 +662,13 @@ AddTexture(renderer_opengl* Opengl,
                                 GL_RGBA, 
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
-    return (*Entry);
+    Ret.Id = (u32)(*Entry); 
+    return Ret;
 }
 
 static inline void
 ClearTextures(renderer_opengl* Opengl) {
+    Opengl->glDeleteTextures(Opengl->TexturesCount, Opengl->Textures);
     Opengl->TexturesCount = 0;
 }
 #endif
@@ -662,7 +677,7 @@ static inline void
 Render(renderer_opengl* Opengl, mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
-    u32 CurrentTexture = 0;
+    GLuint CurrentTexture = 0;
     u32 InstancesToDrawCount = 0;
     u32 LastDrawnInstanceIndex = 0;
     u32 CurrentInstanceIndex = 0;
@@ -691,9 +706,11 @@ Render(renderer_opengl* Opengl, mailbox* Commands)
                 InstancesToDrawCount = 0;
                 
                 auto Result = Transpose(Data->Basis);
-                GLint uProjectionLoc = Opengl->glGetUniformLocation(Opengl->Shader, 
-                                                                    "uProjection");
-                Opengl->glProgramUniformMatrix4fv(Opengl->Shader, 
+                GLint uProjectionLoc = 
+                    Opengl->glGetUniformLocation(Opengl->Shader,
+                                                 "uProjection");
+                Opengl->glProgramUniformMatrix4fv(
+                                          Opengl->Shader, 
                                           uProjectionLoc, 
                                           1, 
                                           GL_FALSE, 
@@ -778,11 +795,14 @@ Render(renderer_opengl* Opengl, mailbox* Commands)
                 using data_t = render_command_draw_textured_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
+#if REFACTOR
+                GLuint OpenglTextureHandle = (GLuint)Data->TextureHandle.Id; 
+#else
                 // If the game texture handle does not exist in the lookup table, 
                 // add texture to renderer and register it into the lookup table
                 u32 GameBitmapHandle = Data->TextureHandle;
-                u32 OpenglTextureHandle = Opengl->GameToOpenglTextureTable[GameBitmapHandle];
-                
+                GLuint OpenglTextureHandle = Opengl->GameToOpenglTextureTable[GameBitmapHandle];
+#endif
                 if (OpenglTextureHandle == 0) {
                     OpenglTextureHandle = Opengl->DummyTexture;
                 }

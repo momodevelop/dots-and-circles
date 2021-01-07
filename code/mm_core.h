@@ -239,6 +239,12 @@ SafeCastI32ToU32(i32 Value) {
     return (u32)Value;
 }
 
+static inline u16
+SafeCastI32ToU16(i32 Value) {
+    Assert(Value <= U16_MAX && Value >= 0);
+    return (u16)Value;
+}
+
 static inline u32
 SafeCastI64ToU32(i64 Value) {
     Assert(Value <= U32_MAX && Value >= 0);

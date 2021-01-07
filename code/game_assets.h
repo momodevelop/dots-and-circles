@@ -17,10 +17,9 @@
 struct bitmap {
     u32 Width, Height, Channels;
 #if REFACTOR
-    u32 Handle;
-#else
-    void* Pixels;
+    renderer_texture_handle Handle;
 #endif
+    void* Pixels;
 };
 
 struct atlas_rect {
@@ -70,7 +69,7 @@ Height(font* Font) {
 
 struct game_assets {
     arena Arena;
-    
+   
     array<bitmap> Bitmaps;
     array<atlas_rect> AtlasRects;
     array<font> Fonts;
@@ -82,13 +81,15 @@ struct game_assets {
 static inline quad2f
 GetAtlasUV(game_assets* Assets, atlas_rect* AtlasRect) {
     auto Bitmap = Assets->Bitmaps[AtlasRect->BitmapId];
-    return Quad2F(RatioRect(AtlasRect->Rect, {0, 0, Bitmap.Width, Bitmap.Height}));
+    rect2u Rect = {0, 0, Bitmap.Width, Bitmap.Height };
+    return Quad2F(RatioRect(AtlasRect->Rect,Rect));
 }
 
 static inline quad2f
 GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
     auto Bitmap = Assets->Bitmaps[Glyph->BitmapId];
-    return Quad2F(RatioRect(Glyph->AtlasRect, {0, 0, Bitmap.Width, Bitmap.Height}));
+    rect2u Rect = {0, 0, Bitmap.Width, Bitmap.Height };
+    return Quad2F(RatioRect(Glyph->AtlasRect, Rect));
 }
 
 static inline quad2f 
@@ -96,6 +97,12 @@ GetAtlasUV(game_assets* Assets, atlas_rect_id AtlasRectId) {
     return GetAtlasUV(Assets, Assets->AtlasRects + AtlasRectId);
 }
 
+#if REFACTOR
+static inline renderer_texture_handle
+GetRendererTextureHandle(game_assets* Assets, bitmap_id BitmapId) {
+    return Assets->Bitmaps[BitmapId].Handle;
+}
+#endif
 
 static inline b32
 CheckAssetSignature(void* Memory, const char* Signature) {
@@ -110,8 +117,6 @@ CheckAssetSignature(void* Memory, const char* Signature) {
 }
 
 
-// TODO(Momo): Perhaps remove render_commands and 
-// replace with platform call for linking textures?
 static inline game_assets
 CreateAssets(arena* Arena, 
              platform_api* Platform,
@@ -163,25 +168,24 @@ CreateAssets(arena* Arena,
         
         switch(YuuEntry->Type) {
             case AssetType_Bitmap: {
-                auto* YuuBitmap = Read<yuu_bitmap>(&FileMemoryItr);
-                
-                // NOTE(Momo): Allocate Image
+                auto* YuuBitmap = Read<yuu_bitmap>(&FileMemoryItr);              
                 auto* Bitmap = Assets.Bitmaps + YuuBitmap->Id;
                 Bitmap->Width = YuuBitmap->Width;
                 Bitmap->Height = YuuBitmap->Height;
                 Bitmap->Channels = YuuBitmap->Channels;
-                
-                // NOTE(Momo): Allocate pixel data
                 usize BitmapSize = Bitmap->Width * 
                                    Bitmap->Height * 
                                    Bitmap->Channels;
 #if REFACTOR
                 void* Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
-                Bitmap->Handle = 
-                    Platform->AddTexture(Bitmap->Width, 
-                                        Bitmap->Height,
-                                        Pixels);
+                Assert(Pixels);
+                MemCopy(Pixels, FileMemoryItr, BitmapSize);
+                FileMemoryItr += BitmapSize;
+                Bitmap->Handle = Platform->AddTexture(YuuBitmap->Width, 
+                                                      YuuBitmap->Height,
+                                                      Pixels);
 #else
+                
                 Bitmap->Pixels = PushBlock(&Assets.Arena, BitmapSize, 1);
                 Assert(Bitmap->Pixels);
                 MemCopy(Bitmap->Pixels, FileMemoryItr, BitmapSize);

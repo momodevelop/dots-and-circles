@@ -39,11 +39,17 @@ Update(splash_image_entity* Entity,
     // NOTE(Momo): Render
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
-    
+#if REFACTOR 
+    PushCommandDrawTexturedQuad(RenderCommands, 
+                                Entity->Colors, 
+                                T*S,  
+                                GetRendererTextureHandle(Assets, Entity->BitmapHandle));
+#else
     PushCommandDrawTexturedQuad(RenderCommands, 
                                 Entity->Colors, 
                                 T*S,  
                                 Entity->BitmapHandle);
+#endif
 }
 
 struct splash_blackout_entity {
