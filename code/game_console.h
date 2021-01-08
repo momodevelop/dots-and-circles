@@ -3,8 +3,8 @@
 
 #include "mm_list.h"
 #include "mm_colors.h"
-#include "platform.h"
-#include "renderer.h"
+#include "game_platform.h"
+#include "game_renderer.h"
 #include "game_assets.h"
 #include "game_text.h"
 

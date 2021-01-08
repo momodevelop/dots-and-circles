@@ -8,7 +8,7 @@
 #include "mm_core.h"
 #include "mm_string.h"
 #include "mm_mailbox.h"
-#include "renderer.h"
+#include "game_renderer.h"
 
 // NOTE(Momo): Global Settings
 static constexpr usize Global_PermanentMemorySize = Gigabytes(1);

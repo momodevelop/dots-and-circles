@@ -1,7 +1,7 @@
 #ifndef __RENDERER_OPENGL__
 #define __RENDERER_OPENGL__
 
-#include "renderer.h"
+#include "game_renderer.h"
 
 // Opengl typedefs
 #define GL_TRUE                 1
@@ -227,7 +227,7 @@ enum {
     OpenglVaoBind_Transform
 };
 
-struct renderer_opengl {
+struct opengl {
     renderer Header;
 
     // Bindings that needs to be filled by platform
@@ -291,7 +291,7 @@ struct renderer_opengl {
 };
 
 static inline void 
-AttachShader(renderer_opengl* Opengl, u32 Program, u32 Type, char* Code) {
+AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
     GLuint Shader = Opengl->glCreateShader(Type);
     Opengl->glShaderSource(Shader, 1, &Code, NULL);
     Opengl->glCompileShader(Shader);
@@ -300,7 +300,7 @@ AttachShader(renderer_opengl* Opengl, u32 Program, u32 Type, char* Code) {
 }
 
 // TODO: Change name to OpenglAliugnViewport
-static inline void AlignViewport(renderer_opengl* Opengl) 
+static inline void AlignViewport(opengl* Opengl) 
 {
     auto Region = GetRenderRegion(Opengl->WindowDimensions.W, 
                                   Opengl->WindowDimensions.H, 
@@ -319,7 +319,7 @@ static inline void AlignViewport(renderer_opengl* Opengl)
 
 
 static inline void 
-Resize(renderer_opengl* Opengl,  
+Resize(opengl* Opengl,  
        u16 WindowWidth, 
        u16 WindowHeight) 
 {
@@ -329,7 +329,7 @@ Resize(renderer_opengl* Opengl,
 }
 
 static inline b32
-Init(renderer_opengl* Opengl,
+Init(opengl* Opengl,
      u32 WindowWidth, 
      u32 WindowHeight, 
      u32 MaxEntities) 
@@ -603,7 +603,7 @@ Init(renderer_opengl* Opengl,
 }
 
 static inline void 
-DrawInstances(renderer_opengl* Opengl, 
+DrawInstances(opengl* Opengl, 
               GLuint Texture, 
               u32 InstancesToDraw, 
               u32 IndexToDrawFrom) 
@@ -632,7 +632,7 @@ DrawInstances(renderer_opengl* Opengl,
 
 
 static inline renderer_texture_handle
-AddTexture(renderer_opengl* Opengl,
+AddTexture(opengl* Opengl,
            u32 Width,
            u32 Height,
            void* Pixels) 
@@ -666,14 +666,14 @@ AddTexture(renderer_opengl* Opengl,
 }
 
 static inline void
-ClearTextures(renderer_opengl* Opengl) {
+ClearTextures(opengl* Opengl) {
     Opengl->glDeleteTextures(Opengl->TexturesCount, Opengl->Textures);
     Opengl->TexturesCount = 0;
 }
 
 
 static inline void
-Render(renderer_opengl* Opengl, mailbox* Commands) 
+Render(opengl* Opengl, mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;

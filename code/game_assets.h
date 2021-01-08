@@ -9,9 +9,8 @@
 #include "mm_mailbox.h"
 #include "mm_string.h"
 
-#include "platform.h"
+#include "game_platform.h"
 #include "game_assets_file_formats.h"
-#include "renderer.h"
 
 // NOTE(Momo): Asset types
 struct texture {

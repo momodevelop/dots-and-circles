@@ -12,8 +12,8 @@
 #include "mm_maths.h"
 #include "mm_arena.h"
 
-#include "renderer_opengl.h"
-#include "platform.h"
+#include "game_opengl.h"
+#include "game_platform.h"
 #include "thirdparty/sdl2/include/SDL.h"
 #include "thirdparty/glad/glad.c"
 
@@ -368,7 +368,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     // Renderer
-    renderer_opengl Renderer = {};
+    opengl Renderer = {};
     Init(&Renderer, WindowWidth, WindowHeight, 10000);
     
 

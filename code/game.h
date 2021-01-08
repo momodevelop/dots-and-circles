@@ -1,15 +1,9 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "platform.h"
-
-
-#if INTERNAL
+#include "game_platform.h"
 #include "game_console.h"
-#endif
-
-
-#include "renderer.h"
+#include "game_renderer.h"
 #include "game_assets.h"
 #include "mm_list.h"
 

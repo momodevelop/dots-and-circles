@@ -5,8 +5,8 @@
 #include "mm_maths.h"
 #include "mm_string.h"
 #include "mm_mailbox.h"
-#include "platform.h"
-#include "renderer_opengl.h"
+#include "game_platform.h"
+#include "game_opengl.h"
 
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
@@ -73,7 +73,7 @@ char Global_SourceGameCodeDllFullPath[MAX_PATH];
 char Global_GameCodeLockFullPath[MAX_PATH];
 char Global_TempGameCodeDllFullPath[MAX_PATH];        
 
-renderer_opengl Global_Opengl;
+opengl Global_Opengl;
 
 #if INTERNAL
 HANDLE Global_StdOut;
