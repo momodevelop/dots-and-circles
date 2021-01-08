@@ -35,7 +35,6 @@ struct permanent_state {
     union {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
-        struct game_mode_menu* MenuMode;
         struct game_mode_sandbox* SandboxMode;
     };
     
