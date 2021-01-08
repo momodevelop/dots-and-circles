@@ -276,7 +276,8 @@ Win32GameCode(const char* SrcFileName,
 }
 
 static inline void
-Win32LoadGameCode(win32_game_code* Code) {
+Win32LoadGameCode(win32_game_code* Code) 
+{
     WIN32_FILE_ATTRIBUTE_DATA Ignored; 
     if(!GetFileAttributesEx(Code->LockFileName, 
                             GetFileExInfoStandard, 

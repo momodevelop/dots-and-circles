@@ -123,6 +123,7 @@ struct platform_api {
 
 
 // Memory required by the game to get it running
+// Note that Transient Memory, once set, should not be moved!
 struct game_memory {
     void* PermanentMemory;
     usize PermanentMemorySize;

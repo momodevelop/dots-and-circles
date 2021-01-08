@@ -29,17 +29,17 @@ struct renderer_texture_handle {
     u32 Id;
 };
 
-struct render_command_clear_color {
+struct renderer_command_clear_color {
     static constexpr u32 TypeId = __LINE__;
     v4f Colors;
 };
 
-struct render_command_set_basis {
+struct renderer_command_set_basis {
     static constexpr u32 TypeId = __LINE__;
     m44f Basis;
 };
 
-struct render_command_draw_textured_quad {
+struct renderer_command_draw_textured_quad {
     static constexpr u32 TypeId = __LINE__;
 
     renderer_texture_handle TextureHandle;
@@ -49,13 +49,13 @@ struct render_command_draw_textured_quad {
 };
 
 
-struct render_command_draw_quad {
+struct renderer_command_draw_quad {
     static constexpr u32 TypeId = __LINE__;
     v4f Colors;
     m44f Transform;
 };
 
-struct render_command_set_design_resolution {
+struct renderer_command_set_design_resolution {
     static constexpr u32 TypeId = __LINE__;
     u32 Width;
     u32 Height;
@@ -101,7 +101,7 @@ GetRenderRegion(u32 WindowWidth,
 
 static inline void
 PushSetBasis(mailbox* Commands, m44f Basis) {
-    using data_t = render_command_set_basis;
+    using data_t = renderer_command_set_basis;
     auto* Data = Push<data_t>(Commands);
     Data->Basis = Basis;
 }
@@ -111,7 +111,7 @@ PushOrthoCamera(mailbox* Commands,
                          v3f Position,
                          rect3f Frustum)   
 {
-    using data_t = render_command_set_basis;
+    using data_t = renderer_command_set_basis;
     auto* Data = Push<data_t>(Commands);
     
     auto P  = M44fOrthographic(-1.f, 1.f,
@@ -131,7 +131,7 @@ PushOrthoCamera(mailbox* Commands,
 
 static inline void
 PushClearColor(mailbox* Commands, v4f Colors) {
-    using data_t = render_command_clear_color;
+    using data_t = renderer_command_clear_color;
     auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
 }
@@ -140,17 +140,17 @@ PushClearColor(mailbox* Commands, v4f Colors) {
 
 static inline void
 PushDrawTexturedQuad(mailbox* Commands, 
-                            v4f Colors, 
-                            m44f Transform, 
-                            renderer_texture_handle TextureHandle,
-                            quad2f TextureCoords = {
-                                0.0f, 1.0f,  // top left
-                                1.0f, 1.0f, // top right
-                                1.0f, 0.f, // bottom right
-                                0.f, 0.f, // bottom left
-                            }) 
+                     v4f Colors, 
+                     m44f Transform, 
+                     renderer_texture_handle TextureHandle,
+                     quad2f TextureCoords = {
+                         0.0f, 1.0f,  // top left
+                         1.0f, 1.0f, // top right
+                         1.0f, 0.f, // bottom right
+                         0.f, 0.f, // bottom left
+                     }) 
 {
-    using data_t = render_command_draw_textured_quad;
+    using data_t = renderer_command_draw_textured_quad;
     auto* Data = Push<data_t>(Commands);
     
     Data->Colors = Colors;
@@ -161,12 +161,12 @@ PushDrawTexturedQuad(mailbox* Commands,
 
 static inline void
 PushDrawTexturedQuad(mailbox* Commands,
-                            v4f Colors, 
-                            m44f Transform, 
-                            renderer_texture_handle TextureHandle,
-                            rect2f TextureCoords) 
+                     v4f Colors, 
+                     m44f Transform, 
+                     renderer_texture_handle TextureHandle,
+                     rect2f TextureCoords) 
 {
-    using data_t = render_command_draw_textured_quad;
+    using data_t = renderer_command_draw_textured_quad;
     auto* Data = Push<data_t>(Commands);
     
     Data->Colors = Colors;
@@ -181,7 +181,7 @@ PushDrawQuad(mailbox* Commands,
                     v4f Colors, 
                     m44f Transform) 
 {
-    using data_t = render_command_draw_quad;
+    using data_t = renderer_command_draw_quad;
     auto* Data = Push<data_t>(Commands);
     Data->Colors = Colors;
     Data->Transform = Transform;
@@ -189,9 +189,9 @@ PushDrawQuad(mailbox* Commands,
 
 static inline void 
 PushDrawLine(mailbox* Payload, 
-                    line2f Line, 
-                    f32 Thickness = 2.f,
-                    v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+             line2f Line, 
+             f32 Thickness = 2.f,
+             v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
@@ -216,50 +216,52 @@ PushDrawLine(mailbox* Payload,
 
 static inline void 
 PushDrawLineRect(mailbox* Commands, 
-                        rect2f Rect,
-                        f32 Thickness = 1.f,
-                        v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
+                 rect2f Rect,
+                 f32 Thickness = 1.f,
+                 v4f Colors = {0.f, 1.f, 0.f, 1.f}) 
 {
     //Bottom
     PushDrawLine(Commands, 
-                        { 
-                            Rect.Min.X, 
-                            Rect.Min.Y,  
-                            Rect.Max.X, 
-                            Rect.Min.Y,
-                        },  Thickness, Colors);
+                { 
+                    Rect.Min.X, 
+                    Rect.Min.Y,  
+                    Rect.Max.X, 
+                    Rect.Min.Y,
+                },  Thickness, Colors);
     // Left
     PushDrawLine(Commands, 
-                        { 
-                            Rect.Min.X,
-                            Rect.Min.Y,
-                            Rect.Min.X,
-                            Rect.Max.Y,
-                        },  Thickness, Colors);
+                { 
+                    Rect.Min.X,
+                    Rect.Min.Y,
+                    Rect.Min.X,
+                    Rect.Max.Y,
+                },  Thickness, Colors);
     
     //Top
     PushDrawLine(Commands, 
-                        { 
-                            Rect.Min.X,
-                            Rect.Max.Y,
-                            Rect.Max.X,
-                            Rect.Max.Y,
-                        }, Thickness, Colors);
+                { 
+                    Rect.Min.X,
+                    Rect.Max.Y,
+                    Rect.Max.X,
+                    Rect.Max.Y,
+                }, Thickness, Colors);
     
     //Right 
     PushDrawLine(Commands, 
-                        { 
-                            Rect.Max.X,
-                            Rect.Min.Y,
-                            Rect.Max.X,
-                            Rect.Max.Y,
-                        },  Thickness, Colors);
+                { 
+                    Rect.Max.X,
+                    Rect.Min.Y,
+                    Rect.Max.X,
+                    Rect.Max.Y,
+                },  Thickness, Colors);
 }
 
 static inline void 
-PushSetDesignResolution(mailbox* Commands, u32 Width, u32 Height)  
+PushSetDesignResolution(mailbox* Commands, 
+                        u32 Width, 
+                        u32 Height)  
 {
-    using data_t = render_command_set_design_resolution;
+    using data_t = renderer_command_set_design_resolution;
     auto* Data = Push<data_t>(Commands);
     Data->Width = Width;
     Data->Height = Height;

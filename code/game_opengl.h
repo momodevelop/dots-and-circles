@@ -687,15 +687,15 @@ Render(opengl* Opengl, mailbox* Commands)
         auto Entry = GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            case render_command_set_design_resolution::TypeId: {
-                using data_t = render_command_set_design_resolution;
+            case renderer_command_set_design_resolution::TypeId: {
+                using data_t = renderer_command_set_design_resolution;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 Opengl->RenderDimensions.W = Data->Width;
                 Opengl->RenderDimensions.H = Data->Height;
                 AlignViewport(Opengl);
             } break;
-            case render_command_set_basis::TypeId: {
-                using data_t = render_command_set_basis;
+            case renderer_command_set_basis::TypeId: {
+                using data_t = renderer_command_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 DrawInstances(Opengl, 
                               CurrentTexture, 
@@ -716,16 +716,16 @@ Render(opengl* Opengl, mailbox* Commands)
                                           Result[0].Elements);
                 
             } break;
-            case render_command_clear_color::TypeId: {
-                using data_t = render_command_clear_color;
+            case renderer_command_clear_color::TypeId: {
+                using data_t = renderer_command_clear_color;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 Opengl->glClearColor(Data->Colors.R, 
                                      Data->Colors.G, 
                                      Data->Colors.B, 
                                      Data->Colors.A);
             } break;
-            case render_command_draw_quad::TypeId: {
-                using data_t = render_command_draw_quad;
+            case renderer_command_draw_quad::TypeId: {
+                using data_t = renderer_command_draw_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
                 // If the game texture handle does not exist in the lookup table, 
@@ -767,8 +767,8 @@ Render(opengl* Opengl, mailbox* Commands)
                 ++InstancesToDrawCount;
                 ++CurrentInstanceIndex;
             } break;
-            case render_command_draw_textured_quad::TypeId: {
-                using data_t = render_command_draw_textured_quad;
+            case renderer_command_draw_textured_quad::TypeId: {
+                using data_t = renderer_command_draw_textured_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 GLuint OpenglTextureHandle = (GLuint)Data->TextureHandle.Id; 
                 if (OpenglTextureHandle == 0) {
