@@ -198,7 +198,7 @@ PushDrawLine(mailbox* Payload,
         Swap(Line.Min, Line.Max);
     }
     
-    f32 LineLength = Count(Line.Max - Line.Min);
+    f32 LineLength = Length(Line.Max - Line.Min);
     v2f LineMiddle = Midpoint(Line.Max, Line.Min);
     
     v2f LineVector = Line.Max - Line.Min;
