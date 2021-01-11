@@ -11,13 +11,11 @@
 #include "game_renderer.h"
 
 // NOTE(Momo): Global Settings
-static constexpr usize Global_PermanentMemorySize = Gigabytes(1);
-static constexpr usize Global_RenderCommandsMemorySize = Megabytes(64);
-static constexpr usize Global_TransientMemorySize = Megabytes(256);
 static constexpr u32 Global_DefaultRefreshRate = 60;
 static constexpr f32 Global_DesignWidth = 1600.f;
 static constexpr f32 Global_DesignHeight = 900.f;
 static constexpr f32 Global_DesignDepth = 200.f;
+
 
 // Input API /////////////////////////////////////////
 struct input_button {
@@ -98,8 +96,23 @@ IsHeld(input_button Button) {
 }
 
 // Platform Api ////////////////////////////////////////////////////
+struct platform_file_handle {
+    u32 Id;
+    u32 Error; // 0 is always no error!
+};
+
+
 #define PlatformLogFunc(Name) void Name(const char* Format, ...)
 typedef PlatformLogFunc(platform_log);
+
+#define PlatformOpenAssetFileFunc(Name) platform_file_handle Name(void)
+typedef PlatformOpenAssetFileFunc(platform_open_asset_file);
+
+#define PlatformCloseFileFunc(Name) void Name(platform_file_handle* Handle)
+typedef PlatformCloseFileFunc(platform_close_file);
+
+#define PlatformReadFileFunc2(Name) void Name(platform_file_handle* Handle, usize Offset, usize Size, void* Dest)
+typedef PlatformReadFileFunc2(platform_read_file2);
 
 #define PlatformGetFileSizeFunc(Name) u32 Name(const char* Path)
 typedef PlatformGetFileSizeFunc(platform_get_file_size);
@@ -107,11 +120,15 @@ typedef PlatformGetFileSizeFunc(platform_get_file_size);
 #define PlatformReadFileFunc(Name) b32 Name(void* Dest, u32 DestSize, const char* Path)
 typedef PlatformReadFileFunc(platform_read_file);
 
-#define PlatformAddTexture(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
-typedef PlatformAddTexture(platform_add_texture);
+#define PlatformLogFileErrorFunc(Name) void Name(platform_file_handle* Handle)
+typedef PlatformLogFileErrorFunc(platform_log_file_error);
 
-#define PlatformClearTextures(Name) void Name()
-typedef PlatformClearTextures(platform_clear_textures);
+#define PlatformAddTextureFunc(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
+typedef PlatformAddTextureFunc(platform_add_texture);
+
+#define PlatformClearTexturesFunc(Name) void Name()
+typedef PlatformClearTexturesFunc(platform_clear_textures);
+
 
 struct platform_api {
     platform_log* Log;
@@ -119,6 +136,10 @@ struct platform_api {
     platform_read_file* ReadFile;
     platform_add_texture* AddTexture;
     platform_clear_textures* ClearTextures;
+    platform_open_asset_file* OpenAssetFile;
+    platform_close_file* CloseFile;
+    platform_log_file_error* LogFileError;
+    platform_read_file2* ReadFile2;
 };
 
 

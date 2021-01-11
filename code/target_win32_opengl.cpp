@@ -1,9 +1,11 @@
 #include <windows.h>
 #include <ShellScalingAPI.h>
 
+#include "mm_arena.h"
 #include "mm_core.h"
 #include "mm_maths.h"
 #include "mm_string.h"
+#include "mm_list.h"
 #include "mm_mailbox.h"
 #include "game_platform.h"
 #include "game_opengl.h"
@@ -59,24 +61,27 @@ static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
 static WglFunctionPtr(wglGetExtensionsStringEXT);
 
-// Globals
-static const char* Global_GameCodeDllFileName = "game.dll";
-static const char* Global_TempGameCodeDllFileName = "temp_game.dll";
-static const char* Global_GameCodeLockFileName = "lock";
 
-b32 Global_IsRunning;
-u32 Global_PerformanceFrequency;
-char Global_ExeFullPath[MAX_PATH];
-char* Global_OnePastExeDirectory;
+struct win32_state {
+    b32 IsRunning;
+    u32 PerformanceFrequency;
+    char ExeFullPath[MAX_PATH];
+    char* OnePastExeDirectory;
 
-char Global_SourceGameCodeDllFullPath[MAX_PATH];
-char Global_GameCodeLockFullPath[MAX_PATH];
-char Global_TempGameCodeDllFullPath[MAX_PATH];        
+    opengl* Opengl;
 
-opengl Global_Opengl;
+    array<HANDLE> FileHandles;
+    list<u32> FileHandleFreeIds;
+
+    // memory
+    arena Arena;
+
+};
+
+win32_state* Global_Win32State;
 
 #if INTERNAL
-HANDLE Global_StdOut;
+    HANDLE Global_StdOut;
 #endif
 
 static inline LARGE_INTEGER
@@ -98,11 +103,34 @@ Height(RECT Value) {
     return Value.bottom - Value.top;
 }
 
+
+
+
+static inline void*
+Win32AllocateMemory(usize MemorySize) {
+    return VirtualAllocEx(GetCurrentProcess(),
+                          0, 
+                          MemorySize,
+                          MEM_RESERVE | MEM_COMMIT, 
+                          PAGE_READWRITE);
+}
+
+static inline void
+Win32FreeMemory(void* Memory) {
+    VirtualFreeEx(GetCurrentProcess(), 
+                  Memory,    
+                  0, 
+                  MEM_RELEASE); 
+}
 // TODO: Shift this into win32 state?
 #if INTERNAL
 static inline void
 Win32WriteConsole(const char* Message) {
-    WriteConsoleA(Global_StdOut, Message, SiStrLen(Message), 0, NULL);
+    WriteConsoleA(Global_StdOut,
+                  Message, 
+                  SiStrLen(Message), 
+                  0, 
+                  NULL);
 }
 #endif
 
@@ -123,7 +151,6 @@ PlatformLogFunc(Win32Log) {
     va_end(VaList);
 
 }
-#define Win32RuntimeAssert(Cond, Msg) if(!(Cond)) { Win32Log(Msg); ExitProcess(1); }
 
 static inline LARGE_INTEGER
 Win32GetCurrentCounter(void) {
@@ -136,93 +163,14 @@ static inline f32
 Win32GetSecondsElapsed(LARGE_INTEGER Start, 
                        LARGE_INTEGER End) 
 {
-    return (f32(End.QuadPart - Start.QuadPart)) / Global_PerformanceFrequency; 
+    return (f32(End.QuadPart - Start.QuadPart)) / 
+            Global_Win32State->PerformanceFrequency; 
 }
-
-
-static inline
-PlatformAddTexture(Win32AddTexture) {
-    return AddTexture(&Global_Opengl, Width, Height, Pixels);
-}
-
-static inline 
-PlatformClearTextures(Win32ClearTextures) {
-    return ClearTextures(&Global_Opengl);
-}
-
-
-static inline
-PlatformReadFileFunc(Win32ReadFile) {
-    HANDLE FileHandle = CreateFileA(Path, 
-                                    GENERIC_READ, 
-                                    FILE_SHARE_READ,
-                                    0,
-                                    OPEN_EXISTING,
-                                    0,
-                                    0);
-    Defer { CloseHandle(FileHandle); };
-
-    if(FileHandle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32ReadFile] Cannot open file: %s\n", Path);
-        return false;
-    } else {
-        LARGE_INTEGER FileSize;
-        if (GetFileSizeEx(FileHandle, &FileSize)) {
-            u32 FileSize32 = SafeCastU64ToU32(FileSize.QuadPart);
-            if (FileSize.QuadPart > DestSize) {
-                Win32Log("[Win32ReadFile] DestSize too smol for file: %s!\n", Path); 
-                return false;
-            }
-
-            DWORD BytesRead;
-            if(ReadFile(FileHandle, Dest, FileSize32, &BytesRead, 0) &&
-               FileSize.QuadPart == BytesRead) {
-                return true;
-            }
-            else {
-                Win32Log("[Win32ReadFile] Cannot read file: %s!\n", Path);
-                return false;
-            }
-
-        }
-        else {
-            Win32Log("[Win32ReadFile] Cannot get file size: %s!\n", Path);
-            return false;
-        }
-    }    
-}
-
-static inline
-PlatformGetFileSizeFunc(Win32GetFileSize) 
-{
-    HANDLE FileHandle = CreateFileA(Path, 
-                                    GENERIC_READ, 
-                                    FILE_SHARE_READ,
-                                    0,
-                                    OPEN_EXISTING,
-                                    0,
-                                    0);
-    Defer { CloseHandle(FileHandle); };
-
-    if(FileHandle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32GetFileSize] Cannot open file: %s\n", Path);
-        return 0;
-    } else {
-        LARGE_INTEGER FileSize;
-        if (!GetFileSizeEx(FileHandle, &FileSize)) {
-            Win32Log("[Win32GetFileSize] Problems getting file size: %s\n", Path);
-            return 0;
-        }
-
-        return (u32)FileSize.QuadPart;
-    }
-}
-
 
 static inline void
 Win32BuildExePathFilename(char* Dest, const char* Filename) {
-    for(const char *Itr = Global_ExeFullPath; 
-        Itr != Global_OnePastExeDirectory; 
+    for(const char *Itr = Global_Win32State->ExeFullPath; 
+        Itr != Global_Win32State->OnePastExeDirectory; 
         ++Itr, ++Dest) 
     {
         (*Dest) = (*Itr);
@@ -244,9 +192,9 @@ struct win32_game_code {
     FILETIME LastWriteTime;
     b32 IsValid;
 
-    const char* SrcFileName;
-    const char* TempFileName;
-    const char* LockFileName;
+    char SrcFileName[MAX_PATH];
+    char TempFileName[MAX_PATH];
+    char LockFileName[MAX_PATH];        
 };
 
 
@@ -269,9 +217,14 @@ Win32GameCode(const char* SrcFileName,
     Assert(SrcFileName && TempFileName && LockFileName);
 
     win32_game_code Ret = {};
-    Ret.SrcFileName = SrcFileName;
-    Ret.TempFileName = TempFileName;
-    Ret.LockFileName = LockFileName;
+    Win32BuildExePathFilename(Ret.SrcFileName, SrcFileName);
+    Win32BuildExePathFilename(Ret.TempFileName, TempFileName);
+    Win32BuildExePathFilename(Ret.LockFileName, LockFileName);
+
+    Win32Log("Src Game Code DLL: %s\n", Ret.SrcFileName);
+    Win32Log("Tmp Game Code DLL: %s\n", Ret.TempFileName);
+    Win32Log("Game Code Lock: %s\n", Ret.LockFileName);
+    
     return Ret;
 }
 
@@ -309,7 +262,7 @@ Win32ReloadGameCodeIfOutdated(win32_game_code* Code)
 {
     // Check last modified date
     LARGE_INTEGER CurrentLastWriteTime = 
-        FiletimeToLargeInt(Win32GetLastWriteTime(Global_GameCodeDllFileName)); 
+        FiletimeToLargeInt(Win32GetLastWriteTime(Code->SrcFileName)); 
     LARGE_INTEGER GameCodeLastWriteTime =
         FiletimeToLargeInt(Code->LastWriteTime);
 
@@ -317,17 +270,6 @@ Win32ReloadGameCodeIfOutdated(win32_game_code* Code)
         Win32UnloadGameCode(Code);
         Win32LoadGameCode(Code);
     }
-}
-
-static inline platform_api 
-Win32LoadPlatformApi() {
-    platform_api Ret = {};
-    Ret.Log = Win32Log;
-    Ret.ReadFile = Win32ReadFile;
-    Ret.GetFileSize = Win32GetFileSize;
-    Ret.ClearTextures = Win32ClearTextures;
-    Ret.AddTexture = Win32AddTexture;
-    return Ret;
 }
 
 
@@ -416,20 +358,25 @@ Win32OpenglLoadWglExtensions() {
 
         if (wglMakeCurrent(Dc, OpenglContext)) {
 
-#define Win32SetWglFunction(Name) Name = (WglFunction(Name)*)wglGetProcAddress(#Name); if (!Name) { Win32Log("[OpenGL] Cannot load: " #Name " \n"); }
+#define Win32SetWglFunction(Name) \
+            Name = (WglFunction(Name)*)wglGetProcAddress(#Name); \
+            if (!Name) { \
+                Win32Log("[OpenGL] Cannot load: " #Name " \n"); \
+                return false; \
+            }
 
             Win32SetWglFunction(wglChoosePixelFormatARB);
             Win32SetWglFunction(wglCreateContextAttribsARB);
             Win32SetWglFunction(wglSwapIntervalEXT);
 
             wglMakeCurrent(0, 0);
+            return true;
         }
         else {
             Win32Log("[OpenGL] Cannot begin to load wgl extensions\n");
             return false;
         }
 
-        return true;
     }
     else {
         Win32Log("[OpenGL] Cannot register class to load wgl extensions\n");
@@ -467,16 +414,136 @@ Win32TryGetOpenglFunction(const char* Name, HMODULE FallbackModule)
     return p;
 
 }
-// TODO: Maybe return the context?
-static inline b32
-Win32OpenglInit(HDC DeviceContext, 
-                u32 WindowWidth, 
-                u32 WindowHeight) 
+
+#if INTERNAL
+static inline
+OpenglDebugCallbackFunc(Win32OpenglDebugCallback) {
+    // Ignore NOTIFICATION severity
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) 
+        return;
+    
+    const char* _source;
+    const char* _type;
+    const char* _severity;
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:
+        _source = "API";
+        break;
+        
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        _source = "WINDOW SYSTEM";
+        break;
+        
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        _source = "SHADER COMPILER";
+        break;
+        
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+        _source = "THIRD PARTY";
+        break;
+        
+        case GL_DEBUG_SOURCE_APPLICATION:
+        _source = "APPLICATION";
+        break;
+        
+        case GL_DEBUG_SOURCE_OTHER:
+        _source = "UNKNOWN";
+        break;
+        
+        default:
+        _source = "UNKNOWN";
+        break;
+    }
+    
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+        _type = "ERROR";
+        break;
+        
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        _type = "DEPRECATED BEHAVIOR";
+        break;
+        
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        _type = "UDEFINED BEHAVIOR";
+        break;
+        
+        case GL_DEBUG_TYPE_PORTABILITY:
+        _type = "PORTABILITY";
+        break;
+
+        case GL_DEBUG_TYPE_PERFORMANCE:
+        _type = "PERFORMANCE";
+        break;
+        
+        case GL_DEBUG_TYPE_OTHER:
+        _type = "OTHER";
+        break;
+        
+        case GL_DEBUG_TYPE_MARKER:
+        _type = "MARKER";
+        break;
+        
+        default:
+        _type = "UNKNOWN";
+        break;
+    }
+    
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_HIGH:
+        _severity = "HIGH";
+        break;
+        
+        case GL_DEBUG_SEVERITY_MEDIUM:
+        _severity = "MEDIUM";
+        break;
+        
+        case GL_DEBUG_SEVERITY_LOW:
+        _severity = "LOW";
+        break;
+
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+        _severity = "NOTIFICATION";
+        break;
+        
+        default:
+        _severity = "UNKNOWN";
+        break;
+    }
+    
+    Win32Log("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
+              id, _type, _severity, _source, msg);
+    
+};
+#endif
+
+static inline void
+Win32FreeOpengl(opengl* Opengl) {
+    Win32FreeMemory(Opengl);
+}
+
+static inline opengl*
+Win32AllocateOpengl(HDC DeviceContext, 
+                    v2u WindowDimensions) 
 {
+    // This is kinda what we wanna do if we ever want Renderer to be its own DLL...
+    usize RendererMemorySize = sizeof(opengl) + Kilobytes(128); 
+    void* RendererMemory = Win32AllocateMemory(RendererMemorySize);
+    opengl* Opengl = BootstrapStruct(opengl,
+                                     RendererMemory, 
+                                     RendererMemorySize, 
+                                     Header.Arena);
+
+    if (!Opengl) {
+        Win32Log("Cannot allocate renderer memory"); 
+        return nullptr;
+    }
 
     if (!Win32OpenglLoadWglExtensions()) {
-        return false;
+        Win32FreeOpengl(Opengl);
+        return nullptr;
     }
+    
     Win32OpenglSetPixelFormat(DeviceContext);
 
 
@@ -493,24 +560,26 @@ Win32OpenglInit(HDC DeviceContext,
     };
     HGLRC OpenglContext = 0;
     
-    // Mordern
-    if(wglCreateContextAttribsARB) {
-        OpenglContext = 
-            wglCreateContextAttribsARB(DeviceContext, 
-                                       0, 
-                                       Win32OpenglAttribs); 
-    }
+    // Modern
+    OpenglContext = wglCreateContextAttribsARB(DeviceContext, 
+                                               0, 
+                                               Win32OpenglAttribs); 
 
-    // Not modernw
-    if (!OpenglContext) {
-        OpenglContext = wglCreateContext(DeviceContext);
-    }
+    // Not modern
+    //if (!OpenglContext) {
+    //    OpenglContext = wglCreateContext(DeviceContext);
+    //}
 
     if(wglMakeCurrent(DeviceContext, OpenglContext)) {
         HMODULE Module = LoadLibraryA("opengl32.dll");
         // TODO: Log functions that are not loaded
-#define Win32SetOpenglFunction(Name) Global_Opengl.Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
-        if (!Global_Opengl.Name) { Win32Log("[Opengl] Cannot load " #Name " \n"); return false; }
+#define Win32SetOpenglFunction(Name) \
+        Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
+        if (!Opengl->Name) { \
+            Win32Log("[Opengl] Cannot load " #Name " \n"); \
+            Win32FreeOpengl(Opengl); \
+            return nullptr; \
+        }
 
         Win32SetOpenglFunction(glEnable);
         Win32SetOpenglFunction(glDisable); 
@@ -549,10 +618,21 @@ Win32OpenglInit(HDC DeviceContext,
         Win32SetOpenglFunction(glNamedBufferSubData);
         Win32SetOpenglFunction(glUseProgram);
         Win32SetOpenglFunction(glDeleteTextures);
+        Win32SetOpenglFunction(glDebugMessageCallbackARB);
     }
-    Init(&Global_Opengl, WindowWidth, WindowHeight, 128);
+    
+    Init(Opengl, 
+         WindowDimensions, 
+         128,
+         8);
 
-    return true;
+#if INTERNAL
+    Opengl->glEnable(GL_DEBUG_OUTPUT);
+    Opengl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    Opengl->glDebugMessageCallbackARB(Win32OpenglDebugCallback, nullptr);
+#endif
+
+    return Opengl;
 }
 
 static inline v2u
@@ -585,22 +665,6 @@ Win32GetClientDimensions(HWND Window) {
 
 }
 
-static inline void*
-Win32AllocateMemory(usize MemorySize) {
-    return VirtualAllocEx(GetCurrentProcess(),
-                          0, 
-                          MemorySize,
-                          MEM_RESERVE | MEM_COMMIT, 
-                          PAGE_READWRITE);
-}
-
-static inline void
-Win32FreeMemory(void* Memory) {
-    VirtualFreeEx(GetCurrentProcess(), 
-                  Memory,    
-                  0, 
-                  MEM_RELEASE); 
-}
 static inline void
 Win32ProcessMessages(HWND Window, 
                      input* Input)
@@ -609,7 +673,7 @@ Win32ProcessMessages(HWND Window,
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
         switch(Msg.message) {
             case WM_CLOSE: {
-                Global_IsRunning = false;
+                Global_Win32State->IsRunning = false;
             } break;
             case WM_CHAR: {
                 char C = (char)Msg.wParam;
@@ -669,18 +733,19 @@ Win32WindowCallback(HWND Window,
     LRESULT Result = 0;
     switch(Message) {
         case WM_CLOSE: {
-            Global_IsRunning = false;
+            Global_Win32State->IsRunning = false;
         } break;
         case WM_DESTROY: {
-            Global_IsRunning = false;
+            Global_Win32State->IsRunning = false;
         } break;
         case WM_WINDOWPOSCHANGED: {
-            if(Global_Opengl.Header.IsInitialized) {
+            if(Global_Win32State->Opengl && 
+               Global_Win32State->Opengl->Header.IsInitialized) {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);
                 //Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
                 //Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
-                Resize(&Global_Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
+                Resize(Global_Win32State->Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
 
@@ -693,41 +758,202 @@ Win32WindowCallback(HWND Window,
 }
 
 static inline void
-Win32InitGlobals() {
+Win32Init(win32_state* State) {
     // Initialize performance frequency
     {
         LARGE_INTEGER PerfCountFreq;
         QueryPerformanceFrequency(&PerfCountFreq);
-        Global_PerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
-        Global_IsRunning = true;
+        State->PerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
+        State->IsRunning = true;
     }
 
     // Initialize paths
     {
         GetModuleFileNameA(0, 
-                           Global_ExeFullPath, 
-                           sizeof(Global_ExeFullPath));
+                           State->ExeFullPath, 
+                           sizeof(State->ExeFullPath));
 
-        Global_OnePastExeDirectory = Global_ExeFullPath;
-        for( char* Itr = Global_ExeFullPath; *Itr; ++Itr) {
+        State->OnePastExeDirectory = Global_Win32State->ExeFullPath;
+        for( char* Itr = Global_Win32State->ExeFullPath; *Itr; ++Itr) {
             if (*Itr == '\\') {
-                Global_OnePastExeDirectory = Itr + 1;
+                State->OnePastExeDirectory = Itr + 1;
             }
         }
 
-        Win32BuildExePathFilename(Global_SourceGameCodeDllFullPath, 
-                                  Global_GameCodeDllFileName);
-        Win32BuildExePathFilename(Global_TempGameCodeDllFullPath, 
-                                  Global_TempGameCodeDllFileName);
-        Win32BuildExePathFilename(Global_GameCodeLockFullPath, 
-                                  Global_GameCodeLockFileName);
+    }
 
-        Win32Log("Src Game Code DLL: %s\n", Global_SourceGameCodeDllFullPath);
-        Win32Log("Tmp Game Code DLL: %s\n", Global_TempGameCodeDllFullPath);
-        Win32Log("Game Code Lock: %s\n", Global_GameCodeLockFullPath);
+    // Initialize file handle store
+    {
+        const u32 FileHandleCap = 8;
+        State->FileHandles = Array<HANDLE>(&State->Arena, FileHandleCap); 
+        State->FileHandleFreeIds = List<u32>(&State->Arena, FileHandleCap);
+        for (u32 I = 0; I < FileHandleCap; ++I) {
+            Push(&State->FileHandleFreeIds, I);
+        }
     }
 }
 
+// Platform Functions ////////////////////////////////////////////////////
+enum platform_file_error {
+    PlatformFileError_None,
+    PlatformFileError_NotEnoughHandlers,
+    PlatformFileError_CannotOpenFile,   
+    PlatformFileError_Closed,
+};
+
+static inline 
+PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
+    platform_file_handle Ret = {}; 
+    const char* Path = "yuu";
+    list<u32>* FreeIds = &Global_Win32State->FileHandleFreeIds;
+    
+    // Check if there are free handlers to go around
+    if (FreeIds->Count == 0) {
+        Ret.Error = PlatformFileError_NotEnoughHandlers;
+        return Ret;
+    }    
+
+    HANDLE Win32Handle = CreateFileA(Path, 
+                                    GENERIC_READ, 
+                                    FILE_SHARE_READ,
+                                    0,
+                                    OPEN_EXISTING,
+                                    0,
+                                    0);
+    
+     
+    if(Win32Handle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32ReadFile] Cannot open file: %s\n", Path);
+        Ret.Error = PlatformFileError_CannotOpenFile;
+        return Ret;
+    } 
+
+    Ret.Id = Back(FreeIds);
+    Pop(FreeIds);
+    Global_Win32State->FileHandles[Ret.Id] = Win32Handle; 
+
+    return Ret; 
+}
+
+
+static inline 
+PlatformLogFileErrorFunc(Win32LogFileError) {
+    switch(Handle->Error) {
+        case PlatformFileError_None: {
+            Win32Log("[File] There is no file error\n");
+        } break;
+        case PlatformFileError_NotEnoughHandlers: {
+            Win32Log("[File] There is not enough handlers\n");
+        } break;
+        case PlatformFileError_CannotOpenFile:{
+            Win32Log("[File] Cannot open file\n");
+        } break;
+        case PlatformFileError_Closed:{
+            Win32Log("[File] File is already closed");
+        } break;
+    }
+
+}
+
+static inline
+PlatformCloseFileFunc(Win32CloseFile) {
+    HANDLE Win32Handle = Global_Win32State->FileHandles[Handle->Id];
+    Push(&Global_Win32State->FileHandleFreeIds, Handle->Id);
+    if (Win32Handle != INVALID_HANDLE_VALUE) {
+        CloseHandle(Win32Handle); 
+    }
+}
+static inline
+PlatformAddTextureFunc(Win32AddTexture) {
+    return AddTexture(Global_Win32State->Opengl, Width, Height, Pixels);
+}
+
+static inline 
+PlatformClearTexturesFunc(Win32ClearTextures) {
+    return ClearTextures(Global_Win32State->Opengl);
+}
+
+
+static inline
+PlatformReadFileFunc(Win32ReadFile) {
+    HANDLE FileHandle = CreateFileA(Path, 
+                                    GENERIC_READ, 
+                                    FILE_SHARE_READ,
+                                    0,
+                                    OPEN_EXISTING,
+                                    0,
+                                    0);
+    Defer { CloseHandle(FileHandle); };
+
+    if(FileHandle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32ReadFile] Cannot open file: %s\n", Path);
+        return false;
+    } else {
+        LARGE_INTEGER FileSize;
+        if (GetFileSizeEx(FileHandle, &FileSize)) {
+            u32 FileSize32 = SafeCastU64ToU32(FileSize.QuadPart);
+            if (FileSize.QuadPart > DestSize) {
+                Win32Log("[Win32ReadFile] DestSize too smol for file: %s!\n", Path); 
+                return false;
+            }
+
+            DWORD BytesRead;
+            if(ReadFile(FileHandle, Dest, FileSize32, &BytesRead, 0) &&
+               FileSize.QuadPart == BytesRead) {
+                return true;
+            }
+            else {
+                Win32Log("[Win32ReadFile] Cannot read file: %s!\n", Path);
+                return false;
+            }
+
+        }
+        else {
+            Win32Log("[Win32ReadFile] Cannot get file size: %s!\n", Path);
+            return false;
+        }
+    }    
+}
+
+static inline
+PlatformGetFileSizeFunc(Win32GetFileSize) 
+{
+    HANDLE FileHandle = CreateFileA(Path, 
+                                    GENERIC_READ, 
+                                    FILE_SHARE_READ,
+                                    0,
+                                    OPEN_EXISTING,
+                                    0,
+                                    0);
+    Defer { CloseHandle(FileHandle); };
+
+    if(FileHandle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32GetFileSize] Cannot open file: %s\n", Path);
+        return 0;
+    } else {
+        LARGE_INTEGER FileSize;
+        if (!GetFileSizeEx(FileHandle, &FileSize)) {
+            Win32Log("[Win32GetFileSize] Problems getting file size: %s\n", Path);
+            return 0;
+        }
+
+        return (u32)FileSize.QuadPart;
+    }
+}
+
+
+static inline platform_api 
+Win32LoadPlatformApi() {
+    platform_api Ret = {};
+    Ret.Log = Win32Log;
+    Ret.ReadFile = Win32ReadFile;
+    Ret.GetFileSize = Win32GetFileSize;
+    Ret.ClearTextures = Win32ClearTextures;
+    Ret.AddTexture = Win32AddTexture;
+    Ret.OpenAssetFile = Win32OpenAssetFile;
+    Ret.CloseFile = Win32CloseFile;
+    return Ret;
+}
 
 int CALLBACK
 WinMain(HINSTANCE Instance,
@@ -735,24 +961,34 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    Win32InitGlobals();
+#if INTERNAL
+    AllocConsole();    
+    Defer { FreeConsole(); };
+    Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif 
+    usize PlatformMemorySize = Kilobytes(256);
+    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
+    if (!PlatformMemory) {
+        Win32Log("Cannot allocate platform memory\n");
+        return 1;
+    }
+    Defer { Win32FreeMemory(PlatformMemory); };
+
+    Global_Win32State = BootstrapStruct(win32_state,
+                                        PlatformMemory,
+                                        PlatformMemorySize,
+                                        Arena);
+
+    Win32Init(Global_Win32State);
+    
     input GameInput = {};
     {
-        // TODO: We should really use an arena for this but I'm lazy af.
         char _Characters[10];
         Init(&GameInput, _Characters, 10);
     }
 
-#if INTERNAL
-    // Allocate game_console and stdout
-    AllocConsole();    
-    Defer { FreeConsole(); };
-    Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
     platform_api PlatformApi = Win32LoadPlatformApi();
-#endif 
-
-
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
  
     WNDCLASSA WindowClass = {};
@@ -762,8 +998,10 @@ WinMain(HINSTANCE Instance,
     WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
     WindowClass.lpszClassName = "DnCWindowClass";
 
-    Win32RuntimeAssert(RegisterClassA(&WindowClass), 
-                      "Failed to register class");
+    if(!RegisterClassA(&WindowClass)) {
+        Win32Log("Failed to register class");
+        return 1;
+    }
 
     Win32Log("Window class registered\n");
     HWND Window;
@@ -798,7 +1036,10 @@ WinMain(HINSTANCE Instance,
                     0);
     }
 
-    Win32RuntimeAssert(Window, "Window failed to initialize\n");
+    if (!Window) {
+        Win32Log("Window failed to intialize\n");
+        return 1;
+    }
 
     Win32Log("Window Initialized\n");
     // Log the dimensions of window and client area
@@ -820,47 +1061,51 @@ WinMain(HINSTANCE Instance,
     // Load the game code DLL
     // TODO: Make game code global?
     win32_game_code GameCode = 
-        Win32GameCode(
-            Global_SourceGameCodeDllFullPath,
-            Global_TempGameCodeDllFullPath,
-            Global_GameCodeLockFullPath);
+        Win32GameCode("game.dll", "temp_game.dll", "lock");
 
-    // Initialize memory
+    // Initialize game memory
     game_memory GameMemory = {};
-    GameMemory.PermanentMemorySize = Global_PermanentMemorySize;
+    GameMemory.PermanentMemorySize = Megabytes(256);
     GameMemory.PermanentMemory = Win32AllocateMemory(GameMemory.PermanentMemorySize); 
-
-    Win32RuntimeAssert(GameMemory.PermanentMemory, 
-                       "Cannot allocate program memory\n");
+    if (!GameMemory.PermanentMemory) {
+        Win32Log("Cannot allocate game permanent memory\n");
+        return 1;
+    }
     Defer { Win32FreeMemory(GameMemory.PermanentMemory); };
 
-    GameMemory.TransientMemorySize = Global_TransientMemorySize;
+    GameMemory.TransientMemorySize = Gigabytes(1);
     GameMemory.TransientMemory = Win32AllocateMemory(GameMemory.TransientMemorySize);
-    Win32RuntimeAssert(GameMemory.TransientMemory, 
-                       "Cannot allocate program memory\n");
+    if (!GameMemory.TransientMemory) {
+        Win32Log("Cannot allocate game transient memory\n");
+        return 1;
+    }
     Defer { Win32FreeMemory(GameMemory.TransientMemory); };
     
     // Intialize Render commands
-    void* RenderCommandsMemory = Win32AllocateMemory(Global_RenderCommandsMemorySize); 
+    usize RenderCommandsMemorySize = Megabytes(64);
+    void* RenderCommandsMemory = Win32AllocateMemory(RenderCommandsMemorySize); 
+    if (!RenderCommandsMemory) {
+        Win32Log("Cannot allocate render commands memory\n");
+        return 1;
+    }
     mailbox RenderCommands = Mailbox(RenderCommandsMemory,
-                                     Global_RenderCommandsMemorySize);
-    
+                                     RenderCommandsMemorySize);
  
     // Initialize OpenGL
-    {
-        v2u Dimensions = Win32GetClientDimensions(Window);
-        b32 Success = Win32OpenglInit(DeviceContext, 
-                                      Dimensions.W, 
-                                      Dimensions.H);
-        Win32RuntimeAssert(Success, "Cannot initialize Opengl");
+    Global_Win32State->Opengl = Win32AllocateOpengl(DeviceContext, 
+                                        Win32GetClientDimensions(Window));
+    if (!Global_Win32State->Opengl) {
+        Win32Log("Cannot initialize opengl\n");
+        return 1;
     }
+    Defer { Win32FreeOpengl(Global_Win32State->Opengl); };
 
     // Set sleep granularity to 1ms
     b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
 
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
-    while (Global_IsRunning) {
+    while (Global_Win32State->IsRunning) {
         Win32ReloadGameCodeIfOutdated(&GameCode);
 
         Update(&GameInput);
@@ -868,14 +1113,15 @@ WinMain(HINSTANCE Instance,
                              &GameInput);
 
         if (GameCode.GameUpdate) {
-            GameCode.GameUpdate(&GameMemory,
+            Global_Win32State->IsRunning = 
+                GameCode.GameUpdate(&GameMemory,
                                 &PlatformApi,
                                 &RenderCommands,
                                 &GameInput,
                                 TargetSecsPerFrame);
         }
 
-        Render(&Global_Opengl, &RenderCommands);
+        Render(Global_Win32State->Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
         f32 SecsElapsed = 
@@ -884,8 +1130,9 @@ WinMain(HINSTANCE Instance,
         if (TargetSecsPerFrame > SecsElapsed) {
             if (SleepIsGranular) {
                 DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecsElapsed));
-                if (MsToSleep > 0) {
-                    Sleep(MsToSleep);
+                // We cut the sleep some slack, so we sleep 1 sec less.
+                if (MsToSleep > 1) {
+                    Sleep(MsToSleep - 1);
                 }
             }
             while(TargetSecsPerFrame > 
