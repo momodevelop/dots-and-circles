@@ -1,6 +1,7 @@
 #ifndef __RENDERER_OPENGL__
 #define __RENDERER_OPENGL__
 
+#include "mm_list.h"
 #include "game_renderer.h"
 
 // Opengl typedefs
@@ -29,7 +30,23 @@
 #define GL_NEAREST                      0x2600
 #define GL_TEXTURE_MIN_FILTER           0x2801
 #define GL_TEXTURE_MAG_FILTER           0x2800
-
+#define GL_DEBUG_SOURCE_API 0x8246
+#define GL_DEBUG_SOURCE_WINDOW_SYSTEM 0x8247
+#define GL_DEBUG_SOURCE_SHADER_COMPILER 0x8248
+#define GL_DEBUG_SOURCE_THIRD_PARTY 0x8249
+#define GL_DEBUG_SOURCE_APPLICATION 0x824A
+#define GL_DEBUG_SOURCE_OTHER 0x824B
+#define GL_DEBUG_SEVERITY_HIGH 0x9146
+#define GL_DEBUG_SEVERITY_MEDIUM 0x9147
+#define GL_DEBUG_SEVERITY_LOW 0x9148
+#define GL_DEBUG_SEVERITY_NOTIFICATION 0x826B
+#define GL_DEBUG_TYPE_ERROR 0x824C
+#define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR 0x824D
+#define GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR 0x824E
+#define GL_DEBUG_TYPE_PORTABILITY 0x824F
+#define GL_DEBUG_TYPE_PERFORMANCE 0x8250
+#define GL_DEBUG_TYPE_OTHER 0x8251
+#define GL_DEBUG_TYPE_MARKER 0x8268
 
 typedef i32  GLenum;
 typedef i32  GLint; 
@@ -45,6 +62,8 @@ typedef f32  GLfloat;
 
 #define OpenglFunction(name) opengl_func_##name
 #define OpenglFunctionPtr(name) OpenglFunction(name) *name
+#define OpenglDebugCallbackFunc(Name) void Name(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *msg,const void *userParam)
+typedef OpenglDebugCallbackFunc(GLDEBUGPROC);
 
 typedef void    OpenglFunction(glEnable)(GLenum cap);
 typedef void    OpenglFunction(glDisable)(GLenum cap);
@@ -143,7 +162,8 @@ typedef void    OpenglFunction(glProgramUniformMatrix4fv)(GLuint program,
 typedef void    OpenglFunction(glUseProgram)(GLuint program);
 typedef void    OpenglFunction(glDeleteTextures)(GLsizei n, 
                                                  const GLuint* textures);
-
+typedef void    OpenglFunction(glDebugMessageCallbackARB)(GLDEBUGPROC *callback, 
+                                                          const void *userParam);
 
 // Stuff to work with game
 constexpr static inline f32 QuadModel[] = {
@@ -268,6 +288,7 @@ struct opengl {
     OpenglFunctionPtr(glNamedBufferSubData);
     OpenglFunctionPtr(glUseProgram);
     OpenglFunctionPtr(glDeleteTextures);
+    OpenglFunctionPtr(glDebugMessageCallbackARB);
 
 
     GLuint Buffers[OpenglVbo_Max]; 
@@ -282,9 +303,7 @@ struct opengl {
     
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
-    // TODO(Momo): Make this dynamic. Renderer needs its own arena. 
-    GLuint Textures[255];
-    GLsizei TexturesCount;
+    list<GLuint> Textures;
     
     v2u WindowDimensions;
     v2u RenderDimensions;
@@ -330,15 +349,13 @@ Resize(opengl* Opengl,
 
 static inline b32
 Init(opengl* Opengl,
-     u32 WindowWidth, 
-     u32 WindowHeight, 
-     u32 MaxEntities) 
+     v2u WindowDimensions,
+     u32 MaxEntities,
+     u32 MaxTextures) 
 {
     Opengl->MaxEntities = MaxEntities;
-    Opengl->RenderDimensions.W = WindowWidth;
-    Opengl->RenderDimensions.H = WindowHeight;
-    Opengl->WindowDimensions.W = WindowWidth;
-    Opengl->WindowDimensions.H = WindowHeight;
+    Opengl->RenderDimensions = WindowDimensions;
+    Opengl->WindowDimensions = WindowDimensions;
    
     Opengl->glEnable(GL_DEPTH_TEST);
     Opengl->glEnable(GL_SCISSOR_TEST);
@@ -638,21 +655,21 @@ AddTexture(opengl* Opengl,
            void* Pixels) 
 {
     // TODO: remove hardcoded 255
-    Assert(Opengl->TexturesCount < 255);
     renderer_texture_handle Ret = {};
-    GLuint* Entry = Opengl->Textures + Opengl->TexturesCount++;
+
+    GLuint Entry;
 
     Opengl->glCreateTextures(GL_TEXTURE_2D, 
                              1, 
-                             Entry);
+                             &Entry);
 
-    Opengl->glTextureStorage2D((*Entry), 
-                                1, 
-                                GL_RGBA8, 
-                                Width, 
-                                Height);
+    Opengl->glTextureStorage2D(Entry, 
+                               1, 
+                               GL_RGBA8, 
+                               Width, 
+                               Height);
     
-    Opengl->glTextureSubImage2D((*Entry), 
+    Opengl->glTextureSubImage2D(Entry, 
                                 0, 
                                 0, 
                                 0, 
@@ -661,14 +678,17 @@ AddTexture(opengl* Opengl,
                                 GL_RGBA, 
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
-    Ret.Id = (u32)(*Entry); 
+
+    Ret.Id = Entry;
+    Push(&Opengl->Textures, Entry);
     return Ret;
 }
 
 static inline void
 ClearTextures(opengl* Opengl) {
-    Opengl->glDeleteTextures(Opengl->TexturesCount, Opengl->Textures);
-    Opengl->TexturesCount = 0;
+    Opengl->glDeleteTextures((GLsizei)Opengl->Textures.Count, 
+                             Opengl->Textures.Elements);
+    Clear(&Opengl->Textures);
 }
 
 

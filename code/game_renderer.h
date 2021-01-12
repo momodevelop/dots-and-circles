@@ -23,6 +23,7 @@ Ground rules about this renderer.
 // "Inherited" by all renderers
 struct renderer {
     b32 IsInitialized;
+    arena Arena;
 };
 
 struct renderer_texture_handle {

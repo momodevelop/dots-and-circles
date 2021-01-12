@@ -81,6 +81,20 @@ Pop(list<type>* List) {
 }
 
 template<typename type>
+static inline type&
+Front(list<type>* List) {
+    Assert(List->Count > 0);
+    return List->Elements[0];
+}
+
+template<typename type>
+static inline type&
+Back(list<type>* List) {
+    Assert(List->Count > 0);
+    return List->Elements[List->Count-1];
+}
+
+template<typename type>
 static inline void
 Remove(list<type>* List, usize Index) {
     Assert(Index < List->Count);

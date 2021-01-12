@@ -420,8 +420,7 @@ static inline
 OpenglDebugCallbackFunc(Win32OpenglDebugCallback) {
     // Ignore NOTIFICATION severity
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) 
-        return;
-    
+        return;    
     const char* _source;
     const char* _type;
     const char* _severity;
@@ -455,6 +454,7 @@ OpenglDebugCallbackFunc(Win32OpenglDebugCallback) {
         break;
     }
     
+
     switch (type) {
         case GL_DEBUG_TYPE_ERROR:
         _type = "ERROR";
@@ -620,7 +620,6 @@ Win32AllocateOpengl(HDC DeviceContext,
         Win32SetOpenglFunction(glDeleteTextures);
         Win32SetOpenglFunction(glDebugMessageCallbackARB);
     }
-    
     Init(Opengl, 
          WindowDimensions, 
          128,
