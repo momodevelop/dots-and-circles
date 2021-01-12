@@ -15,7 +15,7 @@ struct mailbox {
     u8* DataMemoryAt;
     u8* EntryMemoryStart;
     u8* EntryMemoryAt;   
-    u32 MemorySize;
+    usize MemorySize;
     u32 EntryCount;
 };
 
@@ -34,7 +34,7 @@ Clear(mailbox* Mailbox) {
 }
 
 static inline mailbox
-Mailbox(void* Memory, u32 MemorySize) {
+Mailbox(void* Memory, usize MemorySize) {
     mailbox Ret = {};
     Ret.Memory = (u8*)Memory;
     Ret.MemorySize = MemorySize;

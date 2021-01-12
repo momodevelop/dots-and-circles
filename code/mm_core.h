@@ -41,7 +41,7 @@ using iptr = ptrdiff_t;
 #define Unmask(flag, mask) (flag & ~mask)
 #define IsMasked(flag, mask) ((flag & mask) > 0)
 #define Lerp(start, end, fraction) ((start) + ((end) - (start))*(fraction)) 
-#define OffsetOf(type, Member) (usize)&(((type *)0)->Member)
+#define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
 #define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
 #define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 

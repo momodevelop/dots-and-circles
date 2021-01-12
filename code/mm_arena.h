@@ -16,13 +16,6 @@ Arena(void* Memory, usize Capacity) {
     return { (u8*)Memory, 0, Capacity};
 }
 
-template<typename T>
-static inline arena 
-BootstrapArena(void* Memory, usize MemorySize) {
-    return Arena((u8*)Memory + sizeof(T), 
-                 MemorySize - sizeof(T));
-}
-
 static inline void 
 Clear(arena* Arena) {
     Arena->Used = 0;
@@ -123,6 +116,22 @@ SubArena(arena* SrcArena, usize Capacity) {
     return Ret;
 }
 
+static inline void*
+BootstrapBlock(usize StructSize,
+              usize OffsetToArena,
+              void* Memory,
+              usize MemorySize) 
+{
+    Assert(StructSize < MemorySize);
+    void* ArenaMemory = (u8*)Memory + StructSize; 
+    usize ArenaMemorySize = MemorySize - StructSize;
+    arena* ArenaPtr = (arena*)((u8*)Memory + OffsetToArena);
+    (*ArenaPtr) = Arena(ArenaMemory, ArenaMemorySize);
+    
+    return Memory;
+}
 
+
+#define BootstrapStruct(Type, Member, Memory, MemorySize) (Type*)BootstrapBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
 
 #endif

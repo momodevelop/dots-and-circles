@@ -65,15 +65,15 @@ GameUpdateFunc(GameUpdate)
     //  Initialization of the game
     if(!PermState->IsInitialized) {
         // NOTE(Momo): Arenas
-        PermState->MainArena = 
-            BootstrapArena<permanent_state>(GameMemory->PermanentMemory, 
-                                            GameMemory->PermanentMemorySize);
+        PermState = BootstrapStruct(permanent_state,
+                                    MainArena,
+                                    GameMemory->PermanentMemory, 
+                                    GameMemory->PermanentMemorySize);
 
         // NOTE(Momo): Assets
-        PermState->Assets = CreateAssets(
-                &PermState->MainArena, 
-                Platform,
-                String("yuu\0"));
+        PermState->Assets = CreateAssets(&PermState->MainArena, 
+                                         Platform,
+                                         String("yuu\0"));
 
         // Console Init
         {
@@ -115,9 +115,10 @@ GameUpdateFunc(GameUpdate)
     }
 
     if (!TransientState->IsInitialized) {
-        TransientState->TransArena =
-            BootstrapArena<transient_state>(GameMemory->TransientMemory,
-                                            GameMemory->TransientMemorySize);
+        TransientState = BootstrapStruct(transient_state,
+                                         TransArena,
+                                         GameMemory->TransientMemory, 
+                                         GameMemory->TransientMemorySize);
 
     }
 

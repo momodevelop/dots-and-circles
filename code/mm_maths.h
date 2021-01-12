@@ -81,24 +81,26 @@ using v3u = vec<u32,3>;
 
 template<typename t>
 struct vec<t,4> {
-    t Elements[4];
-    struct {
-        union {
-            vec<t,3> XYZ;
-            struct {
-                t X, Y, Z;
-            };
-        }; 
-        f32 W;
-    };
-    struct {
-        union {
-            vec<t,3> RGB;
-            struct {
-                t R, G, B;
-            };
-        }; 
-        t A;
+    union {
+        t Elements[4];
+        struct {
+            union {
+                vec<t,3> XYZ;
+                struct {
+                    t X, Y, Z;
+                };
+            }; 
+            f32 W;
+        };
+        struct {
+            union {
+                vec<t,3> RGB;
+                struct {
+                    t R, G, B;
+                };
+            }; 
+            t A;
+        };
     };
     GenerateSubscriptOp(4)
 };

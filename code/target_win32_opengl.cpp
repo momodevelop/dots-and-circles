@@ -530,9 +530,9 @@ Win32AllocateOpengl(HDC DeviceContext,
     usize RendererMemorySize = sizeof(opengl) + Kilobytes(128); 
     void* RendererMemory = Win32AllocateMemory(RendererMemorySize);
     opengl* Opengl = BootstrapStruct(opengl,
+                                     Arena,
                                      RendererMemory, 
-                                     RendererMemorySize, 
-                                     Header.Arena);
+                                     RendererMemorySize);
 
     if (!Opengl) {
         Win32Log("Cannot allocate renderer memory"); 
@@ -974,9 +974,9 @@ WinMain(HINSTANCE Instance,
     Defer { Win32FreeMemory(PlatformMemory); };
 
     Global_Win32State = BootstrapStruct(win32_state,
+                                        Arena,
                                         PlatformMemory,
-                                        PlatformMemorySize,
-                                        Arena);
+                                        PlatformMemorySize);
 
     Win32Init(Global_Win32State);
     
@@ -1112,8 +1112,7 @@ WinMain(HINSTANCE Instance,
                              &GameInput);
 
         if (GameCode.GameUpdate) {
-            Global_Win32State->IsRunning = 
-                GameCode.GameUpdate(&GameMemory,
+            GameCode.GameUpdate(&GameMemory,
                                 &PlatformApi,
                                 &RenderCommands,
                                 &GameInput,

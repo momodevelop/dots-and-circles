@@ -60,8 +60,8 @@ typedef iptr GLintptr;
 typedef b8   GLboolean;
 typedef f32  GLfloat;
 
-#define OpenglFunction(name) opengl_func_##name
-#define OpenglFunctionPtr(name) OpenglFunction(name) *name
+#define OpenglFunction(Name) opengl_func_##Name
+#define OpenglFunctionPtr(Name) OpenglFunction(Name)* Name
 #define OpenglDebugCallbackFunc(Name) void Name(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *msg,const void *userParam)
 typedef OpenglDebugCallbackFunc(GLDEBUGPROC);
 
@@ -250,6 +250,8 @@ enum {
 struct opengl {
     renderer Header;
 
+    arena Arena;
+
     // Bindings that needs to be filled by platform
     OpenglFunctionPtr(glEnable);
     OpenglFunctionPtr(glDisable); 
@@ -296,7 +298,6 @@ struct opengl {
     
     // NOTE(Momo): We only need one blueprint which is a 1x1 square.
     GLuint Model; 
-    u32 MaxEntities;
     
     GLuint BlankTexture;
     GLuint DummyTexture;
@@ -353,16 +354,13 @@ Init(opengl* Opengl,
      u32 MaxEntities,
      u32 MaxTextures) 
 {
-    Opengl->MaxEntities = MaxEntities;
+    Opengl->Textures = List<GLuint>(&Opengl->Arena, MaxTextures);
+
     Opengl->RenderDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
    
     Opengl->glEnable(GL_DEPTH_TEST);
     Opengl->glEnable(GL_SCISSOR_TEST);
-#if INTERNAL
-    Opengl->glEnable(GL_DEBUG_OUTPUT);
-    Opengl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-#endif
     
     Opengl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
@@ -654,9 +652,7 @@ AddTexture(opengl* Opengl,
            u32 Height,
            void* Pixels) 
 {
-    // TODO: remove hardcoded 255
     renderer_texture_handle Ret = {};
-
     GLuint Entry;
 
     Opengl->glCreateTextures(GL_TEXTURE_2D, 
