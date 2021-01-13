@@ -385,7 +385,10 @@ Win32OpenglLoadWglExtensions() {
 }
 
 static inline u32
-Win32DetermineIdealRefreshRate(HDC DeviceContext) {
+Win32DetermineIdealRefreshRate(HWND Window) {
+    HDC DeviceContext = GetDC(Window);
+    Defer { ReleaseDC(Window, DeviceContext); };
+
     u32 RefreshRate = Global_DefaultRefreshRate;
     {
         i32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
@@ -523,10 +526,14 @@ Win32FreeOpengl(opengl* Opengl) {
 }
 
 static inline opengl*
-Win32AllocateOpengl(HDC DeviceContext, 
+Win32AllocateOpengl(HWND Window, 
                     v2u WindowDimensions) 
 {
-    // This is kinda what we wanna do if we ever want Renderer to be its own DLL...
+    HDC DeviceContext = GetDC(Window); 
+    Defer { ReleaseDC(Window, DeviceContext); };
+    
+    // This is kinda what we wanna do if we ever want Renderer 
+    // to be its own DLL...
     usize RendererMemorySize = sizeof(opengl) + Kilobytes(128); 
     void* RendererMemory = Win32AllocateMemory(RendererMemorySize);
     opengl* Opengl = BootstrapStruct(opengl,
@@ -565,10 +572,11 @@ Win32AllocateOpengl(HDC DeviceContext,
                                                0, 
                                                Win32OpenglAttribs); 
 
-    // Not modern
-    //if (!OpenglContext) {
-    //    OpenglContext = wglCreateContext(DeviceContext);
-    //}
+    if (!OpenglContext) {
+        //OpenglContext = wglCreateContext(DeviceContext);
+        Win32Log("Cannot create opengl context");
+        return nullptr;
+    }
 
     if(wglMakeCurrent(DeviceContext, OpenglContext)) {
         HMODULE Module = LoadLibraryA("opengl32.dll");
@@ -791,6 +799,14 @@ Win32Init(win32_state* State) {
         }
     }
 }
+
+static inline void
+Win32SwapBuffers(HWND Window) {
+    HDC DeviceContext = GetDC(Window); 
+    Defer { ReleaseDC(Window, DeviceContext); };
+    SwapBuffers(DeviceContext);
+}
+
 
 // Platform Functions ////////////////////////////////////////////////////
 enum platform_file_error {
@@ -1049,9 +1065,7 @@ WinMain(HINSTANCE Instance,
         Win32Log("Client Dimensions: %d x %d\n", ClientWH.W, ClientWH.H);
     }
     
-    HDC DeviceContext = GetDC(Window); 
-
-    u32 RefreshRate = Win32DetermineIdealRefreshRate(DeviceContext); 
+    u32 RefreshRate = Win32DetermineIdealRefreshRate(Window); 
     f32 TargetSecsPerFrame = 1.f / RefreshRate; 
     Win32Log("Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
     Win32Log("Monitor Refresh Rate: %d\n", RefreshRate);
@@ -1091,8 +1105,9 @@ WinMain(HINSTANCE Instance,
                                      RenderCommandsMemorySize);
  
     // Initialize OpenGL
-    Global_Win32State->Opengl = Win32AllocateOpengl(DeviceContext, 
-                                        Win32GetClientDimensions(Window));
+    Global_Win32State->Opengl = 
+        Win32AllocateOpengl(Window, 
+                            Win32GetClientDimensions(Window));
     if (!Global_Win32State->Opengl) {
         Win32Log("Cannot initialize opengl\n");
         return 1;
@@ -1138,17 +1153,12 @@ WinMain(HINSTANCE Instance,
 
         }
         
-
         LastCount = Win32GetCurrentCounter();
-        // Swap buffers
-        {
-            HDC Dc = GetDC(Window);
-            SwapBuffers(Dc);
-            ReleaseDC(Window, Dc); 
-        }
-
+        Win32SwapBuffers(Window);
     }
 
 
     return 0;
 }
+
+
