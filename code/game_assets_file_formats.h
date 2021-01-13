@@ -21,35 +21,35 @@ enum font_id : u32 {
 };
 
 
-enum atlas_rect_id : u32 {
-    AtlasRect_Ryoji,
-    AtlasRect_Yuu,
-    AtlasRect_Karu00,
-    AtlasRect_Karu01,
-    AtlasRect_Karu02,
-    AtlasRect_Karu10,
-    AtlasRect_Karu11,
-    AtlasRect_Karu12,
-    AtlasRect_Karu20,
-    AtlasRect_Karu21,
-    AtlasRect_Karu22,
-    AtlasRect_Karu30,
-    AtlasRect_Karu31,
-    AtlasRect_Karu32,
+enum atlas_aabb_id : u32 {
+    AtlasAabb_Ryoji,
+    AtlasAabb_Yuu,
+    AtlasAabb_Karu00,
+    AtlasAabb_Karu01,
+    AtlasAabb_Karu02,
+    AtlasAabb_Karu10,
+    AtlasAabb_Karu11,
+    AtlasAabb_Karu12,
+    AtlasAabb_Karu20,
+    AtlasAabb_Karu21,
+    AtlasAabb_Karu22,
+    AtlasAabb_Karu30,
+    AtlasAabb_Karu31,
+    AtlasAabb_Karu32,
     
-    AtlasRect_PlayerDot,
-    AtlasRect_PlayerCircle,
-    AtlasRect_BulletDot,
-    AtlasRect_BulletCircle,
-    AtlasRect_Enemy,
+    AtlasAabb_PlayerDot,
+    AtlasAabb_PlayerCircle,
+    AtlasAabb_BulletDot,
+    AtlasAabb_BulletCircle,
+    AtlasAabb_Enemy,
 
     
-    AtlasRect_Count,
+    AtlasAabb_Count,
 };
 
 enum asset_type : u32 {
     AssetType_Texture,
-    AssetType_AtlasRect,
+    AssetType_AtlasAabb,
     AssetType_Font,
     AssetType_FontGlyph,
     AssetType_FontKerning,
@@ -72,10 +72,10 @@ struct yuu_texture {
     
 };
 
-struct yuu_atlas_rect {
-    atlas_rect_id Id;
+struct yuu_atlas_aabb {
+    atlas_aabb_id Id;
     texture_id TextureId;
-    rect2u Rect;
+    aabb2u Aabb;
     
 };
 
@@ -92,8 +92,8 @@ struct yuu_font_glyph {
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;
-    rect2f Box; 
-    rect2u AtlasRect;
+    aabb2f Box; 
+    aabb2u AtlasAabb;
     
 };
 

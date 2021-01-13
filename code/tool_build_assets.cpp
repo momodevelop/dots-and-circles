@@ -1,14 +1,14 @@
 #include "tool_build_assets.h"
 #include "mm_bitwise.h"
-#include "mm_rect_packer.h"
+#include "mm_aabb_packer.h"
 
-static inline rect2u
-Rect2u(rp_rect Rect) {
+static inline aabb2u
+Aabb2u(ap_aabb Aabb) {
 	return { 
-        Rect.X, 
-        Rect.Y, 
-        Rect.X + Rect.W, 
-        Rect.Y + Rect.H 
+        Aabb.X, 
+        Aabb.Y, 
+        Aabb.X + Aabb.W, 
+        Aabb.Y + Aabb.H 
     };    
 }
 
@@ -56,7 +56,7 @@ enum atlas_context_type {
 struct atlas_context_image {
     atlas_context_type Type;
     const char* Filename;
-    atlas_rect_id Id;
+    atlas_aabb_id Id;
     texture_id TextureId;
     u8* Texture;
 };
@@ -75,16 +75,16 @@ struct atlas_context_font {
 
 
 static inline void  
-Init(rp_rect* Rect, atlas_context_image* Context){
+Init(ap_aabb* Aabb, atlas_context_image* Context){
     i32 W, H, C;
     stbi_info(Context->Filename, &W, &H, &C);
-    Rect->W = (u32)W;
-    Rect->H = (u32)H;
-    Rect->UserData = Context;
+    Aabb->W = (u32)W;
+    Aabb->H = (u32)H;
+    Aabb->UserData = Context;
 }
 
 static inline void
-Init(rp_rect* Rect, atlas_context_font* Context){
+Init(ap_aabb* Aabb, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
     stbtt_GetCodepointTextureBox(&Context->LoadedFont.Info, 
 			Context->Codepoint, 
@@ -92,19 +92,19 @@ Init(rp_rect* Rect, atlas_context_font* Context){
 			Context->RasterScale, 
 			&ix0, &iy0, &ix1, &iy1);
     
-    Rect->W= (u32)(ix1 - ix0);
-    Rect->H= (u32)(iy1 - iy0);
-    Rect->UserData = Context;
+    Aabb->W= (u32)(ix1 - ix0);
+    Aabb->H= (u32)(iy1 - iy0);
+    Aabb->UserData = Context;
 }
 
 
 static inline void 
 WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                      u8* TextureMemory, rp_rect TextureRect) 
+                      u8* TextureMemory, ap_aabb TextureAabb) 
 {
     i32 j = 0;
-    for (u32 y = TextureRect.Y; y < TextureRect.Y + TextureRect.H; ++y) {
-        for (u32 x = TextureRect.X; x < TextureRect.X + TextureRect.W; ++x) {
+    for (u32 y = TextureAabb.Y; y < TextureAabb.Y + TextureAabb.H; ++y) {
+        for (u32 x = TextureAabb.X; x < TextureAabb.X + TextureAabb.W; ++x) {
             u32 Index = TwoToOne(y, x, AtlasWidth) * 4;
             Assert(Index < (AtlasWidth * AtlasHeight * 4));
             for (u32 c = 0; c < 4; ++c) {
@@ -116,25 +116,25 @@ WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
+GenerateAtlas(const ap_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)malloc(AtlasSize);
     
     
-    for (u32 i = 0; i < RectCount; ++i) {
-        auto Rect = Rects[i];
+    for (u32 i = 0; i < AabbCount; ++i) {
+        auto Aabb = Aabbs[i];
         
-        auto Type = *(atlas_context_type*)Rect.UserData;
+        auto Type = *(atlas_context_type*)Aabb.UserData;
         switch(Type) {
             case AtlasContextType_Image: {
-                auto* Context = (atlas_context_image*)Rect.UserData;
+                auto* Context = (atlas_context_image*)Aabb.UserData;
                 i32 W, H, C;
                 u8* TextureMemory = stbi_load(Context->Filename, &W, &H, &C, 0);
                 Defer { stbi_image_free(TextureMemory); };
-                WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Rect);
+                WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Aabb);
             } break;
             case AtlasContextType_Font: {
-                auto* Context = (atlas_context_font*)Rect.UserData; 
+                auto* Context = (atlas_context_font*)Aabb.UserData; 
                 constexpr u32 Channels = 4;
                 
                 i32 W, H;
@@ -155,7 +155,7 @@ GenerateAtlas(const rp_rect* Rects, usize RectCount, u32 Width, u32 Height) {
                         FontTextureItr[k++] = FontTextureOneCh[j];
                     }
                 }
-                WriteSubTextureToAtlas(&AtlasMemory, Width, Height, FontTexture, Rect);
+                WriteSubTextureToAtlas(&AtlasMemory, Width, Height, FontTexture, Aabb);
                 
             } break;
             
@@ -180,35 +180,35 @@ int main() {
     Defer { FreeFont(LoadedFont.Item); };
     
     atlas_context_image AtlasImageContexts[] = {
-        { AtlasContextType_Image, "assets/ryoji.png",  AtlasRect_Ryoji, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/yuu.png",    AtlasRect_Yuu,    Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu00.png", AtlasRect_Karu00, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu01.png", AtlasRect_Karu01, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu02.png", AtlasRect_Karu02, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu10.png", AtlasRect_Karu10, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu11.png", AtlasRect_Karu11, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu12.png", AtlasRect_Karu12, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu20.png", AtlasRect_Karu20, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu21.png", AtlasRect_Karu21, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu22.png", AtlasRect_Karu22, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu30.png", AtlasRect_Karu30, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu31.png", AtlasRect_Karu31, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu32.png", AtlasRect_Karu32, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_white.png", AtlasRect_PlayerDot, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_black.png", AtlasRect_PlayerCircle, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasRect_BulletDot, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasRect_BulletCircle, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/enemy.png", AtlasRect_Enemy, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/ryoji.png",  AtlasAabb_Ryoji, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/yuu.png",    AtlasAabb_Yuu,    Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu00.png", AtlasAabb_Karu00, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu01.png", AtlasAabb_Karu01, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu02.png", AtlasAabb_Karu02, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu10.png", AtlasAabb_Karu10, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu11.png", AtlasAabb_Karu11, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu12.png", AtlasAabb_Karu12, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu20.png", AtlasAabb_Karu20, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu21.png", AtlasAabb_Karu21, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu22.png", AtlasAabb_Karu22, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu30.png", AtlasAabb_Karu30, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu31.png", AtlasAabb_Karu31, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/karu32.png", AtlasAabb_Karu32, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/player_white.png", AtlasAabb_PlayerDot, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/player_black.png", AtlasAabb_PlayerCircle, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasAabb_BulletDot, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasAabb_BulletCircle, Texture_AtlasDefault },
+        { AtlasContextType_Image, "assets/enemy.png", AtlasAabb_Enemy, Texture_AtlasDefault },
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
 
-    constexpr usize TotalRects = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
+    constexpr usize TotalAabbs = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
-    rp_rect PackedRects[TotalRects];
-       usize PackedRectCount = 0;
+    ap_aabb PackedAabbs[TotalAabbs];
+       usize PackedAabbCount = 0;
     {
         for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
-            Init(PackedRects + PackedRectCount++, AtlasImageContexts + i);
+            Init(PackedAabbs + PackedAabbCount++, AtlasImageContexts + i);
         }
         for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
             auto* Font = AtlasFontContexts + i;
@@ -218,7 +218,7 @@ int main() {
             Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Item.Info, 72.f);
             Font->FontId = Font_Default;
             Font->TextureId = Texture_AtlasDefault;
-            Init(PackedRects + PackedRectCount++, Font);
+            Init(PackedAabbs + PackedAabbCount++, Font);
         }
     }
     
@@ -226,18 +226,18 @@ int main() {
     u32 AtlasWidth = 1024;
     u32 AtlasHeight = 1024;
     {
-        constexpr usize NodeCount = ArrayCount(PackedRects) + 1;
+        constexpr usize NodeCount = ArrayCount(PackedAabbs) + 1;
         
-        rp_node RectPackNodes[NodeCount];
-        rp_context RectPackContext = rp_CreateRectPacker(AtlasWidth, AtlasHeight, RectPackNodes, NodeCount);
-        if (!rp_Pack(&RectPackContext, PackedRects, PackedRectCount, MmrpSort_Height)) {
+        ap_node AabbPackNodes[NodeCount];
+        ap_context AabbPackContext = ap_CreateAabbPacker(AtlasWidth, AtlasHeight, AabbPackNodes, NodeCount);
+        if (!ap_Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, MmrpSort_Height)) {
             printf("Failed to generate texture\n");
             return 1;
         }
     }
    
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasTexture = GenerateAtlas(PackedRects, PackedRectCount, AtlasWidth, AtlasHeight);
+    u8* AtlasTexture = GenerateAtlas(PackedAabbs, PackedAabbCount, AtlasWidth, AtlasHeight);
 #if 1
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
     printf("Written test atlas: test.png\n");
@@ -251,30 +251,32 @@ int main() {
         WriteTexture(AssetBuilder, Texture_Ryoji, "assets/ryoji.png");
         WriteTexture(AssetBuilder, Texture_Yuu, "assets/yuu.png");
         WriteTexture(AssetBuilder, Texture_AtlasDefault, AtlasWidth, AtlasHeight, 4, AtlasTexture);
-        for(u32 i = 0; i <  PackedRectCount; ++i) {
-            auto Rect = PackedRects[i];
-            auto Type = *(atlas_context_type*)Rect.UserData;
+        for(u32 i = 0; i <  PackedAabbCount; ++i) {
+            auto Aabb = PackedAabbs[i];
+            auto Type = *(atlas_context_type*)Aabb.UserData;
             switch(Type) {
                 case AtlasContextType_Image: {
-                    auto* Image = (atlas_context_image*)Rect.UserData;
-                    rect2u AtlasRect = Rect2u(Rect);
-                    WriteAtlasRect(AssetBuilder, Image->Id, Image->TextureId, AtlasRect);
+                    auto* Image = (atlas_context_image*)Aabb.UserData;
+                    aabb2u AtlasAabb = Aabb2u(Aabb);
+                    WriteAtlasAabb(AssetBuilder, Image->Id, Image->TextureId, AtlasAabb);
                     
                 } break;
                 case AtlasContextType_Font: {
-                    auto* Font  = (atlas_context_font*)Rect.UserData;
+                    auto* Font  = (atlas_context_font*)Aabb.UserData;
                     
                     i32 Advance;
                     i32 LeftSideBearing; 
                     stbtt_GetCodepointHMetrics(&LoadedFont.Item.Info, Font->Codepoint, &Advance, &LeftSideBearing);
                     
-                    rect2i Box;
+                    aabb2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Item.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
                     
-                    WriteFontGlyph(AssetBuilder, Font->FontId, Font->TextureId, Font->Codepoint, FontPixelScale * Advance,
+                    WriteFontGlyph(AssetBuilder, Font->FontId, 
+                                   Font->TextureId, 
+                                   Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
-                                   Rect2u(Rect), 
-                                   Rect2f(Box) * FontPixelScale);
+                                   Aabb2u(Aabb), 
+                                   Aabb2f(Box) * FontPixelScale);
                     
                 } break;
                 
@@ -284,7 +286,7 @@ int main() {
         i32 Ascent, Descent, LineGap;
         stbtt_GetFontVMetrics(&LoadedFont.Item.Info, &Ascent, &Descent, &LineGap); 
         
-        rect2i BoundingBox = {}; 
+        aabb2i BoundingBox = {}; 
         stbtt_GetFontBoundingBox(&LoadedFont.Item.Info, 
             &BoundingBox.Min.X,
             &BoundingBox.Min.Y,

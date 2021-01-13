@@ -27,7 +27,7 @@ DrawString(mailbox* RenderCommands,
     v3f CurPosition = Position;
     
     
-    v4f Color = { 1.f, 1.f, 1.f, 1.f };
+    c4f Color = { 1.f, 1.f, 1.f, 1.f };
     auto* Font = Assets->Fonts + Font_Default;
     
     u32 Strlen = SiStrLen(String);
@@ -46,10 +46,10 @@ DrawString(mailbox* RenderCommands,
                                  CurPosition.Z);
         
         PushDrawTexturedQuad(RenderCommands, 
-                                    Color, 
-                                    T*S*A, 
-                                    GetRendererTextureHandle(Assets, Glyph->TextureId),
-                                    GetAtlasUV(Assets, Glyph));
+                             Color, 
+                             T*S*A, 
+                             GetRendererTextureHandle(Assets, Glyph->TextureId),
+                             GetAtlasUV(Assets, Glyph));
 
     
         CurPosition.X += Glyph->Advance * Size;
@@ -73,7 +73,7 @@ UpdateSandboxMode(permanent_state* PermState,
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
-            CenteredRect( 
+            CenteredAabb( 
                 v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )
@@ -84,7 +84,7 @@ UpdateSandboxMode(permanent_state* PermState,
         game_mode_sandbox_entity * Entity = &Mode->Entity;
         m44f Transform = M44fTranslation(Mode->Entity.Position) * 
                          M44fScale(64.f, 64.f, 1.f);
-        auto* AtlasRect = PermState->Assets.AtlasRects + AtlasRect_PlayerDot;
+        auto* AtlasAabb = PermState->Assets.AtlasAabbs + AtlasAabb_PlayerDot;
        
         v3f Speed = { 50.f, 0.f, 0.f };
         Entity->Position += Speed * DeltaTime;
@@ -92,8 +92,8 @@ UpdateSandboxMode(permanent_state* PermState,
         PushDrawTexturedQuad(RenderCommands, 
                                     Color_White, 
                                     Transform, 
-                                    GetRendererTextureHandle(&PermState->Assets, AtlasRect->TextureId),
-                                    GetAtlasUV(&PermState->Assets, AtlasRect));
+                                    GetRendererTextureHandle(&PermState->Assets, AtlasAabb->TextureId),
+                                    GetAtlasUV(&PermState->Assets, AtlasAabb));
 
     }
 

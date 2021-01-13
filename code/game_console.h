@@ -17,16 +17,16 @@ struct game_console_command {
 
 struct game_console_string {
     string_buffer Buffer;
-    v4f Color;
+    c4f Color;
 };
 
 
 struct game_console {
     b32 IsActive;
-    v4f InfoBgColor;
-    v4f InputBgColor;
-    v4f InputTextColor;
-    v4f InfoTextDefaultColor;
+    c4f InfoBgColor;
+    c4f InputBgColor;
+    c4f InputTextColor;
+    c4f InfoTextDefaultColor;
     v3f Position;
     v2f Dimensions;
 
@@ -81,10 +81,10 @@ GameConsole(arena* Arena,
             usize InfoLines, 
             usize CharactersPerLine, 
             usize CommandsCapacity,
-            v4f InfoBgColor,
-            v4f InfoTextDefaultColor,
-            v4f InputBgColor,
-            v4f InputTextColor,
+            c4f InfoBgColor,
+            c4f InfoTextDefaultColor,
+            c4f InputBgColor,
+            c4f InputTextColor,
             v2f Dimensions,
             v3f Position)
 {
@@ -111,7 +111,7 @@ GameConsole(arena* Arena,
 
 
 static inline void
-PushInfo(game_console* Console, string String, v4f Color) {
+PushInfo(game_console* Console, string String, c4f Color) {
     for (usize I = 0; I < Console->InfoBuffers.Count - 1; ++I) {
         usize J = Console->InfoBuffers.Count - 1 - I;
         game_console_string* Dest = Console->InfoBuffers + J;
@@ -135,7 +135,7 @@ Update(game_console* Console,
         Console->IsActive = !Console->IsActive; 
     }
 
-    if (Console->IsActive) {
+    if (!Console->IsActive) {
         return;
     }
 
@@ -181,7 +181,9 @@ Render(game_console* Console,
         m44f ScaleMatrix = M44fScale(Console->Dimensions);
         m44f PositionMatrix = M44fTranslation(Console->Position);
         m44f InfoBgTransform = PositionMatrix * ScaleMatrix;
-        PushDrawQuad(RenderCommands, Console->InfoBgColor, InfoBgTransform);
+        PushDrawQuad(RenderCommands, 
+                     Console->InfoBgColor, 
+                     InfoBgTransform);
     }
 
     {
@@ -193,7 +195,9 @@ Render(game_console* Console,
         );
 
         m44f InputBgTransform = PositionMatrix * ScaleMatrix;
-        PushDrawQuad(RenderCommands, Console->InputBgColor, InputBgTransform);
+        PushDrawQuad(RenderCommands, 
+                     Console->InputBgColor, 
+                     InputBgTransform);
     }
 
     // Draw text

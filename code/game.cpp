@@ -110,8 +110,8 @@ GameUpdateFunc(GameUpdate)
 
         // NOTE(Momo): Set design resolution for game
         PushSetDesignResolution(RenderCommands, 
-                                       (u32)Global_DesignWidth, 
-                                       (u32)Global_DesignHeight);
+                                (u32)Global_DesignWidth, 
+                                (u32)Global_DesignHeight);
     }
 
     if (!TransientState->IsInitialized) {

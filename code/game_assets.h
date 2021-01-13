@@ -18,15 +18,15 @@ struct texture {
     renderer_texture_handle Handle;
 };
 
-struct atlas_rect {
-    rect2u Rect;
+struct atlas_aabb {
+    aabb2u Aabb;
     texture_id TextureId;
 };
 
 
 struct font_glyph {
-    rect2u AtlasRect;
-    rect2f Box; 
+    aabb2u AtlasAabb;
+    aabb2f Box; 
     texture_id TextureId;
     f32 Advance;
     f32 LeftBearing;
@@ -62,7 +62,7 @@ struct game_assets {
     arena Arena;
    
     array<texture> Textures;
-    array<atlas_rect> AtlasRects;
+    array<atlas_aabb> AtlasAabbs;
     array<font> Fonts;
 };
 
@@ -70,17 +70,17 @@ struct game_assets {
 // TODO: Maybe we should just pass in ID instead of pointer.
 // Should be waaaay cleaner
 static inline quad2f
-GetAtlasUV(game_assets* Assets, atlas_rect* AtlasRect) {
-    auto Texture = Assets->Textures[AtlasRect->TextureId];
-    rect2u Rect = {0, 0, Texture.Width, Texture.Height };
-    return Quad2F(RatioRect(AtlasRect->Rect,Rect));
+GetAtlasUV(game_assets* Assets, atlas_aabb* AtlasAabb) {
+    auto Texture = Assets->Textures[AtlasAabb->TextureId];
+    aabb2u Aabb = {0, 0, Texture.Width, Texture.Height };
+    return Quad2f(RatioAabb(AtlasAabb->Aabb,Aabb));
 }
 
 static inline quad2f
 GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
     auto Texture = Assets->Textures[Glyph->TextureId];
-    rect2u Rect = {0, 0, Texture.Width, Texture.Height };
-    return Quad2F(RatioRect(Glyph->AtlasRect, Rect));
+    aabb2u Aabb = {0, 0, Texture.Width, Texture.Height };
+    return Quad2f(RatioAabb(Glyph->AtlasAabb, Aabb));
 }
 
 
@@ -102,7 +102,6 @@ CheckAssetSignature(void* Memory, const char* Signature) {
     return true; 
 }
 
-
 static inline game_assets
 CreateAssets(arena* Arena, 
              platform_api* Platform,
@@ -114,7 +113,7 @@ CreateAssets(arena* Arena,
     game_assets Assets = {};
     Assets.Arena = SubArena(Arena, Megabytes(100));
     Assets.Textures = Array<texture>(Arena, Texture_Count);
-    Assets.AtlasRects = Array<atlas_rect>(Arena, AtlasRect_Count);
+    Assets.AtlasAabbs = Array<atlas_aabb>(Arena, AtlasAabb_Count);
     Assets.Fonts = Array<font>(Arena, Font_Count);
     
     scratch Scratch = BeginScratch(&Assets.Arena);
@@ -167,11 +166,11 @@ CreateAssets(arena* Arena,
                                                       YuuTexture->Height,
                                                       Pixels);
             } break;
-            case AssetType_AtlasRect: { 
-                auto* YuuAtlasRect = Read<yuu_atlas_rect>(&FileMemoryItr);
-                auto* AtlasRect = Assets.AtlasRects + YuuAtlasRect->Id;
-                AtlasRect->Rect = YuuAtlasRect->Rect;
-                AtlasRect->TextureId = YuuAtlasRect->TextureId;
+            case AssetType_AtlasAabb: { 
+                auto* YuuAtlasAabb = Read<yuu_atlas_aabb>(&FileMemoryItr);
+                auto* AtlasAabb = Assets.AtlasAabbs + YuuAtlasAabb->Id;
+                AtlasAabb->Aabb = YuuAtlasAabb->Aabb;
+                AtlasAabb->TextureId = YuuAtlasAabb->TextureId;
             } break;
             case AssetType_Font: {
                 auto* YuuFont = Read<yuu_font>(&FileMemoryItr);
@@ -186,7 +185,7 @@ CreateAssets(arena* Arena,
                 usize GlyphIndex = HashCodepoint(YuuFontGlyph->Codepoint);
                 auto* Glyph = Font->Glyphs + GlyphIndex;
                 
-                Glyph->AtlasRect = YuuFontGlyph->AtlasRect;
+                Glyph->AtlasAabb = YuuFontGlyph->AtlasAabb;
                 Glyph->TextureId = YuuFontGlyph->TextureId;
                 Glyph->Advance = YuuFontGlyph->Advance;
                 Glyph->LeftBearing = YuuFontGlyph->LeftBearing;

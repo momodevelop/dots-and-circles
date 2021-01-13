@@ -7,7 +7,7 @@
 struct splash_image_entity {
     v3f Scale;
     v3f Position;
-    v4f Colors;
+    c4f Colors;
     
     texture_id TextureHandle;
     
@@ -40,16 +40,16 @@ Update(splash_image_entity* Entity,
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
     PushDrawTexturedQuad(RenderCommands, 
-                                Entity->Colors, 
-                                T*S,  
-                                GetRendererTextureHandle(Assets, Entity->TextureHandle));
+                         Entity->Colors, 
+                         T*S,  
+                        GetRendererTextureHandle(Assets, Entity->TextureHandle));
 
 }
 
 struct splash_blackout_entity {
     v3f Scale;
     v3f Position;
-    v4f Colors;
+    c4f Colors;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -134,7 +134,7 @@ UpdateSplashMode(permanent_state* PermState,
 
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
-            CenteredRect( 
+            CenteredAabb( 
                 v3f { 
                     Global_DesignWidth, 
                     Global_DesignHeight,

@@ -94,15 +94,15 @@ WriteTexture(ab_context* Context, texture_id Id, const char* Filename) {
 
 
 static inline void 
-WriteAtlasRect(ab_context* Context, atlas_rect_id Id, texture_id TargetTextureId, rect2u Rect) 
+WriteAtlasAabb(ab_context* Context, atlas_aabb_id Id, texture_id TargetTextureId, aabb2u Aabb) 
 {
-    WriteEntry(Context,  AssetType_AtlasRect);
+    WriteEntry(Context,  AssetType_AtlasAabb);
     
-    yuu_atlas_rect AtlasRect = {};
-    AtlasRect.Id = Id;
-    AtlasRect.TextureId = TargetTextureId;
-    AtlasRect.Rect = Rect;
-    fwrite(&AtlasRect, sizeof(AtlasRect), 1,  Context->File);
+    yuu_atlas_aabb AtlasAabb = {};
+    AtlasAabb.Id = Id;
+    AtlasAabb.TextureId = TargetTextureId;
+    AtlasAabb.Aabb = Aabb;
+    fwrite(&AtlasAabb, sizeof(AtlasAabb), 1,  Context->File);
 }
 
 static inline void
@@ -119,7 +119,14 @@ WriteFont(ab_context* Context, font_id Id, f32 Ascent, f32 Descent, f32 LineGap)
 }
 
 static inline void 
-WriteFontGlyph(ab_context* Context, font_id FontId, texture_id TargetTextureId, u32 Codepoint, f32 Advance, f32 LeftBearing, rect2u AtlasRect, rect2f Box) 
+WriteFontGlyph(ab_context* Context, 
+               font_id FontId, 
+               texture_id TargetTextureId, 
+               u32 Codepoint, 
+               f32 Advance, 
+               f32 LeftBearing, 
+               aabb2u AtlasAabb, 
+               aabb2f Box) 
 {
     WriteEntry(Context, AssetType_FontGlyph);
     
@@ -127,7 +134,7 @@ WriteFontGlyph(ab_context* Context, font_id FontId, texture_id TargetTextureId, 
     FontGlyph.FontId = FontId;
     FontGlyph.TextureId = TargetTextureId;
     FontGlyph.Codepoint = Codepoint;
-    FontGlyph.AtlasRect = AtlasRect;
+    FontGlyph.AtlasAabb = AtlasAabb;
     FontGlyph.LeftBearing = LeftBearing;
     FontGlyph.Advance = Advance;
     FontGlyph.Box = Box;

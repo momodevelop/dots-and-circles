@@ -58,8 +58,8 @@ struct wave {
 
 struct player {
     // NOTE(Momo): Rendering
-    atlas_rect* DotImageRect;
-    atlas_rect* CircleImageRect;
+    atlas_aabb* DotImageAabb;
+    atlas_aabb* CircleImageAabb;
     f32 DotImageAlpha;
     f32 DotImageAlphaTarget;
     f32 DotImageTransitionTimer;
@@ -82,7 +82,7 @@ struct player {
 
 
 struct bullet {
-	atlas_rect* ImageRect;
+	atlas_aabb* ImageAabb;
 	v2f Size;
     mood_type MoodType;
     v2f Direction;
@@ -92,7 +92,7 @@ struct bullet {
 };
 
 struct enemy {
-    atlas_rect* ImageRect;
+    atlas_aabb* ImageAabb;
 	v2f Size; 
 	v2f Position;
     enemy_firing_pattern_type FiringPatternType;
@@ -149,7 +149,7 @@ SpawnEnemy(game_mode_main* Mode,
     Enemy.MovementType = MovementType;
 
     // TODO: Change to appropriate enemy
-    Enemy.ImageRect = Assets->AtlasRects + AtlasRect_Enemy;
+    Enemy.ImageAabb = Assets->AtlasAabbs + AtlasAabb_Enemy;
     Push(&Mode->Enemies, Enemy);
 }
 
@@ -169,7 +169,7 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
 	    Bullet.Direction = Normalize(Direction);
 	
     Bullet.MoodType = Mood;
-	Bullet.ImageRect = Assets->AtlasRects + ((Bullet.MoodType == MoodType_Dot) ? AtlasRect_BulletDot : AtlasRect_BulletCircle);
+	Bullet.ImageAabb = Assets->AtlasAabbs + ((Bullet.MoodType == MoodType_Dot) ? AtlasAabb_BulletDot : AtlasAabb_BulletCircle);
 		
     Push(&Mode->Bullets, Bullet);
 }
@@ -188,8 +188,8 @@ InitMainMode(permanent_state* PermState) {
     auto* Assets = &PermState->Assets;
     auto* Player = &Mode->Player;
     Player->Speed = 300.f;
-    Player->DotImageRect = Assets->AtlasRects + AtlasRect_PlayerDot;
-    Player->CircleImageRect = Assets->AtlasRects + AtlasRect_PlayerCircle;
+    Player->DotImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
+    Player->CircleImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerCircle;
     
     Player->Position = {};
     Player->Direction = {};
@@ -219,7 +219,7 @@ UpdateMainMode(permanent_state* PermState,
     PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
-            CenteredRect( 
+            CenteredAabb( 
                 v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )
@@ -453,17 +453,17 @@ UpdateMainMode(permanent_state* PermState,
         PushDrawTexturedQuad(RenderCommands, 
                                     Color_White, 
                                     T*S, 
-                                    GetRendererTextureHandle(Assets, Player->CircleImageRect->TextureId),
-                                    GetAtlasUV(Assets, Player->CircleImageRect));
+                                    GetRendererTextureHandle(Assets, Player->CircleImageAabb->TextureId),
+                                    GetAtlasUV(Assets, Player->CircleImageAabb));
 
         
 		RenderPos.Z += 0.1f;
         T = M44fTranslation(RenderPos);
         PushDrawTexturedQuad(RenderCommands, 
-                                    v4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
-                                    T*S, 
-                                    GetRendererTextureHandle(Assets, Player->DotImageRect->TextureId),
-                                    GetAtlasUV(Assets, Player->DotImageRect));
+                             c4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
+                             T*S, 
+                             GetRendererTextureHandle(Assets, Player->DotImageAabb->TextureId),
+                             GetAtlasUV(Assets, Player->DotImageAabb));
 
     }
 
@@ -492,8 +492,8 @@ UpdateMainMode(permanent_state* PermState,
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
-							 GetRendererTextureHandle(Assets, Bullet->ImageRect->TextureId),
-							 GetAtlasUV(Assets, Bullet->ImageRect));
+							 GetRendererTextureHandle(Assets, Bullet->ImageAabb->TextureId),
+							 GetAtlasUV(Assets, Bullet->ImageAabb));
 
 
     
@@ -511,8 +511,8 @@ UpdateMainMode(permanent_state* PermState,
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
-							 GetRendererTextureHandle(Assets, Enemy->ImageRect->TextureId),
-							 GetAtlasUV(Assets, Enemy->ImageRect));
+							 GetRendererTextureHandle(Assets, Enemy->ImageAabb->TextureId),
+							 GetAtlasUV(Assets, Enemy->ImageAabb));
 
 	}
 

@@ -18,10 +18,10 @@ static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
-template<typename t, usize amt>
+template<typename t, usize N>
 struct vec {
-    f32 Elements[amt];
-    GenerateSubscriptOp(amt)
+    f32 Elements[N];
+    GenerateSubscriptOp(N)
 };
 
 template<typename t>
@@ -70,9 +70,6 @@ struct vec<t ,3> {
             };
             t D;
         }; 
-        struct {
-            t R, G, B;
-        };
     };
     GenerateSubscriptOp(3)
 };
@@ -92,15 +89,6 @@ struct vec<t,4> {
             }; 
             f32 W;
         };
-        struct {
-            union {
-                vec<t,3> RGB;
-                struct {
-                    t R, G, B;
-                };
-            }; 
-            t A;
-        };
     };
     GenerateSubscriptOp(4)
 };
@@ -115,84 +103,72 @@ struct m44f {
     }
 };
 
-template<typename t, usize n>
+template<typename t, usize N>
 struct circle {
-    vec<t,n> Origin;
+    vec<t,N> Origin;
     t Radius;
 };
 using circle2f = circle<f32, 2>;
 
-// TODO: Remove
-struct aabb2u {
-    v2u Origin;
-    v2u Radius;
+template<typename t, usize N>
+struct aabb {
+    vec<t,N> Min;
+    vec<t,N> Max;
 };
+using aabb2u = aabb<u32,2>;
+using aabb2f = aabb<f32,2>;
+using aabb2i = aabb<i32,2>;
+using aabb3u = aabb<u32,3>;
+using aabb3f = aabb<f32,3>;
 
-struct aabb2f {
-    v2f Origin;
-    v2f Radius;
+template<typename t, usize N>
+static inline aabb<t,N>
+operator*(aabb<t,N> Lhs, t Rhs) {
+    return { Lhs.Min * Rhs, Lhs.Max * Rhs };
+}
+
+template<typename t, usize N>
+static inline aabb<t,N>
+operator*(t Lhs, aabb<t,N> Rhs) {
+    return { Rhs.Min * Lhs, Rhs.Max * Lhs };
+}
+
+template<typename t, usize N>
+struct line {
+    vec<t,N> Min;
+    vec<t,N> Max;
 };
+using line2f = aabb<f32,2>;
+using line3f = aabb<f32,3>;
 
-struct aabb3f {
-    v3f Origin;
-    v3f Radius;
-};
-
-struct rect2i {
-    v2i Min;
-    v2i Max;
-};
-
-struct rect2u {
-    v2u Min;
-    v2u Max;
-};
-
-struct rect2f {
-    v2f Min;
-    v2f Max;
-};
-
-struct rect3f {
-    v3f Min;
-    v3f Max;
-};
-
-struct line2f {
-    v2f Min;
-    v2f Max;
-};
-
-struct line3f {
-    v3f Min;
-    v3f Max;
-};
-
-struct quad2f {
-    v2f Points[4];
+template<typename t, usize N> 
+struct quad {
+    vec<t,N> Points[4];
     inline auto& operator[](usize I) { 
         Assert(I < 4);
         return Points[I];
     }
 
 };
+using quad2f = quad<f32,2>;
 
 
-struct quad3f {
-    v3f Points[4];
-    inline auto& operator[](usize I) { 
-        Assert(I < 4);
-        return Points[I];
-    }
+template<typename t, usize N> 
+static inline t
+Width(aabb<t,N> Aabb) {
+    return Aabb.Max.X - Aabb.Min.X;
+}
 
+template<typename t, usize N>
+static inline t
+Height(aabb<t,N> Aabb) {
+    return Aabb.Max.Y - Aabb.Min.Y; 
+}
 
-};
-
-
-// rect2u
-static inline rect2u
-Rect2u(u32 X, u32 Y, u32 Width, u32 Height) {
-    rect2u Ret = {};
+// aabb2u
+static inline aabb2u
+Aabb2u(u32 X, u32 Y, u32 Width, u32 Height) {
+    aabb2u Ret = {};
     Ret.Min.X = X;
     Ret.Min.Y = Y;
     Ret.Max.X = X + Width;
@@ -200,30 +176,8 @@ Rect2u(u32 X, u32 Y, u32 Width, u32 Height) {
     return Ret;
 }
 
-
-static inline u32
-Width(rect2u Rect) {
-    return Rect.Max.X - Rect.Min.X; 
-}
-
-static inline u32
-Height(rect2u Rect) {
-    return Rect.Max.Y - Rect.Min.Y; 
-}
-
-// rect2f
-static inline f32
-Width(rect2f Rect) {
-    return Rect.Max.X - Rect.Min.X; 
-}
-
-static inline f32
-Height(rect2f Rect) {
-    return Rect.Max.Y - Rect.Min.Y; 
-}
-
 // NOTE(Momo): Common Functions
-static inline b8
+static inline b32
 IsEqual(f32 L, f32 R) {
     return Abs(L - R) <= Epsilon32;
 }
@@ -290,7 +244,6 @@ Add(vec<t,n> L, vec<t,n> R) {
     return Ret;
 }
 
-
 template<typename t, usize n>
 static inline vec<t,n> 
 Sub(vec<t,n> L, vec<t,n> R) {
@@ -330,7 +283,7 @@ static inline vec<t,n>
 Negate(vec<t,n> V){
     vec<t,n> Ret = {};
     for (usize I = 0; I < n; ++I) {
-        Ret[i] = -v; 
+        Ret[I] = -V; 
     }
     return Ret;
 }
@@ -511,36 +464,12 @@ IsOppDir(vec<t,n> L, vec<t,n> R) {
     return (L * R) < 0;
 }
 
-
 template<typename t, usize n>
 static inline vec<t,n> 
 Project(vec<t,n> From, vec<t,n> To) { 
     return (To * From) / LengthSq(To) * To;
 }
 
-
-// Constructors...
-// TODO: to be replaced by something else? Idk?
-static inline v2f 
-V2f(v3f V) {
-    return { V.X, V.Y };
-}
-
-static inline v2f
-V2f(v2u V) {
-    return { (f32)V.X, (f32)V.Y };
-}
-
-static inline v2f
-V2f(v2i V) {
-    return { (f32)V.X, (f32)V.Y };
-}
-static inline v3f 
-V3f(v2f V) {
-    return { V.X, V.Y, 0.f };
-}
-
-// Intersections
 template<typename t, usize n>
 static inline b32
 IsIntersecting(circle<t,n> L, circle<t,n> R) {
@@ -563,6 +492,26 @@ operator*(m44f L, m44f R) {
     return res;
 }
 
+// Constructors...
+static inline v2f 
+V2f(v3f V) {
+    return { V.X, V.Y };
+}
+
+static inline v3f 
+V3f(v2f V) {
+    return { V.X, V.Y, 0.f };
+}
+
+static inline v2f
+V2f(v2u V) {
+    return { (f32)V.X, (f32)V.Y };
+}
+
+static inline v2f
+V2f(v2i V) {
+    return { (f32)V.X, (f32)V.Y };
+}
 
 static inline m44f 
 Transpose(m44f M) {
@@ -704,41 +653,41 @@ Line3f(line2f Line) {
 }
 
 
-static inline rect2f
-Rect2f(rect3f Rect) {
+static inline aabb2f
+Aabb2f(aabb3f Aabb) {
     return {
-        Rect.Min.XY,
-        Rect.Max.XY,
+        Aabb.Min.XY,
+        Aabb.Max.XY,
     };
 }
 
-static inline rect2f 
-Rect2f(rect2u Rect) {
+static inline aabb2f 
+Aabb2f(aabb2u Aabb) {
     return {
-        V2f(Rect.Min),
-        V2f(Rect.Max),
+        V2f(Aabb.Min),
+        V2f(Aabb.Max),
     };
 }
 
-static inline rect2f 
-Rect2f(rect2i Rect) {
+static inline aabb2f 
+Aabb2f(aabb2i Aabb) {
     return {
-        V2f(Rect.Min),
-        V2f(Rect.Max),
+        V2f(Aabb.Min),
+        V2f(Aabb.Max),
     };
 }
 
-static inline rect3f
-Rect3f(rect2f Rect) {
+static inline aabb3f
+Aabb3f(aabb2f Aabb) {
     return {
-        V3f(Rect.Min),
-        V3f(Rect.Max),
+        V3f(Aabb.Min),
+        V3f(Aabb.Max),
     };
 }
 
-static inline rect3f
-CenteredRect(v3f Dimensions, v3f Anchor) {
-    rect3f Ret = {};
+static inline aabb3f
+CenteredAabb(v3f Dimensions, v3f Anchor) {
+    aabb3f Ret = {};
     Ret.Min.X = Lerp(0, -Dimensions.W, Anchor.X);
     Ret.Max.X = Lerp(Dimensions.W, 0, Anchor.X);
 
@@ -752,19 +701,19 @@ CenteredRect(v3f Dimensions, v3f Anchor) {
 }
 
 static inline f32 
-AspectRatio(rect2f R) {
+AspectRatio(aabb2f R) {
     return Width(R)/Height(R);
 }
 
 static inline f32
-AspectRatio(rect2u R) {
+AspectRatio(aabb2u R) {
     return (f32)Width(R)/Height(R);
 }
 
 
-// NOTE(Momo): Gets the Normalized values of Rect A based on another Rect B
-static inline rect2f 
-RatioRect(rect2f A, rect2f B) {
+// NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
+static inline aabb2f 
+RatioAabb(aabb2f A, aabb2f B) {
     return  {
         Ratio(A.Min.X, B.Min.X, B.Max.X),
         Ratio(A.Min.Y, B.Min.Y, B.Max.Y),
@@ -773,9 +722,9 @@ RatioRect(rect2f A, rect2f B) {
     };
 }
 
-static inline rect2f 
-RatioRect(rect2u A, rect2u B) {
-    return RatioRect(Rect2f(A), Rect2f(B));
+static inline aabb2f 
+RatioAabb(aabb2u A, aabb2u B) {
+    return RatioAabb(Aabb2f(A), Aabb2f(B));
 }
 
 
@@ -817,12 +766,12 @@ PointOnRay(ray2f Ray, f32 Time) {
 
 
 static inline quad2f
-Quad2F(rect2f Rect) {
-    return {
-        Rect.Min.X, Rect.Max.Y, // top left
-        Rect.Max.X, Rect.Max.Y, // top right
-        Rect.Max.X, Rect.Min.Y, // bottom right
-        Rect.Min.X, Rect.Min.Y, // bottom left
+Quad2f(aabb2f Aabb) {
+    return quad2f{
+        Aabb.Min.X, Aabb.Max.Y, // top left
+        Aabb.Max.X, Aabb.Max.Y, // top right
+        Aabb.Max.X, Aabb.Min.Y, // bottom right
+        Aabb.Min.X, Aabb.Min.Y, // bottom left
     };
 }
 

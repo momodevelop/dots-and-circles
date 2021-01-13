@@ -10,7 +10,7 @@ static inline void
 DrawText(mailbox* RenderCommands, 
            game_assets* Assets,
            v3f Position,
-           v4f Color, 
+           c4f Color, 
            font_id FontId,
            f32 Size, 
            string String) 
@@ -32,10 +32,10 @@ DrawText(mailbox* RenderCommands,
                                    CurPosition.Z);
 
         PushDrawTexturedQuad(RenderCommands, 
-                                    Color, 
-                                    T*S*A,
-                                    GetRendererTextureHandle(Assets, Glyph->TextureId),
-                                    GetAtlasUV(Assets, Glyph));
+                             Color, 
+                             T*S*A,
+                             GetRendererTextureHandle(Assets, Glyph->TextureId),
+                             GetAtlasUV(Assets, Glyph));
  
         CurPosition.X += Glyph->Advance * Size;
         if (i != String.Count - 1 ) {
