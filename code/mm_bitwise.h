@@ -93,14 +93,20 @@ Write(void** P, T Item) {
 // Memory manipulation
 static inline void 
 Copy(void* dest, void* src, usize size) {
-    for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
+    for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
+         p < e; ++p, 
+         ++q)
+    {
         *p = *q;
     }
 }
 
 static inline void 
 Zero(void *mem, usize size) {
-    for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
+    for (u8 *p = (u8*)mem, *e = p + size; 
+         p < e; 
+         ++p)
+    {
         *p = 0;
     }
 }
