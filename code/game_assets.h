@@ -59,6 +59,7 @@ Height(font* Font) {
 
 
 struct game_assets {
+    // TODO: remove
     arena Arena;
    
     array<texture> Textures;

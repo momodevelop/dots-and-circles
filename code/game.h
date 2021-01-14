@@ -23,8 +23,11 @@ enum game_mode_type : u32 {
 // TODO: Put game_arena in here
 struct transient_state {
     b32 IsInitialized;
-   
-    arena TransArena;
+    
+    arena Arena;
+    game_assets* Assets;
+    
+
 };
 
 struct permanent_state {
