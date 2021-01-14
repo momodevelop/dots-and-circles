@@ -52,30 +52,63 @@ AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 
-template<typename T>
-static inline T*
-Peek(u8* P) {
-    T* Ret = (T*)P;
-    (*P) += sizeof(T);
+
+template<typename t>
+static inline t*
+Peek(void* P) {
+    return (t*)P;
+}
+
+template<typename t>
+static inline t
+PeekCopy(void* P) {
+    return *(Peek<t>(P));
+}
+
+
+template<typename t>
+static inline t*
+Read(void** P) {
+    t* Ret = (t*)(*P);
+    (*P) = (u8*)(*P) + sizeof(t);
     return Ret;
 }
 
-template<typename T>
-static inline T*
-Read(u8** P) {
-    T* Ret = (T*)(*P);
-    (*P) += sizeof(T);
-    return Ret;
-}
 
+template<typename t>
+static inline t
+ReadCopy(void** P) {
+    return *(Read<t>(P));
+}
 
 template<typename T>
 static inline void
-Write(u8** P, T Item) {
+Write(void** P, T Item) {
     T* LocationAsT = (T*)(*P);
     (*LocationAsT) = Item;
-    (*P) += sizeof(T);
+    (*P) = (u8*)(*P) + sizeof(T);
 }
 
 
+// Memory manipulation
+static inline void 
+Copy(void* dest, void* src, usize size) {
+    for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
+        *p = *q;
+    }
+}
+
+static inline void 
+Zero(void *mem, usize size) {
+    for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
+        *p = 0;
+    }
+}
+
+#define ZeroStruct(p) Zero((p), sizeof(*(p)))
+#define ZeroStaticArray(a) Zero((a), sizeof((a)))
+#define ZeroDynamicArray(a, c) Zero((a), sizeof(*(a)) * c)
+
+
 #endif 
+

@@ -119,8 +119,11 @@ GameUpdateFunc(GameUpdate)
                                          Arena,
                                          GameMemory->TransientMemory, 
                                          GameMemory->TransientMemorySize);
-        TransientState->Assets = AllocateGameAssets(&TransientState->Arena, Platform);
 
+#if REFACTOR
+        TransientState->Assets = AllocateAssets(&TransientState->Arena, 
+                                                Platform);
+#endif
     }
 
     // Console
@@ -183,30 +186,3 @@ GameUpdateFunc(GameUpdate)
     Render(&PermState->Console, RenderCommands, &PermState->Assets);
 }
 
-static inline game_assets*
-AllocateAssets(arena* Arena, 
-               platform_api* Platform) 
-{
-    Platform->ClearTextures();
-
-    game_assets* Ret = {};
-    Ret->Textures = Array<texture>(Arena, Texture_Count);
-    Ret->AtlasAabbs = Array<atlas_aabb>(Arena, AtlasAabb_Count);
-    Ret->Fonts = Array<font>(Arena, Font_Count);
-
-    platform_file_handle AssetFh = Platform->OpenAssetFile();
-    if (AssetFh.Error) {
-        Platform->Log("Cannot open asset file\n");
-        return nullptr; 
-    }
-   
-    scratch Scratch = BeginScratch(Arena);
-    Defer { EndScratch(&Scratch); };
-
-    // Read and check file header
-    {
-    }
-
-    Platform->ReadFile2(&AssetFh, Offset, Size, Dest);
-
-}

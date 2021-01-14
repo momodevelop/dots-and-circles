@@ -57,8 +57,6 @@ union range {
     };
 };
 
-
-// TODO: rename to 'maybe'
 struct no {}; 
 template<typename T>
 struct maybe {
@@ -127,20 +125,6 @@ SiStrReverse(char* Dest) {
 }
 
 
-// Memory manipulation
-static inline void 
-MemCopy(void* dest, void* src, usize size) {
-    for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; p < e; ++p, ++q){
-        *p = *q;
-    }
-}
-
-static inline void 
-MemZero(void *mem, usize size) {
-    for (u8 *p = (u8*)mem, *e = p + size; p < e; ++p){
-        *p = 0;
-    }
-}
 
 static inline void 
 SiItoa(char* Dest, i32 Num) {
@@ -172,10 +156,6 @@ SiItoa(char* Dest, i32 Num) {
     SiStrReverse(Dest);
 }
 
-#define ZeroMem(m, s) MemZero(m, s)
-#define ZeroStruct(p) ZeroMem((p), sizeof(*(p)))
-#define ZeroStaticArray(a) ZeroMem((a), sizeof((a)))
-#define ZeroDynamicArray(a, c) ZeroMem((a), sizeof(*(a)) * c)
 
 // Assertion
 #if SLOW

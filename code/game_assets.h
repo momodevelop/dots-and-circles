@@ -92,10 +92,9 @@ GetRendererTextureHandle(game_assets* Assets, texture_id TextureId) {
 
 
 static inline b32
-CheckAssetSignature(void* Memory, const char* Signature) {
+CheckAssetSignature(void* Memory, string Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    u32 SigLen = SiStrLen(Signature);
-    for (u32 i = 0; i < SigLen; ++i) {
+    for (u32 i = 0; i < Signature.Count; ++i) {
         if (MemoryU8[i] != Signature[i]) {
             return false;
         }
@@ -108,7 +107,6 @@ CreateAssets(arena* Arena,
              platform_api* Platform,
              string Filename)
 {
-
     Platform->ClearTextures();
 
     game_assets Assets = {};
@@ -122,12 +120,12 @@ CreateAssets(arena* Arena,
     
     // NOTE(Momo): File read into temp arena
     // TODO(Momo): We could just create the assets as we read.
-    u8* FileMemory = nullptr;
-    u8* FileMemoryItr = nullptr;
+    void* FileMemory = nullptr;
+    void* FileMemoryItr = nullptr;
     {
         u32 Filesize = Platform->GetFileSize(Filename.Elements);
         Assert(Filesize);
-        FileMemory = FileMemoryItr = (u8*)PushBlock(Scratch, Filesize);
+        FileMemory = FileMemoryItr = PushBlock(Scratch, Filesize);
         Platform->ReadFile(FileMemory, Filesize, Filename.Elements);
     }
     
@@ -135,11 +133,10 @@ CreateAssets(arena* Arena,
     u32 FileEntryCount = 0;
     {
         const char* Signature = "MOMO";
-        Assert(CheckAssetSignature(FileMemoryItr, Signature));
-        FileMemoryItr+= SiStrLen(Signature);
+        FileMemoryItr = (u8*)FileMemoryItr + SiStrLen(Signature);
         
         // NOTE(Momo): Read the counts in order
-        FileEntryCount = *(Read<u32>(&FileMemoryItr));
+        FileEntryCount = ReadCopy<u32>(&FileMemoryItr);
     }
     
     // NOTE(Momo): Allocate Assets
@@ -150,7 +147,8 @@ CreateAssets(arena* Arena,
         
         switch(YuuEntry->Type) {
             case AssetType_Texture: {
-                auto* YuuTexture = Read<yuu_texture>(&FileMemoryItr);              
+                auto* YuuTexture =
+                    Read<yuu_texture>(&FileMemoryItr);              
                 auto* Texture = Assets.Textures + YuuTexture->Id;
                 Texture->Width = YuuTexture->Width;
                 Texture->Height = YuuTexture->Height;
@@ -161,11 +159,11 @@ CreateAssets(arena* Arena,
 
                 void* Pixels = PushBlock(&Assets.Arena, TextureSize, 1);
                 Assert(Pixels);
-                MemCopy(Pixels, FileMemoryItr, TextureSize);
-                FileMemoryItr += TextureSize;
+                Copy(Pixels, FileMemoryItr, TextureSize);
+                FileMemoryItr = (u8*)FileMemoryItr + TextureSize;
                 Texture->Handle = Platform->AddTexture(YuuTexture->Width, 
-                                                      YuuTexture->Height,
-                                                      Pixels);
+                                                       YuuTexture->Height,
+                                                       Pixels);
             } break;
             case AssetType_AtlasAabb: { 
                 auto* YuuAtlasAabb = Read<yuu_atlas_aabb>(&FileMemoryItr);
@@ -193,9 +191,13 @@ CreateAssets(arena* Arena,
                 Glyph->Box = YuuFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                auto* YuuFontKerning = Read<yuu_font_kerning>(&FileMemoryItr);
-                auto* Font = Assets.Fonts + YuuFontKerning->FontId;
-                Font->Kernings[HashCodepoint(YuuFontKerning->CodepointA)][HashCodepoint(YuuFontKerning->CodepointB)] = YuuFontKerning->Kerning;
+                auto* YuuFontKerning =
+                    Read<yuu_font_kerning>(&FileMemoryItr);
+                font* Font = Assets.Fonts + YuuFontKerning->FontId;
+                usize HashedCpA= HashCodepoint(YuuFontKerning->CodepointA);
+                usize HashedCpB= HashCodepoint(YuuFontKerning->CodepointB);
+                
+                Font->Kernings[HashedCpA][HashedCpB] = YuuFontKerning->Kerning;
                 
             } break;
             default: {
@@ -210,6 +212,65 @@ CreateAssets(arena* Arena,
     return Assets;
 }
 
+static inline game_assets*
+AllocateAssets(arena* Arena,
+               platform_api* Platform) 
+{
+    Platform->ClearTextures();
+
+    game_assets* Ret = PushStruct<game_assets>(Arena);
+    Ret->Textures = Array<texture>(Arena, Texture_Count);
+    Ret->AtlasAabbs = Array<atlas_aabb>(Arena, AtlasAabb_Count);
+    Ret->Fonts = Array<font>(Arena, Font_Count);
+
+
+    platform_file_handle AssetFile = Platform->OpenAssetFile();
+    if(AssetFile.Error) {
+        Platform->LogFileError(&AssetFile);
+        return nullptr;
+    }
+
+
+    usize CurrentFileOffset = 0;
+    u32 FileEntryCount = 0;
+    // Check file signaure
+    {        
+        scratch Scratch = BeginScratch(Arena);
+        Defer { EndScratch(&Scratch); };
+        
+        string Signature = String("MOMO");
+        void* Dest = PushBlock(Scratch, Signature.Count, 1);  
+
+        Platform->ReadFile2(&AssetFile,
+                            CurrentFileOffset, 
+                            Signature.Count, 
+                            Dest);
+
+        if (!CheckAssetSignature(Dest, Signature)) {
+            Platform->Log("[Assets] Wrong asset signature\n");
+            return nullptr;
+        }
+        CurrentFileOffset += Signature.Count;
+        
+        // Get File Entry
+        Platform->ReadFile2(&AssetFile,
+                            CurrentFileOffset,
+                            sizeof(u32),
+                            Dest);
+
+        FileEntryCount = PeekCopy<u32>(Dest);
+    }
+   
+    // Allocate assets
+    {
+
+
+    }
+
+
+    
+    return Ret;
+}
 
 
 #endif  
