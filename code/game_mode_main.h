@@ -211,9 +211,10 @@ InitMainMode(permanent_state* PermState) {
 
 static inline void
 UpdateMainMode(permanent_state* PermState, 
-       mailbox* RenderCommands, 
-       input* Input,
-       f32 DeltaTime) 
+               transient_state* TransState,
+               mailbox* RenderCommands, 
+               input* Input,
+               f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;
     PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });

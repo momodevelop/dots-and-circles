@@ -60,7 +60,7 @@ extern "C"
 GameUpdateFunc(GameUpdate) 
 {
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
-    auto* TransientState = (transient_state*)GameMemory->TransientMemory;
+    auto* TranState = (transient_state*)GameMemory->TransientMemory;
        
     //  Initialization of the game
     if(!PermState->IsInitialized) {
@@ -114,16 +114,16 @@ GameUpdateFunc(GameUpdate)
                                 (u32)Global_DesignHeight);
     }
 
-    if (!TransientState->IsInitialized) {
-        TransientState = BootstrapStruct(transient_state,
-                                         Arena,
-                                         GameMemory->TransientMemory, 
-                                         GameMemory->TransientMemorySize);
+    if (!TranState->IsInitialized) {
+        TranState = BootstrapStruct(transient_state,
+                                    Arena,
+                                    GameMemory->TransientMemory, 
+                                    GameMemory->TransientMemorySize);
 
-#if REFACTOR
-        TransientState->Assets = AllocateAssets(&TransientState->Arena, 
-                                                Platform);
-#endif
+        TranState->Assets = AllocateAssets(&TranState->Arena, 
+                                           Platform);
+        Assert(TranState->Assets);
+        TranState->IsInitialized = true;
     }
 
     // Console
@@ -161,18 +161,21 @@ GameUpdateFunc(GameUpdate)
     switch(PermState->CurrentGameMode) {
         case GameModeType_Splash: {
             UpdateSplashMode(PermState, 
+                             TranState,
                              RenderCommands, 
                              Input, 
                              DeltaTime);
         } break;
         case GameModeType_Main: {
             UpdateMainMode(PermState, 
+                           TranState,
                            RenderCommands, 
                            Input, 
                            DeltaTime);
         } break; 
         case GameModeType_Sandbox: {
             UpdateSandboxMode(PermState, 
+                              TranState,
                               RenderCommands, 
                               Input, 
                               DeltaTime);

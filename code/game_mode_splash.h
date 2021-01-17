@@ -124,7 +124,8 @@ InitSplashMode(permanent_state* PermState) {
 }
 
 static inline void
-UpdateSplashMode(permanent_state* PermState, 
+UpdateSplashMode(permanent_state* PermState,
+                 transient_state* TransState,
                  mailbox* RenderCommands,
                  input* Input,
                  f32 DeltaTime)

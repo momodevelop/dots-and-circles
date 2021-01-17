@@ -64,9 +64,10 @@ DrawString(mailbox* RenderCommands,
 
 static inline void
 UpdateSandboxMode(permanent_state* PermState, 
-       mailbox* RenderCommands, 
-       input* Input,
-       f32 DeltaTime) 
+                  transient_state* TransState,
+                   mailbox* RenderCommands, 
+                   input* Input,
+                   f32 DeltaTime) 
 {
     game_mode_sandbox* Mode = PermState->SandboxMode;
 

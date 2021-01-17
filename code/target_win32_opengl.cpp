@@ -814,6 +814,7 @@ enum platform_file_error {
     PlatformFileError_NotEnoughHandlers,
     PlatformFileError_CannotOpenFile,   
     PlatformFileError_Closed,
+    PlatformFileError_ReadFileFailed,
 };
 
 static inline 
@@ -864,10 +865,15 @@ PlatformLogFileErrorFunc(Win32LogFileError) {
             Win32Log("[File] Cannot open file\n");
         } break;
         case PlatformFileError_Closed:{
-            Win32Log("[File] File is already closed");
+            Win32Log("[File] File is already closed\n");
         } break;
+        case PlatformFileError_ReadFileFailed: {
+            Win32Log("[File] File read failed\n");
+        } break;
+        default: {
+            Win32Log("[File] Undefined error!\n");
+        };
     }
-
 }
 
 static inline
@@ -888,6 +894,28 @@ PlatformClearTexturesFunc(Win32ClearTextures) {
     return ClearTextures(Global_Win32State->Opengl);
 }
 
+static inline 
+PlatformReadFileFunc2(Win32ReadFile2) {
+    if (Handle->Error) {
+        return;
+    }
+
+    HANDLE Win32Handle = Global_Win32State->FileHandles[Handle->Id];
+    OVERLAPPED Overlapped = {};
+    Overlapped.Offset = (u32)((Offset >> 0) & 0xFFFFFFFF);
+    Overlapped.OffsetHigh = (u32)((Offset >> 32) & 0xFFFFFFFF);
+
+    u32 FileSize32 = (u32)Size;
+    DWORD BytesRead;
+    if(ReadFile(Win32Handle, Dest, FileSize32, &BytesRead, &Overlapped) &&
+       FileSize32 == BytesRead) 
+    {
+        // success;
+    }
+    else {
+        Handle->Error = PlatformFileError_ReadFileFailed; 
+    }
+}
 
 static inline
 PlatformReadFileFunc(Win32ReadFile) {
@@ -967,6 +995,7 @@ Win32LoadPlatformApi() {
     Ret.AddTexture = Win32AddTexture;
     Ret.OpenAssetFile = Win32OpenAssetFile;
     Ret.CloseFile = Win32CloseFile;
+    Ret.ReadFile2 = Win32ReadFile2;
     return Ret;
 }
 
