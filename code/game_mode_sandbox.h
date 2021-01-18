@@ -64,13 +64,13 @@ DrawString(mailbox* RenderCommands,
 
 static inline void
 UpdateSandboxMode(permanent_state* PermState, 
-                  transient_state* TransState,
-                   mailbox* RenderCommands, 
-                   input* Input,
-                   f32 DeltaTime) 
+                  transient_state* TranState,
+                  mailbox* RenderCommands, 
+                  input* Input,
+                  f32 DeltaTime) 
 {
     game_mode_sandbox* Mode = PermState->SandboxMode;
-
+    game_assets* Assets = TranState->Assets;
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
@@ -85,7 +85,7 @@ UpdateSandboxMode(permanent_state* PermState,
         game_mode_sandbox_entity * Entity = &Mode->Entity;
         m44f Transform = M44fTranslation(Mode->Entity.Position) * 
                          M44fScale(64.f, 64.f, 1.f);
-        auto* AtlasAabb = PermState->Assets.AtlasAabbs + AtlasAabb_PlayerDot;
+        auto* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
        
         v3f Speed = { 50.f, 0.f, 0.f };
         Entity->Position += Speed * DeltaTime;
@@ -93,8 +93,8 @@ UpdateSandboxMode(permanent_state* PermState,
         PushDrawTexturedQuad(RenderCommands, 
                                     Color_White, 
                                     Transform, 
-                                    GetRendererTextureHandle(&PermState->Assets, AtlasAabb->TextureId),
-                                    GetAtlasUV(&PermState->Assets, AtlasAabb));
+                                    GetRendererTextureHandle(Assets, AtlasAabb->TextureId),
+                                    GetAtlasUV(Assets, AtlasAabb));
 
     }
 

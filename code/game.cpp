@@ -70,11 +70,6 @@ GameUpdateFunc(GameUpdate)
                                     GameMemory->PermanentMemory, 
                                     GameMemory->PermanentMemorySize);
 
-        // NOTE(Momo): Assets
-        PermState->Assets = CreateAssets(&PermState->MainArena, 
-                                         Platform,
-                                         String("yuu\0"));
-
         // Console Init
         {
             v2f Dimensions = { Global_DesignWidth, 240.f };
@@ -142,7 +137,7 @@ GameUpdateFunc(GameUpdate)
             case GameModeType_Main: {
                 PermState->MainMode = 
                     PushStruct<game_mode_main>(ModeArena); 
-                InitMainMode(PermState);
+                InitMainMode(PermState, TranState);
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
@@ -186,6 +181,6 @@ GameUpdateFunc(GameUpdate)
     }
 
     // Render Console
-    Render(&PermState->Console, RenderCommands, &PermState->Assets);
+    Render(&PermState->Console, RenderCommands, TranState->Assets);
 }
 

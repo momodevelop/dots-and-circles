@@ -125,12 +125,13 @@ InitSplashMode(permanent_state* PermState) {
 
 static inline void
 UpdateSplashMode(permanent_state* PermState,
-                 transient_state* TransState,
+                 transient_state* TranState,
                  mailbox* RenderCommands,
                  input* Input,
                  f32 DeltaTime)
 {
     game_mode_splash* Mode = PermState->SplashMode;
+    game_assets* Assets = TranState->Assets;
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
 
     PushOrthoCamera(RenderCommands, 
@@ -147,15 +148,15 @@ UpdateSplashMode(permanent_state* PermState,
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
         Update(Mode->SplashImg + I, 
-               &PermState->Assets, 
+               Assets, 
                RenderCommands, 
                DeltaTime);
     }
     
     Update(&Mode->SplashBlackout,
-            &PermState->Assets,
-            RenderCommands,
-            DeltaTime);
+           Assets,
+           RenderCommands,
+           DeltaTime);
         
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {

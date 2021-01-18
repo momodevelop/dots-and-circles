@@ -7,8 +7,6 @@
 #include "game_assets.h"
 #include "mm_list.h"
 
-
-// NOTE(Momo): How much do we care to make this generic and use CRTP + std::variant?
 enum game_mode_type : u32 {
     GameModeType_Splash,
     GameModeType_Main,
@@ -25,9 +23,7 @@ struct transient_state {
     b32 IsInitialized;
     
     arena Arena;
-    game_assets* Assets;
-    
-
+    game_assets* Assets; 
 };
 
 struct permanent_state {
@@ -40,8 +36,6 @@ struct permanent_state {
         struct game_mode_main* MainMode;
         struct game_mode_sandbox* SandboxMode;
     };
-    
-    game_assets Assets;
     
     arena MainArena;
     arena ModeArena;

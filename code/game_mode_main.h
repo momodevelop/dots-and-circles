@@ -176,7 +176,9 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
 	
 
 static inline void 
-InitMainMode(permanent_state* PermState) {
+InitMainMode(permanent_state* PermState,
+             transient_state* TranState) 
+{
     game_mode_main* Mode = PermState->MainMode;
 
     Mode->Arena = SubArena(&PermState->ModeArena, Remaining(PermState->ModeArena));
@@ -185,8 +187,8 @@ InitMainMode(permanent_state* PermState) {
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
 
-    auto* Assets = &PermState->Assets;
-    auto* Player = &Mode->Player;
+    game_assets* Assets = TranState->Assets;
+    player* Player = &Mode->Player;
     Player->Speed = 300.f;
     Player->DotImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
     Player->CircleImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerCircle;
@@ -211,7 +213,7 @@ InitMainMode(permanent_state* PermState) {
 
 static inline void
 UpdateMainMode(permanent_state* PermState, 
-               transient_state* TransState,
+               transient_state* TranState,
                mailbox* RenderCommands, 
                input* Input,
                f32 DeltaTime) 
@@ -226,8 +228,8 @@ UpdateMainMode(permanent_state* PermState,
             )
     );
     
-    auto* Assets = &PermState->Assets;
-    auto* Player = &Mode->Player;
+    game_assets* Assets = TranState->Assets;
+    player* Player = &Mode->Player;
     
     // NOTE(Momo): Input
     {

@@ -1,15 +1,8 @@
-
-[] Cleanup
-    [] Remove aabb
-    [] String Format
+[] Clean game exit
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)
 [] Animation?
-[] Hot Swapping code
-    [] Reload every frame 
-[] Quaternion
+[] Quaternions?
 [] Profiling? 
 [] Introspection?
-[] Consider making link texture a platform function?
-[] Flip atlas UV to start from bottom left
