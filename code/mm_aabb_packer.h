@@ -5,20 +5,20 @@
 #include "mm_core.h"
 
 
-enum ap_sort_type {
-    MmrpSort_Width,
-    MmrpSort_Height,
-    MmrpSort_Area,
-    MmrpSort_Perimeter,
-    MmrpSort_Pathological,
-    MmrpSort_BiggerSide,
+enum aabb_packer_sort_type {
+    AabbPackerSortType_Width,
+    AabbPackerSortType_Height,
+    AabbPackerSortType_Area,
+    AabbPackerSortType_Perimeter,
+    AabbPackerSortType_Pathological,
+    AabbPackerSortType_BiggerSide,
 };
 
-struct ap_node {
+struct aabb_packer_node {
     u32 X, Y, W, H;
 };
 
-struct ap_aabb {
+struct aabb_packer_aabb {
     // NOTE(Momo): Input
     u32 W, H; 
     
@@ -29,17 +29,17 @@ struct ap_aabb {
     u32 X, Y;
 };
 
-struct ap_context {
+struct aabb_packer {
     u32 Width;
     u32 Height;
-    ap_node* Nodes;
+    aabb_packer_node* Nodes;
     usize NodeCount;
 };
 
-static inline ap_context
-ap_CreateAabbPacker(u32 Width, u32 Height, ap_node* Nodes, usize NodeCount) 
+static inline aabb_packer
+AabbPacker(u32 Width, u32 Height, aabb_packer_node* Nodes, usize NodeCount) 
 {
-    ap_context Ret = {};
+    aabb_packer Ret = {};
     Ret.Width = Width;
     Ret.Height = Height;
     Ret.Nodes = Nodes;
@@ -49,51 +49,51 @@ ap_CreateAabbPacker(u32 Width, u32 Height, ap_node* Nodes, usize NodeCount)
 }
 
 static inline i32 
-ap__SortWidth(const void* Lhs, const void* Rhs) {
-    auto L = (*(ap_aabb*)(Lhs));
-    auto R = (*(ap_aabb*)(Rhs));
+__AabbPacker_SortWidth(const void* Lhs, const void* Rhs) {
+    auto L = (*(aabb_packer_aabb*)(Lhs));
+    auto R = (*(aabb_packer_aabb*)(Rhs));
     return R.W - L.W ;
 }
 
 
 static inline i32 
-ap__SortHeight(const void* Lhs, const void* Rhs) {
-    auto L = (*(ap_aabb*)(Lhs));
-    auto R = (*(ap_aabb*)(Rhs));
+__AabbPacker_SortHeight(const void* Lhs, const void* Rhs) {
+    auto L = (*(aabb_packer_aabb*)(Lhs));
+    auto R = (*(aabb_packer_aabb*)(Rhs));
     return R.H - L.H;
 }
 
 static inline i32 
-ap__SortPerimeter(const void* Lhs, const void* Rhs) {
-    auto L = (*(ap_aabb*)(Lhs));
-    auto R = (*(ap_aabb*)(Rhs));
+__AabbPacker_SortPerimeter(const void* Lhs, const void* Rhs) {
+    auto L = (*(aabb_packer_aabb*)(Lhs));
+    auto R = (*(aabb_packer_aabb*)(Rhs));
     auto LhsPerimeter = L.W + L.H;
     auto RhsPerimeter = R.W + R.H;
     return RhsPerimeter - LhsPerimeter;
 }
 
 static inline i32 
-ap__SortArea(const void* Lhs, const void* Rhs) {
-    auto L = (*(ap_aabb*)(Lhs));
-    auto R = (*(ap_aabb*)(Rhs));
+__AabbPacker_SortArea(const void* Lhs, const void* Rhs) {
+    auto L = (*(aabb_packer_aabb*)(Lhs));
+    auto R = (*(aabb_packer_aabb*)(Rhs));
     auto LhsArea = L.W * L.H;
     auto RhsArea = R.W * R.H;
     return  RhsArea - LhsArea;
 }
 
 static inline i32
-ap__SortBiggerSide(const void* Lhs, const void* Rhs) {
-    auto L = (*(ap_aabb*)(Lhs));
-    auto R = (*(ap_aabb*)(Rhs));
+__AabbPacker_SortBiggerSide(const void* Lhs, const void* Rhs) {
+    auto L = (*(aabb_packer_aabb*)(Lhs));
+    auto R = (*(aabb_packer_aabb*)(Rhs));
     auto LhsBiggerSide = Maximum(L.W, L.H);
     auto RhsBiggerSide = Maximum(R.W, R.H);
     return RhsBiggerSide - LhsBiggerSide;
 }
 
 static inline i32
-ap__SortPathological(const void* Lhs, const void* Rhs) {
-    auto L = (*(ap_aabb*)(Lhs));
-    auto R = (*(ap_aabb*)(Rhs));
+__AabbPacker_SortPathological(const void* Lhs, const void* Rhs) {
+    auto L = (*(aabb_packer_aabb*)(Lhs));
+    auto R = (*(aabb_packer_aabb*)(Rhs));
     auto LhsMultipler = Maximum(L.W, L.H)/Minimum(L.W, L.H) * L.W * L.H;
     auto RhsMultipler = Maximum(R.W, R.H)/Minimum(R.W, R.H) * R.W * R.H;
     return RhsMultipler - LhsMultipler;
@@ -101,22 +101,22 @@ ap__SortPathological(const void* Lhs, const void* Rhs) {
 
 
 static inline void 
-ap__Sort(ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortType) {
+__AabbPacker_Sort(aabb_packer_aabb* Aabbs, usize AabbCount, aabb_packer_sort_type SortType) {
     switch(SortType) {
-        case MmrpSort_Width: {
-            qsort(Aabbs, AabbCount, sizeof(ap_aabb), ap__SortWidth);
+        case AabbPackerSortType_Width: {
+            qsort(Aabbs, AabbCount, sizeof(aabb_packer_aabb), __AabbPacker_SortWidth);
         } break;
-        case MmrpSort_Height: {
-            qsort(Aabbs, AabbCount, sizeof(ap_aabb), ap__SortHeight);
+        case AabbPackerSortType_Height: {
+            qsort(Aabbs, AabbCount, sizeof(aabb_packer_aabb), __AabbPacker_SortHeight);
         } break;
-        case MmrpSort_Area: {
-            qsort(Aabbs, AabbCount, sizeof(ap_aabb), ap__SortArea);
+        case AabbPackerSortType_Area: {
+            qsort(Aabbs, AabbCount, sizeof(aabb_packer_aabb), __AabbPacker_SortArea);
         } break;
-        case MmrpSort_Perimeter: {
-            qsort(Aabbs, AabbCount, sizeof(ap_aabb), ap__SortPerimeter);
+        case AabbPackerSortType_Perimeter: {
+            qsort(Aabbs, AabbCount, sizeof(aabb_packer_aabb), __AabbPacker_SortPerimeter);
         } break;
-        case MmrpSort_Pathological: {
-            qsort(Aabbs, AabbCount, sizeof(ap_aabb), ap__SortPathological);
+        case AabbPackerSortType_Pathological: {
+            qsort(Aabbs, AabbCount, sizeof(aabb_packer_aabb), __AabbPacker_SortPathological);
         } break;
         default: {
             Assert(false);
@@ -128,9 +128,9 @@ ap__Sort(ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortType) {
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b32
-ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortType = MmrpSort_Area) 
+Pack(aabb_packer* Context, aabb_packer_aabb* Aabbs, usize AabbCount, aabb_packer_sort_type SortType = __AabbPacker_SortArea) 
 {
-    ap__Sort(Aabbs, AabbCount, SortType);
+    __AabbPacker_Sort(Aabbs, AabbCount, SortType);
     
     usize CurrentNodeCount = 0;
     Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };
@@ -143,7 +143,7 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
         {
             for (usize  j = 0; j < ChosenSpaceIndex ; ++j ) {
                 usize Index = ChosenSpaceIndex - j - 1;
-                ap_node Space = Context->Nodes[Index];
+                aabb_packer_node Space = Context->Nodes[Index];
                 // NOTE(Momo): Check if the image fits
                 if (Aabb.W <= Space.W && Aabb.H <= Space.H) {
                     ChosenSpaceIndex = Index;
@@ -159,7 +159,7 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
         }
         
         // NOTE(Momo): Swap and pop the chosen space
-        ap_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
+        aabb_packer_node ChosenSpace = Context->Nodes[ChosenSpaceIndex];
         if (CurrentNodeCount > 0) {
             Context->Nodes[ChosenSpaceIndex] = Context->Nodes[CurrentNodeCount-1];
             --CurrentNodeCount;
@@ -168,7 +168,7 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
         // NOTE(Momo): Split if not perfect fit
         if (ChosenSpace.W != Aabb.W && ChosenSpace.H == Aabb.H) {
             // Split right
-            ap_node SplitSpaceRight = {
+            aabb_packer_node SplitSpaceRight = {
                 ChosenSpace.X + Aabb.W,
                 ChosenSpace.Y,
                 ChosenSpace.W - Aabb.W,
@@ -178,7 +178,7 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
         }
         else if (ChosenSpace.W == Aabb.W && ChosenSpace.H != Aabb.H) {
             // Split down
-            ap_node SplitSpaceDown = {
+            aabb_packer_node SplitSpaceDown = {
                 ChosenSpace.X,
                 ChosenSpace.Y + Aabb.H,
                 ChosenSpace.W,
@@ -188,7 +188,7 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
         }
         else if (ChosenSpace.W != Aabb.W && ChosenSpace.H != Aabb.H) {
             // Split right
-            ap_node SplitSpaceRight = {
+            aabb_packer_node SplitSpaceRight = {
                 ChosenSpace.X + Aabb.W,
                 ChosenSpace.Y,
                 ChosenSpace.W - Aabb.W,
@@ -196,7 +196,7 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
             };
             
             // Split down
-            ap_node SplitSpaceDown = {
+            aabb_packer_node SplitSpaceDown = {
                 ChosenSpace.X,
                 ChosenSpace.Y + Aabb.H,
                 ChosenSpace.W,
@@ -225,4 +225,4 @@ ap_Pack(ap_context* Context, ap_aabb* Aabbs, usize AabbCount, ap_sort_type SortT
     return true;
 }
 
-#endif //RYOJI_Aabb_packer_H
+#endif

@@ -3,7 +3,7 @@
 set Path=%cd%\bin\;%Path%
 set build_dir=%cd%\build\
 
-mkdir -p %build_dir%
+if not exist "%build_dir%" mkdir %build_dir%
 
 pushd code
 start momovim .

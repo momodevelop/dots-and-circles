@@ -3,7 +3,7 @@
 #include "mm_aabb_packer.h"
 
 static inline aabb2u
-Aabb2u(ap_aabb Aabb) {
+Aabb2u(aabb_packer_aabb Aabb) {
 	return { 
         Aabb.X, 
         Aabb.Y, 
@@ -75,7 +75,7 @@ struct atlas_context_font {
 
 
 static inline void  
-Init(ap_aabb* Aabb, atlas_context_image* Context){
+Init(aabb_packer_aabb* Aabb, atlas_context_image* Context){
     i32 W, H, C;
     stbi_info(Context->Filename, &W, &H, &C);
     Aabb->W = (u32)W;
@@ -84,7 +84,7 @@ Init(ap_aabb* Aabb, atlas_context_image* Context){
 }
 
 static inline void
-Init(ap_aabb* Aabb, atlas_context_font* Context){
+Init(aabb_packer_aabb* Aabb, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
     stbtt_GetCodepointTextureBox(&Context->LoadedFont.Info, 
 			Context->Codepoint, 
@@ -100,7 +100,7 @@ Init(ap_aabb* Aabb, atlas_context_font* Context){
 
 static inline void 
 WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                      u8* TextureMemory, ap_aabb TextureAabb) 
+                      u8* TextureMemory, aabb_packer_aabb TextureAabb) 
 {
     i32 j = 0;
     for (u32 y = TextureAabb.Y; y < TextureAabb.Y + TextureAabb.H; ++y) {
@@ -116,7 +116,7 @@ WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-GenerateAtlas(const ap_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
+GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)malloc(AtlasSize);
     
@@ -204,7 +204,7 @@ int main() {
 
     constexpr usize TotalAabbs = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
-    ap_aabb PackedAabbs[TotalAabbs];
+    aabb_packer_aabb PackedAabbs[TotalAabbs];
        usize PackedAabbCount = 0;
     {
         for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
@@ -228,9 +228,9 @@ int main() {
     {
         constexpr usize NodeCount = ArrayCount(PackedAabbs) + 1;
         
-        ap_node AabbPackNodes[NodeCount];
-        ap_context AabbPackContext = ap_CreateAabbPacker(AtlasWidth, AtlasHeight, AabbPackNodes, NodeCount);
-        if (!ap_Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, MmrpSort_Height)) {
+        aabb_packer_node AabbPackNodes[NodeCount];
+        aabb_packer AabbPackContext = AabbPacker(AtlasWidth, AtlasHeight, AabbPackNodes, NodeCount);
+        if (!Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, AabbPackerSortType_Height)) {
             printf("Failed to generate texture\n");
             return 1;
         }
