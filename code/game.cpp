@@ -102,6 +102,7 @@ GameUpdateFunc(GameUpdate)
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
         PermState->IsInitialized = true;
+        PermState->IsRunning = true;
 
         // NOTE(Momo): Set design resolution for game
         PushSetDesignResolution(RenderCommands, 
@@ -182,5 +183,7 @@ GameUpdateFunc(GameUpdate)
 
     // Render Console
     Render(&PermState->Console, RenderCommands, TranState->Assets);
+
+    return PermState->IsRunning;
 }
 

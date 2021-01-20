@@ -28,6 +28,8 @@ struct transient_state {
 
 struct permanent_state {
     b32 IsInitialized;
+    b32 IsRunning;
+    b32 IsShowInfo;
 
     game_mode_type CurrentGameMode;
     game_mode_type NextGameMode;
@@ -40,7 +42,6 @@ struct permanent_state {
     arena MainArena;
     arena ModeArena;
 
-    b32 IsShowInfo;
     game_console Console;
 
 

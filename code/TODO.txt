@@ -1,5 +1,4 @@
 [] Clean game exit
-[] Hot reload when asset file changes
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)

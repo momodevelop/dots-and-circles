@@ -111,14 +111,11 @@ typedef PlatformOpenAssetFileFunc(platform_open_asset_file);
 #define PlatformCloseFileFunc(Name) void Name(platform_file_handle* Handle)
 typedef PlatformCloseFileFunc(platform_close_file);
 
-#define PlatformReadFileFunc2(Name) void Name(platform_file_handle* Handle, usize Offset, usize Size, void* Dest)
-typedef PlatformReadFileFunc2(platform_read_file2);
+#define PlatformReadFileFunc(Name) void Name(platform_file_handle* Handle, usize Offset, usize Size, void* Dest)
+typedef PlatformReadFileFunc(platform_read_file);
 
 #define PlatformGetFileSizeFunc(Name) u32 Name(const char* Path)
 typedef PlatformGetFileSizeFunc(platform_get_file_size);
-
-#define PlatformReadFileFunc(Name) b32 Name(void* Dest, u32 DestSize, const char* Path)
-typedef PlatformReadFileFunc(platform_read_file);
 
 #define PlatformLogFileErrorFunc(Name) void Name(platform_file_handle* Handle)
 typedef PlatformLogFileErrorFunc(platform_log_file_error);
@@ -133,13 +130,12 @@ typedef PlatformClearTexturesFunc(platform_clear_textures);
 struct platform_api {
     platform_log* Log;
     platform_get_file_size* GetFileSize;
-    platform_read_file* ReadFile;
     platform_add_texture* AddTexture;
     platform_clear_textures* ClearTextures;
     platform_open_asset_file* OpenAssetFile;
     platform_close_file* CloseFile;
     platform_log_file_error* LogFileError;
-    platform_read_file2* ReadFile2;
+    platform_read_file* ReadFile;
 };
 
 
@@ -153,12 +149,13 @@ struct game_memory {
     usize TransientMemorySize;
 };
 
-// NOTE(Momo): Function typedefs and helpers
-#define GameUpdateFunc(Name) void Name(game_memory* GameMemory, \
-                                       platform_api* Platform, \
-                                       mailbox* RenderCommands, \
-                                       input* Input, \
-                                       f32 DeltaTime)
+// Game function typedefs
+// Returns true if still running, false if need to quit.
+#define GameUpdateFunc(Name) b32 Name(game_memory* GameMemory, \
+                                      platform_api* Platform, \
+                                      mailbox* RenderCommands, \
+                                      input* Input, \
+                                      f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
 
 

@@ -899,7 +899,7 @@ PlatformClearTexturesFunc(Win32ClearTextures) {
 }
 
 static inline 
-PlatformReadFileFunc2(Win32ReadFile2) {
+PlatformReadFileFunc(Win32ReadFile) {
     if (Handle->Error) {
         return;
     }
@@ -919,47 +919,6 @@ PlatformReadFileFunc2(Win32ReadFile2) {
     else {
         Handle->Error = PlatformFileError_ReadFileFailed; 
     }
-}
-
-static inline
-PlatformReadFileFunc(Win32ReadFile) {
-    HANDLE FileHandle = CreateFileA(Path, 
-                                    GENERIC_READ, 
-                                    FILE_SHARE_READ,
-                                    0,
-                                    OPEN_EXISTING,
-                                    0,
-                                    0);
-    Defer { CloseHandle(FileHandle); };
-
-    if(FileHandle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32ReadFile] Cannot open file: %s\n", Path);
-        return false;
-    } else {
-        LARGE_INTEGER FileSize;
-        if (GetFileSizeEx(FileHandle, &FileSize)) {
-            u32 FileSize32 = SafeCastU64ToU32(FileSize.QuadPart);
-            if (FileSize.QuadPart > DestSize) {
-                Win32Log("[Win32ReadFile] DestSize too smol for file: %s!\n", Path); 
-                return false;
-            }
-
-            DWORD BytesRead;
-            if(ReadFile(FileHandle, Dest, FileSize32, &BytesRead, 0) &&
-               FileSize.QuadPart == BytesRead) {
-                return true;
-            }
-            else {
-                Win32Log("[Win32ReadFile] Cannot read file: %s!\n", Path);
-                return false;
-            }
-
-        }
-        else {
-            Win32Log("[Win32ReadFile] Cannot get file size: %s!\n", Path);
-            return false;
-        }
-    }    
 }
 
 static inline
@@ -999,7 +958,7 @@ Win32LoadPlatformApi() {
     Ret.AddTexture = Win32AddTexture;
     Ret.OpenAssetFile = Win32OpenAssetFile;
     Ret.CloseFile = Win32CloseFile;
-    Ret.ReadFile2 = Win32ReadFile2;
+
     return Ret;
 }
 
@@ -1184,7 +1143,7 @@ WinMain(HINSTANCE Instance,
                 }
             }
             while(TargetSecsPerFrame > 
-                    Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter()));
+                  Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter()));
 
         }
         

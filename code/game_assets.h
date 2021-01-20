@@ -113,10 +113,10 @@ Read(platform_file_handle* File,
     if(!Ret) {
         return nullptr; 
     }
-    Platform->ReadFile2(File,
-                        (*FileOffset),
-                        BlockSize,
-                        Ret);
+    Platform->ReadFile(File,
+                       (*FileOffset),
+                       BlockSize,
+                       Ret);
     (*FileOffset) += BlockSize;
     return Ret;
 }
@@ -175,6 +175,7 @@ AllocateAssets(arena* Arena,
 
     usize CurFileOffset = 0;
     u32 FileEntryCount = 0;
+    
     // Check file signaure
     {        
         scratch Scratch = BeginScratch(Arena);
