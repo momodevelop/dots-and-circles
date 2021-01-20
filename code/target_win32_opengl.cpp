@@ -229,7 +229,7 @@ Win32GameCode(const char* SrcFileName,
 }
 
 static inline void
-Win32LoadGameCode(win32_game_code* Code) 
+Load(win32_game_code* Code) 
 {
     WIN32_FILE_ATTRIBUTE_DATA Ignored; 
     if(!GetFileAttributesEx(Code->LockFileName, 
@@ -248,7 +248,7 @@ Win32LoadGameCode(win32_game_code* Code)
 }
 
 static inline void 
-Win32UnloadGameCode(win32_game_code* Code) {
+Unload(win32_game_code* Code) {
     if (Code->Dll) {
         FreeLibrary(Code->Dll);
         Code->Dll = 0;
@@ -257,19 +257,23 @@ Win32UnloadGameCode(win32_game_code* Code) {
     Code->GameUpdate = 0;
 }
 
-static inline void
-Win32ReloadGameCodeIfOutdated(win32_game_code* Code) 
-{
+static inline b32
+IsOutdated(win32_game_code* Code) {    
     // Check last modified date
     LARGE_INTEGER CurrentLastWriteTime = 
         FiletimeToLargeInt(Win32GetLastWriteTime(Code->SrcFileName)); 
     LARGE_INTEGER GameCodeLastWriteTime =
         FiletimeToLargeInt(Code->LastWriteTime);
 
-    if (CurrentLastWriteTime.QuadPart > GameCodeLastWriteTime.QuadPart) {
-        Win32UnloadGameCode(Code);
-        Win32LoadGameCode(Code);
-    }
+    return (CurrentLastWriteTime.QuadPart > GameCodeLastWriteTime.QuadPart); 
+}
+
+
+static inline void
+Reload(win32_game_code* Code) 
+{
+    Unload(Code);
+    Load(Code);
 }
 
 
@@ -1149,7 +1153,9 @@ WinMain(HINSTANCE Instance,
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (Global_Win32State->IsRunning) {
-        Win32ReloadGameCodeIfOutdated(&GameCode);
+        if (IsOutdated(&GameCode)) {
+            Reload(&GameCode);
+        }
 
         Update(&GameInput);
         Win32ProcessMessages(Window, 
