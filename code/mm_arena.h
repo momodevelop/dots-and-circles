@@ -30,7 +30,7 @@ Remaining(arena Arena) {
 static inline void* 
 PushBlock(arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
     Assert(Size && Alignment);
-    u8 Adjust = AlignForwardDiff(Arena->Memory, Alignment);
+    u8 Adjust = AlignForwardDiff((u8*)Arena->Memory + Arena->Used, Alignment);
     
     // if not enough space, return 
     u8* MemoryEnd = (u8*)Arena->Memory + Arena->Capacity;

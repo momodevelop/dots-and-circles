@@ -128,7 +128,10 @@ __AabbPacker_Sort(aabb_packer_aabb* Aabbs, usize AabbCount, aabb_packer_sort_typ
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b32
-Pack(aabb_packer* Context, aabb_packer_aabb* Aabbs, usize AabbCount, aabb_packer_sort_type SortType = __AabbPacker_SortArea) 
+Pack(aabb_packer* Context, 
+     aabb_packer_aabb* Aabbs, 
+     usize AabbCount, 
+     aabb_packer_sort_type SortType) 
 {
     __AabbPacker_Sort(Aabbs, AabbCount, SortType);
     

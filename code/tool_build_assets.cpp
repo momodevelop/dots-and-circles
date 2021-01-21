@@ -2,6 +2,8 @@
 #include "mm_bitwise.h"
 #include "mm_aabb_packer.h"
 
+#define GENERATE_TEST_PNG 1
+
 static inline aabb2u
 Aabb2u(aabb_packer_aabb Aabb) {
 	return { 
@@ -139,10 +141,10 @@ GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Hei
                 
                 i32 W, H;
                 u8* FontTextureOneCh = stbtt_GetCodepointTexture(&Context->LoadedFont.Info, 
-                                                               Context->RasterScale,
-                                                               Context->RasterScale, 
-                                                               Context->Codepoint, 
-                                                               &W, &H, nullptr, nullptr);
+                                                                 Context->RasterScale,
+                                                                 Context->RasterScale, 
+                                                                 Context->Codepoint, 
+                                                                 &W, &H, nullptr, nullptr);
                 Defer { stbtt_FreeTexture( FontTextureOneCh, nullptr ); };
                 
                 u32 TextureDimensions = (u32)(W * H);
@@ -168,7 +170,7 @@ GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Hei
 }
 
 int main() {
-    printf("tool_build_assets start!\n");
+    printf("[Build Assets] Start!\n");
 
     maybe<loaded_font> LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
     if (!LoadedFont) {
@@ -231,17 +233,18 @@ int main() {
         aabb_packer_node AabbPackNodes[NodeCount];
         aabb_packer AabbPackContext = AabbPacker(AtlasWidth, AtlasHeight, AabbPackNodes, NodeCount);
         if (!Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, AabbPackerSortType_Height)) {
-            printf("Failed to generate texture\n");
+            printf("[Build Assets] Failed to generate texture\n");
             return 1;
         }
     }
    
     // NOTE(Momo): Generate atlas from rects
     u8* AtlasTexture = GenerateAtlas(PackedAabbs, PackedAabbCount, AtlasWidth, AtlasHeight);
-#if 1
+#if GENERATE_TEST_PNG 
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
-    printf("Written test atlas: test.png\n");
+    printf("[Build Assets] Written test atlas: test.png\n");
 #endif
+    printf("[Build Assets] Atlas generated\n");
     
                     
     ab_context AssetBuilder_ = {};
@@ -307,12 +310,11 @@ int main() {
             }
         }
         
-        
-        
     }
     End(AssetBuilder);
+    printf("[Build Assets] Assets generated\n");
     
-    printf("tool_build_assets done!\n");
+    printf("[Build Assets] End!\n");
     
     return 0;
     

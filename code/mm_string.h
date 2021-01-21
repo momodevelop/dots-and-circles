@@ -44,20 +44,28 @@ SubString(string Src, range<usize> Range) {
     return SubArray(Src, Range);
 }
 
-// Maybe this can be moved to Array?
-static inline dlink_list<string>
+static inline array<string>
 DelimitSplit(string Str, arena* Arena, char Delimiter) {
-    dlink_list<string> Ret ={}; 
+    // We are having faith that the arena given is a bump arena.
+    // i.e. strings that are push into the arena will be contiguous 
+    // in memory, and thus convertible to an array<string> struct.
+    array<string> Ret ={}; 
     range<usize> Range = {};
 
-    while (Range.End != Str.Count) {
+    for (;Range.End != Str.Count;) {
         Range.End = Find(Str, ' ', Range.Start); 
+        
 
-        auto* Link = PushStruct<dlink<string>>(Arena);
-        (*Link) = DLink<string>(SubString(Str, Range));
-        PushBack(&Ret, Link);
+        string* Link = PushStruct<string>(Arena);
+        Assert(Link);
+        (*Link) = SubString(Str, Range);
+
+        if (Ret.Elements == nullptr) {
+            Ret.Elements = Link;            
+        }
  
         Range.Start = Range.End + 1;
+        ++Ret.Count;
     }
     return Ret;
 }

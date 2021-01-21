@@ -3,7 +3,7 @@
 
 // Includes that I sadly cannot live without
 #include <cstdint>
-#define REFACTOR 1
+#define REFACTOR 0
 
 // Types
 using c8 = char;

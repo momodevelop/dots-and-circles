@@ -15,7 +15,6 @@ SET CommonCompilerFlags=-DSLOW -DINTERNAL  %CommonCompilerFlags%
 SET CommonLinkerFlags=-incremental:no -opt:ref
 SET CommonLinkerFlags=user32.lib opengl32.lib gdi32.lib winmm.lib %CommonLinkerFlags%
 
-
 pushd %BuildDir%
 
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate

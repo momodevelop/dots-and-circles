@@ -20,7 +20,7 @@ CmdJump(void * Context, string Arguments) {
     auto Scratch = BeginScratch(&PermState->ModeArena);
     Defer {  EndScratch(&Scratch); };
 
-    dlink_list<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
+    array<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
         PushInfo(&PermState->Console, 
