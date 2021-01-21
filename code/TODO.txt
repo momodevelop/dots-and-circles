@@ -1,8 +1,7 @@
-[] Clean game exit
+[] Basic  profiling
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)
 [] Animation?
 [] Quaternions?
-[] Profiling? 
 [] Introspection?

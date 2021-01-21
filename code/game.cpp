@@ -17,10 +17,9 @@ static inline void
 CmdJump(void * Context, string Arguments) {
     auto* PermState = (permanent_state*)Context;
     
-    auto Scratch = BeginScratch(&PermState->ModeArena);
-    Defer {  EndScratch(&Scratch); };
+    scratch Scratchpad = Scratch(&PermState->ModeArena);
 
-    array<string> ArgList = DelimitSplit(Arguments, Scratch, ' ');
+    array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
         PushInfo(&PermState->Console, 

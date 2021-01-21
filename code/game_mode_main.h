@@ -7,6 +7,15 @@
 #include "mm_list.h"
 #include "game.h"
 
+// Rendering layers
+// TODO: Organize this better please. 
+// Maybe a map or array or something.
+constexpr static f32 ZLayPlayer =  0.f;
+constexpr static f32 ZLayDotBullet = 10.f;
+constexpr static f32 ZLayCircleBullet = 20.f;
+constexpr static f32 ZLayEnemy = 30.f;
+constexpr static f32 ZLayDebug = 40.f;
+    
 enum mood_type : u32 {
     MoodType_Dot,
     MoodType_Circle,
@@ -210,93 +219,31 @@ InitMainMode(permanent_state* PermState,
 
 }
 
+static inline void 
+UpdatePlayer(game_mode_main* Mode, 
+             f32 DeltaTime) 
+{
+    player* Player = &Mode->Player; 
+    Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
+            Player->DotImageAlphaTarget, 
+            Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
+    
+    Player->DotImageTransitionTimer += DeltaTime;
+    Player->DotImageTransitionTimer = 
+        Clamp(Player->DotImageTransitionTimer, 
+              0.f, 
+              Player->DotImageTransitionDuration);
+    
+    Player->Position += Player->Direction * Player->Speed * DeltaTime;
+}
 
 static inline void
-UpdateMainMode(permanent_state* PermState, 
-               transient_state* TranState,
-               mailbox* RenderCommands, 
-               input* Input,
-               f32 DeltaTime) 
+UpdateBullet(game_mode_main* Mode,
+             f32 DeltaTime) 
 {
-    game_mode_main* Mode = PermState->MainMode;
-    PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
-    PushOrthoCamera(RenderCommands, 
-            v3f{}, 
-            CenteredAabb( 
-                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
-                v3f{ 0.5f, 0.5f, 0.5f }
-            )
-    );
-    
-    game_assets* Assets = TranState->Assets;
-    player* Player = &Mode->Player;
-    
-    // NOTE(Momo): Input
-    {
-        v2f Direction = {};
-        b8 IsMovementButtonDown = false;
-        if(IsDown(Input->ButtonLeft)) {
-            Direction.X = -1.f;
-            IsMovementButtonDown = true;
-        };
-        
-        if(IsDown(Input->ButtonRight)) {
-            Direction.X = 1.f;
-            IsMovementButtonDown = true;
-        }
-        
-        if(IsDown(Input->ButtonUp)) {
-            Direction.Y = 1.f;
-            IsMovementButtonDown = true;
-        }
-        if(IsDown(Input->ButtonDown)) {
-            Direction.Y = -1.f;
-            IsMovementButtonDown = true;
-        }
-        
-        if (IsMovementButtonDown) 
-            Player->Direction = Normalize(Direction);
-        else {
-            Player->Direction = {};
-        }
-        
-        
-        // NOTE(Momo): Absorb Mode Switch
-        if(IsPoked(Input->ButtonSwitch)) {
-            Player->MoodType = (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
-            
-            switch(Player->MoodType) {
-                case MoodType_Dot: {
-                    Player->DotImageAlphaTarget = 1.f;
-                } break;
-                case MoodType_Circle: {
-                    Player->DotImageAlphaTarget = 0.f;
-                }break;
-                default:
-                    Assert(false);
-            }
-            Player->DotImageTransitionTimer = 0.f;
-        }
-    }
-    
-    // NOTE(Momo): Player Update
-    {
-        
-        Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
-                Player->DotImageAlphaTarget, 
-                Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
-        
-        Player->DotImageTransitionTimer += DeltaTime;
-        Player->DotImageTransitionTimer = Clamp(Player->DotImageTransitionTimer, 0.f, Player->DotImageTransitionDuration);
-        
-        Player->Position += Player->Direction * Player->Speed * DeltaTime;
-    }
- 
-
-	// Bullet Update
-	for(usize I = 0; I < Mode->Bullets.Count;) {
+    for(usize I = 0; I < Mode->Bullets.Count;) {
         bullet* Bullet = Mode->Bullets + I;
-		Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
+        Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
         // Out of bounds self-destruction
         if (Bullet->Position.X <= -Global_DesignWidth * 0.5f - Bullet->HitCircle.Radius || 
             Bullet->Position.X >= Global_DesignWidth * 0.5f + Bullet->HitCircle.Radius ||
@@ -308,66 +255,23 @@ UpdateMainMode(permanent_state* PermState,
         ++I;
     }
 
+}
 
-    // Wave logic Update
-    {
-        if (Mode->Wave.IsDone) {
-            // TODO: Random wave type
-            Mode->Wave.Type = WavePatternType_SpawnNForDuration;
-            // Initialize the wave
-            switch (Mode->Wave.Type) {
-                case WavePatternType_SpawnNForDuration: {
-                    auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
-                    Pattern->EnemiesPerSpawn = 1;
-                    Pattern->SpawnTimer = 0.f;
-                    Pattern->SpawnDuration = 3.f;
-                    Pattern->Timer = 0.f;
-                    Pattern->Duration = 30.f;
-                } break;
-                default: 
-                    Assert(false);
-            }
-            Mode->Wave.IsDone = false;
-        }
-        else {
-            // Update the wave.
-            switch(Mode->Wave.Type) {
-                case WavePatternType_SpawnNForDuration: {
-                    auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
-                    Pattern->SpawnTimer += DeltaTime;
-                    Pattern->Timer += DeltaTime;
-                    if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
-                        v2f Pos = {
-                            Bilateral(&Mode->Rng) * Global_DesignWidth * 0.5f,
-                            Bilateral(&Mode->Rng) * Global_DesignHeight * 0.5f
-                        };
-                        auto MoodType = (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
-                        SpawnEnemy(Mode, 
-                                Assets,
-                                Pos,
-                                MoodType,
-                                EnemyFiringPatternType_Homing,
-                                EnemyMovementType_Static,
-                                0.5f, 
-                                10.f);
+static inline void 
+UpdateWave(game_mode_main* Mode, 
+           f32 DeltaTime) 
+{
 
-                        Pattern->SpawnTimer = 0.f;
-                    }
-                    
-                    if (Pattern->Timer >= Pattern->Duration) {
-                        Mode->Wave.IsDone = true;
-                    }
 
-                } break;
-                default:
-                    Assert(false);
-            }
-            
-        }
+}
 
-    }
 
-	// Enemy logic update
+static inline void 
+UpdateEnemies(game_mode_main* Mode,
+              game_assets* Assets,
+              f32 DeltaTime) 
+{
+    player* Player = &Mode->Player;
     for (usize I = 0; I < Mode->Enemies.Count; ++I) 
     {
         enemy* Enemy = Mode->Enemies + I;
@@ -415,61 +319,186 @@ UpdateMainMode(permanent_state* PermState,
             continue;
         }
         ++Enemy;
+
 	}
-   
-	// Collision 
-	{
-        circle2f PlayerCircle = Player->HitCircle;
-        PlayerCircle.Origin += Player->Position;
+}
 
-		// Player vs every bullet
-        for (usize I = 0; I < Mode->Bullets.Count;) 
-        {
-            bullet* Bullet = Mode->Bullets + I;
-            circle2f BulletCircle = Bullet->HitCircle;
-            BulletCircle.Origin += Bullet->Position;
+static inline void
+UpdateCollision(game_mode_main* Mode)
+{
+    player* Player = &Mode->Player;
+    circle2f PlayerCircle = Player->HitCircle;
+    PlayerCircle.Origin += Player->Position;
 
-            if (IsIntersecting(PlayerCircle, BulletCircle)) {
-                 if (Player->MoodType == Bullet->MoodType ) {
-                    SwapRemove(&Mode->Bullets, I);
-                    continue;
-                 }
-            }
-            ++I;
-		}
-	}
-
-    // Rendering Logic
-    constexpr static f32 ZLayPlayer =  0.f;
-    constexpr static f32 ZLayDotBullet = 10.f;
-    constexpr static f32 ZLayCircleBullet = 20.f;
-    constexpr static f32 ZLayEnemy = 30.f;
-    constexpr static f32 ZLayDebug = 40.f;
-    
-    // Player Rendering
+    // Player vs every bullet
+    for (usize I = 0; I < Mode->Bullets.Count;) 
     {
-        m44f S = M44fScale(V3f(Player->Size));
-        
-		v3f RenderPos = V3f(Player->Position);
-        RenderPos.Z = ZLayPlayer;
-        m44f T = M44fTranslation(RenderPos);
-        PushDrawTexturedQuad(RenderCommands, 
-                                    Color_White, 
-                                    T*S, 
-                                    GetRendererTextureHandle(Assets, Player->CircleImageAabb->TextureId),
-                                    GetAtlasUV(Assets, Player->CircleImageAabb));
+        bullet* Bullet = Mode->Bullets + I;
+        circle2f BulletCircle = Bullet->HitCircle;
+        BulletCircle.Origin += Bullet->Position;
 
-        
-		RenderPos.Z += 0.1f;
-        T = M44fTranslation(RenderPos);
-        PushDrawTexturedQuad(RenderCommands, 
-                             c4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
-                             T*S, 
-                             GetRendererTextureHandle(Assets, Player->DotImageAabb->TextureId),
-                             GetAtlasUV(Assets, Player->DotImageAabb));
+        if (IsIntersecting(PlayerCircle, BulletCircle)) {
+             if (Player->MoodType == Bullet->MoodType ) {
+                SwapRemove(&Mode->Bullets, I);
+                continue;
+             }
+        }
+        ++I;
+    }
+}
 
+static inline void
+UpdateWaves(game_mode_main* Mode, 
+           game_assets* Assets,
+           f32 DeltaTime) 
+{
+    if (Mode->Wave.IsDone) {
+        // TODO: Random wave type
+        Mode->Wave.Type = WavePatternType_SpawnNForDuration;
+        // Initialize the wave
+        switch (Mode->Wave.Type) {
+            case WavePatternType_SpawnNForDuration: {
+                auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
+                Pattern->EnemiesPerSpawn = 1;
+                Pattern->SpawnTimer = 0.f;
+                Pattern->SpawnDuration = 3.f;
+                Pattern->Timer = 0.f;
+                Pattern->Duration = 30.f;
+            } break;
+            default: 
+                Assert(false);
+        }
+        Mode->Wave.IsDone = false;
+    }
+    else {
+        // Update the wave.
+        switch(Mode->Wave.Type) {
+            case WavePatternType_SpawnNForDuration: {
+                auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
+                Pattern->SpawnTimer += DeltaTime;
+                Pattern->Timer += DeltaTime;
+                if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
+                    v2f Pos = {
+                        Bilateral(&Mode->Rng) * Global_DesignWidth * 0.5f,
+                        Bilateral(&Mode->Rng) * Global_DesignHeight * 0.5f
+                    };
+                    auto MoodType = (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
+                    SpawnEnemy(Mode, 
+                            Assets,
+                            Pos,
+                            MoodType,
+                            EnemyFiringPatternType_Homing,
+                            EnemyMovementType_Static,
+                            0.5f, 
+                            10.f);
+
+                    Pattern->SpawnTimer = 0.f;
+                }
+                
+                if (Pattern->Timer >= Pattern->Duration) {
+                    Mode->Wave.IsDone = true;
+                }
+
+            } break;
+            default:
+                Assert(false);
+        }
+        
     }
 
+}
+
+
+
+
+
+static inline void
+UpdateInput(game_mode_main* Mode,
+            input* Input)
+{
+    v2f Direction = {};
+    player* Player = &Mode->Player; 
+    b8 IsMovementButtonDown = false;
+    if(IsDown(Input->ButtonLeft)) {
+        Direction.X = -1.f;
+        IsMovementButtonDown = true;
+    };
+    
+    if(IsDown(Input->ButtonRight)) {
+        Direction.X = 1.f;
+        IsMovementButtonDown = true;
+    }
+    
+    if(IsDown(Input->ButtonUp)) {
+        Direction.Y = 1.f;
+        IsMovementButtonDown = true;
+    }
+    if(IsDown(Input->ButtonDown)) {
+        Direction.Y = -1.f;
+        IsMovementButtonDown = true;
+    }
+    
+    if (IsMovementButtonDown) 
+        Player->Direction = Normalize(Direction);
+    else {
+        Player->Direction = {};
+    }
+    
+    
+    // NOTE(Momo): Absorb Mode Switch
+    if(IsPoked(Input->ButtonSwitch)) {
+        Player->MoodType = 
+            (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
+        
+        switch(Player->MoodType) {
+            case MoodType_Dot: {
+                Player->DotImageAlphaTarget = 1.f;
+            } break;
+            case MoodType_Circle: {
+                Player->DotImageAlphaTarget = 0.f;
+            }break;
+            default:
+                Assert(false);
+        }
+        Player->DotImageTransitionTimer = 0.f;
+    }
+}
+   
+
+static inline void 
+RenderPlayer(game_mode_main* Mode,
+             game_assets* Assets,
+             mailbox* RenderCommands) 
+{
+    player* Player = &Mode->Player;
+    m44f S = M44fScale(V3f(Player->Size));
+    
+    v3f RenderPos = V3f(Player->Position);
+    RenderPos.Z = ZLayPlayer;
+    m44f T = M44fTranslation(RenderPos);
+    
+    PushDrawTexturedQuad(RenderCommands, 
+                         Color_White, 
+                         T*S,
+                         GetTexture(Assets, Player->CircleImageAabb->TextureId).Handle,
+                         GetAtlasUV(Assets, Player->CircleImageAabb));
+
+    
+    RenderPos.Z += 0.1f;
+    T = M44fTranslation(RenderPos);
+    PushDrawTexturedQuad(RenderCommands, 
+                         c4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
+                         T*S, 
+                         GetTexture(Assets, Player->DotImageAabb->TextureId).Handle,
+                         GetAtlasUV(Assets, Player->DotImageAabb));
+
+}
+
+static inline void
+RenderBullets(game_mode_main* Mode,
+              game_assets* Assets,
+              mailbox* RenderCommands) 
+{
 	// Bullet Rendering 
     f32 DotLayerOffset = 0.f;
     f32 CircleLayerOffset = 0.f;
@@ -495,15 +524,19 @@ UpdateMainMode(permanent_state* PermState,
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
-							 GetRendererTextureHandle(Assets, Bullet->ImageAabb->TextureId),
+							 GetTexture(Assets, Bullet->ImageAabb->TextureId).Handle,
 							 GetAtlasUV(Assets, Bullet->ImageAabb));
 
 
     
 	}
+}
 
-
-	// Enemy Rendering
+static inline void
+RenderEnemies(game_mode_main* Mode, 
+              game_assets* Assets,
+              mailbox* RenderCommands) 
+{
     for(usize I = 0; I < Mode->Enemies.Count; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
@@ -514,18 +547,48 @@ UpdateMainMode(permanent_state* PermState,
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
-							 GetRendererTextureHandle(Assets, Enemy->ImageAabb->TextureId),
+							 GetTexture(Assets, Enemy->ImageAabb->TextureId).Handle,
 							 GetAtlasUV(Assets, Enemy->ImageAabb));
-
 	}
+}
 
 
+static inline void
+UpdateMainMode(permanent_state* PermState, 
+               transient_state* TranState,
+               mailbox* RenderCommands, 
+               input* Input,
+               f32 DeltaTime) 
+{
+    game_mode_main* Mode = PermState->MainMode;
+    PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
+    PushOrthoCamera(RenderCommands, 
+            v3f{}, 
+            CenteredAabb( 
+                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
+                v3f{ 0.5f, 0.5f, 0.5f }
+            )
+    );
+    
+    game_assets* Assets = TranState->Assets;
+    UpdateInput(Mode, Input);
+    UpdatePlayer(Mode, DeltaTime);    
+    UpdateBullet(Mode, DeltaTime);
+    UpdateWaves(Mode, Assets, DeltaTime);
+    UpdateEnemies(Mode, Assets, DeltaTime); 
+    UpdateCollision(Mode);
 
+
+    RenderPlayer(Mode, Assets, RenderCommands);
+    RenderBullets(Mode, Assets, RenderCommands);
+    RenderEnemies(Mode, Assets, RenderCommands);
+
+
+    // TODO: We would like better debug rendering system please that is more global
     // Debug Rendering 
     {
-        scratch Scratch = BeginScratch(&Mode->Arena);
-        Defer { EndScratch(&Scratch); };
-        string_buffer Buffer = StringBuffer(Scratch, 256);
+        scratch Scratchpad = Scratch(&Mode->Arena);
+        string_buffer Buffer = StringBuffer(Scratchpad, 256);
         Push(&Buffer, String("Bullets: "));
         PushI32(&Buffer, (i32)Mode->Bullets.Count);
 

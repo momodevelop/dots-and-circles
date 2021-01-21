@@ -42,7 +42,7 @@ Update(splash_image_entity* Entity,
     PushDrawTexturedQuad(RenderCommands, 
                          Entity->Colors, 
                          T*S,  
-                        GetRendererTextureHandle(Assets, Entity->TextureHandle));
+                         GetTexture(Assets, Entity->TextureHandle).Handle);
 
 }
 

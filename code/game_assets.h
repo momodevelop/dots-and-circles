@@ -83,9 +83,9 @@ GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
 }
 
 
-static inline renderer_texture_handle
-GetRendererTextureHandle(game_assets* Assets, texture_id TextureId) {
-    return Assets->Textures[TextureId].Handle;
+static inline texture
+GetTexture(game_assets* Assets, texture_id TextureId) {
+    return Assets->Textures[TextureId];
 }
 
 
@@ -178,8 +178,7 @@ AllocateAssets(arena* Arena,
     
     // Check file signaure
     {        
-        scratch Scratch = BeginScratch(Arena);
-        Defer { EndScratch(&Scratch); };
+        scratch Scratchpad = Scratch(Arena);
         
         string Signature = String("MOMO");
         void* ReadSignature = Read(&AssetFile,
@@ -199,7 +198,7 @@ AllocateAssets(arena* Arena,
         // Get File Entry
         FileEntryCount = ReadCopy<u32>(&AssetFile,
                                        Platform,
-                                       Scratch,
+                                       Scratchpad,
                                        &CurFileOffset);
         CheckFile(AssetFile);
     }
@@ -207,13 +206,12 @@ AllocateAssets(arena* Arena,
 
     for (u32 I = 0; I < FileEntryCount; ++I) 
     {
-        scratch Scratch = BeginScratch(Arena);
-        Defer { EndScratch(&Scratch); };
+        scratch Scratchpad = Scratch(Arena);
 
         // NOTE(Momo): Read header
         auto* YuuEntry = Read<yuu_entry>(&AssetFile,
                                          Platform,
-                                         Scratch,
+                                         Scratchpad,
                                          &CurFileOffset);
         CheckPtr(YuuEntry);
         CheckFile(AssetFile);
@@ -222,7 +220,7 @@ AllocateAssets(arena* Arena,
             case AssetType_Texture: {
                 auto* YuuTexture = Read<yuu_texture>(&AssetFile, 
                                                      Platform, 
-                                                     Scratch,
+                                                     Scratchpad,
                                                      &CurFileOffset);              
 
                 CheckPtr(YuuTexture);
@@ -252,7 +250,7 @@ AllocateAssets(arena* Arena,
             case AssetType_AtlasAabb: { 
                 auto* YuuAtlasAabb = Read<yuu_atlas_aabb>(&AssetFile, 
                                                           Platform, 
-                                                          Scratch,
+                                                          Scratchpad,
                                                           &CurFileOffset);              
                 CheckPtr(YuuAtlasAabb);
                 CheckFile(AssetFile);
@@ -264,7 +262,7 @@ AllocateAssets(arena* Arena,
             case AssetType_Font: {
                 auto* YuuFont = Read<yuu_font>(&AssetFile,
                                                Platform,
-                                               Scratch,
+                                               Scratchpad,
                                                &CurFileOffset);
                 CheckPtr(YuuFont);
                 CheckFile(AssetFile);
@@ -277,7 +275,7 @@ AllocateAssets(arena* Arena,
             case AssetType_FontGlyph: {
                 auto* YuuFontGlyph = Read<yuu_font_glyph>(&AssetFile,
                                                           Platform,
-                                                          Scratch,
+                                                          Scratchpad,
                                                           &CurFileOffset);
                 CheckPtr(YuuFontGlyph);
                 CheckFile(AssetFile);
@@ -295,7 +293,7 @@ AllocateAssets(arena* Arena,
             case AssetType_FontKerning: {
                 auto* YuuFontKerning = Read<yuu_font_kerning>(&AssetFile,
                                                               Platform,
-                                                              Scratch,
+                                                              Scratchpad,
                                                               &CurFileOffset);
                 CheckPtr(YuuFontKerning);
                 CheckFile(AssetFile);

@@ -85,10 +85,20 @@ PushSiArray(arena* Arena, usize Count) {
     return (type*)PushBlock(Arena, sizeof(type) * Count, alignof(type));
 }
 
-// NOTE(Momo): temporary memory API
+// NOTE(Momo): "Temporary Memory" API
 struct scratch {
     arena* Arena;
     usize OldUsed;
+
+    scratch(arena* Arena) :
+        Arena(Arena),
+        OldUsed(Arena->Used) 
+    {
+    }
+
+    ~scratch() {
+        this->Arena->Used = this->OldUsed;
+    }
 
     // Allow conversion to arena* to use functions associated with it
     operator arena*() const { 
@@ -97,18 +107,9 @@ struct scratch {
 };
 
 static inline scratch
-BeginScratch(arena* Arena) {
-    scratch Ret;
-    Ret.Arena = Arena;
-    Ret.OldUsed = Arena->Used;
-    return Ret;
+Scratch(arena* Arena) {
+    return scratch(Arena);
 }
-
-static inline void
-EndScratch(scratch* TempMemory) {
-    TempMemory->Arena->Used = TempMemory->OldUsed;
-}
-
 
 static inline arena
 SubArena(arena* SrcArena, usize Capacity) {

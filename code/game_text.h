@@ -34,12 +34,13 @@ DrawText(mailbox* RenderCommands,
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
                              T*S*A,
-                             GetRendererTextureHandle(Assets, Glyph->TextureId),
+                             GetTexture(Assets, Glyph->TextureId).Handle,
                              GetAtlasUV(Assets, Glyph));
  
         CurPosition.X += Glyph->Advance * Size;
         if (i != String.Count - 1 ) {
-            CurPosition.X += Font->Kernings[HashCodepoint(String[i])][HashCodepoint(String[i+1])] * Size;
+            CurPosition.X += 
+                Font->Kernings[HashCodepoint(String[i])][HashCodepoint(String[i+1])] * Size;
         }
     }
     

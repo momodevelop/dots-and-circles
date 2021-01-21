@@ -961,6 +961,7 @@ Win32LoadPlatformApi() {
     return Ret;
 }
 
+
 int CALLBACK
 WinMain(HINSTANCE Instance,
         HINSTANCE PrevInstance,

@@ -48,7 +48,7 @@ DrawString(mailbox* RenderCommands,
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
                              T*S*A, 
-                             GetRendererTextureHandle(Assets, Glyph->TextureId),
+                             GetTexture(Assets, Glyph->TextureId).Handle,
                              GetAtlasUV(Assets, Glyph));
 
     
@@ -93,7 +93,7 @@ UpdateSandboxMode(permanent_state* PermState,
         PushDrawTexturedQuad(RenderCommands, 
                                     Color_White, 
                                     Transform, 
-                                    GetRendererTextureHandle(Assets, AtlasAabb->TextureId),
+                                    GetTexture(Assets, AtlasAabb->TextureId).Handle,
                                     GetAtlasUV(Assets, AtlasAabb));
 
     }
