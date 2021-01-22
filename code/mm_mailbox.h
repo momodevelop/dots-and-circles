@@ -68,7 +68,7 @@ Push(mailbox* Mailbox)
     // Allocate Entry
     u8 EntryAdjust = AlignBackwardDiff(Mailbox->EntryMemoryAt, alignof(mailbox_entry_header));
     u32 EntrySize = sizeof(mailbox_entry_header);
-    
+   
     if (Mailbox->EntryMemoryAt - EntrySize - EntryAdjust < Mailbox->DataMemoryAt + DataSize +  DataAdjust) {
         return nullptr; 
     }

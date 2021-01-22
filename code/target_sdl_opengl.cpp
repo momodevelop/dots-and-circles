@@ -132,7 +132,7 @@ SdlGlDebugCallback(GLenum source,
 
 
 
-static inline b32
+static inline b32 
 SdlCopyFile(const char* DestFilename, const char* SrcFilename) {
     SDL_RWops* DestFile = SDL_RWFromFile(DestFilename, "wb");
     SDL_RWops* SrcFile = SDL_RWFromFile(SrcFilename, "rb");

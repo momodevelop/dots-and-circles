@@ -18,6 +18,7 @@ static constexpr f32 Epsilon32  = 1.19209290E-07f;
 static constexpr f32 Tau32  = Pi32 * 2.f;
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
+
 template<typename t, usize N>
 struct vec {
     f32 Elements[N];

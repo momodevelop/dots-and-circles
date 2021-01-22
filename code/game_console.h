@@ -1,5 +1,5 @@
-#ifndef GAME_CONSOLE
-#define GAME_CONSOLE
+#ifndef __GAME_CONSOLE__
+#define __GAME_CONSOLE__
 
 #include "mm_list.h"
 #include "mm_colors.h"
