@@ -2,8 +2,9 @@
 #define GAME_H
 
 #include "game_platform.h"
-#include "game_console.h"
+#include "game_debug_console.h"
 #include "game_renderer.h"
+#include "game_debug.h"
 #include "game_assets.h"
 #include "mm_list.h"
 
@@ -24,6 +25,7 @@ struct transient_state {
     
     arena Arena;
     game_assets* Assets; 
+    debug_state* Debug;
 };
 
 struct permanent_state {
@@ -42,7 +44,7 @@ struct permanent_state {
     arena MainArena;
     arena ModeArena;
 
-    game_console Console;
+    debug_console Console;
 
 
 };

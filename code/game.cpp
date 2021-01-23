@@ -3,7 +3,7 @@
 #include "game_mode_splash.h"
 #include "game_mode_main.h"
 #include "game_mode_sandbox.h"
-#include "game_console.h"
+#include "game_debug.h"
 #include "game_text.h"
 #include "mm_arena.h"
 #include "mm_list.h"
@@ -17,7 +17,7 @@ static inline void
 CmdJump(void * Context, string Arguments) {
     auto* PermState = (permanent_state*)Context;
     
-    scratch Scratchpad = Scratch(&PermState->ModeArena);
+    scratch Scratchpad(&PermState->ModeArena);
 
     array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
     if ( ArgList.Count != 2 ) {
@@ -60,7 +60,7 @@ GameUpdateFunc(GameUpdate)
 {
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TranState = (transient_state*)GameMemory->TransientMemory;
-       
+    auto* DebugState = (debug_state*)GameMemory->DebugMemory; 
     //  Initialization of the game
     if(!PermState->IsInitialized) {
         // NOTE(Momo): Arenas
@@ -78,7 +78,7 @@ GameUpdateFunc(GameUpdate)
                 Global_DesignDepth * 0.5f - 1.f
             };
             PermState->Console = 
-                GameConsole(&PermState->MainArena, 
+                DebugConsole(&PermState->MainArena, 
                             5, 
                             110, 
                             1,
@@ -95,7 +95,6 @@ GameUpdateFunc(GameUpdate)
                             PermState);
         }
 
-        // NOTE(Momo): Arena for modes
         PermState->ModeArena = SubArena(&PermState->MainArena, 
                                         Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
@@ -103,7 +102,6 @@ GameUpdateFunc(GameUpdate)
         PermState->IsInitialized = true;
         PermState->IsRunning = true;
 
-        // NOTE(Momo): Set design resolution for game
         PushSetDesignResolution(RenderCommands, 
                                 (u32)Global_DesignWidth, 
                                 (u32)Global_DesignHeight);
@@ -118,8 +116,16 @@ GameUpdateFunc(GameUpdate)
         TranState->Assets = AllocateAssets(&TranState->Arena, 
                                            Platform);
         Assert(TranState->Assets);
+        
+        TranState->Debug = AllocateDebugState(&TranState->Arena, 128);
+        Assert(TranState->Debug);
+
+
         TranState->IsInitialized = true;
     }
+
+    if (!
+
 
     // Console
     Update(&PermState->Console, Input);

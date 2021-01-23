@@ -720,10 +720,8 @@ Win32ProcessMessages(HWND Window,
                     case VK_BACK:
                         Input->ButtonBack.Now = IsDown;
                         break;
-                }
-                
+                } 
                 TranslateMessage(&Msg);
-
             } break;
             default: 
             {
@@ -1078,7 +1076,7 @@ WinMain(HINSTANCE Instance,
     }
     Defer { Win32FreeMemory(GameMemory.PermanentMemory); };
 
-    GameMemory.TransientMemorySize = Gigabytes(1);
+    GameMemory.TransientMemorySize = Megabytes(256);
     GameMemory.TransientMemory = Win32AllocateMemory(GameMemory.TransientMemorySize);
     if (!GameMemory.TransientMemory) {
         Win32Log("Cannot allocate game transient memory\n");
@@ -1086,6 +1084,14 @@ WinMain(HINSTANCE Instance,
     }
     Defer { Win32FreeMemory(GameMemory.TransientMemory); };
     
+    GameMemory.DebugMemorySize = Megabytes(256);
+    GameMemory.DebugMemory = Win32AllocateMemory(GameMemory.DebugMemorySize);
+    if (!GameMemory.DebugMemory) {
+        Win32Log("Cannot allocate game debug memory\n");
+        return 1;
+    }
+    Defer { Win32FreeMemory(GameMemory.DebugMemory); };
+
     // Intialize Render commands
     usize RenderCommandsMemorySize = Megabytes(64);
     void* RenderCommandsMemory = Win32AllocateMemory(RenderCommandsMemorySize); 

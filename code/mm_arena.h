@@ -106,11 +106,6 @@ struct scratch {
     }
 };
 
-static inline scratch
-Scratch(arena* Arena) {
-    return scratch(Arena);
-}
-
 static inline arena
 SubArena(arena* SrcArena, usize Capacity) {
     Assert(Capacity);

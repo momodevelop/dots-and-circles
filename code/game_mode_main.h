@@ -257,14 +257,6 @@ UpdateBullet(game_mode_main* Mode,
 
 }
 
-static inline void 
-UpdateWave(game_mode_main* Mode, 
-           f32 DeltaTime) 
-{
-
-
-}
-
 
 static inline void 
 UpdateEnemies(game_mode_main* Mode,
@@ -382,7 +374,9 @@ UpdateWaves(game_mode_main* Mode,
                         Bilateral(&Mode->Rng) * Global_DesignWidth * 0.5f,
                         Bilateral(&Mode->Rng) * Global_DesignHeight * 0.5f
                     };
-                    auto MoodType = (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
+                    auto MoodType = 
+                        (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
+
                     SpawnEnemy(Mode, 
                             Assets,
                             Pos,
@@ -537,6 +531,9 @@ RenderEnemies(game_mode_main* Mode,
               game_assets* Assets,
               mailbox* RenderCommands) 
 {
+#if REFACTOR
+    TIME_BLOCK
+#endif 
     for(usize I = 0; I < Mode->Enemies.Count; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
@@ -586,8 +583,9 @@ UpdateMainMode(permanent_state* PermState,
 
     // TODO: We would like better debug rendering system please that is more global
     // Debug Rendering 
+#if REFACTOR
     {
-        scratch Scratchpad = Scratch(&Mode->Arena);
+        scratch Scratchpad(&Mode->Arena);
         string_buffer Buffer = StringBuffer(Scratchpad, 256);
         Push(&Buffer, String("Bullets: "));
         PushI32(&Buffer, (i32)Mode->Bullets.Count);
@@ -613,7 +611,8 @@ UpdateMainMode(permanent_state* PermState,
                  32.f, 
                  Buffer.Array);
     }
-
+#else 
+#endif
 }
 
 #endif //GAME_MODE_H

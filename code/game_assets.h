@@ -178,7 +178,7 @@ AllocateAssets(arena* Arena,
     
     // Check file signaure
     {        
-        scratch Scratchpad = Scratch(Arena);
+        scratch Scratchpad(Arena);
         
         string Signature = String("MOMO");
         void* ReadSignature = Read(&AssetFile,
@@ -206,7 +206,7 @@ AllocateAssets(arena* Arena,
 
     for (u32 I = 0; I < FileEntryCount; ++I) 
     {
-        scratch Scratchpad = Scratch(Arena);
+        scratch Scratchpad(Arena);
 
         // NOTE(Momo): Read header
         auto* YuuEntry = Read<yuu_entry>(&AssetFile,

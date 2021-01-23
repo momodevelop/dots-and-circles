@@ -35,12 +35,11 @@ struct input {
             input_button ButtonConfirm;
             input_button ButtonSwitch;
             input_button ButtonBack;
-
-            // Meta keys
             input_button ButtonConsole;
-
         };
     };
+    
+
 };
 
 
@@ -147,6 +146,9 @@ struct game_memory {
     
     void* TransientMemory;
     usize TransientMemorySize;
+
+    void* DebugMemory;
+    usize DebugMemorySize;
 };
 
 // Game function typedefs

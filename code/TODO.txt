@@ -1,4 +1,6 @@
+[] Create debug state
 [] Basic  profiling
+[] Convert game input to mouse
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)
