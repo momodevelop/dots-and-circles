@@ -5,6 +5,8 @@
 #include <cstdint>
 #define REFACTOR 0
 
+
+
 // Types
 using c8 = char;
 using b8 = bool;

@@ -107,8 +107,7 @@ Pop(debug_console* Console) {
 static inline void 
 Update(debug_console* Console, 
        input* Input,
-       f32 DeltaTime,
-       platform_api* Platform) 
+       f32 DeltaTime) 
 {
     if (IsPoked(Input->ButtonConsole)) {
         Console->IsActive = !Console->IsActive; 
@@ -139,7 +138,6 @@ Update(debug_console* Console,
                     Reset(&Console->PopRepeatTimer);
                 }
                 Tick(&Console->PopRepeatTimer, DeltaTime);
-                Platform->Log("Hello: %f\n", Console->PopRepeatTimer.Current);
             }
             Tick(&Console->StartPopRepeatTimer, DeltaTime);
         }
@@ -150,6 +148,7 @@ Update(debug_console* Console,
 
     // Execute command
     if (IsPoked(Input->ButtonConfirm)) {
+        Log("Hello Log");
         string Arguments = Console->InputBuffer.Array;
         PushInfo(Console, Console->InputBuffer.Array, Color_White);
         Copy(&Console->CommandBuffer, Arguments);

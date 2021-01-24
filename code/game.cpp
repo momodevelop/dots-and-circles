@@ -1,3 +1,12 @@
+
+// This is purely for convienience.
+// There are some things that are easier to debug 
+// with console logging than other methods.
+#define GLOBAL_LOG 1
+#if GLOBAL_LOG
+void (*Log)(const char* Format, ...);
+#endif
+
 #include "game.h"
 #include "game_assets.h"
 #include "game_mode_splash.h"
@@ -56,9 +65,15 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
 }
 #endif
 
+
+
+
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
+#if GLOBAL_LOG
+    Log = Platform->Log;
+#endif
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TranState = (transient_state*)GameMemory->TransientMemory;
     auto* DebugState = (debug_state*)GameMemory->DebugMemory; 
@@ -146,7 +161,7 @@ GameUpdateFunc(GameUpdate)
     }
 
 
-    Update(&DebugState->Console, Input, DeltaTime, Platform);
+    Update(&DebugState->Console, Input, DeltaTime);
 
     // Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
