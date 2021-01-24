@@ -148,7 +148,6 @@ Update(debug_console* Console,
 
     // Execute command
     if (IsPoked(Input->ButtonConfirm)) {
-        Log("Hello Log");
         string Arguments = Console->InputBuffer.Array;
         PushInfo(Console, Console->InputBuffer.Array, Color_White);
         Copy(&Console->CommandBuffer, Arguments);

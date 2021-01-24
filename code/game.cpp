@@ -1,11 +1,17 @@
-
 // This is purely for convienience.
 // There are some things that are easier to debug 
 // with console logging than other methods.
-#define GLOBAL_LOG 1
+// TODO: Perhaps we have REAL in game logging?
+#define GLOBAL_LOG 0
 #if GLOBAL_LOG
 void (*Log)(const char* Format, ...);
 #endif
+
+#include "mm_arena.h"
+#include "mm_list.h"
+#include "mm_maths.h"
+#include "mm_colors.h"
+#include "mm_link_list.h"
 
 #include "game.h"
 #include "game_assets.h"
@@ -14,11 +20,6 @@ void (*Log)(const char* Format, ...);
 #include "game_mode_sandbox.h"
 #include "game_debug.h"
 #include "game_text.h"
-#include "mm_arena.h"
-#include "mm_list.h"
-#include "mm_maths.h"
-#include "mm_colors.h"
-#include "mm_link_list.h"
 
 #if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...

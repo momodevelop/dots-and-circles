@@ -8,6 +8,7 @@
 #include "game_assets.h"
 #include "mm_list.h"
 
+
 enum game_mode_type : u32 {
     GameModeType_Splash,
     GameModeType_Main,
