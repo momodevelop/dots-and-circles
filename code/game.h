@@ -25,7 +25,6 @@ struct transient_state {
     
     arena Arena;
     game_assets* Assets; 
-    debug_state* Debug;
 };
 
 struct permanent_state {
@@ -43,9 +42,6 @@ struct permanent_state {
     
     arena MainArena;
     arena ModeArena;
-
-    debug_console Console;
-
 
 };
 

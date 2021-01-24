@@ -31,23 +31,14 @@ struct debug_variable {
 
 struct debug_state {
     b32 IsInitialized;
+    arena Arena;
    
     list<debug_variable> Variables; 
     debug_console Console;
+
+    struct permanent_state* PermanentState;
+    struct transient_state* TransientState;
 };
-
-
-
-
-static inline debug_state*
-AllocateDebugState(arena* Arena, 
-                   usize VariableCapacity) 
-{
-    debug_state* Ret = {};
-    Ret->Variables = List<debug_variable>(Arena, VariableCapacity); 
-
-    return Ret;
-}
 
 static inline void
 HookVariable(debug_state* State) {
@@ -66,6 +57,8 @@ Render(debug_state* State,
        arena* Arena) 
 
 {
+    Render(&State->Console, RenderCommands, Assets);
+
     // For each variable, render:
     // Name: Data
     for (usize I = 0; I < State->Variables.Count; ++I) {
@@ -74,7 +67,7 @@ Render(debug_state* State,
         Push(&Buffer, State->Variables[I].Name);
         Push(&Buffer, String(": "));
 
-        PushI32(&Buffer, (i32)Mode->Bullets.Count);
+        //PushI32(&Buffer, (i32)Mode->Bullets.Count);
         DrawText(RenderCommands, 
                  Assets, 
                  v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 

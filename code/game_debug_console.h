@@ -3,12 +3,13 @@
 
 #include "mm_list.h"
 #include "mm_colors.h"
+#include "mm_timer.h"
 #include "game_platform.h"
 #include "game_renderer.h"
 #include "game_assets.h"
 #include "game_text.h"
 
-using debug_console_callback = void (*)(void* Context, string Arguments);
+using debug_console_callback = void (*)(struct debug_console* Console, void* Context, string Arguments);
 struct debug_console_command {
     string Key;
     debug_console_callback Callback;
@@ -19,7 +20,6 @@ struct debug_console_string {
     string_buffer Buffer;
     c4f Color;
 };
-
 
 struct debug_console {
     b32 IsActive;
@@ -35,10 +35,14 @@ struct debug_console {
     string_buffer InputBuffer;
     string_buffer CommandBuffer;
 
+    // Backspace (to delete character) related
+    // Maybe make an easing system?
+    timer StartPopRepeatTimer;
+    timer PopRepeatTimer;
+    b32 IsStartPop;
+
     list<debug_console_command> Commands;
 };
-
-
 
 static inline void 
 RegisterCommand(debug_console* Console, 
@@ -57,36 +61,11 @@ UnregisterCommand(debug_console* Console, string Key) {
     });
 }
 
-static inline b32 
-Execute(debug_console* Console, string Arguments) {
-    // Assume that the first token is the command     
-    range<usize> Range = { 0, Find(Arguments, ' ') };
-    string CommandStr = SubString(Arguments, Range); 
-
-    // Send a command to a callback
-    for (usize I = 0; I < Console->Commands.Count; ++I) {
-        debug_console_command* Command = &Console->Commands[I];
-        if (Command->Key == CommandStr) {
-             Command->Callback(Command->Context, Arguments);
-             return true;
-        }
-    }
-
-    return false;
-}
-
-
 static inline debug_console
 DebugConsole(arena* Arena, 
              usize InfoLines, 
              usize CharactersPerLine, 
-             usize CommandsCapacity,
-             c4f InfoBgColor,
-             c4f InfoTextDefaultColor,
-             c4f InputBgColor,
-             c4f InputTextColor,
-             v2f Dimensions,
-             v3f Position)
+             usize CommandsCapacity)
 {
     debug_console Ret = {};
 
@@ -98,12 +77,6 @@ DebugConsole(arena* Arena,
 
     Ret.InputBuffer = StringBuffer(Arena, CharactersPerLine);
     Ret.CommandBuffer = StringBuffer(Arena, CharactersPerLine);
-    Ret.InfoBgColor = InfoBgColor;
-    Ret.InfoTextDefaultColor = InfoTextDefaultColor;
-    Ret.InputBgColor = InputBgColor;
-    Ret.InputTextColor = InputTextColor;
-    Ret.Dimensions = Dimensions;
-    Ret.Position = Position;
 
     Ret.Commands = List<debug_console_command>(Arena, CommandsCapacity);
     return Ret;
@@ -117,19 +90,25 @@ PushInfo(debug_console* Console, string String, c4f Color) {
         debug_console_string* Dest = Console->InfoBuffers + J;
         debug_console_string* Src = Console->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, Src->Buffer.Array);
-        Dest->Color = Console->InfoTextDefaultColor;
-
+        Dest->Color = Src->Color;
     }
     Console->InfoBuffers[0].Color = Color;
     Clear(&Console->InfoBuffers[0].Buffer);
     Copy(&Console->InfoBuffers[0].Buffer, String);
 }
 
+static inline void 
+Pop(debug_console* Console) {
+    if (!IsEmpty(Console->InputBuffer.Array))
+        Pop(&Console->InputBuffer);
+}
 
 // Returns true if there is a new command
 static inline void 
 Update(debug_console* Console, 
-       input* Input) 
+       input* Input,
+       f32 DeltaTime,
+       platform_api* Platform) 
 {
     if (IsPoked(Input->ButtonConsole)) {
         Console->IsActive = !Console->IsActive; 
@@ -145,17 +124,47 @@ Update(debug_console* Console,
         Push(&Console->InputBuffer, Input->Characters.Array);
     }
     
-    // Remove character
-    if (IsPoked(Input->ButtonBack)) {
-        if (!IsEmpty(Console->InputBuffer.Array))
-            Pop(&Console->InputBuffer);
+    // Remove character backspace logic
+    if (IsDown(Input->ButtonBack)) {
+        if(!Console->IsStartPop) {
+            Pop(Console);
+            Console->IsStartPop = true;
+            Reset(&Console->StartPopRepeatTimer);
+            Reset(&Console->PopRepeatTimer);
+        }
+        else {
+            if (IsTimeUp(Console->StartPopRepeatTimer)) {
+                if(IsTimeUp(Console->PopRepeatTimer)) {
+                    Pop(Console);
+                    Reset(&Console->PopRepeatTimer);
+                }
+                Tick(&Console->PopRepeatTimer, DeltaTime);
+                Platform->Log("Hello: %f\n", Console->PopRepeatTimer.Current);
+            }
+            Tick(&Console->StartPopRepeatTimer, DeltaTime);
+        }
+    }
+    else {
+        Console->IsStartPop = false; 
     }
 
+    // Execute command
     if (IsPoked(Input->ButtonConfirm)) {
+        string Arguments = Console->InputBuffer.Array;
         PushInfo(Console, Console->InputBuffer.Array, Color_White);
-        Copy(&Console->CommandBuffer, Console->InputBuffer.Array);
+        Copy(&Console->CommandBuffer, Arguments);
         Clear(&Console->InputBuffer);
-        Execute(Console, Console->CommandBuffer.Array);
+
+        range<usize> Range = { 0, Find(Arguments, ' ') };
+        string CommandStr = SubString(Arguments, Range); 
+
+        // Send a command to a callback
+        for (usize I = 0; I < Console->Commands.Count; ++I) {
+            debug_console_command* Command = &Console->Commands[I];
+            if (Command->Key == CommandStr) {
+                 Command->Callback(Console, Command->Context, Arguments);
+            }
+        }
     }
 
 }

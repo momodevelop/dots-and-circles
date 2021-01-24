@@ -14,15 +14,15 @@
 #if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
-CmdJump(void * Context, string Arguments) {
-    auto* PermState = (permanent_state*)Context;
-    
-    scratch Scratchpad(&PermState->ModeArena);
+CmdJump(debug_console* Console, void* Context, string Arguments) {
+    auto* DebugState = (debug_state*)Context;
+    permanent_state* PermState = DebugState->PermanentState;
+    scratch Scratchpad(&DebugState->Arena);
 
     array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
-        PushInfo(&PermState->Console, 
+        PushInfo(Console, 
                  String("Expected only 2 arguments"), 
                  Color_Red);
         return;
@@ -30,28 +30,29 @@ CmdJump(void * Context, string Arguments) {
 
     string StateToChangeTo = ArgList[1];
     if (StateToChangeTo == String("main")) {
-        PushInfo(&PermState->Console, 
+        PushInfo(Console, 
                  String("Jumping to Main"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
     else if (StateToChangeTo == String("splash")) {
-        PushInfo(&PermState->Console, 
+        PushInfo(Console, 
                  String("Jumping to Splash"),  
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
     else if (StateToChangeTo == String("sandbox")) {
-        PushInfo(&PermState->Console, 
+        PushInfo(Console, 
                  String("Jumping to Sandbox"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
-        PushInfo(&PermState->Console, 
+        PushInfo(Console, 
                  String("Invalid state to jump to"), 
                  Color_Red);
     }
+
 }
 #endif
 
@@ -71,28 +72,6 @@ GameUpdateFunc(GameUpdate)
 
         // Console Init
         {
-            v2f Dimensions = { Global_DesignWidth, 240.f };
-            v3f Position = { 
-                -Global_DesignWidth * 0.5f + Dimensions.W * 0.5f, 
-                -Global_DesignHeight * 0.5f + Dimensions.H * 0.5f, 
-                Global_DesignDepth * 0.5f - 1.f
-            };
-            PermState->Console = 
-                DebugConsole(&PermState->MainArena, 
-                            5, 
-                            110, 
-                            1,
-                            Color_Grey3,
-                            Color_White,
-                            Color_Grey2,
-                            Color_White,
-                            Dimensions,
-                            Position); 
-            
-            RegisterCommand(&PermState->Console, 
-                            String("jump"), 
-                            CmdJump, 
-                            PermState);
         }
 
         PermState->ModeArena = SubArena(&PermState->MainArena, 
@@ -117,18 +96,57 @@ GameUpdateFunc(GameUpdate)
                                            Platform);
         Assert(TranState->Assets);
         
-        TranState->Debug = AllocateDebugState(&TranState->Arena, 128);
-        Assert(TranState->Debug);
 
 
         TranState->IsInitialized = true;
     }
 
-    if (!
+    if (!DebugState->IsInitialized) {
+        DebugState = BootstrapStruct(debug_state,
+                                     Arena,
+                                     GameMemory->DebugMemory,
+                                     GameMemory->DebugMemorySize);
+
+        DebugState->Variables = List<debug_variable>(&DebugState->Arena, 16); 
+        
+        // Init console
+        {
+            v2f Dimensions = { Global_DesignWidth, 240.f };
+            v3f Position = { 
+                -Global_DesignWidth * 0.5f + Dimensions.W * 0.5f, 
+                -Global_DesignHeight * 0.5f + Dimensions.H * 0.5f, 
+                Global_DesignDepth * 0.5f - 1.f
+            };
+
+            DebugState->Console = 
+                DebugConsole(&DebugState->Arena, 
+                             5, 
+                             110, 
+                             1);
+
+            DebugState->Console.InfoBgColor = Color_Grey3;
+            DebugState->Console.InfoTextDefaultColor = Color_White;
+            DebugState->Console.InputBgColor = Color_Grey2;
+            DebugState->Console.InputTextColor = Color_White;
+            DebugState->Console.Dimensions = Dimensions;
+            DebugState->Console.Position = Position;
+
+            DebugState->Console.StartPopRepeatTimer = Timer(0.5f);
+            DebugState->Console.PopRepeatTimer = Timer(0.025f); 
+
+            RegisterCommand(&DebugState->Console, 
+                            String("jump"), 
+                            CmdJump, 
+                            DebugState);
+        }
+            
+        DebugState->PermanentState = PermState;
+        DebugState->TransientState = TranState;
+        DebugState->IsInitialized = true;
+    }
 
 
-    // Console
-    Update(&PermState->Console, Input);
+    Update(&DebugState->Console, Input, DeltaTime, Platform);
 
     // Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
@@ -187,7 +205,7 @@ GameUpdateFunc(GameUpdate)
     }
 
     // Render Console
-    Render(&PermState->Console, RenderCommands, TranState->Assets);
+    Render(&DebugState->Console, RenderCommands, TranState->Assets);
 
     return PermState->IsRunning;
 }
