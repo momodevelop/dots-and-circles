@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <ShellScalingAPI.h>
+#include <mmdeviceapi.h>
+#include <audioclient.h>
 
 #include "mm_arena.h"
 #include "mm_core.h"
@@ -60,27 +62,22 @@ static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
 static WglFunctionPtr(wglGetExtensionsStringEXT);
 
+// Globals
+b32 GlobalIsRunning;
+opengl* GlobalOpengl;
+u32 GlobalPerformanceFrequency;
+array<HANDLE> GlobalFileHandles;
+list<u32> GlobalFreeFileHandleIds;
+char GlobalExeFullPath[MAX_PATH];
+char* GlobalOnePastExeDirectory;
+arena GlobalArena;
 
-struct win32_state {
-    b32 IsRunning;
-    u32 PerformanceFrequency;
-    char ExeFullPath[MAX_PATH];
-    char* OnePastExeDirectory;
-
-    opengl* Opengl;
-
-    array<HANDLE> FileHandles;
-    list<u32> FileHandleFreeIds;
-
-    // memory
-    arena Arena;
-
+struct win32_audio {
+    i32 SamplesPerSecond;
 };
 
-win32_state* Global_Win32State;
-
 #if INTERNAL
-    HANDLE Global_StdOut;
+    HANDLE GlobalStdOut;
 #endif
 
 static inline LARGE_INTEGER
@@ -125,7 +122,7 @@ Win32FreeMemory(void* Memory) {
 #if INTERNAL
 static inline void
 Win32WriteConsole(const char* Message) {
-    WriteConsoleA(Global_StdOut,
+    WriteConsoleA(GlobalStdOut,
                   Message, 
                   SiStrLen(Message), 
                   0, 
@@ -163,13 +160,13 @@ Win32GetSecondsElapsed(LARGE_INTEGER Start,
                        LARGE_INTEGER End) 
 {
     return (f32(End.QuadPart - Start.QuadPart)) / 
-            Global_Win32State->PerformanceFrequency; 
+            GlobalPerformanceFrequency; 
 }
 
 static inline void
 Win32BuildExePathFilename(char* Dest, const char* Filename) {
-    for(const char *Itr = Global_Win32State->ExeFullPath; 
-        Itr != Global_Win32State->OnePastExeDirectory; 
+    for(const char *Itr = GlobalExeFullPath; 
+        Itr != GlobalOnePastExeDirectory; 
         ++Itr, ++Dest) 
     {
         (*Dest) = (*Itr);
@@ -214,7 +211,6 @@ Win32GameCode(const char* SrcFileName,
               const char* LockFileName) 
 {
     Assert(SrcFileName && TempFileName && LockFileName);
-
     win32_game_code Ret = {};
     Win32BuildExePathFilename(Ret.SrcFileName, SrcFileName);
     Win32BuildExePathFilename(Ret.TempFileName, TempFileName);
@@ -275,6 +271,51 @@ Reload(win32_game_code* Code)
     Load(Code);
 }
 
+static inline maybe<win32_audio>
+Win32Audio() {
+    if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
+        Win32Log("[Audio] Failed CoInitializeEx\n");
+        return No();
+    }
+
+    IMMDeviceEnumerator* Enumerator;
+
+    if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), 
+                               NULL,
+                               CLSCTX_ALL, IID_PPV_ARGS(&Enumerator))))
+    {
+        Win32Log("[Audio] Failed to create IMMDeviceEnumerator\n");
+        return No();
+    }
+
+    IMMDevice* Device;
+    if (FAILED(Enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &Device))) {
+        Win32Log("[Audio] Failed to get audio endpoint\n");
+        return No();
+    }
+
+    if(FAILED(Device->Activate(__uuidof(IAudioClient), 
+                               CLSCTX_ALL, 
+                               NULL, 
+                               (LPVOID*)&AudioClient))) {
+        Win32Log("[Audio] Failed to create IAudioClient\n");
+        return No();
+    }
+
+    WAVEFORMATEXTENSIBLE WaveFormat;
+    WaveFormat.Format.cbSize = sizeof(WaveFormat);
+    WaveFormat.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    WaveFormat.Format.wBitsPerSample = 16;
+    WaveFormat.Format.nChannels = 2;
+    WaveFormat.Format.nSamplesPerSec = (DWORD)SamplesPerSecond;
+    WaveFormat.Format.nBlockAlign = 
+        (WORD)(WaveFormat.Format.nChannels * WaveFormat.Format.wBitsPerSample / 8);
+    WaveFormat.Format.nAvgBytesPerSec = 
+        WaveFormat.Format.nSamplesPerSec * WaveFormat.Format.nBlockAlign;
+    WaveFormat.Samples.wValidBitsPerSample = 16;
+    WaveFormat.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+    WaveFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+}
 
 static inline void
 Win32OpenglSetPixelFormat(HDC DeviceContext) {
@@ -568,12 +609,8 @@ Win32AllocateOpengl(HWND Window,
         WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
         0,
     };
-    HGLRC OpenglContext = 0;
-    
-    // Modern
-    OpenglContext = wglCreateContextAttribsARB(DeviceContext, 
-                                               0, 
-                                               Win32OpenglAttribs); 
+    HGLRC OpenglContext = wglCreateContextAttribsARB(DeviceContext, 0, 
+                                                     Win32OpenglAttribs); 
 
     if (!OpenglContext) {
         //OpenglContext = wglCreateContext(DeviceContext);
@@ -683,7 +720,7 @@ Win32ProcessMessages(HWND Window,
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
         switch(Msg.message) {
             case WM_CLOSE: {
-                Global_Win32State->IsRunning = false;
+                GlobalIsRunning = false;
             } break;
             case WM_CHAR: {
                 char C = (char)Msg.wParam;
@@ -741,19 +778,19 @@ Win32WindowCallback(HWND Window,
     LRESULT Result = 0;
     switch(Message) {
         case WM_CLOSE: {
-            Global_Win32State->IsRunning = false;
+            GlobalIsRunning = false;
         } break;
         case WM_DESTROY: {
-            Global_Win32State->IsRunning = false;
+            GlobalIsRunning = false;
         } break;
         case WM_WINDOWPOSCHANGED: {
-            if(Global_Win32State->Opengl && 
-               Global_Win32State->Opengl->Header.IsInitialized) {
+            if(GlobalOpengl && 
+               GlobalOpengl->Header.IsInitialized) {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);
                 //Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
                 //Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
-                Resize(Global_Win32State->Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
+                Resize(GlobalOpengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
 
@@ -765,40 +802,55 @@ Win32WindowCallback(HWND Window,
     return Result;
 }
 
-static inline void
-Win32Init(win32_state* State) {
-    // Initialize performance frequency
-    {
-        LARGE_INTEGER PerfCountFreq;
-        QueryPerformanceFrequency(&PerfCountFreq);
-        State->PerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
-        State->IsRunning = true;
+static inline HWND 
+Win32CreateWindow(HINSTANCE Instance,
+                  u32 WindowWidth,
+                  u32 WindowHeight) 
+{
+    WNDCLASSA WindowClass = {};
+    WindowClass.style = CS_HREDRAW | CS_VREDRAW;
+    WindowClass.lpfnWndProc = Win32WindowCallback;
+    WindowClass.hInstance = Instance;
+    WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
+    WindowClass.lpszClassName = "DnCWindowClass";
+
+    if(!RegisterClassA(&WindowClass)) {
+        Win32Log("Failed to register class");
+        return {};
     }
 
-    // Initialize paths
-    {
-        GetModuleFileNameA(0, 
-                           State->ExeFullPath, 
-                           sizeof(State->ExeFullPath));
+    HWND Window = {};
+    RECT WindowRect = {};
+    v2u MonitorDimensions = Win32GetMonitorDimensions();
+    WindowRect.left = MonitorDimensions.W / 2 - WindowWidth / 2;
+    WindowRect.right = MonitorDimensions.W / 2 + WindowWidth / 2;
+    WindowRect.top = MonitorDimensions.H / 2 - WindowHeight / 2;
+    WindowRect.bottom = MonitorDimensions.H / 2 + WindowHeight / 2;
+    
+    DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+    AdjustWindowRectEx(&WindowRect,
+                       Style,
+                       FALSE,
+                       0);
+    
 
-        State->OnePastExeDirectory = Global_Win32State->ExeFullPath;
-        for( char* Itr = Global_Win32State->ExeFullPath; *Itr; ++Itr) {
-            if (*Itr == '\\') {
-                State->OnePastExeDirectory = Itr + 1;
-            }
-        }
+    // TODO: Adaptively create 'best' window resolution based on current desktop reso.
+    Window = CreateWindowExA(
+                0,
+                WindowClass.lpszClassName,
+                "Dots And Circles",
+                Style,
+                WindowRect.left,
+                WindowRect.top,
+                Width(WindowRect),
+                Height(WindowRect),
+                0,
+                0,
+                Instance,
+                0);
 
-    }
+    return Window;
 
-    // Initialize file handle store
-    {
-        const u32 FileHandleCap = 8;
-        State->FileHandles = Array<HANDLE>(&State->Arena, FileHandleCap); 
-        State->FileHandleFreeIds = List<u32>(&State->Arena, FileHandleCap);
-        for (u32 I = 0; I < FileHandleCap; ++I) {
-            Push(&State->FileHandleFreeIds, I);
-        }
-    }
 }
 
 static inline void
@@ -822,7 +874,7 @@ static inline
 PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     platform_file_handle Ret = {}; 
     const char* Path = "yuu";
-    list<u32>* FreeIds = &Global_Win32State->FileHandleFreeIds;
+    list<u32>* FreeIds = &GlobalFreeFileHandleIds;
     
     // Check if there are free handlers to go around
     if (FreeIds->Count == 0) {
@@ -847,7 +899,8 @@ PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
 
     Ret.Id = Back(FreeIds);
     Pop(FreeIds);
-    Global_Win32State->FileHandles[Ret.Id] = Win32Handle; 
+    GlobalFileHandles[Ret.Id] = Win32Handle; 
+
 
     return Ret; 
 }
@@ -879,20 +932,20 @@ PlatformLogFileErrorFunc(Win32LogFileError) {
 
 static inline
 PlatformCloseFileFunc(Win32CloseFile) {
-    HANDLE Win32Handle = Global_Win32State->FileHandles[Handle->Id];
-    Push(&Global_Win32State->FileHandleFreeIds, Handle->Id);
+    HANDLE Win32Handle = GlobalFileHandles[Handle->Id];
+    Push(&GlobalFreeFileHandleIds, Handle->Id);
     if (Win32Handle != INVALID_HANDLE_VALUE) {
         CloseHandle(Win32Handle); 
     }
 }
 static inline
 PlatformAddTextureFunc(Win32AddTexture) {
-    return AddTexture(Global_Win32State->Opengl, Width, Height, Pixels);
+    return AddTexture(GlobalOpengl, Width, Height, Pixels);
 }
 
 static inline 
 PlatformClearTexturesFunc(Win32ClearTextures) {
-    return ClearTextures(Global_Win32State->Opengl);
+    return ClearTextures(GlobalOpengl);
 }
 
 static inline 
@@ -901,7 +954,7 @@ PlatformReadFileFunc(Win32ReadFile) {
         return;
     }
 
-    HANDLE Win32Handle = Global_Win32State->FileHandles[Handle->Id];
+    HANDLE Win32Handle = GlobalFileHandles[Handle->Id];
     OVERLAPPED Overlapped = {};
     Overlapped.Offset = (u32)((Offset >> 0) & 0xFFFFFFFF);
     Overlapped.OffsetHigh = (u32)((Offset >> 32) & 0xFFFFFFFF);
@@ -945,20 +998,6 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
 }
 
 
-static inline platform_api 
-Win32LoadPlatformApi() {
-    platform_api Ret = {};
-    Ret.Log = Win32Log;
-    Ret.ReadFile = Win32ReadFile;
-    Ret.GetFileSize = Win32GetFileSize;
-    Ret.ClearTextures = Win32ClearTextures;
-    Ret.AddTexture = Win32AddTexture;
-    Ret.OpenAssetFile = Win32OpenAssetFile;
-    Ret.CloseFile = Win32CloseFile;
-
-    return Ret;
-}
-
 
 int CALLBACK
 WinMain(HINSTANCE Instance,
@@ -967,10 +1006,30 @@ WinMain(HINSTANCE Instance,
         int ShowCode)
 {
 #if INTERNAL
+    // Initialize console
     AllocConsole();    
     Defer { FreeConsole(); };
-    Global_StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    GlobalStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif 
+
+    GlobalIsRunning = true;
+
+    // Initialize current path
+    GetModuleFileNameA(0, GlobalExeFullPath, 
+                       sizeof(GlobalExeFullPath));
+    GlobalOnePastExeDirectory = GlobalExeFullPath;
+    for( char* Itr = GlobalExeFullPath; *Itr; ++Itr) {
+        if (*Itr == '\\') {
+            GlobalOnePastExeDirectory = Itr + 1;
+        }
+    }
+
+    // Initialize Performance Counter
+    LARGE_INTEGER PerfCountFreq;
+    QueryPerformanceFrequency(&PerfCountFreq);
+    GlobalPerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
+
+    // Initialize Arena
     usize PlatformMemorySize = Kilobytes(256);
     void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
     if (!PlatformMemory) {
@@ -978,65 +1037,27 @@ WinMain(HINSTANCE Instance,
         return 1;
     }
     Defer { Win32FreeMemory(PlatformMemory); };
+    GlobalArena = Arena(PlatformMemory, PlatformMemorySize); 
 
-    Global_Win32State = BootstrapStruct(win32_state,
-                                        Arena,
-                                        PlatformMemory,
-                                        PlatformMemorySize);
+    // Initialize file handle store
+    const u32 FileHandleCap = 8;
+    GlobalFileHandles = Array<HANDLE>(&GlobalArena, FileHandleCap); 
+    GlobalFreeFileHandleIds = List<u32>(&GlobalArena, FileHandleCap);
+    for (u32 I = 0; I < FileHandleCap; ++I) {
+        Push(&GlobalFreeFileHandleIds, I);
+    }
 
-    Win32Init(Global_Win32State);
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-    WNDCLASSA WindowClass = {};
-    WindowClass.style = CS_HREDRAW | CS_VREDRAW;
-    WindowClass.lpfnWndProc = Win32WindowCallback;
-    WindowClass.hInstance = Instance;
-    WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
-    WindowClass.lpszClassName = "DnCWindowClass";
-
-    if(!RegisterClassA(&WindowClass)) {
-        Win32Log("Failed to register class");
-        return 1;
-    }
-
+  
     Win32Log("Window class registered\n");
-    HWND Window;
-    {
-        RECT WindowRect = {};
-        v2u MonitorDimensions = Win32GetMonitorDimensions();
-        WindowRect.left = MonitorDimensions.W / 2 - (u16)Global_DesignWidth / 2;
-        WindowRect.right = MonitorDimensions.W / 2 + (u16)Global_DesignWidth / 2;
-        WindowRect.top = MonitorDimensions.H / 2 - (u16)Global_DesignHeight / 2;
-        WindowRect.bottom = MonitorDimensions.H / 2 + (u16)Global_DesignHeight / 2;
-        
-        DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-        AdjustWindowRectEx(&WindowRect,
-                           Style,
-                           FALSE,
-                           0);
-        
-
-        // TODO: Adaptively create 'best' window resolution based on current desktop reso.
-        Window = CreateWindowExA(
-                    0,
-                    WindowClass.lpszClassName,
-                    "Dots And Circles",
-                    Style,
-                    WindowRect.left,
-                    WindowRect.top,
-                    Width(WindowRect),
-                    Height(WindowRect),
-                    0,
-                    0,
-                    Instance,
-                    0);
-    }
-
+    HWND Window = Win32CreateWindow(Instance, 
+                                   (u32)Global_DesignWidth,
+                                   (u32)Global_DesignHeight);
     if (!Window) {
         Win32Log("Window failed to intialize\n");
         return 1;
     }
-
     Win32Log("Window Initialized\n");
     // Log the dimensions of window and client area
     {
@@ -1058,10 +1079,22 @@ WinMain(HINSTANCE Instance,
         Win32GameCode("game.dll", "temp_game.dll", "lock");
 
     // Initialize game input
-    input GameInput = CreateInput(StringBuffer(&Global_Win32State->Arena, 10));
+    input GameInput = Input(StringBuffer(&GlobalArena, 10));
 
     // Initialize platform api
-    platform_api PlatformApi = Win32LoadPlatformApi();
+    platform_api PlatformApi = {};
+    PlatformApi.Log = Win32Log;
+    PlatformApi.ReadFile = Win32ReadFile;
+    PlatformApi.GetFileSize = Win32GetFileSize;
+    PlatformApi.ClearTextures = Win32ClearTextures;
+    PlatformApi.AddTexture = Win32AddTexture;
+    PlatformApi.OpenAssetFile = Win32OpenAssetFile;
+    PlatformApi.CloseFile = Win32CloseFile;
+
+    // Initialize Audio-related stuff
+    win32_audio Audio = Win32Audio();
+    Audio.SamplesPerSecond = 48000;
+
 
     // Initialize game memory
     game_memory GameMemory = {};
@@ -1099,27 +1132,22 @@ WinMain(HINSTANCE Instance,
     mailbox RenderCommands = Mailbox(RenderCommandsMemory,
                                      RenderCommandsMemorySize);
 
-    //TODO: Initialize WASAPI
-    {
-
-    }
-
     // Initialize OpenGL
-    Global_Win32State->Opengl = 
+    GlobalOpengl = 
         Win32AllocateOpengl(Window, 
                             Win32GetClientDimensions(Window));
-    if (!Global_Win32State->Opengl) {
+    if (!GlobalOpengl) {
         Win32Log("Cannot initialize opengl\n");
         return 1;
     }
-    Defer { Win32FreeOpengl(Global_Win32State->Opengl); };
+    Defer { Win32FreeOpengl(GlobalOpengl); };
 
     // Set sleep granularity to 1ms
     b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
 
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
-    while (Global_Win32State->IsRunning) {
+    while (GlobalIsRunning) {
         if (IsOutdated(&GameCode)) {
             Reload(&GameCode);
         }
@@ -1136,7 +1164,7 @@ WinMain(HINSTANCE Instance,
                                 TargetSecsPerFrame);
         }
 
-        Render(Global_Win32State->Opengl, &RenderCommands);
+        Render(GlobalOpengl, &RenderCommands);
         Clear(&RenderCommands);
         
         f32 SecsElapsed = 

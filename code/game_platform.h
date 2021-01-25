@@ -44,7 +44,7 @@ struct input {
 
 
 static inline input
-CreateInput(string_buffer Buffer) 
+Input(string_buffer Buffer) 
 {
     input Ret = {};
     Ret.Characters = Buffer;
