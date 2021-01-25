@@ -13,7 +13,7 @@
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 
-// Opengl/WGL Bindings
+// WGL Bindings
 #define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
 #define WGL_CONTEXT_LAYER_PLANE_ARB             0x2093
@@ -985,17 +985,8 @@ WinMain(HINSTANCE Instance,
                                         PlatformMemorySize);
 
     Win32Init(Global_Win32State);
-    
-    input GameInput = {};
-    {
-        char _Characters[10];
-        Init(&GameInput, _Characters, 10);
-    }
-
-
-    platform_api PlatformApi = Win32LoadPlatformApi();
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
- 
+
     WNDCLASSA WindowClass = {};
     WindowClass.style = CS_HREDRAW | CS_VREDRAW;
     WindowClass.lpfnWndProc = Win32WindowCallback;
@@ -1025,7 +1016,7 @@ WinMain(HINSTANCE Instance,
                            0);
         
 
-        // TODO: Adaptively create 'best' window resolution based on desktop reso.
+        // TODO: Adaptively create 'best' window resolution based on current desktop reso.
         Window = CreateWindowExA(
                     0,
                     WindowClass.lpszClassName,
@@ -1066,6 +1057,12 @@ WinMain(HINSTANCE Instance,
     win32_game_code GameCode = 
         Win32GameCode("game.dll", "temp_game.dll", "lock");
 
+    // Initialize game input
+    input GameInput = CreateInput(StringBuffer(&Global_Win32State->Arena, 10));
+
+    // Initialize platform api
+    platform_api PlatformApi = Win32LoadPlatformApi();
+
     // Initialize game memory
     game_memory GameMemory = {};
     GameMemory.PermanentMemorySize = Megabytes(256);
@@ -1101,7 +1098,12 @@ WinMain(HINSTANCE Instance,
     }
     mailbox RenderCommands = Mailbox(RenderCommandsMemory,
                                      RenderCommandsMemorySize);
- 
+
+    //TODO: Initialize WASAPI
+    {
+
+    }
+
     // Initialize OpenGL
     Global_Win32State->Opengl = 
         Win32AllocateOpengl(Window, 

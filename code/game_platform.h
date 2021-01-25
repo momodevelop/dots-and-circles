@@ -43,12 +43,12 @@ struct input {
 };
 
 
-static inline void
-Init(input* Input,
-     char* Memory,
-     usize Capacity) 
+static inline input
+CreateInput(string_buffer Buffer) 
 {
-    Input->Characters = StringBuffer(Memory, Capacity);
+    input Ret = {};
+    Ret.Characters = Buffer;
+    return Ret;
 }
 
 

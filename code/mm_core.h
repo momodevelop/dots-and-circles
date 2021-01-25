@@ -62,10 +62,10 @@ union range {
 struct no {}; 
 template<typename T>
 struct maybe {
-    T Item;
+    T This;
     b32 IsNone;
   
-    maybe(T Item) : Item(Item), IsNone(false) {}
+    maybe(T This) : This(This), IsNone(false) {}
     maybe(no) : IsNone(true) {}
 
     operator bool() {
