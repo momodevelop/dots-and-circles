@@ -1040,6 +1040,7 @@ WinMain(HINSTANCE Instance,
     PlatformApi.CloseFile = Win32CloseFile;
 
     // Initialize Audio-related stuff
+#if 0
     u32 SamplesPerSecond = 48000;
     IAudioClient* AudioClient = {};
     {
@@ -1085,8 +1086,33 @@ WinMain(HINSTANCE Instance,
         WaveFormat.Samples.wValidBitsPerSample = 16;
         WaveFormat.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
         WaveFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }
 
+
+        REFERENCE_TIME BufferDuration = 10000000ULL * BufferSizeInSamples / SamplesPerSecond; // buffer size in 100 nanoseconds
+        if (FAILED(GlobalSoundClient->Initialize(
+                        AUDCLNT_SHAREMODE_SHARED, 
+                        AUDCLNT_STREAMFLAGS_NOPERSIST, 
+                        BufferDuration, 0, 
+                        &WaveFormat.Format, nullptr)))
+        {
+            Assert(!"Error");
+        }
+
+        if (FAILED(GlobalSoundClient->GetService(IID_PPV_ARGS(&GlobalSoundRenderClient))))
+        {
+            Assert(!"Error");
+        }
+
+        UINT32 SoundFrameCount;
+        if (FAILED(GlobalSoundClient->GetBufferSize(&SoundFrameCount)))
+        {
+            Assert(!"Error");
+        }
+
+    // Check if we got what we requested (better would to pass this value back as real buffer size)
+
+    }
+#endif
 
     // Initialize game memory
     game_memory GameMemory = {};
