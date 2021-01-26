@@ -4,6 +4,7 @@
 #include <audioclient.h>
 
 #include "mm_arena.h"
+#include "mm_pool.h"
 #include "mm_core.h"
 #include "mm_maths.h"
 #include "mm_string.h"
@@ -66,18 +67,14 @@ static WglFunctionPtr(wglGetExtensionsStringEXT);
 b32 GlobalIsRunning;
 opengl* GlobalOpengl;
 u32 GlobalPerformanceFrequency;
-array<HANDLE> GlobalFileHandles;
-list<u32> GlobalFreeFileHandleIds;
 char GlobalExeFullPath[MAX_PATH];
 char* GlobalOnePastExeDirectory;
 arena GlobalArena;
+pool<HANDLE> GlobalFileHandles;
 
-struct win32_audio {
-    i32 SamplesPerSecond;
-};
 
 #if INTERNAL
-    HANDLE GlobalStdOut;
+HANDLE GlobalStdOut;
 #endif
 
 static inline LARGE_INTEGER
@@ -99,9 +96,6 @@ Height(RECT Value) {
     return Value.bottom - Value.top;
 }
 
-
-
-
 static inline void*
 Win32AllocateMemory(usize MemorySize) {
     return VirtualAllocEx(GetCurrentProcess(),
@@ -113,12 +107,15 @@ Win32AllocateMemory(usize MemorySize) {
 
 static inline void
 Win32FreeMemory(void* Memory) {
-    VirtualFreeEx(GetCurrentProcess(), 
-                  Memory,    
-                  0, 
-                  MEM_RELEASE); 
+    if(Memory) {
+        VirtualFreeEx(GetCurrentProcess(), 
+                      Memory,    
+                      0, 
+                      MEM_RELEASE); 
+    }
 }
-// TODO: Shift this into win32 state?
+
+
 #if INTERNAL
 static inline void
 Win32WriteConsole(const char* Message) {
@@ -216,9 +213,6 @@ Win32GameCode(const char* SrcFileName,
     Win32BuildExePathFilename(Ret.TempFileName, TempFileName);
     Win32BuildExePathFilename(Ret.LockFileName, LockFileName);
 
-    Win32Log("Src Game Code DLL: %s\n", Ret.SrcFileName);
-    Win32Log("Tmp Game Code DLL: %s\n", Ret.TempFileName);
-    Win32Log("Game Code Lock: %s\n", Ret.LockFileName);
     
     return Ret;
 }
@@ -377,11 +371,11 @@ Win32OpenglLoadWglExtensions() {
 }
 
 static inline u32
-Win32DetermineIdealRefreshRate(HWND Window) {
+Win32DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
     HDC DeviceContext = GetDC(Window);
     Defer { ReleaseDC(Window, DeviceContext); };
 
-    u32 RefreshRate = Global_DefaultRefreshRate;
+    u32 RefreshRate = DefaultRefreshRate;
     {
         i32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
         // It is possible for the refresh rate to be 0 or less
@@ -630,6 +624,39 @@ Win32AllocateOpengl(HWND Window,
     return Opengl;
 }
 
+static inline void
+Win32InitGlobalPaths() {
+    GetModuleFileNameA(0, GlobalExeFullPath, 
+                       sizeof(GlobalExeFullPath));
+    GlobalOnePastExeDirectory = GlobalExeFullPath;
+    for( char* Itr = GlobalExeFullPath; *Itr; ++Itr) {
+        if (*Itr == '\\') {
+            GlobalOnePastExeDirectory = Itr + 1;
+        }
+    }
+}
+
+static inline void 
+Win32InitGlobalPerformanceFrequency() {
+    LARGE_INTEGER PerfCountFreq;
+    QueryPerformanceFrequency(&PerfCountFreq);
+    GlobalPerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
+}
+
+static inline b32
+Win32AllocateGlobalArena() {
+    usize PlatformMemorySize = Kilobytes(256);
+    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
+    GlobalArena = Arena(PlatformMemory, PlatformMemorySize); 
+    return PlatformMemory != nullptr;
+}
+
+static inline void
+Win32FreeGlobalArena() {
+    Win32FreeMemory(GlobalArena.Memory); 
+}
+
+
 static inline v2u
 Win32GetMonitorDimensions() {
     v2u Ret = {};
@@ -808,7 +835,6 @@ Win32SwapBuffers(HWND Window) {
     SwapBuffers(DeviceContext);
 }
 
-
 // Platform Functions ////////////////////////////////////////////////////
 enum platform_file_error {
     PlatformFileError_None,
@@ -822,10 +848,9 @@ static inline
 PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     platform_file_handle Ret = {}; 
     const char* Path = "yuu";
-    list<u32>* FreeIds = &GlobalFreeFileHandleIds;
     
     // Check if there are free handlers to go around
-    if (FreeIds->Count == 0) {
+    if (Remainder(&GlobalFileHandles) == 0) {
         Ret.Error = PlatformFileError_NotEnoughHandlers;
         return Ret;
     }    
@@ -844,11 +869,9 @@ PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
         Ret.Error = PlatformFileError_CannotOpenFile;
         return Ret;
     } 
+    
 
-    Ret.Id = Back(FreeIds);
-    Pop(FreeIds);
-    GlobalFileHandles[Ret.Id] = Win32Handle; 
-
+    Ret.Id = (u32)Reserve(&GlobalFileHandles, Win32Handle);
 
     return Ret; 
 }
@@ -880,11 +903,11 @@ PlatformLogFileErrorFunc(Win32LogFileError) {
 
 static inline
 PlatformCloseFileFunc(Win32CloseFile) {
-    HANDLE Win32Handle = GlobalFileHandles[Handle->Id];
-    Push(&GlobalFreeFileHandleIds, Handle->Id);
+    HANDLE* Win32Handle = Get(&GlobalFileHandles, Handle->Id);
     if (Win32Handle != INVALID_HANDLE_VALUE) {
-        CloseHandle(Win32Handle); 
+        CloseHandle(*Win32Handle); 
     }
+    Cancel(&GlobalFileHandles, Handle->Id);
 }
 static inline
 PlatformAddTextureFunc(Win32AddTexture) {
@@ -902,7 +925,7 @@ PlatformReadFileFunc(Win32ReadFile) {
         return;
     }
 
-    HANDLE Win32Handle = GlobalFileHandles[Handle->Id];
+    HANDLE Win32Handle = *(Get(&GlobalFileHandles, Handle->Id));
     OVERLAPPED Overlapped = {};
     Overlapped.Offset = (u32)((Offset >> 0) & 0xFFFFFFFF);
     Overlapped.OffsetHigh = (u32)((Offset >> 32) & 0xFFFFFFFF);
@@ -945,6 +968,68 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
     }
 }
 
+static inline platform_api
+Win32PlatformApi() {
+    platform_api PlatformApi = {};
+    PlatformApi.Log = Win32Log;
+    PlatformApi.ReadFile = Win32ReadFile;
+    PlatformApi.GetFileSize = Win32GetFileSize;
+    PlatformApi.ClearTextures = Win32ClearTextures;
+    PlatformApi.AddTexture = Win32AddTexture;
+    PlatformApi.OpenAssetFile = Win32OpenAssetFile;
+    PlatformApi.CloseFile = Win32CloseFile;
+    return PlatformApi;
+}
+
+static inline void
+Win32FreeGameMemory(game_memory* GameMemory) {
+    Win32FreeMemory(GameMemory->DebugMemory);
+    Win32FreeMemory(GameMemory->PermanentMemory);
+    Win32FreeMemory(GameMemory->TransientMemory);
+}
+
+static inline maybe<game_memory>
+Win32AllocateGameMemory(usize PermanentMemorySize,
+                        usize TransientMemorySize,
+                        usize DebugMemorySize) 
+{
+    game_memory GameMemory = {};
+
+    GameMemory.PermanentMemory =                
+        Win32AllocateMemory(PermanentMemorySize); 
+
+    GameMemory.TransientMemory = 
+        Win32AllocateMemory(TransientMemorySize);
+
+    GameMemory.DebugMemory =
+        Win32AllocateMemory(DebugMemorySize);
+
+    if (!GameMemory.PermanentMemory ||
+        !GameMemory.TransientMemory ||
+        !GameMemory.DebugMemory) {
+        Win32FreeGameMemory(&GameMemory);
+        return No();
+    }
+    return Yes(GameMemory); 
+}
+
+
+static inline maybe<mailbox>
+Win32AllocateRenderCommands(usize RenderCommandsMemorySize) {
+    void* RenderCommandsMemory =
+        Win32AllocateMemory(RenderCommandsMemorySize); 
+
+    mailbox RenderCommands = Mailbox(RenderCommandsMemory,
+                                     RenderCommandsMemorySize);
+
+    return RenderCommands;
+
+}
+
+static inline void
+Win32FreeRenderCommands(mailbox* RenderCommands) {
+    Win32FreeMemory(RenderCommands->Memory);
+}
 
 
 int CALLBACK
@@ -958,46 +1043,22 @@ WinMain(HINSTANCE Instance,
     AllocConsole();    
     Defer { FreeConsole(); };
     GlobalStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-#endif 
-
+#endif
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     GlobalIsRunning = true;
 
-    // Initialize current path
-    GetModuleFileNameA(0, GlobalExeFullPath, 
-                       sizeof(GlobalExeFullPath));
-    GlobalOnePastExeDirectory = GlobalExeFullPath;
-    for( char* Itr = GlobalExeFullPath; *Itr; ++Itr) {
-        if (*Itr == '\\') {
-            GlobalOnePastExeDirectory = Itr + 1;
-        }
-    }
-
-    // Initialize Performance Counter
-    LARGE_INTEGER PerfCountFreq;
-    QueryPerformanceFrequency(&PerfCountFreq);
-    GlobalPerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
-
-    // Initialize Arena
-    usize PlatformMemorySize = Kilobytes(256);
-    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
-    if (!PlatformMemory) {
+    Win32InitGlobalPaths();
+    Win32InitGlobalPerformanceFrequency();
+    
+    if (!Win32AllocateGlobalArena()) {
         Win32Log("Cannot allocate platform memory\n");
         return 1;
     }
-    Defer { Win32FreeMemory(PlatformMemory); };
-    GlobalArena = Arena(PlatformMemory, PlatformMemorySize); 
+    Defer { Win32FreeGlobalArena(); };
 
     // Initialize file handle store
-    const u32 FileHandleCap = 8;
-    GlobalFileHandles = Array<HANDLE>(&GlobalArena, FileHandleCap); 
-    GlobalFreeFileHandleIds = List<u32>(&GlobalArena, FileHandleCap);
-    for (u32 I = 0; I < FileHandleCap; ++I) {
-        Push(&GlobalFreeFileHandleIds, I);
-    }
+    GlobalFileHandles = Pool<HANDLE>(&GlobalArena, 8);
 
-    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
-  
     Win32Log("Window class registered\n");
     HWND Window = Win32CreateWindow(Instance, 
                                    (u32)Global_DesignWidth,
@@ -1007,37 +1068,21 @@ WinMain(HINSTANCE Instance,
         return 1;
     }
     Win32Log("Window Initialized\n");
-    // Log the dimensions of window and client area
-    {
-        v2u WindowWH = Win32GetWindowDimensions(Window);
-        v2u ClientWH = Win32GetClientDimensions(Window);
-        Win32Log("Window Dimensions: %d x %d\n", WindowWH.W, WindowWH.H);
-        Win32Log("Client Dimensions: %d x %d\n", ClientWH.W, ClientWH.H);
-    }
-    
-    u32 RefreshRate = Win32DetermineIdealRefreshRate(Window); 
+   
+    u32 RefreshRate = Win32DetermineIdealRefreshRate(Window, 60); 
     f32 TargetSecsPerFrame = 1.f / RefreshRate; 
     Win32Log("Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
     Win32Log("Monitor Refresh Rate: %d\n", RefreshRate);
 
-    // Create and initialize game code and DLL file paths
     // Load the game code DLL
-    // TODO: Make game code global?
     win32_game_code GameCode = 
         Win32GameCode("game.dll", "temp_game.dll", "lock");
-
+    
     // Initialize game input
     input GameInput = Input(StringBuffer(&GlobalArena, 10));
 
     // Initialize platform api
-    platform_api PlatformApi = {};
-    PlatformApi.Log = Win32Log;
-    PlatformApi.ReadFile = Win32ReadFile;
-    PlatformApi.GetFileSize = Win32GetFileSize;
-    PlatformApi.ClearTextures = Win32ClearTextures;
-    PlatformApi.AddTexture = Win32AddTexture;
-    PlatformApi.OpenAssetFile = Win32OpenAssetFile;
-    PlatformApi.CloseFile = Win32CloseFile;
+    platform_api PlatformApi = Win32PlatformApi();
 
     // Initialize Audio-related stuff
 #if 0
@@ -1114,41 +1159,25 @@ WinMain(HINSTANCE Instance,
     }
 #endif
 
-    // Initialize game memory
-    game_memory GameMemory = {};
-    GameMemory.PermanentMemorySize = Megabytes(256);
-    GameMemory.PermanentMemory = Win32AllocateMemory(GameMemory.PermanentMemorySize); 
-    if (!GameMemory.PermanentMemory) {
-        Win32Log("Cannot allocate game permanent memory\n");
+    maybe<game_memory> GameMemory = 
+        Win32AllocateGameMemory(Megabytes(256),
+                                Megabytes(256),
+                                Megabytes(256));
+    if (!GameMemory) {
+        Win32Log("Failed to allocate game memory\n");
         return 1;
     }
-    Defer { Win32FreeMemory(GameMemory.PermanentMemory); };
+    Defer { Win32FreeGameMemory(&GameMemory.This); };
 
-    GameMemory.TransientMemorySize = Megabytes(256);
-    GameMemory.TransientMemory = Win32AllocateMemory(GameMemory.TransientMemorySize);
-    if (!GameMemory.TransientMemory) {
-        Win32Log("Cannot allocate game transient memory\n");
-        return 1;
-    }
-    Defer { Win32FreeMemory(GameMemory.TransientMemory); };
-    
-    GameMemory.DebugMemorySize = Megabytes(256);
-    GameMemory.DebugMemory = Win32AllocateMemory(GameMemory.DebugMemorySize);
-    if (!GameMemory.DebugMemory) {
-        Win32Log("Cannot allocate game debug memory\n");
-        return 1;
-    }
-    Defer { Win32FreeMemory(GameMemory.DebugMemory); };
 
-    // Intialize Render commands
-    usize RenderCommandsMemorySize = Megabytes(64);
-    void* RenderCommandsMemory = Win32AllocateMemory(RenderCommandsMemorySize); 
-    if (!RenderCommandsMemory) {
+    // Initialize RenderCommands
+    maybe<mailbox> RenderCommands = 
+        Win32AllocateRenderCommands(Megabytes(64));
+    if (!RenderCommands) {
         Win32Log("Cannot allocate render commands memory\n");
         return 1;
     }
-    mailbox RenderCommands = Mailbox(RenderCommandsMemory,
-                                     RenderCommandsMemorySize);
+    Defer { Win32FreeRenderCommands(&RenderCommands.This); };
 
     // Initialize OpenGL
     GlobalOpengl = 
@@ -1176,22 +1205,24 @@ WinMain(HINSTANCE Instance,
                              &GameInput);
 
         if (GameCode.GameUpdate) {
-            GameCode.GameUpdate(&GameMemory,
+            GameCode.GameUpdate(&GameMemory.This,
                                 &PlatformApi,
-                                &RenderCommands,
+                                &RenderCommands.This,
                                 &GameInput,
                                 TargetSecsPerFrame);
         }
 
-        Render(GlobalOpengl, &RenderCommands);
-        Clear(&RenderCommands);
+        Render(GlobalOpengl, &RenderCommands.This);
+        Clear(&RenderCommands.This);
         
         f32 SecsElapsed = 
             Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter());
         
         if (TargetSecsPerFrame > SecsElapsed) {
             if (SleepIsGranular) {
-                DWORD MsToSleep = (DWORD)(1000.f * (TargetSecsPerFrame - SecsElapsed));
+                DWORD MsToSleep = 
+                    (DWORD)(1000.f * (TargetSecsPerFrame - SecsElapsed));
+
                 // We cut the sleep some slack, so we sleep 1 sec less.
                 if (MsToSleep > 1) {
                     Sleep(MsToSleep - 1);
