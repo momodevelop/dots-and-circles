@@ -264,58 +264,6 @@ IsOutdated(win32_game_code* Code) {
 }
 
 
-static inline void
-Reload(win32_game_code* Code) 
-{
-    Unload(Code);
-    Load(Code);
-}
-
-static inline maybe<win32_audio>
-Win32Audio() {
-    if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
-        Win32Log("[Audio] Failed CoInitializeEx\n");
-        return No();
-    }
-
-    IMMDeviceEnumerator* Enumerator;
-
-    if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), 
-                               NULL,
-                               CLSCTX_ALL, IID_PPV_ARGS(&Enumerator))))
-    {
-        Win32Log("[Audio] Failed to create IMMDeviceEnumerator\n");
-        return No();
-    }
-
-    IMMDevice* Device;
-    if (FAILED(Enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &Device))) {
-        Win32Log("[Audio] Failed to get audio endpoint\n");
-        return No();
-    }
-
-    if(FAILED(Device->Activate(__uuidof(IAudioClient), 
-                               CLSCTX_ALL, 
-                               NULL, 
-                               (LPVOID*)&AudioClient))) {
-        Win32Log("[Audio] Failed to create IAudioClient\n");
-        return No();
-    }
-
-    WAVEFORMATEXTENSIBLE WaveFormat;
-    WaveFormat.Format.cbSize = sizeof(WaveFormat);
-    WaveFormat.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    WaveFormat.Format.wBitsPerSample = 16;
-    WaveFormat.Format.nChannels = 2;
-    WaveFormat.Format.nSamplesPerSec = (DWORD)SamplesPerSecond;
-    WaveFormat.Format.nBlockAlign = 
-        (WORD)(WaveFormat.Format.nChannels * WaveFormat.Format.wBitsPerSample / 8);
-    WaveFormat.Format.nAvgBytesPerSec = 
-        WaveFormat.Format.nSamplesPerSec * WaveFormat.Format.nBlockAlign;
-    WaveFormat.Samples.wValidBitsPerSample = 16;
-    WaveFormat.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
-    WaveFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-}
 
 static inline void
 Win32OpenglSetPixelFormat(HDC DeviceContext) {
@@ -1092,8 +1040,52 @@ WinMain(HINSTANCE Instance,
     PlatformApi.CloseFile = Win32CloseFile;
 
     // Initialize Audio-related stuff
-    win32_audio Audio = Win32Audio();
-    Audio.SamplesPerSecond = 48000;
+    u32 SamplesPerSecond = 48000;
+    IAudioClient* AudioClient = {};
+    {
+        if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
+            Win32Log("[Audio] Failed CoInitializeEx\n");
+            return 1;
+        }
+
+        IMMDeviceEnumerator* Enumerator;
+
+        if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), 
+                                   NULL,
+                                   CLSCTX_ALL, IID_PPV_ARGS(&Enumerator))))
+        {
+            Win32Log("[Audio] Failed to create IMMDeviceEnumerator\n");
+            return 1;
+        }
+
+        IMMDevice* Device;
+        if (FAILED(Enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &Device))) {
+            Win32Log("[Audio] Failed to get audio endpoint\n");
+            return 1;
+        }
+
+        if(FAILED(Device->Activate(__uuidof(IAudioClient), 
+                                   CLSCTX_ALL, 
+                                   NULL, 
+                                   (LPVOID*)&AudioClient))) {
+            Win32Log("[Audio] Failed to create IAudioClient\n");
+            return 1;
+        }
+
+        WAVEFORMATEXTENSIBLE WaveFormat;
+        WaveFormat.Format.cbSize = sizeof(WaveFormat);
+        WaveFormat.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        WaveFormat.Format.wBitsPerSample = 16;
+        WaveFormat.Format.nChannels = 2;
+        WaveFormat.Format.nSamplesPerSec = (DWORD)SamplesPerSecond;
+        WaveFormat.Format.nBlockAlign = 
+            (WORD)(WaveFormat.Format.nChannels * WaveFormat.Format.wBitsPerSample / 8);
+        WaveFormat.Format.nAvgBytesPerSec = 
+            WaveFormat.Format.nSamplesPerSec * WaveFormat.Format.nBlockAlign;
+        WaveFormat.Samples.wValidBitsPerSample = 16;
+        WaveFormat.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+        WaveFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }
 
 
     // Initialize game memory
@@ -1149,7 +1141,8 @@ WinMain(HINSTANCE Instance,
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (GlobalIsRunning) {
         if (IsOutdated(&GameCode)) {
-            Reload(&GameCode);
+            Unload(&GameCode);
+            Load(&GameCode);
         }
 
         Update(&GameInput);
