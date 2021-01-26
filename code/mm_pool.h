@@ -30,6 +30,13 @@ Get(pool<t>* Pool, usize Id) {
     return &Pool->Slots[Id]; 
 }
 
+// For use with smaller types
+template<typename t>
+static inline t
+GetCopy(pool<t>* Pool, usize Id) {
+    return Pool->Slots[Id]; 
+}
+
 template<typename t>
 static inline usize 
 Remainder(pool<t>* Pool) {
@@ -50,7 +57,7 @@ Reserve(pool<t>* Pool, t Construct = {})
 
 template<typename t>
 static inline void
-Cancel(pool<t>* Pool, usize Id) {
+Release(pool<t>* Pool, usize Id) {
     Push(&Pool->FreeList, Id);
 }
 

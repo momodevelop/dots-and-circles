@@ -207,12 +207,10 @@ Win32GameCode(const char* SrcFileName,
               const char* TempFileName,
               const char* LockFileName) 
 {
-    Assert(SrcFileName && TempFileName && LockFileName);
     win32_game_code Ret = {};
     Win32BuildExePathFilename(Ret.SrcFileName, SrcFileName);
     Win32BuildExePathFilename(Ret.TempFileName, TempFileName);
     Win32BuildExePathFilename(Ret.LockFileName, LockFileName);
-
     
     return Ret;
 }
@@ -347,7 +345,7 @@ Win32OpenglLoadWglExtensions() {
 #define Win32SetWglFunction(Name) \
             Name = (WglFunction(Name)*)wglGetProcAddress(#Name); \
             if (!Name) { \
-                Win32Log("[OpenGL] Cannot load: " #Name " \n"); \
+                Win32Log("[Win32::OpenGL] Cannot load wgl function: " #Name " \n"); \
                 return false; \
             }
 
@@ -359,13 +357,13 @@ Win32OpenglLoadWglExtensions() {
             return true;
         }
         else {
-            Win32Log("[OpenGL] Cannot begin to load wgl extensions\n");
+            Win32Log("[Win32::OpenGL] Cannot begin to load wgl extensions\n");
             return false;
         }
 
     }
     else {
-        Win32Log("[OpenGL] Cannot register class to load wgl extensions\n");
+        Win32Log("[Win32::Opengl] Cannot register class to load wgl extensions\n");
         return false;
     }
 }
@@ -508,19 +506,21 @@ OpenglDebugCallbackFunc(Win32OpenglDebugCallback) {
 
 static inline void
 Win32FreeOpengl(opengl* Opengl) {
+    Win32Log("[Win32::Opengl] Freeing opengl\n");
     Win32FreeMemory(Opengl);
 }
 
 static inline opengl*
 Win32AllocateOpengl(HWND Window, 
-                    v2u WindowDimensions) 
+                    v2u WindowDimensions,
+                    usize ExtraMemory) 
 {
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
     // This is kinda what we wanna do if we ever want Renderer 
     // to be its own DLL...
-    usize RendererMemorySize = sizeof(opengl) + Kilobytes(128); 
+    usize RendererMemorySize = sizeof(opengl) + ExtraMemory; 
     void* RendererMemory = Win32AllocateMemory(RendererMemorySize);
     opengl* Opengl = BootstrapStruct(opengl,
                                      Arena,
@@ -528,9 +528,11 @@ Win32AllocateOpengl(HWND Window,
                                      RendererMemorySize);
 
     if (!Opengl) {
-        Win32Log("Cannot allocate renderer memory"); 
+        Win32Log("[Win32::Opengl] Failed to allocate\n"); 
         return nullptr;
     }
+
+    Win32Log("[Win32::Opengl] Allocated: %d bytes\n", RendererMemorySize);
 
     if (!Win32OpenglLoadWglExtensions()) {
         Win32FreeOpengl(Opengl);
@@ -556,7 +558,8 @@ Win32AllocateOpengl(HWND Window,
 
     if (!OpenglContext) {
         //OpenglContext = wglCreateContext(DeviceContext);
-        Win32Log("Cannot create opengl context");
+        Win32Log("[Win32::Opengl] Cannot create opengl context");
+        Win32FreeOpengl(Opengl);
         return nullptr;
     }
 
@@ -566,7 +569,7 @@ Win32AllocateOpengl(HWND Window,
 #define Win32SetOpenglFunction(Name) \
         Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
         if (!Opengl->Name) { \
-            Win32Log("[Opengl] Cannot load " #Name " \n"); \
+            Win32Log("[Win32::Opengl] Cannot load opengl function '" #Name "' \n"); \
             Win32FreeOpengl(Opengl); \
             return nullptr; \
         }
@@ -643,18 +646,24 @@ Win32InitGlobalPerformanceFrequency() {
     GlobalPerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
 }
 
-static inline b32
-Win32AllocateGlobalArena() {
-    usize PlatformMemorySize = Kilobytes(256);
-    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
-    GlobalArena = Arena(PlatformMemory, PlatformMemorySize); 
-    return PlatformMemory != nullptr;
-}
-
 static inline void
 Win32FreeGlobalArena() {
+    Win32Log("[Win32::Arena] Freed platform arena\n");
     Win32FreeMemory(GlobalArena.Memory); 
 }
+
+static inline b32
+Win32AllocateGlobalArena(u32 PlatformMemorySize) {
+    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
+    GlobalArena = Arena(PlatformMemory, PlatformMemorySize); 
+    if(!PlatformMemory) {
+        Win32Log("[Win32::Arena] Cannot allocate platform arena\n");
+        return false;
+    }
+    Win32Log("[Win32::Arena] Allocated arena: %d bytes\n", PlatformMemorySize);
+    return true;
+}
+
 
 
 static inline v2u
@@ -760,11 +769,12 @@ Win32WindowCallback(HWND Window,
         } break;
         case WM_WINDOWPOSCHANGED: {
             if(GlobalOpengl && 
-               GlobalOpengl->Header.IsInitialized) {
+               GlobalOpengl->Header.IsInitialized) 
+            {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);
-                //Win32Log("ClientWH: %d x %d\n", ClientWH.W, ClientWH.H);
-                //Win32Log("WindowWH: %d x %d\n", WindowWH.W, WindowWH.H);
+                Win32Log("[Win32::Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
+                Win32Log("[Win32::Resize] Window: %d x %d\n", WindowWH.W, WindowWH.H);
                 Resize(GlobalOpengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
@@ -777,21 +787,23 @@ Win32WindowCallback(HWND Window,
     return Result;
 }
 
+
 static inline HWND 
 Win32CreateWindow(HINSTANCE Instance,
                   u32 WindowWidth,
-                  u32 WindowHeight) 
+                  u32 WindowHeight,
+                  const char* Title) 
 {
     WNDCLASSA WindowClass = {};
     WindowClass.style = CS_HREDRAW | CS_VREDRAW;
     WindowClass.lpfnWndProc = Win32WindowCallback;
     WindowClass.hInstance = Instance;
     WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
-    WindowClass.lpszClassName = "DnCWindowClass";
+    WindowClass.lpszClassName = "MainWindowClass";
 
     if(!RegisterClassA(&WindowClass)) {
-        Win32Log("Failed to register class");
-        return {};
+        Win32Log("[Win32::Window] Failed to create class\n");
+        return NULL;
     }
 
     HWND Window = {};
@@ -807,13 +819,12 @@ Win32CreateWindow(HINSTANCE Instance,
                        Style,
                        FALSE,
                        0);
-    
 
     // TODO: Adaptively create 'best' window resolution based on current desktop reso.
     Window = CreateWindowExA(
                 0,
                 WindowClass.lpszClassName,
-                "Dots And Circles",
+                Title,
                 Style,
                 WindowRect.left,
                 WindowRect.top,
@@ -824,6 +835,15 @@ Win32CreateWindow(HINSTANCE Instance,
                 Instance,
                 0);
 
+    if (!Window) {
+        Win32Log("[Win32::Window] Failed to create window\n");
+        return NULL;
+    }
+    Win32Log("[Win32::Window] Window created successfully\n");
+    v2u WindowWH = Win32GetWindowDimensions(Window);
+    v2u ClientWH = Win32GetClientDimensions(Window);
+    Win32Log("[Win32::Window] Client: %d x %d\n", ClientWH.W, ClientWH.H);
+    Win32Log("[Win32::Window] Window: %d x %d\n", WindowWH.W, WindowWH.H);
     return Window;
 
 }
@@ -865,7 +885,7 @@ PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     
      
     if(Win32Handle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32ReadFile] Cannot open file: %s\n", Path);
+        Win32Log("[Win32::ReadFile] Cannot open file: %s\n", Path);
         Ret.Error = PlatformFileError_CannotOpenFile;
         return Ret;
     } 
@@ -881,33 +901,33 @@ static inline
 PlatformLogFileErrorFunc(Win32LogFileError) {
     switch(Handle->Error) {
         case PlatformFileError_None: {
-            Win32Log("[File] There is no file error\n");
+            Win32Log("[Win32::File] There is no file error\n");
         } break;
         case PlatformFileError_NotEnoughHandlers: {
-            Win32Log("[File] There is not enough handlers\n");
+            Win32Log("[Win32::File] There is not enough handlers\n");
         } break;
         case PlatformFileError_CannotOpenFile:{
-            Win32Log("[File] Cannot open file\n");
+            Win32Log("[Win32::File] Cannot open file\n");
         } break;
         case PlatformFileError_Closed:{
-            Win32Log("[File] File is already closed\n");
+            Win32Log("[Win32::File] File is already closed\n");
         } break;
         case PlatformFileError_ReadFileFailed: {
-            Win32Log("[File] File read failed\n");
+            Win32Log("[Win32::File] File read failed\n");
         } break;
         default: {
-            Win32Log("[File] Undefined error!\n");
+            Win32Log("[Win32::File] Undefined error!\n");
         };
     }
 }
 
 static inline
 PlatformCloseFileFunc(Win32CloseFile) {
-    HANDLE* Win32Handle = Get(&GlobalFileHandles, Handle->Id);
+    HANDLE Win32Handle = GetCopy(&GlobalFileHandles, Handle->Id);
     if (Win32Handle != INVALID_HANDLE_VALUE) {
-        CloseHandle(*Win32Handle); 
+        CloseHandle(Win32Handle); 
     }
-    Cancel(&GlobalFileHandles, Handle->Id);
+    Release(&GlobalFileHandles, Handle->Id);
 }
 static inline
 PlatformAddTextureFunc(Win32AddTexture) {
@@ -955,12 +975,12 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
     Defer { CloseHandle(FileHandle); };
 
     if(FileHandle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32GetFileSize] Cannot open file: %s\n", Path);
+        Win32Log("[Win32::GetFileSize] Cannot open file: %s\n", Path);
         return 0;
     } else {
         LARGE_INTEGER FileSize;
         if (!GetFileSizeEx(FileHandle, &FileSize)) {
-            Win32Log("[Win32GetFileSize] Problems getting file size: %s\n", Path);
+            Win32Log("[Win32::GetFileSize] Problems getting file size: %s\n", Path);
             return 0;
         }
 
@@ -986,6 +1006,7 @@ Win32FreeGameMemory(game_memory* GameMemory) {
     Win32FreeMemory(GameMemory->DebugMemory);
     Win32FreeMemory(GameMemory->PermanentMemory);
     Win32FreeMemory(GameMemory->TransientMemory);
+    Win32Log("[Win32::GameMemory] Freed\n");
 }
 
 static inline maybe<game_memory>
@@ -994,13 +1015,15 @@ Win32AllocateGameMemory(usize PermanentMemorySize,
                         usize DebugMemorySize) 
 {
     game_memory GameMemory = {};
-
+    GameMemory.PermanentMemorySize = PermanentMemorySize;
     GameMemory.PermanentMemory =                
         Win32AllocateMemory(PermanentMemorySize); 
 
+    GameMemory.TransientMemorySize = TransientMemorySize;
     GameMemory.TransientMemory = 
         Win32AllocateMemory(TransientMemorySize);
 
+    GameMemory.DebugMemorySize = DebugMemorySize;
     GameMemory.DebugMemory =
         Win32AllocateMemory(DebugMemorySize);
 
@@ -1008,9 +1031,21 @@ Win32AllocateGameMemory(usize PermanentMemorySize,
         !GameMemory.TransientMemory ||
         !GameMemory.DebugMemory) {
         Win32FreeGameMemory(&GameMemory);
+        Win32Log("[Win32::GameMemory] Failed to allocate\n");
         return No();
     }
+    Win32Log("[Win32::GameMemory] Allocated\n");
+    Win32Log("[Win32::GameMemory] Permanent Memory Size: %d bytes\n", PermanentMemorySize);
+    Win32Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", TransientMemorySize);
+    Win32Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", DebugMemorySize);
+
     return Yes(GameMemory); 
+}
+
+static inline void
+Win32FreeRenderCommands(mailbox* RenderCommands) {
+    Win32Log("[Win32::RenderCommands] Freed\n"); 
+    Win32FreeMemory(RenderCommands->Memory);
 }
 
 
@@ -1018,17 +1053,16 @@ static inline maybe<mailbox>
 Win32AllocateRenderCommands(usize RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
         Win32AllocateMemory(RenderCommandsMemorySize); 
-
+    if (!RenderCommandsMemory) {
+        Win32Log("[Win32::RenderCommands] Failed to allocate\n"); 
+        return No();
+    }
     mailbox RenderCommands = Mailbox(RenderCommandsMemory,
                                      RenderCommandsMemorySize);
+    Win32Log("[Win32::RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
 
-    return RenderCommands;
+    return Yes(RenderCommands);
 
-}
-
-static inline void
-Win32FreeRenderCommands(mailbox* RenderCommands) {
-    Win32FreeMemory(RenderCommands->Memory);
 }
 
 
@@ -1050,8 +1084,7 @@ WinMain(HINSTANCE Instance,
     Win32InitGlobalPaths();
     Win32InitGlobalPerformanceFrequency();
     
-    if (!Win32AllocateGlobalArena()) {
-        Win32Log("Cannot allocate platform memory\n");
+    if (!Win32AllocateGlobalArena(Kilobytes(256))) {
         return 1;
     }
     Defer { Win32FreeGlobalArena(); };
@@ -1059,20 +1092,16 @@ WinMain(HINSTANCE Instance,
     // Initialize file handle store
     GlobalFileHandles = Pool<HANDLE>(&GlobalArena, 8);
 
-    Win32Log("Window class registered\n");
     HWND Window = Win32CreateWindow(Instance, 
                                    (u32)Global_DesignWidth,
-                                   (u32)Global_DesignHeight);
-    if (!Window) {
-        Win32Log("Window failed to intialize\n");
-        return 1;
-    }
-    Win32Log("Window Initialized\n");
+                                   (u32)Global_DesignHeight,
+                                   "Dots and Circles");
+    if (!Window) { return 1; }
    
-    u32 RefreshRate = Win32DetermineIdealRefreshRate(Window, 60); 
-    f32 TargetSecsPerFrame = 1.f / RefreshRate; 
-    Win32Log("Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
-    Win32Log("Monitor Refresh Rate: %d\n", RefreshRate);
+    u32 RefreshRateHz = Win32DetermineIdealRefreshRate(Window, 60); 
+    f32 TargetSecsPerFrame = 1.f / RefreshRateHz; 
+    Win32Log("[Win32::Main] Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
+    Win32Log("[Win32::Main] Monitor Refresh Rate: %d Hz\n", RefreshRateHz);
 
     // Load the game code DLL
     win32_game_code GameCode = 
@@ -1085,12 +1114,29 @@ WinMain(HINSTANCE Instance,
     platform_api PlatformApi = Win32PlatformApi();
 
     // Initialize Audio-related stuff
-#if 0
-    u32 SamplesPerSecond = 48000;
+    struct win32_sound_output {
+        u32 BitsPerSample;
+        u32 SamplesPerSecond;
+        u32 SamplesPerFrame; 
+        u32 LatencyInFrames;
+
+        // Represents samples
+        usize SampleBufferSize;
+        i16* SampleBuffer;
+        
+    } SoundOutput = {};
+  
+    SoundOutput.SamplesPerSecond = 48000;
+    SoundOutput.SampleBufferSize = SoundOutput.SamplesPerSecond;
+    SoundOutput.LatencyInFrames = 1;
+    SoundOutput.SamplesPerFrame = (SoundOutput.SamplesPerSecond / RefreshRateHz) * SoundOutput.LatencyInFrames;
+    SoundOutput.SampleBuffer = (i16*)Win32AllocateMemory(SoundOutput.SampleBufferSize); 
+
     IAudioClient* AudioClient = {};
+    IAudioRenderClient* AudioRenderClient = {};
     {
         if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
-            Win32Log("[Audio] Failed CoInitializeEx\n");
+            Win32Log("[Win32::Audio] Failed CoInitializeEx\n");
             return 1;
         }
 
@@ -1100,13 +1146,13 @@ WinMain(HINSTANCE Instance,
                                    NULL,
                                    CLSCTX_ALL, IID_PPV_ARGS(&Enumerator))))
         {
-            Win32Log("[Audio] Failed to create IMMDeviceEnumerator\n");
+            Win32Log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
             return 1;
         }
 
         IMMDevice* Device;
         if (FAILED(Enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &Device))) {
-            Win32Log("[Audio] Failed to get audio endpoint\n");
+            Win32Log("[Win32::Audio] Failed to get audio endpoint\n");
             return 1;
         }
 
@@ -1114,7 +1160,7 @@ WinMain(HINSTANCE Instance,
                                    CLSCTX_ALL, 
                                    NULL, 
                                    (LPVOID*)&AudioClient))) {
-            Win32Log("[Audio] Failed to create IAudioClient\n");
+            Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
             return 1;
         }
 
@@ -1123,7 +1169,7 @@ WinMain(HINSTANCE Instance,
         WaveFormat.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
         WaveFormat.Format.wBitsPerSample = 16;
         WaveFormat.Format.nChannels = 2;
-        WaveFormat.Format.nSamplesPerSec = (DWORD)SamplesPerSecond;
+        WaveFormat.Format.nSamplesPerSec = (DWORD)SoundOutput.SamplesPerSecond;
         WaveFormat.Format.nBlockAlign = 
             (WORD)(WaveFormat.Format.nChannels * WaveFormat.Format.wBitsPerSample / 8);
         WaveFormat.Format.nAvgBytesPerSec = 
@@ -1133,32 +1179,38 @@ WinMain(HINSTANCE Instance,
         WaveFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 
 
-        REFERENCE_TIME BufferDuration = 10000000ULL * BufferSizeInSamples / SamplesPerSecond; // buffer size in 100 nanoseconds
-        if (FAILED(GlobalSoundClient->Initialize(
+        // buffer size in 100 nanoseconds
+        REFERENCE_TIME BufferDuration = 
+            10000000ULL * SoundOutput.SampleBufferSize / SoundOutput.SamplesPerSecond;         
+        if (FAILED(AudioClient->Initialize(
                         AUDCLNT_SHAREMODE_SHARED, 
                         AUDCLNT_STREAMFLAGS_NOPERSIST, 
                         BufferDuration, 0, 
                         &WaveFormat.Format, nullptr)))
         {
-            Assert(!"Error");
+            return 1;
         }
 
-        if (FAILED(GlobalSoundClient->GetService(IID_PPV_ARGS(&GlobalSoundRenderClient))))
+        if (FAILED(AudioClient->GetService(IID_PPV_ARGS(&AudioRenderClient))))
         {
-            Assert(!"Error");
+            return 1;
         }
 
         UINT32 SoundFrameCount;
-        if (FAILED(GlobalSoundClient->GetBufferSize(&SoundFrameCount)))
+        if (FAILED(AudioClient->GetBufferSize(&SoundFrameCount)))
         {
-            Assert(!"Error");
+            return 1;
+        }
+        
+        if (SoundOutput.SampleBufferSize != SoundFrameCount) {
+            return 1;
         }
 
-    // Check if we got what we requested (better would to pass this value back as real buffer size)
-
+        Win32Log("[Win32::Audio] Loaded!\n");
     }
-#endif
+    AudioClient->Start();
 
+    // Initialize game memory
     maybe<game_memory> GameMemory = 
         Win32AllocateGameMemory(Megabytes(256),
                                 Megabytes(256),
@@ -1180,9 +1232,9 @@ WinMain(HINSTANCE Instance,
     Defer { Win32FreeRenderCommands(&RenderCommands.This); };
 
     // Initialize OpenGL
-    GlobalOpengl = 
-        Win32AllocateOpengl(Window, 
-                            Win32GetClientDimensions(Window));
+    GlobalOpengl = Win32AllocateOpengl(Window, 
+                                       Win32GetClientDimensions(Window),
+                                       Kilobytes(128));
     if (!GlobalOpengl) {
         Win32Log("Cannot initialize opengl\n");
         return 1;
@@ -1212,9 +1264,44 @@ WinMain(HINSTANCE Instance,
                                 TargetSecsPerFrame);
         }
 
+
         Render(GlobalOpengl, &RenderCommands.This);
         Clear(&RenderCommands.This);
         
+        for (usize I = 0; I < SoundOutput.SampleBufferSize/2; ++I) {
+            SoundOutput.SampleBuffer[I] = I16_MAX;
+        }
+
+        
+        // Sound
+        {
+            // Compute how much sound to write and where
+            UINT32 SamplesToWrite = 0;
+            UINT32 SoundPaddingSize;
+            if (SUCCEEDED(AudioClient->GetCurrentPadding(&SoundPaddingSize))) {
+                SamplesToWrite = (UINT32)SoundOutput.SampleBufferSize - SoundPaddingSize;
+                // Cap the samples to write to how much latency is allowed.
+                if (SamplesToWrite > SoundOutput.LatencySampleCount) {
+                    SamplesToWrite = SoundOutput.LatencySampleCount;
+                }
+                Win32Log("Samples To Write: %d\n", SamplesToWrite);
+            }
+
+            BYTE* SoundBufferData;
+            if (SUCCEEDED(AudioRenderClient->GetBuffer((UINT32)SamplesToWrite, &SoundBufferData))) {
+                i16* SrcSample = SoundOutput.SampleBuffer;
+                i16* DestSample = (i16*)SoundBufferData;
+                for(usize I = 0; I < SamplesToWrite; ++I ){
+                    // Because we are 16 bits
+                    *DestSample++ = *SrcSample++;
+                    *DestSample++ = *SrcSample++;
+                }
+
+                AudioRenderClient->ReleaseBuffer((UINT32)SamplesToWrite, 0);
+            }
+
+        }
+
         f32 SecsElapsed = 
             Win32GetSecondsElapsed(LastCount, Win32GetCurrentCounter());
         
@@ -1237,8 +1324,8 @@ WinMain(HINSTANCE Instance,
         Win32SwapBuffers(Window);
     }
 
-
     return 0;
 }
+
 
 
