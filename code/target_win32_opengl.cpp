@@ -1119,7 +1119,8 @@ WinMain(HINSTANCE Instance,
         u32 SamplesPerSecond;
         u32 SamplesPerFrame; 
         u32 LatencyInFrames;
-
+        u32 LatencySampleCount;
+        u32 BytesPerSample;
         // Represents samples
         usize SampleBufferSize;
         i16* SampleBuffer;
@@ -1127,9 +1128,9 @@ WinMain(HINSTANCE Instance,
     } SoundOutput = {};
   
     SoundOutput.SamplesPerSecond = 48000;
-    SoundOutput.SampleBufferSize = SoundOutput.SamplesPerSecond;
-    SoundOutput.LatencyInFrames = 1;
-    SoundOutput.SamplesPerFrame = (SoundOutput.SamplesPerSecond / RefreshRateHz) * SoundOutput.LatencyInFrames;
+    SoundOutput.BytesPerSample = sizeof(i16)*2;
+    SoundOutput.SampleBufferSize = SoundOutput.SamplesPerSecond * SoundOutput.BytesPerSample;
+    SoundOutput.LatencySampleCount = (SoundOutput.SamplesPerSecond / RefreshRateHz) * 1;
     SoundOutput.SampleBuffer = (i16*)Win32AllocateMemory(SoundOutput.SampleBufferSize); 
 
     IAudioClient* AudioClient = {};
@@ -1244,6 +1245,8 @@ WinMain(HINSTANCE Instance,
     // Set sleep granularity to 1ms
     b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
 
+
+    f32 TSine = 0.f;
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (GlobalIsRunning) {
@@ -1267,14 +1270,10 @@ WinMain(HINSTANCE Instance,
 
         Render(GlobalOpengl, &RenderCommands.This);
         Clear(&RenderCommands.This);
-        
-        for (usize I = 0; I < SoundOutput.SampleBufferSize/2; ++I) {
-            SoundOutput.SampleBuffer[I] = I16_MAX;
-        }
 
-        
         // Sound
         {
+            // TODO: Safe releasing things we allocated
             // Compute how much sound to write and where
             UINT32 SamplesToWrite = 0;
             UINT32 SoundPaddingSize;
@@ -1284,17 +1283,32 @@ WinMain(HINSTANCE Instance,
                 if (SamplesToWrite > SoundOutput.LatencySampleCount) {
                     SamplesToWrite = SoundOutput.LatencySampleCount;
                 }
-                Win32Log("Samples To Write: %d\n", SamplesToWrite);
             }
+
+
+            i16* SampleOut = SoundOutput.SampleBuffer;
+            for(usize I = 0; I < SamplesToWrite; ++I) {
+                const i16 Volume = 3000;
+                i16 SampleValue = (i16)(Sin(TSine) * Volume);
+                // Based on number of channels!
+                *SampleOut++ = SampleValue;
+                *SampleOut++ = SampleValue;
+                TSine += TargetSecsPerFrame;
+            }
+
+
+
 
             BYTE* SoundBufferData;
             if (SUCCEEDED(AudioRenderClient->GetBuffer((UINT32)SamplesToWrite, &SoundBufferData))) {
                 i16* SrcSample = SoundOutput.SampleBuffer;
                 i16* DestSample = (i16*)SoundBufferData;
+                // Buffer structure:
+                // i16   i16    i16  i16   i16  i16
+                // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
                 for(usize I = 0; I < SamplesToWrite; ++I ){
-                    // Because we are 16 bits
-                    *DestSample++ = *SrcSample++;
-                    *DestSample++ = *SrcSample++;
+                    *DestSample++ = *SrcSample++; // Left
+                    *DestSample++ = *SrcSample++; // Right
                 }
 
                 AudioRenderClient->ReleaseBuffer((UINT32)SamplesToWrite, 0);
