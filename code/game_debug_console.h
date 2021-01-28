@@ -106,7 +106,7 @@ Pop(debug_console* Console) {
 // Returns true if there is a new command
 static inline void 
 Update(debug_console* Console, 
-       input* Input,
+       game_input* Input,
        f32 DeltaTime) 
 {
     if (IsPoked(Input->ButtonConsole)) {

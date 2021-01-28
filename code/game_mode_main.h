@@ -408,7 +408,7 @@ UpdateWaves(game_mode_main* Mode,
 
 static inline void
 UpdateInput(game_mode_main* Mode,
-            input* Input)
+            game_input* Input)
 {
     v2f Direction = {};
     player* Player = &Mode->Player; 
@@ -554,7 +554,7 @@ static inline void
 UpdateMainMode(permanent_state* PermState, 
                transient_state* TranState,
                mailbox* RenderCommands, 
-               input* Input,
+               game_input* Input,
                f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;

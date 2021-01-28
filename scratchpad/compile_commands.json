@@ -1,7 +1,0 @@
-[
-    {
-        "directory": "D:\\Stuff\\Repos\\c\\dots-and-circles\\scratchpad"
-        "command": "cl -DINTERNAL test.cpp"
-        "file": "test.cpp"
-    },
-]

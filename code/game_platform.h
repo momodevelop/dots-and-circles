@@ -11,31 +11,30 @@
 #include "game_renderer.h"
 
 // NOTE(Momo): Global Settings
-static constexpr u32 Global_DefaultRefreshRate = 60;
 static constexpr f32 Global_DesignWidth = 1600.f;
 static constexpr f32 Global_DesignHeight = 900.f;
 static constexpr f32 Global_DesignDepth = 200.f;
 
 
 // Input API /////////////////////////////////////////
-struct input_button {
+struct game_input_button {
     bool Before : 1;
     bool Now : 1;
 };
 
-struct input {
+struct game_input {
     string_buffer Characters;
     union {
-        input_button Buttons[8];
+        game_input_button Buttons[8];
         struct {
-            input_button ButtonUp;
-            input_button ButtonDown;
-            input_button ButtonRight;
-            input_button ButtonLeft;
-            input_button ButtonConfirm;
-            input_button ButtonSwitch;
-            input_button ButtonBack;
-            input_button ButtonConsole;
+            game_input_button ButtonUp;
+            game_input_button ButtonDown;
+            game_input_button ButtonRight;
+            game_input_button ButtonLeft;
+            game_input_button ButtonConfirm;
+            game_input_button ButtonSwitch;
+            game_input_button ButtonBack;
+            game_input_button ButtonConsole;
         };
     };
     
@@ -43,17 +42,17 @@ struct input {
 };
 
 
-static inline input
+static inline game_input
 Input(string_buffer Buffer) 
 {
-    input Ret = {};
+    game_input Ret = {};
     Ret.Characters = Buffer;
     return Ret;
 }
 
 
 static inline b32
-TryPushCharacterInput(input* Input, char C) {
+TryPushCharacterInput(game_input* Input, char C) {
     if (C >= 32 && C <= 126) {
         Push(&Input->Characters, C);
         return true;
@@ -62,7 +61,7 @@ TryPushCharacterInput(input* Input, char C) {
 }
 
 static inline void
-Update(input* Input) {
+Update(game_input* Input) {
     Clear(&Input->Characters);
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
@@ -71,26 +70,26 @@ Update(input* Input) {
 
 // before: 0, now: 1
 static inline b32 
-IsPoked(input_button Button) {
+IsPoked(game_input_button Button) {
     return !Button.Before && Button.Now;
 }
 
 // before: 1, now: 0
 static inline b32
-IsReleased(input_button Button) {
+IsReleased(game_input_button Button) {
     return Button.Before && !Button.Now;
 }
 
 
 // before: X, now: 1
 static inline b32
-IsDown(input_button Button) {
+IsDown(game_input_button Button) {
     return Button.Now;
 }
 
 // before: 1, now: 1
 static inline b32
-IsHeld(input_button Button) {
+IsHeld(game_input_button Button) {
     return Button.Before && Button.Now;
 }
 
@@ -156,7 +155,7 @@ struct game_memory {
 #define GameUpdateFunc(Name) b32 Name(game_memory* GameMemory, \
                                       platform_api* Platform, \
                                       mailbox* RenderCommands, \
-                                      input* Input, \
+                                      game_input* Input, \
                                       f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
 
