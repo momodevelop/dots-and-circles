@@ -59,6 +59,7 @@ union range {
     };
 };
 
+
 struct no {}; 
 template<typename T>
 struct maybe {
@@ -232,6 +233,7 @@ SafeCastI64ToU32(i64 Value) {
     Assert(Value <= U32_MAX && Value >= 0);
     return (u32)Value;
 }
+
 
 
 #endif

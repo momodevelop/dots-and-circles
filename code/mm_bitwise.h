@@ -116,5 +116,27 @@ Zero(void *mem, usize size) {
 #define ZeroDynamicArray(a, c) Zero((a), sizeof(*(a)) * c)
 
 
+static inline u32
+constexpr FourCC(const char String[5]) {
+    return 
+        ((u32)(String[0]) << 0 ) |
+        ((u32)(String[1]) << 8 ) |
+        ((u32)(String[2]) << 16) |
+        ((u32)(String[3]) << 24);
+}
+
+static inline u16
+EndianSwap(u16 Value) {
+    return ((Value << 8) | Value >> 8);
+}
+
+static inline u32
+EndianSwap(u32 Value) {
+    return ((Value << 24) |
+            ((Value & 0xFF00) << 8) |
+            ((Value >> 8) & 0xFF00) |
+            (Value >> 24));
+}
+
 #endif 
 

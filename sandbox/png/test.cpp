@@ -3,12 +3,10 @@
 #include "../../code/mm_core.h"
 #include "../../code/mm_bitwise.h"
 
-#define _CRT_SECURE_NO_WARNINGS 1
-
 static inline void* 
 ReadFileToMemory(const char* Filename) {
     FILE* File = {};
-    if (fopen_s(&File, "test.png", "rb") == 0) { 
+    if (fopen_s(&File, "test.png", "rb") != 0) { 
         printf("Cannot find file\n");
         return nullptr;
     }
@@ -25,32 +23,89 @@ ReadFileToMemory(const char* Filename) {
     return Ret;
 }
 
+struct png_header {
+    u8 Signature[8];
+};
+
+#pragma pack(push, 1)
+// 5.3 Chunk layout
+// | Length | Type | Data | CRC
+struct png_chunk_header {
+    u32 Length;
+    union {
+        u32 TypeU32;
+        u8 Type[4];
+    };
+};
+
+struct png_chunk_data_IHDR {
+    u32 Width;
+    u32 Height;
+    u8 BitDepth;
+    u8 ColourType;
+    u8 CompressionMethod;
+    u8 FilterMethod;
+    u8 InterlaceMethod;
+};
+
+struct png_chunk_footer {
+    u32 Crc; 
+};
+#pragma pack(pop)
 
 int main() {    
-    const u8 PngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
     
     void* PngMemory = ReadFileToMemory("test.png");
     if (!PngMemory){
-        printf("Cannot allocate memory\n");
         return 1;
     }
     Defer { free(PngMemory); }; 
 
-    // let's go
+    // Let's go
+    const u8 PngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
     void* Itr = PngMemory;
+
+    // Read the signature
     {
-        // Read the signature
-        u8* Signature = (u8*)Itr;
+        auto* PngHeader = Read<png_header>(&Itr);  
+
         for (u32 I = 0; I < ArrayCount(PngSignature); ++I) {
-            if (PngSignature[I] != Signature[I]) {
+            if (PngSignature[I] != PngHeader->Signature[I]) {
                 printf("Png Singature wrong!\n");
                 return 1;
             }
         }
-        Itr = (u8*)Itr + ArrayCount(PngSignature);  
     }
 
+    // Process the rest of the chunks
+    {
+        b32 IsRunning = true;
+        while(!IsRunning) {
+            auto* ChunkHeader = Read<png_chunk_header>(&Itr);
+            switch(ChunkHeader->TypeU32) {
+                case FourCC("IHDR"): {
+                    printf("IHDR\n");
+                } break;
+                case FourCC("IEND"): {
+                    printf("IEND\n");
+                    IsRunning = false; 
+                } break;
+                case FourCC("PLTE"): {
+                    printf("PLTE\n");
+                } break;
+                                     
+                case FourCC("IDAT"): {
+                    printf("IDAT\n");
+                } break;
+                default: {
+                    printf("Unknown Type\n");
+                    IsRunning = false;
+                }
+            }
+        }
 
+
+    }
 
 
     printf("Done!");
