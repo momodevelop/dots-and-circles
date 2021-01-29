@@ -204,6 +204,11 @@ int main() {
                                 ZlibHeader.FCHECK, 
                                 ZlibHeader.FDICT, 
                                 ZlibHeader.FLEVEL); 
+                        
+                        if (ZlibHeader.CM != 8) {
+                            printf("CM is %d. Must be 8\n", 
+                                    ZlibHeader.CM); 
+                        }
                         IsZlibInitialized = true;
 
 
