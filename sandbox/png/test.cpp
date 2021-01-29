@@ -106,11 +106,12 @@ struct png_zlib_header_parsed {
 static inline png_zlib_header_parsed
 ParseZlibHeader(png_zlib_header Header) {
     png_zlib_header_parsed Ret = {};
-    Ret.CM = (Header.Bytes[0] >> 4) & 0x0F;
-    Ret.CINFO = Header.Bytes[0] & 0x0F;
-    Ret.FCHECK = Header.Bytes[1] >> 3;
-    Ret.FDICT = Header.Bytes[1] & 0x04 >> 2;
-    Ret.FLEVEL = Header.Bytes[1] & 0x03;
+    Ret.CM = Header.Bytes[0] & 0x0F;
+    Ret.CINFO = (Header.Bytes[0] >> 4) & 0x0F;
+
+    Ret.FCHECK = Header.Bytes[1] & 0x1F;
+    Ret.FDICT = Header.Bytes[1] >> 5 & 0x01;
+    Ret.FLEVEL = Header.Bytes[1] >> 6 & 0x03;
         
     return Ret;
 }

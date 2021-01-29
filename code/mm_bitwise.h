@@ -52,31 +52,6 @@ AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 
-
-static inline void*
-Read(void** P, usize Size) {
-    void* Ret = (*P);
-    (*P) = (u8*)(*P) + Size; 
-    return Ret;
-}    
-
-template<typename t>
-static inline t*
-Read(void** P) {
-    return (t*)Read(P, sizeof(t));
-}
-
-
-template<typename T>
-static inline void
-Write(void** P, T Item) {
-    T* LocationAsT = (T*)(*P);
-    (*LocationAsT) = Item;
-    (*P) = (u8*)(*P) + sizeof(T);
-}
-
-
-// Memory manipulation
 static inline void 
 Copy(void* dest, void* src, usize size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
@@ -125,6 +100,31 @@ EndianSwap(u32* Value) {
                 ((Origin >> 8) & 0xFF00) |
                 (Origin >> 24));
 }
+
+// TODO: shift these to 'mm_stream'?
+static inline void*
+Read(void** P, usize Size) {
+    void* Ret = (*P);
+    (*P) = (u8*)(*P) + Size; 
+    return Ret;
+}    
+
+template<typename t>
+static inline t*
+Read(void** P) {
+    return (t*)Read(P, sizeof(t));
+}
+
+
+template<typename T>
+static inline void
+Write(void** P, T Item) {
+    T* LocationAsT = (T*)(*P);
+    (*LocationAsT) = Item;
+    (*P) = (u8*)(*P) + sizeof(T);
+}
+
+
 
 #endif 
 
