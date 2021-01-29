@@ -1,7 +1,0 @@
-WARN [neovide::renderer::fonts::font_loader] Tried to load Extra Symbols.otf from assets but build didn't include embed-fonts feature
-WARN [neovide::renderer::fonts::font_loader] Tried to load Missing Glyphs.otf from assets but build didn't include embed-fonts feature
-WARN [neovide::renderer::fonts::font_loader] Tried to load Extra Symbols.otf from assets but build didn't include embed-fonts feature
-WARN [neovide::renderer::fonts::font_loader] Tried to load Missing Glyphs.otf from assets but build didn't include embed-fonts feature
-WARN [neovide::renderer::fonts::font_loader] Tried to load Extra Symbols.otf from assets but build didn't include embed-fonts feature
-WARN [neovide::renderer::fonts::font_loader] Tried to load Missing Glyphs.otf from assets but build didn't include embed-fonts feature
-ERROR [neovide::bridge] Cannot get neovim api info, either neovide is launched with an unknown command line option or neovim version not supported!
