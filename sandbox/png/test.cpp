@@ -80,28 +80,58 @@ int main() {
     // Process the rest of the chunks
     {
         b32 IsRunning = true;
-        while(!IsRunning) {
+        while(IsRunning) {
             auto* ChunkHeader = Read<png_chunk_header>(&Itr);
+            EndianSwap(&ChunkHeader->Length);
+            printf("%c%c%c%c: %d\n", 
+                ChunkHeader->Type[0], 
+                ChunkHeader->Type[1],
+                ChunkHeader->Type[2],
+                ChunkHeader->Type[3],
+                ChunkHeader->Length);
             switch(ChunkHeader->TypeU32) {
                 case FourCC("IHDR"): {
-                    printf("IHDR\n");
+                    auto* IHDR = Read<png_chunk_data_IHDR>(&Itr);
+                    EndianSwap(&IHDR->Width);
+                    EndianSwap(&IHDR->Height);
+
+                    // We are only interested in certain types of PNGs
+                    
+                    printf(">> %d,%d,%d,%d,%d,%d,%d\n", 
+                         IHDR->Width,
+                         IHDR->Height,
+                         IHDR->BitDepth,
+                         IHDR->ColourType,
+                         IHDR->CompressionMethod,
+                         IHDR->FilterMethod,
+                         IHDR->InterlaceMethod);
                 } break;
                 case FourCC("IEND"): {
-                    printf("IEND\n");
+                    Advance(&Itr, ChunkHeader->Length);
                     IsRunning = false; 
                 } break;
                 case FourCC("PLTE"): {
-                    printf("PLTE\n");
+                    Advance(&Itr, ChunkHeader->Length);
                 } break;
-                                     
+                case FourCC("sRGB"): {
+                    Advance(&Itr, ChunkHeader->Length);
+                } break;
+                case FourCC("gAMA"): {
+                    Advance(&Itr, ChunkHeader->Length);
+                } break;
+                case FourCC("pHYs"): {
+                    Advance(&Itr, ChunkHeader->Length);
+                } break;
                 case FourCC("IDAT"): {
-                    printf("IDAT\n");
+                    Advance(&Itr, ChunkHeader->Length);
                 } break;
                 default: {
-                    printf("Unknown Type\n");
+                    printf("Unknown chunk header!\n");
                     IsRunning = false;
                 }
+
             }
+            Advance<png_chunk_footer>(&Itr);
         }
 
 

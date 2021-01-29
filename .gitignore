@@ -1,4 +1,5 @@
 .clangd/
+.vs/
 build/
 !SDL2.lib
 !SDL2main.lib

@@ -52,7 +52,6 @@ AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 
-
 template<typename t>
 static inline t*
 Peek(void* P) {
@@ -65,13 +64,28 @@ PeekCopy(void* P) {
     return *(Peek<t>(P));
 }
 
+static inline void
+Advance(void** P, usize Amount) {
+    (*P) = (u8*)(*P) + Amount; 
+}
+
+template<typename t>
+static inline void
+Advance(void** P) {
+    Advance(P, sizeof(t));
+}
+
+static inline void*
+Read(void** P, usize Size) {
+    void* Ret = (*P);
+    Advance(P, Size);
+    return Ret;
+}    
 
 template<typename t>
 static inline t*
 Read(void** P) {
-    t* Ret = (t*)(*P);
-    (*P) = (u8*)(*P) + sizeof(t);
-    return Ret;
+    return (t*)Read(P, sizeof(t));
 }
 
 
@@ -125,17 +139,19 @@ constexpr FourCC(const char String[5]) {
         ((u32)(String[3]) << 24);
 }
 
-static inline u16
-EndianSwap(u16 Value) {
-    return ((Value << 8) | Value >> 8);
+static inline void
+EndianSwap(u16* Value) {
+    u16 Origin = (*Value);
+    (*Value) = ((Origin << 8) | Origin >> 8);
 }
 
-static inline u32
-EndianSwap(u32 Value) {
-    return ((Value << 24) |
-            ((Value & 0xFF00) << 8) |
-            ((Value >> 8) & 0xFF00) |
-            (Value >> 24));
+static inline void
+EndianSwap(u32* Value) {
+    u32 Origin = (*Value);
+    (*Value) =  ((Origin << 24) |
+                ((Origin & 0xFF00) << 8) |
+                ((Origin >> 8) & 0xFF00) |
+                (Origin >> 24));
 }
 
 #endif 

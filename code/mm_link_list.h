@@ -22,7 +22,7 @@ template<typename type>
 static inline void
 Pushback(dlink<type>* Dest, dlink<type>* Node) {
     Node->Prev = Dest;
-    Dest->Next = Element;
+    Dest->Next = Node;
 }
 
 template<typename type>
