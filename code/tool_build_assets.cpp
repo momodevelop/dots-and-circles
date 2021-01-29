@@ -172,14 +172,16 @@ GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Hei
 int main() {
     printf("[Build Assets] Start!\n");
 
-    maybe<loaded_font> LoadedFont = AllocateFontFromFile("assets/DroidSansMono.ttf");
-    if (!LoadedFont) {
+    maybe<loaded_font> LoadedFont_ = 
+        AllocateFontFromFile("assets/DroidSansMono.ttf");
+    if (!LoadedFont_) {
         printf("Failed to load font\n");
         return 1; 
     }
-    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Item.Info, 1.f);
-    
-    Defer { FreeFont(LoadedFont.Item); };
+    loaded_font& LoadedFont = LoadedFont_.This;
+    Defer { FreeFont(LoadedFont); };
+
+    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
     
     atlas_context_image AtlasImageContexts[] = {
         { AtlasContextType_Image, "assets/ryoji.png",  AtlasAabb_Ryoji, Texture_AtlasDefault },
@@ -215,9 +217,9 @@ int main() {
         for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
             auto* Font = AtlasFontContexts + i;
             Font->Type = AtlasContextType_Font;
-            Font->LoadedFont = LoadedFont.Item;
+            Font->LoadedFont = LoadedFont;
             Font->Codepoint = Codepoint_Start + i;
-            Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Item.Info, 72.f);
+            Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
             Font->FontId = Font_Default;
             Font->TextureId = Texture_AtlasDefault;
             Init(PackedAabbs + PackedAabbCount++, Font);
@@ -253,7 +255,13 @@ int main() {
     {
         WriteTexture(AssetBuilder, Texture_Ryoji, "assets/ryoji.png");
         WriteTexture(AssetBuilder, Texture_Yuu, "assets/yuu.png");
-        WriteTexture(AssetBuilder, Texture_AtlasDefault, AtlasWidth, AtlasHeight, 4, AtlasTexture);
+        WriteTexture(AssetBuilder, 
+                     Texture_AtlasDefault, 
+                     AtlasWidth, 
+                     AtlasHeight, 
+                     4, 
+                     AtlasTexture);
+
         for(u32 i = 0; i <  PackedAabbCount; ++i) {
             auto Aabb = PackedAabbs[i];
             auto Type = *(atlas_context_type*)Aabb.UserData;
@@ -261,7 +269,10 @@ int main() {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Aabb.UserData;
                     aabb2u AtlasAabb = Aabb2u(Aabb);
-                    WriteAtlasAabb(AssetBuilder, Image->Id, Image->TextureId, AtlasAabb);
+                    WriteAtlasAabb(AssetBuilder, 
+                                   Image->Id, 
+                                   Image->TextureId, 
+                                   AtlasAabb);
                     
                 } break;
                 case AtlasContextType_Font: {
@@ -269,10 +280,18 @@ int main() {
                     
                     i32 Advance;
                     i32 LeftSideBearing; 
-                    stbtt_GetCodepointHMetrics(&LoadedFont.Item.Info, Font->Codepoint, &Advance, &LeftSideBearing);
+                    stbtt_GetCodepointHMetrics(&LoadedFont.Info, 
+                                               Font->Codepoint, 
+                                               &Advance, 
+                                               &LeftSideBearing);
                     
                     aabb2i Box;
-                    stbtt_GetCodepointBox(&LoadedFont.Item.Info, Font->Codepoint, &Box.Min.X, &Box.Min.Y, &Box.Max.X, &Box.Max.Y);
+                    stbtt_GetCodepointBox(&LoadedFont.Info, 
+                                          Font->Codepoint, 
+                                          &Box.Min.X, 
+                                          &Box.Min.Y, 
+                                          &Box.Max.X, 
+                                          &Box.Max.Y);
                     
                     WriteFontGlyph(AssetBuilder, Font->FontId, 
                                    Font->TextureId, 
@@ -287,10 +306,10 @@ int main() {
         }
         
         i32 Ascent, Descent, LineGap;
-        stbtt_GetFontVMetrics(&LoadedFont.Item.Info, &Ascent, &Descent, &LineGap); 
+        stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
         
         aabb2i BoundingBox = {}; 
-        stbtt_GetFontBoundingBox(&LoadedFont.Item.Info, 
+        stbtt_GetFontBoundingBox(&LoadedFont.Info, 
             &BoundingBox.Min.X,
             &BoundingBox.Min.Y,
             &BoundingBox.Max.X,
@@ -305,7 +324,7 @@ int main() {
         
         for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
             for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {
-                i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Item.Info, (i32)i, (i32)j);
+                i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
                 WriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }

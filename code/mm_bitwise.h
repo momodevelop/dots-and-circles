@@ -52,33 +52,11 @@ AlignForwardDiff(void* ptr, u8 align)  {
     return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
 }
 
-template<typename t>
-static inline t*
-Peek(void* P) {
-    return (t*)P;
-}
-
-template<typename t>
-static inline t
-PeekCopy(void* P) {
-    return *(Peek<t>(P));
-}
-
-static inline void
-Advance(void** P, usize Amount) {
-    (*P) = (u8*)(*P) + Amount; 
-}
-
-template<typename t>
-static inline void
-Advance(void** P) {
-    Advance(P, sizeof(t));
-}
 
 static inline void*
 Read(void** P, usize Size) {
     void* Ret = (*P);
-    Advance(P, Size);
+    (*P) = (u8*)(*P) + Size; 
     return Ret;
 }    
 
@@ -88,12 +66,6 @@ Read(void** P) {
     return (t*)Read(P, sizeof(t));
 }
 
-
-template<typename t>
-static inline t
-ReadCopy(void** P) {
-    return *(Read<t>(P));
-}
 
 template<typename T>
 static inline void
