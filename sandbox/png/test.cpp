@@ -2,25 +2,30 @@
 #include <stdlib.h>
 #include "../../code/mm_core.h"
 #include "../../code/mm_bitwise.h"
+#include "../../code/mm_stream.h"
 
-static inline void* 
+static inline maybe<stream>
 ReadFileToMemory(const char* Filename) {
     FILE* File = {};
     if (fopen_s(&File, "test.png", "rb") != 0) { 
         printf("Cannot find file\n");
-        return nullptr;
+        return No();
     }
-    
     Defer{ fclose(File); };
+
 
     fseek(File, 0, SEEK_END);
     i32 Filesize = ftell(File);
     fseek(File, 0, SEEK_SET);
+    
+    void* FileMemory = malloc(Filesize);
+    fread(FileMemory, 1, Filesize, File); 
 
-    void* Ret = malloc(Filesize);
-    fread(Ret, 1, Filesize, File); 
+    fclose(File);
 
-    return Ret;
+    stream Ret = Stream(FileMemory, Filesize);
+
+    return Yes(Ret);
 }
 
 struct png_image {
@@ -116,21 +121,35 @@ ParseZlibHeader(png_zlib_header Header) {
     return Ret;
 }
 
+static inline b32
+IsSupported(png_chunk_data_IHDR* IHDR) {
+    // We are only interested in certain types of PNGs
+
+    if (IHDR->ColourType != 6 &&
+        IHDR->BitDepth != 8 &&
+        IHDR->CompressionMethod &&
+        IHDR->FilterMethod != 0 &&
+        IHDR->InterlaceMethod != 0) {
+        return false;
+    }
+
+    return true;
+}
+
+
 int main() {    
-    
-    void* PngMemory = ReadFileToMemory("test.png");
-    if (!PngMemory){
+    maybe<stream> PngStream_ = ReadFileToMemory("test.png");
+    if (!PngStream_){
         return 1;
     }
-    Defer { free(PngMemory); }; 
+    stream& PngStream = PngStream_.This;
+    Defer { free(PngStream.Contents.Elements); }; 
 
-    // Let's go
     const u8 PngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-    void* Itr = PngMemory;
 
     // Read the signature
     {
-        auto* PngHeader = Read<png_header>(&Itr);  
+        auto* PngHeader = Consume<png_header>(&PngStream);  
         for (u32 I = 0; I < ArrayCount(PngSignature); ++I) {
             if (PngSignature[I] != PngHeader->Signature[I]) {
                 printf("Png Singature wrong!\n");
@@ -142,13 +161,13 @@ int main() {
 
     // Process the rest of the chunks
     {
+
         b8 IsRunning = true;
         png_image Image = {};
         b8 IsZlibInitialized = false;
-        png_zlib_header_parsed ZlibHeader = {};
-        while(IsRunning) {
-            auto* ChunkHeader = Read<png_chunk_header>(&Itr);
-
+        u32 CM, CINFO, FCHECK, FDICT, FLEVEL; 
+        while(IsRunning ) {
+            auto* ChunkHeader = Consume<png_chunk_header>(&PngStream);
             EndianSwap(&ChunkHeader->Length);
             printf("%c%c%c%c: %d\n", 
                 ChunkHeader->Type[0], 
@@ -158,70 +177,57 @@ int main() {
                 ChunkHeader->Length);
             switch(ChunkHeader->TypeU32) {
                 case FourCC("IHDR"): {
-                    auto* Chunk = Read<png_chunk_data_IHDR>(&Itr);
+                    auto* Chunk = Consume<png_chunk_data_IHDR>(&PngStream);
                     EndianSwap(&Chunk->Width);
                     EndianSwap(&Chunk->Height);
 
-                    // We are only interested in certain types of PNGs
-                    if (Chunk->ColourType != 6) {
-                        printf("Colour Type %d. Must be 6.\n", 
-                                Chunk->ColourType);    
+                    if (!IsSupported(Chunk)) {
+                        printf("Not supported format\n");
+                        IsRunning = false;
                     }
-                    if (Chunk->BitDepth != 8) {
-                        printf("Bit Depth %d. Must be 8.\n", 
-                                Chunk->BitDepth);    
-                    } 
-                    if (Chunk->CompressionMethod != 0) {
-                        printf("Compression Method %d. Must be 0.\n", 
-                                Chunk->CompressionMethod);    
+                    else {
+                        Image.Width = Chunk->Width;
+                        Image.Height = Chunk->Height;
+                        Image.Channels = 4;
+                        // 4 for channels
+                        Image.Data = malloc(Image.Width * 
+                                            Image.Height * 
+                                            Image.Channels);
                     }
-                    if (Chunk->FilterMethod != 0) {
-                        printf("Filter Method %d. Must be 0.\n", 
-                                Chunk->FilterMethod);    
-                    } 
-                    if (Chunk->InterlaceMethod != 0) {
-                        printf("Interlace Method %d. Must be 0.\n", 
-                                Chunk->InterlaceMethod);
-                    } 
-
-                    Image.Width = Chunk->Width;
-                    Image.Height = Chunk->Height;
-                    Image.Channels = 4;
-                    // 4 for channels
-                    Image.Data = malloc(Image.Width * 
-                                        Image.Height * 
-                                        Image.Channels);
                 } break;
                 case FourCC("IDAT"): { 
                     if (!IsZlibInitialized) {
-                        auto* Raw = Read<png_zlib_header>(&Itr);
-
-                        ZlibHeader = ParseZlibHeader(*Raw); 
+                        auto* Raw = Peek<png_zlib_header>(&PngStream);
+                        CINFO = ConsumeBits(&PngStream, 4);
+                        CM = ConsumeBits(&PngStream, 4);
+                        FLEVEL = ConsumeBits(&PngStream, 2);
+                        FDICT = ConsumeBits(&PngStream, 1);
+                        FCHECK = ConsumeBits(&PngStream, 5);
                         printf("%d %d\n", Raw->Bytes[0], Raw->Bytes[1]); 
                         printf(">> CM: %d\n>> CINFO: %d\n>> FCHECK: %d\n>> FDICT: %d\n>> FLEVEL: %d\n",
-                                ZlibHeader.CM, 
-                                ZlibHeader.CINFO, 
-                                ZlibHeader.FCHECK, 
-                                ZlibHeader.FDICT, 
-                                ZlibHeader.FLEVEL); 
+                                CM, 
+                                CINFO, 
+                                FCHECK, 
+                                FDICT, 
+                                FLEVEL); 
                         
-                        if (ZlibHeader.CM != 8) {
-                            printf("CM is %d. Must be 8\n", 
-                                    ZlibHeader.CM); 
+                        if (CM != 8) {
+                            printf("Not supported format\n");
+                            IsRunning = false;
                         }
-                        IsZlibInitialized = true;
-
-
-                        for (u32 I = 0; I < ChunkHeader->Length - 2; ++I) {
-                            printf("%d ", (*(u8*)Itr)); 
-                            Read(&Itr, 1);
+                        else {
+                            IsZlibInitialized = true;
+                            for (u32 I = 0; I < ChunkHeader->Length - 2; ++I) {
+                                u8* Byte = Consume<u8>(&PngStream);
+                                printf("%d ", (*Byte)); 
+                            }
                         }
 
                     }
                     else {
-                        for (u32 I = 0; I < ChunkHeader->Length; ++I) {
-                            printf("%d ", (*(u8*)Itr)); 
-                            Read(&Itr, 1);
+                        for (u32 I = 0; I < ChunkHeader->Length - 2; ++I) {
+                            u8* Byte = Consume<u8>(&PngStream);
+                            printf("%d ", (*Byte)); 
                         }
                     }
                     printf("\n");
@@ -232,19 +238,19 @@ int main() {
                 case FourCC("PLTE"): {
                     // Only absolutely required by ColorType == 3
                     // Thus we don't give a shit about this atm.
-                    Read<png_chunk_data_PLTE>(&Itr);
+                    Consume<png_chunk_data_PLTE>(&PngStream);
                 } break;
                 case FourCC("sRGB"): {
                     // We don't give a shit about this atm
-                    Read<png_chunk_data_sRGB>(&Itr);
+                    Consume<png_chunk_data_sRGB>(&PngStream);
                 } break;
                 case FourCC("gAMA"): {
                     // We don't give a shit about this atm
-                    Read<png_chunk_data_gAMA>(&Itr);
+                    Consume<png_chunk_data_gAMA>(&PngStream);
                 } break;
                 case FourCC("pHYs"): {
                     // We don't give a shit about this atm
-                    Read<png_chunk_data_pHYs>(&Itr);
+                    Consume<png_chunk_data_pHYs>(&PngStream);
                 } break;
                 default: {
                     printf("Unknown chunk header!\n");
@@ -252,7 +258,7 @@ int main() {
                 }
             }
             // Do we give a shit about this?
-            Read<png_chunk_footer>(&Itr);
+            Consume<png_chunk_footer>(&PngStream);
         }
 
         free(Image.Data);

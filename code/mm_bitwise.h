@@ -101,9 +101,9 @@ EndianSwap(u32* Value) {
                 (Origin >> 24));
 }
 
-// TODO: shift these to 'mm_stream'?
+
 static inline void*
-Read(void** P, usize Size) {
+Consume(void** P, usize Size) {
     void* Ret = (*P);
     (*P) = (u8*)(*P) + Size; 
     return Ret;
@@ -111,7 +111,7 @@ Read(void** P, usize Size) {
 
 template<typename t>
 static inline t*
-Read(void** P) {
+Consume(void** P) {
     return (t*)Read(P, sizeof(t));
 }
 
@@ -123,8 +123,6 @@ Write(void** P, T Item) {
     (*LocationAsT) = Item;
     (*P) = (u8*)(*P) + sizeof(T);
 }
-
-
 
 #endif 
 
