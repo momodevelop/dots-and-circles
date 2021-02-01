@@ -6,7 +6,7 @@
 // TODO: Linked list of stream chunks?
 struct stream {
     array<u8> Contents;
-    u8* Current;
+    usize Current;
 
     // For bit reading
     u32 BitBuffer;
@@ -17,18 +17,22 @@ static inline stream
 Stream(void* Memory, usize MemorySize) {
     stream Ret = {};
     Ret.Contents = Array((u8*)Memory, MemorySize);
-    Ret.Current = Ret.Contents.Elements;
     return Ret;
 }
+
+static inline b32
+IsEos(stream* Stream) {
+    return Stream->Current >= Stream->Contents.Count;
+}
+
 
 static inline void*
 Peek(stream* Stream, usize Amount) {
     // Will reach end of stream
-    if (Stream->Current + Amount > 
-        Stream->Contents.Elements + Stream->Contents.Count) {
+    if (Stream->Current + Amount > Stream->Contents.Count) {
         return nullptr;
     }
-    return Stream->Current;
+    return Stream->Contents.Elements + Stream->Current;
 }
 
 template<typename t>
@@ -37,12 +41,21 @@ Peek(stream* Stream) {
     return (t*)Peek(Stream, sizeof(t));
 }
 
+static inline void
+Advance(stream* Stream, usize Amount) {
+    Stream->Current += Amount;
+}
+
+template<typename t>
+static inline void
+Advance(stream* Stream) {
+    Advance(Stream, sizeof(t));
+}
+
 static inline void*
 Consume(stream* Stream, usize Amount) {
     void* Ret = Peek(Stream, Amount);
-    if (Ret) {
-        Stream->Current += Amount;
-    }
+    Advance(Stream, Amount);
     return Ret;
 }
 
@@ -56,7 +69,6 @@ Consume(stream* Stream) {
 static inline u32
 ConsumeBits(stream* Stream, u32 Amount){
     Assert(Amount <= 32);
-    
     
     while(Stream->BitCount < Amount) {
         u32 Byte = *Consume<u8>(Stream);
