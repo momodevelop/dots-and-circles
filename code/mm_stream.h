@@ -25,37 +25,13 @@ IsEos(stream* Stream) {
     return Stream->Current >= Stream->Contents.Count;
 }
 
-
-static inline void*
-Peek(stream* Stream, usize Amount) {
-    // Will reach end of stream
-    if (Stream->Current + Amount > Stream->Contents.Count) {
-        return nullptr;
-    }
-    return Stream->Contents.Elements + Stream->Current;
-}
-
-template<typename t>
-static inline t*
-Peek(stream* Stream) {
-    return (t*)Peek(Stream, sizeof(t));
-}
-
-static inline void
-Advance(stream* Stream, usize Amount) {
-    Stream->Current += Amount;
-}
-
-template<typename t>
-static inline void
-Advance(stream* Stream) {
-    Advance(Stream, sizeof(t));
-}
-
 static inline void*
 Consume(stream* Stream, usize Amount) {
-    void* Ret = Peek(Stream, Amount);
-    Advance(Stream, Amount);
+    void* Ret = nullptr;
+    if (Stream->Current + Amount <= Stream->Contents.Count) {
+        Ret = Stream->Contents.Elements + Stream->Current;
+    }
+    Stream->Current += Amount;
     return Ret;
 }
 

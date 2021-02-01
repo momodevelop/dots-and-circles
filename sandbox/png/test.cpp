@@ -168,10 +168,7 @@ ParsePng(void* Memory, usize MemorySize) {
     PngImage.Width = IHDR->Width;
     PngImage.Height = IHDR->Height;
     PngImage.Channels = 4;
-    PngImage.Data = malloc(PngImage.Width * 
-                           PngImage.Height * 
-                           PngImage.Channels);
-    Advance<png_chunk_footer>(&PngStream);
+    Consume<png_chunk_footer>(&PngStream);
 
     // Search for IDAT header
     u32 CM, CINFO, FCHECK, FDICT, FLEVEL; 
@@ -191,11 +188,48 @@ ParsePng(void* Memory, usize MemorySize) {
                         FCHECK, 
                         FDICT, 
                         FLEVEL); 
-                if (CM != 8) {
-                    FreePng(&PngImage);
+                if (CM != 8 || FDICT != 0) {
                     return No();
                 }
-                Advance(&PngStream, ChunkHeader->Length - 2);
+
+                PngImage.Data = malloc(PngImage.Width * 
+                                       PngImage.Height * 
+                                       PngImage.Channels);
+                u8 BFINAL = 0;
+                while(BFINAL == 0){
+                    BFINAL = (u8)ConsumeBits(&PngStream, 1);
+                    u16 BTYPE = (u8)ConsumeBits(&PngStream, 2);
+                    switch(BTYPE) {
+                        case 0b00: {
+                            // no compression
+                            ConsumeBits(&PngStream, 5);
+                            u16 LEN = (u16)ConsumeBits(&PngStream, 16);
+                            u16 NLEN = (u16)ConsumeBits(&PngStream, 16);
+                            printf("No compression\n");
+                            printf(">>> LEN: %d\n", LEN);
+                            printf(">>> NLEN: %d\n", NLEN);
+                            if (LEN != ~(NLEN)) {
+                                printf("LEN vs NLEN mismatch!");
+                                FreePng(&PngImage);
+                                return No();
+                            }
+                        } break;
+                        case 0b01: {
+                            // fixed huffman
+                            printf("Fixed huffman\n");
+                        } break;
+                        case 0b10: {
+                            // dynamic huffman
+                            printf("Dynamic huffman\n");
+                        } break;
+                        default: {
+                            FreePng(&PngImage);
+                        }
+                    }
+                }
+
+
+                //Advance(&PngStream, ChunkHeader->Length - 2);
             } break;
             case FourCC("IEND"): {
                 return Yes(PngImage);
@@ -207,10 +241,10 @@ ParsePng(void* Memory, usize MemorySize) {
                     ChunkHeader->Type[2],
                     ChunkHeader->Type[3],
                     ChunkHeader->Length);
-                Advance(&PngStream, ChunkHeader->Length);
+                Consume(&PngStream, ChunkHeader->Length);
             };
         }
-        Advance<png_chunk_footer>(&PngStream);
+        Consume<png_chunk_footer>(&PngStream);
     }
 
     FreePng(&PngImage);
