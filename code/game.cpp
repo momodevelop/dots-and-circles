@@ -27,7 +27,8 @@ static inline void
 CmdJump(debug_console* Console, void* Context, string Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
-    scratch Scratchpad(&DebugState->Arena);
+    scratch Scratchpad = BeginScratch(&DebugState->Arena);
+    Defer{ EndScratch(&Scratchpad); };
 
     array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
     if ( ArgList.Count != 2 ) {

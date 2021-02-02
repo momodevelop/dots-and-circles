@@ -90,21 +90,24 @@ struct scratch {
     arena* Arena;
     usize OldUsed;
 
-    scratch(arena* Arena) :
-        Arena(Arena),
-        OldUsed(Arena->Used) 
-    {
-    }
-
-    ~scratch() {
-        this->Arena->Used = this->OldUsed;
-    }
-
     // Allow conversion to arena* to use functions associated with it
     operator arena*() const { 
         return Arena; 
     }
 };
+
+static inline scratch
+BeginScratch(arena* Arena) {
+    scratch Ret = {};
+    Ret.Arena = Arena;
+    Ret.OldUsed = Arena->Used;
+    return Ret;
+}
+
+static inline void
+EndScratch(scratch* Scratch) {
+    Scratch->Arena->Used = Scratch->OldUsed;
+}
 
 static inline arena
 SubArena(arena* SrcArena, usize Capacity) {

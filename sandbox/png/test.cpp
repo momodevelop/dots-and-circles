@@ -189,10 +189,10 @@ ParsePng(void* Memory, usize MemorySize) {
                             ConsumeBits(&PngStream, 5);
                             u16 LEN = (u16)ConsumeBits(&PngStream, 16);
                             u16 NLEN = (u16)ConsumeBits(&PngStream, 16);
-                            printf("No compression\n");
-                            printf(">>> LEN: %d\n", LEN);
-                            printf(">>> NLEN: %d\n", NLEN);
-                            if (LEN != ~(NLEN)) {
+                            printf(">>>>No compression\n");
+                            printf(">>>>> LEN: %d\n", LEN);
+                            printf(">>>>> NLEN: %d\n", NLEN);
+                            if ((u16)LEN != ~((u16)(NLEN))) {
                                 printf("LEN vs NLEN mismatch!\n");
                                 FreePng(PngImage);
                                 return No();
@@ -201,6 +201,8 @@ ParsePng(void* Memory, usize MemorySize) {
                         case 0b01: {
                             // fixed huffman
                             printf("Fixed huffman\n");
+                            // loop until end of block
+                            //
                         } break;
                         case 0b10: {
                             // dynamic huffman
