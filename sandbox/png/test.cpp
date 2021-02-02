@@ -99,6 +99,8 @@ ParsePng(arena* Arena,
          usize PngMemorySize) 
 {
     const u8 PngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+    
+
     stream PngStream = Stream(PngMemory, PngMemorySize); 
     scratch Scratch = BeginScratch(Arena);
 
@@ -143,7 +145,7 @@ ParsePng(arena* Arena,
     Consume<png_chunk_footer>(&PngStream);
 
     // Search for IDAT header
-    u32 CM, CINFO, FCHECK, FDICT, FLEVEL; 
+    u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
     while(!IsEos(&PngStream)) {
         ChunkHeader = Consume<png_chunk_header>(&PngStream);
         EndianSwap(&ChunkHeader->Length);
