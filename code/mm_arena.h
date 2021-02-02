@@ -104,10 +104,14 @@ BeginScratch(arena* Arena) {
     return Ret;
 }
 
+// NOTE: Conceptually, you can choose not to call this after
+// BeginScratch() to permanently 'imprint' what was done in scratch
+// onto the memory.
 static inline void
 EndScratch(scratch* Scratch) {
     Scratch->Arena->Used = Scratch->OldUsed;
 }
+
 
 static inline arena
 SubArena(arena* SrcArena, usize Capacity) {
@@ -123,8 +127,8 @@ SubArena(arena* SrcArena, usize Capacity) {
 
 static inline void*
 BootstrapBlock(usize StructSize,
-              usize OffsetToArena,
-              void* Memory,
+               usize OffsetToArena,
+               void* Memory,
               usize MemorySize) 
 {
     Assert(StructSize < MemorySize);

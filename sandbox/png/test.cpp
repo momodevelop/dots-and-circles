@@ -94,10 +94,13 @@ FreePng(png_image Png) {
 }
 
 static inline maybe<png_image> 
-ParsePng(void* Memory, usize MemorySize) {
+ParsePng(arena* Arena, 
+         void* PngMemory, 
+         usize PngMemorySize) 
+{
     const u8 PngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-    stream PngStream = Stream(Memory, MemorySize); 
-    png_image PngImage = {};
+    stream PngStream = Stream(PngMemory, PngMemorySize); 
+    scratch Scratch = BeginScratch(Arena);
 
     // Read the signature
     auto* PngHeader = Consume<png_header>(&PngStream);  
@@ -137,9 +140,6 @@ ParsePng(void* Memory, usize MemorySize) {
     }
     EndianSwap(&IHDR->Width);
     EndianSwap(&IHDR->Height);
-    PngImage.Width = IHDR->Width;
-    PngImage.Height = IHDR->Height;
-    PngImage.Channels = 4;
     Consume<png_chunk_footer>(&PngStream);
 
     // Search for IDAT header
@@ -174,9 +174,12 @@ ParsePng(void* Memory, usize MemorySize) {
                     return No();
                 }
 
-                PngImage.Data = malloc(PngImage.Width * 
-                                       PngImage.Height * 
-                                       PngImage.Channels);
+                // TODO: Change to arena
+                
+                void* BitmapData = PushBlock(Scratch,
+                                             IHDR->Width * 
+                                             IHDR->Height * 
+                                             4);
                 u8 BFINAL = 0;
                 while(BFINAL == 0){
                     u16 BTYPE = (u8)ConsumeBits(&PngStream, 2);
@@ -194,7 +197,6 @@ ParsePng(void* Memory, usize MemorySize) {
                             printf(">>>>> NLEN: %d\n", NLEN);
                             if ((u16)LEN != ~((u16)(NLEN))) {
                                 printf("LEN vs NLEN mismatch!\n");
-                                FreePng(PngImage);
                                 return No();
                             }
                         } break;
@@ -202,7 +204,6 @@ ParsePng(void* Memory, usize MemorySize) {
                             // fixed huffman
                             printf("Fixed huffman\n");
                             // loop until end of block
-                            //
                         } break;
                         case 0b10: {
                             // dynamic huffman
@@ -210,17 +211,18 @@ ParsePng(void* Memory, usize MemorySize) {
                         } break;
                         default: {
                             printf("Error\n");
-                            FreePng(PngImage);
                             return No();
                         }
                     }
                 }
-
-
                 //Advance(&PngStream, ChunkHeader->Length - 2);
             } break;
             case FourCC("IEND"): {
-                return Yes(PngImage);
+                png_image Ret = {};
+                Ret.Width = IHDR->Width;
+                Ret.Height = IHDR->Height;
+                Ret.Channels = 4;
+                return Yes(Ret);
             } break;
             default: {
                 printf("%c%c%c%c: %d\n", 
@@ -234,12 +236,16 @@ ParsePng(void* Memory, usize MemorySize) {
         }
         Consume<png_chunk_footer>(&PngStream);
     }
-
-    FreePng(PngImage);
     return No();
 }
 
 int main() {    
+    usize MemorySize = Megabytes(1);
+    void * Memory = malloc(MemorySize);
+    if (!Memory) { return 1; }
+    Defer { free(Memory); };  
+    arena AppArena = Arena(Memory, MemorySize);
+
     maybe<read_file_result> PngFile_ = ReadFile("test.png");
     if (!PngFile_){
         return 1;
@@ -247,7 +253,7 @@ int main() {
     read_file_result& PngFile = PngFile_.This;
     Defer { free(PngFile.Memory); }; 
 
-    ParsePng(PngFile.Memory, PngFile.MemorySize);
+    ParsePng(&AppArena, PngFile.Memory, PngFile.MemorySize);
 
     printf("Done!");
     return 0;
