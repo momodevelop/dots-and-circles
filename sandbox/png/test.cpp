@@ -77,48 +77,20 @@ struct png_chunk_footer {
 
 // ZLIB header notes:
 // Bytes[0]:
-// - bits 0-3: Compression Method (CM)
-// - bits 4-7: Compression Info (CINFO)
+// - compression flags bit 0-3: Compression Method (CM)
+// - compression flags bit 4-7: Compression Info (CINFO)
 // Bytes[1]:
-// - bits 0-4: FCHECK 
-// - bits 5: Preset dictionary (FDICT)
-// - bits 6-7: Compression level (FLEVEL)
-struct png_zlib_header {
-    u8 Bytes[2];
+// - additional flags bit 0-4: FCHECK 
+// - additional flags bit 5: Preset dictionary (FDICT)
+// - additional flags bit 6-7: Compression level (FLEVEL)
+struct png_IDAT_header {
+    u8 CompressionFlags;
+    u8 AdditionalFlags;
 };
-
-struct png_zlib_header_parsed {
-    u8 CM;
-    u8 CINFO;
-    u8 FCHECK;
-    u8 FDICT;
-    u8 FLEVEL; 
-};
-
-static inline png_zlib_header_parsed
-ParseZlibHeader(png_zlib_header Header) {
-    png_zlib_header_parsed Ret = {};
-    Ret.CM = Header.Bytes[0] & 0x0F;
-    Ret.CINFO = (Header.Bytes[0] >> 4) & 0x0F;
-
-    Ret.FCHECK = Header.Bytes[1] & 0x1F;
-    Ret.FDICT = Header.Bytes[1] >> 5 & 0x01;
-    Ret.FLEVEL = Header.Bytes[1] >> 6 & 0x03;
-        
-    return Ret;
-}
-
-static inline b32
-IsSupported(png_chunk_data_IHDR* IHDR) {
-    // We are only interested in certain types of PNGs
-
-
-    return true;
-}
 
 static inline void
-FreePng(png_image* Png) {
-    free(Png->Data);
+FreePng(png_image Png) {
+    free(Png.Data);
 }
 
 static inline maybe<png_image> 
@@ -177,18 +149,28 @@ ParsePng(void* Memory, usize MemorySize) {
         EndianSwap(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
+                printf("Length: %d\n", ChunkHeader->Length);
+#if 0
+                auto* Header = Consume<png_IDAT_header>(&PngStream);
+                CM = Header->CompressionFlags & 0x0F;
+                CINFO = (Header->CompressionFlags >> 4) & 0x0F;
+                FCHECK = Header->AdditionalFlags & 0x1F;
+                FDICT = Header->AdditionalFlags >> 5 & 0x01;
+                FLEVEL = Header->AdditionalFlags >> 6 & 0x03;
+#else
                 CINFO = ConsumeBits(&PngStream, 4);
                 CM = ConsumeBits(&PngStream, 4);
-                FLEVEL = ConsumeBits(&PngStream, 2);
+                FLEVEL = ConsumeBits(&PngStream, 2); //useless?
                 FDICT = ConsumeBits(&PngStream, 1);
-                FCHECK = ConsumeBits(&PngStream, 5);
+                FCHECK = ConsumeBits(&PngStream, 5); //not needed?
+#endif
                 printf(">> CM: %d\n>> CINFO: %d\n>> FCHECK: %d\n>> FDICT: %d\n>> FLEVEL: %d\n",
                         CM, 
                         CINFO, 
                         FCHECK, 
                         FDICT, 
                         FLEVEL); 
-                if (CM != 8 || FDICT != 0) {
+                if (CM != 8 || FDICT != 0 || CINFO > 7) {
                     return No();
                 }
 
@@ -197,8 +179,10 @@ ParsePng(void* Memory, usize MemorySize) {
                                        PngImage.Channels);
                 u8 BFINAL = 0;
                 while(BFINAL == 0){
-                    BFINAL = (u8)ConsumeBits(&PngStream, 1);
                     u16 BTYPE = (u8)ConsumeBits(&PngStream, 2);
+                    BFINAL = (u8)ConsumeBits(&PngStream, 1);
+                    printf(">>> BFINAL: %d\n", BFINAL);
+                    printf(">>> BTYPE: %d\n", BTYPE);
                     switch(BTYPE) {
                         case 0b00: {
                             // no compression
@@ -209,8 +193,8 @@ ParsePng(void* Memory, usize MemorySize) {
                             printf(">>> LEN: %d\n", LEN);
                             printf(">>> NLEN: %d\n", NLEN);
                             if (LEN != ~(NLEN)) {
-                                printf("LEN vs NLEN mismatch!");
-                                FreePng(&PngImage);
+                                printf("LEN vs NLEN mismatch!\n");
+                                FreePng(PngImage);
                                 return No();
                             }
                         } break;
@@ -223,7 +207,9 @@ ParsePng(void* Memory, usize MemorySize) {
                             printf("Dynamic huffman\n");
                         } break;
                         default: {
-                            FreePng(&PngImage);
+                            printf("Error\n");
+                            FreePng(PngImage);
+                            return No();
                         }
                     }
                 }
@@ -247,7 +233,7 @@ ParsePng(void* Memory, usize MemorySize) {
         Consume<png_chunk_footer>(&PngStream);
     }
 
-    FreePng(&PngImage);
+    FreePng(PngImage);
     return No();
 }
 
