@@ -202,14 +202,46 @@ ParsePng(arena* Arena,
                                 return No();
                             }
                         } break;
-                        case 0b01: {
-                            // fixed huffman
-                            printf("Fixed huffman\n");
-                            // loop until end of block
-                        } break;
-                        case 0b10: {
-                            // dynamic huffman
-                            printf("Dynamic huffman\n");
+                        case 0b01: 
+                        case 0b10:
+                        {
+                            printf("Huffman\n");
+                            u32 LitLenDistTable[512];
+                            u32 HLIT = 0;
+                            u32 HDIST = 0;
+                            if (BTYPE == 0b01) {
+                                // Fixed huffman
+                                // Read representation of code trees
+                                HLIT = 288;
+                                HDIST = 32;
+                                u32 BitCounts[][2] = {
+                                    {143, 8},
+                                    {255, 9},
+                                    {279, 7},
+                                    {287, 8},
+                                    {319, 5}
+                                };
+
+                                for(u32 RangeIndex = 0, BitCountIndex = 0; 
+                                    RangeIndex < ArrayCount(BitCounts); 
+                                    ++RangeIndex) {
+                                    u32 BitCount = BitCounts[RangeIndex][1];
+                                    u32 EndRange = BitCounts[RangeIndex][0];
+                                    while(BitCountIndex <= EndRange) {
+                                        LitLenDistTable[BitCountIndex++] = BitCount;
+                                    }
+                                }
+                            }
+                            else // BTYPE == 0b10
+                            {
+                                //Dynamic buffman
+                            }
+
+
+
+
+
+
                         } break;
                         default: {
                             printf("Error\n");

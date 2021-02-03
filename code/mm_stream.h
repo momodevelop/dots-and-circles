@@ -25,11 +25,6 @@ IsEos(stream* Stream) {
     return Stream->Current >= Stream->Contents.Count;
 }
 
-// Byte consumption goes from LSB to MSB
-// -----
-// | | |
-// -----
-
 static inline void*
 Consume(stream* Stream, usize Amount) {
     void* Ret = nullptr;
@@ -47,12 +42,6 @@ Consume(stream* Stream) {
 }
 
 
-
-// Bit consumption goes from LSB to MSB
-// ----------
-// |76543210|
-// ----------
-//    <------- consumes this way
 static inline u32
 ConsumeBits(stream* Stream, u32 Amount){
     Assert(Amount <= 32);

@@ -1,7 +1,6 @@
-[] Animated Console
-[] Basic  profiling
 [] Convert game input to mouse
-
+[] Animated Console
+[] Basic profiling
 
 [] Art assets
     [] Enemy (...32x32?)
