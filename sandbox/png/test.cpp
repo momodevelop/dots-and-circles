@@ -206,7 +206,8 @@ ParsePng(arena* Arena,
                         case 0b10:
                         {
                             printf("Huffman\n");
-                            u32 LitLenDistTable[512];
+                            // TODO: Is 512 really the max?
+                            u32 LitLenTable[512];
                             u32 HLIT = 0;
                             u32 HDIST = 0;
                             if (BTYPE == 0b01) {
@@ -219,7 +220,6 @@ ParsePng(arena* Arena,
                                     {255, 9},
                                     {279, 7},
                                     {287, 8},
-                                    {319, 5}
                                 };
 
                                 for(u32 RangeIndex = 0, BitCountIndex = 0; 
@@ -228,7 +228,7 @@ ParsePng(arena* Arena,
                                     u32 BitCount = BitCounts[RangeIndex][1];
                                     u32 EndRange = BitCounts[RangeIndex][0];
                                     while(BitCountIndex <= EndRange) {
-                                        LitLenDistTable[BitCountIndex++] = BitCount;
+                                        LitLenTable[BitCountIndex++] = BitCount;
                                     }
                                 }
                             }
@@ -238,7 +238,24 @@ ParsePng(arena* Arena,
                             }
 
 
+                            // Then we do the Huffman decoding
+                            u32 SymbolCount = HLIT;
+                            {
+#define PNG_HUFFMAN_MAX_BIT_COUNT 16
+                                // 1. Count the number of codes for each code length
+                                u32 LenCountTable[PNG_HUFFMAN_MAX_BIT_COUNT] = {};
+                                for (u32 LitIndex = 0; 
+                                     LitIndex < SymbolCount;
+                                     ++LitIndex) 
+                                {
+                                    u32 Len = LitLenTable[LitIndex];
+                                    Assert(Len < PNG_HUFFMAN_MAX_BIT_COUNT);
+                                    ++LenCountTable[Len];
+                                }
 
+                                // 2. Numerical value of smallest code for each code length
+
+                            }
 
 
 
