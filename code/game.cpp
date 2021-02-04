@@ -139,19 +139,13 @@ GameUpdateFunc(GameUpdate)
                 DebugConsole(&DebugState->Arena, 
                              5, 
                              110, 
-                             1);
-
-            DebugState->Console.InfoBgColor = Color_Grey3;
-            DebugState->Console.InfoTextDefaultColor = Color_White;
-            DebugState->Console.InputBgColor = Color_Grey2;
-            DebugState->Console.InputTextColor = Color_White;
-            DebugState->Console.Dimensions = Dimensions;
-            DebugState->Console.TransitionStartPos = Position - v3f{ 0.f, 240.f };
-            DebugState->Console.TransitionEndPos = Position;
-            DebugState->Console.TransitionTimer = Timer(0.1f);
-
-            DebugState->Console.StartPopRepeatTimer = Timer(0.5f);
-            DebugState->Console.PopRepeatTimer = Timer(0.025f); 
+                             16,
+                             Position - v3f{0.f, 240.f},
+                             Position,
+                             0.1f,
+                             Dimensions,
+                             0.5f,
+                             0.025f);
 
             RegisterCommand(&DebugState->Console, 
                             String("jump"), 
