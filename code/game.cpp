@@ -156,7 +156,7 @@ GameUpdateFunc(GameUpdate)
 
     Update(&DebugState->Console, Input, DeltaTime);
 
-#if 1 
+#if 0 
     static f32 TSine = 0.f;
     // TODO: Shift this part to game code
     i16* SampleOut = Audio->SampleBuffer;
