@@ -150,12 +150,16 @@ struct game_memory {
     usize DebugMemorySize;
 };
 
+struct game_audio {
+};
+
 // Game function typedefs
 // Returns true if still running, false if need to quit.
 #define GameUpdateFunc(Name) b32 Name(game_memory* GameMemory, \
                                       platform_api* Platform, \
                                       mailbox* RenderCommands, \
                                       game_input* Input, \
+                                      game_audio* Audio\
                                       f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
 

@@ -87,10 +87,6 @@ GameUpdateFunc(GameUpdate)
                                     GameMemory->PermanentMemory, 
                                     GameMemory->PermanentMemorySize);
 
-        // Console Init
-        {
-        }
-
         PermState->ModeArena = SubArena(&PermState->MainArena, 
                                         Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
