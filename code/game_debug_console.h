@@ -1,6 +1,7 @@
 #ifndef __GAME_CONSOLE__
 #define __GAME_CONSOLE__
 
+#include "mm_easing.h"
 #include "mm_list.h"
 #include "mm_colors.h"
 #include "mm_timer.h"
@@ -23,6 +24,7 @@ struct debug_console_string {
 
 struct debug_console {
     b32 IsActive;
+
     c4f InfoBgColor;
     c4f InputBgColor;
     c4f InputTextColor;
@@ -40,6 +42,11 @@ struct debug_console {
     timer StartPopRepeatTimer;
     timer PopRepeatTimer;
     b32 IsStartPop;
+
+    // Enter and Exit transitions for swag!
+    v3f TransitionStartPos;
+    v3f TransitionEndPos;
+    timer TransitionTimer;
 
     list<debug_console_command> Commands;
 };
@@ -113,7 +120,21 @@ Update(debug_console* Console,
         Console->IsActive = !Console->IsActive; 
     }
 
-    if (!Console->IsActive) {
+
+    // TODO: Make this cleaner
+    if (Console->IsActive) {
+        Tick(&Console->TransitionTimer, DeltaTime);
+        f32 P = EaseInQuad(Percent(Console->TransitionTimer));
+        Console->Position = 
+            Console->TransitionStartPos + 
+            P * (Console->TransitionEndPos - Console->TransitionStartPos); 
+    }
+    else if (!Console->IsActive) {
+        Untick(&Console->TransitionTimer, DeltaTime);
+        f32 P = EaseInQuad(Percent(Console->TransitionTimer));
+        Console->Position = 
+            Console->TransitionStartPos + 
+            P * (Console->TransitionEndPos - Console->TransitionStartPos); 
         return;
     }
 
@@ -132,8 +153,8 @@ Update(debug_console* Console,
             Reset(&Console->PopRepeatTimer);
         }
         else {
-            if (IsTimeUp(Console->StartPopRepeatTimer)) {
-                if(IsTimeUp(Console->PopRepeatTimer)) {
+            if (IsEnd(Console->StartPopRepeatTimer)) {
+                if(IsEnd(Console->PopRepeatTimer)) {
                     Pop(Console);
                     Reset(&Console->PopRepeatTimer);
                 }
@@ -172,7 +193,7 @@ Render(debug_console* Console,
        mailbox* RenderCommands,
        game_assets* Assets) 
 {
-    if (!Console->IsActive) {
+    if (IsBegin(Console->TransitionTimer)) {
         return;
     }
     font* Font = Assets->Fonts + Font_Default;

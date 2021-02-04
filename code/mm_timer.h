@@ -9,15 +9,26 @@ struct timer {
 };
 
 static inline timer
-Timer(f32 Duration) {
+Timer(f32 EndTime) {
     timer Ret = {};
-    Ret.End = Duration;
+    Ret.End = EndTime;
     return Ret;
 }
 
 static inline void
 Tick(timer* Timer, f32 DeltaTime) {
     Timer->Current += DeltaTime;
+    if (Timer->Current >= Timer->End) {
+        Timer->Current = Timer->End;
+    }
+}
+
+static inline void
+Untick(timer* Timer, f32 DeltaTime) {
+    Timer->Current -= DeltaTime;
+    if (Timer->Current < 0.f ) {
+        Timer->Current = 0.f;
+    }
 }
 
 static inline void
@@ -26,9 +37,20 @@ Reset(timer* Timer) {
 }
 
 static inline b32
-IsTimeUp(timer Timer) {
+IsEnd(timer Timer) {
     return Timer.Current >= Timer.End;
 }
 
+static inline b32
+IsBegin(timer Timer) {
+    return Timer.Current <= 0.f;
+}
+
+// Returns [0 - 1]
+static inline f32
+Percent(timer Timer) {
+    Assert(Timer.End != 0.f);
+    return Timer.Current / Timer.End;
+}
 
 #endif

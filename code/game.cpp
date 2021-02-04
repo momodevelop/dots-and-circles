@@ -146,7 +146,9 @@ GameUpdateFunc(GameUpdate)
             DebugState->Console.InputBgColor = Color_Grey2;
             DebugState->Console.InputTextColor = Color_White;
             DebugState->Console.Dimensions = Dimensions;
-            DebugState->Console.Position = Position;
+            DebugState->Console.TransitionStartPos = Position - v3f{ 0.f, 240.f };
+            DebugState->Console.TransitionEndPos = Position;
+            DebugState->Console.TransitionTimer = Timer(0.1f);
 
             DebugState->Console.StartPopRepeatTimer = Timer(0.5f);
             DebugState->Console.PopRepeatTimer = Timer(0.025f); 
