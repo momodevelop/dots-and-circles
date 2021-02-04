@@ -151,6 +151,8 @@ struct game_memory {
 };
 
 struct game_audio {
+    i16* SampleBuffer;
+    usize SampleCount;
 };
 
 // Game function typedefs
@@ -159,7 +161,7 @@ struct game_audio {
                                       platform_api* Platform, \
                                       mailbox* RenderCommands, \
                                       game_input* Input, \
-                                      game_audio* Audio\
+                                      game_audio* Audio,\
                                       f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
 

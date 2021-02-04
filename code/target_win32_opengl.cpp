@@ -1315,7 +1315,6 @@ WinMain(HINSTANCE Instance,
     b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
 
 
-    f32 TSine = 0.f;
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (GlobalIsRunning) {
@@ -1328,23 +1327,12 @@ WinMain(HINSTANCE Instance,
         Win32ProcessMessages(Window, 
                              &GameInput);
 
-        if (GameCode.GameUpdate) {
-            GameCode.GameUpdate(&GameMemory,
-                                &PlatformApi,
-                                &RenderCommands,
-                                &GameInput,
-                                TargetSecsPerFrame);
-        }
-
-
-        Render(GlobalOpengl, &RenderCommands);
-        Clear(&RenderCommands);
-
-        // Sound
+        // Compute how much sound to write and where
+        // TODO: Functionize this
+        game_audio GameAudio = {};
         {
-            // Compute how much sound to write and where
-            UINT32 SamplesToWrite = 0;
             UINT32 SoundPaddingSize;
+            UINT32 SamplesToWrite = 0;
             if (SUCCEEDED(Wasapi.AudioClient->
                     GetCurrentPadding(&SoundPaddingSize))) {
                 SamplesToWrite = 
@@ -1355,38 +1343,42 @@ WinMain(HINSTANCE Instance,
                     SamplesToWrite = AudioOutput.LatencySampleCount;
                 }
             }
+            GameAudio.SampleBuffer = AudioOutput.Buffer;
+            GameAudio.SampleCount = SamplesToWrite; 
+        }
+
+        if (GameCode.GameUpdate) 
+        {
+            GameCode.GameUpdate(&GameMemory,
+                                &PlatformApi,
+                                &RenderCommands,
+                                &GameInput,
+                                &GameAudio,
+                                TargetSecsPerFrame);
+        }
 
 
-            // TODO: Shift this part to game code
-            i16* SampleOut = AudioOutput.Buffer;
-            for(usize I = 0; I < SamplesToWrite; ++I) {
-                const i16 Volume = 3000;
-                i16 SampleValue = (i16)(Sin(TSine) * Volume);
-                // Based on number of channels!
-                *SampleOut++ = SampleValue;
-                *SampleOut++ = SampleValue;
-                TSine += TargetSecsPerFrame;
-            }
-
-
-
-
+        Render(GlobalOpengl, &RenderCommands);
+        Clear(&RenderCommands);
+       
+        // TODO: Functionize this
+        {
             BYTE* SoundBufferData;
             if (SUCCEEDED(Wasapi.AudioRenderClient->
-                        GetBuffer((UINT32)SamplesToWrite, &SoundBufferData))) 
+                        GetBuffer((UINT32)GameAudio.SampleCount, &SoundBufferData))) 
             {
                 i16* SrcSample = AudioOutput.Buffer;
                 i16* DestSample = (i16*)SoundBufferData;
                 // Buffer structure:
                 // i16   i16    i16  i16   i16  i16
                 // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
-                for(usize I = 0; I < SamplesToWrite; ++I ){
+                for(usize I = 0; I < GameAudio.SampleCount; ++I ){
                     *DestSample++ = *SrcSample++; // Left
                     *DestSample++ = *SrcSample++; // Right
                 }
 
                 Wasapi.AudioRenderClient->ReleaseBuffer(
-                        (UINT32)SamplesToWrite, 0);
+                        (UINT32)GameAudio.SampleCount, 0);
             }
 
         }
