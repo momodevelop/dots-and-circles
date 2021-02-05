@@ -241,22 +241,31 @@ ParsePng(arena* Arena,
                             // Then we do the Huffman decoding
                             u32 SymbolCount = HLIT;
                             {
-#define PNG_HUFFMAN_MAX_BIT_COUNT 16
+                                constexpr u32 HuffmanMaxBits = 15;
+
                                 // 1. Count the number of codes for each code length
-                                u32 LenCountTable[PNG_HUFFMAN_MAX_BIT_COUNT] = {};
+                                //
+                                // Note: It should be entirely possible to have an array
+                                // of size = HuffmanMaxBits instead of HuffmanMaxBits+1
+                                // but readability will suffer. 
+                                u32 LenCountTable[HuffmanMaxBits+1] = {};
                                 for (u32 LitIndex = 0; 
                                      LitIndex < SymbolCount;
                                      ++LitIndex) 
                                 {
                                     u32 Len = LitLenTable[LitIndex];
-                                    Assert(Len < PNG_HUFFMAN_MAX_BIT_COUNT);
+                                    Assert(Len < HuffmanMaxBits);
                                     ++LenCountTable[Len];
                                 }
 
                                 // 2. Numerical value of smallest code for each code length
-                                u32 NextUnusedCode[PNG_HUFFMAN_MAX_BIT_COUNT] = {};
-                                LenCountTable[0] = 0;
+                                u32 LenNextCodeTable[HuffmanMaxBits+1] = {};
+                                for (u32 LenIndex = 1, CurrentCode = 0;
+                                     LenIndex <= HuffmanMaxBits;
+                                     ++LenIndex)
                                 {
+                                    CurrentCode = LenNextCodeTable[BitIndex-1]
+                                    LenNextCodeTable[BitIndex] = (PrevNextCode + LenNextCodeTable
                                 }
                             }
 
