@@ -254,7 +254,10 @@ ParsePng(arena* Arena,
                                 }
 
                                 // 2. Numerical value of smallest code for each code length
-
+                                u32 NextUnusedCode[PNG_HUFFMAN_MAX_BIT_COUNT] = {};
+                                LenCountTable[0] = 0;
+                                {
+                                }
                             }
 
 
