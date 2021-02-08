@@ -73,33 +73,33 @@ UpdateSandboxMode(permanent_state* PermState,
     UpdateInput(Mode, Input);
 
     // Entity
-    {
-        game_mode_sandbox_entity * Entity = &Mode->Entity;
-        m44f Transform = M44fTranslation(Mode->Entity.Position) * 
-                         M44fScale(64.f, 64.f, 1.f);
-        auto* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
-        f32 Speed = 300.f; 
-        Entity->Position += Entity->Direction * Speed * DeltaTime;
-        PushDrawTexturedQuad(RenderCommands, 
-                             Color_White, 
-                             Transform,
-                             GetTexture(Assets, Texture_AtlasDefault).Handle,
-                             GetAtlasUV(Assets, AtlasAabb));
-    }
+    game_mode_sandbox_entity * Entity = &Mode->Entity;
+    m44f Transform = M44fTranslation(Mode->Entity.Position) * 
+                     M44fScale(64.f, 64.f, 1.f);
+    auto* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
+    f32 Speed = 300.f; 
+    Entity->Position += Entity->Direction * Speed * DeltaTime;
+    PushDrawTexturedQuad(RenderCommands, 
+                         Color_White, 
+                         Transform,
+                         GetTexture(Assets, Texture_AtlasDefault).Handle,
+                         GetAtlasUV(Assets, AtlasAabb));
 
     // Line
+    line2f Line = line2f {
+            v2f { -200.f, -200.f },
+            v2f { 200.f, 200.f }
+    };
+
+    PushDrawLine(RenderCommands,
+                 Line,
+                 16.f,
+                 Color_White);
+
+    // Line circle collision detection
     {
-        line2f Line = line2f {
-                v2f { -200.f, -200.f },
-                v2f { 200.f, 200.f }
-        };
 
-        PushDrawLine(RenderCommands,
-                     Line,
-                     16.f,
-                     Color_White);
     }
-
     
 }
 

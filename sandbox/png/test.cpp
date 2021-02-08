@@ -38,6 +38,10 @@ ReadFile(const char* Filename) {
     return Yes(Ret);
 }
 
+static constexpr usize PngMaxBits = 15;
+static constexpr usize PngMaxDistanceCodes = 30;
+static constexpr usize PngMaxLiteralCodes = 288;
+
 struct png_image {
     u32 Width;
     u32 Height; 
@@ -93,6 +97,43 @@ struct png_IDAT_header {
 static inline void
 FreePng(png_image Png) {
     free(Png.Data);
+}
+
+
+static inline void
+ComputeHuffman(u32* SymLenTable, u32 SymTableCount) {
+
+    // 1. Count the number of codes for each code length
+    for (u32 LitIndex = 0; 
+         LitIndex < LitCount;
+         ++LitIndex) 
+    {
+        u32 Len = LitLenTable[LitIndex];
+        Assert(Len < PngMaxBits);
+        ++LenCountTable[Len];
+    }
+
+    // 2. Numerical value of smallest code for each code length
+    u32 LenNextCodeTable[PngMaxBits] = {};
+    for (u32 BitIndex = 1, CurrentCode = 0;
+         BitIndex <= PngMaxBits;
+         ++BitIndex)
+    {
+        CurrentCode = (CurrentCode + LenNextCodeTable[BitIndex-1]) << 1;
+        LenNextCodeTable[BitIndex] = CurrentCode; 
+    }
+
+
+    // 3. Assign numerical values to all codes
+    for (u32 LitIndex = 0;
+         LitIndex <= LitCount;
+         ++LitIndex) 
+    {
+        u32 BitLength = LitLenTable[LitIndex]; 
+        if (BitLength > 0) {
+            LitCodeTable[LitIndex] = LenNextCodeTable[BitLength]++;  
+        }
+    }
 }
 
 static inline maybe<png_image> 
@@ -154,21 +195,16 @@ ParsePng(arena* Arena,
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
                 printf("Length: %d\n", ChunkHeader->Length);
-#if 0
-                auto* Header = Consume<png_IDAT_header>(&PngStream);
-                CM = Header->CompressionFlags & 0x0F;
-                CINFO = (Header->CompressionFlags >> 4) & 0x0F;
-                FCHECK = Header->AdditionalFlags & 0x1F;
-                FDICT = Header->AdditionalFlags >> 5 & 0x01;
-                FLEVEL = Header->AdditionalFlags >> 6 & 0x03;
-#else
                 CINFO = ConsumeBits(&PngStream, 4);
                 CM = ConsumeBits(&PngStream, 4);
                 FLEVEL = ConsumeBits(&PngStream, 2); //useless?
                 FDICT = ConsumeBits(&PngStream, 1);
                 FCHECK = ConsumeBits(&PngStream, 5); //not needed?
-#endif
-                printf(">> CM: %d\n>> CINFO: %d\n>> FCHECK: %d\n>> FDICT: %d\n>> FLEVEL: %d\n",
+                printf(">> CM: %d\n\
+                        >> CINFO: %d\n\
+                        >> FCHECK: %d\n\
+                        >> FDICT: %d\n\
+                        >> FLEVEL: %d\n",
                         CM, 
                         CINFO, 
                         FCHECK, 
@@ -178,8 +214,6 @@ ParsePng(arena* Arena,
                     return No();
                 }
 
-                // TODO: Change to arena
-                
                 void* BitmapData = PushBlock(Scratch,
                                              IHDR->Width * 
                                              IHDR->Height * 
@@ -196,7 +230,7 @@ ParsePng(arena* Arena,
                             ConsumeBits(&PngStream, 5);
                             u16 LEN = (u16)ConsumeBits(&PngStream, 16);
                             u16 NLEN = (u16)ConsumeBits(&PngStream, 16);
-                            printf(">>>>No compression\n");
+                            printf(">>>> No compression\n");
                             printf(">>>>> LEN: %d\n", LEN);
                             printf(">>>>> NLEN: %d\n", NLEN);
                             if ((u16)LEN != ~((u16)(NLEN))) {
@@ -205,46 +239,43 @@ ParsePng(arena* Arena,
                             }
                         } break;
                         case 0b01: 
-                        case 0b10:
-                        {
+                        case 0b10: {
                             printf("Huffman\n");
-                            // TODO: Is 512 really the max?
-                            u32 LitLenTable[512];
-                            u32 LitCodeTable[512];
+
+                            u32 LitCodeTable[PngMaxLiteralCodes];
+                            u32 LitLenTable[PngMaxLiteralCodes];
 
                             u32 HLIT = 0;
                             u32 HDIST = 0;
                             if (BTYPE == 0b01) {
                                 // Fixed huffman
                                 // Read representation of code trees
-                                HLIT = 288;
+                                HLIT = PngMaxLiteralCodes;
                                 HDIST = 32;
-                                u32 BitCounts[][2] = {
-                                    {143, 8},
-                                    {255, 9},
-                                    {279, 7},
-                                    {287, 8},
-                                };
 
-                                for(u32 RangeIndex = 0, LitIndex = 0; 
-                                    RangeIndex < ArrayCount(BitCounts); 
-                                    ++RangeIndex) {
-                                    u32 BitCount = BitCounts[RangeIndex][1];
-                                    u32 EndRange = BitCounts[RangeIndex][0];
-                                    while(LitIndex <= EndRange) {
-                                        LitLenTable[LitIndex++] = BitCount;
-                                    }
-                                }
+                                u32 LitIndex = 0;
+                                for (; LitIndex < 144; ++LitIndex) 
+                                    LitLenTable[LitIndex] = 8;
+                                for (; LitIndex < 256; ++LitIndex) 
+                                    LitLenTable[LitIndex] = 9;
+                                for (; LitIndex < 280; ++LitIndex) 
+                                    LitLenTable[LitIndex] = 7;
+                                for (; LitIndex < PngMaxLiteralCodes; ++LitIndex) 
+                                    LitLenTable[LitIndex] = 8;
+
+                                ComputeHuffman();
+
                             }
                             else // BTYPE == 0b10
                             {
-                                //Dynamic buffman
+                                //TODO: Dynamic huffman
                             }
 
 
-                            constexpr static u32 PngHuffmanMaxBits = 15;
+                            // TODO: Figure out what kind of lookup table we want
+                            // for huffman
                             // Actual Huffman decoding
-                            u32 LenCountTable[PngHuffmanMaxBits + 1] = {};
+                            u32 LenCountTable[PngMaxBits + 1] = {};
                             u32 LitCount = HLIT;
                             {
                                 // 1. Count the number of codes for each code length
@@ -253,14 +284,14 @@ ParsePng(arena* Arena,
                                      ++LitIndex) 
                                 {
                                     u32 Len = LitLenTable[LitIndex];
-                                    Assert(Len < PngHuffmanMaxBits);
+                                    Assert(Len < PngMaxBits);
                                     ++LenCountTable[Len];
                                 }
 
                                 // 2. Numerical value of smallest code for each code length
-                                u32 LenNextCodeTable[PngHuffmanMaxBits] = {};
+                                u32 LenNextCodeTable[PngMaxBits] = {};
                                 for (u32 BitIndex = 1, CurrentCode = 0;
-                                     BitIndex <= PngHuffmanMaxBits;
+                                     BitIndex <= PngMaxBits;
                                      ++BitIndex)
                                 {
                                     CurrentCode = (CurrentCode + LenNextCodeTable[BitIndex-1]) << 1;
