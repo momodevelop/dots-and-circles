@@ -1,5 +1,5 @@
-#ifndef GAME_ASSETS_TYPE_ID 
-#define GAME_ASSETS_TYPE_ID
+#ifndef GAME_ASSETS_TYPES 
+#define GAME_ASSETS_TYPES
 
 #include "mm_core.h"
 #include "mm_maths.h"

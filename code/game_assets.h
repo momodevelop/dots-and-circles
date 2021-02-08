@@ -10,7 +10,7 @@
 #include "mm_string.h"
 
 #include "game_platform.h"
-#include "game_assets_file_formats.h"
+#include "game_assets_types.h"
 
 // NOTE(Momo): Asset types
 struct texture {

@@ -10,6 +10,8 @@ struct read_file_result
     usize MemorySize;
 };
 
+
+
 static inline maybe<read_file_result>
 ReadFile(const char* Filename) {
     FILE* File = {};
@@ -224,13 +226,13 @@ ParsePng(arena* Arena,
                                     {287, 8},
                                 };
 
-                                for(u32 RangeIndex = 0, BitCountIndex = 0; 
+                                for(u32 RangeIndex = 0, LitIndex = 0; 
                                     RangeIndex < ArrayCount(BitCounts); 
                                     ++RangeIndex) {
                                     u32 BitCount = BitCounts[RangeIndex][1];
                                     u32 EndRange = BitCounts[RangeIndex][0];
-                                    while(BitCountIndex <= EndRange) {
-                                        LitLenTable[BitCountIndex++] = BitCount;
+                                    while(LitIndex <= EndRange) {
+                                        LitLenTable[LitIndex++] = BitCount;
                                     }
                                 }
                             }
@@ -240,14 +242,14 @@ ParsePng(arena* Arena,
                             }
 
 
-                            // Then we do the Huffman decoding
-                            u32 SymbolCount = HLIT;
+                            constexpr static u32 PngHuffmanMaxBits = 15;
+                            // Actual Huffman decoding
+                            u32 LenCountTable[PngHuffmanMaxBits + 1] = {};
+                            u32 LitCount = HLIT;
                             {
-                                constexpr static u32 PngHuffmanMaxBits = 15;
                                 // 1. Count the number of codes for each code length
-                                u32 LenCountTable[PngHuffmanMaxBits + 1] = {};
                                 for (u32 LitIndex = 0; 
-                                     LitIndex < SymbolCount;
+                                     LitIndex < LitCount;
                                      ++LitIndex) 
                                 {
                                     u32 Len = LitLenTable[LitIndex];
@@ -256,14 +258,43 @@ ParsePng(arena* Arena,
                                 }
 
                                 // 2. Numerical value of smallest code for each code length
-                                u32 NextUnusedCode[PngHuffmanMaxBits] = {};
+                                u32 LenNextCodeTable[PngHuffmanMaxBits] = {};
                                 for (u32 BitIndex = 1, CurrentCode = 0;
                                      BitIndex <= PngHuffmanMaxBits;
                                      ++BitIndex)
                                 {
-                                    CurrentCode = (CurrentCode + NextUnusedCode[BitIndex-1]) << 1;
-                                    NextUnusedCode[BitIndex] = CurrentCode; 
+                                    CurrentCode = (CurrentCode + LenNextCodeTable[BitIndex-1]) << 1;
+                                    LenNextCodeTable[BitIndex] = CurrentCode; 
                                 }
+
+
+                                // 3. Assign numerical values to all codes
+                                for (u32 LitIndex = 0;
+                                     LitIndex <= LitCount;
+                                     ++LitIndex) 
+                                {
+                                    u32 BitLength = LitLenTable[LitIndex]; 
+                                    if (BitLength > 0) {
+                                        LitCodeTable[LitIndex] = LenNextCodeTable[BitLength]++;  
+                                    }
+                                }
+                            }
+
+
+                            // 
+                            printf("Result...\n");
+                            for (u32 LitIndex = 0;
+                                 LitIndex < LitCount;
+                                 ++LitIndex) 
+                            {
+                                printf("%d\t%d\t%d\n", LitIndex, LitLenTable[LitIndex], LitCodeTable[LitIndex]);
+                            }
+
+                            printf("Decoding...\n");
+                            for (;;) 
+                            {
+                                // TBC
+                                return No();
                             }
 
 

@@ -1319,6 +1319,7 @@ WinMain(HINSTANCE Instance,
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
     while (GlobalIsRunning) {
         if (IsOutdated(&GameCode)) {
+            Win32Log("[Win32] Reloading game code!\n");
             Unload(&GameCode);
             Load(&GameCode);
         }

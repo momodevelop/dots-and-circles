@@ -402,10 +402,6 @@ UpdateWaves(game_mode_main* Mode,
 
 }
 
-
-
-
-
 static inline void
 UpdateInput(game_mode_main* Mode,
             game_input* Input)
