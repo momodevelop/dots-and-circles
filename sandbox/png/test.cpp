@@ -99,9 +99,11 @@ FreePng(png_image Png) {
     free(Png.Data);
 }
 
+struct png_huffman
 
+// TODO
 static inline void
-ComputeHuffman(u32* SymLenTable, u32 SymTableCount) {
+ComputeHuffman(png_huffman* Huffman, array<u32> SymLenTable) {
 
     // 1. Count the number of codes for each code length
     for (u32 LitIndex = 0; 
