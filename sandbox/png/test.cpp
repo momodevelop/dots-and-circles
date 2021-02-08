@@ -208,6 +208,8 @@ ParsePng(arena* Arena,
                             printf("Huffman\n");
                             // TODO: Is 512 really the max?
                             u32 LitLenTable[512];
+                            u32 LitCodeTable[512];
+
                             u32 HLIT = 0;
                             u32 HDIST = 0;
                             if (BTYPE == 0b01) {
@@ -241,31 +243,26 @@ ParsePng(arena* Arena,
                             // Then we do the Huffman decoding
                             u32 SymbolCount = HLIT;
                             {
-                                constexpr u32 HuffmanMaxBits = 15;
-
+                                constexpr static u32 PngHuffmanMaxBits = 15;
                                 // 1. Count the number of codes for each code length
-                                //
-                                // Note: It should be entirely possible to have an array
-                                // of size = HuffmanMaxBits instead of HuffmanMaxBits+1
-                                // but readability will suffer. 
-                                u32 LenCountTable[HuffmanMaxBits+1] = {};
+                                u32 LenCountTable[PngHuffmanMaxBits + 1] = {};
                                 for (u32 LitIndex = 0; 
                                      LitIndex < SymbolCount;
                                      ++LitIndex) 
                                 {
                                     u32 Len = LitLenTable[LitIndex];
-                                    Assert(Len < HuffmanMaxBits);
+                                    Assert(Len < PngHuffmanMaxBits);
                                     ++LenCountTable[Len];
                                 }
 
                                 // 2. Numerical value of smallest code for each code length
-                                u32 LenNextCodeTable[HuffmanMaxBits+1] = {};
-                                for (u32 LenIndex = 1, CurrentCode = 0;
-                                     LenIndex <= HuffmanMaxBits;
-                                     ++LenIndex)
+                                u32 NextUnusedCode[PngHuffmanMaxBits] = {};
+                                for (u32 BitIndex = 1, CurrentCode = 0;
+                                     BitIndex <= PngHuffmanMaxBits;
+                                     ++BitIndex)
                                 {
-                                    CurrentCode = LenNextCodeTable[BitIndex-1]
-                                    LenNextCodeTable[BitIndex] = (PrevNextCode + LenNextCodeTable
+                                    CurrentCode = (CurrentCode + NextUnusedCode[BitIndex-1]) << 1;
+                                    NextUnusedCode[BitIndex] = CurrentCode; 
                                 }
                             }
 
