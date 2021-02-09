@@ -189,9 +189,9 @@ namespace zawarudo {
     }
 }
 
-#define zawarudo_VARANON_IMPL(COUNTER) zawarudo_ryojianon##COUNTER
-#define zawarudo_VARANON(counter) zawarudo_VARANON_IMPL(counter)
-#define Defer auto zawarudo_VARANON(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
+#define AnonVarSub(x) zawarudo_ryojianon##x
+#define AnonVar(x) AnonVarSub(x)
+#define Defer auto AnonVar(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
 // Safe Truncation
 #define I8_MIN                (-128)

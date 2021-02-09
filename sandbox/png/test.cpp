@@ -99,41 +99,43 @@ FreePng(png_image Png) {
     free(Png.Data);
 }
 
-struct png_huffman
+struct png_huffman {
+    array<u16> CodeSymTable; // Canonical ordered symbols
+    array<u16> LenCountTable;
+};
 
-// TODO
+
 static inline void
-ComputeHuffman(png_huffman* Huffman, array<u32> SymLenTable) {
-
+PngHuffman(png_huffman* Huff, array<u16> SymLenTable) {
     // 1. Count the number of codes for each code length
-    for (u32 LitIndex = 0; 
-         LitIndex < LitCount;
-         ++LitIndex) 
+    for (usize Sym = 0; 
+         Sym < SymLenTable.Count;
+         ++Sym) 
     {
-        u32 Len = LitLenTable[LitIndex];
+        u16 Len = SymLenTable[Sym];
         Assert(Len < PngMaxBits);
-        ++LenCountTable[Len];
+        ++Huff->LenCountTable[Len];
     }
 
     // 2. Numerical value of smallest code for each code length
-    u32 LenNextCodeTable[PngMaxBits] = {};
-    for (u32 BitIndex = 1, CurrentCode = 0;
-         BitIndex <= PngMaxBits;
-         ++BitIndex)
+    u16 LenOffsetTable[PngMaxBits+1] = {};
+    for (usize Len = 1;
+         Len < PngMaxBits;
+         ++Len)
     {
-        CurrentCode = (CurrentCode + LenNextCodeTable[BitIndex-1]) << 1;
-        LenNextCodeTable[BitIndex] = CurrentCode; 
+        LenOffsetTable[Len+1] = LenOffsetTable[Len] + Huff->LenCountTable[Len]; 
     }
 
 
     // 3. Assign numerical values to all codes
-    for (u32 LitIndex = 0;
-         LitIndex <= LitCount;
-         ++LitIndex) 
+    for (usize Sym = 0;
+         Sym < SymLenTable.Count;
+         ++Sym)
     {
-        u32 BitLength = LitLenTable[LitIndex]; 
-        if (BitLength > 0) {
-            LitCodeTable[LitIndex] = LenNextCodeTable[BitLength]++;  
+        u16 Len = SymLenTable[Sym]; 
+        if (Len > 0) {
+            u16 Code = LenOffsetTable[Len]++;
+            Huff->CodeSymTable[Code] = (u16)Sym;
         }
     }
 }
@@ -190,12 +192,12 @@ ParsePng(arena* Arena,
     Consume<png_chunk_footer>(&PngStream);
 
     // Search for IDAT header
-    u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
     while(!IsEos(&PngStream)) {
         ChunkHeader = Consume<png_chunk_header>(&PngStream);
         EndianSwap(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
+                u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
                 printf("Length: %d\n", ChunkHeader->Length);
                 CINFO = ConsumeBits(&PngStream, 4);
                 CM = ConsumeBits(&PngStream, 4);
@@ -243,9 +245,11 @@ ParsePng(arena* Arena,
                         case 0b01: 
                         case 0b10: {
                             printf("Huffman\n");
+                            png_huffman LitHuffman = {};
+                            png_huffman DistHuffman = {};
 
-                            u32 LitCodeTable[PngMaxLiteralCodes];
-                            u32 LitLenTable[PngMaxLiteralCodes];
+                            BootstrapArray(LitLenTable, u16, PngMaxLiteralCodes);
+                            BootstrapArray(DistLenTable, u16, PngMaxDistanceCodes);
 
                             u32 HLIT = 0;
                             u32 HDIST = 0;
@@ -255,17 +259,17 @@ ParsePng(arena* Arena,
                                 HLIT = PngMaxLiteralCodes;
                                 HDIST = 32;
 
-                                u32 LitIndex = 0;
-                                for (; LitIndex < 144; ++LitIndex) 
-                                    LitLenTable[LitIndex] = 8;
-                                for (; LitIndex < 256; ++LitIndex) 
-                                    LitLenTable[LitIndex] = 9;
-                                for (; LitIndex < 280; ++LitIndex) 
-                                    LitLenTable[LitIndex] = 7;
-                                for (; LitIndex < PngMaxLiteralCodes; ++LitIndex) 
-                                    LitLenTable[LitIndex] = 8;
-
-                                ComputeHuffman();
+                                usize Lit = 0;
+                                for (; Lit < 144; ++Lit) 
+                                    LitLenTable[Lit] = 8;
+                                for (; Lit < 256; ++Lit) 
+                                    LitLenTable[Lit] = 9;
+                                for (; Lit < 280; ++Lit) 
+                                    LitLenTable[Lit] = 7;
+                                for (; Lit < PngMaxLiteralCodes; ++Lit) 
+                                    LitLenTable[Lit] = 8;
+                                for (Lit = 0; Lit < PngMaxDistanceCodes; ++Lit) 
+                                    DistLenTable[Lit] = 5;
 
                             }
                             else // BTYPE == 0b10
@@ -278,52 +282,6 @@ ParsePng(arena* Arena,
                             // for huffman
                             // Actual Huffman decoding
                             u32 LenCountTable[PngMaxBits + 1] = {};
-                            u32 LitCount = HLIT;
-                            {
-                                // 1. Count the number of codes for each code length
-                                for (u32 LitIndex = 0; 
-                                     LitIndex < LitCount;
-                                     ++LitIndex) 
-                                {
-                                    u32 Len = LitLenTable[LitIndex];
-                                    Assert(Len < PngMaxBits);
-                                    ++LenCountTable[Len];
-                                }
-
-                                // 2. Numerical value of smallest code for each code length
-                                u32 LenNextCodeTable[PngMaxBits] = {};
-                                for (u32 BitIndex = 1, CurrentCode = 0;
-                                     BitIndex <= PngMaxBits;
-                                     ++BitIndex)
-                                {
-                                    CurrentCode = (CurrentCode + LenNextCodeTable[BitIndex-1]) << 1;
-                                    LenNextCodeTable[BitIndex] = CurrentCode; 
-                                }
-
-
-                                // 3. Assign numerical values to all codes
-                                for (u32 LitIndex = 0;
-                                     LitIndex <= LitCount;
-                                     ++LitIndex) 
-                                {
-                                    u32 BitLength = LitLenTable[LitIndex]; 
-                                    if (BitLength > 0) {
-                                        LitCodeTable[LitIndex] = LenNextCodeTable[BitLength]++;  
-                                    }
-                                }
-                            }
-
-
-                            // 
-                            printf("Result...\n");
-                            for (u32 LitIndex = 0;
-                                 LitIndex < LitCount;
-                                 ++LitIndex) 
-                            {
-                                printf("%d\t%d\t%d\n", LitIndex, LitLenTable[LitIndex], LitCodeTable[LitIndex]);
-                            }
-
-                            printf("Decoding...\n");
                             for (;;) 
                             {
                                 // TBC

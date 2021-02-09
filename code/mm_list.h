@@ -23,6 +23,8 @@ struct list {
     }
 };
 
+#define BootstrapList(name, type, count) type AnonVar(__LINE__)[count] = {}; list<type> name = List(AnonVar(__LINE__), count)
+
 // Constructors
 template<typename type>
 static inline list<type>
@@ -30,6 +32,15 @@ List(type* Arr, usize Capacity) {
     list<type> Ret = {};
     Ret.Elements = Arr;
     Ret.Capacity= Capacity;
+    return Ret;
+}
+
+template<typename type>
+static inline list<type>
+List(arena* Arena, usize Capacity) {
+    list<type> Ret = {};
+    Ret.Elements = PushSiArray<type>(Arena, Capacity);
+    Ret.Capacity = Capacity;
     return Ret;
 }
 
@@ -128,14 +139,5 @@ operator+(list<type> L, usize I) {
     return L.Elements + I;
 }
 
-#include "mm_arena.h"
-template<typename type>
-static inline list<type>
-List(arena* Arena, usize Capacity) {
-    list<type> Ret = {};
-    Ret.Elements = PushSiArray<type>(Arena, Capacity);
-    Ret.Capacity = Capacity;
-    return Ret;
-}
 
 #endif

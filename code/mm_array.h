@@ -8,6 +8,9 @@
 // and the Elements on the heap.
 //
 
+
+#define BootstrapArray(name, type, count) type AnonVar(__LINE__)[count] = {}; array<type> name = Array(AnonVar(__LINE__), count)
+
 template<typename type>
 struct array {
     usize Count;

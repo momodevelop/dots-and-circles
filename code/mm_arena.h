@@ -50,35 +50,6 @@ PushStruct(arena* Arena) {
     return (type*)PushBlock(Arena, sizeof(type), alignof(type));
 }
 
-// Consider removal because the functions below opens a bag of worms
-// regarding whether to forward the arena down and in 
-// what order of arguments.
-// 
-#if 0
-// Push with a given constructor function
-template<typename type, typename ctr, typename... args>
-static inline type*
-PushCtr(arena* Arena, ctr Constructor, args&&... Args) {
-    type* Ret = PushStruct<type>(Arena);
-    
-    // Perfect forwarding!
-    (*Ret) = Constructor(static_cast<args&&>(Args)...);
-
-    return Ret;
-}
-
-// Same as PushConstruct, but passes the Arena down as first variable.
-// This is because there are many cases where you want to 
-// allocate with the same allocator.
-template<typename type, typename ctr, typename... args>
-static inline type*
-PushCtrPassThru(arena* Arena, ctr Constructor, args&&... Args) {
-    type* Ret = PushStruct<type>(Arena);
-    (*Ret) = Constructor(Arena, static_cast<args&&>(Args)...);
-    return Ret;
-}
-#endif
-
 template<typename type>
 static inline type*
 PushSiArray(arena* Arena, usize Count) {
