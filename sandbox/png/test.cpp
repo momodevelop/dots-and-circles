@@ -184,16 +184,16 @@ Decode(png_context* Context, png_huffman* Huffman) {
 static inline b32
 ParsePngIDATChunk(png_context* Context) {
     u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
-    CINFO = ConsumeBits(&Context->Stream, 4);
     CM = ConsumeBits(&Context->Stream, 4);
-    FLEVEL = ConsumeBits(&Context->Stream, 2); //useless?
-    FDICT = ConsumeBits(&Context->Stream, 1);
+    CINFO = ConsumeBits(&Context->Stream, 4);
     FCHECK = ConsumeBits(&Context->Stream, 5); //not needed?
+    FDICT = ConsumeBits(&Context->Stream, 1);
+    FLEVEL = ConsumeBits(&Context->Stream, 2); //useless?
     printf(">> CM: %d\n\
-            >> CINFO: %d\n\
-            >> FCHECK: %d\n\
-            >> FDICT: %d\n\
-            >> FLEVEL: %d\n",
+>> CINFO: %d\n\
+>> FCHECK: %d\n\
+>> FDICT: %d\n\
+>> FLEVEL: %d\n",
             CM, 
             CINFO, 
             FCHECK, 
@@ -213,8 +213,8 @@ ParsePngIDATChunk(png_context* Context) {
 
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        u16 BTYPE = (u8)ConsumeBits(&Context->Stream, 2);
         BFINAL = (u8)ConsumeBits(&Context->Stream, 1);
+        u16 BTYPE = (u8)ConsumeBits(&Context->Stream, 2);
         printf(">>> BFINAL: %d\n", BFINAL);
         printf(">>> BTYPE: %d\n", BTYPE);
         switch(BTYPE) {

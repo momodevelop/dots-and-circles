@@ -42,26 +42,21 @@ Consume(stream* Stream) {
 }
 
 
+// Bits are consumed from LSB to MSB
 static inline u32
 ConsumeBits(stream* Stream, u32 Amount){
     Assert(Amount <= 32);
     
     while(Stream->BitCount < Amount) {
         u32 Byte = *Consume<u8>(Stream);
-        Stream->BitBuffer <<= 8;
-        Stream->BitBuffer |= Byte;
+        Stream->BitBuffer |= (Byte << Stream->BitCount);
         Stream->BitCount += 8;
     }
 
-    // TODO: There probably is a way to optimize this?
-    // Can do that for exercise
-    u32 LocationDistance = Stream->BitCount - Amount;
-    u32 Flag = ((1 << Amount) - 1) << LocationDistance;
-    u32 ResultAtLocation = (Stream->BitBuffer & Flag);
-    u32 Result = ResultAtLocation >> LocationDistance; 
+    u32 Result = Stream->BitBuffer & ((1 << Amount) - 1); 
 
     Stream->BitCount -= Amount;
-    Stream->BitBuffer &= ~(Stream->BitBuffer & Flag);
+    Stream->BitBuffer >>= Amount;
 
     return Result;
 }
