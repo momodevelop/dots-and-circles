@@ -214,7 +214,9 @@ ParsePngIDATChunk(png_context* Context) {
         Context->IsImageDataInitialized = true;
     }
 
-#if 1
+
+
+#if 1 
     unsigned long ImageSize = Context->ImageWidth * 
                       Context->ImageHeight * 
                       Context->ImageChannels * 10;
@@ -307,7 +309,7 @@ ParsePngIDATChunk(png_context* Context) {
                     u32 Sym = Decode(Context, &LitHuffman);
                     if (Sym <= 255) { 
                         u8 ByteToWrite = (u8)(Sym & 0xFF); 
-                        printf("%X ", ByteToWrite);
+                        printf("%02X ", ByteToWrite);
                         Context->ImageData[Context->ImageDataCount++] = ByteToWrite;
                     }
                     else if (Sym >= 257) {
@@ -323,11 +325,9 @@ ParsePngIDATChunk(png_context* Context) {
                             return false;
                         }
                         u32 Dist = Dists[Sym] + ConsumeBits(&Context->Stream, DistExBits[Sym]);
-                        //printf("%d %d\n", Len, Dist);
-                        while(--Len) {
+                        while(Len--) {
                             u8 ByteToWrite = Context->ImageData[Context->ImageDataCount - Dist];
-                            //printf("Copying from %lld: %X\n", Context->ImageDataCount - Dist, ByteToWrite);
-                            printf("%X ", ByteToWrite);
+                            printf("%02X ", ByteToWrite);
                             Context->ImageData[Context->ImageDataCount++] = ByteToWrite; 
                         }
                     }
@@ -336,6 +336,10 @@ ParsePngIDATChunk(png_context* Context) {
                         break;
                     }
                 }
+                printf("\n");
+
+                // TODO: Reconstruct pixels and send to final pixel output
+
             } break;
             default: {
                 printf("Error\n");
@@ -426,7 +430,7 @@ int main() {
     Defer { free(Memory); };  
     arena AppArena = Arena(Memory, MemorySize);
 
-    maybe<read_file_result> PngFile_ = ReadFile("test.png");
+    maybe<read_file_result> PngFile_ = ReadFile("test2.png");
     if (!PngFile_){
         return 1;
     }
