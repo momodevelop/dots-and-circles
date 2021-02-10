@@ -10,12 +10,10 @@ struct read_file_result
     usize MemorySize;
 };
 
-
-
 static inline maybe<read_file_result>
 ReadFile(const char* Filename) {
     FILE* File = {};
-    if (fopen_s(&File, "test.png", "rb") != 0) { 
+    if (fopen_s(&File, Filename, "rb") != 0) { 
         printf("Cannot find file\n");
         return No();
     }
@@ -45,9 +43,10 @@ static constexpr usize PngMaxFixedLitCodes = 288;
 struct png_context {
     stream Stream;
     arena* Arena; 
-    void* ImageData;
-    b32 IsImageDataInitialized;
 
+    b32 IsImageDataInitialized;
+    u8* ImageData;
+    usize ImageDataCount;
     u32 ImageWidth;
     u32 ImageHeight;
     u32 ImageChannels;
@@ -162,13 +161,13 @@ Huffman(arena* Arena,
 
 static inline u32
 Decode(png_context* Context, png_huffman* Huffman) {
-    u32 Code = 0;
-    u32 First = 0;
-    u32 Index = 0;
+    i32 Code = 0;
+    i32 First = 0;
+    i32 Index = 0;
 
-    for (u32 Len = 1; Len <= PngMaxBits; ++Len) {
+    for (i32 Len = 1; Len <= PngMaxBits; ++Len) {
         Code |= ConsumeBits(&Context->Stream, 1);
-        u32 Count = Huffman->LenCountTable[Len];
+        i32 Count = Huffman->LenCountTable[Len];
         if(Code - Count < First)
             return Huffman->CodeSymTable[Index + (Code - First)];
         Index += Count;
@@ -177,9 +176,11 @@ Decode(png_context* Context, png_huffman* Huffman) {
         Code <<= 1;
     }
 
+    // TODO: Should return some kind of error code
     return 0;
 }
 
+#include "puff.c"
 
 static inline b32
 ParsePngIDATChunk(png_context* Context) {
@@ -204,13 +205,27 @@ ParsePngIDATChunk(png_context* Context) {
     }
 
     if (!Context->IsImageDataInitialized) {
+        printf("Result W/H/C: %d, %d, %d\n", Context->ImageWidth, 
+                Context->ImageHeight, Context->ImageChannels);
         usize ImageSize = Context->ImageWidth * 
                           Context->ImageHeight * 
-                          Context->ImageChannels;
-        Context->ImageData = PushBlock(Context->Arena, ImageSize);
+                          Context->ImageChannels * 10;
+        Context->ImageData = PushSiArray<u8>(Context->Arena, ImageSize);
         Context->IsImageDataInitialized = true;
     }
 
+#if 1
+    unsigned long ImageSize = Context->ImageWidth * 
+                      Context->ImageHeight * 
+                      Context->ImageChannels * 10;
+    unsigned long StreamLength = Context->Stream.Contents.Count - Context->Stream.Current; 
+    
+    puff(Context->ImageData, 
+         &ImageSize,
+         Context->Stream.Contents.Elements + Context->Stream.Current,
+         &StreamLength);
+#endif 
+    //return false;
     u8 BFINAL = 0;
     while(BFINAL == 0){
         BFINAL = (u8)ConsumeBits(&Context->Stream, 1);
@@ -229,11 +244,10 @@ ParsePngIDATChunk(png_context* Context) {
                     printf("LEN vs NLEN mismatch!\n");
                     return false;
                 }
-                // TODO
+                // TODO: complete this
             } break;
             case 0b01: 
             case 0b10: {
-                printf("Huffman\n");
                 png_huffman LitHuffman = {};
                 png_huffman DistHuffman = {};
 
@@ -273,15 +287,55 @@ ParsePngIDATChunk(png_context* Context) {
                     return false;
                 }
 
-                // Actual Huffman decoding
+                static const short Lens[29] = { /* Size base for length codes 257..285 */
+                    3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
+                    35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
+                static const short LenExBits[29] = { /* Extra bits for length codes 257..285 */
+                    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
+                    3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
+                static const short Dists[30] = { /* Offset base for distance codes 0..29 */
+                    1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
+                    257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
+                    8193, 12289, 16385, 24577};
+                static const short DistExBits[30] = { /* Extra bits for distance codes 0..29 */
+                    0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
+                    7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
+                    12, 12, 13, 13};
                 u32 LenCountTable[PngMaxBits + 1] = {};
                 for (;;) 
                 {
-                    return false;
+                    u32 Sym = Decode(Context, &LitHuffman);
+                    if (Sym <= 255) { 
+                        u8 ByteToWrite = (u8)(Sym & 0xFF); 
+                        printf("%X ", ByteToWrite);
+                        Context->ImageData[Context->ImageDataCount++] = ByteToWrite;
+                    }
+                    else if (Sym >= 257) {
+                        Sym -= 257;
+                        if (Sym >= 29) {
+                            printf("Invalid Symbol 1\n"); 
+                            return false;
+                        }
+                        u32 Len = Lens[Sym] + ConsumeBits(&Context->Stream, LenExBits[Sym]);
+                        Sym = Decode(Context, &DistHuffman);
+                        if (Sym < 0) {
+                            printf("Invalid Symbol 2\n");
+                            return false;
+                        }
+                        u32 Dist = Dists[Sym] + ConsumeBits(&Context->Stream, DistExBits[Sym]);
+                        //printf("%d %d\n", Len, Dist);
+                        while(--Len) {
+                            u8 ByteToWrite = Context->ImageData[Context->ImageDataCount - Dist];
+                            //printf("Copying from %lld: %X\n", Context->ImageDataCount - Dist, ByteToWrite);
+                            printf("%X ", ByteToWrite);
+                            Context->ImageData[Context->ImageDataCount++] = ByteToWrite; 
+                        }
+                    }
+                    else { 
+                        // Sym == 256
+                        break;
+                    }
                 }
-
-
-
             } break;
             default: {
                 printf("Error\n");
@@ -289,10 +343,8 @@ ParsePngIDATChunk(png_context* Context) {
             }
         }
     }
-    //Advance(&PngStream, ChunkHeader->Length - 2);
     return true;
 }
-
 
 static inline maybe<png_image> 
 ParsePng(arena* Arena, 
@@ -328,7 +380,8 @@ ParsePng(arena* Arena,
         IHDR->BitDepth != 8 &&
         IHDR->CompressionMethod &&
         IHDR->FilterMethod != 0 &&
-        IHDR->InterlaceMethod != 0) {
+        IHDR->InterlaceMethod != 0) 
+    {
         return No();
     }
     EndianSwap(&IHDR->Width);
@@ -385,3 +438,4 @@ int main() {
     printf("Done!");
     return 0;
 }
+
