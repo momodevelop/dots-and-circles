@@ -20,46 +20,67 @@ Stream(void* Memory, usize MemorySize) {
     return Ret;
 }
 
+static inline stream
+Stream(arena* Arena, usize Capacity) {
+    void* Memory = PushBlock(Arena, Capacity);
+    return Stream(Memory, Capacity); 
+} 
+
 static inline b32
-IsEos(stream* Stream) {
-    return Stream->Current >= Stream->Contents.Count;
+IsEos(stream* S) {
+    return S->Current >= S->Contents.Count;
 }
 
 static inline void*
-Consume(stream* Stream, usize Amount) {
+Consume(stream* S, usize Amount) {
     void* Ret = nullptr;
-    if (Stream->Current + Amount <= Stream->Contents.Count) {
-        Ret = Stream->Contents.Elements + Stream->Current;
+    if (S->Current + Amount <= S->Contents.Count) {
+        Ret = S->Contents.Elements + S->Current;
     }
-    Stream->Current += Amount;
+    S->Current += Amount;
     return Ret;
 }
 
 template<typename t>
 static inline t* 
-Consume(stream* Stream) {
-    return (t*)Consume(Stream, sizeof(t));
+Consume(stream* S) {
+    return (t*)Consume(S, sizeof(t));
 }
 
 
 // Bits are consumed from LSB to MSB
 static inline u32
-ConsumeBits(stream* Stream, u32 Amount){
+ConsumeBits(stream* S, u32 Amount){
     Assert(Amount <= 32);
     
-    while(Stream->BitCount < Amount) {
-        u32 Byte = *Consume<u8>(Stream);
-        Stream->BitBuffer |= (Byte << Stream->BitCount);
-        Stream->BitCount += 8;
+    while(S->BitCount < Amount) {
+        u32 Byte = *Consume<u8>(S);
+        S->BitBuffer |= (Byte << S->BitCount);
+        S->BitCount += 8;
     }
 
-    u32 Result = Stream->BitBuffer & ((1 << Amount) - 1); 
+    u32 Result = S->BitBuffer & ((1 << Amount) - 1); 
 
-    Stream->BitCount -= Amount;
-    Stream->BitBuffer >>= Amount;
+    S->BitCount -= Amount;
+    S->BitBuffer >>= Amount;
 
     return Result;
 }
 
+static inline b32
+Write(stream* S, void* Src, usize SrcSize) {
+    if (S->Current + SrcSize >= S->Contents.Count) {
+        return false;
+    }
+    Copy(S->Contents.Elements + S->Current, Src, SrcSize);
+    S->Current += SrcSize; 
+    return true;
+}
+
+template<typename t>
+static inline b32
+Write(stream* S, t Struct){
+    return Write(S, &Struct, sizeof(t));
+}
 
 #endif

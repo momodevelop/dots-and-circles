@@ -44,12 +44,16 @@ struct png_context {
     stream Stream;
     arena* Arena; 
 
-    b32 IsImageDataInitialized;
-    u8* ImageData;
-    usize ImageDataCount;
+    b32 IsImageInitialized;
+    stream ImageStream;
+    stream DepressedImageStream;
+
     u32 ImageWidth;
     u32 ImageHeight;
     u32 ImageChannels;
+
+    scratch ImageStreamMark;
+    scratch DepressedImageStreamMark;
 };
 
 struct png_image {
@@ -136,9 +140,7 @@ Huffman(arena* Arena,
 
     // 2. Numerical value of smallest code for each code length
     u16 LenOffsetTable[PngMaxBits+1] = {};
-    for (usize Len = 1;
-         Len < PngMaxBits;
-         ++Len)
+    for (usize Len = 1; Len < PngMaxBits; ++Len)
     {
         LenOffsetTable[Len+1] = LenOffsetTable[Len] + Ret.LenCountTable[Len]; 
     }
@@ -160,13 +162,13 @@ Huffman(arena* Arena,
 }
 
 static inline u32
-Decode(png_context* Context, png_huffman* Huffman) {
+Decode(stream* SrcStream, png_huffman* Huffman) {
     i32 Code = 0;
     i32 First = 0;
     i32 Index = 0;
 
     for (i32 Len = 1; Len <= PngMaxBits; ++Len) {
-        Code |= ConsumeBits(&Context->Stream, 1);
+        Code |= ConsumeBits(SrcStream, 1);
         i32 Count = Huffman->LenCountTable[Len];
         if(Code - Count < First)
             return Huffman->CodeSymTable[Index + (Code - First)];
@@ -180,54 +182,13 @@ Decode(png_context* Context, png_huffman* Huffman) {
     return 0;
 }
 
-#include "puff.c"
-
+// TODO: This is already zlib/DEFLATE related
+// Maybe we can move this to another function/use another struct?
+// The issue is optimization I guess? Especially for fixed-huffman codes.
+#if 0
 static inline b32
-ParsePngIDATChunk(png_context* Context) {
-    u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
-    CM = ConsumeBits(&Context->Stream, 4);
-    CINFO = ConsumeBits(&Context->Stream, 4);
-    FCHECK = ConsumeBits(&Context->Stream, 5); //not needed?
-    FDICT = ConsumeBits(&Context->Stream, 1);
-    FLEVEL = ConsumeBits(&Context->Stream, 2); //useless?
-    printf(">> CM: %d\n\
->> CINFO: %d\n\
->> FCHECK: %d\n\
->> FDICT: %d\n\
->> FLEVEL: %d\n",
-            CM, 
-            CINFO, 
-            FCHECK, 
-            FDICT, 
-            FLEVEL); 
-    if (CM != 8 || FDICT != 0 || CINFO > 7) {
-        return false;
-    }
-
-    if (!Context->IsImageDataInitialized) {
-        printf("Result W/H/C: %d, %d, %d\n", Context->ImageWidth, 
-                Context->ImageHeight, Context->ImageChannels);
-        usize ImageSize = Context->ImageWidth * 
-                          Context->ImageHeight * 
-                          Context->ImageChannels * 10;
-        Context->ImageData = PushSiArray<u8>(Context->Arena, ImageSize);
-        Context->IsImageDataInitialized = true;
-    }
-
-
-
-#if 1 
-    unsigned long ImageSize = Context->ImageWidth * 
-                      Context->ImageHeight * 
-                      Context->ImageChannels * 10;
-    unsigned long StreamLength = Context->Stream.Contents.Count - Context->Stream.Current; 
-    
-    puff(Context->ImageData, 
-         &ImageSize,
-         Context->Stream.Contents.Elements + Context->Stream.Current,
-         &StreamLength);
-#endif 
-    //return false;
+Deflate(png_context* Context) 
+{
     u8 BFINAL = 0;
     while(BFINAL == 0){
         BFINAL = (u8)ConsumeBits(&Context->Stream, 1);
@@ -284,7 +245,7 @@ ParsePngIDATChunk(png_context* Context) {
                 }
                 else // BTYPE == 0b10
                 {
-                    //TODO: Dynamic huffman
+                    // TODO: Dynamic huffman
                     printf(">>>> Dynamic huffman not supported\n");
                     return false;
                 }
@@ -349,6 +310,190 @@ ParsePngIDATChunk(png_context* Context) {
     }
     return true;
 }
+#else 
+static inline b32
+Deflate(stream* SrcStream, stream* DestStream, arena* Arena) 
+{
+    static const short Lens[29] = { /* Size base for length codes 257..285 */
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
+        35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
+    static const short LenExBits[29] = { /* Extra bits for length codes 257..285 */
+        0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
+        3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0};
+    static const short Dists[30] = { /* Offset base for distance codes 0..29 */
+        1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
+        257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
+        8193, 12289, 16385, 24577};
+    static const short DistExBits[30] = { /* Extra bits for distance codes 0..29 */
+        0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
+        7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
+        12, 12, 13, 13};
+    u8 BFINAL = 0;
+    while(BFINAL == 0){
+        BFINAL = (u8)ConsumeBits(SrcStream, 1);
+        u16 BTYPE = (u8)ConsumeBits(SrcStream, 2);
+        printf(">>> BFINAL: %d\n", BFINAL);
+        printf(">>> BTYPE: %d\n", BTYPE);
+        switch(BTYPE) {
+            case 0b00: {
+                printf(">>>> No compression\n");
+                ConsumeBits(SrcStream, 5);
+                u16 LEN = (u16)ConsumeBits(SrcStream, 16);
+                u16 NLEN = (u16)ConsumeBits(SrcStream, 16);
+                printf(">>>>> LEN: %d\n", LEN);
+                printf(">>>>> NLEN: %d\n", NLEN);
+                if ((u16)LEN != ~((u16)(NLEN))) {
+                    printf("LEN vs NLEN mismatch!\n");
+                    return false;
+                }
+                // TODO: complete this
+            } break;
+            case 0b01: 
+            case 0b10: {
+                png_huffman LitHuffman = {};
+                png_huffman DistHuffman = {};
+
+                if (BTYPE == 0b01) {
+                    // Fixed huffman
+                    printf(">>>> Fixed huffman\n");
+
+                    BootstrapArray(LitLenTable, u16, PngMaxFixedLitCodes);
+                    BootstrapArray(DistLenTable, u16, PngMaxDistCodes);
+                    
+                    usize Lit = 0;
+                    for (; Lit < 144; ++Lit) 
+                        LitLenTable[Lit] = 8;
+                    for (; Lit < 256; ++Lit) 
+                        LitLenTable[Lit] = 9;
+                    for (; Lit < 280; ++Lit) 
+                        LitLenTable[Lit] = 7;
+                    for (; Lit < PngMaxFixedLitCodes; ++Lit) 
+                        LitLenTable[Lit] = 8;
+                    for (Lit = 0; Lit < PngMaxDistCodes; ++Lit) 
+                        DistLenTable[Lit] = 5;
+                     
+                    LitHuffman = Huffman(Arena, 
+                                         LitLenTable, 
+                                         PngMaxBits+1,
+                                         PngMaxFixedLitCodes);
+                    DistHuffman = Huffman(Arena,
+                //Advance(&PngStream, ChunkHeader->Length - 2);
+                                          DistLenTable,
+                                          PngMaxBits+1,
+                                          PngMaxDistCodes);
+
+                }
+                else // BTYPE == 0b10
+                {
+                    // TODO: Dynamic huffman
+                    printf(">>>> Dynamic huffman not supported\n");
+                    return false;
+                }
+
+                u32 LenCountTable[PngMaxBits + 1] = {};
+                for (;;) 
+                {
+                    u32 Sym = Decode(SrcStream, &LitHuffman);
+                    if (Sym <= 255) { 
+                        u8 ByteToWrite = (u8)(Sym & 0xFF); 
+                        printf("%02X ", ByteToWrite);
+                        Write(DestStream, ByteToWrite);
+                        //Context->ImageData[Context->ImageDataCount++] = ByteToWrite;
+                    }
+                    else if (Sym >= 257) {
+                        Sym -= 257;
+                        if (Sym >= 29) {
+                            printf("Invalid Symbol 1\n"); 
+                            return false;
+                        }
+                        u32 Len = Lens[Sym] + ConsumeBits(SrcStream, LenExBits[Sym]);
+                        Sym = Decode(SrcStream, &DistHuffman);
+                        if (Sym < 0) {
+                            printf("Invalid Symbol 2\n");
+                            return false;
+                        }
+                        u32 Dist = Dists[Sym] + ConsumeBits(SrcStream, DistExBits[Sym]);
+                        while(Len--) {
+                            usize TargetIndex = DestStream->Current - Dist;
+                            u8 ByteToWrite = DestStream->Contents[TargetIndex];
+                            printf("%02X ", ByteToWrite);
+                            Write(DestStream, ByteToWrite);
+                        }
+                    }
+                    else { 
+                        // Sym == 256
+                        break;
+                    }
+                }
+                printf("\n");
+
+                // TODO: Reconstruct pixels and send to final pixel output
+
+            } break;
+            default: {
+                printf("Error\n");
+                return false;
+            }
+        }
+    }
+    return true;
+}
+#endif
+
+
+
+static inline b32
+ParseIDATChunk(png_context* Context) {
+    u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
+    CM = ConsumeBits(&Context->Stream, 4);
+    CINFO = ConsumeBits(&Context->Stream, 4);
+    FCHECK = ConsumeBits(&Context->Stream, 5); //not needed?
+    FDICT = ConsumeBits(&Context->Stream, 1);
+    FLEVEL = ConsumeBits(&Context->Stream, 2); //useless?
+    printf(">> CM: %d\n\
+>> CINFO: %d\n\
+>> FCHECK: %d\n\
+>> FDICT: %d\n\
+>> FLEVEL: %d\n",
+            CM, 
+            CINFO, 
+            FCHECK, 
+            FDICT, 
+            FLEVEL); 
+    if (CM != 8 || FDICT != 0 || CINFO > 7) {
+        return false;
+    }
+
+    if (!Context->IsImageInitialized) {
+        printf("Result W/H/C: %d, %d, %d\n", Context->ImageWidth, 
+                Context->ImageHeight, Context->ImageChannels);
+        usize ImageSize = Context->ImageWidth * 
+                          Context->ImageHeight * 
+                          Context->ImageChannels;
+
+        Context->ImageStreamMark = BeginScratch(Context->Arena);
+        Context->ImageStream = Stream(Context->ImageStreamMark, ImageSize);
+    
+        Context->DepressedImageStreamMark = BeginScratch(Context->ImageStreamMark);
+        usize DepressedImageDataSize = (Context->ImageWidth + 1) *
+                                        Context->ImageHeight* 
+                                        Context->ImageChannels;
+        Context->DepressedImageStream = Stream(Context->Arena, DepressedImageDataSize);
+
+        Context->IsImageInitialized = true;
+    }
+
+    scratch Scratch = BeginScratch(Context->Arena);
+    Defer { EndScratch(&Scratch); };
+    // Deflate
+    if (!Deflate(&Context->Stream, 
+                 &Context->DepressedImageStream,
+                 Scratch)) 
+    {
+        return false;
+    }
+    return true;
+}
 
 static inline maybe<png_image> 
 ParsePng(arena* Arena, 
@@ -402,10 +547,9 @@ ParsePng(arena* Arena,
         EndianSwap(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
-                if (!ParsePngIDATChunk(&Context)) {
+                if (!ParseIDATChunk(&Context)) {
                     return No();
                 }
-                //Advance(&PngStream, ChunkHeader->Length - 2);
             } break;
             case FourCC("IEND"): {
                 png_image Ret = {};
