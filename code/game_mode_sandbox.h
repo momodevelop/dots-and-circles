@@ -64,7 +64,7 @@ UpdateSandboxMode(permanent_state* PermState,
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
-            CenteredAabb( 
+            CenteredAabb3f( 
                 v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )
@@ -82,7 +82,7 @@ UpdateSandboxMode(permanent_state* PermState,
     PushDrawTexturedQuad(RenderCommands, 
                          Color_White, 
                          Transform,
-                         GetTexture(Assets, Texture_AtlasDefault).Handle,
+                         GetTexture(Assets, Texture_AtlasDefault)->Handle,
                          GetAtlasUV(Assets, AtlasAabb));
 
     // Line

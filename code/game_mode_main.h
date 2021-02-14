@@ -67,8 +67,8 @@ struct wave {
 
 struct player {
     // NOTE(Momo): Rendering
-    atlas_aabb* DotImageAabb;
-    atlas_aabb* CircleImageAabb;
+    game_asset_atlas_aabb* DotImageAabb;
+    game_asset_atlas_aabb* CircleImageAabb;
     f32 DotImageAlpha;
     f32 DotImageAlphaTarget;
     f32 DotImageTransitionTimer;
@@ -91,7 +91,7 @@ struct player {
 
 
 struct bullet {
-	atlas_aabb* ImageAabb;
+	game_asset_atlas_aabb* ImageAabb;
 	v2f Size;
     mood_type MoodType;
     v2f Direction;
@@ -101,7 +101,7 @@ struct bullet {
 };
 
 struct enemy {
-    atlas_aabb* ImageAabb;
+    game_asset_atlas_aabb* ImageAabb;
 	v2f Size; 
 	v2f Position;
     enemy_firing_pattern_type FiringPatternType;
@@ -127,13 +127,6 @@ struct game_mode_main {
     rng_series Rng;
 };
 
-
-
-// Helper function to draw text easily
-static inline void
-DrawDebugText(mailbox* RenderCommands, game_assets* Assets, v3f Position, string String) {
-    DrawText(RenderCommands, Assets, Position, Color_White, Font_Default, 32.f, String);
-}
 
 static inline void
 SpawnEnemy(game_mode_main* Mode, 
@@ -186,7 +179,8 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
 
 static inline void 
 InitMainMode(permanent_state* PermState,
-             transient_state* TranState) 
+             transient_state* TranState,
+             debug_state* DebugState) 
 {
     game_mode_main* Mode = PermState->MainMode;
 
@@ -217,6 +211,12 @@ InitMainMode(permanent_state* PermState,
     
     Mode->Wave.IsDone = true;
 
+    HookU32Variable(DebugState, String("Bullets"), &Mode->Bullets);
+}
+
+static inline void
+UninitMainMode(debug_state* DebugState) {
+    UnhookVariable(DebugState, String("Bullets"));
 }
 
 static inline void 
@@ -466,11 +466,12 @@ RenderPlayer(game_mode_main* Mode,
     v3f RenderPos = V3f(Player->Position);
     RenderPos.Z = ZLayPlayer;
     m44f T = M44fTranslation(RenderPos);
-    
+   
+    auto* Texture = GetTexture(Assets, Player->CircleImageAabb->TextureId);
     PushDrawTexturedQuad(RenderCommands, 
                          Color_White, 
                          T*S,
-                         GetTexture(Assets, Player->CircleImageAabb->TextureId).Handle,
+                         Texture->Handle,
                          GetAtlasUV(Assets, Player->CircleImageAabb));
 
     
@@ -479,7 +480,7 @@ RenderPlayer(game_mode_main* Mode,
     PushDrawTexturedQuad(RenderCommands, 
                          c4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                          T*S, 
-                         GetTexture(Assets, Player->DotImageAabb->TextureId).Handle,
+                         GetTexture(Assets, Player->DotImageAabb->TextureId)->Handle,
                          GetAtlasUV(Assets, Player->DotImageAabb));
 
 }
@@ -514,7 +515,7 @@ RenderBullets(game_mode_main* Mode,
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
-							 GetTexture(Assets, Bullet->ImageAabb->TextureId).Handle,
+							 GetTexture(Assets, Bullet->ImageAabb->TextureId)->Handle,
 							 GetAtlasUV(Assets, Bullet->ImageAabb));
 
 
@@ -527,9 +528,6 @@ RenderEnemies(game_mode_main* Mode,
               game_assets* Assets,
               mailbox* RenderCommands) 
 {
-#if REFACTOR
-    TIME_BLOCK
-#endif 
     for(usize I = 0; I < Mode->Enemies.Count; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
@@ -540,7 +538,7 @@ RenderEnemies(game_mode_main* Mode,
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
-							 GetTexture(Assets, Enemy->ImageAabb->TextureId).Handle,
+							 GetTexture(Assets, Enemy->ImageAabb->TextureId)->Handle,
 							 GetAtlasUV(Assets, Enemy->ImageAabb));
 	}
 }
@@ -557,7 +555,7 @@ UpdateMainMode(permanent_state* PermState,
     PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
-            CenteredAabb( 
+            CenteredAabb3f( 
                 v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
                 v3f{ 0.5f, 0.5f, 0.5f }
             )

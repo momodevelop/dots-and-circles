@@ -8,7 +8,7 @@
 #include "game_platform.h"
 #include "game_renderer.h"
 #include "game_assets.h"
-#include "game_text.h"
+#include "game_draw.h"
 
 using debug_console_callback = void (*)(struct debug_console* Console, void* Context, string Arguments);
 struct debug_console_command {
@@ -211,7 +211,7 @@ Render(debug_console* Console,
     if (IsBegin(Console->TransitTimer)) {
         return;
     }
-    font* Font = Assets->Fonts + Font_Default;
+    game_asset_font* Font = Assets->Fonts + Font_Default;
     
     f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
@@ -253,11 +253,11 @@ Render(debug_console* Console,
 
             DrawText(RenderCommands,
                     Assets,
-                    Position,
-                    Console->InfoBuffers[I].Color,
                     Font_Default, 
+                    Position,
+                    Console->InfoBuffers[I].Buffer.Array,
                     FontSize,
-                    Console->InfoBuffers[I].Buffer.Array);
+                    Console->InfoBuffers[I].Color);
         }
 
         {
@@ -269,10 +269,11 @@ Render(debug_console* Console,
             DrawText(
                 RenderCommands, 
                 Assets, 
+                Font_Default, 
                 Position,
-                Console->InputTextColor,
-                Font_Default, FontSize, 
-                Console->InputBuffer.Array
+                Console->InputBuffer.Array,
+                FontSize,
+                Console->InputTextColor
             );
         
         }

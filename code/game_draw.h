@@ -1,24 +1,25 @@
-#ifndef __GAME_TEXT__
-#define __GAME_TEXT__
+#ifndef __GAME_DRAW__
+#define __GAME_DRAW__
 
 #include "mm_array.h"
 
 #include "game_renderer.h"
 #include "game_assets.h"
 
+
 static inline void
 DrawText(mailbox* RenderCommands, 
-           game_assets* Assets,
-           v3f Position,
-           c4f Color, 
-           font_id FontId,
-           f32 Size, 
-           string String) 
+         game_assets* Assets,
+         game_asset_font_id FontId,
+         v3f Position,
+         string String,
+         f32 Size, 
+         c4f Color = Color_White) 
 {
     v3f CurPosition = Position;
+    auto* Font = GetFont(Assets, FontId);
     
     for(u32 i = 0; i < String.Count; ++i) {
-        font* Font = Assets->Fonts + FontId;
         auto* Glyph = Font->Glyphs + HashCodepoint(String[i]);
         auto Box = Glyph->Box; 
         
@@ -34,7 +35,7 @@ DrawText(mailbox* RenderCommands,
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
                              T*S*A,
-                             GetTexture(Assets, Glyph->TextureId).Handle,
+                             GetTexture(Assets, Glyph->TextureId)->Handle,
                              GetAtlasUV(Assets, Glyph));
  
         CurPosition.X += Glyph->Advance * Size;

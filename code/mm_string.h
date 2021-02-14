@@ -77,6 +77,28 @@ NullTerm(string_buffer* Dest) {
 }
 
 static inline void 
+PushU32(string_buffer* Dest, u32 Num) {
+    if (Num == 0) {
+        Push(Dest, '0');
+        return;
+    }
+
+    usize StartPoint = Dest->Count; 
+
+    for(; Num != 0; Num /= 10) {
+        i32 DigitToConvert = Num % 10;
+        Push(Dest, (char)(DigitToConvert + '0'));
+    }
+
+    // Reverse starting from start point to count
+    usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
+    for(usize I = 0; I < SubStrLenHalved; ++I) {
+        Swap(Dest->Elements[StartPoint + I], 
+             Dest->Elements[Dest->Count-1-I]);
+    }
+}
+
+static inline void 
 PushI32(string_buffer* Dest, i32 Num) {
     if (Num == 0) {
         Push(Dest, '0');

@@ -46,4 +46,7 @@ struct permanent_state {
 
 };
 
+
+
+
 #endif //GAME_H

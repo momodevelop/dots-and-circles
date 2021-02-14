@@ -66,7 +66,10 @@ Reverse(array<type>* Dest) {
 
 template<typename type, typename unary_comparer>
 static inline usize
-Find(array<type> Array, unary_comparer UnaryCompare, usize StartIndex = 0) {
+Find(array<type> Array, 
+     unary_comparer UnaryCompare, 
+     usize StartIndex = 0) 
+{
     for(usize I = StartIndex; I < Array.Count; ++I) {
         if(UnaryCompare(Array.Elements + I)) {
             return I;
@@ -78,7 +81,10 @@ Find(array<type> Array, unary_comparer UnaryCompare, usize StartIndex = 0) {
 
 template<typename type>
 static inline usize
-Find(array<type> Array, type Item, usize StartIndex = 0) {
+Find(array<type> Array, 
+     type Item, 
+     usize StartIndex = 0) 
+{
     return Find(Array, [Item](type* It) {
         return (*It) == Item;       
     }, StartIndex);

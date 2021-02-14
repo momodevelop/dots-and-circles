@@ -19,7 +19,7 @@ void (*Log)(const char* Format, ...);
 #include "game_mode_main.h"
 #include "game_mode_sandbox.h"
 #include "game_debug.h"
-#include "game_text.h"
+#include "game_draw.h"
 
 #if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...
@@ -172,8 +172,23 @@ GameUpdateFunc(GameUpdate)
 
     // Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
+        switch(PermState->CurrentGameMode) {
+            case GameModeType_Splash: {
+            } break;
+            case GameModeType_Main: {
+                UninitMainMode(DebugState);
+            } break;
+            case GameModeType_Sandbox: {
+            } break;
+            default: {
+            }
+        }
+
+
+
         Clear(&PermState->ModeArena);
         arena* ModeArena = &PermState->ModeArena;
+
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
                 PermState->SplashMode = 
@@ -183,7 +198,7 @@ GameUpdateFunc(GameUpdate)
             case GameModeType_Main: {
                 PermState->MainMode = 
                     PushStruct<game_mode_main>(ModeArena); 
-                InitMainMode(PermState, TranState);
+                InitMainMode(PermState, TranState, DebugState);
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
@@ -227,7 +242,8 @@ GameUpdateFunc(GameUpdate)
     }
 
     // Render Console
-    Render(&DebugState->Console, RenderCommands, TranState->Assets);
+    Render(DebugState, TranState->Assets, RenderCommands);
+    //Render(&DebugState->Console, RenderCommands, TranState->Assets);
 
     return PermState->IsRunning;
 }

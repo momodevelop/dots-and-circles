@@ -66,7 +66,8 @@ static inline aabb2u
 GetRenderRegion(u32 WindowWidth, 
                 u32 WindowHeight, 
                 u32 RenderWidth, 
-                u32 RenderHeight) {
+                u32 RenderHeight) 
+{
     Assert(RenderWidth > 0 && RenderHeight > 0 && WindowWidth > 0 && WindowHeight > 0);
     aabb2u Ret = {};
     
@@ -109,22 +110,22 @@ PushSetBasis(mailbox* Commands, m44f Basis) {
 
 static inline void
 PushOrthoCamera(mailbox* Commands, 
-                         v3f Position,
-                         aabb3f Frustum)   
+                v3f Position,
+                aabb3f Frustum)   
 {
     using data_t = renderer_command_set_basis;
     auto* Data = Push<data_t>(Commands);
     
     auto P  = M44fOrthographic(-1.f, 1.f,
-                                 -1.f, 1.f,
-                                 -1.f, 1.f,
-                                 Frustum.Min.X,  
-                                 Frustum.Max.X, 
-                                 Frustum.Min.Y, 
-                                 Frustum.Max.Y,
-                                 Frustum.Min.Z, 
-                                 Frustum.Max.Z,
-                                 true);
+                             -1.f, 1.f,
+                             -1.f, 1.f,
+                             Frustum.Min.X,  
+                             Frustum.Max.X, 
+                             Frustum.Min.Y, 
+                             Frustum.Max.Y,
+                             Frustum.Min.Z, 
+                             Frustum.Max.Z,
+                             true);
     
     m44f V = M44fTranslation(-Position.X, -Position.Y, -Position.Z);
     Data->Basis = P*V;

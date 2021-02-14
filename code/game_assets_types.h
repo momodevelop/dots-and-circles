@@ -4,7 +4,7 @@
 #include "mm_core.h"
 #include "mm_maths.h"
 
-enum texture_id : u32 {
+enum game_asset_texture_id : u32 {
     Texture_Ryoji,
     Texture_Yuu,
     Texture_AtlasDefault,
@@ -16,13 +16,13 @@ static constexpr u32 Codepoint_Start = 32;
 static constexpr u32 Codepoint_End = 126;
 static constexpr u32 Codepoint_Count = Codepoint_End - Codepoint_Start;
 
-enum font_id : u32 {
+enum game_asset_font_id : u32 {
     Font_Default,
     Font_Count,
 };
 
 
-enum atlas_aabb_id : u32 {
+enum game_asset_atlas_aabb_id : u32 {
     AtlasAabb_Ryoji,
     AtlasAabb_Yuu,
     AtlasAabb_Karu00,
@@ -48,7 +48,7 @@ enum atlas_aabb_id : u32 {
     AtlasAabb_Count,
 };
 
-enum asset_type : u32 {
+enum game_asset_type : u32 {
     AssetType_Texture,
     AssetType_AtlasAabb,
     AssetType_Font,
@@ -59,12 +59,12 @@ enum asset_type : u32 {
 
 // NOTE(Momo): asset pack file structures
 #pragma pack(push, 1)
-struct yuu_entry {
-    asset_type Type;
+struct game_asset_file_entry {
+    game_asset_type Type;
 };
 
-struct yuu_texture {
-    texture_id Id;
+struct game_asset_file_texture {
+    game_asset_texture_id Id;
     u32 Width;
     u32 Height;
     u32 Channels;
@@ -73,23 +73,24 @@ struct yuu_texture {
     
 };
 
-struct yuu_atlas_aabb {
-    atlas_aabb_id Id;
-    texture_id TextureId;
+struct game_asset_file_atlas_aabb {
+    game_asset_atlas_aabb_id Id;
+    game_asset_texture_id TextureId;
+    
     aabb2u Aabb;
     
 };
 
-struct yuu_font {
-    font_id Id;
+struct game_asset_file_font {
+    game_asset_font_id Id;
     f32 Ascent;
     f32 Descent;
     f32 LineGap;
 };
 
-struct yuu_font_glyph {
-    font_id FontId;
-    texture_id TextureId;
+struct game_asset_file_font_glyph {
+    game_asset_font_id FontId;
+    game_asset_texture_id TextureId;
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;
@@ -98,8 +99,8 @@ struct yuu_font_glyph {
     
 };
 
-struct yuu_font_kerning {
-    font_id FontId;
+struct game_asset_file_font_kerning {
+    game_asset_font_id FontId;
     i32 Kerning;
     u32 CodepointA;
     u32 CodepointB;

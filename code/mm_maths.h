@@ -687,7 +687,7 @@ Aabb3f(aabb2f Aabb) {
 }
 
 static inline aabb3f
-CenteredAabb(v3f Dimensions, v3f Anchor) {
+CenteredAabb3f(v3f Dimensions, v3f Anchor) {
     aabb3f Ret = {};
     Ret.Min.X = Lerp(0, -Dimensions.W, Anchor.X);
     Ret.Max.X = Lerp(Dimensions.W, 0, Anchor.X);

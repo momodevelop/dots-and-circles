@@ -118,7 +118,9 @@ Remove(list<type>* List, usize Index) {
 template<typename type, typename unary_comparer> 
 static inline usize
 RemoveIf(list<type>* List, unary_comparer UnaryComparer) {
-    Remove(List, Find(List->Array, UnaryComparer));
+    usize Index = Find(List->Array, UnaryComparer);
+    Remove(List, Index);
+    return Index;
 }
 
 // Faster version of Remove by swapping the last element into the current element

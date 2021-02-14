@@ -13,33 +13,33 @@
 #include "game_assets_types.h"
 
 // NOTE(Momo): Asset types
-struct texture {
+struct game_asset_texture {
     u32 Width, Height, Channels;
     renderer_texture_handle Handle;
 };
 
-struct atlas_aabb {
+struct game_asset_atlas_aabb {
     aabb2u Aabb;
-    texture_id TextureId;
+    game_asset_texture_id TextureId;
 };
 
 
-struct font_glyph {
+struct game_asset_font_glyph {
     aabb2u AtlasAabb;
     aabb2f Box; 
-    texture_id TextureId;
+    game_asset_texture_id TextureId;
     f32 Advance;
     f32 LeftBearing;
 };
 
-struct font {
+struct game_asset_font {
     // NOTE(Momo): We cater for a fixed set of codepoints. 
     // ASCII 32 to 126 
     // Worry about sparseness next time.
     f32 LineGap;
     f32 Ascent;
     f32 Descent;
-    font_glyph Glyphs[Codepoint_Count];
+    game_asset_font_glyph Glyphs[Codepoint_Count];
     u32 Kernings[Codepoint_Count][Codepoint_Count];
 };
 
@@ -51,7 +51,7 @@ HashCodepoint(u32 Codepoint) {
 }
 
 static inline f32 
-Height(font* Font) {
+Height(game_asset_font* Font) {
     return Abs(Font->Ascent) + Abs(Font->Descent);
 }
 
@@ -60,34 +60,38 @@ struct game_assets {
     // TODO: remove
     arena Arena;
    
-    array<texture> Textures;
-    array<atlas_aabb> AtlasAabbs;
-    array<font> Fonts;
+    array<game_asset_texture> Textures;
+    array<game_asset_atlas_aabb> AtlasAabbs;
+    array<game_asset_font> Fonts;
 };
 
 
 // TODO: Maybe we should just pass in ID instead of pointer.
 // Should be waaaay cleaner
 static inline quad2f
-GetAtlasUV(game_assets* Assets, atlas_aabb* AtlasAabb) {
+GetAtlasUV(game_assets* Assets, game_asset_atlas_aabb* AtlasAabb) {
     auto Texture = Assets->Textures[AtlasAabb->TextureId];
     aabb2u Aabb = {0, 0, Texture.Width, Texture.Height };
     return Quad2f(RatioAabb(AtlasAabb->Aabb,Aabb));
 }
 
 static inline quad2f
-GetAtlasUV(game_assets* Assets, font_glyph* Glyph) {
+GetAtlasUV(game_assets* Assets, game_asset_font_glyph* Glyph) {
     auto Texture = Assets->Textures[Glyph->TextureId];
     aabb2u Aabb = {0, 0, Texture.Width, Texture.Height };
     return Quad2f(RatioAabb(Glyph->AtlasAabb, Aabb));
 }
 
 
-static inline texture
-GetTexture(game_assets* Assets, texture_id TextureId) {
-    return Assets->Textures[TextureId];
+static inline game_asset_texture*
+GetTexture(game_assets* Assets, game_asset_texture_id TextureId) {
+    return &Assets->Textures[TextureId];
 }
 
+static inline game_asset_font*
+GetFont(game_assets* Assets, game_asset_font_id FontId) {
+    return &Assets->Fonts[FontId];
+}
 
 static inline b32
 CheckAssetSignature(void* Memory, string Signature) {
@@ -164,9 +168,9 @@ AllocateAssets(arena* Arena,
     Platform->ClearTextures();
 
     game_assets* Ret = PushStruct<game_assets>(Arena);
-    Ret->Textures = Array<texture>(Arena, Texture_Count);
-    Ret->AtlasAabbs = Array<atlas_aabb>(Arena, AtlasAabb_Count);
-    Ret->Fonts = Array<font>(Arena, Font_Count);
+    Ret->Textures = Array<game_asset_texture>(Arena, Texture_Count);
+    Ret->AtlasAabbs = Array<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
+    Ret->Fonts = Array<game_asset_font>(Arena, Font_Count);
 
 
     platform_file_handle AssetFile = Platform->OpenAssetFile();
@@ -211,27 +215,28 @@ AllocateAssets(arena* Arena,
         Defer{ EndScratch(&Scratchpad); };
 
         // NOTE(Momo): Read header
-        auto* YuuEntry = Read<yuu_entry>(&AssetFile,
-                                         Platform,
-                                         Scratchpad,
-                                         &CurFileOffset);
-        CheckPtr(YuuEntry);
+        auto* FileEntry = Read<game_asset_file_entry>(&AssetFile,
+                                                     Platform,
+                                                     Scratchpad,
+                                                     &CurFileOffset);
+        CheckPtr(FileEntry);
         CheckFile(AssetFile);
 
-        switch(YuuEntry->Type) {
+        switch(FileEntry->Type) {
             case AssetType_Texture: {
-                auto* YuuTexture = Read<yuu_texture>(&AssetFile, 
-                                                     Platform, 
-                                                     Scratchpad,
-                                                     &CurFileOffset);              
+                using data_t = game_asset_file_texture;
+                auto* FileTexture = Read<data_t>(&AssetFile, 
+                                                 Platform, 
+                                                 Scratchpad,
+                                                 &CurFileOffset);              
 
-                CheckPtr(YuuTexture);
+                CheckPtr(FileTexture);
                 CheckFile(AssetFile);
 
-                auto* Texture = Ret->Textures + YuuTexture->Id;
-                Texture->Width = YuuTexture->Width;
-                Texture->Height = YuuTexture->Height;
-                Texture->Channels = YuuTexture->Channels;
+                auto* Texture = Ret->Textures + FileTexture->Id;
+                Texture->Width = FileTexture->Width;
+                Texture->Height = FileTexture->Height;
+                Texture->Channels = FileTexture->Channels;
                 usize TextureSize = Texture->Width * 
                                     Texture->Height * 
                                     Texture->Channels;
@@ -245,65 +250,68 @@ AllocateAssets(arena* Arena,
                 CheckPtr(Pixels);
                 CheckFile(AssetFile);
 
-                Texture->Handle = Platform->AddTexture(YuuTexture->Width, 
-                                                       YuuTexture->Height,
+                Texture->Handle = Platform->AddTexture(FileTexture->Width, 
+                                                       FileTexture->Height,
                                                        Pixels);
             } break;
             case AssetType_AtlasAabb: { 
-                auto* YuuAtlasAabb = Read<yuu_atlas_aabb>(&AssetFile, 
-                                                          Platform, 
-                                                          Scratchpad,
-                                                          &CurFileOffset);              
-                CheckPtr(YuuAtlasAabb);
+                using data_t = game_asset_file_atlas_aabb;
+                auto* FileAtlasAabb = Read<data_t>(&AssetFile, 
+                                                  Platform, 
+                                                  Scratchpad,
+                                                  &CurFileOffset);              
+                CheckPtr(FileAtlasAabb);
                 CheckFile(AssetFile);
 
-                auto* AtlasAabb = Ret->AtlasAabbs + YuuAtlasAabb->Id;
-                AtlasAabb->Aabb = YuuAtlasAabb->Aabb;
-                AtlasAabb->TextureId = YuuAtlasAabb->TextureId;
+                auto* AtlasAabb = Ret->AtlasAabbs + FileAtlasAabb->Id;
+                AtlasAabb->Aabb = FileAtlasAabb->Aabb;
+                AtlasAabb->TextureId = FileAtlasAabb->TextureId;
             } break;
             case AssetType_Font: {
-                auto* YuuFont = Read<yuu_font>(&AssetFile,
+                using data_t = game_asset_file_font;
+                auto* FileFont = Read<data_t>(&AssetFile,
                                                Platform,
                                                Scratchpad,
                                                &CurFileOffset);
-                CheckPtr(YuuFont);
+                CheckPtr(FileFont);
                 CheckFile(AssetFile);
 
-                auto* Font = Ret->Fonts + YuuFont->Id;
-                Font->LineGap = YuuFont->LineGap;
-                Font->Ascent = YuuFont->Ascent;
-                Font->Descent = YuuFont->Descent;
+                auto* Font = Ret->Fonts + FileFont->Id;
+                Font->LineGap = FileFont->LineGap;
+                Font->Ascent = FileFont->Ascent;
+                Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                auto* YuuFontGlyph = Read<yuu_font_glyph>(&AssetFile,
-                                                          Platform,
-                                                          Scratchpad,
-                                                          &CurFileOffset);
-                CheckPtr(YuuFontGlyph);
+                using data_t = game_asset_file_font_glyph;
+                auto* FileFontGlyph = Read<data_t>(&AssetFile,
+                                                  Platform,
+                                                  Scratchpad,
+                                                  &CurFileOffset);
+                CheckPtr(FileFontGlyph);
                 CheckFile(AssetFile);
 
-                auto* Font = Ret->Fonts + YuuFontGlyph->FontId;
-                usize GlyphIndex = HashCodepoint(YuuFontGlyph->Codepoint);
+                auto* Font = Ret->Fonts + FileFontGlyph->FontId;
+                usize GlyphIndex = HashCodepoint(FileFontGlyph->Codepoint);
                 auto* Glyph = Font->Glyphs + GlyphIndex;
                 
-                Glyph->AtlasAabb = YuuFontGlyph->AtlasAabb;
-                Glyph->TextureId = YuuFontGlyph->TextureId;
-                Glyph->Advance = YuuFontGlyph->Advance;
-                Glyph->LeftBearing = YuuFontGlyph->LeftBearing;
-                Glyph->Box = YuuFontGlyph->Box;
+                Glyph->AtlasAabb = FileFontGlyph->AtlasAabb;
+                Glyph->TextureId = FileFontGlyph->TextureId;
+                Glyph->Advance = FileFontGlyph->Advance;
+                Glyph->LeftBearing = FileFontGlyph->LeftBearing;
+                Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                auto* YuuFontKerning = Read<yuu_font_kerning>(&AssetFile,
-                                                              Platform,
-                                                              Scratchpad,
-                                                              &CurFileOffset);
-                CheckPtr(YuuFontKerning);
+                using data_t = game_asset_file_font_kerning;
+                auto* FileFontKerning = Read<data_t>(&AssetFile,
+                                                  Platform,
+                                                  Scratchpad,
+                                                  &CurFileOffset);
+                CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
-                font* Font = Ret->Fonts + YuuFontKerning->FontId;
-                usize HashedCpA= HashCodepoint(YuuFontKerning->CodepointA);
-                usize HashedCpB= HashCodepoint(YuuFontKerning->CodepointB);
-                
-                Font->Kernings[HashedCpA][HashedCpB] = YuuFontKerning->Kerning;
+                game_asset_font* Font = Ret->Fonts + FileFontKerning->FontId;
+                usize HashedCpA = HashCodepoint(FileFontKerning->CodepointA);
+                usize HashedCpB = HashCodepoint(FileFontKerning->CodepointB);
+                Font->Kernings[HashedCpA][HashedCpB] = FileFontKerning->Kerning;
                 
             } break;
             default: {

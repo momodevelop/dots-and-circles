@@ -49,19 +49,24 @@ End(ab_context* Context) {
 }
 
 static inline void
-WriteEntry(ab_context* Context, asset_type AssetType) {
-    yuu_entry Entry = {};
+WriteEntry(ab_context* Context, game_asset_type AssetType) {
+    game_asset_file_entry Entry = {};
     Entry.Type = AssetType;
     fwrite(&Entry, sizeof(Entry),  1, Context->File);
     ++Context->EntryCount;
 }
 
 static inline void 
-WriteTexture(ab_context* Context, texture_id Id, u32 Width, u32 Height, u32 Channels, u8* Pixels) 
+WriteTexture(ab_context* Context, 
+             game_asset_texture_id Id, 
+             u32 Width, 
+             u32 Height, 
+             u32 Channels, 
+             u8* Pixels) 
 {
     WriteEntry(Context, AssetType_Texture);
     
-    yuu_texture Texture = {};
+    game_asset_file_texture Texture = {};
     Texture.Id = Id;
     Texture.Width = Width;
     Texture.Height = Height;
@@ -76,7 +81,10 @@ WriteTexture(ab_context* Context, texture_id Id, u32 Width, u32 Height, u32 Chan
 }
 
 static inline void 
-WriteTexture(ab_context* Context, texture_id Id, const char* Filename) {
+WriteTexture(ab_context* Context, 
+             game_asset_texture_id Id, 
+             const char* Filename) 
+{
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
     {
@@ -94,11 +102,14 @@ WriteTexture(ab_context* Context, texture_id Id, const char* Filename) {
 
 
 static inline void 
-WriteAtlasAabb(ab_context* Context, atlas_aabb_id Id, texture_id TargetTextureId, aabb2u Aabb) 
+WriteAtlasAabb(ab_context* Context, 
+               game_asset_atlas_aabb_id Id, 
+               game_asset_texture_id TargetTextureId, 
+               aabb2u Aabb) 
 {
     WriteEntry(Context,  AssetType_AtlasAabb);
     
-    yuu_atlas_aabb AtlasAabb = {};
+    game_asset_file_atlas_aabb AtlasAabb = {};
     AtlasAabb.Id = Id;
     AtlasAabb.TextureId = TargetTextureId;
     AtlasAabb.Aabb = Aabb;
@@ -106,11 +117,15 @@ WriteAtlasAabb(ab_context* Context, atlas_aabb_id Id, texture_id TargetTextureId
 }
 
 static inline void
-WriteFont(ab_context* Context, font_id Id, f32 Ascent, f32 Descent, f32 LineGap) 
+WriteFont(ab_context* Context, 
+          game_asset_font_id Id, 
+          f32 Ascent, 
+          f32 Descent, 
+          f32 LineGap) 
 {
     WriteEntry(Context, AssetType_Font);
     
-    yuu_font Font = {};
+    game_asset_file_font Font = {};
     Font.Id = Id;
     Font.Ascent = Ascent;
     Font.Descent = Descent;
@@ -120,8 +135,8 @@ WriteFont(ab_context* Context, font_id Id, f32 Ascent, f32 Descent, f32 LineGap)
 
 static inline void 
 WriteFontGlyph(ab_context* Context, 
-               font_id FontId, 
-               texture_id TargetTextureId, 
+               game_asset_font_id FontId, 
+               game_asset_texture_id TargetTextureId, 
                u32 Codepoint, 
                f32 Advance, 
                f32 LeftBearing, 
@@ -130,7 +145,7 @@ WriteFontGlyph(ab_context* Context,
 {
     WriteEntry(Context, AssetType_FontGlyph);
     
-    yuu_font_glyph FontGlyph = {};
+    game_asset_file_font_glyph FontGlyph = {};
     FontGlyph.FontId = FontId;
     FontGlyph.TextureId = TargetTextureId;
     FontGlyph.Codepoint = Codepoint;
@@ -143,11 +158,15 @@ WriteFontGlyph(ab_context* Context,
 }
 
 static inline void 
-WriteFontKerning(ab_context* Context, font_id FontId, u32 CodepointA, u32 CodepointB, i32 Kerning) 
+WriteFontKerning(ab_context* Context, 
+                 game_asset_font_id FontId, 
+                 u32 CodepointA,
+                 u32 CodepointB, 
+                 i32 Kerning) 
 {
     WriteEntry(Context, AssetType_FontKerning);
     
-    yuu_font_kerning Font = {};
+    game_asset_file_font_kerning Font = {};
     Font.FontId = FontId;
     Font.Kerning = Kerning;
     Font.CodepointA = CodepointA;

@@ -9,7 +9,7 @@ struct splash_image_entity {
     v3f Position;
     c4f Colors;
     
-    texture_id TextureHandle;
+    game_asset_texture_id TextureHandle;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -39,10 +39,11 @@ Update(splash_image_entity* Entity,
     // NOTE(Momo): Render
     m44f T = M44fTranslation(Entity->Position);
     m44f S = M44fScale(Entity->Scale);
+    game_asset_texture* Texture = GetTexture(Assets, Entity->TextureHandle);
     PushDrawTexturedQuad(RenderCommands, 
                          Entity->Colors, 
                          T*S,  
-                         GetTexture(Assets, Entity->TextureHandle).Handle);
+                         Texture->Handle);
 
 }
 
@@ -133,10 +134,9 @@ UpdateSplashMode(permanent_state* PermState,
     game_mode_splash* Mode = PermState->SplashMode;
     game_assets* Assets = TranState->Assets;
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-
     PushOrthoCamera(RenderCommands, 
             v3f{}, 
-            CenteredAabb( 
+            CenteredAabb3f( 
                 v3f { 
                     Global_DesignWidth, 
                     Global_DesignHeight,
