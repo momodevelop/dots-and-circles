@@ -540,49 +540,49 @@ parse_png(Memory_Arena* arena,
     context.image_width = IHDR->width;
     context.image_height = IHDR->height;
     context.image_channels = 4;
-    consume<Png_Chunk_Footer>(&context.main_stream);
+    consume<png_chunk_footer>(&Context.Stream);
 
     // Search for IDAT header
-    while(!is_eos(&context.main_stream)) {
-        chunk_header = consume<Png_Chunk_Header>(&context.main_stream);
-        EndianSwap(&chunk_header->length);
-        switch(chunk_header->type_u32) {
+    while(!IsEos(&Context.Stream)) {
+        ChunkHeader = Consume<png_chunk_header>(&Context.Stream);
+        EndianSwap(&ChunkHeader->Length);
+        switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
-                if (!parse_IDAT_chunk(&context)) {
+                if (!ParseIDATChunk(&Context)) {
                     return No();
                 }
             } break;
             case FourCC("IEND"): {
-                Png_Image ret = {};
-                ret.width = context.image_width;
-                ret.height = context.image_height;
-                ret.channels = context.image_channels;
-                return Yes(ret);
+                png_image Ret = {};
+                Ret.Width = Context.ImageWidth;
+                Ret.Height = Context.ImageHeight;
+                Ret.Channels = Context.ImageChannels;
+                return Yes(Ret);
             } break;
             default: {
-                consume(&context.main_stream, chunk_header->length);
+                Consume(&Context.Stream, ChunkHeader->Length);
             };
         }
-        consume<Png_Chunk_Footer>(&context.main_stream);
+        Consume<png_chunk_footer>(&Context.Stream);
     }
     return No();
 }
 
 int main() {    
-    usize memory_size = Megabytes(1);
-    void * memory = malloc(memory_size);
-    if (!memory) { return 1; }
-    Defer { free(memory); };  
-    Memory_Arena app_arena = Arena(memory, memory_size);
+    usize MemorySize = Megabytes(1);
+    void * Memory = malloc(MemorySize);
+    if (!Memory) { return 1; }
+    Defer { free(Memory); };  
+    arena AppArena = Arena(Memory, MemorySize);
 
-    maybe<Read_File_Result> png_file_ = read_file("test2.png");
-    if (!png_file_){
+    maybe<read_file_result> PngFile_ = ReadFile("test2.png");
+    if (!PngFile_){
         return 1;
     }
-    Read_File_Result& png_file = png_file_.This;
-    Defer { free(png_file.memory); }; 
+    read_file_result& PngFile = PngFile_.This;
+    Defer { free(PngFile.Memory); }; 
 
-    parse_png(&app_arena, png_file.memory, png_file.memory_size);
+    ParsePng(&AppArena, PngFile.Memory, PngFile.MemorySize);
 
     printf("Done!");
     return 0;

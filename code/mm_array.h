@@ -9,101 +9,100 @@
 //
 
 
-#define BootstrapArray(name, type, count) type AnonVar(__LINE__)[count] = {}; array<type> name = Array(AnonVar(__LINE__), count)
+#define boot_array(name, T, count) T AnonVar(__LINE__)[count] = {}; Array<T> name = array(AnonVar(__LINE__), count)
 
-template<typename type>
-struct array {
-    usize Count;
-    type* Elements;
+template<typename T>
+struct Array {
+    usize count;
+    T* elements;
 
-    inline auto& operator[](usize I) {
-        Assert(I < Count);
-        return Elements[I];
+    inline auto& operator[](usize index) {
+        Assert(index < count);
+        return elements[index];
     }
 };
 
 
-template<typename type>
-static inline array<type>
-Array(type* Elements, usize Count) {
-    array<type> Ret = {};
-    Ret.Elements = Elements;
-    Ret.Count = Count;
-
-    return Ret;
+template<typename T>
+static inline Array<T>
+array(T* elements, usize count) {
+    Array<T> ret = {};
+    ret.elements = elements;
+    ret.count = count;
+    return ret;
 }
 
-template<typename type>
-static inline array<type> 
-Array(arena* Arena, usize Count) {
-    type* Buffer = PushSiArray<type>(Arena, Count);
-    return Array(Buffer, Count);
+template<typename T>
+static inline Array<T> 
+array(Memory_Arena* arena, usize count) {
+    T* buffer = PushSiArray<T>(arena, count);
+    return array(buffer, count);
     
 }
 
-template<typename type>
-static inline array<type>
-SubArray(array<type> Src, range<usize> Slice) {
-    Assert(Slice.Start <= Slice.End);
-    return Array(Src.Elements + Slice.Start, Slice.End - Slice.Start);
+template<typename T>
+static inline Array<T>
+sub_array(Array<T> src, Range<usize> slice) {
+    Assert(slice.start <= slice.end);
+    return Array(src.elements + slice.start, slice.end - slice.start);
 };
 
 
-template<typename type>
+template<typename T>
 static inline b32
-IsEmpty(array<type> Array) {
-    return Array.Count == 0;
+is_empty(Array<T> array) {
+    return array.count == 0;
 }
 
-template<typename type>
+template<typename T>
 static inline void
-Reverse(array<type>* Dest) {
-    for (usize i = 0; i < Dest->Count/2; ++i) {
-        Swap(Dest->Elements[i], Dest->Elements[Dest->Count-1-i]);
+reverse(Array<T>* dest) {
+    for (usize i = 0; i < dest->count/2; ++i) {
+        Swap(dest->elements[i], dest->elements[dest->count-1-i]);
     }
 }
 
 
-template<typename type, typename unary_comparer>
+template<typename T, typename Unary_Compare>
 static inline usize
-Find(array<type> Array, 
-     unary_comparer UnaryCompare, 
+find(Array<T> array, 
+     Unary_Compare unary_compare, 
      usize StartIndex = 0) 
 {
-    for(usize I = StartIndex; I < Array.Count; ++I) {
-        if(UnaryCompare(Array.Elements + I)) {
+    for(usize I = StartIndex; I < array.count; ++I) {
+        if(unary_compare(array.elements + I)) {
             return I;
         }
     }
-    return Array.Count;
+    return array.count;
 }
 
 
-template<typename type>
+template<typename T>
 static inline usize
-Find(array<type> Array, 
-     type Item, 
-     usize StartIndex = 0) 
+find(Array<T> array, 
+     T item, 
+     usize start_index = 0) 
 {
-    return Find(Array, [Item](type* It) {
-        return (*It) == Item;       
-    }, StartIndex);
+    return find(array, [item](T* It) {
+        return (*It) == item;       
+    }, start_index);
 }
 
-template<typename type>
-static inline type*
-operator+(array<type> L, usize I) {
-    return L.Elements + I;
+template<typename T>
+static inline T*
+operator+(Array<T> lhs, usize index) {
+    return lhs.elements + index;
 }
 
-template<typename type>
+template<typename T>
 static inline b32
-operator==(array<type> Lhs, array<type> Rhs) { 
-    if(Lhs.Count != Rhs.Count) {
+operator==(Array<T> lhs, Array<T> rhs) { 
+    if(lhs.count != rhs.count) {
         return false;
     }
-    for (u32 i = 0; i < Lhs.Count; ++i) {
-        if (Lhs.Elements[i] != Rhs.Elements[i]) {
+    for (u32 i = 0; i < lhs.count; ++i) {
+        if (lhs.elements[i] != rhs.elements[i]) {
             return false;
         }
     }
