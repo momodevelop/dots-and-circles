@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include "../../code/mm_core.h"
 #include "../../code/mm_bitwise.h"
+
 #include "../../code/mm_stream.h"
+#include "../../code/mm_stream.cpp"
 
 struct Read_File_Result
 {
@@ -163,13 +165,13 @@ create_huffman(Memory_Arena* arena,
 }
 
 static inline u32
-Decode(Stream* src_stream, Png_Huffman* huffman) {
+decode(Stream* src_stream, Png_Huffman* huffman) {
     i32 code = 0;
     i32 first = 0;
     i32 index = 0;
 
     for (i32 len = 1; len <= PngMaxBits; ++len) {
-        code |= consume_bits(src_stream, 1);
+        code |= src_stream->read_bits(1);
         i32 count = huffman->len_count_table[len];
         if(code - count < first)
             return huffman->code_sym_table[index + (code - first)];
@@ -331,16 +333,16 @@ deflate(Stream* src_stream, Stream* dest_stream, Memory_Arena* arena)
         12, 12, 13, 13};
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        BFINAL = (u8)consume_bits(src_stream, 1);
-        u16 BTYPE = (u8)consume_bits(src_stream, 2);
+        BFINAL = (u8)src_stream->read_bits(1);
+        u16 BTYPE = (u8)src_stream->read_bits(2);
         printf(">>> BFINAL: %d\n", BFINAL);
         printf(">>> BTYPE: %d\n", BTYPE);
         switch(BTYPE) {
             case 0b00: {
                 printf(">>>> No compression\n");
-                consume_bits(src_stream, 5);
-                u16 LEN = (u16)consume_bits(src_stream, 16);
-                u16 NLEN = (u16)consume_bits(src_stream, 16);
+                src_stream->read_bits(5);
+                u16 LEN = (u16)src_stream->read_bits(16);
+                u16 NLEN = (u16)src_stream->read_bits(16);
                 printf(">>>>> LEN: %d\n", LEN);
                 printf(">>>>> NLEN: %d\n", NLEN);
                 if ((u16)LEN != ~((u16)(NLEN))) {
@@ -390,34 +392,34 @@ deflate(Stream* src_stream, Stream* dest_stream, Memory_Arena* arena)
                     return false;
                 }
 
-                u32 LenCountTable[PngMaxBits + 1] = {};
+                u32 len_count_table[PngMaxBits + 1] = {};
                 for (;;) 
                 {
-                    u32 Sym = Decode(src_stream, &lit_huffman);
-                    if (Sym <= 255) { 
-                        u8 ByteToWrite = (u8)(Sym & 0xFF); 
+                    u32 sym = decode(src_stream, &lit_huffman);
+                    if (sym <= 255) { 
+                        u8 ByteToWrite = (u8)(sym & 0xFF); 
                         printf("%02X ", ByteToWrite);
-                        write(dest_stream, ByteToWrite);
+                        dest_stream->write(ByteToWrite);
                         //Context->ImageData[Context->ImageDataCount++] = ByteToWrite;
                     }
-                    else if (Sym >= 257) {
-                        Sym -= 257;
-                        if (Sym >= 29) {
+                    else if (sym >= 257) {
+                        sym -= 257;
+                        if (sym >= 29) {
                             printf("Invalid Symbol 1\n"); 
                             return false;
                         }
-                        u32 Len = lens[Sym] + consume_bits(src_stream, len_ex_bits[Sym]);
-                        Sym = Decode(src_stream, &dist_huffman);
-                        if (Sym < 0) {
+                        u32 len = lens[sym] + src_stream->read_bits(len_ex_bits[sym]);
+                        sym = decode(src_stream, &dist_huffman);
+                        if (sym < 0) {
                             printf("Invalid Symbol 2\n");
                             return false;
                         }
-                        u32 Dist = dists[Sym] + consume_bits(src_stream, dist_ex_bits[Sym]);
-                        while(Len--) {
-                            usize TargetIndex = dest_stream->current - Dist;
-                            u8 ByteToWrite = dest_stream->contents[TargetIndex];
-                            printf("%02X ", ByteToWrite);
-                            write(dest_stream, ByteToWrite);
+                        u32 dist = dists[sym] + src_stream->read_bits(dist_ex_bits[sym]);
+                        while(len--) {
+                            usize target_index = dest_stream->current - dist;
+                            u8 byte_to_write = dest_stream->contents[target_index];
+                            printf("%02X ", byte_to_write);
+                            dest_stream->write(byte_to_write);
                         }
                     }
                     else { 
@@ -445,11 +447,11 @@ deflate(Stream* src_stream, Stream* dest_stream, Memory_Arena* arena)
 static inline b32
 parse_IDAT_chunk(Png_Context* context) {
     u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
-    CM = consume_bits(&context->main_stream, 4);
-    CINFO = consume_bits(&context->main_stream, 4);
-    FCHECK = consume_bits(&context->main_stream, 5); //not needed?
-    FDICT = consume_bits(&context->main_stream, 1);
-    FLEVEL = consume_bits(&context->main_stream, 2); //useless?
+    CM = context->main_stream.read_bits(4);
+    CINFO = context->main_stream.read_bits(4);
+    FCHECK = context->main_stream.read_bits(5); //not needed?
+    FDICT = context->main_stream.read_bits(1);
+    FLEVEL = context->main_stream.read_bits(2); //useless?
     printf(">> CM: %d\n\
 >> CINFO: %d\n\
 >> FCHECK: %d\n\
@@ -472,13 +474,13 @@ parse_IDAT_chunk(Png_Context* context) {
                           context->image_channels;
 
         context->img_stream_mark = BeginScratch(context->arena);
-        context->img_stream = stream(context->img_stream_mark, image_size);
+        context->img_stream = Stream::create(context->img_stream_mark, image_size);
     
         context->depressed_img_stream_mark = BeginScratch(context->arena);
-        usize DepressedImageDataSize = (context->image_width + 1) *
+        usize depressed_img_size = (context->image_width + 1) *
                                         context->image_height* 
                                         context->image_channels;
-        context->depressed_img_stream = stream(context->arena, DepressedImageDataSize);
+        context->depressed_img_stream = Stream::create(context->arena, depressed_img_size);
 
         context->is_image_initialized = true;
     }
@@ -501,11 +503,11 @@ parse_png(Memory_Arena* arena,
           usize png_memory_size) 
 {
     Png_Context context = {};
-    context.main_stream = stream(png_memory, png_memory_size); 
+    context.main_stream = Stream::create(png_memory, png_memory_size); 
     context.arena = arena;
 
     // Read the signature
-    auto* png_header = consume<Png_Header>(&context.main_stream);  
+    auto* png_header = context.main_stream.read<Png_Header>();  
     if (!png_header) { return No(); };
 
     static constexpr u8 png_signature[] = { 
@@ -519,10 +521,10 @@ parse_png(Memory_Arena* arena,
     }
 
     // Check for IHDR which MUST appear first
-    auto* chunk_header = consume<Png_Chunk_Header>(&context.main_stream);
+    auto* chunk_header = context.main_stream.read<Png_Chunk_Header>();
     if (!chunk_header){ return No(); }
     if (chunk_header->type_u32 != FourCC("IHDR")) { return No(); }
-    auto* IHDR = consume<Png_Chunk_Data_IHDR>(&context.main_stream);
+    auto* IHDR = context.main_stream.read<Png_Chunk_Data_IHDR>();
     if (!IHDR) { return No(); }
 
     // Unsupported details
@@ -540,11 +542,11 @@ parse_png(Memory_Arena* arena,
     context.image_width = IHDR->width;
     context.image_height = IHDR->height;
     context.image_channels = 4;
-    consume<Png_Chunk_Footer>(&context.main_stream);
+    context.main_stream.read<Png_Chunk_Footer>();
 
     // Search for IDAT header
-    while(!is_eos(&context.main_stream)) {
-        chunk_header = consume<Png_Chunk_Header>(&context.main_stream);
+    while(!context.main_stream.is_eos()) {
+        chunk_header = context.main_stream.read<Png_Chunk_Header>();
         EndianSwap(&chunk_header->length);
         switch(chunk_header->type_u32) {
             case FourCC("IDAT"): {
@@ -560,10 +562,10 @@ parse_png(Memory_Arena* arena,
                 return Yes(ret);
             } break;
             default: {
-                consume(&context.main_stream, chunk_header->length);
+                context.main_stream.read(chunk_header->length);
             };
         }
-        consume<Png_Chunk_Footer>(&context.main_stream);
+        context.main_stream.read<Png_Chunk_Footer>();
     }
     return No();
 }
