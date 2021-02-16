@@ -1,7 +1,6 @@
-#ifndef __LIST__
-#define __LIST__
+#ifndef __MOMO_LIST__
+#define __MOMO_LIST__
 
-#include "mm_core.h"
 #include "mm_array.h"
 
 template<typename T>

@@ -6,59 +6,60 @@
 #include "mm_array.h"
 #include "mm_arena.h"
 
-template<typename t>
-struct pool {
-    array<t> Slots;
-    list<usize> FreeList;
+template<typename T>
+struct Pool {
+    Array<T> slots;
+    List<usize> free_list;
+
+    static Pool create(Memory_Arena* arena, usize cap);
+    T* get(usize id);
+    usize remainder() const;
 };
 
-template<typename t>
-static inline pool<t>
-Pool(arena* Arena, usize Capacity) {
-    pool<t> Ret = {};
-    Ret.Slots = Array<t>(Arena, Capacity); 
-    Ret.FreeList = List<usize>(Arena, Capacity);
-    for (usize I = 0; I < Capacity; ++I) {
-        Push(&Ret.FreeList, I);
+template<typename T>
+Pool<T> Pool<T>::create(Memory_Arena* arena, usize cap) {
+    Pool<T> Ret = {};
+    Ret.slots = Array<T>(arena, cap); 
+    Ret.free_list = list<usize>(arena, cap);
+    for (usize I = 0; I < cap; ++I) {
+        Push(&Ret.free_list, I);
     }
     return Ret;
 }
 
-template<typename t>
-static inline t*
-Get(pool<t>* Pool, usize Id) {
-    return &Pool->Slots[Id]; 
+template<typename T>
+T* Pool<T>::get(usize Id) {
+    return &this->slots[Id]; 
 }
 
 // For use with smaller types
-template<typename t>
-static inline t
-GetCopy(pool<t>* Pool, usize Id) {
-    return Pool->Slots[Id]; 
+template<typename T>
+static inline T
+GetCopy(Pool<T>* Pool, usize Id) {
+    return Pool->slots[Id]; 
 }
 
-template<typename t>
-static inline usize 
-Remainder(pool<t>* Pool) {
-    return Pool->FreeList.Count;
+template<typename T>
+usize Pool<T>::remainder() const {
+    return this->free_list.count;
 }
 
 // Analogous to 'booking a reservation'
 template<typename t>
 static inline usize
-Reserve(pool<t>* Pool, t Construct = {})
+Reserve(Pool<t>* Pool, t Construct = {})
 {
-    usize Ret = Back(&Pool->FreeList);
-    Pop(&Pool->FreeList);
-    Pool->Slots[Ret] = Construct;
+    usize Ret = Back(&Pool->free_list);
+    Pop(&Pool->free_list);
+    Pool->slots[Ret] = Construct;
 
     return Ret;
 }
 
 template<typename t>
 static inline void
-Release(pool<t>* Pool, usize Id) {
-    Push(&Pool->FreeList, Id);
+Release(Pool<t>* Pool, usize Id) {
+    Push(&Pool->free_list, Id);
 }
 
 #endif
