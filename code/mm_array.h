@@ -9,45 +9,21 @@
 #include "mm_core.h"
 #include "mm_arena.h"
 
-
-#define boot_array(name, T, count) T AnonVar(__LINE__)[count] = {}; Array<T> name = array(AnonVar(__LINE__), count)
+#define boot_array(name, T, count) T AnonVar(__LINE__)[count] = {}; Array<T> name = create_array(AnonVar(__LINE__), count)
 
 template<typename T>
 struct Array {
     usize count;
     T* elements;
 
-    b8 is_empty() const;
-    void reverse();
-    
-    template<typename Unary_Compare>
-    usize find(Unary_Compare unary_compare, usize start_index = 0) const; 
-    usize find(T item, usize start_index = 0) const;
-
-    b8 operator==(const Array<T>& rhs);
-    auto& operator[](usize index);
-    const auto& operator[](usize index) const;
-
-    static Array<T> create(T* elements, usize count);
-    static Array<T> create(Memory_Arena* arena, usize count);
-    static Array<T> create(Array<T> src, Range<usize> slice); 
+    inline auto& operator[](usize index) {
+        Assert(index < count);
+        return elements[index];
+    }
 };
 
 template<typename T>
-auto& Array<T>::operator[](usize index) {
-    Assert(index < this->count);
-    return this->elements[index];
-}
-
-template<typename T>
-const auto& Array<T>::operator[](usize index) const {
-    Assert(index < this->count);
-    return this->elements[index];
-}
-
-
-template<typename T>
-Array<T> Array<T>::create(T* elements, usize count) {
+Array<T> create_array(T* elements, usize count) {
     Array<T> ret = {};
     ret.elements = elements;
     ret.count = count;
@@ -55,45 +31,43 @@ Array<T> Array<T>::create(T* elements, usize count) {
 }
 
 template<typename T>
-Array<T> Array<T>::create(Memory_Arena* arena, usize count) {
+Array<T> create_array(Memory_Arena* arena, usize count) {
     T* buffer = PushSiArray<T>(arena, count);
-    return Array<T>::create(buffer, count);
+    return create_array(buffer, count);
 }
 
 template<typename T>
-Array<T> Array<T>::create(Array<T> src, Range<usize> slice) {
+Array<T> create_array(Array<T>* src, Range<usize> slice) {
     Assert(slice.start <= slice.end);
-    return Array(src.elements + slice.start, slice.end - slice.start);
+    return create_array(src->elements + slice.start, slice.end - slice.start);
 };
 
 
 template<typename T>
-b8 Array<T>::is_empty() const {
-    return array.count == 0;
+b8 is_empty(Array<T>* arr) {
+    return arr->count == 0;
 }
 
 template<typename T>
-void Array<T>::reverse() {
-    for (usize i = 0; i < dest->count/2; ++i) {
-        Swap(dest->elements[i], dest->elements[dest->count-1-i]);
+void reverse(Array<T>* arr) {
+    for (usize i = 0; i < arr->count/2; ++i) {
+        Swap(arr->elements[i], arr->elements[arr->count-1-i]);
     }
 }
 
-template <typename T>
-template <typename Unary_Compare>
-usize Array<T>::find(Unary_Compare unary_compare, usize start_index) const 
+template<typename T, typename Unary_Compare>
+usize find(Array<T> arr, Unary_Compare unary_compare, usize start_index) 
 {
-    for (usize i = start_index; I < this->count; ++I) {
-        if (unary_compare(array.elements + I)) {
-            return I;
+    for (usize i = start_index; i < arr.count; ++i) {
+        if (unary_compare(array.elements + i)) {
+            return i;
         }
     }
     return array.count;
 }
 
 template<typename T>
-usize Array<T>::find(T item, usize start_index) const 
-{
+usize find(T item, usize start_index) {
     return find(array, [item](T* It) {
         return (*It) == item;       
     }, start_index);
