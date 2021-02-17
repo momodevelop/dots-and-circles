@@ -21,6 +21,7 @@ void (*Log)(const char* Format, ...);
 #include "game_debug.h"
 #include "game_draw.h"
 
+
 #if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
@@ -29,7 +30,7 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
     permanent_state* PermState = DebugState->PermanentState;
     scratch Scratchpad = BeginScratch(&DebugState->Arena);
     Defer{ EndScratch(&Scratchpad); };
-
+    
     array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
@@ -38,7 +39,7 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
                  Color_Red);
         return;
     }
-
+    
     string StateToChangeTo = ArgList[1];
     if (StateToChangeTo == String("main")) {
         PushInfo(Console, 
@@ -55,20 +56,16 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
     else if (StateToChangeTo == String("sandbox")) {
         PushInfo(Console, 
                  String("Jumping to Sandbox"), 
-                 Color_Yellow);
-        PermState->NextGameMode = GameModeType_Sandbox;
+                 Color__Sandbox;
     }
     else {
         PushInfo(Console, 
                  String("Invalid state to jump to"), 
                  Color_Red);
     }
-
+    
 }
 #endif
-
-
-
 
 extern "C" 
 GameUpdateFunc(GameUpdate) 
@@ -86,39 +83,39 @@ GameUpdateFunc(GameUpdate)
                                     MainArena,
                                     GameMemory->PermanentMemory, 
                                     GameMemory->PermanentMemorySize);
-
+        
         PermState->ModeArena = SubArena(&PermState->MainArena, 
                                         Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
         PermState->IsInitialized = true;
         PermState->IsRunning = true;
-
+        
         PushSetDesignResolution(RenderCommands, 
                                 (u32)Global_DesignWidth, 
                                 (u32)Global_DesignHeight);
     }
-
+    
     if (!TranState->IsInitialized) {
         TranState = BootstrapStruct(transient_state,
                                     Arena,
                                     GameMemory->TransientMemory, 
                                     GameMemory->TransientMemorySize);
-
+        
         TranState->Assets = AllocateAssets(&TranState->Arena, 
                                            Platform);
         Assert(TranState->Assets);
         
-
+        
         TranState->IsInitialized = true;
     }
-
+    
     if (!DebugState->IsInitialized) {
         DebugState = BootstrapStruct(debug_state,
                                      Arena,
                                      GameMemory->DebugMemory,
                                      GameMemory->DebugMemorySize);
-
+        
         DebugState->Variables = List<debug_variable>(&DebugState->Arena, 16); 
         
         // Init console
@@ -129,7 +126,7 @@ GameUpdateFunc(GameUpdate)
                 -Global_DesignHeight * 0.5f + Dimensions.H * 0.5f, 
                 Global_DesignDepth * 0.5f - 1.f
             };
-
+            
             DebugState->Console = 
                 DebugConsole(&DebugState->Arena, 
                              5, 
@@ -141,21 +138,21 @@ GameUpdateFunc(GameUpdate)
                              Dimensions,
                              0.5f,
                              0.025f);
-
+            
             RegisterCommand(&DebugState->Console, 
                             String("jump"), 
                             CmdJump, 
                             DebugState);
         }
-            
+        
         DebugState->PermanentState = PermState;
         DebugState->TransientState = TranState;
         DebugState->IsInitialized = true;
     }
-
-
+    
+    
     Update(&DebugState->Console, Input, DeltaTime);
-
+    
 #if 0 
     static f32 TSine = 0.f;
     // TODO: Shift this part to game code
@@ -169,7 +166,7 @@ GameUpdateFunc(GameUpdate)
         TSine += DeltaTime;
     }
 #endif
-
+    
     // Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
         switch(PermState->CurrentGameMode) {
@@ -183,12 +180,12 @@ GameUpdateFunc(GameUpdate)
             default: {
             }
         }
-
-
-
+        
+        
+        
         Clear(&PermState->ModeArena);
         arena* ModeArena = &PermState->ModeArena;
-
+        
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
                 PermState->SplashMode = 
@@ -212,7 +209,7 @@ GameUpdateFunc(GameUpdate)
         PermState->CurrentGameMode = PermState->NextGameMode;
         PermState->NextGameMode = GameModeType_None;
     }
-
+    
     // State update
     switch(PermState->CurrentGameMode) {
         case GameModeType_Splash: {
@@ -240,11 +237,11 @@ GameUpdateFunc(GameUpdate)
             Assert(false);
         }
     }
-
+    
     // Render Console
     Render(DebugState, TranState->Assets, RenderCommands);
     //Render(&DebugState->Console, RenderCommands, TranState->Assets);
-
+    
     return PermState->IsRunning;
 }
 
