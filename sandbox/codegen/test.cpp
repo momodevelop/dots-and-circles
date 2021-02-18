@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../code/mm_core.h"
+
+// maybe we make this standalone and cool
 
 static inline void
 GenerateCode(const char* SrcFile,
              const char* DestFile,
-             const char* SrcKeyword,
+             const char* SrcKeyword) 
+{
+
+}
 
 
 
