@@ -44,12 +44,12 @@ Clear(list<type>* List) {
 
 template<typename type>
 static inline void
-Copy(list<type>* Dest, array<type> Src) {
-    Assert(Src.Count <= Dest->Capacity);
-    for (u32 i = 0; i < Src.Count; ++i ) {
-        Dest->Elements[i] = Src.Elements[i];
+Copy(list<type>* Dest, array<type>* Src) {
+    Assert(Src->Count <= Dest->Capacity);
+    for (u32 i = 0; i < Src->Count; ++i ) {
+        Dest->Elements[i] = Src->Elements[i];
     }
-    Dest->Count = Src.Count;
+    Dest->Count = Src->Count;
 }
 
 template<typename type>
@@ -131,7 +131,6 @@ SwapRemove(list<type>* List, usize Index) {
     return Index;
 }
 
-// Specialized struct and functions for ascii string
 template<typename type>
 static inline type*
 operator+(list<type> L, usize I) {

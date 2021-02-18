@@ -115,12 +115,12 @@ PushInfo(debug_console* Console, string String, c4f Color) {
         usize J = Console->InfoBuffers.Count - 1 - I;
         debug_console_string* Dest = Console->InfoBuffers + J;
         debug_console_string* Src = Console->InfoBuffers + J - 1;
-        Copy(&Dest->Buffer, Src->Buffer);
+        Copy(&Dest->Buffer, &Src->Buffer);
         Dest->Color = Src->Color;
     }
     Console->InfoBuffers[0].Color = Color;
     Clear(&Console->InfoBuffers[0].Buffer);
-    Copy(&Console->InfoBuffers[0].Buffer, String);
+    Copy(&Console->InfoBuffers[0].Buffer, &String);
 }
 
 static inline void 
@@ -180,7 +180,7 @@ Update(debug_console* Console,
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
             PushInfo(Console, Console->InputBuffer, Color_White);
-            Copy(&Console->CommandBuffer, Console->InputBuffer);
+            Copy(&Console->CommandBuffer, &Console->InputBuffer);
             Clear(&Console->InputBuffer);
 
             range<usize> Range = { 0, Find(&Console->CommandBuffer, ' ') };

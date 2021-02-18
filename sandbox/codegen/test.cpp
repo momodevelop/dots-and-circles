@@ -1,26 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "../../code/mm_core.h"
 
-struct test{
-    
-};
-
-template<typename T>
 static inline void
-Boo() {
-    test Ret; 
-}
+GenerateCode(const char* SrcFile,
+             const char* DestFile,
+             const char* SrcKeyword,
 
-template<typename T>
-static inline test
-Foo() {
-    Boo<T>();
-    test Ret = {};
-    return Ret;
-}
+
 
 int main() {
-    Foo<int>();
-
+    
+    GenerateCode("src_file", "dest_file", "src_keyword", "dest_keyword");
 
 }
