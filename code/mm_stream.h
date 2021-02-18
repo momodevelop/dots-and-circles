@@ -47,7 +47,6 @@ Consume(stream* S) {
     return (t*)Consume(S, sizeof(t));
 }
 
-
 // Bits are consumed from LSB to MSB
 static inline u32
 ConsumeBits(stream* S, u32 Amount){

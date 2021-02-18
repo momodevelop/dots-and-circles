@@ -95,8 +95,8 @@ GameUpdateFunc(GameUpdate)
         PermState->IsRunning = true;
 
         PushSetDesignResolution(RenderCommands, 
-                                (u32)Global_DesignWidth, 
-                                (u32)Global_DesignHeight);
+                                (u32)Global_DesignSpace.W, 
+                                (u32)Global_DesignSpace.H);
     }
 
     if (!TranState->IsInitialized) {
@@ -123,11 +123,11 @@ GameUpdateFunc(GameUpdate)
         
         // Init console
         {
-            v2f Dimensions = { Global_DesignWidth, 240.f };
+            v2f Dimensions = { Global_DesignSpace.W, 240.f };
             v3f Position = { 
-                -Global_DesignWidth * 0.5f + Dimensions.W * 0.5f, 
-                -Global_DesignHeight * 0.5f + Dimensions.H * 0.5f, 
-                Global_DesignDepth * 0.5f - 1.f
+                -Global_DesignSpace.W * 0.5f + Dimensions.W * 0.5f, 
+                -Global_DesignSpace.H * 0.5f + Dimensions.H * 0.5f, 
+                Global_DesignSpace.D * 0.5f - 1.f
             };
 
             DebugState->Console = 

@@ -59,16 +59,9 @@ UpdateSandboxMode(permanent_state* PermState,
                   game_input* Input,
                   f32 DeltaTime) 
 {
+    SwitchToGameCoords(RenderCommands);
     game_mode_sandbox* Mode = PermState->SandboxMode;
     game_assets* Assets = TranState->Assets;
-    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    PushOrthoCamera(RenderCommands, 
-            v3f{}, 
-            CenteredAabb3f( 
-                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
-                v3f{ 0.5f, 0.5f, 0.5f }
-            )
-    );
     
     UpdateInput(Mode, Input);
 

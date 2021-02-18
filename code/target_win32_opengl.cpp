@@ -644,7 +644,7 @@ static inline void
 Win32InitGlobalPerformanceFrequency() {
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    GlobalPerformanceFrequency = SafeCastI64ToU32(PerfCountFreq.QuadPart);
+    GlobalPerformanceFrequency = SafeCastU32(PerfCountFreq.QuadPart);
 }
 
 static inline void
@@ -815,8 +815,8 @@ Win32InitWasapi(u32 SamplesPerSecond,
 static inline v2u
 Win32GetMonitorDimensions() {
     v2u Ret = {};
-    Ret.W = SafeCastI32ToU32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = SafeCastI32ToU32(GetSystemMetrics(SM_CYSCREEN));
+    Ret.W = SafeCastU32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = SafeCastU32(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
@@ -1239,8 +1239,8 @@ WinMain(HINSTANCE Instance,
     GlobalFileHandles = Pool<HANDLE>(&GlobalArena, 8);
 
     HWND Window = Win32CreateWindow(Instance, 
-                                   (u32)Global_DesignWidth,
-                                   (u32)Global_DesignHeight,
+                                   (u32)Global_DesignSpace.W,
+                                   (u32)Global_DesignSpace.H,
                                    "Dots and Circles");
     if (!Window) { return 1; }
    

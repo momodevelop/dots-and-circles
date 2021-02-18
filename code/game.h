@@ -6,7 +6,6 @@
 #include "game_renderer.h"
 #include "game_debug.h"
 #include "game_assets.h"
-#include "mm_list.h"
 
 
 enum game_mode_type : u32 {
@@ -47,6 +46,18 @@ struct permanent_state {
 };
 
 
+// Common functions
+static inline void
+SwitchToGameCoords(mailbox* RenderCommands) {
+    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushOrthoCamera(RenderCommands, 
+            v3f{}, 
+            CenteredAabb3f( 
+                Global_DesignSpace,
+                Global_DesignSpaceAnchor
+            )
+    );
+}
 
 
 #endif //GAME_H

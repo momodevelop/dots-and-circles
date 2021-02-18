@@ -125,7 +125,7 @@ PushInfo(debug_console* Console, string String, c4f Color) {
 
 static inline void 
 Pop(debug_console* Console) {
-    if (!IsEmpty(Console->InputBuffer))
+    if (!IsEmpty(&Console->InputBuffer))
         Pop(&Console->InputBuffer);
 }
 
@@ -183,7 +183,7 @@ Update(debug_console* Console,
             Copy(&Console->CommandBuffer, Console->InputBuffer);
             Clear(&Console->InputBuffer);
 
-            range<usize> Range = { 0, Find(Console->CommandBuffer, ' ') };
+            range<usize> Range = { 0, Find(&Console->CommandBuffer, ' ') };
             string CommandStr = SubString(Console->CommandBuffer, Range); 
 
             // Send a command to a callback

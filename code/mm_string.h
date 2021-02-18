@@ -1,14 +1,12 @@
 #ifndef MM_STRING
 #define MM_STRING
 
-#include "mm_array.h"
 #include "mm_list.h"
-#include "mm_link_list.h"
 #include "mm_arena.h"
+#include "mm_array.h"
 
 using string = array<char>;
 using string_buffer = list<char>;
-
 
 static inline string_buffer
 StringBuffer(char* Memory, usize Capacity) {
@@ -20,12 +18,10 @@ StringBuffer(arena* Arena, usize Capacity) {
     return List<char>(Arena, Capacity);
 }
 
-
 static inline string
 String(char* Elements, usize Count) {
-    return Array<char>(Elements, Count);
+    return Array(Elements, Count);
 }
-
 
 // Assumes C-String
 static inline string 
@@ -53,7 +49,7 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
     range<usize> Range = {};
 
     for (;Range.End != Str.Count;) {
-        Range.End = Find(Str, ' ', Range.Start); 
+        Range.End = Find(&Str, ' ', Range.Start); 
         
 
         string* Link = PushStruct<string>(Arena);

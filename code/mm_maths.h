@@ -21,7 +21,7 @@ static constexpr f32 Tau32  = Pi32 * 2.f;
 
 template<typename t, usize N>
 struct vec {
-    f32 Elements[N];
+    t Elements[N];
     GenerateSubscriptOp(N)
 };
 

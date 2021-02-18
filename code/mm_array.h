@@ -3,6 +3,7 @@
 
 #include "mm_core.h"
 #include "mm_arena.h"
+
 // A container for arrays, with bounds checking assert.
 // The point of this, I guess, is the option to store the Count on the stack
 // and the Elements on the heap.
@@ -60,22 +61,22 @@ Reverse(array<type>* Dest) {
 
 template<typename type, typename unary_comparer>
 static inline usize
-Find(array<type> Array, 
+Find(array<type>* Array, 
      unary_comparer UnaryCompare, 
      usize StartIndex = 0) 
 {
-    for(usize I = StartIndex; I < Array.Count; ++I) {
-        if(UnaryCompare(Array.Elements + I)) {
+    for(usize I = StartIndex; I < Array->Count; ++I) {
+        if(UnaryCompare(Array->Elements + I)) {
             return I;
         }
     }
-    return Array.Count;
+    return Array->Count;
 }
 
 
 template<typename type>
 static inline usize
-Find(array<type> Array, 
+Find(array<type>* Array, 
      type Item, 
      usize StartIndex = 0) 
 {

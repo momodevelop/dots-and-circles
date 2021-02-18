@@ -245,10 +245,10 @@ UpdateBullet(game_mode_main* Mode,
         bullet* Bullet = Mode->Bullets + I;
         Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
         // Out of bounds self-destruction
-        if (Bullet->Position.X <= -Global_DesignWidth * 0.5f - Bullet->HitCircle.Radius || 
-            Bullet->Position.X >= Global_DesignWidth * 0.5f + Bullet->HitCircle.Radius ||
-            Bullet->Position.Y <= -Global_DesignHeight * 0.5f - Bullet->HitCircle.Radius ||
-            Bullet->Position.Y >= Global_DesignHeight * 0.5f + Bullet->HitCircle.Radius) {
+        if (Bullet->Position.X <= -Global_DesignSpace.W * 0.5f - Bullet->HitCircle.Radius || 
+            Bullet->Position.X >= Global_DesignSpace.W * 0.5f + Bullet->HitCircle.Radius ||
+            Bullet->Position.Y <= -Global_DesignSpace.H * 0.5f - Bullet->HitCircle.Radius ||
+            Bullet->Position.Y >= Global_DesignSpace.H * 0.5f + Bullet->HitCircle.Radius) {
             SwapRemove(&Mode->Bullets, I);
             continue;
         }
@@ -371,8 +371,8 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->Timer += DeltaTime;
                 if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
                     v2f Pos = {
-                        Bilateral(&Mode->Rng) * Global_DesignWidth * 0.5f,
-                        Bilateral(&Mode->Rng) * Global_DesignHeight * 0.5f
+                        Bilateral(&Mode->Rng) * Global_DesignSpace.W * 0.5f,
+                        Bilateral(&Mode->Rng) * Global_DesignSpace.H * 0.5f
                     };
                     auto MoodType = 
                         (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
@@ -551,15 +551,9 @@ UpdateMainMode(permanent_state* PermState,
                game_input* Input,
                f32 DeltaTime) 
 {
+    SwitchToGameCoords(RenderCommands);
     game_mode_main* Mode = PermState->MainMode;
     PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
-    PushOrthoCamera(RenderCommands, 
-            v3f{}, 
-            CenteredAabb3f( 
-                v3f{ Global_DesignWidth, Global_DesignHeight, Global_DesignDepth }, 
-                v3f{ 0.5f, 0.5f, 0.5f }
-            )
-    );
     
     game_assets* Assets = TranState->Assets;
     UpdateInput(Mode, Input);

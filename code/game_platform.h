@@ -11,9 +11,8 @@
 #include "game_renderer.h"
 
 // NOTE(Momo): Global Settings
-static constexpr f32 Global_DesignWidth = 1600.f;
-static constexpr f32 Global_DesignHeight = 900.f;
-static constexpr f32 Global_DesignDepth = 200.f;
+static constexpr v3f Global_DesignSpace = { 1600.f, 900.f, 200.f };
+static constexpr v3f Global_DesignSpaceAnchor = { 0.5f, 0.5f, 0.5f };
 
 
 // Input API /////////////////////////////////////////

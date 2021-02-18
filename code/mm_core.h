@@ -194,43 +194,43 @@ namespace zawarudo {
 #define Defer auto AnonVar(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
 
 // Safe Truncation
-#define I8_MIN                (-128)
-#define I16_MIN               (-32768)
-#define I32_MIN               (-2147483648)
-#define I64_MIN               (-9223372036854775808)
+#define I8_Min                (-128)
+#define I16_Min              (-32768)
+#define I32_Min               (-2147483648)
+#define I64_Min               (-9223372036854775808)
 
-#define I8_MAX                (127)
-#define I16_MAX               (32767)
-#define I32_MAX               (2147483647)
-#define I64_MAX               (9223372036854775807)
+#define I8_Max                (127)
+#define I16_Max               (32767)
+#define I32_Max               (2147483647)
+#define I64_Max               (9223372036854775807)
 
-#define U8_MAX                (255)
-#define U16_MAX               (65535)
-#define U32_MAX               (4294967295)
-#define U64_MAX               (18446744073709551615)
+#define U8_Max               (255)
+#define U16_Max               (65535)
+#define U32_Max               (4294967295)
+#define U64_Max               (18446744073709551615)
 
 
 static inline u32
-SafeCastU64ToU32(u64 Value) {
-    Assert(Value <= U32_MAX);
+SafeCastU32(u64 Value) {
+    Assert(Value <= U32_Max);
     return (u32)Value;
 }
 
 static inline u32
-SafeCastI32ToU32(i32 Value) {
+SafeCastU32(i32 Value) {
     Assert(Value >= 0);
     return (u32)Value;
 }
 
 static inline u16
-SafeCastI32ToU16(i32 Value) {
-    Assert(Value <= U16_MAX && Value >= 0);
+SafeCastU16(i32 Value) {
+    Assert(Value <= U16_Max && Value >= 0);
     return (u16)Value;
 }
 
 static inline u32
-SafeCastI64ToU32(i64 Value) {
-    Assert(Value <= U32_MAX && Value >= 0);
+SafeCastU32(i64 Value) {
+    Assert(Value <= U32_Max && Value >= 0);
     return (u32)Value;
 }
 

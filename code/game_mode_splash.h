@@ -131,20 +131,10 @@ UpdateSplashMode(permanent_state* PermState,
                  game_input* Input,
                  f32 DeltaTime)
 {
+    SwitchToGameCoords(RenderCommands);
     game_mode_splash* Mode = PermState->SplashMode;
     game_assets* Assets = TranState->Assets;
-    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
-    PushOrthoCamera(RenderCommands, 
-            v3f{}, 
-            CenteredAabb3f( 
-                v3f { 
-                    Global_DesignWidth, 
-                    Global_DesignHeight,
-                    Global_DesignDepth 
-                }, 
-                v3f{ 0.5f, 0.5f, 0.5f }
-            )
-    );
+    
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
         Update(Mode->SplashImg + I, 
