@@ -5,71 +5,64 @@
 
 template<typename T>
 struct List {
-    union {
-        struct {
-            usize count; // Amount of objects currently borrowed
-            T* elements;   // Expects pointer to object
-        };
-        Array<T> array;
-    };
-
-
-    usize capacity; // Total number of borrowable objects.
-    
+    Array<T> array;
+    usize count; 
+   
     inline T& operator[](usize index) {
-        Assert(index < count);
-        return elements[index];
+        return array[index];
+    }
+
+    inline const T& operator[](usize index) const {
+        return array[index];
     }
 };
 
-#define boot_list(name, T, count) T AnonVar(__LINE__)[count] = {}; list<T> name = List(AnonVar(__LINE__), count)
+#define boot_list(name, T, count) T AnonVar(__LINE__)[count] = {}; list<T> name = create_list(AnonVar(__LINE__), count)
 
 // Constructors
 template<typename T>
 static inline List<T>
-list(T* arr, usize capacity) {
+create_list(T* arr, usize capacity) {
     List<T> ret = {};
-    ret.elements = arr;
-    ret.capacity = capacity;
+    ret.array = create_array(arr, capacity);
     return ret;
 }
 
 template<typename T>
 static inline List<T>
-list(Memory_Arena* arena, usize capacity) {
+create_list(Memory_Arena* arena, usize capacity) {
     List<T> ret = {};
-    ret.elements = PushSiArray<T>(arena, capacity);
-    ret.capacity = capacity;
+    ret.array = create_array(arena, capacity);
     return ret;
 }
 
 // Functions
 template<typename T>
 static inline void 
-clear(List<T>* list) {
-    list->Count = 0;
+clear(List<T>* l) {
+    l->count = 0;
 }
 
 template<typename T>
 static inline void
-copy(List<T>* dest, Array<T> src) {
-    Assert(src.count <= dest->capacity);
-    for (u32 i = 0; i < src.count; ++i ) {
-        dest->elements[i] = src.elements[i];
+copy(List<T>* l, const Array<T>* src) {
+    Assert(src->count <= l->capacity);
+    for (u32 i = 0; i < src->count; ++i ) {
+        l->elements[i] = src->elements[i];
     }
-    dest->count = src.count;
+    l->count = src->count;
 }
 
 template<typename T>
 static inline usize
-remaining(List<T> list) {
-    return list.capacity - list.count;
+remaining(const List<T>* l) {
+    return l->array.length - l->count;
 }
 
 template<typename T>
 static inline void
 push(List<T>* list, T obj) {
-    Assert(list->count < list->capacity);
+    Assert(list->count < list->array.capacity);
     list->elements[list->count++] = obj;
 }
 

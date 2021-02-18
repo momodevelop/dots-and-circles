@@ -13,80 +13,94 @@
 
 template<typename T>
 struct Array {
-    usize count;
+    usize length;
     T* elements;
 
-    inline auto& operator[](usize index) {
-        Assert(index < count);
+    inline T& operator[](usize index) {
+        Assert(index < length);
+        return elements[index];
+    }
+
+    inline const T& operator[](usize index) const {
+        Assert(index < length);
         return elements[index];
     }
 };
 
 template<typename T>
-Array<T> create_array(T* elements, usize count) {
+static inline Array<T> 
+create_array(T* elements, usize length) {
     Array<T> ret = {};
     ret.elements = elements;
-    ret.count = count;
+    ret.length = length;
     return ret;
 }
 
 template<typename T>
-Array<T> create_array(Memory_Arena* arena, usize count) {
-    T* buffer = PushSiArray<T>(arena, count);
-    return create_array(buffer, count);
+static inline Array<T> 
+create_array(Memory_Arena* arena, usize length) {
+    T* buffer = PushSiArray<T>(arena, length);
+    return create_array(buffer, length);
 }
 
 template<typename T>
-Array<T> create_array(Array<T>* src, Range<usize> slice) {
+static inline Array<T> 
+create_array(Array<T>* src, Range<usize> slice) {
     Assert(slice.start <= slice.end);
     return create_array(src->elements + slice.start, slice.end - slice.start);
 };
 
 
 template<typename T>
-b8 is_empty(Array<T>* arr) {
+static inline b8 
+is_empty(const Array<T>* arr) {
     return arr->count == 0;
 }
 
 template<typename T>
-void reverse(Array<T>* arr) {
-    for (usize i = 0; i < arr->count/2; ++i) {
-        Swap(arr->elements[i], arr->elements[arr->count-1-i]);
+static inline void 
+reverse(Array<T>* arr) {
+    for (usize i = 0; i < arr->length/2; ++i) {
+        Swap(arr->elements[i], arr->elements[arr->length-1-i]);
     }
 }
 
 template<typename T, typename Unary_Compare>
-usize find(Array<T> arr, Unary_Compare unary_compare, usize start_index) 
+static inline usize
+find(const Array<T>* arr, 
+     Unary_Compare unary_compare, 
+     usize start_index) 
 {
-    for (usize i = start_index; i < arr.count; ++i) {
-        if (unary_compare(array.elements + i)) {
+    for (usize i = start_index; i < arr->length; ++i) {
+        if (unary_compare(arr->elements + i)) {
             return i;
         }
     }
-    return array.count;
+    return arr->length;
 }
 
 template<typename T>
-usize find(T item, usize start_index) {
-    return find(array, [item](T* It) {
+static inline usize 
+find(const Array<T>* arr, T item, usize start_index) {
+    return find(arr, [item](T* It) {
         return (*It) == item;       
     }, start_index);
 }
 
 template<typename T>
 static inline T*
-operator+(Array<T> lhs, usize index) {
-    return lhs.elements + index;
+operator+(Array<T>* lhs, usize index) {
+    return lhs->elements + index;
 }
 
 template<typename T>
-static inline b32
-operator==(Array<T> lhs, Array<T> rhs) { 
-    if(lhs.count != rhs.count) {
+static inline b8
+operator==(const Array<T>* lhs, const Array<T>* rhs) { 
+    if(lhs->length != rhs->length) {
         return false;
     }
-    for (u32 i = 0; i < lhs.count; ++i) {
-        if (lhs.elements[i] != rhs.elements[i]) {
+    for (u32 i = 0; i < lhs->length; ++i) {
+        if (lhs->elements[i] != rhs->elements[i]) {
             return false;
         }
     }

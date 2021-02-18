@@ -9,7 +9,6 @@
 using string = Array<char>;
 using string_buffer = List<char>;
 
-
 static inline string_buffer
 StringBuffer(char* Memory, usize Capacity) {
     return List<char>(Memory, Capacity);
