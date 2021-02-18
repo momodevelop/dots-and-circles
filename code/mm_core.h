@@ -5,6 +5,8 @@
 #include <cstdint>
 #define REFACTOR 0
 
+
+
 // Types
 using c8 = char;
 using b8 = bool;
@@ -46,14 +48,14 @@ using iptr = ptrdiff_t;
 #define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 
 template<typename T>
-union Range {
+union range {
     struct {
-        T start;
-        T end;
+        T Start;
+        T End;
     };
     struct {
-        T min; 
-        T max;
+        T Min; 
+        T Max;
     };
 };
 

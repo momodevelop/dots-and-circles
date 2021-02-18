@@ -4,31 +4,31 @@
 #include "mm_core.h"
 #include "mm_bitwise.h"
 
-struct Memory_Arena {
+struct arena {
     u8* Memory;
     usize Used;
     usize Capacity;
 };
 
-static inline Memory_Arena 
+static inline arena 
 Arena(void* Memory, usize Capacity) {
     Assert(Capacity);
     return { (u8*)Memory, 0, Capacity};
 }
 
 static inline void 
-Clear(Memory_Arena* Arena) {
+Clear(arena* Arena) {
     Arena->Used = 0;
 }
 
 static inline usize 
-Remaining(Memory_Arena Arena) {
+Remaining(arena Arena) {
     return Arena.Capacity - Arena.Used;
 }
 
 
 static inline void* 
-PushBlock(Memory_Arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
+PushBlock(arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
     Assert(Size && Alignment);
     u8 Adjust = AlignForwardDiff((u8*)Arena->Memory + Arena->Used, Alignment);
     
@@ -46,29 +46,29 @@ PushBlock(Memory_Arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
 
 template<typename type>
 static inline type*
-PushStruct(Memory_Arena* Arena) {
+PushStruct(arena* Arena) {
     return (type*)PushBlock(Arena, sizeof(type), alignof(type));
 }
 
 template<typename type>
 static inline type*
-PushSiArray(Memory_Arena* Arena, usize Count) {
+PushSiArray(arena* Arena, usize Count) {
     return (type*)PushBlock(Arena, sizeof(type) * Count, alignof(type));
 }
 
 // NOTE(Momo): "Temporary Memory" API
 struct scratch {
-    Memory_Arena* Arena;
+    arena* Arena;
     usize OldUsed;
 
     // Allow conversion to arena* to use functions associated with it
-    operator Memory_Arena*() const { 
+    operator arena*() const { 
         return Arena; 
     }
 };
 
 static inline scratch
-BeginScratch(Memory_Arena* Arena) {
+BeginScratch(arena* Arena) {
     scratch Ret = {};
     Ret.Arena = Arena;
     Ret.OldUsed = Arena->Used;
@@ -84,10 +84,10 @@ EndScratch(scratch* Scratch) {
 }
 
 
-static inline Memory_Arena
-SubArena(Memory_Arena* SrcArena, usize Capacity) {
+static inline arena
+SubArena(arena* SrcArena, usize Capacity) {
     Assert(Capacity);
-    Memory_Arena Ret = {};
+    arena Ret = {};
 
     // We don't care about alignment, so it should be 1.
     Ret.Memory = (u8*)PushBlock(SrcArena, Capacity, 1);
@@ -105,7 +105,7 @@ BootstrapBlock(usize StructSize,
     Assert(StructSize < MemorySize);
     void* ArenaMemory = (u8*)Memory + StructSize; 
     usize ArenaMemorySize = MemorySize - StructSize;
-    Memory_Arena* ArenaPtr = (Memory_Arena*)((u8*)Memory + OffsetToArena);
+    arena* ArenaPtr = (arena*)((u8*)Memory + OffsetToArena);
     (*ArenaPtr) = Arena(ArenaMemory, ArenaMemorySize);
     
     return Memory;

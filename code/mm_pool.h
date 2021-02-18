@@ -6,52 +6,59 @@
 #include "mm_array.h"
 #include "mm_arena.h"
 
-template<typename T>
-struct Pool {
-    Array<T> slots;
-    List<usize> free_list;
-
+template<typename t>
+struct pool {
+    array<t> Slots;
+    list<usize> FreeList;
 };
 
-template<typename T>
-Pool<T> create_pool(Memory_Arena* arena, usize cap) {
-    Pool<T> ret = {};
-    ret.slots = create_array<T>(arena, cap); 
-    ret.free_list = list<usize>(arena, cap);
-    for (usize i = 0; i < cap; ++i) {
-        Push(&ret.free_list, i);
+template<typename t>
+static inline pool<t>
+Pool(arena* Arena, usize Capacity) {
+    pool<t> Ret = {};
+    Ret.Slots = Array<t>(Arena, Capacity); 
+    Ret.FreeList = List<usize>(Arena, Capacity);
+    for (usize I = 0; I < Capacity; ++I) {
+        Push(&Ret.FreeList, I);
     }
     return Ret;
 }
 
-template<typename T>
-static inline T*
-get(usize id) {
-    return &this->slots[id]; 
+template<typename t>
+static inline t*
+Get(pool<t>* Pool, usize Id) {
+    return &Pool->Slots[Id]; 
 }
 
-template<typename T>
-static inline usize
-remainder(Pool<T>* p) {
-    return p->free_list.count;
+// For use with smaller types
+template<typename t>
+static inline t
+GetCopy(pool<t>* Pool, usize Id) {
+    return Pool->Slots[Id]; 
+}
+
+template<typename t>
+static inline usize 
+Remainder(pool<t>* Pool) {
+    return Pool->FreeList.Count;
 }
 
 // Analogous to 'booking a reservation'
 template<typename t>
 static inline usize
-reserve(Pool<t>* p, t item = {})
+Reserve(pool<t>* Pool, t Construct = {})
 {
-    usize ret = Back(&p->free_list);
-    Pop(&p->free_list);
-    p->slots[ret] = item;
+    usize Ret = Back(&Pool->FreeList);
+    Pop(&Pool->FreeList);
+    Pool->Slots[Ret] = Construct;
 
-    return ret;
+    return Ret;
 }
 
 template<typename t>
 static inline void
-release(Pool<t>* Pool, usize Id) {
-    Push(&Pool->free_list, Id);
+Release(pool<t>* Pool, usize Id) {
+    Push(&Pool->FreeList, Id);
 }
 
 #endif

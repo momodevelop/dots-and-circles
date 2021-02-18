@@ -4,83 +4,83 @@
 #include "mm_array.h"
 
 // TODO: Linked list of stream chunks?
-struct Stream {
-    Array<u8> contents;
-    usize current;
-    
+struct stream {
+    array<u8> Contents;
+    usize Current;
+
     // For bit reading
-    u32 bit_buffer;
-    u32 bit_count;
+    u32 BitBuffer;
+    u32 BitCount;
 };
 
-static inline Stream
-create_stream(void* memory, usize memory_size) {
-    Stream Ret = {};
-    Ret.contents = create_array((u8*)memory, memory_size);
+static inline stream
+Stream(void* Memory, usize MemorySize) {
+    stream Ret = {};
+    Ret.Contents = Array((u8*)Memory, MemorySize);
     return Ret;
 }
 
-static inline Stream
-create_stream(Memory_Arena* arena, usize capacity) {
-    void* Memory = PushBlock(arena, capacity);
-    return create_stream(Memory, capacity);
+static inline stream
+Stream(arena* Arena, usize Capacity) {
+    void* Memory = PushBlock(Arena, Capacity);
+    return Stream(Memory, Capacity); 
+} 
+
+static inline b32
+IsEos(stream* S) {
+    return S->Current >= S->Contents.Count;
 }
 
-static inline void* 
-read(Stream* s, usize amount) {
-    void* ret = nullptr;
-    if (s->current + amount <= s->contents.count) {
-        ret = s->contents.elements + s->current;
+static inline void*
+Consume(stream* S, usize Amount) {
+    void* Ret = nullptr;
+    if (S->Current + Amount <= S->Contents.Count) {
+        Ret = S->Contents.Elements + S->Current;
     }
-    s->current += amount;
-    return ret;
+    S->Current += Amount;
+    return Ret;
 }
 
-template<typename T> 
-T* read(Stream* s) {
-    return (T*)read(s, sizeof(T));
+template<typename t>
+static inline t* 
+Consume(stream* S) {
+    return (t*)Consume(S, sizeof(t));
 }
 
-static inline b8
-is_eos(Stream* s) {
-    return s->current >= s->contents.count;
-}
 
-static inline u32 
-read_bits(Stream* s, u32 amount) {
-    Assert(amount <= 32);
+// Bits are consumed from LSB to MSB
+static inline u32
+ConsumeBits(stream* S, u32 Amount){
+    Assert(Amount <= 32);
     
-    while(s->bit_count < amount) {
-        u32* byte_ptr = (u32*)read<u8>(s);
-        Assert(byte_ptr);
-        s->bit_buffer |= ((*byte_ptr) << s->bit_count);
-        s->bit_count += 8;
+    while(S->BitCount < Amount) {
+        u32 Byte = *Consume<u8>(S);
+        S->BitBuffer |= (Byte << S->BitCount);
+        S->BitCount += 8;
     }
-    
-    u32 Result = s->bit_buffer & ((1 << amount) - 1); 
-    
-    s->bit_count -= amount;
-    s->bit_buffer >>= amount;
-    
+
+    u32 Result = S->BitBuffer & ((1 << Amount) - 1); 
+
+    S->BitCount -= Amount;
+    S->BitBuffer >>= Amount;
+
     return Result;
 }
 
-static inline b8 
-write(Stream* s, void* src, usize src_size)
-{
-    if (s->current + src_size >= s->contents.count) {
+static inline b32
+Write(stream* S, void* Src, usize SrcSize) {
+    if (S->Current + SrcSize >= S->Contents.Count) {
         return false;
     }
-    Copy(s->contents.elements + s->current, src, src_size);
-    s->current += src_size; 
+    Copy(S->Contents.Elements + S->Current, Src, SrcSize);
+    S->Current += SrcSize; 
     return true;
 }
 
-template<typename T>
-static inline b8
-write(Stream* s, T item){
-    return write(s, &item, sizeof(T));
+template<typename t>
+static inline b32
+Write(stream* S, t Struct){
+    return Write(S, &Struct, sizeof(t));
 }
-
 
 #endif

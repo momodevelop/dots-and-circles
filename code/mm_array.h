@@ -1,106 +1,109 @@
-//
-// A container for arrays, with bounds checking assert.
-// The point of this, I guess, is the option to store the Count on the stack
-// and the Elements on the heap.
-//
 #ifndef MOMO_ARRAY
 #define MOMO_ARRAY
 
 #include "mm_core.h"
 #include "mm_arena.h"
+// A container for arrays, with bounds checking assert.
+// The point of this, I guess, is the option to store the Count on the stack
+// and the Elements on the heap.
+//
 
-#define boot_array(name, T, count) T AnonVar(__LINE__)[count] = {}; Array<T> name = create_array(AnonVar(__LINE__), count)
 
-template<typename T>
-struct Array {
-    usize length;
-    T* elements;
+#define BootstrapArray(name, type, count) type AnonVar(__LINE__)[count] = {}; array<type> name = Array(AnonVar(__LINE__), count)
 
-    inline T& operator[](usize index) {
-        Assert(index < length);
-        return elements[index];
-    }
+template<typename type>
+struct array {
+    usize Count;
+    type* Elements;
 
-    inline const T& operator[](usize index) const {
-        Assert(index < length);
-        return elements[index];
+    inline auto& operator[](usize I) {
+        Assert(I < Count);
+        return Elements[I];
     }
 };
 
-template<typename T>
-static inline Array<T> 
-create_array(T* elements, usize length) {
-    Array<T> ret = {};
-    ret.elements = elements;
-    ret.length = length;
-    return ret;
+
+template<typename type>
+static inline array<type>
+Array(type* Elements, usize Count) {
+    array<type> Ret = {};
+    Ret.Elements = Elements;
+    Ret.Count = Count;
+
+    return Ret;
 }
 
-template<typename T>
-static inline Array<T> 
-create_array(Memory_Arena* arena, usize length) {
-    T* buffer = PushSiArray<T>(arena, length);
-    return create_array(buffer, length);
+template<typename type>
+static inline array<type> 
+Array(arena* Arena, usize Count) {
+    type* Buffer = PushSiArray<type>(Arena, Count);
+    return Array(Buffer, Count);
+    
 }
 
-template<typename T>
-static inline Array<T> 
-create_array(Array<T>* src, Range<usize> slice) {
-    Assert(slice.start <= slice.end);
-    return create_array(src->elements + slice.start, slice.end - slice.start);
+template<typename type>
+static inline array<type>
+SubArray(array<type> Src, range<usize> Slice) {
+    Assert(Slice.Start <= Slice.End);
+    return Array(Src.Elements + Slice.Start, Slice.End - Slice.Start);
 };
 
 
-template<typename T>
-static inline b8 
-is_empty(const Array<T>* arr) {
-    return arr->count == 0;
+template<typename type>
+static inline b32
+IsEmpty(array<type> Array) {
+    return Array.Count == 0;
 }
 
-template<typename T>
-static inline void 
-reverse(Array<T>* arr) {
-    for (usize i = 0; i < arr->length/2; ++i) {
-        Swap(arr->elements[i], arr->elements[arr->length-1-i]);
+template<typename type>
+static inline void
+Reverse(array<type>* Dest) {
+    for (usize i = 0; i < Dest->Count/2; ++i) {
+        Swap(Dest->Elements[i], Dest->Elements[Dest->Count-1-i]);
     }
 }
 
-template<typename T, typename Unary_Compare>
+
+template<typename type, typename unary_comparer>
 static inline usize
-find(const Array<T>* arr, 
-     Unary_Compare unary_compare, 
-     usize start_index) 
+Find(array<type> Array, 
+     unary_comparer UnaryCompare, 
+     usize StartIndex = 0) 
 {
-    for (usize i = start_index; i < arr->length; ++i) {
-        if (unary_compare(arr->elements + i)) {
-            return i;
+    for(usize I = StartIndex; I < Array.Count; ++I) {
+        if(UnaryCompare(Array.Elements + I)) {
+            return I;
         }
     }
-    return arr->length;
+    return Array.Count;
 }
 
-template<typename T>
-static inline usize 
-find(const Array<T>* arr, T item, usize start_index) {
-    return find(arr, [item](T* It) {
-        return (*It) == item;       
-    }, start_index);
+
+template<typename type>
+static inline usize
+Find(array<type> Array, 
+     type Item, 
+     usize StartIndex = 0) 
+{
+    return Find(Array, [Item](type* It) {
+        return (*It) == Item;       
+    }, StartIndex);
 }
 
-template<typename T>
-static inline T*
-operator+(Array<T>* lhs, usize index) {
-    return lhs->elements + index;
+template<typename type>
+static inline type*
+operator+(array<type> L, usize I) {
+    return L.Elements + I;
 }
 
-template<typename T>
-static inline b8
-operator==(const Array<T>* lhs, const Array<T>* rhs) { 
-    if(lhs->length != rhs->length) {
+template<typename type>
+static inline b32
+operator==(array<type> Lhs, array<type> Rhs) { 
+    if(Lhs.Count != Rhs.Count) {
         return false;
     }
-    for (u32 i = 0; i < lhs->length; ++i) {
-        if (lhs->elements[i] != rhs->elements[i]) {
+    for (u32 i = 0; i < Lhs.Count; ++i) {
+        if (Lhs.Elements[i] != Rhs.Elements[i]) {
             return false;
         }
     }

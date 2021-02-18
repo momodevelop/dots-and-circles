@@ -6,8 +6,9 @@
 #include "mm_link_list.h"
 #include "mm_arena.h"
 
-using string = Array<char>;
-using string_buffer = List<char>;
+using string = array<char>;
+using string_buffer = list<char>;
+
 
 static inline string_buffer
 StringBuffer(char* Memory, usize Capacity) {
@@ -50,19 +51,19 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
     // in memory, and thus convertible to an array<string> struct.
     array<string> Ret ={}; 
     range<usize> Range = {};
-    
+
     for (;Range.End != Str.Count;) {
         Range.End = Find(Str, ' ', Range.Start); 
         
-        
+
         string* Link = PushStruct<string>(Arena);
         Assert(Link);
         (*Link) = SubString(Str, Range);
-        
+
         if (Ret.Elements == nullptr) {
             Ret.Elements = Link;            
         }
-        
+ 
         Range.Start = Range.End + 1;
         ++Ret.Count;
     }
@@ -81,14 +82,14 @@ PushU32(string_buffer* Dest, u32 Num) {
         Push(Dest, '0');
         return;
     }
-    
+
     usize StartPoint = Dest->Count; 
-    
+
     for(; Num != 0; Num /= 10) {
         i32 DigitToConvert = Num % 10;
         Push(Dest, (char)(DigitToConvert + '0'));
     }
-    
+
     // Reverse starting from start point to count
     usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
     for(usize I = 0; I < SubStrLenHalved; ++I) {
@@ -103,21 +104,21 @@ PushI32(string_buffer* Dest, i32 Num) {
         Push(Dest, '0');
         return;
     }
-    
+
     usize StartPoint = Dest->Count; 
-    
+
     b32 Negative = Num < 0;
     Num = Abs(Num);
-    
+
     for(; Num != 0; Num /= 10) {
         i32 DigitToConvert = Num % 10;
         Push(Dest, (char)(DigitToConvert + '0'));
     }
-    
+
     if (Negative) {
         Push(Dest, '-');
     }
-    
+
     // Reverse starting from start point to count
     usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
     for(usize I = 0; I < SubStrLenHalved; ++I) {
