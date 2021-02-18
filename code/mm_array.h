@@ -50,12 +50,6 @@ SubArray(array<type> Src, range<usize> Slice) {
 
 
 template<typename type>
-static inline b32
-IsEmpty(array<type> Array) {
-    return Array.Count == 0;
-}
-
-template<typename type>
 static inline void
 Reverse(array<type>* Dest) {
     for (usize i = 0; i < Dest->Count/2; ++i) {

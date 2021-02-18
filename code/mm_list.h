@@ -5,15 +5,7 @@
 #include "mm_array.h"
 
 template<typename type>
-struct list {
-    union {
-        struct {
-            usize Count;     // Amount of objects currently borrowed
-            type* Elements;     // Expects pointer to object
-        };
-        array<type> Array;
-    };
-
+struct list : array<type>{
 
     usize Capacity; // Total number of borrowable objects.
     
@@ -106,6 +98,12 @@ Back(list<type>* List) {
 }
 
 template<typename type>
+static inline b32
+IsEmpty(list<type> List) {
+    return List.Count == 0;
+}
+
+template<typename type>
 static inline void
 Remove(list<type>* List, usize Index) {
     Assert(Index < List->Count);
@@ -118,7 +116,7 @@ Remove(list<type>* List, usize Index) {
 template<typename type, typename unary_comparer> 
 static inline usize
 RemoveIf(list<type>* List, unary_comparer UnaryComparer) {
-    usize Index = Find(List->Array, UnaryComparer);
+    usize Index = Find(*List, UnaryComparer);
     Remove(List, Index);
     return Index;
 }

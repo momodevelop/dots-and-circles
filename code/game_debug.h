@@ -113,13 +113,12 @@ Render(debug_state* State,
             }
         }
 
-        //PushI32(&Buffer, (i32)Mode->Bullets.Count);
         DrawText(
              RenderCommands, 
              Assets, 
              Font_Default, 
              v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
-             Buffer.Array,
+             Buffer,
              32.f, 
              Color_White 
         );

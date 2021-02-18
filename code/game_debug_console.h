@@ -115,7 +115,7 @@ PushInfo(debug_console* Console, string String, c4f Color) {
         usize J = Console->InfoBuffers.Count - 1 - I;
         debug_console_string* Dest = Console->InfoBuffers + J;
         debug_console_string* Src = Console->InfoBuffers + J - 1;
-        Copy(&Dest->Buffer, Src->Buffer.Array);
+        Copy(&Dest->Buffer, Src->Buffer);
         Dest->Color = Src->Color;
     }
     Console->InfoBuffers[0].Color = Color;
@@ -125,7 +125,7 @@ PushInfo(debug_console* Console, string String, c4f Color) {
 
 static inline void 
 Pop(debug_console* Console) {
-    if (!IsEmpty(Console->InputBuffer.Array))
+    if (!IsEmpty(Console->InputBuffer))
         Pop(&Console->InputBuffer);
 }
 
@@ -151,7 +151,7 @@ Update(debug_console* Console,
         if (Input->Characters.Count > 0 && 
             Input->Characters.Count <= Remaining(Console->InputBuffer)) 
         {  
-            Push(&Console->InputBuffer, Input->Characters.Array);
+            Push(&Console->InputBuffer, Input->Characters);
         }
         
         // Remove character backspace logic
@@ -179,19 +179,18 @@ Update(debug_console* Console,
 
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
-            string Arguments = Console->InputBuffer.Array;
-            PushInfo(Console, Console->InputBuffer.Array, Color_White);
-            Copy(&Console->CommandBuffer, Arguments);
+            PushInfo(Console, Console->InputBuffer, Color_White);
+            Copy(&Console->CommandBuffer, Console->InputBuffer);
             Clear(&Console->InputBuffer);
 
-            range<usize> Range = { 0, Find(Arguments, ' ') };
-            string CommandStr = SubString(Arguments, Range); 
+            range<usize> Range = { 0, Find(Console->CommandBuffer, ' ') };
+            string CommandStr = SubString(Console->CommandBuffer, Range); 
 
             // Send a command to a callback
             for (usize I = 0; I < Console->Commands.Count; ++I) {
                 debug_console_command* Command = &Console->Commands[I];
                 if (Command->Key == CommandStr) {
-                     Command->Callback(Console, Command->Context, Arguments);
+                     Command->Callback(Console, Command->Context, Console->CommandBuffer);
                 }
             }
         }
@@ -255,7 +254,7 @@ Render(debug_console* Console,
                     Assets,
                     Font_Default, 
                     Position,
-                    Console->InfoBuffers[I].Buffer.Array,
+                    Console->InfoBuffers[I].Buffer,
                     FontSize,
                     Console->InfoBuffers[I].Color);
         }
@@ -271,7 +270,7 @@ Render(debug_console* Console,
                 Assets, 
                 Font_Default, 
                 Position,
-                Console->InputBuffer.Array,
+                Console->InputBuffer,
                 FontSize,
                 Console->InputTextColor
             );
