@@ -1,8 +1,9 @@
-[] Convert game input to mouse
-[] Basic profiling
+[] Animation
+    [] Figure out animation format for game side
+    [] Figure out animation asset format
+    
 [] Art assets
     [] Enemy (...32x32?)
     [] Player (32x32?)
-[] Animation
 [] Quaternions?
 [] Introspection?

@@ -197,7 +197,7 @@ PushDrawLine(mailbox* Payload,
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
-        Swap(Line.Min, Line.Max);
+        Swap(&Line.Min, &Line.Max);
     }
     
     f32 LineLength = Length(Line.Max - Line.Min);

@@ -28,15 +28,38 @@ using iptr = ptrdiff_t;
 #define Kilobyte (1 << 10)
 #define Megabyte (1 << 20)
 #define Gigabyte (1 << 30)
-
-#define Abs(x) (((x) < 0) ? -(x) : (x))
-#define Maximum(x, y) (((x) > (y)) ? (x) : (y))
-#define Minimum(x, y) (((x) < (y)) ? (x) : (y))
 #define Kilobytes(num) (Kilobyte * num)
 #define Megabytes(num) (Megabyte * num)
 #define Gigabytes(num) (Gigabyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
-#define Clamp(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+
+template<typename T>
+static inline T
+Abs(T X) {
+    return X < 0 ? -X : X;
+}
+
+template<typename T>
+static inline T
+Max(T X, T Y) {
+    return X > Y ? X : Y;
+}
+
+template<typename T>
+static inline T
+Min(T X, T Y) {
+    return X < Y ? X : Y;
+}
+
+template<typename T>
+static inline void
+Swap(T* A, T* B) {
+    T Temp = (*A);
+    (*A) = (*B);
+    (*B) = Temp;
+}
+
+// TODO: Change the rest to templates
 #define TwoToOne(row, col, width) (col + row * width) 
 #define Complement(x, low, high) (high - x + low)
 #define Mask(flag, mask) (flag | mask)
@@ -45,7 +68,6 @@ using iptr = ptrdiff_t;
 #define Lerp(start, end, fraction) ((start) + ((end) - (start))*(fraction)) 
 #define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
 #define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
-#define Swap(a, b) { auto Temp = (a); (a) = (b); (b) = Temp; }
 
 template<typename T>
 union range {
@@ -103,9 +125,9 @@ SiStrCopy(char * Dest, const char* Src) {
 }
 
 static inline b8
-SiStrCompare(const char* Dest, const char* Src) {
-    for(; (*Src) != 0 ; ++Src, ++Dest) {
-        if ((*Dest) != (*Src)) {
+SiStrCompare(const char* Lhs, const char* Rhs) {
+    for(; (*Rhs) != 0 ; ++Rhs, ++Lhs) {
+        if ((*Lhs) != (*Rhs)) {
             return false;
         }
     }
@@ -113,9 +135,9 @@ SiStrCompare(const char* Dest, const char* Src) {
 }
 
 static inline b8
-SiStrCompareN(const char* Dest, const char* Src, usize N) {
-    for(usize I = 0; I < N; ++I, ++Dest, ++Src) {
-        if ((*Dest) != (*Src)) {
+SiStrCompareN(const char* Lhs, const char* Rhs, usize N) {
+    for(usize I = 0; I < N; ++I, ++Lhs, ++Rhs) {
+        if ((*Lhs) != (*Rhs)) {
             return false;
         }
     }
@@ -142,7 +164,7 @@ SiStrReverse(char* Dest) {
     char* BackPtr = Dest;
     for (; *(BackPtr+1) != 0; ++BackPtr);
     for (;Dest < BackPtr; ++Dest, --BackPtr) {
-        Swap((*Dest), (*BackPtr));
+        Swap(Dest, BackPtr);
     }
 }
 

@@ -89,8 +89,8 @@ PushU32(string_buffer* Dest, u32 Num) {
     // Reverse starting from start point to count
     usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
     for(usize I = 0; I < SubStrLenHalved; ++I) {
-        Swap(Dest->Elements[StartPoint + I], 
-             Dest->Elements[Dest->Count-1-I]);
+        Swap(&Dest->Elements[StartPoint + I], 
+             &Dest->Elements[Dest->Count-1-I]);
     }
 }
 
@@ -118,8 +118,8 @@ PushI32(string_buffer* Dest, i32 Num) {
     // Reverse starting from start point to count
     usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
     for(usize I = 0; I < SubStrLenHalved; ++I) {
-        Swap(Dest->Elements[StartPoint + I], 
-             Dest->Elements[Dest->Count-1-I]);
+        Swap(&Dest->Elements[StartPoint + I], 
+             &Dest->Elements[Dest->Count-1-I]);
     }
 }
 
