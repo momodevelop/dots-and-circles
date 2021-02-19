@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../code/mm_core.h"
+#include "mm_core.h"
 
 // For now, we can only replace $0 to $9 in the input file.
 // Should be more than enough for most use cases. 
