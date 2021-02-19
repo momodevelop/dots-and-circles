@@ -1,10 +1,6 @@
 .clangd/
 .vs/
 build/
-!SDL2.lib
-!SDL2main.lib
-!SDL2test.lib
-!SDL2.dll
 *.exe
 *.obj
-.pdb
+*.pdb

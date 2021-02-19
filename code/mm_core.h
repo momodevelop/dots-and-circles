@@ -102,6 +102,25 @@ SiStrCopy(char * Dest, const char* Src) {
     (*Dest) = 0;
 }
 
+static inline b8
+SiStrCompare(const char* Dest, const char* Src) {
+    for(; (*Src) != 0 ; ++Src, ++Dest) {
+        if ((*Dest) != (*Src)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static inline b8
+SiStrCompareN(const char* Dest, const char* Src, usize N) {
+    for(usize I = 0; I < N; ++I, ++Dest, ++Src) {
+        if ((*Dest) != (*Src)) {
+            return false;
+        }
+    }
+    return true;
+}
 static inline void
 SiStrConcat(char* Dest, const char* Src) {
     // Go to the end of Dest

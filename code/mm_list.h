@@ -9,8 +9,8 @@ struct list : array<type>{
     usize Capacity; // Total number of borrowable objects.
     
     inline type& operator[](usize I) {
-        Assert(I < Count);
-        return Elements[I];
+        Assert(I < this->Count);
+        return this->Elements[I];
     }
 };
 
@@ -46,8 +46,8 @@ template<typename type>
 static inline void
 Copy(list<type>* Dest, array<type>* Src) {
     Assert(Src->Count <= Dest->Capacity);
-    for (u32 i = 0; i < Src->Count; ++i ) {
-        Dest->Elements[i] = Src->Elements[i];
+    for (u32 I = 0; I < Src->Count; ++I ) {
+        Dest->Elements[I] = Src->Elements[I];
     }
     Dest->Count = Src->Count;
 }

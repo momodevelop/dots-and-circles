@@ -27,8 +27,6 @@ ReadFile(const char* Filename) {
     void* FileMemory = malloc(Filesize);
     fread(FileMemory, 1, Filesize, File); 
 
-    fclose(File);
-
     read_file_result Ret = {};
     Ret.Memory = FileMemory;
     Ret.MemorySize = Filesize;

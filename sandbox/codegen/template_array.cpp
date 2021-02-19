@@ -1,5 +1,5 @@
-#ifndef MOMO_ARRAY_###
-#define MOMO_ARRAY_###
+#ifndef MOMO_ARRAY_$0
+#define MOMO_ARRAY_$0
 
 #include "mm_core.h"
 #include "mm_arena.h"
@@ -12,9 +12,9 @@
 
 #define BootstrapArray(name, type, count) type AnonVar(__LINE__)[count] = {}; array<type> name = Array(AnonVar(__LINE__), count)
 
-struct array_### {
+struct array_$0 {
     usize Count;
-    ###* Elements;
+    $0* Elements;
 
     inline auto& operator[](usize I) {
         Assert(I < Count);
@@ -23,34 +23,31 @@ struct array_### {
 };
 
 
-static inline array_###
-Array(###* Elements, usize Count) {
-    array_### Ret = {};
+static inline array_$0
+Array$1($0* Elements, usize Count) {
+    array_$0 Ret = {};
     Ret.Elements = Elements;
     Ret.Count = Count;
 
     return Ret;
 }
 
-template<typename type>
-static inline array<type> 
-Array(arena* Arena, usize Count) {
-    type* Buffer = PushSiArray<type>(Arena, Count);
+static inline array_$0
+Array$1(arena* Arena, usize Count) {
+    type* Buffer = PushSiArray<$0>(Arena, Count);
     return Array(Buffer, Count);
     
 }
 
-template<typename type>
-static inline array<type>
-SubArray(array<type> Src, range<usize> Slice) {
+static inline array_$0
+SubArray(array_$0 Src, range<usize> Slice) {
     Assert(Slice.Start <= Slice.End);
     return Array(Src.Elements + Slice.Start, Slice.End - Slice.Start);
 };
 
 
-template<typename type>
 static inline void
-Reverse(array<type>* Dest) {
+Reverse(array_$0* Dest) {
     for (usize i = 0; i < Dest->Count/2; ++i) {
         Swap(Dest->Elements[i], Dest->Elements[Dest->Count-1-i]);
     }
@@ -83,15 +80,13 @@ Find(array<type>* Array,
     }, StartIndex);
 }
 
-template<typename type>
 static inline type*
-operator+(array<type> L, usize I) {
+operator+(array_$0 L, usize I) {
     return L.Elements + I;
 }
 
-template<typename type>
 static inline b32
-operator==(array<type> Lhs, array<type> Rhs) { 
+operator==(array_$0 Lhs, array<type> Rhs) { 
     if(Lhs.Count != Rhs.Count) {
         return false;
     }
