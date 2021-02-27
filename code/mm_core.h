@@ -59,6 +59,12 @@ Swap(T* A, T* B) {
     (*B) = Temp;
 }
 
+template<typename T>
+static inline T
+Clamp(T Value, T Low, T High) {
+    return Min(Max(Value, High), Low); 
+}
+
 // TODO: Change the rest to templates
 #define TwoToOne(row, col, width) (col + row * width) 
 #define Complement(x, low, high) (high - x + low)
