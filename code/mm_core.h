@@ -33,68 +33,74 @@ using iptr = ptrdiff_t;
 #define Gigabytes(num) (Gigabyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 
-template<typename T>
-static inline T
-Abs(T X) {
+template<typename t>
+static inline t
+Abs(t X) {
     return X < 0 ? -X : X;
 }
 
-template<typename T>
-static inline T
-Max(T X, T Y) {
+template<typename t>
+static inline t
+Max(t X, t Y) {
     return X > Y ? X : Y;
 }
 
-template<typename T>
-static inline T
-Min(T X, T Y) {
+template<typename t>
+static inline t
+Min(t X, t Y) {
     return X < Y ? X : Y;
 }
 
-template<typename T>
+template<typename t>
 static inline void
-Swap(T* A, T* B) {
-    T Temp = (*A);
+Swap(t* A, t* B) {
+    t Temp = (*A);
     (*A) = (*B);
     (*B) = Temp;
 }
 
-template<typename T>
-static inline T
-Clamp(T Value, T Low, T High) {
+template<typename t>
+static inline t
+Clamp(t Value, t Low, t High) {
     return Min(Max(Value, High), Low); 
 }
 
-// TODO: Change the rest to templates
-#define TwoToOne(row, col, width) (col + row * width) 
-#define Complement(x, low, high) (high - x + low)
-#define Mask(flag, mask) (flag | mask)
-#define Unmask(flag, mask) (flag & ~mask)
-#define IsMasked(flag, mask) ((flag & mask) > 0)
-#define Lerp(start, end, fraction) ((start) + ((end) - (start))*(fraction)) 
-#define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
-#define Ratio(x, min, max) (((x) - (min))/((max) - (min)))
+template<typename t>
+static inline t
+Lerp(t Start, t End, f32 Fraction) {
+    return Start + ((End - Start) * Fraction);
+}
 
-template<typename T>
+// Get the ratio of Value within the range [Min,Max] 
+// Return value Will be [0, 1]
+static inline f32
+Ratio(f32 Value, f32 Min, f32 Max) {
+    return (Value - Min)/(Max - Min); 
+}
+
+// TODO: Change the rest to templates
+#define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
+
+template<typename t>
 union range {
     struct {
-        T Start;
-        T End;
+        t Start;
+        t End;
     };
     struct {
-        T Min; 
-        T Max;
+        t Min; 
+        t Max;
     };
 };
 
 
 struct no {}; 
-template<typename T>
+template<typename t>
 struct maybe {
-    T This;
+    t This;
     b32 IsNone;
   
-    maybe(T This) : This(This), IsNone(false) {}
+    maybe(t This) : This(This), IsNone(false) {}
     maybe(no) : IsNone(true) {}
 
     operator bool() {
@@ -102,10 +108,10 @@ struct maybe {
     }
 };
 
-template<typename T>
-static inline maybe<T>
-Yes(T Item) {
-    return maybe<T>(Item);
+template<typename t>
+static inline maybe<t>
+Yes(t Item) {
+    return maybe<t>(Item);
 }
 
 static inline no

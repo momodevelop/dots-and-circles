@@ -63,6 +63,8 @@ static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
 static WglFunctionPtr(wglGetExtensionsStringEXT);
 
+struct win32_state {
+};
 // Globals
 b32 GlobalIsRunning;
 opengl* GlobalOpengl;

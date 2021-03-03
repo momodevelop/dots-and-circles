@@ -72,14 +72,14 @@ static inline quad2f
 GetAtlasUV(game_assets* Assets, game_asset_atlas_aabb* AtlasAabb) {
     auto Texture = Assets->Textures[AtlasAabb->TextureId];
     aabb2u Aabb = {0, 0, Texture.Width, Texture.Height };
-    return Quad2f(RatioAabb(AtlasAabb->Aabb,Aabb));
+    return Quad2f(Ratio(AtlasAabb->Aabb,Aabb));
 }
 
 static inline quad2f
 GetAtlasUV(game_assets* Assets, game_asset_font_glyph* Glyph) {
     auto Texture = Assets->Textures[Glyph->TextureId];
     aabb2u Aabb = {0, 0, Texture.Width, Texture.Height };
-    return Quad2f(RatioAabb(Glyph->AtlasAabb, Aabb));
+    return Quad2f(Ratio(Glyph->AtlasAabb, Aabb));
 }
 
 

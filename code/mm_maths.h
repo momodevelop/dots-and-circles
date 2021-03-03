@@ -689,14 +689,14 @@ Aabb3f(aabb2f Aabb) {
 static inline aabb3f
 CenteredAabb3f(v3f Dimensions, v3f Anchor) {
     aabb3f Ret = {};
-    Ret.Min.X = Lerp(0, -Dimensions.W, Anchor.X);
-    Ret.Max.X = Lerp(Dimensions.W, 0, Anchor.X);
+    Ret.Min.X = Lerp(0.f, -Dimensions.W, Anchor.X);
+    Ret.Max.X = Lerp(Dimensions.W, 0.f, Anchor.X);
 
-    Ret.Min.Y = Lerp(0, -Dimensions.H, Anchor.Y);
-    Ret.Max.Y = Lerp(Dimensions.H, 0, Anchor.Y);
+    Ret.Min.Y = Lerp(0.f, -Dimensions.H, Anchor.Y);
+    Ret.Max.Y = Lerp(Dimensions.H, 0.f, Anchor.Y);
 
-    Ret.Min.Z = Lerp(0, -Dimensions.D, Anchor.Z);
-    Ret.Max.Z = Lerp(Dimensions.D, 0, Anchor.Z);
+    Ret.Min.Z = Lerp(0.f, -Dimensions.D, Anchor.Z);
+    Ret.Max.Z = Lerp(Dimensions.D, 0.f, Anchor.Z);
 
     return Ret; 
 }
@@ -714,7 +714,7 @@ AspectRatio(aabb2u R) {
 
 // NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
 static inline aabb2f 
-RatioAabb(aabb2f A, aabb2f B) {
+Ratio(aabb2f A, aabb2f B) {
     return  {
         Ratio(A.Min.X, B.Min.X, B.Max.X),
         Ratio(A.Min.Y, B.Min.Y, B.Max.Y),
@@ -724,10 +724,9 @@ RatioAabb(aabb2f A, aabb2f B) {
 }
 
 static inline aabb2f 
-RatioAabb(aabb2u A, aabb2u B) {
-    return RatioAabb(Aabb2f(A), Aabb2f(B));
+Ratio(aabb2u A, aabb2u B) {
+    return Ratio(Aabb2f(A), Aabb2f(B));
 }
-
 
 struct ray2f {
     v2f Origin;
