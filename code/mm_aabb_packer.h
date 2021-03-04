@@ -85,8 +85,8 @@ static inline i32
 __AabbPacker_SortBiggerSide(const void* Lhs, const void* Rhs) {
     auto L = (*(aabb_packer_aabb*)(Lhs));
     auto R = (*(aabb_packer_aabb*)(Rhs));
-    auto LhsBiggerSide = Maximum(L.W, L.H);
-    auto RhsBiggerSide = Maximum(R.W, R.H);
+    auto LhsBiggerSide = Max(L.W, L.H);
+    auto RhsBiggerSide = Max(R.W, R.H);
     return RhsBiggerSide - LhsBiggerSide;
 }
 
@@ -94,8 +94,8 @@ static inline i32
 __AabbPacker_SortPathological(const void* Lhs, const void* Rhs) {
     auto L = (*(aabb_packer_aabb*)(Lhs));
     auto R = (*(aabb_packer_aabb*)(Rhs));
-    auto LhsMultipler = Maximum(L.W, L.H)/Minimum(L.W, L.H) * L.W * L.H;
-    auto RhsMultipler = Maximum(R.W, R.H)/Minimum(R.W, R.H) * R.W * R.H;
+    auto LhsMultipler = Max(L.W, L.H)/Min(L.W, L.H) * L.W * L.H;
+    auto RhsMultipler = Max(R.W, R.H)/Min(R.W, R.H) * R.W * R.H;
     return RhsMultipler - LhsMultipler;
 }
 

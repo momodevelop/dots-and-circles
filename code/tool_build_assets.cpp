@@ -107,7 +107,7 @@ WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
     i32 j = 0;
     for (u32 y = TextureAabb.Y; y < TextureAabb.Y + TextureAabb.H; ++y) {
         for (u32 x = TextureAabb.X; x < TextureAabb.X + TextureAabb.W; ++x) {
-            u32 Index = TwoToOne(y, x, AtlasWidth) * 4;
+            u32 Index = (y * x + AtlasWidth) * 4;
             Assert(Index < (AtlasWidth * AtlasHeight * 4));
             for (u32 c = 0; c < 4; ++c) {
                 (*AtlasMemory)[Index + c] = TextureMemory[j++];

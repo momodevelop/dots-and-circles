@@ -63,8 +63,6 @@ static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
 static WglFunctionPtr(wglGetExtensionsStringEXT);
 
-struct win32_state {
-};
 // Globals
 b32 GlobalIsRunning;
 opengl* GlobalOpengl;
@@ -73,7 +71,7 @@ char GlobalExeFullPath[MAX_PATH];
 char* GlobalOnePastExeDirectory;
 arena GlobalArena;
 pool<HANDLE> GlobalFileHandles;
-
+void* GlobalGameMemoryBlock;
 
 #if INTERNAL
 HANDLE GlobalStdOut;
@@ -1150,35 +1148,34 @@ Win32InitPlatformApi() {
 }
 
 static inline void
-Win32FreeGameMemory(game_memory* GameMemory) {
-    Win32FreeMemory(GameMemory->DebugMemory);
-    Win32FreeMemory(GameMemory->PermanentMemory);
-    Win32FreeMemory(GameMemory->TransientMemory);
+Win32FreeGameMemory() {
+    Win32FreeMemory(GlobalGameMemoryBlock);
     Win32Log("[Win32::GameMemory] Freed\n");
 }
 
 static inline maybe<game_memory>
 Win32InitGameMemory(usize PermanentMemorySize,
-                        usize TransientMemorySize,
-                        usize DebugMemorySize) 
+                    usize TransientMemorySize,
+                    usize DebugMemorySize) 
 {
+    usize TotalGameMemory = 
+        PermanentMemorySize + TransientMemorySize + DebugMemorySize;
+    GlobalGameMemoryBlock = Win32AllocateMemory(TotalGameMemory);
+
     game_memory GameMemory = {};
     GameMemory.PermanentMemorySize = PermanentMemorySize;
-    GameMemory.PermanentMemory =                
-        Win32AllocateMemory(PermanentMemorySize); 
+    GameMemory.PermanentMemory = (u8*)GlobalGameMemoryBlock;           
 
     GameMemory.TransientMemorySize = TransientMemorySize;
     GameMemory.TransientMemory = 
-        Win32AllocateMemory(TransientMemorySize);
+        (u8*)GameMemory.PermanentMemory + PermanentMemorySize;
 
     GameMemory.DebugMemorySize = DebugMemorySize;
-    GameMemory.DebugMemory =
-        Win32AllocateMemory(DebugMemorySize);
+    GameMemory.DebugMemory = 
+        (u8*)GameMemory.TransientMemory + TransientMemorySize;
 
-    if (!GameMemory.PermanentMemory ||
-        !GameMemory.TransientMemory ||
-        !GameMemory.DebugMemory) {
-        Win32FreeGameMemory(&GameMemory);
+    if (!GlobalGameMemoryBlock) {
+        Win32FreeGameMemory();
         Win32Log("[Win32::GameMemory] Failed to allocate\n");
         return No();
     }
@@ -1292,7 +1289,7 @@ WinMain(HINSTANCE Instance,
         return 1;
     }
     game_memory& GameMemory = GameMemory_.This;
-    Defer { Win32FreeGameMemory(&GameMemory); };
+    Defer { Win32FreeGameMemory(); };
 
 
     // Initialize RenderCommands
@@ -1315,7 +1312,6 @@ WinMain(HINSTANCE Instance,
 
     // Set sleep granularity to 1ms
     b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
-
 
     // Game Loop
     LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
