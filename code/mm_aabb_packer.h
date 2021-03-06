@@ -47,55 +47,54 @@ CreateAabbPacker(u32 Width,
     return Ret;
 }
 
-static inline i32 
-__AabbPacker_SortWidth(const void* Lhs, const void* Rhs) {
-    auto L = (*(aabb_packer_rect*)(Lhs));
-    auto R = (*(aabb_packer_rect*)(Rhs));
-    return R.W - L.W ;
+static inline b32 
+__AabbPacker_SortWidth(aabb_packer_rect Lhs, 
+                       aabb_packer_rect Rhs) {
+    return Rhs.W > Lhs.W ;
 }
 
 
-static inline i32 
-__AabbPacker_SortHeight(const void* Lhs, const void* Rhs) {
-    auto L = (*(aabb_packer_rect*)(Lhs));
-    auto R = (*(aabb_packer_rect*)(Rhs));
-    return R.H - L.H;
+static inline b32 
+__AabbPacker_SortHeight(aabb_packer_rect Lhs,
+                        aabb_packer_rect Rhs) 
+{
+    return Rhs.H > Lhs.H;
 }
 
-static inline i32 
-__AabbPacker_SortPerimeter(const void* Lhs, const void* Rhs) {
-    auto L = (*(aabb_packer_rect*)(Lhs));
-    auto R = (*(aabb_packer_rect*)(Rhs));
-    auto LhsPerimeter = L.W + L.H;
-    auto RhsPerimeter = R.W + R.H;
-    return RhsPerimeter - LhsPerimeter;
+static inline b32 
+__AabbPacker_SortPerimeter(aabb_packer_rect Lhs,
+                           aabb_packer_rect Rhs)
+{
+    u32 LhsPerimeter = Lhs.W + Lhs.H;
+    u32 RhsPerimeter = Rhs.W + Rhs.H;
+    return RhsPerimeter > LhsPerimeter;
 }
 
-static inline i32 
-__AabbPacker_SortArea(const void* Lhs, const void* Rhs) {
-    auto L = (*(aabb_packer_rect*)(Lhs));
-    auto R = (*(aabb_packer_rect*)(Rhs));
-    auto LhsArea = L.W * L.H;
-    auto RhsArea = R.W * R.H;
-    return  RhsArea - LhsArea;
+static inline b32
+__AabbPacker_SortArea(aabb_packer_rect Lhs, 
+                      aabb_packer_rect Rhs) 
+{
+    u32 LhsArea = Lhs.W * Lhs.H;
+    u32 RhsArea = Rhs.W * Rhs.H;
+    return  RhsArea > LhsArea;
 }
 
-static inline i32
-__AabbPacker_SortBiggerSide(const void* Lhs, const void* Rhs) {
-    auto L = (*(aabb_packer_rect*)(Lhs));
-    auto R = (*(aabb_packer_rect*)(Rhs));
-    auto LhsBiggerSide = Maximum(L.W, L.H);
-    auto RhsBiggerSide = Maximum(R.W, R.H);
-    return RhsBiggerSide - LhsBiggerSide;
+static inline b32
+__AabbPacker_SortBiggerSide(aabb_packer_rect Lhs,
+                            aabb_packer_rect Rhs) 
+{
+    u32 LhsBiggerSide = Maximum(Lhs.W, Lhs.H);
+    u32 RhsBiggerSide = Maximum(Rhs.W, Rhs.H);
+    return RhsBiggerSide > LhsBiggerSide;
 }
 
-static inline i32
-__AabbPacker_SortPathological(const void* Lhs, const void* Rhs) {
-    aabb_packer_rect L = (*(aabb_packer_rect*)(Lhs));
-    aabb_packer_rect R = (*(aabb_packer_rect*)(Rhs));
-    u32 LhsMultipler = Maximum(L.W, L.H)/Minimum(L.W, L.H) * L.W * L.H;
-    u32 RhsMultipler = Maximum(R.W, R.H)/Minimum(R.W, R.H) * R.W * R.H;
-    return RhsMultipler - LhsMultipler;
+static inline b32
+__AabbPacker_SortPathological(aabb_packer_rect Lhs, 
+                              aabb_packer_rect Rhs) 
+{
+    u32 LhsMultipler = Maximum(Lhs.W, Lhs.H)/Minimum(Lhs.W, Lhs.H) * Lhs.W * Lhs.H;
+    u32 RhsMultipler = Maximum(Rhs.W, Rhs.H)/Minimum(Rhs.W, Rhs.H) * Rhs.W * Rhs.H;
+    return RhsMultipler > LhsMultipler;
 }
 
 
@@ -105,19 +104,22 @@ __AabbPacker_Sort(aabb_packer_rect* Aabbs,
                   aabb_packer_sort_type SortType) {
     switch(SortType) {
         case AabbPackerSortType_Width: {
-            qsort(Aabbs, AabbCount, sizeof(aabb_packer_rect), __AabbPacker_SortWidth);
+            QuickSort(Aabbs, AabbCount, __AabbPacker_SortWidth);
         } break;
         case AabbPackerSortType_Height: {
-            qsort(Aabbs, AabbCount, sizeof(aabb_packer_rect), __AabbPacker_SortHeight);
+            QuickSort(Aabbs, AabbCount, __AabbPacker_SortHeight);
         } break;
         case AabbPackerSortType_Area: {
-            qsort(Aabbs, AabbCount, sizeof(aabb_packer_rect), __AabbPacker_SortArea);
+            QuickSort(Aabbs, AabbCount, __AabbPacker_SortArea);
         } break;
         case AabbPackerSortType_Perimeter: {
-            qsort(Aabbs, AabbCount, sizeof(aabb_packer_rect), __AabbPacker_SortPerimeter);
+            QuickSort(Aabbs, AabbCount, __AabbPacker_SortPerimeter);
         } break;
         case AabbPackerSortType_Pathological: {
-            qsort(Aabbs, AabbCount, sizeof(aabb_packer_rect), __AabbPacker_SortPathological);
+            QuickSort(Aabbs, AabbCount, __AabbPacker_SortPathological);
+        } break;
+        case AabbPackerSortType_BiggerSide: {
+            QuickSort(Aabbs, AabbCount, __AabbPacker_SortBiggerSide);
         } break;
         default: {
             Assert(false);
