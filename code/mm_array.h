@@ -1,9 +1,6 @@
 #ifndef MOMO_ARRAY
 #define MOMO_ARRAY
 
-#include "mm_core.h"
-#include "mm_arena.h"
-
 // A container for arrays, with bounds checking assert.
 // The point of this, I guess, is the option to store the Count on the stack
 // and the Elements on the heap.
@@ -16,7 +13,7 @@ template<typename type>
 struct array {
     usize Count;
     type* Elements;
-
+    
     inline auto& operator[](usize I) {
         Assert(I < Count);
         return Elements[I];
@@ -26,17 +23,17 @@ struct array {
 
 template<typename type>
 static inline array<type>
-Array(type* Elements, usize Count) {
+CreateArray(type* Elements, usize Count) {
     array<type> Ret = {};
     Ret.Elements = Elements;
     Ret.Count = Count;
-
+    
     return Ret;
 }
 
 template<typename type>
 static inline array<type> 
-Array(arena* Arena, usize Count) {
+CreateArray(arena* Arena, usize Count) {
     type* Buffer = PushSiArray<type>(Arena, Count);
     return Array(Buffer, Count);
     
@@ -81,8 +78,8 @@ Find(array<type>* Array,
      usize StartIndex = 0) 
 {
     return Find(Array, [Item](type* It) {
-        return (*It) == Item;       
-    }, StartIndex);
+                    return (*It) == Item;       
+                }, StartIndex);
 }
 
 template<typename type>

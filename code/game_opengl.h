@@ -223,7 +223,7 @@ void main(void) {
     fragColor = texture(uTexture, mTexCoord) * mColor; 
 })###";
 
-    
+
 
 // NOTE(Momo): Attributes
 enum { 
@@ -249,9 +249,9 @@ enum {
 
 struct opengl {
     renderer Header;
-
+    
     arena Arena;
-
+    
     // Bindings that needs to be filled by platform
     OpenglFunctionPtr(glEnable);
     OpenglFunctionPtr(glDisable); 
@@ -291,8 +291,8 @@ struct opengl {
     OpenglFunctionPtr(glUseProgram);
     OpenglFunctionPtr(glDeleteTextures);
     OpenglFunctionPtr(glDebugMessageCallbackARB);
-
-
+    
+    
     GLuint Buffers[OpenglVbo_Max]; 
     GLuint Shader;
     
@@ -330,8 +330,8 @@ static inline void AlignViewport(opengl* Opengl)
     u32 x, y, w, h;
     x = Region.Min.X;
     y = Region.Min.Y;
-    w = Width(Region);
-    h = Height(Region);
+    w = GetWidth(Region);
+    h = GetHeight(Region);
     
     Opengl->glViewport(x, y, w, h);
     Opengl->glScissor(x, y, w, h);
@@ -355,10 +355,10 @@ Init(opengl* Opengl,
      u32 MaxTextures) 
 {
     Opengl->Textures = List<GLuint>(&Opengl->Arena, MaxTextures);
-
+    
     Opengl->RenderDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
-   
+    
     Opengl->glEnable(GL_DEPTH_TEST);
     Opengl->glEnable(GL_SCISSOR_TEST);
     
@@ -374,7 +374,7 @@ Init(opengl* Opengl,
                                  sizeof(QuadModel), 
                                  QuadModel, 
                                  0);
-
+    
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Indices], 
                                  sizeof(QuadIndices), 
                                  QuadIndices, 
@@ -384,7 +384,7 @@ Init(opengl* Opengl,
                                  sizeof(v2f) * 4 * MaxEntities, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
-
+    
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Colors], 
                                  sizeof(v4f) * MaxEntities, 
                                  nullptr, 
@@ -403,19 +403,19 @@ Init(opengl* Opengl,
                                       Opengl->Buffers[OpenglVbo_Model], 
                                       0, 
                                       sizeof(f32)*3);
-
+    
     Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Texture, 
                                       Opengl->Buffers[OpenglVbo_Texture], 
                                       0, 
                                       sizeof(f32) * 8);
-
+    
     Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Colors, 
                                       Opengl->Buffers[OpenglVbo_Colors],  
                                       0, 
                                       sizeof(v4f));
-
+    
     Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Transform, 
                                       Opengl->Buffers[OpenglVbo_Transform], 
@@ -445,7 +445,7 @@ Init(opengl* Opengl,
     Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Colors, 
                                        OpenglVaoBind_Colors);
-
+    
     Opengl->glVertexArrayBindingDivisor(Opengl->Model, OpenglVaoBind_Colors, 1); 
     
     // aTexCoord
@@ -472,7 +472,7 @@ Init(opengl* Opengl,
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 2);
-
+    
     Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture4); 
     Opengl->glVertexArrayAttribFormat(Opengl->Model, 
                                       OpenglAtb_Texture4, 
@@ -484,11 +484,11 @@ Init(opengl* Opengl,
     Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture1, 
                                        OpenglVaoBind_Texture);
-
+    
     Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture2, 
                                        OpenglVaoBind_Texture);
-
+    
     Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture3, 
                                        OpenglVaoBind_Texture);
@@ -544,7 +544,7 @@ Init(opengl* Opengl,
     Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Transform4, 
                                        OpenglVaoBind_Transform);
-
+    
     Opengl->glVertexArrayBindingDivisor(Opengl->Model, 
                                         OpenglVaoBind_Transform, 
                                         1); 
@@ -557,7 +557,7 @@ Init(opengl* Opengl,
     Opengl->glVertexArrayElementBuffer(Opengl->Model, 
                                        Opengl->Buffers[OpenglVbo_Indices]);
     
-   
+    
     
     // NOTE(Momo): Setup Shader Program
     Opengl->Shader = Opengl->glCreateProgram();
@@ -569,9 +569,9 @@ Init(opengl* Opengl,
                  Opengl->Shader, 
                  GL_FRAGMENT_SHADER, 
                  (char*)OpenglFragmentShader);
-
+    
     Opengl->glLinkProgram(Opengl->Shader);
-   
+    
     GLint Result;
     Opengl->glGetProgramiv(Opengl->Shader, GL_LINK_STATUS, &Result);
     if (Result != GL_TRUE) {
@@ -611,8 +611,8 @@ Init(opengl* Opengl,
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
     }
-
-
+    
+    
     Opengl->Header.IsInitialized = true;
     return true;
 }
@@ -654,11 +654,11 @@ AddTexture(opengl* Opengl,
 {
     renderer_texture_handle Ret = {};
     GLuint Entry;
-
+    
     Opengl->glCreateTextures(GL_TEXTURE_2D, 
                              1, 
                              &Entry);
-
+    
     Opengl->glTextureStorage2D(Entry, 
                                1, 
                                GL_RGBA8, 
@@ -674,7 +674,7 @@ AddTexture(opengl* Opengl,
                                 GL_RGBA, 
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
-
+    
     Ret.Id = Entry;
     Push(&Opengl->Textures, Entry);
     return Ret;
@@ -725,11 +725,11 @@ Render(opengl* Opengl, mailbox* Commands)
                     Opengl->glGetUniformLocation(Opengl->Shader,
                                                  "uProjection");
                 Opengl->glProgramUniformMatrix4fv(
-                                          Opengl->Shader, 
-                                          uProjectionLoc, 
-                                          1, 
-                                          GL_FALSE, 
-                                          Result[0].Elements);
+                                                  Opengl->Shader, 
+                                                  uProjectionLoc, 
+                                                  1, 
+                                                  GL_FALSE, 
+                                                  Result[0].Elements);
                 
             } break;
             case renderer_command_clear_color::TypeId: {
@@ -807,12 +807,12 @@ Render(opengl* Opengl, mailbox* Commands)
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Colors], 
                                              CurrentInstanceIndex * sizeof(v4f),
                                              sizeof(v4f), 
-                                            &Data->Colors);
+                                             &Data->Colors);
                 
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Texture],
                                              CurrentInstanceIndex * sizeof(quad2f),
                                              sizeof(quad2f),
-                                            &Data->TextureCoords);
+                                             &Data->TextureCoords);
                 
                 // NOTE(Momo): Transpose; game is row-major
                 m44f Transform = Transpose(Data->Transform);

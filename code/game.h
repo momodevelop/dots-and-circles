@@ -1,6 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "mm_core.h"
+
 #include "game_platform.h"
 #include "game_debug_console.h"
 #include "game_renderer.h"
@@ -8,18 +10,17 @@
 #include "game_assets.h"
 
 
-enum game_mode_type : u32 {
+enum game_mode_type {
     GameModeType_Splash,
     GameModeType_Main,
     GameModeType_Menu,
     GameModeType_Sandbox,
-
+    
     GameModeType_None
 };
 
 // Stuff in this state can be zero initialized with no problems
 // I.e. This state contains stuff that does not need to exist past a frame
-// TODO: Put game_arena in here
 struct transient_state {
     b32 IsInitialized;
     
@@ -31,7 +32,7 @@ struct permanent_state {
     b32 IsInitialized;
     b32 IsRunning;
     b32 IsShowInfo;
-
+    
     game_mode_type CurrentGameMode;
     game_mode_type NextGameMode;
     union {
@@ -42,22 +43,27 @@ struct permanent_state {
     
     arena MainArena;
     arena ModeArena;
-
+    
 };
 
 
 // Common functions
 static inline void
 SwitchToGameCoords(mailbox* RenderCommands) {
+    aabb3f CenterBox = CenteredAabb3f(Global_DesignSpace, Global_DesignSpaceAnchor);
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushOrthoCamera(RenderCommands, 
-            v3f{}, 
-            CenteredAabb3f( 
-                Global_DesignSpace,
-                Global_DesignSpaceAnchor
-            )
-    );
+                    v3f{}, 
+                    CenterBox);
 }
 
+static inline void
+SwitchToUICoords(mailbox* RenderCommands) {
+    aabb3f CenterBox = CenteredAabb3f(Global_DesignSpace, v3f{});
+    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushOrthoCamera(RenderCommands, 
+                    v3f{}, 
+                    CenterBox);
+}
 
 #endif //GAME_H

@@ -1,0 +1,63 @@
+version(1);
+project_name = "4coder custom";
+
+patterns = {
+"*.c",
+"*.cpp",
+"*.h",
+"*.m",
+"*.mm",
+"*.bat",
+"*.sh",
+"*.4coder",
+"*.txt",
+};
+blacklist_patterns = {
+".*",
+};
+load_paths_custom = {
+ {"."},
+};
+load_paths = {
+ { load_paths_custom, .os = "win"  },
+ { load_paths_custom, .os = "linux"},
+ { load_paths_custom, .os = "mac"  },
+};
+
+build_assets = "bin\\bass.bat";
+build_game = "bin\\bg.bat";
+build_win32 = "bin\\bw32.bat";
+
+run_assets = "bin\\rass.bat";
+run_win32 = "bin\\rw32.bat";
+
+command_list = {
+ { .name = "build assets",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { { build_assets, .os ="win"  }, }, },
+ 
+ { .name = "build game",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { { build_game, .os ="win" }, }, },
+ 
+ { .name = "build win32",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { { build_win32, .os="win" }, }, },
+ 
+ { .name = "run assets",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { { run_assets, .os="win" }, }, },
+
+ { .name = "run win32",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { { run_win32, .os="win" }, }, },
+ 
+
+
+};
+
+fkey_command[1] = "build assets";
+fkey_command[2] = "build game";
+fkey_command[3] = "build win32";
+fkey_command[4] = "run assets";
+fkey_command[5] = "run win32";

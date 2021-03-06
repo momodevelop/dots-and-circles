@@ -31,9 +31,9 @@ Update(splash_image_entity* Entity,
         return;
     
     // NOTE(Momo): Update
-    f32 ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    f32 Ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     
-    Entity->Position.X = Entity->StartX + (Entity->EndX - Entity->StartX) * ease; 
+    Entity->Position.X = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
@@ -44,7 +44,7 @@ Update(splash_image_entity* Entity,
                          Entity->Colors, 
                          T*S,  
                          Texture->Handle);
-
+    
 }
 
 struct splash_blackout_entity {
@@ -120,7 +120,7 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashBlackout.CountdownDuration = 3.f;
         Mode->SplashBlackout.Timer = 0.f;
         Mode->SplashBlackout.Duration = 1.f;
-
+        
     }
 }
 
@@ -147,12 +147,12 @@ UpdateSplashMode(permanent_state* PermState,
            Assets,
            RenderCommands,
            DeltaTime);
-        
+    
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
         PermState->NextGameMode = GameModeType_Splash;
     }
-
+    
 }
 
 #endif //GAME_MODE_SPLASH_H

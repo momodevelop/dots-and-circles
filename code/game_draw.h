@@ -25,19 +25,19 @@ DrawText(mailbox* RenderCommands,
         
         // NOTE(Momo): Set bottom left as origin
         m44f A = M44fTranslation(0.5f, 0.5f, 0.f); 
-        m44f S = M44fScale(Width(Box) * Size, 
-                           Height(Box) * Size, 
+        m44f S = M44fScale(GetWidth(Box) * Size, 
+                           GetHeight(Box) * Size, 
                            1.f);
         m44f T = M44fTranslation(CurPosition.X + Box.Min.X * Size, 
-                                   CurPosition.Y + Box.Min.Y * Size,  
-                                   CurPosition.Z);
-
+                                 CurPosition.Y + Box.Min.Y * Size,  
+                                 CurPosition.Z);
+        
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
                              T*S*A,
                              GetTexture(Assets, Glyph->TextureId)->Handle,
                              GetAtlasUV(Assets, Glyph));
- 
+        
         CurPosition.X += Glyph->Advance * Size;
         if (i != String.Count - 1 ) {
             CurPosition.X += 

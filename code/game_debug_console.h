@@ -10,7 +10,8 @@
 #include "game_assets.h"
 #include "game_draw.h"
 
-using debug_console_callback = void (*)(struct debug_console* Console, void* Context, string Arguments);
+using debug_console_callback = void (*)(struct debug_console* Console, void* Context, string Args);
+
 struct debug_console_command {
     string Key;
     debug_console_callback Callback;
@@ -24,30 +25,30 @@ struct debug_console_string {
 
 struct debug_console {
     b32 IsActive;
-
+    
     c4f InfoBgColor;
     c4f InputBgColor;
     c4f InputTextColor;
     c4f InfoTextDefaultColor;
     v3f Position;
     v2f Dimensions;
-
+    
     // Buffers
     array<debug_console_string> InfoBuffers;
     string_buffer InputBuffer;
     string_buffer CommandBuffer;
-
+    
     // Backspace (to delete character) related
     // Maybe make an easing system?
     timer StartPopRepeatTimer;
     timer PopRepeatTimer;
     b32 IsStartPop;
-
+    
     // Enter and Exit transitions for swag!
     v3f TransitStartPos;
     v3f TransitEndPos;
     timer TransitTimer;
-
+    
     list<debug_console_command> Commands;
 };
 
@@ -64,8 +65,8 @@ RegisterCommand(debug_console* Console,
 static inline void 
 UnregisterCommand(debug_console* Console, string Key) {
     RemoveIf(&Console->Commands, [Key](const debug_console_command* Cmd) { 
-        return Cmd->Key == Key; 
-    });
+                 return Cmd->Key == Key; 
+             });
 }
 
 static inline debug_console
@@ -81,19 +82,19 @@ DebugConsole(arena* Arena,
              f32 PopRepeatDuration)
 {
     debug_console Ret = {};
-
+    
     Ret.InfoBuffers = Array<debug_console_string>(Arena, InfoLineCount);
     for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
         debug_console_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = StringBuffer(Arena, CharactersPerLine);
     }
-
+    
     Ret.InputBuffer = StringBuffer(Arena, CharactersPerLine);
     Ret.CommandBuffer = StringBuffer(Arena, CharactersPerLine);
-
+    
     Ret.Commands = List<debug_console_command>(Arena, CommandsCapacity);
-    Ret.TransitTimer = Timer(TransitDuration);
-
+    Ret.TransitTimer = CreateTimer(TransitDuration);
+    
     Ret.InfoBgColor = Color_Grey3;
     Ret.InfoTextDefaultColor = Color_White;
     Ret.InputBgColor = Color_Grey2;
@@ -102,9 +103,9 @@ DebugConsole(arena* Arena,
     Ret.Position = TransitStartPos;
     Ret.TransitStartPos = TransitStartPos;
     Ret.TransitEndPos = TransitEndPos;
-    Ret.StartPopRepeatTimer = Timer(StartPopRepeatDuration);
-    Ret.PopRepeatTimer = Timer(PopRepeatDuration); 
-
+    Ret.StartPopRepeatTimer = CreateTimer(StartPopRepeatDuration);
+    Ret.PopRepeatTimer = CreateTimer(PopRepeatDuration); 
+    
     return Ret;
 }
 
@@ -138,14 +139,14 @@ Update(debug_console* Console,
     if (IsPoked(Input->ButtonConsole)) {
         Console->IsActive = !Console->IsActive; 
     }
-
+    
     // Transition
     {
         f32 P = EaseInQuad(Percent(Console->TransitTimer));
         v3f Delta = Console->TransitEndPos - Console->TransitStartPos; 
         Console->Position = Console->TransitStartPos + P * Delta; 
     }
-
+    
     if (Console->IsActive) {
         Tick(&Console->TransitTimer, DeltaTime);
         if (Input->Characters.Count > 0 && 
@@ -176,21 +177,21 @@ Update(debug_console* Console,
         else {
             Console->IsStartPop = false; 
         }
-
+        
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
             PushInfo(Console, Console->InputBuffer, Color_White);
             Copy(&Console->CommandBuffer, &Console->InputBuffer);
             Clear(&Console->InputBuffer);
-
+            
             range<usize> Range = { 0, Find(&Console->CommandBuffer, ' ') };
             string CommandStr = SubString(Console->CommandBuffer, Range); 
-
+            
             // Send a command to a callback
             for (usize I = 0; I < Console->Commands.Count; ++I) {
                 debug_console_command* Command = &Console->Commands[I];
                 if (Command->Key == CommandStr) {
-                     Command->Callback(Console, Command->Context, Console->CommandBuffer);
+                    Command->Callback(Console, Command->Context, Console->CommandBuffer);
                 }
             }
         }
@@ -198,8 +199,8 @@ Update(debug_console* Console,
     else if (!Console->IsActive) {
         Untick(&Console->TransitTimer, DeltaTime);
     }
-
-
+    
+    
 }
 
 static inline void
@@ -216,7 +217,7 @@ Render(debug_console* Console,
     f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
     f32 LineHeight = Console->Dimensions.H / (Console->InfoBuffers.Count + 1);
     f32 FontSize = LineHeight * 0.9f;
-    f32 FontHeight = Height(Font) * FontSize;
+    f32 FontHeight = GetHeight(Font) * FontSize;
     f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + Abs(Font->Descent) * FontSize; 
     f32 PaddingWidth = Console->Dimensions.W * 0.005f;
     {
@@ -227,21 +228,21 @@ Render(debug_console* Console,
                      Console->InfoBgColor, 
                      InfoBgTransform);
     }
-
+    
     {
         m44f ScaleMatrix = M44fScale(v2f{ Console->Dimensions.W, LineHeight });
         m44f PositionMatrix = M44fTranslation(
-                Console->Position.X, 
-                Bottom + LineHeight * 0.5f,
-                Console->Position.Z + 0.01f
-        );
-
+                                              Console->Position.X, 
+                                              Bottom + LineHeight * 0.5f,
+                                              Console->Position.Z + 0.01f
+                                              );
+        
         m44f InputBgTransform = PositionMatrix * ScaleMatrix;
         PushDrawQuad(RenderCommands, 
                      Console->InputBgColor, 
                      InputBgTransform);
     }
-
+    
     // Draw text
     {
         for (u32 I = 0; I < Console->InfoBuffers.Count ; ++I) {
@@ -249,34 +250,34 @@ Render(debug_console* Console,
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
             Position.Z = Console->Position.Z + 0.02f;
-
+            
             DrawText(RenderCommands,
-                    Assets,
-                    Font_Default, 
-                    Position,
-                    Console->InfoBuffers[I].Buffer,
-                    FontSize,
-                    Console->InfoBuffers[I].Color);
+                     Assets,
+                     Font_Default, 
+                     Position,
+                     Console->InfoBuffers[I].Buffer,
+                     FontSize,
+                     Console->InfoBuffers[I].Color);
         }
-
+        
         {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + PaddingHeight;
             Position.Z = Console->Position.Z + 0.02f;
-
+            
             DrawText(
-                RenderCommands, 
-                Assets, 
-                Font_Default, 
-                Position,
-                Console->InputBuffer,
-                FontSize,
-                Console->InputTextColor
-            );
-        
+                     RenderCommands, 
+                     Assets, 
+                     Font_Default, 
+                     Position,
+                     Console->InputBuffer,
+                     FontSize,
+                     Console->InputTextColor
+                     );
+            
         }
-
+        
     }
 }
 

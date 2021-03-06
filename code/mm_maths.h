@@ -44,9 +44,9 @@ struct vec<t, 2> {
     };
     GenerateSubscriptOp(2)
 };
-using v2f = vec<f32,2>;
-using v2u = vec<u32,2>;
-using v2i = vec<i32,2>;
+typedef vec<f32,2> v2f;
+typedef vec<u32,2> v2u;
+typedef vec<i32,2> v2i;
 
 template<typename t>
 struct vec<t ,3> {
@@ -74,8 +74,8 @@ struct vec<t ,3> {
     };
     GenerateSubscriptOp(3)
 };
-using v3f = vec<f32,3>;
-using v3u = vec<u32,3>;
+typedef vec<f32,3> v3f;
+typedef vec<u32,3> v3u;
 
 template<typename t>
 struct vec<t,4> {
@@ -93,11 +93,11 @@ struct vec<t,4> {
     };
     GenerateSubscriptOp(4)
 };
-using v4f = vec<f32,4>;
+typedef vec<f32,4> v4f;
 
 struct m44f {
     v4f Elements[4];
-
+    
     inline auto& operator[](usize I) { 
         Assert(I < 4);
         return Elements[I];
@@ -116,11 +116,11 @@ struct aabb {
     vec<t,N> Min;
     vec<t,N> Max;
 };
-using aabb2u = aabb<u32,2>;
-using aabb2f = aabb<f32,2>;
-using aabb2i = aabb<i32,2>;
-using aabb3u = aabb<u32,3>;
-using aabb3f = aabb<f32,3>;
+typedef aabb<u32,2> aabb2u;
+typedef aabb<f32,2> aabb2f;
+typedef aabb<i32,2> aabb2i;
+typedef aabb<u32,3> aabb3u;
+typedef aabb<f32,3> aabb3f;
 
 template<typename t, usize N>
 static inline aabb<t,N>
@@ -139,8 +139,8 @@ struct line {
     vec<t,N> Min;
     vec<t,N> Max;
 };
-using line2f = aabb<f32,2>;
-using line3f = aabb<f32,3>;
+typedef line<f32,2> line2f;
+typedef line<f32,3> line3f;
 
 template<typename t, usize N> 
 struct quad {
@@ -149,20 +149,20 @@ struct quad {
         Assert(I < 4);
         return Points[I];
     }
-
+    
 };
-using quad2f = quad<f32,2>;
+typedef quad<f32,2> quad2f;
 
 
 template<typename t, usize N> 
 static inline t
-Width(aabb<t,N> Aabb) {
+GetWidth(aabb<t,N> Aabb) {
     return Aabb.Max.X - Aabb.Min.X;
 }
 
 template<typename t, usize N>
 static inline t
-Height(aabb<t,N> Aabb) {
+GetHeight(aabb<t,N> Aabb) {
     return Aabb.Max.Y - Aabb.Min.Y; 
 }
 
@@ -607,12 +607,12 @@ M44fScale(v3f Vec) {
 
 static inline m44f 
 M44fOrthographic(f32 NdcLeft, f32 NdcRight,
-                   f32 NdcBottom, f32 NdcTop,
-                   f32 NdcNear, f32 NdcFar,
-                   f32 Left, f32 Right, 
-                   f32 Bottom, f32 Top,
-                   f32 Near, f32 Far,
-                   bool FlipZ) 
+                 f32 NdcBottom, f32 NdcTop,
+                 f32 NdcNear, f32 NdcFar,
+                 f32 Left, f32 Right, 
+                 f32 Bottom, f32 Top,
+                 f32 Near, f32 Far,
+                 bool FlipZ) 
 {
     m44f Ret = {};
     Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
@@ -691,24 +691,24 @@ CenteredAabb3f(v3f Dimensions, v3f Anchor) {
     aabb3f Ret = {};
     Ret.Min.X = Lerp(0.f, -Dimensions.W, Anchor.X);
     Ret.Max.X = Lerp(Dimensions.W, 0.f, Anchor.X);
-
+    
     Ret.Min.Y = Lerp(0.f, -Dimensions.H, Anchor.Y);
     Ret.Max.Y = Lerp(Dimensions.H, 0.f, Anchor.Y);
-
+    
     Ret.Min.Z = Lerp(0.f, -Dimensions.D, Anchor.Z);
     Ret.Max.Z = Lerp(Dimensions.D, 0.f, Anchor.Z);
-
+    
     return Ret; 
 }
 
 static inline f32 
 AspectRatio(aabb2f R) {
-    return Width(R)/Height(R);
+    return GetWidth(R)/GetHeight(R);
 }
 
 static inline f32
 AspectRatio(aabb2u R) {
-    return (f32)Width(R)/Height(R);
+    return (f32)GetWidth(R)/GetHeight(R);
 }
 
 

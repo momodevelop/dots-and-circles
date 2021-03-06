@@ -51,7 +51,7 @@ HashCodepoint(u32 Codepoint) {
 }
 
 static inline f32 
-Height(game_asset_font* Font) {
+GetHeight(game_asset_font* Font) {
     return Abs(Font->Ascent) + Abs(Font->Descent);
 }
 
@@ -59,7 +59,7 @@ Height(game_asset_font* Font) {
 struct game_assets {
     // TODO: remove
     arena Arena;
-   
+    
     array<game_asset_texture> Textures;
     array<game_asset_atlas_aabb> AtlasAabbs;
     array<game_asset_font> Fonts;
@@ -153,30 +153,30 @@ AllocateAssets(arena* Arena,
                platform_api* Platform) 
 {
 #define CheckFile(Handle) \
-    if (Handle.Error) { \
-        Platform->LogFileError(&Handle); \
-        return nullptr; \
-    }
-
+if (Handle.Error) { \
+Platform->LogFileError(&Handle); \
+return nullptr; \
+}
+    
 #define CheckPtr(Ptr) \
-    if ((Ptr) == nullptr ) { \
-        Platform->Log(#Ptr " is null"); \
-        return nullptr; \
-    } \
-
-
+if ((Ptr) == nullptr ) { \
+Platform->Log(#Ptr " is null"); \
+return nullptr; \
+} \
+    
+    
     Platform->ClearTextures();
-
+    
     game_assets* Ret = PushStruct<game_assets>(Arena);
     Ret->Textures = Array<game_asset_texture>(Arena, Texture_Count);
     Ret->AtlasAabbs = Array<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
     Ret->Fonts = Array<game_asset_font>(Arena, Font_Count);
-
-
+    
+    
     platform_file_handle AssetFile = Platform->OpenAssetFile();
     CheckFile(AssetFile);
     Defer { Platform->CloseFile(&AssetFile); }; 
-
+    
     usize CurFileOffset = 0;
     u32 FileEntryCount = 0;
     
@@ -194,7 +194,7 @@ AllocateAssets(arena* Arena,
                                    1);
         CheckPtr(ReadSignature);
         CheckFile(AssetFile);
-
+        
         if (!CheckAssetSignature(ReadSignature, Signature)) {
             Platform->Log("[Assets] Wrong asset signature\n");
             return nullptr;
@@ -207,21 +207,21 @@ AllocateAssets(arena* Arena,
                                        &CurFileOffset);
         CheckFile(AssetFile);
     }
-   
-
+    
+    
     for (u32 I = 0; I < FileEntryCount; ++I) 
     {
         scratch Scratchpad = BeginScratch(Arena);
         Defer{ EndScratch(&Scratchpad); };
-
+        
         // NOTE(Momo): Read header
         auto* FileEntry = Read<game_asset_file_entry>(&AssetFile,
-                                                     Platform,
-                                                     Scratchpad,
-                                                     &CurFileOffset);
+                                                      Platform,
+                                                      Scratchpad,
+                                                      &CurFileOffset);
         CheckPtr(FileEntry);
         CheckFile(AssetFile);
-
+        
         switch(FileEntry->Type) {
             case AssetType_Texture: {
                 using data_t = game_asset_file_texture;
@@ -229,18 +229,18 @@ AllocateAssets(arena* Arena,
                                                  Platform, 
                                                  Scratchpad,
                                                  &CurFileOffset);              
-
+                
                 CheckPtr(FileTexture);
                 CheckFile(AssetFile);
-
+                
                 auto* Texture = Ret->Textures + FileTexture->Id;
                 Texture->Width = FileTexture->Width;
                 Texture->Height = FileTexture->Height;
                 Texture->Channels = FileTexture->Channels;
                 usize TextureSize = Texture->Width * 
-                                    Texture->Height * 
-                                    Texture->Channels;
-
+                    Texture->Height * 
+                    Texture->Channels;
+                
                 void* Pixels = Read(&AssetFile, 
                                     Platform,
                                     Arena, 
@@ -249,7 +249,7 @@ AllocateAssets(arena* Arena,
                                     1);
                 CheckPtr(Pixels);
                 CheckFile(AssetFile);
-
+                
                 Texture->Handle = Platform->AddTexture(FileTexture->Width, 
                                                        FileTexture->Height,
                                                        Pixels);
@@ -257,12 +257,12 @@ AllocateAssets(arena* Arena,
             case AssetType_AtlasAabb: { 
                 using data_t = game_asset_file_atlas_aabb;
                 auto* FileAtlasAabb = Read<data_t>(&AssetFile, 
-                                                  Platform, 
-                                                  Scratchpad,
-                                                  &CurFileOffset);              
+                                                   Platform, 
+                                                   Scratchpad,
+                                                   &CurFileOffset);              
                 CheckPtr(FileAtlasAabb);
                 CheckFile(AssetFile);
-
+                
                 auto* AtlasAabb = Ret->AtlasAabbs + FileAtlasAabb->Id;
                 AtlasAabb->Aabb = FileAtlasAabb->Aabb;
                 AtlasAabb->TextureId = FileAtlasAabb->TextureId;
@@ -270,12 +270,12 @@ AllocateAssets(arena* Arena,
             case AssetType_Font: {
                 using data_t = game_asset_file_font;
                 auto* FileFont = Read<data_t>(&AssetFile,
-                                               Platform,
-                                               Scratchpad,
-                                               &CurFileOffset);
+                                              Platform,
+                                              Scratchpad,
+                                              &CurFileOffset);
                 CheckPtr(FileFont);
                 CheckFile(AssetFile);
-
+                
                 auto* Font = Ret->Fonts + FileFont->Id;
                 Font->LineGap = FileFont->LineGap;
                 Font->Ascent = FileFont->Ascent;
@@ -284,12 +284,12 @@ AllocateAssets(arena* Arena,
             case AssetType_FontGlyph: {
                 using data_t = game_asset_file_font_glyph;
                 auto* FileFontGlyph = Read<data_t>(&AssetFile,
-                                                  Platform,
-                                                  Scratchpad,
-                                                  &CurFileOffset);
+                                                   Platform,
+                                                   Scratchpad,
+                                                   &CurFileOffset);
                 CheckPtr(FileFontGlyph);
                 CheckFile(AssetFile);
-
+                
                 auto* Font = Ret->Fonts + FileFontGlyph->FontId;
                 usize GlyphIndex = HashCodepoint(FileFontGlyph->Codepoint);
                 auto* Glyph = Font->Glyphs + GlyphIndex;
@@ -303,9 +303,9 @@ AllocateAssets(arena* Arena,
             case AssetType_FontKerning: {
                 using data_t = game_asset_file_font_kerning;
                 auto* FileFontKerning = Read<data_t>(&AssetFile,
-                                                  Platform,
-                                                  Scratchpad,
-                                                  &CurFileOffset);
+                                                     Platform,
+                                                     Scratchpad,
+                                                     &CurFileOffset);
                 CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
                 game_asset_font* Font = Ret->Fonts + FileFontKerning->FontId;
@@ -321,11 +321,11 @@ AllocateAssets(arena* Arena,
             
         }
     }
-
-
+    
+    
     
     return Ret;
-
+    
 #undef CheckFile
 #undef CheckPtr
 }

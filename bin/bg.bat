@@ -13,8 +13,6 @@ SET CommonCompilerFlags=-MT -WX -W4 -wd4189 -wd4702 -wd4201 -wd4505 -wd4996 -wd4
 SET CommonCompilerFlags=-DSLOW -DINTERNAL  %CommonCompilerFlags%
 
 pushd %BuildDir%
-call bass.bat 
-call rass.bat
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
 
 

@@ -1,9 +1,6 @@
 #ifndef __MOMO_ARENA__
 #define __MOMO_ARENA__
 
-#include "mm_core.h"
-#include "mm_bitwise.h"
-
 struct arena {
     u8* Memory;
     usize Used;
@@ -11,7 +8,7 @@ struct arena {
 };
 
 static inline arena 
-Arena(void* Memory, usize Capacity) {
+CreateArena(void* Memory, usize Capacity) {
     Assert(Capacity);
     return { (u8*)Memory, 0, Capacity};
 }
@@ -60,7 +57,7 @@ PushSiArray(arena* Arena, usize Count) {
 struct scratch {
     arena* Arena;
     usize OldUsed;
-
+    
     // Allow conversion to arena* to use functions associated with it
     operator arena*() const { 
         return Arena; 
@@ -88,7 +85,7 @@ static inline arena
 SubArena(arena* SrcArena, usize Capacity) {
     Assert(Capacity);
     arena Ret = {};
-
+    
     // We don't care about alignment, so it should be 1.
     Ret.Memory = (u8*)PushBlock(SrcArena, Capacity, 1);
     Assert(Ret.Memory);
@@ -100,13 +97,13 @@ static inline void*
 BootstrapBlock(usize StructSize,
                usize OffsetToArena,
                void* Memory,
-              usize MemorySize) 
+               usize MemorySize) 
 {
     Assert(StructSize < MemorySize);
     void* ArenaMemory = (u8*)Memory + StructSize; 
     usize ArenaMemorySize = MemorySize - StructSize;
     arena* ArenaPtr = (arena*)((u8*)Memory + OffsetToArena);
-    (*ArenaPtr) = Arena(ArenaMemory, ArenaMemorySize);
+    (*ArenaPtr) = CreateArena(ArenaMemory, ArenaMemorySize);
     
     return Memory;
 }

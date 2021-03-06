@@ -9,7 +9,7 @@ pushd %BuildDir%
 
 del /Q %cd%\assets
 
-if not exist "%cd%\assets" mkdir %cd\assets
+if not exist "%cd%\assets" mkdir %cd%\assets
 
 copy %RootDir%\assets\* %cd%\assets
 

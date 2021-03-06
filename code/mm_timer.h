@@ -1,15 +1,13 @@
 #ifndef __MOMO_TIMER__
 #define __MOMO_TIMER__
 
-#include "mm_core.h"
-
 struct timer {
     f32 Current;
     f32 End;
 };
 
 static inline timer
-Timer(f32 EndTime) {
+CreateTimer(f32 EndTime) {
     timer Ret = {};
     Ret.End = EndTime;
     return Ret;

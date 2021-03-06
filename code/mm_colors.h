@@ -37,7 +37,7 @@ struct color<t,4> {
         };
     };
 };
-using c4f = color<f32,4>;
+typedef color<f32,4> c4f;
 
 static c4f Color_Grey1 = { 0.1f, 0.1f, 0.1f, 1.f };
 static c4f Color_Grey2 = { 0.2f, 0.2f, 0.2f, 1.f };
@@ -54,6 +54,5 @@ static c4f Color_Red = { 1.f, 0.f, 0.f, 1.f };
 static c4f Color_Green = { 0.f, 1.f, 0.f, 1.f };
 static c4f Color_Blue = { 0.f, 0.f, 1.f, 1.f };
 static c4f Color_Yellow = { 1.f, 1.f, 0.f, 1.f };
-
 
 #endif 

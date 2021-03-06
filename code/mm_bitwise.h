@@ -1,8 +1,6 @@
 #ifndef __MOMO_BITWISE__
 #define __MOMO_BITWISE__
 
-#include "mm_core.h"
-
 // Note that all alignment operations is catered to only power of 2!
 // Reference: https://stackoverflow.com/questions/227897/how-to-alloc-aligned-memory-only-using-the-standard-library
 // 
@@ -96,9 +94,9 @@ static inline void
 EndianSwap(u32* Value) {
     u32 Origin = (*Value);
     (*Value) =  ((Origin << 24) |
-                ((Origin & 0xFF00) << 8) |
-                ((Origin >> 8) & 0xFF00) |
-                (Origin >> 24));
+                 ((Origin & 0xFF00) << 8) |
+                 ((Origin >> 8) & 0xFF00) |
+                 (Origin >> 24));
 }
 
 

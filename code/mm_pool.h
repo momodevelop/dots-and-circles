@@ -14,7 +14,7 @@ struct pool {
 
 template<typename t>
 static inline pool<t>
-Pool(arena* Arena, usize Capacity) {
+CreatePool(arena* Arena, usize Capacity) {
     pool<t> Ret = {};
     Ret.Slots = Array<t>(Arena, Capacity); 
     Ret.FreeList = List<usize>(Arena, Capacity);
@@ -51,7 +51,7 @@ Reserve(pool<t>* Pool, t Construct = {})
     usize Ret = Back(&Pool->FreeList);
     Pop(&Pool->FreeList);
     Pool->Slots[Ret] = Construct;
-
+    
     return Ret;
 }
 
