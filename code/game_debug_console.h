@@ -145,7 +145,7 @@ DebugConsole_Update(debug_console* Console,
     {
         f32 P = EaseInQuad(Percent(Console->TransitTimer));
         v3f Delta = Console->TransitEndPos - Console->TransitStartPos; 
-        Console->Position = Console->TransitStartPos + P * Delta; 
+        Console->Position = Console->TransitStartPos + (P * Delta); 
     }
     
     if (Console->IsActive) {
@@ -222,8 +222,13 @@ Render(debug_console* Console,
     f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + Abs(Font->Descent) * FontSize; 
     f32 PaddingWidth = Console->Dimensions.W * 0.005f;
     {
-        m44f ScaleMatrix = M44fScale(Console->Dimensions);
-        m44f PositionMatrix = M44fTranslation(Console->Position);
+        m44f ScaleMatrix = M44f_Scale(Console->Dimensions.X, 
+                                      Console->Dimensions.Y, 
+                                      1.f);
+        
+        m44f PositionMatrix = M44f_Translation(Console->Position.X,
+                                               Console->Position.Y,
+                                               Console->Position.Z);
         m44f InfoBgTransform = PositionMatrix * ScaleMatrix;
         PushDrawQuad(RenderCommands, 
                      Console->InfoBgColor, 
@@ -231,12 +236,10 @@ Render(debug_console* Console,
     }
     
     {
-        m44f ScaleMatrix = M44fScale(v2f{ Console->Dimensions.W, LineHeight });
-        m44f PositionMatrix = M44fTranslation(
-                                              Console->Position.X, 
-                                              Bottom + LineHeight * 0.5f,
-                                              Console->Position.Z + 0.01f
-                                              );
+        m44f ScaleMatrix = M44f_Scale(Console->Dimensions.W, LineHeight, 0.f);
+        m44f PositionMatrix = M44f_Translation(Console->Position.X, 
+                                               Bottom + LineHeight * 0.5f,
+                                               Console->Position.Z + 0.01f);
         
         m44f InputBgTransform = PositionMatrix * ScaleMatrix;
         PushDrawQuad(RenderCommands, 

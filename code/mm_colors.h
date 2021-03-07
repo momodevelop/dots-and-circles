@@ -3,38 +3,29 @@
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
 
-template<typename t, usize N>
-struct color {
-    t Elements[N];
-    GenerateSubscriptOp(N)
-};
-
-template<typename t>
-struct color<t,3> {
+struct c3f {
     union {
-        t Elements[3];
+        f32 Elements[3];
         struct {
-            t R, G, B;
+            f32 R, G, B;
         };
     };
 };
 
-template<typename t>
-struct color<t,4> {
+struct c4f {
     union {
-        t Elements[4];
+        f32 Elements[4];
         struct {
             union {
-                vec<t,3> RGB;
+                v3f RGB;
                 struct {
-                    t R, G, B;
+                    f32 R, G, B;
                 };
             }; 
-            t A;
+            f32 A;
         };
     };
 };
-typedef color<f32,4> c4f;
 
 static c4f Color_Grey1 = { 0.1f, 0.1f, 0.1f, 1.f };
 static c4f Color_Grey2 = { 0.2f, 0.2f, 0.2f, 1.f };

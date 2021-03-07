@@ -116,18 +116,18 @@ PushOrthoCamera(mailbox* Commands,
     using data_t = renderer_command_set_basis;
     auto* Data = Push<data_t>(Commands, data_t::TypeId);
     
-    auto P  = M44fOrthographic(-1.f, 1.f,
-                               -1.f, 1.f,
-                               -1.f, 1.f,
-                               Frustum.Min.X,  
-                               Frustum.Max.X, 
-                               Frustum.Min.Y, 
-                               Frustum.Max.Y,
-                               Frustum.Min.Z, 
-                               Frustum.Max.Z,
-                               true);
+    auto P  = M44f_Orthographic(-1.f, 1.f,
+                                -1.f, 1.f,
+                                -1.f, 1.f,
+                                Frustum.Min.X,  
+                                Frustum.Max.X, 
+                                Frustum.Min.Y, 
+                                Frustum.Max.Y,
+                                Frustum.Min.Z, 
+                                Frustum.Max.Z,
+                                true);
     
-    m44f V = M44fTranslation(-Position.X, -Position.Y, -Position.Z);
+    m44f V = M44f_Translation(-Position.X, -Position.Y, -Position.Z);
     Data->Basis = P*V;
 }
 
@@ -174,7 +174,7 @@ PushDrawTexturedQuad(mailbox* Commands,
     Data->Colors = Colors;
     Data->Transform = Transform;
     Data->TextureHandle = TextureHandle;
-    Data->TextureCoords = Quad2f(TextureCoords);
+    Data->TextureCoords = Aabb2f_To_Quad2f(TextureCoords);
 }
 
 
@@ -200,16 +200,16 @@ PushDrawLine(mailbox* Payload,
         Swap(&Line.Min, &Line.Max);
     }
     
-    f32 LineLength = Length(Line.Max - Line.Min);
-    v2f LineMiddle = Midpoint(Line.Max, Line.Min);
+    f32 LineLength = V2f_Length(Line.Max - Line.Min);
+    v2f LineMiddle = V2f_Midpoint(Line.Max, Line.Min);
     
     v2f LineVector = Line.Max - Line.Min;
-    f32 Angle = AngleBetween(LineVector, { 1.f, 0.f });
+    f32 Angle = V2f_AngleBetween(LineVector, { 1.f, 0.f });
     
     
-    m44f T = M44fTranslation(LineMiddle.X, LineMiddle.Y, 100.f);
-    m44f R = M44fRotationZ(Angle);
-    m44f S = M44fScale(LineLength, Thickness, 1.f) ;
+    m44f T = M44f_Translation(LineMiddle.X, LineMiddle.Y, 100.f);
+    m44f R = M44f_RotationZ(Angle);
+    m44f S = M44f_Scale(LineLength, Thickness, 1.f) ;
     
     m44f Transform = T*R*S;
     

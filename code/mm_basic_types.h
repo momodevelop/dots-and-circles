@@ -258,25 +258,25 @@ namespace zawarudo {
 
 
 static inline u32
-SafeCastU32(u64 Value) {
+U64_To_U32(u64 Value) {
     Assert(Value <= U32_Max);
     return (u32)Value;
 }
 
 static inline u32
-SafeCastU32(i32 Value) {
+I32_To_U32(i32 Value) {
     Assert(Value >= 0);
     return (u32)Value;
 }
 
 static inline u16
-SafeCastU16(i32 Value) {
+I32_To_U16(i32 Value) {
     Assert(Value <= U16_Max && Value >= 0);
     return (u16)Value;
 }
 
 static inline u32
-SafeCastU32(i64 Value) {
+I64_To_U32(i64 Value) {
     Assert(Value <= U32_Max && Value >= 0);
     return (u32)Value;
 }

@@ -5,8 +5,8 @@
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
 struct game_mode_sandbox_entity {
-    v2f Position;
-    v2f Direction; 
+    v3f Position;
+    v3f Direction; 
 };
 
 struct game_mode_sandbox {
@@ -16,14 +16,14 @@ struct game_mode_sandbox {
 static inline void 
 InitSandboxMode(permanent_state* PermState) {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
-    Mode->Entity.Position = v2f{ -800.f, 0.f };
+    Mode->Entity.Position = v3f{ -800.f, 0.f, 0.f };
 }
 
 static inline void
 UpdateInput(game_mode_sandbox* Mode,
             game_input* Input)
 {
-    v2f Direction = {};
+    v3f Direction = {};
     game_mode_sandbox_entity* Player = &Mode->Entity; 
     b8 IsMovementButtonDown = false;
     if(IsDown(Input->ButtonLeft)) {
@@ -46,12 +46,12 @@ UpdateInput(game_mode_sandbox* Mode,
     }
     
     if (IsMovementButtonDown) 
-        Player->Direction = Normalize(Direction);
+        Player->Direction = V3f_Normalize(Direction);
     else {
         Player->Direction = {};
     }
 }
-   
+
 static inline void
 UpdateSandboxMode(permanent_state* PermState, 
                   transient_state* TranState,
@@ -64,34 +64,37 @@ UpdateSandboxMode(permanent_state* PermState,
     game_assets* Assets = TranState->Assets;
     
     UpdateInput(Mode, Input);
-
+    
     // Entity
     game_mode_sandbox_entity * Entity = &Mode->Entity;
-    m44f Transform = M44fTranslation(Mode->Entity.Position) * 
-                     M44fScale(64.f, 64.f, 1.f);
+    m44f T = M44f_Translation(Mode->Entity.Position.X,
+                              Mode->Entity.Position.Y,
+                              Mode->Entity.Position.Z);
+    m44f S = M44f_Scale(64.f, 64.f, 1.f);
+    
     auto* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
     f32 Speed = 300.f; 
     Entity->Position += Entity->Direction * Speed * DeltaTime;
     PushDrawTexturedQuad(RenderCommands, 
                          Color_White, 
-                         Transform,
+                         T*S,
                          GetTexture(Assets, Texture_AtlasDefault)->Handle,
                          GetAtlasUV(Assets, AtlasAabb));
-
+    
     // Line
     line2f Line = line2f {
-            v2f { -200.f, -200.f },
-            v2f { 200.f, 200.f }
+        v2f { -200.f, -200.f },
+        v2f { 200.f, 200.f }
     };
-
+    
     PushDrawLine(RenderCommands,
                  Line,
                  16.f,
                  Color_White);
-
+    
     // Line circle collision detection
     {
-
+        
     }
     
 }

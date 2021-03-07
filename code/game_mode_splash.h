@@ -37,8 +37,12 @@ Update(splash_image_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44fTranslation(Entity->Position);
-    m44f S = M44fScale(Entity->Scale);
+    m44f T = M44f_Translation(Entity->Position.X,
+                              Entity->Position.Y,
+                              Entity->Position.Z);
+    m44f S = M44f_Scale(Entity->Scale.X,
+                        Entity->Scale.Y,
+                        1.f);
     game_asset_texture* Texture = GetTexture(Assets, Entity->TextureHandle);
     PushDrawTexturedQuad(RenderCommands, 
                          Entity->Colors, 
@@ -73,8 +77,10 @@ Update(splash_blackout_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44fTranslation(Entity->Position);
-    m44f S = M44fScale(Entity->Scale);
+    m44f T = M44f_Translation(Entity->Position.X,
+                              Entity->Position.Y,
+                              Entity->Position.Z);
+    m44f S = M44f_Scale(Entity->Scale.X, Entity->Scale.Y, 1.f);
     
     PushDrawQuad(RenderCommands, Entity->Colors, T*S);
     

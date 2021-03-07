@@ -17,73 +17,98 @@ static constexpr f32 Tau32  = Pi32 * 2.f;
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
 
-template<typename t, usize N>
-struct vec {
-    t Elements[N];
-    GenerateSubscriptOp(N)
-};
-
-template<typename t>
-struct vec<t, 2> {
+struct v2f {
     union {
-        t Elements[2];
+        f32 Elements[2];
         struct {
-            t X;
-            t Y;
+            f32 X;
+            f32 Y;
         };
         struct {
-            t U;
-            t V;
+            f32 U;
+            f32 V;
         };
         struct {
-            t W;
-            t H;
+            f32 W;
+            f32 H;
         };
     };
     GenerateSubscriptOp(2)
 };
-typedef vec<f32,2> v2f;
-typedef vec<u32,2> v2u;
-typedef vec<i32,2> v2i;
 
-template<typename t>
-struct vec<t ,3> {
+struct v2u {
     union {
-        t Elements[3];
+        u32 Elements[2];
+        struct {
+            u32 X;
+            u32 Y;
+        };
+        struct {
+            u32 U;
+            u32 V;
+        };
+        struct {
+            u32 W;
+            u32 H;
+        };
+    };
+    GenerateSubscriptOp(2)
+};
+
+struct v2i {
+    union {
+        i32 Elements[2];
+        struct {
+            i32 X;
+            i32 Y;
+        };
+        struct {
+            i32 U;
+            i32 V;
+        };
+        struct {
+            i32 W;
+            i32 H;
+        };
+    };
+    GenerateSubscriptOp(2)
+};
+
+struct v3f {
+    union {
+        f32 Elements[3];
         struct {
             union {
-                vec<t,2> XY;
+                v2f XY;
                 struct {
-                    t X, Y;
+                    f32 X, Y;
                 };
             };
-            t Z;
+            f32 Z;
         };
         
         struct {
             union {
-                vec<t,2> WH;
+                v2f WH;
                 struct {
-                    t W, H;
+                    f32 W, H;
                 };
             };
-            t D;
+            f32 D;
         }; 
     };
     GenerateSubscriptOp(3)
 };
-typedef vec<f32,3> v3f;
-typedef vec<u32,3> v3u;
 
-template<typename t>
-struct vec<t,4> {
+
+struct v4f {
     union {
-        t Elements[4];
+        f32 Elements[4];
         struct {
             union {
-                vec<t,3> XYZ;
+                v3f XYZ;
                 struct {
-                    t X, Y, Z;
+                    f32 X, Y, Z;
                 };
             }; 
             f32 W;
@@ -91,7 +116,6 @@ struct vec<t,4> {
     };
     GenerateSubscriptOp(4)
 };
-typedef vec<f32,4> v4f;
 
 struct m44f {
     v4f Elements[4];
@@ -102,82 +126,22 @@ struct m44f {
     }
 };
 
-template<typename t, usize N>
-struct circle {
-    vec<t,N> Origin;
-    t Radius;
+
+struct circle2f {
+    v2f Origin;
+    f32 Radius;
 };
-using circle2f = circle<f32, 2>;
 
-template<typename t, usize N>
-struct aabb {
-    vec<t,N> Min;
-    vec<t,N> Max;
+
+struct line2f {
+    v2f Min;
+    v2f Max;
 };
-typedef aabb<u32,2> aabb2u;
-typedef aabb<f32,2> aabb2f;
-typedef aabb<i32,2> aabb2i;
-typedef aabb<u32,3> aabb3u;
-typedef aabb<f32,3> aabb3f;
 
-template<typename t, usize N>
-static inline aabb<t,N>
-operator*(aabb<t,N> Lhs, t Rhs) {
-    return { Lhs.Min * Rhs, Lhs.Max * Rhs };
-}
-
-template<typename t, usize N>
-static inline aabb<t,N>
-operator*(t Lhs, aabb<t,N> Rhs) {
-    return { Rhs.Min * Lhs, Rhs.Max * Lhs };
-}
-
-template<typename t, usize N>
-struct line {
-    vec<t,N> Min;
-    vec<t,N> Max;
-};
-typedef line<f32,2> line2f;
-typedef line<f32,3> line3f;
-
-template<typename t, usize N> 
-struct quad {
-    vec<t,N> Points[4];
-    inline auto& operator[](usize I) { 
-        Assert(I < 4);
-        return Points[I];
-    }
-    
-};
-typedef quad<f32,2> quad2f;
-
-
-template<typename t, usize N> 
-static inline t
-GetWidth(aabb<t,N> Aabb) {
-    return Aabb.Max.X - Aabb.Min.X;
-}
-
-template<typename t, usize N>
-static inline t
-GetHeight(aabb<t,N> Aabb) {
-    return Aabb.Max.Y - Aabb.Min.Y; 
-}
-
-// aabb2u
-static inline aabb2u
-Aabb2u(u32 X, u32 Y, u32 Width, u32 Height) {
-    aabb2u Ret = {};
-    Ret.Min.X = X;
-    Ret.Min.Y = Y;
-    Ret.Max.X = X + Width;
-    Ret.Max.Y = Y + Height;
-    return Ret;
-}
 
 // NOTE(Momo): Common Functions
 static inline b32
-IsEqual(f32 L, f32 R) {
+F32_IsEqual(f32 L, f32 R) {
     return Abs(L - R) <= Epsilon32;
 }
 
@@ -233,251 +197,451 @@ Pow(f32 b, f32 e) {
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n> 
-Add(vec<t,n> L, vec<t,n> R) {
-    vec<t,n> Ret = {};
-    for (usize I = 0; I < n; ++I) {
-        Ret[I] = L[I] + R[I]; 
-    }
+static inline v2f 
+operator+(v2f L, v2f R) {
+    v2f Ret = {};
+    Ret.X = L.X + R.X;
+    Ret.Y = L.Y + R.Y;
     return Ret;
 }
 
-template<typename t, usize n>
-static inline vec<t,n> 
-Sub(vec<t,n> L, vec<t,n> R) {
-    vec<t,n> Ret = {};
-    for (usize I = 0; I < n; ++I) {
-        Ret[I] = L[I] - R[I]; 
-    }
+static inline v2f
+operator-(v2f L, v2f R) {
+    v2f Ret = {};
+    Ret.X = L.X - R.X;
+    Ret.Y = L.Y - R.Y;
     return Ret;
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n> 
-Mul(vec<t,n> L, t R) {
-    vec<t,n> Ret = {};
-    for (usize I = 0; I < n; ++I) {
-        Ret[I] = L[I] * R; 
-    }
+static inline v2f
+operator*(v2f L, f32 R) {
+    v2f Ret = {};
+    Ret.X = L.X * R;
+    Ret.Y = L.Y * R;
+    
+    return Ret;
+}
+
+static inline v2f
+operator*(f32 R, v2f L) {
+    v2f Ret = {};
+    Ret.X = L.X * R;
+    Ret.Y = L.Y * R;
+    
     return Ret;
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n>
-Div(vec<t,n> L, f32 R) {
-    Assert(!IsEqual(R, 0));
-    vec<t,n> Ret = {};
-    for (usize I = 0; I < n; ++I) {
-        Ret[I] = L[I] / R; 
-    }
+static inline v2f
+operator/(v2f L, f32 R) {
+    Assert(!F32_IsEqual(R, 0));
+    v2f Ret = {};
+    Ret.X = L.X / R;
+    Ret.X = L.Y / R;
+    
     return Ret;
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n> 
-Negate(vec<t,n> V){
-    vec<t,n> Ret = {};
-    for (usize I = 0; I < n; ++I) {
-        Ret[I] = -V; 
-    }
+static inline v2f
+operator-(v2f V){
+    v2f Ret = {};
+    Ret.X = -V.X;
+    Ret.Y = -V.Y;
     return Ret;
 }
 
-template<typename t, usize n>
-static inline b32 
-IsEqual(vec<t,n> L, vec<t,n> R) {
-    for (usize I = 0; I < n; ++I) {
-        if (!IsEqual(L[I], R[I])) {
-            return false;
-        }
-    }
-    return true;
+static inline b8 
+operator==(v2f L, v2f R) {
+    return 
+        F32_IsEqual(L.X, R.X) && 
+        F32_IsEqual(L.Y, R.Y);
 }
 
-template<typename t, usize n>
-static inline t 
-Dot(vec<t,n> L, vec<t,n> R) {
-    t Ret = {};
-    for (usize I = 0; I < n; ++I) {
-        Ret += L[I] * R[I]; 
-    }
+static inline b8
+operator!=(v2f L, v2f R) {
+    return !(L == R);
+}
+
+static inline f32 
+operator*(v2f L, v2f R) {
+    f32 Ret = {};
+    Ret = L.X * R.X + L.Y * R.Y;
     return Ret;
 }
 
-template<typename t, usize n>
-static inline vec<t,n> 
-operator+(vec<t,n> L, vec<t,n> R)  { 
-    return Add(L, R); 
-}
 
-template<typename t, usize n>
-static inline vec<t,n> 
-operator-(vec<t,n> L, vec<t,n> R)  { 
-    return Sub(L, R);
-}
-
-template<typename t, usize n>
-static inline vec<t,n> 
-operator*(vec<t,n> L, t R)  { 
-    return Mul(L, R);
-}
-
-template<typename t, usize n>
-static inline vec<t,n> 
-operator*(t L, vec<t,n> R)  { 
-    return Mul(R, L);
-}
-
-template<typename t, usize n>
-static inline t 
-operator*(vec<t,n> L, vec<t,n> R) {
-    return Dot(L, R); 
-}
-
-
-template<typename t, usize n>
-static inline vec<t,n> 
-operator/(vec<t,n> L, t R)  { 
-    return Div(L, R); 
-}
-
-
-template<typename t, usize n>
-static inline vec<t,n>& 
-operator+=(vec<t,n>& L, vec<t,n> R) {
+static inline v2f& 
+operator+=(v2f& L, v2f R) {
     return L = L + R;
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n>& 
-operator-=(vec<t,n>& L, vec<t,n> R) {
+static inline v2f& 
+operator-=(v2f& L, v2f R) {
     return L = L - R;
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n>& 
-operator*=(vec<t,n>& L, t R) {
+static inline v2f& 
+operator*=(v2f& L, f32 R) {
     return L = L * R;
 }
 
 
-template<typename t, usize n>
-static inline vec<t,n>& 
-operator/=(vec<t,n>& L, t R) {
+static inline v2f& 
+operator/=(v2f& L, f32 R) {
     return L = L / R;
 }
 
 
-template<typename t, usize n>
-static inline b32 
-operator==(vec<t,n> L, vec<t,n> R)  { 
-    return IsEqual(L, R);
+static inline v2f 
+V2f_Midpoint(v2f L, v2f R)  { 
+    return (L + R) / 2.f; 
 }
 
-
-template<typename t, usize n>
-static inline b32 
-operator!=(vec<t,n> L, vec<t,n> R) { 
-    return !(L == R); 
-}
-
-
-template<typename t, usize n>
-static inline vec<t,n> 
-operator-(vec<t,n> V)  { 
-    return Negate(V); 
-}
-
-template<typename t, usize n>
-static inline vec<t,n> 
-Midpoint(vec<t,n> L, vec<t,n> R)  { 
-    return (L + R) / (t)2.f; 
-}
-
-template<typename t, usize n>
-static inline t
-DistanceSq(vec<t,n> L, vec<t,n> R) {
-    t Ret = {};
-    for (usize I = 0; I < n; ++I ){
-        Ret += (R[I] - L[I]) * (R[I] - L[I]);
-    }
+static inline f32
+V2f_DistanceSq(v2f L, v2f R) {
+    // TODO: Maybe shorten this with dot product?
+    f32 Ret = (R.X - L.X) * (R.X - L.X) + (R.Y - L.Y) * (R.Y - L.Y); 
     return Ret;
 }
 
-template<typename t, usize n>
-static inline t
-LengthSq(vec<t,n> V) { 
+static inline f32
+V2f_LengthSq(v2f V) { 
+    // NOTE(Momo): Dot Product trick!
     return V * V;
 }
 
-template<typename t, usize n>
-static inline t 
-Distance(vec<t,n> L, vec<t,n> R)  { 
-    return Sqrt(DistanceSq(L, R)); 
+static inline f32
+V2f_Distance(v2f L, v2f R)  { 
+    return Sqrt(V2f_DistanceSq(L, R)); 
 }
 
-template<typename t, usize n>
-static inline t 
-Length(vec<t,n> L)  { 
-    return Sqrt(LengthSq(L));
+static inline f32 
+V2f_Length(v2f L)  { 
+    return Sqrt(V2f_LengthSq(L));
 }
 
-template<typename t, usize n>
-static inline vec<t,n> 
-Normalize(vec<t,n> V)  {
-    vec<t,n> Ret = V;
-    Ret /= Length(V);
+static inline v2f 
+V2f_Normalize(v2f V)  {
+    v2f Ret = V;
+    Ret /= V2f_Length(V);
     return Ret;
 }
 
-template<typename t, usize n>
-static inline t 
-AngleBetween(vec<t,n> L, vec<t,n> R) {
-    return ACos((L * R) / (Length(L) * Length(R)));
+static inline f32
+V2f_AngleBetween(v2f L, v2f R) {
+    return ACos((L * R) / (V2f_Length(L) * V2f_Length(R)));
 }
 
 
-template<typename t, usize n>
 static inline b32
-IsPerpendicular(vec<t,n> L, vec<t,n> R) { 
-    return IsEqual((L * R), 0); 
+V2f_IsPerpendicular(v2f L, v2f R) { 
+    return F32_IsEqual((L * R), 0); 
 }
 
 
-template<typename t, usize n>
 static inline b32 
-IsSameDir(vec<t,n> L, vec<t,n> R) { 
+V2f_IsSameDir(v2f L, v2f R) { 
     return (L * R) > 0; 
 }
 
 
-template<typename t, usize n>
 static inline b32 
-IsOppDir(vec<t,n> L, vec<t,n> R) { 
+V2f_IsOppDir(v2f L, v2f R) { 
     return (L * R) < 0;
 }
 
-template<typename t, usize n>
-static inline vec<t,n> 
-Project(vec<t,n> From, vec<t,n> To) { 
-    return (To * From) / LengthSq(To) * To;
+static inline v2f 
+V2f_Projection(v2f From, v2f To) { 
+    return (To * From) / V2f_LengthSq(To) * To;
 }
 
-template<typename t, usize n>
+
+static inline v3f 
+operator+(v3f L, v3f R) {
+    v3f Ret = {};
+    Ret.X = L.X + R.X;
+    Ret.Y = L.Y + R.Y;
+    return Ret;
+}
+
+static inline v3f
+operator-(v3f L, v3f R) {
+    v3f Ret = {};
+    Ret.X = L.X - R.X;
+    Ret.Y = L.Y - R.Y;
+    return Ret;
+}
+
+
+static inline v3f
+operator*(v3f L, f32 R) {
+    v3f Ret = {};
+    Ret.X = L.X * R;
+    Ret.Y = L.Y * R;
+    
+    return Ret;
+}
+
+static inline v3f
+operator*(f32 R, v3f L) {
+    v3f Ret = {};
+    Ret.X = L.X * R;
+    Ret.Y = L.Y * R;
+    
+    return Ret;
+}
+
+
+static inline v3f
+operator/(v3f L, f32 R) {
+    Assert(!F32_IsEqual(R, 0));
+    v3f Ret = {};
+    Ret.X = L.X / R;
+    Ret.Y = L.Y / R;
+    
+    return Ret;
+}
+
+
+static inline v3f
+operator-(v3f V){
+    v3f Ret = {};
+    Ret.X = -V.X;
+    Ret.Y = -V.Y;
+    return Ret;
+}
+
+static inline b8 
+operator==(v3f L, v3f R) {
+    return 
+        F32_IsEqual(L.X, R.X) && 
+        F32_IsEqual(L.Y, R.Y);
+}
+
+static inline b8
+operator!=(v3f L, v3f R) {
+    return !(L == R);
+}
+
+static inline f32 
+operator*(v3f L, v3f R) {
+    f32 Ret = {};
+    Ret = L.X * R.X + L.Y * R.Y;
+    return Ret;
+}
+
+
+static inline v3f& 
+operator+=(v3f& L, v3f R) {
+    return L = L + R;
+}
+
+
+static inline v3f& 
+operator-=(v3f& L, v3f R) {
+    return L = L - R;
+}
+
+
+static inline v3f& 
+operator*=(v3f& L, f32 R) {
+    return L = L * R;
+}
+
+
+static inline v3f& 
+operator/=(v3f& L, f32 R) {
+    return L = L / R;
+}
+
+
+static inline v3f 
+V3f_Midpoint(v3f L, v3f R)  { 
+    return (L + R) / 2.f; 
+}
+
+static inline f32
+V3f_DistanceSq(v3f L, v3f R) {
+    // TODO: Maybe shorten this with dot product?
+    f32 Ret = (R.X - L.X) * (R.X - L.X) + (R.Y - L.Y) * (R.Y - L.Y); 
+    return Ret;
+}
+
+static inline f32
+V3f_LengthSq(v3f V) { 
+    // NOTE(Momo): Dot Product trick!
+    return V * V;
+}
+
+static inline f32
+V3f_Distance(v3f L, v3f R)  { 
+    return Sqrt(V3f_DistanceSq(L, R)); 
+}
+
+static inline f32 
+V3f_Length(v3f L)  { 
+    return Sqrt(V3f_LengthSq(L));
+}
+
+static inline v3f 
+V3f_Normalize(v3f V)  {
+    v3f Ret = V;
+    Ret /= V3f_Length(V);
+    return Ret;
+}
+
+static inline f32
+V3f_AngleBetween(v3f L, v3f R) {
+    return ACos((L * R) / (V3f_Length(L) * V3f_Length(R)));
+}
+
+
 static inline b32
-IsIntersecting(circle<t,n> L, circle<t,n> R) {
-	f32 distsq = DistanceSq(L.Origin, R.Origin);
-	f32 rsq = L.Radius + R.Radius;
-    rsq *= rsq;
-	return distsq < rsq;
+V3f_IsPerpendicular(v3f L, v3f R) { 
+    return F32_IsEqual((L * R), 0); 
 }
 
+
+static inline b32 
+V3f_IsSameDir(v3f L, v3f R) { 
+    return (L * R) > 0; 
+}
+
+
+static inline b32 
+V3f_IsOppDir(v3f L, v3f R) { 
+    return (L * R) < 0;
+}
+
+static inline v3f 
+V3f_Projection(v3f From, v3f To) { 
+    return (To * From) / V3f_LengthSq(To) * To;
+}
+
+
+static inline v2f 
+V3f_To_V2f(v3f V) {
+    return { V.X, V.Y };
+}
+
+static inline v3f 
+V2f_To_V3f(v2f V) {
+    return { V.X, V.Y, 0.f };
+}
+
+static inline v2f
+V2u_To_V2f(v2u V) {
+    return { (f32)V.X, (f32)V.Y };
+}
+
+
+// AABB 
+struct aabb2f {
+    v2f Min;
+    v2f Max;
+};
+
+struct aabb2u {
+    v2u Min;
+    v2u Max;
+};
+
+struct aabb3f {
+    v3f Min;
+    v3f Max;
+};
+
+static inline f32
+Aabb2f_Width(aabb2f Aabb) {
+    return Aabb.Max.X - Aabb.Min.X;
+}
+
+static inline f32
+Aabb2f_Height(aabb2f Aabb) {
+    return Aabb.Max.Y - Aabb.Min.Y; 
+}
+
+
+static inline u32
+Aabb2u_Width(aabb2u Aabb) {
+    return Aabb.Max.X - Aabb.Min.X;
+}
+
+static inline u32
+Aabb2u_Height(aabb2u Aabb) {
+    return Aabb.Max.Y - Aabb.Min.Y; 
+}
+
+static inline aabb2u
+Aabb2u_Create(u32 X, u32 Y, u32 Width, u32 Height) {
+    aabb2u Ret = {};
+    Ret.Min.X = X;
+    Ret.Min.Y = Y;
+    Ret.Max.X = X + Width;
+    Ret.Max.Y = Y + Height;
+    return Ret;
+}
+
+static inline aabb3f
+Aabb3f_Centered(v3f Dimensions, v3f Anchor) {
+    aabb3f Ret = {};
+    Ret.Min.X = Lerp(0.f, -Dimensions.W, Anchor.X);
+    Ret.Max.X = Lerp(Dimensions.W, 0.f, Anchor.X);
+    
+    Ret.Min.Y = Lerp(0.f, -Dimensions.H, Anchor.Y);
+    Ret.Max.Y = Lerp(Dimensions.H, 0.f, Anchor.Y);
+    
+    Ret.Min.Z = Lerp(0.f, -Dimensions.D, Anchor.Z);
+    Ret.Max.Z = Lerp(Dimensions.D, 0.f, Anchor.Z);
+    
+    return Ret; 
+}
+
+static inline f32
+Aabb2f_AspectRatio(aabb2f V) {
+    return (f32)Aabb2f_Width(V)/Aabb2f_Height(V);
+}
+
+
+// NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
+static inline aabb2f
+Aabb2u_To_Aabb2f(aabb2u V) {
+    aabb2f Ret = {};
+    Ret.Min = V2u_To_V2f(V.Min);
+    Ret.Max = V2u_To_V2f(V.Max);
+    return Ret;
+}
+
+static inline aabb2f 
+Aabb2f_Ratio(aabb2f A, aabb2f B) {
+    return  {
+        Ratio(A.Min.X, B.Min.X, B.Max.X),
+        Ratio(A.Min.Y, B.Min.Y, B.Max.Y),
+        Ratio(A.Max.X, B.Min.X, B.Max.X),
+        Ratio(A.Max.Y, B.Min.X, B.Max.Y),
+    };
+}
+
+static inline aabb2f 
+Aabb2u_Ratio(aabb2u A, aabb2u B) {
+    aabb2f Af = Aabb2u_To_Aabb2f(A);
+    aabb2f Bf = Aabb2u_To_Aabb2f(B);
+    return Aabb2f_Ratio(Af, Bf);
+}
+
+static inline b32
+Circle2f_IsIntersecting(circle2f L, circle2f R) {
+	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);
+	f32 RSq = L.Radius + R.Radius;
+    RSq *= RSq;
+	return DistSq < RSq;
+}
+
+// Matrices
 // Row major
 static inline m44f 
 operator*(m44f L, m44f R) {
@@ -491,29 +655,8 @@ operator*(m44f L, m44f R) {
     return res;
 }
 
-// Constructors...
-static inline v2f 
-V2f(v3f V) {
-    return { V.X, V.Y };
-}
-
-static inline v3f 
-V3f(v2f V) {
-    return { V.X, V.Y, 0.f };
-}
-
-static inline v2f
-V2f(v2u V) {
-    return { (f32)V.X, (f32)V.Y };
-}
-
-static inline v2f
-V2f(v2i V) {
-    return { (f32)V.X, (f32)V.Y };
-}
-
 static inline m44f 
-Transpose(m44f M) {
+M44f_Transpose(m44f M) {
     m44f Ret = {};
     for (int i = 0; i < 4; ++i ) {
         for (int j = 0; j < 4; ++j) {
@@ -526,7 +669,7 @@ Transpose(m44f M) {
 
 
 static inline m44f 
-M44fTranslation(f32 x, f32 y, f32 z) {
+M44f_Translation(f32 x, f32 y, f32 z) {
     return {
         1.f, 0.f, 0.f, x,
         0.f, 1.f, 0.f, y,
@@ -536,18 +679,7 @@ M44fTranslation(f32 x, f32 y, f32 z) {
 }
 
 static inline m44f 
-M44fTranslation(v2f Vec) {
-    return M44fTranslation(Vec.X, Vec.Y, 0);
-}
-
-static inline m44f 
-M44fTranslation(v3f Vec) {
-    return M44fTranslation(Vec.X, Vec.Y, Vec.Z);
-}
-
-
-static inline m44f 
-M44fRotationX(f32 rad) {
+M44f_RotationX(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -559,7 +691,7 @@ M44fRotationX(f32 rad) {
 }
 
 static inline m44f 
-M44fRotationY(f32 rad) {
+M44f_RotationY(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -571,7 +703,7 @@ M44fRotationY(f32 rad) {
 }
 
 static inline m44f 
-M44fRotationZ(f32 rad) {
+M44f_RotationZ(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     return {
@@ -583,7 +715,7 @@ M44fRotationZ(f32 rad) {
 }
 
 static inline m44f
-M44fScale(f32 x, f32 y, f32 z) {
+M44f_Scale(f32 x, f32 y, f32 z) {
     return {
         x, 0.f, 0.f,   0.f,
         0.f, y, 0.f,   0.f,
@@ -592,25 +724,14 @@ M44fScale(f32 x, f32 y, f32 z) {
     };
 }
 
-static inline m44f
-M44fScale(v2f Vec) {
-    return M44fScale(Vec.X, Vec.Y, 0.f);
-}
-
-static inline m44f
-M44fScale(v3f Vec) {
-    return M44fScale(Vec.X, Vec.Y, Vec.Z);
-}
-
-
 static inline m44f 
-M44fOrthographic(f32 NdcLeft, f32 NdcRight,
-                 f32 NdcBottom, f32 NdcTop,
-                 f32 NdcNear, f32 NdcFar,
-                 f32 Left, f32 Right, 
-                 f32 Bottom, f32 Top,
-                 f32 Near, f32 Far,
-                 bool FlipZ) 
+M44f_Orthographic(f32 NdcLeft, f32 NdcRight,
+                  f32 NdcBottom, f32 NdcTop,
+                  f32 NdcNear, f32 NdcFar,
+                  f32 Left, f32 Right, 
+                  f32 Bottom, f32 Top,
+                  f32 Near, f32 Far,
+                  b8 FlipZ) 
 {
     m44f Ret = {};
     Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
@@ -626,7 +747,7 @@ M44fOrthographic(f32 NdcLeft, f32 NdcRight,
 
 
 static inline m44f 
-M44fIdentity() {
+M44f_Identity() {
     return {
         1.f, 0.f, 0.f, 0.f,
         0.f, 1.f, 0.f, 0.f,
@@ -635,104 +756,13 @@ M44fIdentity() {
     };
 }
 
-static inline line2f
-Line2f(line3f Line) {
-    return {
-        Line.Min.XY,
-        Line.Max.XY,
-    };
-}
-
-static inline line3f
-Line3f(line2f Line) {
-    return {
-        V3f(Line.Min),
-        V3f(Line.Max),
-    };
-}
-
-
-static inline aabb2f
-Aabb2f(aabb3f Aabb) {
-    return {
-        Aabb.Min.XY,
-        Aabb.Max.XY,
-    };
-}
-
-static inline aabb2f 
-Aabb2f(aabb2u Aabb) {
-    return {
-        V2f(Aabb.Min),
-        V2f(Aabb.Max),
-    };
-}
-
-static inline aabb2f 
-Aabb2f(aabb2i Aabb) {
-    return {
-        V2f(Aabb.Min),
-        V2f(Aabb.Max),
-    };
-}
-
-static inline aabb3f
-Aabb3f(aabb2f Aabb) {
-    return {
-        V3f(Aabb.Min),
-        V3f(Aabb.Max),
-    };
-}
-
-static inline aabb3f
-CenteredAabb3f(v3f Dimensions, v3f Anchor) {
-    aabb3f Ret = {};
-    Ret.Min.X = Lerp(0.f, -Dimensions.W, Anchor.X);
-    Ret.Max.X = Lerp(Dimensions.W, 0.f, Anchor.X);
-    
-    Ret.Min.Y = Lerp(0.f, -Dimensions.H, Anchor.Y);
-    Ret.Max.Y = Lerp(Dimensions.H, 0.f, Anchor.Y);
-    
-    Ret.Min.Z = Lerp(0.f, -Dimensions.D, Anchor.Z);
-    Ret.Max.Z = Lerp(Dimensions.D, 0.f, Anchor.Z);
-    
-    return Ret; 
-}
-
-static inline f32 
-AspectRatio(aabb2f R) {
-    return GetWidth(R)/GetHeight(R);
-}
-
-static inline f32
-AspectRatio(aabb2u R) {
-    return (f32)GetWidth(R)/GetHeight(R);
-}
-
-
-// NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
-static inline aabb2f 
-Ratio(aabb2f A, aabb2f B) {
-    return  {
-        Ratio(A.Min.X, B.Min.X, B.Max.X),
-        Ratio(A.Min.Y, B.Min.Y, B.Max.Y),
-        Ratio(A.Max.X, B.Min.X, B.Max.X),
-        Ratio(A.Max.Y, B.Min.X, B.Max.Y),
-    };
-}
-
-static inline aabb2f 
-Ratio(aabb2u A, aabb2u B) {
-    return Ratio(Aabb2f(A), Aabb2f(B));
-}
-
 struct ray2f {
     v2f Origin;
     v2f Direction;
 };
 
 static inline ray2f
-LineToRay(line2f Line) {
+Line2f_To_Ray2f(line2f Line) {
     ray2f Ret = {};
     Ret.Origin = Line.Min;
     Ret.Direction = Line.Max - Line.Min;
@@ -740,7 +770,7 @@ LineToRay(line2f Line) {
 }
 
 static inline void 
-IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeResult) {
+Ray2f_IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeResult) {
     f32 t1;
     f32 t2;
     
@@ -762,9 +792,19 @@ PointOnRay(ray2f Ray, f32 Time) {
     return Ray.Origin + Ray.Direction * Time;
 }
 
+// Quad
+struct quad2f {
+    v2f Points[4];
+    inline auto& operator[](usize I) { 
+        Assert(I < 4);
+        return Points[I];
+    }
+    
+};
+
 
 static inline quad2f
-Quad2f(aabb2f Aabb) {
+Aabb2f_To_Quad2f(aabb2f Aabb) {
     return quad2f{
         Aabb.Min.X, Aabb.Max.Y, // top left
         Aabb.Max.X, Aabb.Max.Y, // top right

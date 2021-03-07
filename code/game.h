@@ -50,7 +50,7 @@ struct permanent_state {
 // Common functions
 static inline void
 SwitchToGameCoords(mailbox* RenderCommands) {
-    aabb3f CenterBox = CenteredAabb3f(Global_DesignSpace, Global_DesignSpaceAnchor);
+    aabb3f CenterBox = Aabb3f_Centered(Global_DesignSpace, Global_DesignSpaceAnchor);
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushOrthoCamera(RenderCommands, 
                     v3f{}, 
@@ -59,7 +59,7 @@ SwitchToGameCoords(mailbox* RenderCommands) {
 
 static inline void
 SwitchToUICoords(mailbox* RenderCommands) {
-    aabb3f CenterBox = CenteredAabb3f(Global_DesignSpace, v3f{});
+    aabb3f CenterBox = Aabb3f_Centered(Global_DesignSpace, v3f{});
     PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
     PushOrthoCamera(RenderCommands, 
                     v3f{}, 

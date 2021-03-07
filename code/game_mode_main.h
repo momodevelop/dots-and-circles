@@ -167,8 +167,8 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
         Bullet.Size.X * 0.5f 
     };
     
-    if (LengthSq(Direction) > 0.f)
-	    Bullet.Direction = Normalize(Direction);
+    if (V2f_LengthSq(Direction) > 0.f)
+	    Bullet.Direction = V2f_Normalize(Direction);
 	
     Bullet.MoodType = Mood;
 	Bullet.ImageAabb = Assets->AtlasAabbs + ((Bullet.MoodType == MoodType_Dot) ? AtlasAabb_BulletDot : AtlasAabb_BulletCircle);
@@ -329,7 +329,7 @@ UpdateCollision(game_mode_main* Mode)
         circle2f BulletCircle = Bullet->HitCircle;
         BulletCircle.Origin += Bullet->Position;
         
-        if (IsIntersecting(PlayerCircle, BulletCircle)) {
+        if (Circle2f_IsIntersecting(PlayerCircle, BulletCircle)) {
             if (Player->MoodType == Bullet->MoodType ) {
                 SwapRemove(&Mode->Bullets, I);
                 continue;
@@ -429,7 +429,7 @@ UpdateInput(game_mode_main* Mode,
     }
     
     if (IsMovementButtonDown) 
-        Player->Direction = Normalize(Direction);
+        Player->Direction = V2f_Normalize(Direction);
     else {
         Player->Direction = {};
     }
@@ -461,12 +461,16 @@ RenderPlayer(game_mode_main* Mode,
              mailbox* RenderCommands) 
 {
     player* Player = &Mode->Player;
-    m44f S = M44fScale(V3f(Player->Size));
+    m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
     
-    v3f RenderPos = V3f(Player->Position);
-    RenderPos.Z = ZLayPlayer;
-    m44f T = M44fTranslation(RenderPos);
-    
+    v3f RenderPos = { 
+        Player->Position.X, 
+        Player->Position.Y, 
+        ZLayPlayer 
+    };
+    m44f T = M44f_Translation(Player->Position.X,
+                              Player->Position.Y,
+                              ZLayPlayer);
     auto* Texture = GetTexture(Assets, Player->CircleImageAabb->TextureId);
     PushDrawTexturedQuad(RenderCommands, 
                          Color_White, 
@@ -475,8 +479,9 @@ RenderPlayer(game_mode_main* Mode,
                          GetAtlasUV(Assets, Player->CircleImageAabb));
     
     
-    RenderPos.Z += 0.1f;
-    T = M44fTranslation(RenderPos);
+    T = M44f_Translation(Player->Position.X,
+                         Player->Position.Y,
+                         ZLayPlayer + 0.01f);
     PushDrawTexturedQuad(RenderCommands, 
                          c4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
                          T*S, 
@@ -497,21 +502,27 @@ RenderBullets(game_mode_main* Mode,
     {
         bullet* Bullet = Mode->Bullets + I;
         
-		m44f S = M44fScale(V3f(Bullet->Size));
-		v3f RenderPos = V3f(Bullet->Position);
+        
+		m44f S = M44f_Scale(Bullet->Size.X, 
+                            Bullet->Size.Y, 
+                            1.f);
+        
+        f32 ZPos = {};
         switch(Bullet->MoodType) {
-            case MoodType_Dot:
-            RenderPos.Z = ZLayDotBullet + DotLayerOffset;
-            DotLayerOffset += 0.01f;
-            break;
-            case MoodType_Circle:
-            RenderPos.Z = ZLayCircleBullet + CircleLayerOffset;
-            CircleLayerOffset += 0.01f;
-            break;
+            case MoodType_Dot: {
+                ZPos= ZLayDotBullet + DotLayerOffset;
+                DotLayerOffset += 0.01f;
+            } break;
+            case MoodType_Circle: {
+                ZPos = ZLayCircleBullet + CircleLayerOffset;
+                CircleLayerOffset += 0.01f;
+            } break;
             default: 
             Assert(false);
         }
-        m44f T = M44fTranslation(RenderPos);
+        m44f T = M44f_Translation(Bullet->Position.X,
+                                  Bullet->Position.Y,
+                                  ZPos);
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,
@@ -531,10 +542,11 @@ RenderEnemies(game_mode_main* Mode,
     for(usize I = 0; I < Mode->Enemies.Count; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
-		m44f S = M44fScale(V3f(Enemy->Size));
-		v3f RenderPos = V3f(Enemy->Position);
-		RenderPos.Z = ZLayEnemy; 
-		m44f T = M44fTranslation(RenderPos);
+		m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
+		v3f RenderPos = V2f_To_V3f(Enemy->Position);
+		m44f T = M44f_Translation(Enemy->Position.X,
+                                  Enemy->Position.Y,
+                                  ZLayEnemy);
 		PushDrawTexturedQuad(RenderCommands,
 							 Color_White,
 							 T*S,

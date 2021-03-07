@@ -20,17 +20,22 @@ DrawText(mailbox* RenderCommands,
     auto* Font = GetFont(Assets, FontId);
     
     for(u32 i = 0; i < String.Count; ++i) {
-        auto* Glyph = Font->Glyphs + HashCodepoint(String[i]);
-        auto Box = Glyph->Box; 
+        game_asset_font_glyph* Glyph = Font->Glyphs + HashCodepoint(String[i]);
+        aabb2f Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f A = M44fTranslation(0.5f, 0.5f, 0.f); 
-        m44f S = M44fScale(GetWidth(Box) * Size, 
-                           GetHeight(Box) * Size, 
-                           1.f);
-        m44f T = M44fTranslation(CurPosition.X + Box.Min.X * Size, 
-                                 CurPosition.Y + Box.Min.Y * Size,  
-                                 CurPosition.Z);
+        m44f A = M44f_Translation(0.5f, 0.5f, 0.f); 
+        
+        f32 BoxWidth = Aabb2f_Width(Box);
+        f32 BoxHeight = Aabb2f_Height(Box);
+        
+        m44f S = M44f_Scale(BoxWidth * Size, 
+                            BoxHeight* Size, 
+                            1.f);
+        
+        m44f T = M44f_Translation(CurPosition.X + Box.Min.X * Size, 
+                                  CurPosition.Y + Box.Min.Y * Size,  
+                                  CurPosition.Z);
         
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
