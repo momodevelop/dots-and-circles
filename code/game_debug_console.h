@@ -64,35 +64,36 @@ RegisterCommand(debug_console* Console,
 
 static inline void 
 UnregisterCommand(debug_console* Console, string Key) {
-    RemoveIf(&Console->Commands, [Key](const debug_console_command* Cmd) { 
-                 return Cmd->Key == Key; 
-             });
+    auto Lamb = [Key](const debug_console_command* Cmd) { 
+        return Cmd->Key == Key; 
+    };
+    RemoveIf(&Console->Commands, Lamb);
 }
 
 static inline debug_console
-DebugConsole(arena* Arena, 
-             usize InfoLineCount, 
-             usize CharactersPerLine, 
-             usize CommandsCapacity,
-             v3f TransitStartPos,
-             v3f TransitEndPos,
-             f32 TransitDuration,
-             v2f Dimensions,
-             f32 StartPopRepeatDuration,
-             f32 PopRepeatDuration)
+DebugConsole_Create(arena* Arena, 
+                    usize InfoLineCount, 
+                    usize CharactersPerLine, 
+                    usize CommandsCapacity,
+                    v3f TransitStartPos,
+                    v3f TransitEndPos,
+                    f32 TransitDuration,
+                    v2f Dimensions,
+                    f32 StartPopRepeatDuration,
+                    f32 PopRepeatDuration)
 {
     debug_console Ret = {};
     
-    Ret.InfoBuffers = Array<debug_console_string>(Arena, InfoLineCount);
+    Ret.InfoBuffers = CreateArray<debug_console_string>(Arena, InfoLineCount);
     for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
         debug_console_string* InfoBuffer = Ret.InfoBuffers + I;
-        InfoBuffer->Buffer = StringBuffer(Arena, CharactersPerLine);
+        InfoBuffer->Buffer = CreateStringBuffer(Arena, CharactersPerLine);
     }
     
-    Ret.InputBuffer = StringBuffer(Arena, CharactersPerLine);
-    Ret.CommandBuffer = StringBuffer(Arena, CharactersPerLine);
+    Ret.InputBuffer = CreateStringBuffer(Arena, CharactersPerLine);
+    Ret.CommandBuffer = CreateStringBuffer(Arena, CharactersPerLine);
     
-    Ret.Commands = List<debug_console_command>(Arena, CommandsCapacity);
+    Ret.Commands = CreateList<debug_console_command>(Arena, CommandsCapacity);
     Ret.TransitTimer = CreateTimer(TransitDuration);
     
     Ret.InfoBgColor = Color_Grey3;
@@ -125,16 +126,16 @@ PushInfo(debug_console* Console, string String, c4f Color) {
 }
 
 static inline void 
-Pop(debug_console* Console) {
+DebugConsole_Pop(debug_console* Console) {
     if (!IsEmpty(&Console->InputBuffer))
         Pop(&Console->InputBuffer);
 }
 
 // Returns true if there is a new command
 static inline void 
-Update(debug_console* Console, 
-       game_input* Input,
-       f32 DeltaTime) 
+DebugConsole_Update(debug_console* Console, 
+                    game_input* Input,
+                    f32 DeltaTime) 
 {
     if (IsPoked(Input->ButtonConsole)) {
         Console->IsActive = !Console->IsActive; 
@@ -158,7 +159,7 @@ Update(debug_console* Console,
         // Remove character backspace logic
         if (IsDown(Input->ButtonBack)) {
             if(!Console->IsStartPop) {
-                Pop(Console);
+                DebugConsole_Pop(Console);
                 Console->IsStartPop = true;
                 Reset(&Console->StartPopRepeatTimer);
                 Reset(&Console->PopRepeatTimer);
@@ -166,7 +167,7 @@ Update(debug_console* Console,
             else {
                 if (IsEnd(Console->StartPopRepeatTimer)) {
                     if(IsEnd(Console->PopRepeatTimer)) {
-                        Pop(Console);
+                        DebugConsole_Pop(Console);
                         Reset(&Console->PopRepeatTimer);
                     }
                     Tick(&Console->PopRepeatTimer, DeltaTime);
@@ -266,15 +267,13 @@ Render(debug_console* Console,
             Position.Y = Bottom + PaddingHeight;
             Position.Z = Console->Position.Z + 0.02f;
             
-            DrawText(
-                     RenderCommands, 
+            DrawText(RenderCommands, 
                      Assets, 
                      Font_Default, 
                      Position,
                      Console->InputBuffer,
                      FontSize,
-                     Console->InputTextColor
-                     );
+                     Console->InputTextColor);
             
         }
         

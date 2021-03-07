@@ -1,9 +1,6 @@
 #ifndef __MOMO_COLOR__
 #define __MOMO_COLOR__
 
-#include "mm_maths.h"
-
-
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
 
 template<typename t, usize N>

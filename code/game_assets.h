@@ -117,10 +117,10 @@ Read(platform_file_handle* File,
     if(!Ret) {
         return nullptr; 
     }
-    Platform->ReadFile(File,
-                       (*FileOffset),
-                       BlockSize,
-                       Ret);
+    Platform->ReadFileFp(File,
+                         (*FileOffset),
+                         BlockSize,
+                         Ret);
     (*FileOffset) += BlockSize;
     return Ret;
 }
@@ -154,28 +154,28 @@ AllocateAssets(arena* Arena,
 {
 #define CheckFile(Handle) \
 if (Handle.Error) { \
-Platform->LogFileError(&Handle); \
+Platform->LogFileErrorFp(&Handle); \
 return nullptr; \
 }
     
 #define CheckPtr(Ptr) \
 if ((Ptr) == nullptr ) { \
-Platform->Log(#Ptr " is null"); \
+Platform->LogFp(#Ptr " is null"); \
 return nullptr; \
 } \
     
     
-    Platform->ClearTextures();
+    Platform->ClearTexturesFp();
     
     game_assets* Ret = PushStruct<game_assets>(Arena);
-    Ret->Textures = Array<game_asset_texture>(Arena, Texture_Count);
-    Ret->AtlasAabbs = Array<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
-    Ret->Fonts = Array<game_asset_font>(Arena, Font_Count);
+    Ret->Textures = CreateArray<game_asset_texture>(Arena, Texture_Count);
+    Ret->AtlasAabbs = CreateArray<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
+    Ret->Fonts = CreateArray<game_asset_font>(Arena, Font_Count);
     
     
-    platform_file_handle AssetFile = Platform->OpenAssetFile();
+    platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     CheckFile(AssetFile);
-    Defer { Platform->CloseFile(&AssetFile); }; 
+    Defer { Platform->CloseFileFp(&AssetFile); }; 
     
     usize CurFileOffset = 0;
     u32 FileEntryCount = 0;
@@ -185,7 +185,7 @@ return nullptr; \
         scratch Scratchpad = BeginScratch(Arena);
         Defer{ EndScratch(&Scratchpad); };
         
-        string Signature = String("MOMO");
+        string Signature = CreateString("MOMO");
         void* ReadSignature = Read(&AssetFile,
                                    Platform,
                                    Arena,
@@ -196,7 +196,7 @@ return nullptr; \
         CheckFile(AssetFile);
         
         if (!CheckAssetSignature(ReadSignature, Signature)) {
-            Platform->Log("[Assets] Wrong asset signature\n");
+            Platform->LogFp("[Assets] Wrong asset signature\n");
             return nullptr;
         }
         
@@ -250,9 +250,9 @@ return nullptr; \
                 CheckPtr(Pixels);
                 CheckFile(AssetFile);
                 
-                Texture->Handle = Platform->AddTexture(FileTexture->Width, 
-                                                       FileTexture->Height,
-                                                       Pixels);
+                Texture->Handle = Platform->AddTextureFp(FileTexture->Width, 
+                                                         FileTexture->Height,
+                                                         Pixels);
             } break;
             case AssetType_AtlasAabb: { 
                 using data_t = game_asset_file_atlas_aabb;

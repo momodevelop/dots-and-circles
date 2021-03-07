@@ -3,10 +3,7 @@
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 
-#include "mm_core.h"
-#include "mm_string.h"
-#include "mm_list.h"
-#include "mm_mailbox.h"
+
 #include "game_platform.h"
 #include "game_opengl.h"
 
@@ -33,7 +30,6 @@
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x0002
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
 
-// TODO: Use defines for better readability
 #define WglFunction(Name) wgl_func_##Name
 #define WglFunctionPtr(Name) WglFunction(Name)* Name
 typedef BOOL WINAPI 
@@ -60,8 +56,6 @@ static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
 static WglFunctionPtr(wglGetExtensionsStringEXT);
 
-struct win32_state {
-};
 // Globals
 b32 GlobalIsRunning;
 opengl* GlobalOpengl;
@@ -70,7 +64,8 @@ char GlobalExeFullPath[MAX_PATH];
 char* GlobalOnePastExeDirectory;
 arena GlobalArena;
 pool<HANDLE> GlobalFileHandles;
-
+void* GlobalGameMemoryBlock;
+usize GlobalGameMemoryBlockSize;
 
 #if INTERNAL
 HANDLE GlobalStdOut;
@@ -139,9 +134,7 @@ PlatformLogFunc(Win32Log) {
     Win32WriteConsole(Buffer);
 #endif
     // TODO: Logging to text file?
-    
     va_end(VaList);
-    
 }
 
 static inline LARGE_INTEGER
@@ -720,43 +713,43 @@ Win32FreeWasapi(win32_wasapi* Wasapi) {
 }
 
 
-static inline maybe<win32_wasapi>
-Win32InitWasapi(u32 SamplesPerSecond, 
+static inline b8
+Win32InitWasapi(win32_wasapi* Wasapi,
+                u32 SamplesPerSecond, 
                 u16 BitsPerSample,
                 u16 Channels,
                 usize BufferSize) 
 {
-    win32_wasapi Ret = {};
     if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
         Win32Log("[Win32::Audio] Failed CoInitializeEx\n");
-        return No();
+        return false;
     }
     
     
     if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), 
                                 NULL,
                                 CLSCTX_ALL, 
-                                IID_PPV_ARGS(&Ret.Enumerator))))
+                                IID_PPV_ARGS(&Wasapi->Enumerator))))
     {
         Win32Log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
-        return No();
+        return false;
     }
     
-    if (FAILED(Ret.Enumerator->GetDefaultAudioEndpoint(
-                                                       eRender, 
-                                                       eConsole, 
-                                                       &Ret.Device))) 
+    if (FAILED(Wasapi->Enumerator->GetDefaultAudioEndpoint(
+                                                           eRender, 
+                                                           eConsole, 
+                                                           &Wasapi->Device))) 
     {
         Win32Log("[Win32::Audio] Failed to get audio endpoint\n");
-        return No();
+        return false;
     }
     
-    if(FAILED(Ret.Device->Activate(__uuidof(IAudioClient), 
-                                   CLSCTX_ALL, 
-                                   NULL, 
-                                   (LPVOID*)&Ret.AudioClient))) {
+    if(FAILED(Wasapi->Device->Activate(__uuidof(IAudioClient), 
+                                       CLSCTX_ALL, 
+                                       NULL, 
+                                       (LPVOID*)&Wasapi->AudioClient))) {
         Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return No();
+        return false;
     }
     
     WAVEFORMATEXTENSIBLE WaveFormat;
@@ -777,36 +770,36 @@ Win32InitWasapi(u32 SamplesPerSecond,
     // buffer size in 100 nanoseconds
     REFERENCE_TIME BufferDuration = 
         10000000ULL * BufferSize / SamplesPerSecond;         
-    if (FAILED(Ret.AudioClient->Initialize(
-                                           AUDCLNT_SHAREMODE_SHARED, 
-                                           AUDCLNT_STREAMFLAGS_NOPERSIST, 
-                                           BufferDuration, 0, 
-                                           &WaveFormat.Format, nullptr)))
+    if (FAILED(Wasapi->AudioClient->Initialize(
+                                               AUDCLNT_SHAREMODE_SHARED, 
+                                               AUDCLNT_STREAMFLAGS_NOPERSIST, 
+                                               BufferDuration, 0, 
+                                               &WaveFormat.Format, nullptr)))
     {
         Win32Log("[Win32::Audio] Failed to initialize audio client\n");
-        return No();
+        return false;
     }
     
-    if (FAILED(Ret.AudioClient->GetService(IID_PPV_ARGS(&Ret.AudioRenderClient))))
+    if (FAILED(Wasapi->AudioClient->GetService(IID_PPV_ARGS(&Wasapi->AudioRenderClient))))
     {
         Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return No();
+        return false;
     }
     
     UINT32 SoundFrameCount;
-    if (FAILED(Ret.AudioClient->GetBufferSize(&SoundFrameCount)))
+    if (FAILED(Wasapi->AudioClient->GetBufferSize(&SoundFrameCount)))
     {
         Win32Log("[Win32::Audio] Failed to get buffer size\n");
-        return No();
+        return false;
     }
     
     if (BufferSize != SoundFrameCount) {
         Win32Log("[Win32::Audio] Buffer size not expected\n");
-        return No();
+        return false;
     }
     
     Win32Log("[Win32::Audio] Loaded!\n");
-    return Yes(Ret);
+    return true;
 }
 
 
@@ -883,6 +876,14 @@ Win32ProcessMessages(HWND Window,
                     case VK_F1:
                     Input->ButtonConsole.Now = IsDown;
                     break;
+                    case VK_F2:
+                    Input->ButtonInspector.Now = IsDown;
+                    break;
+                    case VK_F3:
+                    Input->ButtonSaveState.Now = IsDown;
+                    break;
+                    case VK_F4:
+                    Input->ButtonLoadState.Now = IsDown;
                     case VK_BACK:
                     Input->ButtonBack.Now = IsDown;
                     break;
@@ -1030,7 +1031,7 @@ PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     
     
     if(Win32Handle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32::ReadFile] Cannot open file: %s\n", Path);
+        Win32Log("[Win32::OpenAssetFile] Cannot open file: %s\n", Path);
         Ret.Error = PlatformFileError_CannotOpenFile;
         return Ret;
     } 
@@ -1133,58 +1134,127 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
     }
 }
 
+static inline 
+PlatformLoadStateFunc(Win32LoadState) {
+    const char* Path = "game_state";
+    HANDLE Win32Handle = CreateFileA(Path,
+                                     GENERIC_READ,
+                                     FILE_SHARE_READ,
+                                     0,
+                                     OPEN_EXISTING,
+                                     0,
+                                     0);
+    if (Win32Handle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::LoadState] Cannot open file: %s\n", Path);
+        return;
+    }
+    
+    DWORD BytesRead;
+    b8 Success = ReadFile(Win32Handle, 
+                          GlobalGameMemoryBlock,
+                          (DWORD)GlobalGameMemoryBlockSize,
+                          &BytesRead,
+                          0);
+    if (Success && GlobalGameMemoryBlockSize == BytesRead) {
+        //success
+    }
+    else {
+        Win32Log("[Win32::LoadState] Could not read all bytes: %s\n", Path);
+    }
+    
+    
+}
+
+static inline 
+PlatformSaveStateFunc(Win32SaveState) {
+    // We just dump the whole game memory into a file
+    const char* Path = "game_state";
+    
+    //DeleteFileA(Path);
+    
+    HANDLE Win32Handle = CreateFileA(Path,
+                                     GENERIC_WRITE,
+                                     FILE_SHARE_WRITE,
+                                     0,
+                                     CREATE_ALWAYS,
+                                     0,
+                                     0);
+    if (Win32Handle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::SaveState] Cannot open file: %s\n", Path);
+        return;
+    }
+    
+    DWORD BytesWritten;
+    if(!WriteFile(Win32Handle, 
+                  GlobalGameMemoryBlock,
+                  (DWORD)GlobalGameMemoryBlockSize,
+                  &BytesWritten,
+                  0)) 
+    {
+        Win32Log("[Win32::SaveState] Cannot write file: %s\n", Path);
+        return;
+    }
+    
+    if (BytesWritten != GlobalGameMemoryBlockSize) {
+        Win32Log("Win32::SaveState] Did not complete writing: %s\n", Path);
+        return;
+    }
+    
+    CloseHandle(Win32Handle);
+    
+    
+}
+
 static inline platform_api
 Win32InitPlatformApi() {
     platform_api PlatformApi = {};
-    PlatformApi.Log = Win32Log;
-    PlatformApi.ReadFile = Win32ReadFile;
-    PlatformApi.GetFileSize = Win32GetFileSize;
-    PlatformApi.ClearTextures = Win32ClearTextures;
-    PlatformApi.AddTexture = Win32AddTexture;
-    PlatformApi.OpenAssetFile = Win32OpenAssetFile;
-    PlatformApi.CloseFile = Win32CloseFile;
+    PlatformApi.LogFp = Win32Log;
+    PlatformApi.ReadFileFp = Win32ReadFile;
+    PlatformApi.GetFileSizeFp = Win32GetFileSize;
+    PlatformApi.ClearTexturesFp = Win32ClearTextures;
+    PlatformApi.AddTextureFp = Win32AddTexture;
+    PlatformApi.OpenAssetFileFp = Win32OpenAssetFile;
+    PlatformApi.CloseFileFp = Win32CloseFile;
+    PlatformApi.SaveStateFp = Win32SaveState;
+    PlatformApi.LoadStateFp = Win32LoadState;
     return PlatformApi;
 }
 
 static inline void
-Win32FreeGameMemory(game_memory* GameMemory) {
-    Win32FreeMemory(GameMemory->DebugMemory);
-    Win32FreeMemory(GameMemory->PermanentMemory);
-    Win32FreeMemory(GameMemory->TransientMemory);
+Win32FreeGameMemory() {
+    Win32FreeMemory(GlobalGameMemoryBlock);
     Win32Log("[Win32::GameMemory] Freed\n");
 }
 
-static inline maybe<game_memory>
-Win32InitGameMemory(usize PermanentMemorySize,
+static inline b8
+Win32InitGameMemory(game_memory* GameMemory,
+                    usize PermanentMemorySize,
                     usize TransientMemorySize,
                     usize DebugMemorySize) 
 {
-    game_memory GameMemory = {};
-    GameMemory.PermanentMemorySize = PermanentMemorySize;
-    GameMemory.PermanentMemory =                
-        Win32AllocateMemory(PermanentMemorySize); 
-    
-    GameMemory.TransientMemorySize = TransientMemorySize;
-    GameMemory.TransientMemory = 
-        Win32AllocateMemory(TransientMemorySize);
-    
-    GameMemory.DebugMemorySize = DebugMemorySize;
-    GameMemory.DebugMemory =
-        Win32AllocateMemory(DebugMemorySize);
-    
-    if (!GameMemory.PermanentMemory ||
-        !GameMemory.TransientMemory ||
-        !GameMemory.DebugMemory) {
-        Win32FreeGameMemory(&GameMemory);
+    GlobalGameMemoryBlockSize = PermanentMemorySize + TransientMemorySize + DebugMemorySize;
+    GlobalGameMemoryBlock = Win32AllocateMemory(GlobalGameMemoryBlockSize);
+    if (!GlobalGameMemoryBlock) {
+        Win32FreeGameMemory();
         Win32Log("[Win32::GameMemory] Failed to allocate\n");
-        return No();
+        return false;
     }
+    
+    GameMemory->PermanentMemorySize = PermanentMemorySize;
+    GameMemory->PermanentMemory = GlobalGameMemoryBlock;
+    
+    GameMemory->TransientMemorySize = TransientMemorySize;
+    GameMemory->TransientMemory = (u8*)GlobalGameMemoryBlock + PermanentMemorySize;
+    
+    GameMemory->DebugMemorySize = DebugMemorySize;
+    GameMemory->DebugMemory = (u8*)GameMemory->TransientMemory + TransientMemorySize;
+    
     Win32Log("[Win32::GameMemory] Allocated\n");
     Win32Log("[Win32::GameMemory] Permanent Memory Size: %d bytes\n", PermanentMemorySize);
     Win32Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", TransientMemorySize);
     Win32Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", DebugMemorySize);
     
-    return Yes(GameMemory); 
+    return true;
 }
 
 static inline void
@@ -1194,19 +1264,20 @@ Win32FreeRenderCommands(mailbox* RenderCommands) {
 }
 
 
-static inline maybe<mailbox>
-Win32InitRenderCommands(usize RenderCommandsMemorySize) {
+static inline b8
+Win32InitRenderCommands(mailbox* RenderCommands,
+                        usize RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
         Win32AllocateMemory(RenderCommandsMemorySize); 
     if (!RenderCommandsMemory) {
         Win32Log("[Win32::RenderCommands] Failed to allocate\n"); 
-        return No();
+        return false;
     }
-    mailbox RenderCommands = Mailbox(RenderCommandsMemory,
-                                     RenderCommandsMemorySize);
+    (*RenderCommands) = CreateMailbox(RenderCommandsMemory,
+                                      RenderCommandsMemorySize);
     Win32Log("[Win32::RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
-    return Yes(RenderCommands);
+    return true;
     
 }
 
@@ -1253,7 +1324,7 @@ WinMain(HINSTANCE Instance,
         Win32GameCode("game.dll", "temp_game.dll", "lock");
     
     // Initialize game input
-    game_input GameInput = Input(StringBuffer(&GlobalArena, 10));
+    game_input GameInput = CreateInput(CreateStringBuffer(&GlobalArena, 10));
     
     // Initialize platform api
     platform_api PlatformApi = Win32InitPlatformApi();
@@ -1270,35 +1341,33 @@ WinMain(HINSTANCE Instance,
     Defer{ Win32FreeAudioOutput(&AudioOutput); };
     
     // TODO: Should really initialize from Audio Ouput
-    maybe<win32_wasapi> Wasapi_ = 
-        Win32InitWasapi(AudioOutput.SamplesPerSecond,
+    win32_wasapi Wasapi = {};
+    if(!Win32InitWasapi(&Wasapi,
+                        AudioOutput.SamplesPerSecond,
                         AudioOutput.BitsPerSample,
                         AudioOutput.Channels,
-                        AudioOutput.BufferSize); 
-    if (!Wasapi_) { return 1; }
-    win32_wasapi& Wasapi = Wasapi_.This;
+                        AudioOutput.BufferSize)) {
+        return 1;
+    }
     Defer { Win32FreeWasapi(&Wasapi); }; 
     Wasapi.AudioClient->Start();
     
     // Initialize game memory
-    maybe<game_memory> GameMemory_ = 
-        Win32InitGameMemory(Megabytes(256),
-                            Megabytes(256),
-                            Megabytes(256));
-    if (!GameMemory_) {
+    game_memory GameMemory = {};
+    if (!Win32InitGameMemory(&GameMemory,
+                             Megabytes(256),
+                             Megabytes(256),
+                             Megabytes(256))) 
+    {
         return 1;
     }
-    game_memory& GameMemory = GameMemory_.This;
-    Defer { Win32FreeGameMemory(&GameMemory); };
-    
+    Defer { Win32FreeGameMemory(); };
     
     // Initialize RenderCommands
-    maybe<mailbox> RenderCommands_ = 
-        Win32InitRenderCommands(Megabytes(64));
-    if (!RenderCommands_) {
+    mailbox RenderCommands = {};
+    if(!Win32InitRenderCommands(&RenderCommands, Megabytes(64))) {
         return 1;
     }
-    mailbox& RenderCommands = RenderCommands_.This;
     Defer { Win32FreeRenderCommands(&RenderCommands); };
     
     // Initialize OpenGL

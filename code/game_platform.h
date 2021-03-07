@@ -4,10 +4,7 @@
 #ifndef __PLATFORM__
 #define __PLATFORM__
 
-#include <stdarg.h>
 #include "mm_core.h"
-#include "mm_string.h"
-#include "mm_mailbox.h"
 #include "game_renderer.h"
 
 // NOTE(Momo): Global Settings
@@ -24,7 +21,7 @@ struct game_input_button {
 struct game_input {
     string_buffer Characters;
     union {
-        game_input_button Buttons[8];
+        game_input_button Buttons[11];
         struct {
             game_input_button ButtonUp;
             game_input_button ButtonDown;
@@ -34,6 +31,9 @@ struct game_input {
             game_input_button ButtonSwitch;
             game_input_button ButtonBack;
             game_input_button ButtonConsole;
+            game_input_button ButtonInspector;
+            game_input_button ButtonSaveState;
+            game_input_button ButtonLoadState;
         };
     };
     
@@ -42,8 +42,7 @@ struct game_input {
 
 
 static inline game_input
-Input(string_buffer Buffer) 
-{
+CreateInput(string_buffer Buffer) {
     game_input Ret = {};
     Ret.Characters = Buffer;
     return Ret;
@@ -123,16 +122,23 @@ typedef PlatformAddTextureFunc(platform_add_texture);
 #define PlatformClearTexturesFunc(Name) void Name()
 typedef PlatformClearTexturesFunc(platform_clear_textures);
 
+#define PlatformSaveStateFunc(Name) void Name() 
+typedef PlatformSaveStateFunc(platform_save_state);
+
+#define PlatformLoadStateFunc(Name) void Name()
+typedef PlatformLoadStateFunc(platform_load_state);
 
 struct platform_api {
-    platform_log* Log;
-    platform_get_file_size* GetFileSize;
-    platform_add_texture* AddTexture;
-    platform_clear_textures* ClearTextures;
-    platform_open_asset_file* OpenAssetFile;
-    platform_close_file* CloseFile;
-    platform_log_file_error* LogFileError;
-    platform_read_file* ReadFile;
+    platform_log* LogFp;
+    platform_get_file_size* GetFileSizeFp;
+    platform_add_texture* AddTextureFp;
+    platform_clear_textures* ClearTexturesFp;
+    platform_open_asset_file* OpenAssetFileFp;
+    platform_close_file* CloseFileFp;
+    platform_log_file_error* LogFileErrorFp;
+    platform_read_file* ReadFileFp;
+    platform_save_state* SaveStateFp;
+    platform_load_state* LoadStateFp;
 };
 
 

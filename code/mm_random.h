@@ -4,8 +4,6 @@
 // Very pseudo, much wow.
 // TODO: make a REAL rng.
 
-#include "mm_core.h"
-
 #define MaxNumber 0x05f5c21f
 #define MinNumber 0x000025a0
 
@@ -545,7 +543,7 @@ Next(rng_series *Series)
     if(Series->Index >= ArrayCount(Table)) {
         Series->Index = 0;
     }
-
+    
     return(Result);
 }
 
@@ -560,7 +558,7 @@ Unilateral(rng_series *Series)
 {
     f32 Divisor = 1.0f / (f32)MaxNumber;
     f32 Result = Divisor*(f32)Next(Series);
-
+    
     return(Result);
 }
 
@@ -570,7 +568,7 @@ static inline f32
 Bilateral(rng_series *Series)
 {
     f32 Result = 2.0f * Unilateral(Series) - 1.0f;
-
+    
     return(Result);
 }
 
@@ -578,7 +576,7 @@ static inline f32
 Between(rng_series *Series, f32 Min, f32 Max)
 {
     f32 Result = Lerp(Min, Unilateral(Series), Max);
-
+    
     return(Result);
 }
 
@@ -586,7 +584,7 @@ static inline i32
 Between(rng_series *Series, i32 Min, i32 Max)
 {
     i32 Result = Min + (i32)(Next(Series)%((Max + 1) - Min));
-
+    
     return(Result);
 }
 

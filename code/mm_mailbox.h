@@ -2,9 +2,6 @@
 #ifndef __MOMO_MAILBOX_H__
 #define __MOMO_MAILBOX_H__
 
-#include "mm_maths.h"
-#include "mm_arena.h"
-
 struct mailbox_entry_header {
     u32 Type;
     u32 OffsetToData;
@@ -34,7 +31,7 @@ Clear(mailbox* Mailbox) {
 }
 
 static inline mailbox
-Mailbox(void* Memory, usize MemorySize) {
+CreateMailbox(void* Memory, usize MemorySize) {
     mailbox Ret = {};
     Ret.Memory = (u8*)Memory;
     Ret.MemorySize = MemorySize;
@@ -57,28 +54,30 @@ GetDataFromEntry(mailbox* Mailbox, mailbox_entry_header* Entry) {
 }
 
 
-template<typename T>
-static inline T*
-Push(mailbox* Mailbox) 
+template<typename type>
+static inline type*
+Push(mailbox* Mailbox, u32 Id) 
 {
     // Allocate Data
-    u8 DataAdjust = AlignForwardDiff(Mailbox->DataMemoryAt, alignof(T));
-    u32 DataSize = sizeof(T);
+    u8 DataAdjust = AlignForwardDiff(Mailbox->DataMemoryAt, alignof(type));
+    u32 DataSize = sizeof(type);
     
     // Allocate Entry
     u8 EntryAdjust = AlignBackwardDiff(Mailbox->EntryMemoryAt, alignof(mailbox_entry_header));
     u32 EntrySize = sizeof(mailbox_entry_header);
-   
+    
     if (Mailbox->EntryMemoryAt - EntrySize - EntryAdjust < Mailbox->DataMemoryAt + DataSize +  DataAdjust) {
         return nullptr; 
     }
     
-    auto* Data = (T*)((u8*)Mailbox->DataMemoryAt + DataAdjust);
+    type* Data = (type*)((u8*)Mailbox->DataMemoryAt + DataAdjust);
     Mailbox->DataMemoryAt += DataSize + DataAdjust;
     
     auto* Entry = (mailbox_entry_header*)((u8*)Mailbox->EntryMemoryAt + EntryAdjust);
+    
     Entry->OffsetToData = (u32)((u8*)Data - Mailbox->Memory);
-    Entry->Type = T::TypeId; 
+    
+    Entry->Type = Id; 
     Mailbox->EntryMemoryAt -= EntrySize;
     ++Mailbox->EntryCount;
     

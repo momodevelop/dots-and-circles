@@ -10,12 +10,12 @@
 //
 
 
-#define BootstrapArray(name, type, count) type AnonVar(__LINE__)[count] = {}; array<type> name = Array(AnonVar(__LINE__), count)
+#define BootstrapArray(name, type, count) type AnonVar(__LINE__)[count] = {}; array<type> name = CreateArray(AnonVar(__LINE__), count)
 
 struct array_u32 {
     usize Count;
     u32* Elements;
-
+    
     inline auto& operator[](usize I) {
         Assert(I < Count);
         return Elements[I];
@@ -24,19 +24,19 @@ struct array_u32 {
 
 
 static inline array_u32
-Array(u32* Elements, usize Count) {
+CreateArray(u32* Elements, usize Count) {
     array_u32 Ret = {};
     Ret.Elements = Elements;
     Ret.Count = Count;
-
+    
     return Ret;
 }
 
 template<typename type>
 static inline array<type> 
-Array(arena* Arena, usize Count) {
+CreateArray(arena* Arena, usize Count) {
     type* Buffer = PushSiArray<type>(Arena, Count);
-    return Array(Buffer, Count);
+    return CreateArray(Buffer, Count);
     
 }
 
@@ -44,7 +44,7 @@ template<typename type>
 static inline array<type>
 SubArray(array<type> Src, range<usize> Slice) {
     Assert(Slice.Start <= Slice.End);
-    return Array(Src.Elements + Slice.Start, Slice.End - Slice.Start);
+    return CreateArray(Src.Elements + Slice.Start, Slice.End - Slice.Start);
 };
 
 
@@ -79,8 +79,8 @@ Find(array<type>* Array,
      usize StartIndex = 0) 
 {
     return Find(Array, [Item](type* It) {
-        return (*It) == Item;       
-    }, StartIndex);
+                    return (*It) == Item;       
+                }, StartIndex);
 }
 
 template<typename type>

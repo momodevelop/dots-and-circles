@@ -1,8 +1,6 @@
 #ifndef __MOMO_MATH__
 #define __MOMO_MATH__
 
-#include "mm_core.h"
-#include <math.h>
 
 
 // NOTE(Momo): To future self: We wrap the math functions IN CASE we 

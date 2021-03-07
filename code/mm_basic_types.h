@@ -1,10 +1,6 @@
 #ifndef MM_BASIC_TYPES_H
 #define MM_BASIC_TYPES_H
 
-// Includes that I sadly cannot live without
-#include <cstdint>
-#define REFACTOR 0
-
 // Types
 typedef char c8;
 typedef bool b8;

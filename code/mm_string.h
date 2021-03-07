@@ -1,38 +1,34 @@
 #ifndef MM_STRING
 #define MM_STRING
 
-#include "mm_list.h"
-#include "mm_arena.h"
-#include "mm_array.h"
-
-using string = array<char>;
-using string_buffer = list<char>;
+typedef array<char> string;
+typedef list<char> string_buffer;
 
 static inline string_buffer
-StringBuffer(char* Memory, usize Capacity) {
-    return List<char>(Memory, Capacity);
+CreateStringBuffer(char* Memory, usize Capacity) {
+    return CreateList<char>(Memory, Capacity);
 }
 
 static inline string_buffer
-StringBuffer(arena* Arena, usize Capacity) {
-    return List<char>(Arena, Capacity);
+CreateStringBuffer(arena* Arena, usize Capacity) {
+    return CreateList<char>(Arena, Capacity);
 }
 
 static inline string
-String(char* Elements, usize Count) {
-    return Array(Elements, Count);
+CreateString(char* Elements, usize Count) {
+    return CreateArray(Elements, Count);
 }
 
 // Assumes C-String
 static inline string 
-String(char* SiStr) {
-    return String(SiStr, SiStrLen(SiStr));
+CreateString(char* SiStr) {
+    return CreateString(SiStr, SiStrLen(SiStr));
 }
 
 // Assumes C-String
 static inline string 
-String(const char* SiStr) {
-    return String((char*)SiStr);
+CreateString(const char* SiStr) {
+    return CreateString((char*)SiStr);
 }
 
 static inline string
@@ -47,19 +43,18 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
     // in memory, and thus convertible to an array<string> struct.
     array<string> Ret ={}; 
     range<usize> Range = {};
-
+    
     for (;Range.End != Str.Count;) {
         Range.End = Find(&Str, ' ', Range.Start); 
         
-
         string* Link = PushStruct<string>(Arena);
         Assert(Link);
         (*Link) = SubString(Str, Range);
-
+        
         if (Ret.Elements == nullptr) {
             Ret.Elements = Link;            
         }
- 
+        
         Range.Start = Range.End + 1;
         ++Ret.Count;
     }
@@ -78,14 +73,14 @@ PushU32(string_buffer* Dest, u32 Num) {
         Push(Dest, '0');
         return;
     }
-
+    
     usize StartPoint = Dest->Count; 
-
+    
     for(; Num != 0; Num /= 10) {
         i32 DigitToConvert = Num % 10;
         Push(Dest, (char)(DigitToConvert + '0'));
     }
-
+    
     // Reverse starting from start point to count
     usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
     for(usize I = 0; I < SubStrLenHalved; ++I) {
@@ -100,21 +95,21 @@ PushI32(string_buffer* Dest, i32 Num) {
         Push(Dest, '0');
         return;
     }
-
+    
     usize StartPoint = Dest->Count; 
-
+    
     b32 Negative = Num < 0;
     Num = Abs(Num);
-
+    
     for(; Num != 0; Num /= 10) {
         i32 DigitToConvert = Num % 10;
         Push(Dest, (char)(DigitToConvert + '0'));
     }
-
+    
     if (Negative) {
         Push(Dest, '-');
     }
-
+    
     // Reverse starting from start point to count
     usize SubStrLenHalved = (Dest->Count - StartPoint)/2;
     for(usize I = 0; I < SubStrLenHalved; ++I) {

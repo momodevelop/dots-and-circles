@@ -15,6 +15,7 @@ void (*Log)(const char* Format, ...);
 #include "game_debug.h"
 #include "game_draw.h"
 
+
 #if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
@@ -27,33 +28,33 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
         PushInfo(Console, 
-                 String("Expected only 2 arguments"), 
+                 CreateString("Expected only 2 arguments"), 
                  Color_Red);
         return;
     }
     
     string StateToChangeTo = ArgList[1];
-    if (StateToChangeTo == String("main")) {
+    if (StateToChangeTo == CreateString("main")) {
         PushInfo(Console, 
-                 String("Jumping to Main"), 
+                 CreateString("Jumping to Main"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (StateToChangeTo == String("splash")) {
+    else if (StateToChangeTo == CreateString("splash")) {
         PushInfo(Console, 
-                 String("Jumping to Splash"),  
+                 CreateString("Jumping to Splash"),  
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (StateToChangeTo == String("sandbox")) {
+    else if (StateToChangeTo == CreateString("sandbox")) {
         PushInfo(Console, 
-                 String("Jumping to Sandbox"), 
+                 CreateString("Jumping to Sandbox"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
         PushInfo(Console, 
-                 String("Invalid state to jump to"), 
+                 CreateString("Invalid state to jump to"), 
                  Color_Red);
     }
     
@@ -112,7 +113,7 @@ GameUpdateFunc(GameUpdate)
                                      GameMemory->DebugMemory,
                                      GameMemory->DebugMemorySize);
         
-        DebugState->Variables = List<debug_variable>(&DebugState->Arena, 16); 
+        DebugState->Variables = CreateList<debug_variable>(&DebugState->Arena, 16); 
         
         // Init console
         {
@@ -124,19 +125,19 @@ GameUpdateFunc(GameUpdate)
             };
             
             DebugState->Console = 
-                DebugConsole(&DebugState->Arena, 
-                             5, 
-                             110, 
-                             16,
-                             Position - v3f{0.f, 240.f},
-                             Position,
-                             0.1f,
-                             Dimensions,
-                             0.5f,
-                             0.025f);
+                DebugConsole_Create(&DebugState->Arena, 
+                                    5, 
+                                    110, 
+                                    16,
+                                    Position - v3f{0.f, 240.f},
+                                    Position,
+                                    0.1f,
+                                    Dimensions,
+                                    0.5f,
+                                    0.025f);
             
             RegisterCommand(&DebugState->Console, 
-                            String("jump"), 
+                            CreateString("jump"), 
                             CmdJump, 
                             DebugState);
         }
@@ -147,7 +148,16 @@ GameUpdateFunc(GameUpdate)
     }
     
     
-    Update(&DebugState->Console, Input, DeltaTime);
+    DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
+    
+    // NOTE(Momo): Save and load state trigger for platform
+    // TODO: Put this somewhere else
+    if (IsPoked(Input->ButtonSaveState)) {
+        Platform->SaveStateFp();
+    }
+    else if(IsPoked(Input->ButtonLoadState)) {
+        Platform->LoadStateFp();
+    }
     
 #if 0 
     static f32 TSine = 0.f;
@@ -236,7 +246,6 @@ GameUpdateFunc(GameUpdate)
     
     // Render Console
     Render(DebugState, TranState->Assets, RenderCommands);
-    //Render(&DebugState->Console, RenderCommands, TranState->Assets);
     
     return PermState->IsRunning;
 }

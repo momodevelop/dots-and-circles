@@ -1,29 +1,27 @@
 #ifndef __MM_STREAM__
 #define __MM_STREAM__
 
-#include "mm_array.h"
-
 // TODO: Linked list of stream chunks?
 struct stream {
     array<u8> Contents;
     usize Current;
-
+    
     // For bit reading
     u32 BitBuffer;
     u32 BitCount;
 };
 
 static inline stream
-Stream(void* Memory, usize MemorySize) {
+CreateStream(void* Memory, usize MemorySize) {
     stream Ret = {};
-    Ret.Contents = Array((u8*)Memory, MemorySize);
+    Ret.Contents = CreateArray((u8*)Memory, MemorySize);
     return Ret;
 }
 
 static inline stream
-Stream(arena* Arena, usize Capacity) {
+CreateStream(arena* Arena, usize Capacity) {
     void* Memory = PushBlock(Arena, Capacity);
-    return Stream(Memory, Capacity); 
+    return CreateStream(Memory, Capacity); 
 } 
 
 static inline b32
@@ -57,12 +55,12 @@ ConsumeBits(stream* S, u32 Amount){
         S->BitBuffer |= (Byte << S->BitCount);
         S->BitCount += 8;
     }
-
+    
     u32 Result = S->BitBuffer & ((1 << Amount) - 1); 
-
+    
     S->BitCount -= Amount;
     S->BitBuffer >>= Amount;
-
+    
     return Result;
 }
 

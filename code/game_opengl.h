@@ -354,7 +354,7 @@ Init(opengl* Opengl,
      u32 MaxEntities,
      u32 MaxTextures) 
 {
-    Opengl->Textures = List<GLuint>(&Opengl->Arena, MaxTextures);
+    Opengl->Textures = CreateList<GLuint>(&Opengl->Arena, MaxTextures);
     
     Opengl->RenderDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;

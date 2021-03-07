@@ -11,26 +11,26 @@ struct read_file_result
 };
 
 static inline maybe<read_file_result>
-ReadFile(const char* Filename) {
+ReadFileToMemory(const char* Filename) {
     FILE* File = {};
     if (fopen_s(&File, Filename, "rb") != 0) { 
         printf("Cannot find file\n");
         return No();
     }
     Defer{ fclose(File); };
-
-
+    
+    
     fseek(File, 0, SEEK_END);
     i32 Filesize = ftell(File);
     fseek(File, 0, SEEK_SET);
     
     void* FileMemory = malloc(Filesize);
     fread(FileMemory, 1, Filesize, File); 
-
+    
     read_file_result Ret = {};
     Ret.Memory = FileMemory;
     Ret.MemorySize = Filesize;
-
+    
     return Yes(Ret);
 }
 
@@ -41,15 +41,15 @@ static constexpr usize PngMaxFixedLitCodes = 288;
 struct png_context {
     stream Stream;
     arena* Arena; 
-
+    
     b32 IsImageInitialized;
     stream ImageStream;
     stream DepressedImageStream;
-
+    
     u32 ImageWidth;
     u32 ImageHeight;
     u32 ImageChannels;
-
+    
     scratch ImageStreamMark;
     scratch DepressedImageStreamMark;
 };
@@ -125,7 +125,7 @@ Huffman(arena* Arena,
     png_huffman Ret = {};
     Ret.CodeSymTable = Array<u16>(Arena, CodeSymTableCap);
     Ret.LenCountTable = Array<u16>(Arena, LenCountTableCap);
-
+    
     // 1. Count the number of codes for each code length
     for (usize Sym = 0; 
          Sym < SymLenTable.Count;
@@ -135,15 +135,15 @@ Huffman(arena* Arena,
         Assert(Len < PngMaxBits);
         ++Ret.LenCountTable[Len];
     }
-
+    
     // 2. Numerical value of smallest code for each code length
     u16 LenOffsetTable[PngMaxBits+1] = {};
     for (usize Len = 1; Len < PngMaxBits; ++Len)
     {
         LenOffsetTable[Len+1] = LenOffsetTable[Len] + Ret.LenCountTable[Len]; 
     }
-
-
+    
+    
     // 3. Assign numerical values to all codes
     for (usize Sym = 0;
          Sym < SymLenTable.Count;
@@ -155,7 +155,7 @@ Huffman(arena* Arena,
             Ret.CodeSymTable[Code] = (u16)Sym;
         }
     }
-
+    
     return Ret;
 }
 
@@ -164,7 +164,7 @@ Decode(stream* SrcStream, png_huffman* Huffman) {
     i32 Code = 0;
     i32 First = 0;
     i32 Index = 0;
-
+    
     for (i32 Len = 1; Len <= PngMaxBits; ++Len) {
         Code |= ConsumeBits(SrcStream, 1);
         i32 Count = Huffman->LenCountTable[Len];
@@ -175,7 +175,7 @@ Decode(stream* SrcStream, png_huffman* Huffman) {
         First <<= 1;
         Code <<= 1;
     }
-
+    
     // TODO: Should return some kind of error code
     return 0;
 }
@@ -211,11 +211,11 @@ Deflate(png_context* Context)
             case 0b10: {
                 png_huffman LitHuffman = {};
                 png_huffman DistHuffman = {};
-
+                
                 if (BTYPE == 0b01) {
                     // Fixed huffman
                     printf(">>>> Fixed huffman\n");
-
+                    
                     BootstrapArray(LitLenTable, u16, PngMaxFixedLitCodes);
                     BootstrapArray(DistLenTable, u16, PngMaxDistCodes);
                     
@@ -230,7 +230,7 @@ Deflate(png_context* Context)
                         LitLenTable[Lit] = 8;
                     for (Lit = 0; Lit < PngMaxDistCodes; ++Lit) 
                         DistLenTable[Lit] = 5;
-                     
+                    
                     LitHuffman = Huffman(Context->Arena, 
                                          LitLenTable, 
                                          PngMaxBits+1,
@@ -239,7 +239,7 @@ Deflate(png_context* Context)
                                           DistLenTable,
                                           PngMaxBits+1,
                                           PngMaxDistCodes);
-
+                    
                 }
                 else // BTYPE == 0b10
                 {
@@ -247,7 +247,7 @@ Deflate(png_context* Context)
                     printf(">>>> Dynamic huffman not supported\n");
                     return false;
                 }
-
+                
                 static const short Lens[29] = { /* Size base for length codes 257..285 */
                     3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
                     35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258};
@@ -296,9 +296,9 @@ Deflate(png_context* Context)
                     }
                 }
                 printf("\n");
-
+                
                 // TODO: Reconstruct pixels and send to final pixel output
-
+                
             } break;
             default: {
                 printf("Error\n");
@@ -350,11 +350,11 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
             case 0b10: {
                 png_huffman LitHuffman = {};
                 png_huffman DistHuffman = {};
-
+                
                 if (BTYPE == 0b01) {
                     // Fixed huffman
                     printf(">>>> Fixed huffman\n");
-
+                    
                     BootstrapArray(LitLenTable, u16, PngMaxFixedLitCodes);
                     BootstrapArray(DistLenTable, u16, PngMaxDistCodes);
                     
@@ -369,17 +369,17 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                         LitLenTable[Lit] = 8;
                     for (Lit = 0; Lit < PngMaxDistCodes; ++Lit) 
                         DistLenTable[Lit] = 5;
-                     
+                    
                     LitHuffman = Huffman(Arena, 
                                          LitLenTable, 
                                          PngMaxBits+1,
                                          PngMaxFixedLitCodes);
                     DistHuffman = Huffman(Arena,
-                //Advance(&PngStream, ChunkHeader->Length - 2);
+                                          //Advance(&PngStream, ChunkHeader->Length - 2);
                                           DistLenTable,
                                           PngMaxBits+1,
                                           PngMaxDistCodes);
-
+                    
                 }
                 else // BTYPE == 0b10
                 {
@@ -387,7 +387,7 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                     printf(">>>> Dynamic huffman not supported\n");
                     return false;
                 }
-
+                
                 u32 LenCountTable[PngMaxBits + 1] = {};
                 for (;;) 
                 {
@@ -424,9 +424,9 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                     }
                 }
                 printf("\n");
-
+                
                 // TODO: Reconstruct pixels and send to final pixel output
-
+                
             } break;
             default: {
                 printf("Error\n");
@@ -449,38 +449,38 @@ ParseIDATChunk(png_context* Context) {
     FDICT = ConsumeBits(&Context->Stream, 1);
     FLEVEL = ConsumeBits(&Context->Stream, 2); //useless?
     printf(">> CM: %d\n\
->> CINFO: %d\n\
->> FCHECK: %d\n\
->> FDICT: %d\n\
->> FLEVEL: %d\n",
-            CM, 
-            CINFO, 
-            FCHECK, 
-            FDICT, 
-            FLEVEL); 
+           >> CINFO: %d\n\
+           >> FCHECK: %d\n\
+           >> FDICT: %d\n\
+           >> FLEVEL: %d\n",
+           CM, 
+           CINFO, 
+           FCHECK, 
+           FDICT, 
+           FLEVEL); 
     if (CM != 8 || FDICT != 0 || CINFO > 7) {
         return false;
     }
-
+    
     if (!Context->IsImageInitialized) {
         printf("Result W/H/C: %d, %d, %d\n", Context->ImageWidth, 
-                Context->ImageHeight, Context->ImageChannels);
+               Context->ImageHeight, Context->ImageChannels);
         usize ImageSize = Context->ImageWidth * 
-                          Context->ImageHeight * 
-                          Context->ImageChannels;
-
+            Context->ImageHeight * 
+            Context->ImageChannels;
+        
         Context->ImageStreamMark = BeginScratch(Context->Arena);
         Context->ImageStream = Stream(Context->ImageStreamMark, ImageSize);
-    
+        
         Context->DepressedImageStreamMark = BeginScratch(Context->ImageStreamMark);
         usize DepressedImageDataSize = (Context->ImageWidth + 1) *
-                                        Context->ImageHeight* 
-                                        Context->ImageChannels;
+            Context->ImageHeight* 
+            Context->ImageChannels;
         Context->DepressedImageStream = Stream(Context->Arena, DepressedImageDataSize);
-
+        
         Context->IsImageInitialized = true;
     }
-
+    
     scratch Scratch = BeginScratch(Context->Arena);
     Defer { EndScratch(&Scratch); };
     // Deflate
@@ -501,7 +501,7 @@ ParsePng(arena* Arena,
     png_context Context = {};
     Context.Stream = Stream(PngMemory, PngMemorySize); 
     Context.Arena = Arena;
-
+    
     // Read the signature
     auto* PngHeader = Consume<png_header>(&Context.Stream);  
     if (!PngHeader) { return No(); }
@@ -514,14 +514,14 @@ ParsePng(arena* Arena,
             return No();
         }
     }
-
+    
     // Check for IHDR which MUST appear first
     auto* ChunkHeader = Consume<png_chunk_header>(&Context.Stream);
     if (!ChunkHeader){ return No(); }
     if (ChunkHeader->TypeU32 != FourCC("IHDR")) { return No(); }
     auto* IHDR = Consume<png_chunk_data_IHDR>(&Context.Stream);
     if (!IHDR) { return No(); }
-
+    
     // Unsupported details
     if (IHDR->ColourType != 6 &&
         IHDR->BitDepth != 8 &&
@@ -533,12 +533,12 @@ ParsePng(arena* Arena,
     }
     EndianSwap(&IHDR->Width);
     EndianSwap(&IHDR->Height);
-
+    
     Context.ImageWidth = IHDR->Width;
     Context.ImageHeight = IHDR->Height;
     Context.ImageChannels = 4;
     Consume<png_chunk_footer>(&Context.Stream);
-
+    
     // Search for IDAT header
     while(!IsEos(&Context.Stream)) {
         ChunkHeader = Consume<png_chunk_header>(&Context.Stream);
@@ -571,16 +571,16 @@ int main() {
     if (!Memory) { return 1; }
     Defer { free(Memory); };  
     arena AppArena = Arena(Memory, MemorySize);
-
-    maybe<read_file_result> PngFile_ = ReadFile("test2.png");
+    
+    maybe<read_file_result> PngFile_ = ReadFileToMemory("test2.png");
     if (!PngFile_){
         return 1;
     }
     read_file_result& PngFile = PngFile_.This;
     Defer { free(PngFile.Memory); }; 
-
+    
     ParsePng(&AppArena, PngFile.Memory, PngFile.MemorySize);
-
+    
     printf("Done!");
     return 0;
 }

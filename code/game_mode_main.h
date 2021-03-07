@@ -15,11 +15,11 @@ constexpr static f32 ZLayDotBullet = 10.f;
 constexpr static f32 ZLayCircleBullet = 20.f;
 constexpr static f32 ZLayEnemy = 30.f;
 constexpr static f32 ZLayDebug = 40.f;
-    
+
 enum mood_type : u32 {
     MoodType_Dot,
     MoodType_Circle,
-
+    
     MoodType_Count,
 };
 
@@ -33,13 +33,13 @@ enum enemy_mood_pattern_type : u32 {
 
 enum enemy_firing_pattern_type : u32 {
     EnemyFiringPatternType_Homing,
-
+    
     EnemyFiringPatternType_Count,
 };
 
 enum enemy_movement_type : u32 {
     EnemyMovementType_Static,
-
+    
     EnemyMovementType_Count,
 };
 
@@ -75,11 +75,11 @@ struct player {
     f32 DotImageTransitionDuration;
     
     v2f Size;
-   
+    
 	// Collision
     circle2f HitCircle;
-
-
+    
+    
     // Physics
     v2f Position;
     v2f Direction; 
@@ -107,22 +107,22 @@ struct enemy {
     enemy_firing_pattern_type FiringPatternType;
     enemy_mood_pattern_type MoodPatternType;
     enemy_movement_type MovementType;
-
+    
     f32 FireTimer;
 	f32 FireDuration;
-
+    
     f32 LifeTimer;
     f32 LifeDuration;
 };
 
 struct game_mode_main {
     arena Arena;
-
+    
     player Player;
-
+    
     list<bullet> Bullets;
     list<enemy> Enemies;
-
+    
     wave Wave;
     rng_series Rng;
 };
@@ -130,26 +130,26 @@ struct game_mode_main {
 
 static inline void
 SpawnEnemy(game_mode_main* Mode, 
-        game_assets* Assets, 
-        v2f Position,
-        enemy_mood_pattern_type MoodPatternType,
-        enemy_firing_pattern_type FiringPatternType, 
-        enemy_movement_type MovementType, 
-        f32 FireRate,
-        f32 LifeDuration) 
+           game_assets* Assets, 
+           v2f Position,
+           enemy_mood_pattern_type MoodPatternType,
+           enemy_firing_pattern_type FiringPatternType, 
+           enemy_movement_type MovementType, 
+           f32 FireRate,
+           f32 LifeDuration) 
 {
     enemy Enemy = {}; 
     Enemy.Position = Position;
     Enemy.Size = { 32.f, 32.f };
-
+    
     Enemy.FireTimer = 0.f;
     Enemy.FireDuration = FireRate; 
     Enemy.LifeDuration = LifeDuration;
-
+    
     Enemy.FiringPatternType = FiringPatternType;
     Enemy.MoodPatternType = MoodPatternType;
     Enemy.MovementType = MovementType;
-
+    
     // TODO: Change to appropriate enemy
     Enemy.ImageAabb = Assets->AtlasAabbs + AtlasAabb_Enemy;
     Push(&Mode->Enemies, Enemy);
@@ -166,16 +166,16 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
         { 0.f, 0.f }, 
         Bullet.Size.X * 0.5f 
     };
-
+    
     if (LengthSq(Direction) > 0.f)
 	    Bullet.Direction = Normalize(Direction);
 	
     Bullet.MoodType = Mood;
 	Bullet.ImageAabb = Assets->AtlasAabbs + ((Bullet.MoodType == MoodType_Dot) ? AtlasAabb_BulletDot : AtlasAabb_BulletCircle);
-		
+    
     Push(&Mode->Bullets, Bullet);
 }
-	
+
 
 static inline void 
 InitMainMode(permanent_state* PermState,
@@ -183,13 +183,13 @@ InitMainMode(permanent_state* PermState,
              debug_state* DebugState) 
 {
     game_mode_main* Mode = PermState->MainMode;
-
+    
     Mode->Arena = SubArena(&PermState->ModeArena, Remaining(PermState->ModeArena));
-    Mode->Bullets = List<bullet>(&Mode->Arena, 128);
-    Mode->Enemies = List<enemy>(&Mode->Arena, 128);
+    Mode->Bullets = CreateList<bullet>(&Mode->Arena, 128);
+    Mode->Enemies = CreateList<enemy>(&Mode->Arena, 128);
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
-
+    
     game_assets* Assets = TranState->Assets;
     player* Player = &Mode->Player;
     Player->Speed = 300.f;
@@ -210,13 +210,13 @@ InitMainMode(permanent_state* PermState,
     Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
     
     Mode->Wave.IsDone = true;
-
-    HookU32Variable(DebugState, String("Bullets"), &Mode->Bullets);
+    
+    HookU32Variable(DebugState, CreateString("Bullets"), &Mode->Bullets);
 }
 
 static inline void
 UninitMainMode(debug_state* DebugState) {
-    UnhookVariable(DebugState, String("Bullets"));
+    UnhookVariable(DebugState, CreateString("Bullets"));
 }
 
 static inline void 
@@ -225,8 +225,8 @@ UpdatePlayer(game_mode_main* Mode,
 {
     player* Player = &Mode->Player; 
     Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
-            Player->DotImageAlphaTarget, 
-            Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
+                                 Player->DotImageAlphaTarget, 
+                                 Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
     
     Player->DotImageTransitionTimer += DeltaTime;
     Player->DotImageTransitionTimer = 
@@ -254,7 +254,7 @@ UpdateBullet(game_mode_main* Mode,
         }
         ++I;
     }
-
+    
 }
 
 
@@ -267,43 +267,43 @@ UpdateEnemies(game_mode_main* Mode,
     for (usize I = 0; I < Mode->Enemies.Count; ++I) 
     {
         enemy* Enemy = Mode->Enemies + I;
-
+        
         // Movement
         switch( Enemy->MovementType ) {
             case EnemyMovementType_Static:
-                // Do nothing
-                break;
+            // Do nothing
+            break;
             default: 
-                Assert(false);
+            Assert(false);
         }
-
+        
         // Fire
         Enemy->FireTimer += DeltaTime;
 		if (Enemy->FireTimer > Enemy->FireDuration) {       
             mood_type MoodType = {};
             switch (Enemy->MoodPatternType) {
                 case EnemyMoodPatternType_Dot: 
-                    MoodType = MoodType_Dot;
-                    break;
+                MoodType = MoodType_Dot;
+                break;
                 case EnemyMoodPatternType_Circle:
-                    MoodType = MoodType_Circle;
-                    break;
+                MoodType = MoodType_Circle;
+                break;
                 default:
-                    Assert(false);
+                Assert(false);
             }
-
+            
             v2f Dir = {};
             switch (Enemy->FiringPatternType) {
 		    	case EnemyFiringPatternType_Homing: 
-                    Dir = Player->Position - Enemy->Position;
-			        break;
+                Dir = Player->Position - Enemy->Position;
+                break;
                 default:
-                    Assert(false);
+                Assert(false);
 		    }
             SpawnBullet(Mode, Assets, Enemy->Position, Dir, 200.f, MoodType);
             Enemy->FireTimer = 0.f;
 		}
-
+        
         // Life time
         Enemy->LifeTimer += DeltaTime;
         if (Enemy->LifeTimer > Enemy->LifeDuration) {
@@ -311,7 +311,7 @@ UpdateEnemies(game_mode_main* Mode,
             continue;
         }
         ++Enemy;
-
+        
 	}
 }
 
@@ -321,19 +321,19 @@ UpdateCollision(game_mode_main* Mode)
     player* Player = &Mode->Player;
     circle2f PlayerCircle = Player->HitCircle;
     PlayerCircle.Origin += Player->Position;
-
+    
     // Player vs every bullet
     for (usize I = 0; I < Mode->Bullets.Count;) 
     {
         bullet* Bullet = Mode->Bullets + I;
         circle2f BulletCircle = Bullet->HitCircle;
         BulletCircle.Origin += Bullet->Position;
-
+        
         if (IsIntersecting(PlayerCircle, BulletCircle)) {
-             if (Player->MoodType == Bullet->MoodType ) {
+            if (Player->MoodType == Bullet->MoodType ) {
                 SwapRemove(&Mode->Bullets, I);
                 continue;
-             }
+            }
         }
         ++I;
     }
@@ -341,8 +341,8 @@ UpdateCollision(game_mode_main* Mode)
 
 static inline void
 UpdateWaves(game_mode_main* Mode, 
-           game_assets* Assets,
-           f32 DeltaTime) 
+            game_assets* Assets,
+            f32 DeltaTime) 
 {
     if (Mode->Wave.IsDone) {
         // TODO: Random wave type
@@ -358,7 +358,7 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->Duration = 30.f;
             } break;
             default: 
-                Assert(false);
+            Assert(false);
         }
         Mode->Wave.IsDone = false;
     }
@@ -376,30 +376,30 @@ UpdateWaves(game_mode_main* Mode,
                     };
                     auto MoodType = 
                         (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
-
+                    
                     SpawnEnemy(Mode, 
-                            Assets,
-                            Pos,
-                            MoodType,
-                            EnemyFiringPatternType_Homing,
-                            EnemyMovementType_Static,
-                            0.5f, 
-                            10.f);
-
+                               Assets,
+                               Pos,
+                               MoodType,
+                               EnemyFiringPatternType_Homing,
+                               EnemyMovementType_Static,
+                               0.5f, 
+                               10.f);
+                    
                     Pattern->SpawnTimer = 0.f;
                 }
                 
                 if (Pattern->Timer >= Pattern->Duration) {
                     Mode->Wave.IsDone = true;
                 }
-
+                
             } break;
             default:
-                Assert(false);
+            Assert(false);
         }
         
     }
-
+    
 }
 
 static inline void
@@ -448,12 +448,12 @@ UpdateInput(game_mode_main* Mode,
                 Player->DotImageAlphaTarget = 0.f;
             }break;
             default:
-                Assert(false);
+            Assert(false);
         }
         Player->DotImageTransitionTimer = 0.f;
     }
 }
-   
+
 
 static inline void 
 RenderPlayer(game_mode_main* Mode,
@@ -466,14 +466,14 @@ RenderPlayer(game_mode_main* Mode,
     v3f RenderPos = V3f(Player->Position);
     RenderPos.Z = ZLayPlayer;
     m44f T = M44fTranslation(RenderPos);
-   
+    
     auto* Texture = GetTexture(Assets, Player->CircleImageAabb->TextureId);
     PushDrawTexturedQuad(RenderCommands, 
                          Color_White, 
                          T*S,
                          Texture->Handle,
                          GetAtlasUV(Assets, Player->CircleImageAabb));
-
+    
     
     RenderPos.Z += 0.1f;
     T = M44fTranslation(RenderPos);
@@ -482,7 +482,7 @@ RenderPlayer(game_mode_main* Mode,
                          T*S, 
                          GetTexture(Assets, Player->DotImageAabb->TextureId)->Handle,
                          GetAtlasUV(Assets, Player->DotImageAabb));
-
+    
 }
 
 static inline void
@@ -496,20 +496,20 @@ RenderBullets(game_mode_main* Mode,
     for (usize I = 0; I < Mode->Bullets.Count; ++I) 
     {
         bullet* Bullet = Mode->Bullets + I;
-
+        
 		m44f S = M44fScale(V3f(Bullet->Size));
 		v3f RenderPos = V3f(Bullet->Position);
         switch(Bullet->MoodType) {
             case MoodType_Dot:
-                RenderPos.Z = ZLayDotBullet + DotLayerOffset;
-                DotLayerOffset += 0.01f;
-                break;
+            RenderPos.Z = ZLayDotBullet + DotLayerOffset;
+            DotLayerOffset += 0.01f;
+            break;
             case MoodType_Circle:
-                RenderPos.Z = ZLayCircleBullet + CircleLayerOffset;
-                CircleLayerOffset += 0.01f;
-                break;
+            RenderPos.Z = ZLayCircleBullet + CircleLayerOffset;
+            CircleLayerOffset += 0.01f;
+            break;
             default: 
-                Assert(false);
+            Assert(false);
         }
         m44f T = M44fTranslation(RenderPos);
 		PushDrawTexturedQuad(RenderCommands,
@@ -517,9 +517,9 @@ RenderBullets(game_mode_main* Mode,
 							 T*S,
 							 GetTexture(Assets, Bullet->ImageAabb->TextureId)->Handle,
 							 GetAtlasUV(Assets, Bullet->ImageAabb));
-
-
-    
+        
+        
+        
 	}
 }
 
@@ -562,13 +562,13 @@ UpdateMainMode(permanent_state* PermState,
     UpdateWaves(Mode, Assets, DeltaTime);
     UpdateEnemies(Mode, Assets, DeltaTime); 
     UpdateCollision(Mode);
-
-
+    
+    
     RenderPlayer(Mode, Assets, RenderCommands);
     RenderBullets(Mode, Assets, RenderCommands);
     RenderEnemies(Mode, Assets, RenderCommands);
-
-
+    
+    
     // TODO: We would like better debug rendering system please that is more global
     // Debug Rendering 
 #if REFACTOR
@@ -577,7 +577,7 @@ UpdateMainMode(permanent_state* PermState,
         string_buffer Buffer = StringBuffer(Scratchpad, 256);
         Push(&Buffer, String("Bullets: "));
         PushI32(&Buffer, (i32)Mode->Bullets.Count);
-
+        
         // Number of dot bullets
         DrawText(RenderCommands, 
                  Assets, 
@@ -587,7 +587,7 @@ UpdateMainMode(permanent_state* PermState,
                  32.f, 
                  Buffer.Array);
         Clear(&Buffer);
-
+        
         Push(&Buffer, String("Enemies: "));
         PushI32(&Buffer, (i32)Mode->Enemies.Count);
         

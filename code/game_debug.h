@@ -34,10 +34,10 @@ struct debug_variable {
 struct debug_state {
     b32 IsInitialized;
     arena Arena;
-   
+    
     list<debug_variable> Variables; 
     debug_console Console;
-
+    
     struct permanent_state* PermanentState;
     struct transient_state* TransientState;
 };
@@ -65,9 +65,9 @@ HookU32Variable(debug_state* State,
 static inline void
 UnhookVariable(debug_state* State, string Name) {
     RemoveIf(&State->Variables, [=](debug_variable* Var) {
-        return Name == Var->Name; 
-    });
-
+                 return Name == Var->Name; 
+             });
+    
 }
 
 static inline void
@@ -83,17 +83,17 @@ Render(debug_state* State,
 {
     // Render console system
     Render(&State->Console, RenderCommands, Assets);
-
+    
     // For each variable, render:
     // Name: Data
     for (usize I = 0; I < State->Variables.Count; ++I) {
         scratch Scratchpad = BeginScratch(&State->Arena);
         Defer{ EndScratch(&Scratchpad); };
-
-        string_buffer Buffer = StringBuffer(Scratchpad, 256);
+        
+        string_buffer Buffer = CreateStringBuffer(Scratchpad, 256);
         Push(&Buffer, State->Variables[I].Name);
-        Push(&Buffer, String(": "));
-
+        Push(&Buffer, CreateString(": "));
+        
         Assert(State->Variables[I].Data);
         switch(State->Variables[I].Type) {
             case DebugVariableType_B32: {
@@ -112,16 +112,16 @@ Render(debug_state* State,
                 Assert(false);
             }
         }
-
+        
         DrawText(
-             RenderCommands, 
-             Assets, 
-             Font_Default, 
-             v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
-             Buffer,
-             32.f, 
-             Color_White 
-        );
+                 RenderCommands, 
+                 Assets, 
+                 Font_Default, 
+                 v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
+                 Buffer,
+                 32.f, 
+                 Color_White 
+                 );
         Clear(&Buffer);
     }
 }

@@ -35,7 +35,7 @@ template<typename type>
 static inline array<type> 
 CreateArray(arena* Arena, usize Count) {
     type* Buffer = PushSiArray<type>(Arena, Count);
-    return Array(Buffer, Count);
+    return CreateArray(Buffer, Count);
     
 }
 
@@ -43,7 +43,7 @@ template<typename type>
 static inline array<type>
 SubArray(array<type> Src, range<usize> Slice) {
     Assert(Slice.Start <= Slice.End);
-    return Array(Src.Elements + Slice.Start, Slice.End - Slice.Start);
+    return CreateArray(Src.Elements + Slice.Start, Slice.End - Slice.Start);
 };
 
 

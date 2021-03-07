@@ -1,9 +1,6 @@
 #ifndef __LIST__
 #define __LIST__
 
-#include "mm_core.h"
-#include "mm_array.h"
-
 template<typename type>
 struct list : array<type>{
     usize Capacity; // Total number of borrowable objects.

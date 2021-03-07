@@ -1,10 +1,13 @@
 #ifndef __MM_CORE_H__
 #define __MM_CORE_H__
 
-// TODO(Momo): Remove this
-// Current it's being used by mm_aabb_packer for qsort()
+#include <math.h>
+#include <cstdint>
 
 #include "mm_basic_types.h"
+#include "mm_maths.h"
+#include "mm_colors.h"
+#include "mm_easing.h"
 #include "mm_bitwise.h"
 #include "mm_arena.h"
 #include "mm_array.h"
@@ -12,5 +15,9 @@
 #include "mm_sort.h"
 #include "mm_pool.h"
 #include "mm_aabb_packer.h"
+#include "mm_list.h"
+#include "mm_string.h"
+#include "mm_random.h"
+#include "mm_stream.h"
 
-#endif
+#endif // __MM_CORE_H__
