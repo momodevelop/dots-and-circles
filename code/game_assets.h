@@ -57,7 +57,7 @@ GetHeight(game_asset_font* Font) {
 
 
 struct game_assets {
-    // TODO: remove
+    // TODO: remove?
     arena Arena;
     
     array<game_asset_texture> Textures;
