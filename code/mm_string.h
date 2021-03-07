@@ -16,13 +16,13 @@ CreateStringBuffer(arena* Arena, usize Capacity) {
 
 static inline string
 CreateString(char* Elements, usize Count) {
-    return CreateArray(Elements, Count);
+    return Array_Create(Elements, Count);
 }
 
 // Assumes C-String
 static inline string 
 CreateString(char* SiStr) {
-    return CreateString(SiStr, SiStrLen(SiStr));
+    return Array_Create(SiStr, SiStrLen(SiStr));
 }
 
 // Assumes C-String
@@ -33,7 +33,7 @@ CreateString(const char* SiStr) {
 
 static inline string
 SubString(string Src, range<usize> Range) {
-    return SubArray(Src, Range);
+    return Array_SubArray(Src, Range);
 }
 
 static inline array<string>

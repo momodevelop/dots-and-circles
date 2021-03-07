@@ -23,7 +23,7 @@ struct array {
 
 template<typename type>
 static inline array<type>
-CreateArray(type* Elements, usize Count) {
+Array_Create(type* Elements, usize Count) {
     array<type> Ret = {};
     Ret.Elements = Elements;
     Ret.Count = Count;
@@ -33,17 +33,17 @@ CreateArray(type* Elements, usize Count) {
 
 template<typename type>
 static inline array<type> 
-CreateArray(arena* Arena, usize Count) {
+Array_Create(arena* Arena, usize Count) {
     type* Buffer = Arena_PushSiArray<type>(Arena, Count);
-    return CreateArray(Buffer, Count);
+    return Array_Create(Buffer, Count);
     
 }
 
 template<typename type>
 static inline array<type>
-SubArray(array<type> Src, range<usize> Slice) {
+Array_SubArray(array<type> Src, range<usize> Slice) {
     Assert(Slice.Start <= Slice.End);
-    return CreateArray(Src.Elements + Slice.Start, Slice.End - Slice.Start);
+    return Array_Create(Src.Elements + Slice.Start, Slice.End - Slice.Start);
 };
 
 

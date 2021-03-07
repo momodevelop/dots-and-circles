@@ -84,7 +84,7 @@ DebugConsole_Create(arena* Arena,
 {
     debug_console Ret = {};
     
-    Ret.InfoBuffers = CreateArray<debug_console_string>(Arena, InfoLineCount);
+    Ret.InfoBuffers = Array_Create<debug_console_string>(Arena, InfoLineCount);
     for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
         debug_console_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = CreateStringBuffer(Arena, CharactersPerLine);

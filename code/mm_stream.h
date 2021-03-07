@@ -14,7 +14,7 @@ struct stream {
 static inline stream
 CreateStream(void* Memory, usize MemorySize) {
     stream Ret = {};
-    Ret.Contents = CreateArray((u8*)Memory, MemorySize);
+    Ret.Contents = Array_Create((u8*)Memory, MemorySize);
     return Ret;
 }
 

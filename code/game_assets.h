@@ -173,9 +173,9 @@ return nullptr; \
     Platform->ClearTexturesFp();
     
     game_assets* Ret = Arena_PushStruct<game_assets>(Arena);
-    Ret->Textures = CreateArray<game_asset_texture>(Arena, Texture_Count);
-    Ret->AtlasAabbs = CreateArray<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
-    Ret->Fonts = CreateArray<game_asset_font>(Arena, Font_Count);
+    Ret->Textures = Array_Create<game_asset_texture>(Arena, Texture_Count);
+    Ret->AtlasAabbs = Array_Create<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
+    Ret->Fonts = Array_Create<game_asset_font>(Arena, Font_Count);
     
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
