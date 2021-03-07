@@ -27,7 +27,7 @@ template<typename type>
 static inline list<type>
 CreateList(arena* Arena, usize Capacity) {
     list<type> Ret = {};
-    Ret.Elements = PushSiArray<type>(Arena, Capacity);
+    Ret.Elements = Arena_PushSiArray<type>(Arena, Capacity);
     Ret.Capacity = Capacity;
     return Ret;
 }

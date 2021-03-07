@@ -113,7 +113,7 @@ Read(platform_file_handle* File,
      usize BlockSize,
      u8 BlockAlignment)
 {
-    void* Ret = PushBlock(Arena, BlockSize, BlockAlignment);
+    void* Ret = Arena_PushBlock(Arena, BlockSize, BlockAlignment);
     if(!Ret) {
         return nullptr; 
     }
@@ -167,7 +167,7 @@ return nullptr; \
     
     Platform->ClearTexturesFp();
     
-    game_assets* Ret = PushStruct<game_assets>(Arena);
+    game_assets* Ret = Arena_PushStruct<game_assets>(Arena);
     Ret->Textures = CreateArray<game_asset_texture>(Arena, Texture_Count);
     Ret->AtlasAabbs = CreateArray<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
     Ret->Fonts = CreateArray<game_asset_font>(Arena, Font_Count);
@@ -182,8 +182,8 @@ return nullptr; \
     
     // Check file signaure
     {        
-        scratch Scratchpad = BeginScratch(Arena);
-        Defer{ EndScratch(&Scratchpad); };
+        scratch Scratchpad = Arena_BeginScratch(Arena);
+        Defer{ Arena_EndScratch(&Scratchpad); };
         
         string Signature = CreateString("MOMO");
         void* ReadSignature = Read(&AssetFile,
@@ -211,8 +211,8 @@ return nullptr; \
     
     for (u32 I = 0; I < FileEntryCount; ++I) 
     {
-        scratch Scratchpad = BeginScratch(Arena);
-        Defer{ EndScratch(&Scratchpad); };
+        scratch Scratchpad = Arena_BeginScratch(Arena);
+        Defer{ Arena_EndScratch(&Scratchpad); };
         
         // NOTE(Momo): Read header
         auto* FileEntry = Read<game_asset_file_entry>(&AssetFile,

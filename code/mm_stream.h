@@ -20,7 +20,7 @@ CreateStream(void* Memory, usize MemorySize) {
 
 static inline stream
 CreateStream(arena* Arena, usize Capacity) {
-    void* Memory = PushBlock(Arena, Capacity);
+    void* Memory = Arena_PushBlock(Arena, Capacity);
     return CreateStream(Memory, Capacity); 
 } 
 

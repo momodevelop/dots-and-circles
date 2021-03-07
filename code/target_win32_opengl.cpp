@@ -648,7 +648,7 @@ Win32FreeGlobalArena() {
 static inline b32
 Win32AllocateGlobalArena(u32 PlatformMemorySize) {
     void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
-    GlobalArena = CreateArena(PlatformMemory, PlatformMemorySize); 
+    GlobalArena = Arena_Create(PlatformMemory, PlatformMemorySize); 
     if(!PlatformMemory) {
         Win32Log("[Win32::Arena] Cannot allocate platform arena\n");
         return false;

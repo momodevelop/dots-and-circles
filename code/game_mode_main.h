@@ -184,7 +184,7 @@ InitMainMode(permanent_state* PermState,
 {
     game_mode_main* Mode = PermState->MainMode;
     
-    Mode->Arena = SubArena(&PermState->ModeArena, Remaining(PermState->ModeArena));
+    Mode->Arena = Arena_SubArena(&PermState->ModeArena, Arena_GetRemaining(PermState->ModeArena));
     Mode->Bullets = CreateList<bullet>(&Mode->Arena, 128);
     Mode->Enemies = CreateList<enemy>(&Mode->Arena, 128);
     Mode->Wave.IsDone = true;

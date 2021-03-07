@@ -47,7 +47,7 @@ DelimitSplit(string Str, arena* Arena, char Delimiter) {
     for (;Range.End != Str.Count;) {
         Range.End = Find(&Str, ' ', Range.Start); 
         
-        string* Link = PushStruct<string>(Arena);
+        string* Link = Arena_PushStruct<string>(Arena);
         Assert(Link);
         (*Link) = SubString(Str, Range);
         

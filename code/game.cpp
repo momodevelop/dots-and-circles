@@ -22,8 +22,8 @@ static inline void
 CmdJump(debug_console* Console, void* Context, string Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
-    scratch Scratchpad = BeginScratch(&DebugState->Arena);
-    Defer{ EndScratch(&Scratchpad); };
+    scratch Scratchpad = Arena_BeginScratch(&DebugState->Arena);
+    Defer{ Arena_EndScratch(&Scratchpad); };
     array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
@@ -81,8 +81,8 @@ GameUpdateFunc(GameUpdate)
                                     GameMemory->PermanentMemory, 
                                     GameMemory->PermanentMemorySize);
         
-        PermState->ModeArena = SubArena(&PermState->MainArena, 
-                                        Remaining(PermState->MainArena));
+        PermState->ModeArena = Arena_SubArena(&PermState->MainArena, 
+                                              Arena_GetRemaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
         PermState->IsInitialized = true;
@@ -189,23 +189,23 @@ GameUpdateFunc(GameUpdate)
         
         
         
-        Clear(&PermState->ModeArena);
+        Arena_Clear(&PermState->ModeArena);
         arena* ModeArena = &PermState->ModeArena;
         
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
                 PermState->SplashMode = 
-                    PushStruct<game_mode_splash>(ModeArena); 
+                    Arena_PushStruct<game_mode_splash>(ModeArena); 
                 InitSplashMode(PermState);
             } break;
             case GameModeType_Main: {
                 PermState->MainMode = 
-                    PushStruct<game_mode_main>(ModeArena); 
+                    Arena_PushStruct<game_mode_main>(ModeArena); 
                 InitMainMode(PermState, TranState, DebugState);
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
-                    PushStruct<game_mode_sandbox>(ModeArena); 
+                    Arena_PushStruct<game_mode_sandbox>(ModeArena); 
                 InitSandboxMode(PermState);
             } break;
             default: {
