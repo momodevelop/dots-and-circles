@@ -82,7 +82,7 @@ GameUpdateFunc(GameUpdate)
                                     GameMemory->PermanentMemorySize);
         
         PermState->ModeArena = Arena_SubArena(&PermState->MainArena, 
-                                              Arena_GetRemaining(PermState->MainArena));
+                                              Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
         PermState->IsInitialized = true;

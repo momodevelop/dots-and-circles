@@ -291,12 +291,13 @@ int main() {
                                           &Box.Max.X, 
                                           &Box.Max.Y);
                     
-                    WriteFontGlyph(AssetBuilder, Font->FontId, 
+                    WriteFontGlyph(AssetBuilder, 
+                                   Font->FontId, 
                                    Font->TextureId, 
                                    Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
                                    Aabb2u(Aabb), 
-                                   Aabb2f(Box) * FontPixelScale);
+                                   Aabb2i_To_Aabb2f(Box) * FontPixelScale);
                     
                 } break;
                 

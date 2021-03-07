@@ -19,7 +19,7 @@ Arena_Clear(arena* Arena) {
 }
 
 static inline usize 
-Arena_GetRemaining(arena Arena) {
+Arena_Remaining(arena Arena) {
     return Arena.Capacity - Arena.Used;
 }
 

@@ -538,8 +538,17 @@ V2u_To_V2f(v2u V) {
     return { (f32)V.X, (f32)V.Y };
 }
 
+static inline v2f 
+V2i_To_V2f(v2i V) {
+    return { (f32)V.X, (f32)V.Y };
+}
 
 // AABB 
+struct aabb2i {
+    v2i Min;
+    v2i Max;
+};
+
 struct aabb2f {
     v2f Min;
     v2f Max;
@@ -554,6 +563,12 @@ struct aabb3f {
     v3f Min;
     v3f Max;
 };
+
+static inline aabb2f
+operator*(aabb2f Lhs, f32 Rhs) {
+    return { Lhs.Min * Rhs, Lhs.Max * Rhs };
+}
+
 
 static inline f32
 Aabb2f_Width(aabb2f Aabb) {
@@ -606,8 +621,14 @@ Aabb2f_AspectRatio(aabb2f V) {
     return (f32)Aabb2f_Width(V)/Aabb2f_Height(V);
 }
 
+static inline aabb2f
+Aabb2i_To_Aabb2f(aabb2i V) {
+    aabb2f Ret = {};
+    Ret.Min = V2i_To_V2f(V.Min);
+    Ret.Max = V2i_To_V2f(V.Max);
+    return Ret;
+}
 
-// NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
 static inline aabb2f
 Aabb2u_To_Aabb2f(aabb2u V) {
     aabb2f Ret = {};
@@ -616,6 +637,7 @@ Aabb2u_To_Aabb2f(aabb2u V) {
     return Ret;
 }
 
+// NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
 static inline aabb2f 
 Aabb2f_Ratio(aabb2f A, aabb2f B) {
     return  {
