@@ -7,14 +7,14 @@ struct timer {
 };
 
 static inline timer
-CreateTimer(f32 EndTime) {
+Timer_Create(f32 EndTime) {
     timer Ret = {};
     Ret.End = EndTime;
     return Ret;
 }
 
 static inline void
-Tick(timer* Timer, f32 DeltaTime) {
+Timer_Tick(timer* Timer, f32 DeltaTime) {
     Timer->Current += DeltaTime;
     if (Timer->Current >= Timer->End) {
         Timer->Current = Timer->End;
@@ -22,7 +22,7 @@ Tick(timer* Timer, f32 DeltaTime) {
 }
 
 static inline void
-Untick(timer* Timer, f32 DeltaTime) {
+Timer_Untick(timer* Timer, f32 DeltaTime) {
     Timer->Current -= DeltaTime;
     if (Timer->Current < 0.f ) {
         Timer->Current = 0.f;
@@ -30,23 +30,23 @@ Untick(timer* Timer, f32 DeltaTime) {
 }
 
 static inline void
-Reset(timer* Timer) {
+Timer_Reset(timer* Timer) {
     Timer->Current = 0.f;
 }
 
 static inline b32
-IsEnd(timer Timer) {
+Timer_IsEnd(timer Timer) {
     return Timer.Current >= Timer.End;
 }
 
 static inline b32
-IsBegin(timer Timer) {
+Timer_IsBegin(timer Timer) {
     return Timer.Current <= 0.f;
 }
 
 // Returns [0 - 1]
 static inline f32
-Percent(timer Timer) {
+Timer_Percent(timer Timer) {
     Assert(Timer.End != 0.f);
     return Timer.Current / Timer.End;
 }

@@ -94,7 +94,7 @@ DebugConsole_Create(arena* Arena,
     Ret.CommandBuffer = CreateStringBuffer(Arena, CharactersPerLine);
     
     Ret.Commands = CreateList<debug_console_command>(Arena, CommandsCapacity);
-    Ret.TransitTimer = CreateTimer(TransitDuration);
+    Ret.TransitTimer = Timer_Create(TransitDuration);
     
     Ret.InfoBgColor = Color_Grey3;
     Ret.InfoTextDefaultColor = Color_White;
@@ -104,8 +104,8 @@ DebugConsole_Create(arena* Arena,
     Ret.Position = TransitStartPos;
     Ret.TransitStartPos = TransitStartPos;
     Ret.TransitEndPos = TransitEndPos;
-    Ret.StartPopRepeatTimer = CreateTimer(StartPopRepeatDuration);
-    Ret.PopRepeatTimer = CreateTimer(PopRepeatDuration); 
+    Ret.StartPopRepeatTimer = Timer_Create(StartPopRepeatDuration);
+    Ret.PopRepeatTimer = Timer_Create(PopRepeatDuration); 
     
     return Ret;
 }
@@ -143,13 +143,13 @@ DebugConsole_Update(debug_console* Console,
     
     // Transition
     {
-        f32 P = EaseInQuad(Percent(Console->TransitTimer));
+        f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
         v3f Delta = Console->TransitEndPos - Console->TransitStartPos; 
         Console->Position = Console->TransitStartPos + (P * Delta); 
     }
     
     if (Console->IsActive) {
-        Tick(&Console->TransitTimer, DeltaTime);
+        Timer_Tick(&Console->TransitTimer, DeltaTime);
         if (Input->Characters.Count > 0 && 
             Input->Characters.Count <= Remaining(Console->InputBuffer)) 
         {  
@@ -161,18 +161,18 @@ DebugConsole_Update(debug_console* Console,
             if(!Console->IsStartPop) {
                 DebugConsole_Pop(Console);
                 Console->IsStartPop = true;
-                Reset(&Console->StartPopRepeatTimer);
-                Reset(&Console->PopRepeatTimer);
+                Timer_Reset(&Console->StartPopRepeatTimer);
+                Timer_Reset(&Console->PopRepeatTimer);
             }
             else {
-                if (IsEnd(Console->StartPopRepeatTimer)) {
-                    if(IsEnd(Console->PopRepeatTimer)) {
+                if (Timer_IsEnd(Console->StartPopRepeatTimer)) {
+                    if(Timer_IsEnd(Console->PopRepeatTimer)) {
                         DebugConsole_Pop(Console);
-                        Reset(&Console->PopRepeatTimer);
+                        Timer_Reset(&Console->PopRepeatTimer);
                     }
-                    Tick(&Console->PopRepeatTimer, DeltaTime);
+                    Timer_Tick(&Console->PopRepeatTimer, DeltaTime);
                 }
-                Tick(&Console->StartPopRepeatTimer, DeltaTime);
+                Timer_Tick(&Console->StartPopRepeatTimer, DeltaTime);
             }
         }
         else {
@@ -198,7 +198,7 @@ DebugConsole_Update(debug_console* Console,
         }
     }
     else if (!Console->IsActive) {
-        Untick(&Console->TransitTimer, DeltaTime);
+        Timer_Untick(&Console->TransitTimer, DeltaTime);
     }
     
     
@@ -209,7 +209,7 @@ Render(debug_console* Console,
        mailbox* RenderCommands,
        game_assets* Assets) 
 {
-    if (IsBegin(Console->TransitTimer)) {
+    if (Timer_IsBegin(Console->TransitTimer)) {
         return;
     }
     game_asset_font* Font = Assets->Fonts + Font_Default;
