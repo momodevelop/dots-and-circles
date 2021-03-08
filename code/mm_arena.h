@@ -41,17 +41,28 @@ Arena_PushBlock(arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
     return ret;
 }
 
+#define Arena_PushArray(Type, Arena, Count) \
+(Type*)Arena_PushBlock((Arena), sizeof(Type)*(Count), alignof(Type));
+
+//#define Arena_PushStruct(Type, Arena) \
+//(Type*)Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
+
+// TODO(Momo): Remove
 template<typename type>
 static inline type*
 Arena_PushStruct(arena* Arena) {
     return (type*)Arena_PushBlock(Arena, sizeof(type), alignof(type));
 }
 
+// TODO(Momo): Remove
 template<typename type>
 static inline type*
 Arena_PushSiArray(arena* Arena, usize Count) {
     return (type*)Arena_PushBlock(Arena, sizeof(type) * Count, alignof(type));
 }
+
+
+
 
 // NOTE(Momo): "Temporary Memory" API
 struct scratch {
@@ -95,10 +106,10 @@ Arena_SubArena(arena* SrcArena, usize Capacity) {
 }
 
 static inline void*
-Arena_BootstrapBlock(usize StructSize,
-                     usize OffsetToArena,
-                     void* Memory,
-                     usize MemorySize) 
+Arena_BootupBlock(usize StructSize,
+                  usize OffsetToArena,
+                  void* Memory,
+                  usize MemorySize) 
 {
     Assert(StructSize < MemorySize);
     void* ArenaMemory = (u8*)Memory + StructSize; 
@@ -110,6 +121,6 @@ Arena_BootstrapBlock(usize StructSize,
 }
 
 
-#define BootstrapStruct(Type, Member, Memory, MemorySize) (Type*)Arena_BootstrapBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
+#define Arena_BootupStruct(Type, Member, Memory, MemorySize) (Type*)Arena_BootupBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
 
 #endif

@@ -1,11 +1,9 @@
 # Engine-ish 
-[] Remove stdlib for texture packer
 [] Live Looped Editing
 [] Animation
 [] Figure out animation format for game side
 [] Figure out animation asset format
-[] Save/Load state
-[] Loops recording 
+[] Log to text file
 [] Quaternions?
 [] Introspection?
 

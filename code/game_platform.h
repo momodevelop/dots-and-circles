@@ -125,7 +125,7 @@ typedef PlatformClearTexturesFunc(platform_clear_textures);
 #define PlatformSaveStateFunc(Name) void Name() 
 typedef PlatformSaveStateFunc(platform_save_state);
 
-#define PlatformLoadStateFunc(Name) void Name()
+#define PlatformLoadStateFunc(Name) b8 Name()
 typedef PlatformLoadStateFunc(platform_load_state);
 
 struct platform_api {
