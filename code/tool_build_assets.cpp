@@ -293,13 +293,14 @@ int main() {
                                           &Box.Max.X, 
                                           &Box.Max.Y);
                     
+                    aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
                     WriteFontGlyph(AssetBuilder, 
                                    Font->FontId, 
                                    Font->TextureId, 
                                    Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
                                    Aabb2u(Aabb), 
-                                   Aabb2i_To_Aabb2f(Box) * FontPixelScale);
+                                   ScaledBox);
                     
                 } break;
                 

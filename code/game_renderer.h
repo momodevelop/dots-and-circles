@@ -128,7 +128,7 @@ PushOrthoCamera(mailbox* Commands,
                                 true);
     
     m44f V = M44f_Translation(-Position.X, -Position.Y, -Position.Z);
-    Data->Basis = P*V;
+    Data->Basis = M44f_Concat(P,V);
 }
 
 static inline void
@@ -211,9 +211,10 @@ PushDrawLine(mailbox* Payload,
     m44f R = M44f_RotationZ(Angle);
     m44f S = M44f_Scale(LineLength, Thickness, 1.f) ;
     
-    m44f Transform = T*R*S;
+    m44f RS = M44f_Concat(R,S);
+    m44f TRS = M44f_Concat(T, RS);
     
-    PushDrawQuad(Payload, Colors, Transform);
+    PushDrawQuad(Payload, Colors, TRS);
 }
 
 static inline void 

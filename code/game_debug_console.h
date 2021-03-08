@@ -230,7 +230,7 @@ Render(debug_console* Console,
         m44f PositionMatrix = M44f_Translation(Console->Position.X,
                                                Console->Position.Y,
                                                Console->Position.Z);
-        m44f InfoBgTransform = PositionMatrix * ScaleMatrix;
+        m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
         PushDrawQuad(RenderCommands, 
                      Console->InfoBgColor, 
                      InfoBgTransform);
@@ -242,7 +242,7 @@ Render(debug_console* Console,
                                                Bottom + LineHeight * 0.5f,
                                                Console->Position.Z + 0.01f);
         
-        m44f InputBgTransform = PositionMatrix * ScaleMatrix;
+        m44f InputBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
         PushDrawQuad(RenderCommands, 
                      Console->InputBgColor, 
                      InputBgTransform);

@@ -46,7 +46,7 @@ Update(splash_image_entity* Entity,
     game_asset_texture* Texture = GetTexture(Assets, Entity->TextureHandle);
     PushDrawTexturedQuad(RenderCommands, 
                          Entity->Colors, 
-                         T*S,  
+                         M44f_Concat(T,S),  
                          Texture->Handle);
     
 }
@@ -81,8 +81,8 @@ Update(splash_blackout_entity* Entity,
                               Entity->Position.Y,
                               Entity->Position.Z);
     m44f S = M44f_Scale(Entity->Scale.X, Entity->Scale.Y, 1.f);
-    
-    PushDrawQuad(RenderCommands, Entity->Colors, T*S);
+    m44f TS = M44f_Concat(T,S);
+    PushDrawQuad(RenderCommands, Entity->Colors, TS);
     
 }
 

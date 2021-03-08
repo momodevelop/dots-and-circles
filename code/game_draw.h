@@ -37,9 +37,12 @@ DrawText(mailbox* RenderCommands,
                                   CurPosition.Y + Box.Min.Y * Size,  
                                   CurPosition.Z);
         
+        m44f SA = M44f_Concat(S,A);
+        m44f TSA = M44f_Concat(T, SA);
+        
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
-                             T*S*A,
+                             TSA,
                              GetTexture(Assets, Glyph->TextureId)->Handle,
                              GetAtlasUV(Assets, Glyph));
         

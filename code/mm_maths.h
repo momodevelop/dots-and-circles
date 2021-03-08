@@ -486,7 +486,7 @@ struct aabb3f {
 };
 
 static inline aabb2f
-operator*(aabb2f Lhs, f32 Rhs) {
+Aabb2f_Mul(aabb2f Lhs, f32 Rhs) {
     Lhs.Min = V2f_Mul(Lhs.Min, Rhs);
     Lhs.Max = V2f_Mul(Lhs.Max, Rhs);
     return Lhs;
@@ -515,7 +515,7 @@ Aabb2u_Height(aabb2u Aabb) {
 }
 
 static inline aabb2u
-Aabb2u_Create(u32 X, u32 Y, u32 Width, u32 Height) {
+Aabb2u_CreateXYWH(u32 X, u32 Y, u32 Width, u32 Height) {
     aabb2u Ret = {};
     Ret.Min.X = X;
     Ret.Min.Y = Y;
@@ -593,13 +593,14 @@ Circle2f_IsIntersecting(circle2f L, circle2f R) {
 }
 
 //~ NOTE(Momo): Matrices
+//
 union m44f {
     f32 E[16];
     f32 EE[4][4];
 };
 
 static inline m44f 
-operator*(m44f L, m44f R) {
+M44f_Concat(m44f L, m44f R) {
     m44f Ret = {};
     for (u8 r = 0; r < 4; r++) { 
         for (u8 c = 0; c < 4; c++) { 
@@ -749,7 +750,7 @@ Ray2f_IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeRes
 }
 
 static inline v2f
-PointOnRay(ray2f Ray, f32 Time) {
+Ray2f_Point(ray2f Ray, f32 Time) {
     // O + D * T
     v2f DirTime = V2f_Mul(Ray.Direction, Time);
     v2f Ret = V2f_Add(Ray.Origin, DirTime);
