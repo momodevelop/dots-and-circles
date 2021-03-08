@@ -1,6 +1,7 @@
 #ifndef __MM_AABB_PACKER__
 #define __MM_AABB_PACKER__
 
+// TODO(Momo): Very low priority, but we should rethink this
 enum aabb_packer_sort_type {
     AabbPackerSortType_Width,
     AabbPackerSortType_Height,

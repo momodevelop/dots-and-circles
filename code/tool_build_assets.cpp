@@ -206,6 +206,7 @@ int main() {
     constexpr usize TotalAabbs = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
     aabb_packer_rect PackedAabbs[TotalAabbs];
+    
     usize PackedAabbCount = 0;
     {
         for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
@@ -229,6 +230,7 @@ int main() {
     {
         constexpr usize NodeCount = ArrayCount(PackedAabbs) + 1;
         
+        sort_entry SortEntries[NodeCount];
         aabb_packer_node AabbPackNodes[NodeCount];
         aabb_packer AabbPackContext = AabbPacker_Create(AtlasWidth, 
                                                         AtlasHeight, 
