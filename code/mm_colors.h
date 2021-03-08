@@ -1,11 +1,9 @@
 #ifndef __MOMO_COLOR__
 #define __MOMO_COLOR__
 
-#define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
-
 struct c3f {
     union {
-        f32 Elements[3];
+        f32 E[3];
         struct {
             f32 R, G, B;
         };
@@ -14,7 +12,7 @@ struct c3f {
 
 struct c4f {
     union {
-        f32 Elements[4];
+        f32 E[4];
         struct {
             union {
                 v3f RGB;

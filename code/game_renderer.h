@@ -200,10 +200,10 @@ PushDrawLine(mailbox* Payload,
         Swap(&Line.Min, &Line.Max);
     }
     
-    f32 LineLength = V2f_Length(Line.Max - Line.Min);
+    v2f LineVector = V2f_Sub(Line.Max, Line.Min);
+    f32 LineLength = V2f_Length(LineVector);
     v2f LineMiddle = V2f_Midpoint(Line.Max, Line.Min);
     
-    v2f LineVector = Line.Max - Line.Min;
     f32 Angle = V2f_AngleBetween(LineVector, { 1.f, 0.f });
     
     

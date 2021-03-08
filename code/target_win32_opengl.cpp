@@ -606,10 +606,10 @@ return nullptr; \
         Win32SetOpenglFunction(glDeleteTextures);
         Win32SetOpenglFunction(glDebugMessageCallbackARB);
     }
-    Init(Opengl, 
-         WindowDimensions, 
-         128,
-         8);
+    Opengl_Init(Opengl, 
+                WindowDimensions, 
+                128,
+                8);
     
 #if INTERNAL
     Opengl->glEnable(GL_DEBUG_OUTPUT);
@@ -636,7 +636,7 @@ static inline void
 Win32InitGlobalPerformanceFrequency() {
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    GlobalPerformanceFrequency = SafeCastU32(PerfCountFreq.QuadPart);
+    GlobalPerformanceFrequency = I64_To_U32(PerfCountFreq.QuadPart);
 }
 
 static inline void
@@ -807,8 +807,8 @@ Win32InitWasapi(win32_wasapi* Wasapi,
 static inline v2u
 Win32GetMonitorDimensions() {
     v2u Ret = {};
-    Ret.W = SafeCastU32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = SafeCastU32(GetSystemMetrics(SM_CYSCREEN));
+    Ret.W = I32_To_U32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = I32_To_U32(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
@@ -921,7 +921,7 @@ Win32WindowCallback(HWND Window,
                 v2u ClientWH = Win32GetClientDimensions(Window);
                 Win32Log("[Win32::Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
                 Win32Log("[Win32::Resize] Window: %d x %d\n", WindowWH.W, WindowWH.H);
-                Resize(GlobalOpengl, (u16)ClientWH.W, (u16)ClientWH.H);
+                Opengl_Resize(GlobalOpengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
         
@@ -1077,12 +1077,12 @@ PlatformCloseFileFunc(Win32CloseFile) {
 }
 static inline
 PlatformAddTextureFunc(Win32AddTexture) {
-    return AddTexture(GlobalOpengl, Width, Height, Pixels);
+    return Opengl_AddTexture(GlobalOpengl, Width, Height, Pixels);
 }
 
 static inline 
 PlatformClearTexturesFunc(Win32ClearTextures) {
-    return ClearTextures(GlobalOpengl);
+    return Opengl_ClearTextures(GlobalOpengl);
 }
 
 static inline 
@@ -1427,7 +1427,7 @@ WinMain(HINSTANCE Instance,
         }
         
         
-        Render(GlobalOpengl, &RenderCommands);
+        Opengl_Render(GlobalOpengl, &RenderCommands);
         Clear(&RenderCommands);
         
         // TODO: Functionize this

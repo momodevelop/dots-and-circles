@@ -16,7 +16,7 @@ template<typename t>
 static inline pool<t>
 CreatePool(arena* Arena, usize Capacity) {
     pool<t> Ret = {};
-    Ret.Slots = CreateArray<t>(Arena, Capacity); 
+    Ret.Slots = Array_Create<t>(Arena, Capacity); 
     Ret.FreeList = CreateList<usize>(Arena, Capacity);
     for (usize I = 0; I < Capacity; ++I) {
         Push(&Ret.FreeList, I);

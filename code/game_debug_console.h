@@ -144,8 +144,9 @@ DebugConsole_Update(debug_console* Console,
     // Transition
     {
         f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
-        v3f Delta = Console->TransitEndPos - Console->TransitStartPos; 
-        Console->Position = Console->TransitStartPos + (P * Delta); 
+        v3f Delta = V3f_Sub(Console->TransitEndPos, Console->TransitStartPos); 
+        v3f DeltaP = V3f_Mul(Delta, P);
+        Console->Position = V3f_Add(Console->TransitStartPos, DeltaP); 
     }
     
     if (Console->IsActive) {
@@ -219,7 +220,7 @@ Render(debug_console* Console,
     f32 LineHeight = Console->Dimensions.H / (Console->InfoBuffers.Count + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = GetHeight(Font) * FontSize;
-    f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + Abs(Font->Descent) * FontSize; 
+    f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
     f32 PaddingWidth = Console->Dimensions.W * 0.005f;
     {
         m44f ScaleMatrix = M44f_Scale(Console->Dimensions.X, 

@@ -52,7 +52,7 @@ HashCodepoint(u32 Codepoint) {
 
 static inline f32 
 GetHeight(game_asset_font* Font) {
-    return Abs(Font->Ascent) + Abs(Font->Descent);
+    return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
 }
 
 

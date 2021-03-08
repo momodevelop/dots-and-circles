@@ -18,13 +18,13 @@ struct loaded_font {
     void* Data;
 };
 
-static inline maybe<loaded_font>
-AllocateFontFromFile(const char* Filename) {
+static inline b32
+AllocateFontFromFile(loaded_font* Ret, const char* Filename) {
 	stbtt_fontinfo Font;
     FILE* FontFile = nullptr; 
 	fopen_s(&FontFile, Filename, "rb");
     if (FontFile == nullptr) {
-        return No();
+        return false;
     }
     Defer { fclose(FontFile); };
     
@@ -36,14 +36,15 @@ AllocateFontFromFile(const char* Filename) {
     fread(Buffer, Size, 1, FontFile);
     stbtt_InitFont(&Font, (u8*)Buffer, 0);
     
-    loaded_font Ret = { Font, Buffer };
+    Ret->Info = Font;
+    Ret->Data = Buffer;
     
-    return Yes(Ret);
+    return true;
 }
 
 static inline void
-FreeFont(loaded_font Font) {
-    free(Font.Data);
+FreeFont(loaded_font* Font) {
+    free(Font->Data);
 }
 
 
@@ -170,14 +171,12 @@ GenerateAtlas(const aabb_packer_rect* Aabbs, usize AabbCount, u32 Width, u32 Hei
 int main() {
     printf("[Build Assets] Start!\n");
     
-    maybe<loaded_font> LoadedFont_ = 
-        AllocateFontFromFile("assets/DroidSansMono.ttf");
-    if (!LoadedFont_) {
+    loaded_font LoadedFont = {};
+    if (!AllocateFontFromFile(&LoadedFont, "assets/DroidSansMono.ttf")) {
         printf("Failed to load font\n");
         return 1; 
     }
-    loaded_font& LoadedFont = LoadedFont_.This;
-    Defer { FreeFont(LoadedFont); };
+    Defer { FreeFont(&LoadedFont); };
     
     f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
     
@@ -231,8 +230,11 @@ int main() {
         constexpr usize NodeCount = ArrayCount(PackedAabbs) + 1;
         
         aabb_packer_node AabbPackNodes[NodeCount];
-        aabb_packer AabbPackContext = CreateAabbPacker(AtlasWidth, AtlasHeight, AabbPackNodes, NodeCount);
-        if (!Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, AabbPackerSortType_Height)) {
+        aabb_packer AabbPackContext = AabbPacker_Create(AtlasWidth, 
+                                                        AtlasHeight, 
+                                                        AabbPackNodes, 
+                                                        NodeCount);
+        if (!AabbPacker_Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, AabbPackerSortType_Height)) {
             printf("[Build Assets] Failed to generate texture\n");
             return 1;
         }

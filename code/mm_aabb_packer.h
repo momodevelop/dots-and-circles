@@ -33,10 +33,10 @@ struct aabb_packer {
 };
 
 static inline aabb_packer
-CreateAabbPacker(u32 Width, 
-                 u32 Height, 
-                 aabb_packer_node* Nodes, 
-                 usize NodeCount) 
+AabbPacker_Create(u32 Width, 
+                  u32 Height, 
+                  aabb_packer_node* Nodes, 
+                  usize NodeCount) 
 {
     aabb_packer Ret = {};
     Ret.Width = Width;
@@ -83,8 +83,8 @@ static inline b32
 __AabbPacker_SortBiggerSide(aabb_packer_rect Lhs,
                             aabb_packer_rect Rhs) 
 {
-    u32 LhsBiggerSide = Maximum(Lhs.W, Lhs.H);
-    u32 RhsBiggerSide = Maximum(Rhs.W, Rhs.H);
+    u32 LhsBiggerSide = MaxOf(Lhs.W, Lhs.H);
+    u32 RhsBiggerSide = MaxOf(Rhs.W, Rhs.H);
     return RhsBiggerSide > LhsBiggerSide;
 }
 
@@ -92,8 +92,8 @@ static inline b32
 __AabbPacker_SortPathological(aabb_packer_rect Lhs, 
                               aabb_packer_rect Rhs) 
 {
-    u32 LhsMultipler = Maximum(Lhs.W, Lhs.H)/Minimum(Lhs.W, Lhs.H) * Lhs.W * Lhs.H;
-    u32 RhsMultipler = Maximum(Rhs.W, Rhs.H)/Minimum(Rhs.W, Rhs.H) * Rhs.W * Rhs.H;
+    u32 LhsMultipler = MaxOf(Lhs.W, Lhs.H)/MinOf(Lhs.W, Lhs.H) * Lhs.W * Lhs.H;
+    u32 RhsMultipler = MaxOf(Rhs.W, Rhs.H)/MinOf(Rhs.W, Rhs.H) * Rhs.W * Rhs.H;
     return RhsMultipler > LhsMultipler;
 }
 
@@ -131,10 +131,10 @@ __AabbPacker_Sort(aabb_packer_rect* Aabbs,
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b32
-Pack(aabb_packer* Context, 
-     aabb_packer_rect* Aabbs, 
-     usize AabbCount, 
-     aabb_packer_sort_type SortType) 
+AabbPacker_Pack(aabb_packer* Context, 
+                aabb_packer_rect* Aabbs, 
+                usize AabbCount, 
+                aabb_packer_sort_type SortType) 
 {
     __AabbPacker_Sort(Aabbs, AabbCount, SortType);
     

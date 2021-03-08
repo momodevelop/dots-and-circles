@@ -11,12 +11,72 @@
 //
 
 // NOTE(Momo): Constants
-static constexpr f32 Pi32 = 3.14159265358979323846264338327950288f;
-static constexpr f32 Epsilon32  = 1.19209290E-07f;
-static constexpr f32 Tau32  = Pi32 * 2.f;
+static const f32 Pi32 = 3.14159265358979323846264338327950288f;
+static const f32 Epsilon32  = 1.19209290E-07f;
+static const f32 Tau32  = Pi32 * 2.f;
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
 
+
+
+// NOTE(Momo): Common Functions
+static inline b32
+F32_IsEqual(f32 L, f32 R) {
+    return AbsOf(L - R) <= Epsilon32;
+}
+
+static inline f32 
+DegToRad(f32 degrees) {
+    return degrees * Pi32 / 180.f;
+}
+
+static inline f32 
+RadToDeg(f32 radians) {
+    return radians * 180.f / Pi32;
+}
+
+static inline f32 
+Sin(f32 x) {
+    return sinf(x);
+}
+
+static inline f32 
+Cos(f32 x) {
+    return cosf(x);
+}
+
+static inline f32 
+Tan(f32 x) {
+    return tanf(x);
+}
+
+
+static inline f32 
+Sqrt(f32 x) {
+    return sqrtf(x);
+}
+
+static inline f32 
+ASin(f32 x) {
+    return asinf(x);
+}
+
+static inline f32 
+ACos(f32 x) {
+    return acosf(x);
+}
+
+static inline f32 
+ATan(f32 x) {
+    return atanf(x);
+}
+
+static inline f32
+Pow(f32 b, f32 e) {
+    return powf(b,e);
+}
+
+//~ NOTE(Momo): Vectors
 struct v2f {
     union {
         f32 Elements[2];
@@ -100,10 +160,9 @@ struct v3f {
     GenerateSubscriptOp(3)
 };
 
-
 struct v4f {
     union {
-        f32 Elements[4];
+        f32 E[4];
         struct {
             union {
                 v3f XYZ;
@@ -114,204 +173,80 @@ struct v4f {
             f32 W;
         };
     };
-    GenerateSubscriptOp(4)
 };
 
-struct m44f {
-    v4f Elements[4];
-    
-    inline auto& operator[](usize I) { 
-        Assert(I < 4);
-        return Elements[I];
-    }
-};
-
-
-struct circle2f {
-    v2f Origin;
-    f32 Radius;
-};
-
-
-struct line2f {
-    v2f Min;
-    v2f Max;
-};
-
-
-// NOTE(Momo): Common Functions
-static inline b32
-F32_IsEqual(f32 L, f32 R) {
-    return Abs(L - R) <= Epsilon32;
-}
-
-static inline f32 
-DegToRad(f32 degrees) {
-    return degrees * Pi32 / 180.f;
-}
-
-static inline f32 
-RadToDeg(f32 radians) {
-    return radians * 180.f / Pi32;
-}
-
-static inline f32 
-Sin(f32 x) {
-    return sinf(x);
-}
-
-static inline f32 
-Cos(f32 x) {
-    return cosf(x);
-}
-
-static inline f32 
-Tan(f32 x) {
-    return tanf(x);
-}
-
-
-static inline f32 
-Sqrt(f32 x) {
-    return sqrtf(x);
-}
-
-static inline f32 
-ASin(f32 x) {
-    return asinf(x);
-}
-
-static inline f32 
-ACos(f32 x) {
-    return acosf(x);
-}
-
-static inline f32 
-ATan(f32 x) {
-    return atanf(x);
-}
-
-static inline f32
-Pow(f32 b, f32 e) {
-    return powf(b,e);
-}
-
-
+//~ NOTE(Momo): v2f functions
 static inline v2f 
-operator+(v2f L, v2f R) {
-    v2f Ret = {};
-    Ret.X = L.X + R.X;
-    Ret.Y = L.Y + R.Y;
-    return Ret;
+V2f_Add(v2f L, v2f R) {
+    L.X += R.X;
+    L.Y += R.Y;
+    return L;
 }
 
 static inline v2f
-operator-(v2f L, v2f R) {
-    v2f Ret = {};
-    Ret.X = L.X - R.X;
-    Ret.Y = L.Y - R.Y;
-    return Ret;
-}
-
-
-static inline v2f
-operator*(v2f L, f32 R) {
-    v2f Ret = {};
-    Ret.X = L.X * R;
-    Ret.Y = L.Y * R;
-    
-    return Ret;
-}
-
-static inline v2f
-operator*(f32 R, v2f L) {
-    v2f Ret = {};
-    Ret.X = L.X * R;
-    Ret.Y = L.Y * R;
-    
-    return Ret;
+V2f_Sub(v2f L, v2f R) {
+    L.X -= R.X;
+    L.Y -= R.Y;
+    return L;
 }
 
 
 static inline v2f
-operator/(v2f L, f32 R) {
+V2f_Mul(v2f L, f32 R) {
+    L.X *= R;
+    L.Y *= R;
+    return L;
+}
+
+
+static inline v2f
+V2f_Div(v2f L, f32 R) {
     Assert(!F32_IsEqual(R, 0));
-    v2f Ret = {};
-    Ret.X = L.X / R;
-    Ret.X = L.Y / R;
+    L.X /= R;
+    L.Y /= R;
     
-    return Ret;
+    return L;
 }
 
-
 static inline v2f
-operator-(v2f V){
-    v2f Ret = {};
-    Ret.X = -V.X;
-    Ret.Y = -V.Y;
-    return Ret;
+V2f_Neg(v2f V){
+    V.X = -V.X;
+    V.Y = -V.Y;
+    return V;
 }
 
 static inline b8 
-operator==(v2f L, v2f R) {
+V2f_IsEqual(v2f L, v2f R) {
     return 
         F32_IsEqual(L.X, R.X) && 
         F32_IsEqual(L.Y, R.Y);
 }
 
-static inline b8
-operator!=(v2f L, v2f R) {
-    return !(L == R);
-}
-
 static inline f32 
-operator*(v2f L, v2f R) {
+V2f_Dot(v2f L, v2f R) {
     f32 Ret = {};
     Ret = L.X * R.X + L.Y * R.Y;
     return Ret;
 }
 
-
-static inline v2f& 
-operator+=(v2f& L, v2f R) {
-    return L = L + R;
-}
-
-
-static inline v2f& 
-operator-=(v2f& L, v2f R) {
-    return L = L - R;
-}
-
-
-static inline v2f& 
-operator*=(v2f& L, f32 R) {
-    return L = L * R;
-}
-
-
-static inline v2f& 
-operator/=(v2f& L, f32 R) {
-    return L = L / R;
-}
-
-
 static inline v2f 
 V2f_Midpoint(v2f L, v2f R)  { 
-    return (L + R) / 2.f; 
-}
-
-static inline f32
-V2f_DistanceSq(v2f L, v2f R) {
-    // TODO: Maybe shorten this with dot product?
-    f32 Ret = (R.X - L.X) * (R.X - L.X) + (R.Y - L.Y) * (R.Y - L.Y); 
-    return Ret;
+    v2f LR = V2f_Add(L, R);
+    v2f Ret = V2f_Div(LR, 2.f);
+    return Ret; 
 }
 
 static inline f32
 V2f_LengthSq(v2f V) { 
     // NOTE(Momo): Dot Product trick!
-    return V * V;
+    return V2f_Dot(V, V);
+}
+
+static inline f32
+V2f_DistanceSq(v2f L, v2f R) {
+    v2f V = V2f_Sub(R, L);
+    f32 Ret = V2f_LengthSq(V); 
+    return Ret;
 }
 
 static inline f32
@@ -326,155 +261,132 @@ V2f_Length(v2f L)  {
 
 static inline v2f 
 V2f_Normalize(v2f V)  {
-    v2f Ret = V;
-    Ret /= V2f_Length(V);
+    f32 Len = V2f_Length(V);
+    v2f Ret = V2f_Div(V, V2f_Length(V));
     return Ret;
 }
 
 static inline f32
 V2f_AngleBetween(v2f L, v2f R) {
-    return ACos((L * R) / (V2f_Length(L) * V2f_Length(R)));
+    f32 LLen = V2f_Length(L);
+    f32 RLen = V2f_Length(R);
+    f32 LRDot = V2f_Dot(L,R);
+    f32 Ret = ACos(LRDot/(LLen * RLen));
+    
+    return Ret;
 }
 
 
 static inline b32
 V2f_IsPerpendicular(v2f L, v2f R) { 
-    return F32_IsEqual((L * R), 0); 
+    f32 LRDot = V2f_Dot(L,R);
+    return F32_IsEqual(LRDot, 0); 
 }
 
 
 static inline b32 
 V2f_IsSameDir(v2f L, v2f R) { 
-    return (L * R) > 0; 
+    f32 LRDot = V2f_Dot(L,R);
+    return LRDot > 0; 
 }
 
 
 static inline b32 
 V2f_IsOppDir(v2f L, v2f R) { 
-    return (L * R) < 0;
+    f32 LRDot = V2f_Dot(L,R);
+    return LRDot < 0;
 }
 
 static inline v2f 
 V2f_Projection(v2f From, v2f To) { 
-    return (To * From) / V2f_LengthSq(To) * To;
+    // (To . From)/LenSq(To) * To
+    f32 ToLenSq = V2f_LengthSq(To);
+    Assert(!F32_IsEqual(ToLenSq, 0)); 
+    
+    f32 ToDotFrom = V2f_Dot(To, From);
+    f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
+    v2f Ret = V2f_Mul(To, UnitProjectionScalar);
+    return Ret;
 }
 
 
+//~ NOTE(Momo): v3f Functions
 static inline v3f 
-operator+(v3f L, v3f R) {
-    v3f Ret = {};
-    Ret.X = L.X + R.X;
-    Ret.Y = L.Y + R.Y;
-    return Ret;
+V3f_Add(v3f L, v3f R) {
+    L.X += R.X;
+    L.Y += R.Y;
+    L.Z += R.Z;
+    return L;
 }
 
 static inline v3f
-operator-(v3f L, v3f R) {
-    v3f Ret = {};
-    Ret.X = L.X - R.X;
-    Ret.Y = L.Y - R.Y;
-    return Ret;
-}
-
-
-static inline v3f
-operator*(v3f L, f32 R) {
-    v3f Ret = {};
-    Ret.X = L.X * R;
-    Ret.Y = L.Y * R;
-    
-    return Ret;
-}
-
-static inline v3f
-operator*(f32 R, v3f L) {
-    v3f Ret = {};
-    Ret.X = L.X * R;
-    Ret.Y = L.Y * R;
-    
-    return Ret;
+V3f_Sub(v3f L, v3f R) {
+    L.X -= R.X;
+    L.Y -= R.Y;
+    L.Z -= R.Z;
+    return L;
 }
 
 
 static inline v3f
-operator/(v3f L, f32 R) {
+V3f_Mul(v3f L, f32 R) {
+    L.X *= R;
+    L.Y *= R;
+    L.Z *= R;
+    return L;
+}
+
+
+static inline v3f
+V3f_Div(v3f L, f32 R) {
     Assert(!F32_IsEqual(R, 0));
-    v3f Ret = {};
-    Ret.X = L.X / R;
-    Ret.Y = L.Y / R;
-    
-    return Ret;
+    L.X /= R;
+    L.Y /= R;
+    L.Z /= R;
+    return L;
 }
 
-
 static inline v3f
-operator-(v3f V){
-    v3f Ret = {};
-    Ret.X = -V.X;
-    Ret.Y = -V.Y;
-    return Ret;
+V3f_Neg(v3f V){
+    V.X = -V.X;
+    V.Y = -V.Y;
+    V.Z = -V.Z;
+    return V;
 }
 
 static inline b8 
-operator==(v3f L, v3f R) {
+V3f_IsEqual(v3f L, v3f R) {
     return 
         F32_IsEqual(L.X, R.X) && 
-        F32_IsEqual(L.Y, R.Y);
-}
-
-static inline b8
-operator!=(v3f L, v3f R) {
-    return !(L == R);
+        F32_IsEqual(L.Y, R.Y) &&
+        F32_IsEqual(L.Z, R.Z);
 }
 
 static inline f32 
-operator*(v3f L, v3f R) {
+V3f_Dot(v3f L, v3f R) {
     f32 Ret = {};
-    Ret = L.X * R.X + L.Y * R.Y;
+    Ret = L.X * R.X + L.Y * R.Y + L.Z * R.Z;
     return Ret;
 }
-
-
-static inline v3f& 
-operator+=(v3f& L, v3f R) {
-    return L = L + R;
-}
-
-
-static inline v3f& 
-operator-=(v3f& L, v3f R) {
-    return L = L - R;
-}
-
-
-static inline v3f& 
-operator*=(v3f& L, f32 R) {
-    return L = L * R;
-}
-
-
-static inline v3f& 
-operator/=(v3f& L, f32 R) {
-    return L = L / R;
-}
-
 
 static inline v3f 
 V3f_Midpoint(v3f L, v3f R)  { 
-    return (L + R) / 2.f; 
-}
-
-static inline f32
-V3f_DistanceSq(v3f L, v3f R) {
-    // TODO: Maybe shorten this with dot product?
-    f32 Ret = (R.X - L.X) * (R.X - L.X) + (R.Y - L.Y) * (R.Y - L.Y); 
-    return Ret;
+    v3f LR = V3f_Add(L, R);
+    v3f Ret = V3f_Div(LR, 2.f);
+    return Ret; 
 }
 
 static inline f32
 V3f_LengthSq(v3f V) { 
     // NOTE(Momo): Dot Product trick!
-    return V * V;
+    return V3f_Dot(V, V);
+}
+
+static inline f32
+V3f_DistanceSq(v3f L, v3f R) {
+    v3f V = V3f_Sub(R, L);
+    f32 Ret = V3f_LengthSq(V); 
+    return Ret;
 }
 
 static inline f32
@@ -489,43 +401,52 @@ V3f_Length(v3f L)  {
 
 static inline v3f 
 V3f_Normalize(v3f V)  {
-    v3f Ret = V;
-    Ret /= V3f_Length(V);
+    f32 Len = V3f_Length(V);
+    v3f Ret = V3f_Div(Ret, V3f_Length(V));
     return Ret;
 }
 
 static inline f32
 V3f_AngleBetween(v3f L, v3f R) {
-    return ACos((L * R) / (V3f_Length(L) * V3f_Length(R)));
+    f32 LLen = V3f_Length(L);
+    f32 RLen = V3f_Length(R);
+    f32 LRDot = V3f_Dot(L,R);
+    f32 Ret = ACos(LRDot/(LLen * RLen));
+    
+    return Ret;
 }
 
 
 static inline b32
 V3f_IsPerpendicular(v3f L, v3f R) { 
-    return F32_IsEqual((L * R), 0); 
+    f32 LRDot = V3f_Dot(L,R);
+    return F32_IsEqual(LRDot, 0); 
 }
 
 
 static inline b32 
 V3f_IsSameDir(v3f L, v3f R) { 
-    return (L * R) > 0; 
+    f32 LRDot = V3f_Dot(L,R);
+    return LRDot > 0; 
 }
 
 
 static inline b32 
 V3f_IsOppDir(v3f L, v3f R) { 
-    return (L * R) < 0;
+    f32 LRDot = V3f_Dot(L,R);
+    return LRDot < 0;
 }
 
 static inline v3f 
 V3f_Projection(v3f From, v3f To) { 
-    return (To * From) / V3f_LengthSq(To) * To;
-}
-
-
-static inline v2f 
-V3f_To_V2f(v3f V) {
-    return { V.X, V.Y };
+    // (To . From)/LenSq(To) * To
+    f32 ToLenSq = V3f_LengthSq(To);
+    Assert(!F32_IsEqual(ToLenSq, 0)); 
+    
+    f32 ToDotFrom = V3f_Dot(To, From);
+    f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
+    v3f Ret = V3f_Mul(To, UnitProjectionScalar);
+    return Ret;
 }
 
 static inline v3f 
@@ -543,7 +464,7 @@ V2i_To_V2f(v2i V) {
     return { (f32)V.X, (f32)V.Y };
 }
 
-// AABB 
+//~ NOTE(Momo): AABB 
 struct aabb2i {
     v2i Min;
     v2i Max;
@@ -566,7 +487,9 @@ struct aabb3f {
 
 static inline aabb2f
 operator*(aabb2f Lhs, f32 Rhs) {
-    return { Lhs.Min * Rhs, Lhs.Max * Rhs };
+    Lhs.Min = V2f_Mul(Lhs.Min, Rhs);
+    Lhs.Max = V2f_Mul(Lhs.Max, Rhs);
+    return Lhs;
 }
 
 
@@ -655,6 +578,12 @@ Aabb2u_Ratio(aabb2u A, aabb2u B) {
     return Aabb2f_Ratio(Af, Bf);
 }
 
+//~ NOTE(Momo): Circles
+struct circle2f {
+    v2f Origin;
+    f32 Radius;
+};
+
 static inline b32
 Circle2f_IsIntersecting(circle2f L, circle2f R) {
 	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);
@@ -663,18 +592,22 @@ Circle2f_IsIntersecting(circle2f L, circle2f R) {
 	return DistSq < RSq;
 }
 
-// Matrices
-// Row major
+//~ NOTE(Momo): Matrices
+union m44f {
+    f32 E[16];
+    f32 EE[4][4];
+};
+
 static inline m44f 
 operator*(m44f L, m44f R) {
-    m44f res = {};
+    m44f Ret = {};
     for (u8 r = 0; r < 4; r++) { 
         for (u8 c = 0; c < 4; c++) { 
             for (u8 i = 0; i < 4; i++) 
-                res[r][c] += L[r][i] *  R[i][c]; 
+                Ret.EE[r][c] += L.EE[r][i] *  R.EE[i][c]; 
         } 
     } 
-    return res;
+    return Ret;
 }
 
 static inline m44f 
@@ -682,7 +615,7 @@ M44f_Transpose(m44f M) {
     m44f Ret = {};
     for (int i = 0; i < 4; ++i ) {
         for (int j = 0; j < 4; ++j) {
-            Ret[i][j] = M[j][i];
+            Ret.EE[i][j] = M.EE[j][i];
         }
     }
     
@@ -756,13 +689,13 @@ M44f_Orthographic(f32 NdcLeft, f32 NdcRight,
                   b8 FlipZ) 
 {
     m44f Ret = {};
-    Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
-    Ret[1][1] = (NdcTop-NdcBottom)/(Top-Bottom);
-    Ret[2][2] = (FlipZ ? -1.f : 1.f) * (NdcFar-NdcNear)/(Far-Near);
-    Ret[3][3] = 1.f;
-    Ret[0][3] = -(Right+Left)/(Right-Left);
-    Ret[1][3] = -(Top+Bottom)/(Top-Bottom);
-    Ret[2][3] = -(Far+Near)/(Far-Near);
+    Ret.EE[0][0] = (NdcRight-NdcLeft)/(Right-Left);
+    Ret.EE[1][1] = (NdcTop-NdcBottom)/(Top-Bottom);
+    Ret.EE[2][2] = (FlipZ ? -1.f : 1.f) * (NdcFar-NdcNear)/(Far-Near);
+    Ret.EE[3][3] = 1.f;
+    Ret.EE[0][3] = -(Right+Left)/(Right-Left);
+    Ret.EE[1][3] = -(Top+Bottom)/(Top-Bottom);
+    Ret.EE[2][3] = -(Far+Near)/(Far-Near);
     
     return Ret;
 }
@@ -778,6 +711,12 @@ M44f_Identity() {
     };
 }
 
+//~ NOTE(Momo): Ray and lines
+struct line2f {
+    v2f Min;
+    v2f Max;
+};
+
 struct ray2f {
     v2f Origin;
     v2f Direction;
@@ -787,7 +726,7 @@ static inline ray2f
 Line2f_To_Ray2f(line2f Line) {
     ray2f Ret = {};
     Ret.Origin = Line.Min;
-    Ret.Direction = Line.Max - Line.Min;
+    Ret.Direction = V2f_Sub(Line.Max, Line.Min);
     return Ret;
 }
 
@@ -811,7 +750,10 @@ Ray2f_IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeRes
 
 static inline v2f
 PointOnRay(ray2f Ray, f32 Time) {
-    return Ray.Origin + Ray.Direction * Time;
+    // O + D * T
+    v2f DirTime = V2f_Mul(Ray.Direction, Time);
+    v2f Ret = V2f_Add(Ray.Origin, DirTime);
+    return Ret;
 }
 
 // Quad

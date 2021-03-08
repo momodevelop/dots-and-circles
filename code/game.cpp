@@ -129,7 +129,7 @@ GameUpdateFunc(GameUpdate)
                                     5, 
                                     110, 
                                     16,
-                                    Position - v3f{0.f, 240.f, 0.f},
+                                    V3f_Sub(Position, v3f{0.f, 240.f, 0.f}),
                                     Position,
                                     0.1f,
                                     Dimensions,

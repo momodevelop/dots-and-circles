@@ -157,22 +157,22 @@ f32 EaseInOutElastic(f32 t)  {
 // NOTE(Momo): These require power function. 
 static inline f32 
 EaseInBounce(f32 t)  {
-    return Pow(2.f, 6.f * (t - 1.f)) * Abs(Sin(t * Pi32 * 3.5f));
+    return Pow(2.f, 6.f * (t - 1.f)) * AbsOf(Sin(t * Pi32 * 3.5f));
 }
 
 
 static inline 
 f32 EaseOutBounce(f32 t) {
-    return 1.f -Pow(2.f, -6.f * t) * Abs(Cos(t * Pi32 * 3.5f));
+    return 1.f -Pow(2.f, -6.f * t) * AbsOf(Cos(t * Pi32 * 3.5f));
 }
 
 static inline 
 f32 EaseInOutBounce(f32 t) {
     if (t < 0.5f) {
-        return 8.f * Pow(2.f, 8.f * (t - 1.f)) * Abs(Sin(t * Pi32 * 7.f));
+        return 8.f * Pow(2.f, 8.f * (t - 1.f)) * AbsOf(Sin(t * Pi32 * 7.f));
     }
     else {
-        return 1.f -8.f * Pow(2.f, -8.f * t) * Abs(Sin(t * Pi32 * 7.f));
+        return 1.f -8.f * Pow(2.f, -8.f * t) * AbsOf(Sin(t * Pi32 * 7.f));
     }
 }
 

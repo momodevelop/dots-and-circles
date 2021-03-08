@@ -27,43 +27,14 @@ typedef ptrdiff_t iptr;
 #define Gigabytes(num) (Gigabyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 
-template<typename t>
-static inline t
-Abs(t X) {
-    return X < 0 ? -X : X;
-}
 
-template<typename t>
-static inline t
-Maximum(t X, t Y) {
-    return X > Y ? X : Y;
-}
-
-template<typename t>
-static inline t
-Minimum(t X, t Y) {
-    return X < Y ? X : Y;
-}
-
-template<typename t>
-static inline void
-Swap(t* A, t* B) {
-    t Temp = (*A);
-    (*A) = (*B);
-    (*B) = Temp;
-}
-
-template<typename t>
-static inline t
-Clamp(t Value, t Low, t High) {
-    return Maximum(Minimum(Value, High), Low); 
-}
-
-template<typename t>
-static inline t
-Lerp(t Start, t End, f32 Fraction) {
-    return Start + ((End - Start) * Fraction);
-}
+#define AbsOf(X) (((X) < 0) ? (-X) : (X))
+#define MaxOf(X,Y) ((X) > (Y) ? (X) : (Y))
+#define MinOf(X,Y) ((X) < (Y) ? (X) : (Y))
+#define Swap(A,B) { auto Temp = (*(A)); (*(A)) = (*(B)); (*(B)) = Temp; }
+#define Clamp(Value, Low, High) MaxOf(MinOf(Value, High), Low)
+#define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
+#define Lerp(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
 
 // Get the ratio of Value within the range [Min,Max] 
 // Return value Will be [0, 1]
@@ -72,8 +43,6 @@ Ratio(f32 Value, f32 Min, f32 Max) {
     return (Value - Min)/(Max - Min); 
 }
 
-// TODO: Change the rest to templates
-#define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
 
 template<typename t>
 union range {
@@ -190,7 +159,7 @@ SiItoa(char* Dest, i32 Num) {
     }
     
     b32 Negative = Num < 0;
-    Num = Abs(Num);
+    Num = AbsOf(Num);
     
     char* It = Dest;
     for(; Num != 0; Num /= 10) {

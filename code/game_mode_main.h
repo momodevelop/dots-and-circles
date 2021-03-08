@@ -234,7 +234,10 @@ UpdatePlayer(game_mode_main* Mode,
               0.f, 
               Player->DotImageTransitionDuration);
     
-    Player->Position += Player->Direction * Player->Speed * DeltaTime;
+    f32 SpeedDt = Player->Speed * DeltaTime;
+    v2f Velocity = V2f_Mul(Player->Direction, SpeedDt);
+    Player->Position = V2f_Add(Player->Position, Velocity);
+    
 }
 
 static inline void
@@ -243,7 +246,11 @@ UpdateBullet(game_mode_main* Mode,
 {
     for(usize I = 0; I < Mode->Bullets.Count;) {
         bullet* Bullet = Mode->Bullets + I;
-        Bullet->Position += Bullet->Direction * Bullet->Speed * DeltaTime;
+        
+        f32 SpeedDt = Bullet->Speed * DeltaTime;
+        v2f Velocity = V2f_Mul(Bullet->Direction, SpeedDt);
+        Bullet->Position = V2f_Add(Bullet->Position, Velocity);
+        
         // Out of bounds self-destruction
         if (Bullet->Position.X <= -Global_DesignSpace.W * 0.5f - Bullet->HitCircle.Radius || 
             Bullet->Position.X >= Global_DesignSpace.W * 0.5f + Bullet->HitCircle.Radius ||
@@ -295,7 +302,7 @@ UpdateEnemies(game_mode_main* Mode,
             v2f Dir = {};
             switch (Enemy->FiringPatternType) {
 		    	case EnemyFiringPatternType_Homing: 
-                Dir = Player->Position - Enemy->Position;
+                Dir = V2f_Sub(Player->Position, Enemy->Position);
                 break;
                 default:
                 Assert(false);
@@ -320,14 +327,14 @@ UpdateCollision(game_mode_main* Mode)
 {
     player* Player = &Mode->Player;
     circle2f PlayerCircle = Player->HitCircle;
-    PlayerCircle.Origin += Player->Position;
+    PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
     
     // Player vs every bullet
     for (usize I = 0; I < Mode->Bullets.Count;) 
     {
         bullet* Bullet = Mode->Bullets + I;
         circle2f BulletCircle = Bullet->HitCircle;
-        BulletCircle.Origin += Bullet->Position;
+        BulletCircle.Origin = V2f_Add(BulletCircle.Origin, Bullet->Position);
         
         if (Circle2f_IsIntersecting(PlayerCircle, BulletCircle)) {
             if (Player->MoodType == Bullet->MoodType ) {

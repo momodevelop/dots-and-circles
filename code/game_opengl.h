@@ -311,7 +311,7 @@ struct opengl {
 };
 
 static inline void 
-AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
+Opengl_AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
     GLuint Shader = Opengl->glCreateShader(Type);
     Opengl->glShaderSource(Shader, 1, &Code, NULL);
     Opengl->glCompileShader(Shader);
@@ -320,7 +320,8 @@ AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
 }
 
 // TODO: Change name to OpenglAliugnViewport
-static inline void AlignViewport(opengl* Opengl) 
+static inline void 
+Opengl_AlignViewport(opengl* Opengl) 
 {
     auto Region = GetRenderRegion(Opengl->WindowDimensions.W, 
                                   Opengl->WindowDimensions.H, 
@@ -330,8 +331,8 @@ static inline void AlignViewport(opengl* Opengl)
     u32 x, y, w, h;
     x = Region.Min.X;
     y = Region.Min.Y;
-    w = GetWidth(Region);
-    h = GetHeight(Region);
+    w = Aabb2u_Width(Region);
+    h = Aabb2u_Height(Region);
     
     Opengl->glViewport(x, y, w, h);
     Opengl->glScissor(x, y, w, h);
@@ -339,20 +340,20 @@ static inline void AlignViewport(opengl* Opengl)
 
 
 static inline void 
-Resize(opengl* Opengl,  
-       u16 WindowWidth, 
-       u16 WindowHeight) 
+Opengl_Resize(opengl* Opengl,  
+              u16 WindowWidth, 
+              u16 WindowHeight) 
 {
     Opengl->WindowDimensions.W = WindowWidth;
     Opengl->WindowDimensions.H = WindowHeight;
-    AlignViewport(Opengl);
+    Opengl_AlignViewport(Opengl);
 }
 
 static inline b32
-Init(opengl* Opengl,
-     v2u WindowDimensions,
-     u32 MaxEntities,
-     u32 MaxTextures) 
+Opengl_Init(opengl* Opengl,
+            v2u WindowDimensions,
+            u32 MaxEntities,
+            u32 MaxTextures) 
 {
     Opengl->Textures = CreateList<GLuint>(&Opengl->Arena, MaxTextures);
     
@@ -365,7 +366,7 @@ Init(opengl* Opengl,
     Opengl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
     
-    AlignViewport(Opengl);
+    Opengl_AlignViewport(Opengl);
     
     
     // NOTE(Momo): Setup VBO
@@ -561,14 +562,14 @@ Init(opengl* Opengl,
     
     // NOTE(Momo): Setup Shader Program
     Opengl->Shader = Opengl->glCreateProgram();
-    AttachShader(Opengl, 
-                 Opengl->Shader, 
-                 GL_VERTEX_SHADER, 
-                 (char*)OpenglVertexShader);
-    AttachShader(Opengl, 
-                 Opengl->Shader, 
-                 GL_FRAGMENT_SHADER, 
-                 (char*)OpenglFragmentShader);
+    Opengl_AttachShader(Opengl, 
+                        Opengl->Shader, 
+                        GL_VERTEX_SHADER, 
+                        (char*)OpenglVertexShader);
+    Opengl_AttachShader(Opengl, 
+                        Opengl->Shader, 
+                        GL_FRAGMENT_SHADER, 
+                        (char*)OpenglFragmentShader);
     
     Opengl->glLinkProgram(Opengl->Shader);
     
@@ -618,10 +619,10 @@ Init(opengl* Opengl,
 }
 
 static inline void 
-DrawInstances(opengl* Opengl, 
-              GLuint Texture, 
-              u32 InstancesToDraw, 
-              u32 IndexToDrawFrom) 
+Opengl_DrawInstances(opengl* Opengl, 
+                     GLuint Texture, 
+                     u32 InstancesToDraw, 
+                     u32 IndexToDrawFrom) 
 {
     if (InstancesToDraw > 0) {
         Opengl->glBindTexture(GL_TEXTURE_2D, Texture);
@@ -647,10 +648,10 @@ DrawInstances(opengl* Opengl,
 
 
 static inline renderer_texture_handle
-AddTexture(opengl* Opengl,
-           u32 Width,
-           u32 Height,
-           void* Pixels) 
+Opengl_AddTexture(opengl* Opengl,
+                  u32 Width,
+                  u32 Height,
+                  void* Pixels) 
 {
     renderer_texture_handle Ret = {};
     GLuint Entry;
@@ -681,7 +682,7 @@ AddTexture(opengl* Opengl,
 }
 
 static inline void
-ClearTextures(opengl* Opengl) {
+Opengl_ClearTextures(opengl* Opengl) {
     Opengl->glDeleteTextures((GLsizei)Opengl->Textures.Count, 
                              Opengl->Textures.Elements);
     Clear(&Opengl->Textures);
@@ -689,7 +690,7 @@ ClearTextures(opengl* Opengl) {
 
 
 static inline void
-Render(opengl* Opengl, mailbox* Commands) 
+Opengl_Render(opengl* Opengl, mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -708,28 +709,27 @@ Render(opengl* Opengl, mailbox* Commands)
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 Opengl->RenderDimensions.W = Data->Width;
                 Opengl->RenderDimensions.H = Data->Height;
-                AlignViewport(Opengl);
+                Opengl_AlignViewport(Opengl);
             } break;
             case renderer_command_set_basis::TypeId: {
                 using data_t = renderer_command_set_basis;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
-                DrawInstances(Opengl, 
-                              CurrentTexture, 
-                              InstancesToDrawCount, 
-                              LastDrawnInstanceIndex);
+                Opengl_DrawInstances(Opengl, 
+                                     CurrentTexture, 
+                                     InstancesToDrawCount, 
+                                     LastDrawnInstanceIndex);
                 LastDrawnInstanceIndex += InstancesToDrawCount;
                 InstancesToDrawCount = 0;
                 
-                auto Result = Transpose(Data->Basis);
-                GLint uProjectionLoc = 
-                    Opengl->glGetUniformLocation(Opengl->Shader,
-                                                 "uProjection");
-                Opengl->glProgramUniformMatrix4fv(
-                                                  Opengl->Shader, 
+                auto Result = M44f_Transpose(Data->Basis);
+                GLint uProjectionLoc = Opengl->glGetUniformLocation(Opengl->Shader,
+                                                                    "uProjection");
+                
+                Opengl->glProgramUniformMatrix4fv(Opengl->Shader, 
                                                   uProjectionLoc, 
                                                   1, 
                                                   GL_FALSE, 
-                                                  Result[0].Elements);
+                                                  Result.E);
                 
             } break;
             case renderer_command_clear_color::TypeId: {
@@ -752,10 +752,10 @@ Render(opengl* Opengl, mailbox* Commands)
                 // currently processed texture, batch draw all instances before 
                 // the current instance.
                 if (CurrentTexture != OpenglTextureHandle) {
-                    DrawInstances(Opengl, 
-                                  CurrentTexture, 
-                                  InstancesToDrawCount, 
-                                  LastDrawnInstanceIndex);
+                    Opengl_DrawInstances(Opengl, 
+                                         CurrentTexture, 
+                                         InstancesToDrawCount, 
+                                         LastDrawnInstanceIndex);
                     LastDrawnInstanceIndex += InstancesToDrawCount;
                     InstancesToDrawCount = 0;
                     CurrentTexture = OpenglTextureHandle;
@@ -773,7 +773,7 @@ Render(opengl* Opengl, mailbox* Commands)
                                              &QuadUV);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = Transpose(Data->Transform);
+                m44f Transform = M44f_Transpose(Data->Transform);
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
                                              CurrentInstanceIndex* sizeof(m44f), 
                                              sizeof(m44f), 
@@ -794,10 +794,10 @@ Render(opengl* Opengl, mailbox* Commands)
                 // NOTE(Momo): If the currently set texture is not same as the currently
                 // processed texture, batch draw all instances before the current instance.
                 if (CurrentTexture != OpenglTextureHandle) {
-                    DrawInstances(Opengl, 
-                                  CurrentTexture, 
-                                  InstancesToDrawCount, 
-                                  LastDrawnInstanceIndex);
+                    Opengl_DrawInstances(Opengl, 
+                                         CurrentTexture, 
+                                         InstancesToDrawCount, 
+                                         LastDrawnInstanceIndex);
                     LastDrawnInstanceIndex += InstancesToDrawCount;
                     InstancesToDrawCount = 0;
                     CurrentTexture = OpenglTextureHandle;
@@ -815,7 +815,7 @@ Render(opengl* Opengl, mailbox* Commands)
                                              &Data->TextureCoords);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = Transpose(Data->Transform);
+                m44f Transform = M44f_Transpose(Data->Transform);
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
                                              CurrentInstanceIndex* sizeof(m44f), 
                                              sizeof(m44f), 
@@ -829,7 +829,7 @@ Render(opengl* Opengl, mailbox* Commands)
         }
     }
     
-    DrawInstances(Opengl, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+    Opengl_DrawInstances(Opengl, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
     
 }
 

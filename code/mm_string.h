@@ -99,7 +99,7 @@ PushI32(string_buffer* Dest, i32 Num) {
     usize StartPoint = Dest->Count; 
     
     b32 Negative = Num < 0;
-    Num = Abs(Num);
+    Num = AbsOf(Num);
     
     for(; Num != 0; Num /= 10) {
         i32 DigitToConvert = Num % 10;
