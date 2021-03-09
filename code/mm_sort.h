@@ -36,7 +36,7 @@ Sort_QuickSortPartition(sort_entry* Arr,
     while(LargeIndex > SmallIndex) {
         // Check the value left of LargerIndex
         // If it is bigger than PivotValue, shift it right
-        if (Arr[LargeIndex-1].Key < PivotValue.Key) {
+        if (Arr[LargeIndex-1].Key > PivotValue.Key) {
             Arr[LargeIndex] = Arr[LargeIndex - 1];
             --LargeIndex;
         }
@@ -56,9 +56,9 @@ Sort_QuickSortPartition(sort_entry* Arr,
 
 // NOTE(Momo): This is done inplace
 static inline void 
-Sort_QuickSort(sort_entry* Arr, 
-               usize LeftIndex, 
-               usize OnePastRightIndex) 
+Sort_QuickSortRange(sort_entry* Arr, 
+                    usize LeftIndex, 
+                    usize OnePastRightIndex) 
 {
     if (OnePastRightIndex - LeftIndex <= 1) {
         return;
@@ -67,8 +67,8 @@ Sort_QuickSort(sort_entry* Arr,
                                                LeftIndex, 
                                                OnePastRightIndex);
     
-    Sort_QuickSort(Arr, LeftIndex, PivotIndex);
-    Sort_QuickSort(Arr, PivotIndex + 1, OnePastRightIndex);
+    Sort_QuickSortRange(Arr, LeftIndex, PivotIndex);
+    Sort_QuickSortRange(Arr, PivotIndex + 1, OnePastRightIndex);
     
     // Don't need to concatenate! O_o
 }
@@ -77,7 +77,7 @@ static inline void
 Sort_QuickSort(sort_entry* Arr, 
                usize ArrCount) 
 {
-    Sort_QuickSort(Arr, 0, ArrCount);
+    Sort_QuickSortRange(Arr, 0, ArrCount);
 }
 
 

@@ -3,7 +3,7 @@
 #define GENERATE_TEST_PNG 1
 
 static inline aabb2u
-Aabb2u(aabb_packer_rect Aabb) {
+Aabb2u(aabb_packer_aabb Aabb) {
 	return { 
         Aabb.X, 
         Aabb.Y, 
@@ -76,7 +76,7 @@ struct atlas_context_font {
 
 
 static inline void  
-Init(aabb_packer_rect* Aabb, atlas_context_image* Context){
+InitPackerRectWithImage(aabb_packer_aabb* Aabb, atlas_context_image* Context){
     i32 W, H, C;
     stbi_info(Context->Filename, &W, &H, &C);
     Aabb->W = (u32)W;
@@ -85,7 +85,7 @@ Init(aabb_packer_rect* Aabb, atlas_context_image* Context){
 }
 
 static inline void
-Init(aabb_packer_rect* Aabb, atlas_context_font* Context){
+InitPackerRectWithFont(aabb_packer_aabb* Aabb, atlas_context_font* Context){
     i32 ix0, iy0, ix1, iy1;
     stbtt_GetCodepointTextureBox(&Context->LoadedFont.Info, 
                                  Context->Codepoint, 
@@ -101,7 +101,7 @@ Init(aabb_packer_rect* Aabb, atlas_context_font* Context){
 
 static inline void 
 WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                       u8* TextureMemory, aabb_packer_rect TextureAabb) 
+                       u8* TextureMemory, aabb_packer_aabb TextureAabb) 
 {
     i32 j = 0;
     for (u32 y = TextureAabb.Y; y < TextureAabb.Y + TextureAabb.H; ++y) {
@@ -117,7 +117,7 @@ WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-GenerateAtlas(const aabb_packer_rect* Aabbs, usize AabbCount, u32 Width, u32 Height) {
+GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)malloc(AtlasSize);
     
@@ -203,47 +203,62 @@ int main() {
     };
     atlas_context_font AtlasFontContexts[Codepoint_Count];
     
-    constexpr usize TotalAabbs = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
+    const u32 AabbCount = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
-    aabb_packer_rect PackedAabbs[TotalAabbs];
+    aabb_packer_aabb Aabbs[AabbCount] = {};
+    sort_entry SortEntries[AabbCount] = {};
     
-    usize PackedAabbCount = 0;
-    {
-        for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
-            Init(PackedAabbs + PackedAabbCount++, AtlasImageContexts + i);
-        }
-        for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
-            auto* Font = AtlasFontContexts + i;
-            Font->Type = AtlasContextType_Font;
-            Font->LoadedFont = LoadedFont;
-            Font->Codepoint = Codepoint_Start + i;
-            Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
-            Font->FontId = Font_Default;
-            Font->TextureId = Texture_AtlasDefault;
-            Init(PackedAabbs + PackedAabbCount++, Font);
-        }
+    u32 AabbCounter = 0;
+    
+    for (u32 i = 0; i < ArrayCount(AtlasImageContexts); ++i ) {
+        InitPackerRectWithImage(Aabbs + AabbCounter, AtlasImageContexts + i);
+        SortEntries[AabbCounter].Key = -(f32)Aabbs[AabbCounter].H;
+        SortEntries[AabbCounter].Index = AabbCounter;
+        ++AabbCounter;
+    }
+    
+    for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
+        auto* Font = AtlasFontContexts + i;
+        Font->Type = AtlasContextType_Font;
+        Font->LoadedFont = LoadedFont;
+        Font->Codepoint = Codepoint_Start + i;
+        Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
+        Font->FontId = Font_Default;
+        Font->TextureId = Texture_AtlasDefault;
+        
+        InitPackerRectWithFont(Aabbs + AabbCounter, Font);
+        SortEntries[AabbCounter].Key = -(f32)Aabbs[AabbCounter].H;
+        SortEntries[AabbCounter].Index = AabbCounter;
+        ++AabbCounter;
     }
     
     // NOTE(Momo): Pack rects
     u32 AtlasWidth = 1024;
     u32 AtlasHeight = 1024;
     {
-        constexpr usize NodeCount = ArrayCount(PackedAabbs) + 1;
+        const usize NodeCount = ArrayCount(Aabbs) + 1;
         
-        sort_entry SortEntries[NodeCount];
-        aabb_packer_node AabbPackNodes[NodeCount];
-        aabb_packer AabbPackContext = AabbPacker_Create(AtlasWidth, 
-                                                        AtlasHeight, 
-                                                        AabbPackNodes, 
-                                                        NodeCount);
-        if (!AabbPacker_Pack(&AabbPackContext, PackedAabbs, PackedAabbCount, AabbPackerSortType_Height)) {
+        aabb_packer_node Nodes[NodeCount] = {};
+        aabb_packer Context = AabbPacker_Create(AtlasWidth, 
+                                                AtlasHeight, 
+                                                Nodes, 
+                                                NodeCount);
+        if (!AabbPacker_Pack(&Context, 
+                             Aabbs,
+                             SortEntries,
+                             AabbCount, 
+                             AabbPackerSortType_Height)) 
+        {
             printf("[Build Assets] Failed to generate texture\n");
             return 1;
         }
     }
     
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasTexture = GenerateAtlas(PackedAabbs, PackedAabbCount, AtlasWidth, AtlasHeight);
+    u8* AtlasTexture = GenerateAtlas(Aabbs, 
+                                     AabbCount, 
+                                     AtlasWidth, 
+                                     AtlasHeight);
 #if GENERATE_TEST_PNG 
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
     printf("[Build Assets] Written test atlas: test.png\n");
@@ -252,7 +267,7 @@ int main() {
     
     
     ab_context AssetBuilder_ = {};
-    auto* AssetBuilder = &AssetBuilder_;
+    ab_context* AssetBuilder = &AssetBuilder_;
     Begin(AssetBuilder, "yuu", "MOMO");
     {
         WriteTexture(AssetBuilder, Texture_Ryoji, "assets/ryoji.png");
@@ -264,9 +279,9 @@ int main() {
                      4, 
                      AtlasTexture);
         
-        for(u32 i = 0; i <  PackedAabbCount; ++i) {
-            auto Aabb = PackedAabbs[i];
-            auto Type = *(atlas_context_type*)Aabb.UserData;
+        for(u32 i = 0; i <  AabbCount; ++i) {
+            aabb_packer_aabb Aabb = Aabbs[i];
+            atlas_context_type Type = *(atlas_context_type*)Aabb.UserData;
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Aabb.UserData;

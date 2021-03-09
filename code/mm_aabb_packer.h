@@ -15,7 +15,7 @@ struct aabb_packer_node {
     u32 X, Y, W, H;
 };
 
-struct aabb_packer_rect {
+struct aabb_packer_aabb {
     // NOTE(Momo): Input
     u32 W, H; 
     
@@ -49,22 +49,22 @@ AabbPacker_Create(u32 Width,
 }
 
 static inline b32 
-__AabbPacker_SortWidth(aabb_packer_rect Lhs, 
-                       aabb_packer_rect Rhs) {
+__AabbPacker_SortWidth(aabb_packer_aabb Lhs, 
+                       aabb_packer_aabb Rhs) {
     return Rhs.W > Lhs.W ;
 }
 
 
 static inline b32 
-__AabbPacker_SortHeight(aabb_packer_rect Lhs,
-                        aabb_packer_rect Rhs) 
+__AabbPacker_SortHeight(aabb_packer_aabb Lhs,
+                        aabb_packer_aabb Rhs) 
 {
     return Rhs.H > Lhs.H;
 }
 
 static inline b32 
-__AabbPacker_SortPerimeter(aabb_packer_rect Lhs,
-                           aabb_packer_rect Rhs)
+__AabbPacker_SortPerimeter(aabb_packer_aabb Lhs,
+                           aabb_packer_aabb Rhs)
 {
     u32 LhsPerimeter = Lhs.W + Lhs.H;
     u32 RhsPerimeter = Rhs.W + Rhs.H;
@@ -72,8 +72,8 @@ __AabbPacker_SortPerimeter(aabb_packer_rect Lhs,
 }
 
 static inline b32
-__AabbPacker_SortArea(aabb_packer_rect Lhs, 
-                      aabb_packer_rect Rhs) 
+__AabbPacker_SortArea(aabb_packer_aabb Lhs, 
+                      aabb_packer_aabb Rhs) 
 {
     u32 LhsArea = Lhs.W * Lhs.H;
     u32 RhsArea = Rhs.W * Rhs.H;
@@ -81,8 +81,8 @@ __AabbPacker_SortArea(aabb_packer_rect Lhs,
 }
 
 static inline b32
-__AabbPacker_SortBiggerSide(aabb_packer_rect Lhs,
-                            aabb_packer_rect Rhs) 
+__AabbPacker_SortBiggerSide(aabb_packer_aabb Lhs,
+                            aabb_packer_aabb Rhs) 
 {
     u32 LhsBiggerSide = MaxOf(Lhs.W, Lhs.H);
     u32 RhsBiggerSide = MaxOf(Rhs.W, Rhs.H);
@@ -90,8 +90,8 @@ __AabbPacker_SortBiggerSide(aabb_packer_rect Lhs,
 }
 
 static inline b32
-__AabbPacker_SortPathological(aabb_packer_rect Lhs, 
-                              aabb_packer_rect Rhs) 
+__AabbPacker_SortPathological(aabb_packer_aabb Lhs, 
+                              aabb_packer_aabb Rhs) 
 {
     u32 LhsMultipler = MaxOf(Lhs.W, Lhs.H)/MinOf(Lhs.W, Lhs.H) * Lhs.W * Lhs.H;
     u32 RhsMultipler = MaxOf(Rhs.W, Rhs.H)/MinOf(Rhs.W, Rhs.H) * Rhs.W * Rhs.H;
@@ -100,7 +100,7 @@ __AabbPacker_SortPathological(aabb_packer_rect Lhs,
 
 
 static inline void 
-__AabbPacker_Sort(aabb_packer_rect* Aabbs, 
+__AabbPacker_Sort(aabb_packer_aabb* Aabbs, 
                   usize AabbCount, 
                   aabb_packer_sort_type SortType) {
     switch(SortType) {
@@ -128,23 +128,30 @@ __AabbPacker_Sort(aabb_packer_rect* Aabbs,
     }
 }
 
-
-
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b32
 AabbPacker_Pack(aabb_packer* Context, 
-                aabb_packer_rect* Aabbs, 
-                usize AabbCount, 
+                aabb_packer_aabb* Aabbs, 
+                sort_entry* SortEntries,
+                u32 AabbCount, 
                 aabb_packer_sort_type SortType) 
 {
-    __AabbPacker_Sort(Aabbs, AabbCount, SortType);
+#define TEST 0
     
+#if TEST
+    __AabbPacker_Sort(Aabbs, AabbCount, SortType);
+#else
+    Sort_QuickSort(SortEntries, AabbCount);
+#endif
     usize CurrentNodeCount = 0;
     Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };
     
-    for (u32 i = 0; i < AabbCount; ++i ) {
+    for (u32 i = 0; i < AabbCount; ++i) {
+#if TEST
         auto Aabb = Aabbs[i];
-        
+#else 	
+        aabb_packer_aabb* Aabb = Aabbs + SortEntries[i].Index;
+#endif
         // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
         usize ChosenSpaceIndex = CurrentNodeCount;
         {
@@ -152,7 +159,7 @@ AabbPacker_Pack(aabb_packer* Context,
                 usize Index = ChosenSpaceIndex - j - 1;
                 aabb_packer_node Space = Context->Nodes[Index];
                 // NOTE(Momo): Check if the image fits
-                if (Aabb.W <= Space.W && Aabb.H <= Space.H) {
+                if (Aabb->W <= Space.W && Aabb->H <= Space.H) {
                     ChosenSpaceIndex = Index;
                     break;
                 }
@@ -173,41 +180,41 @@ AabbPacker_Pack(aabb_packer* Context,
         }
         
         // NOTE(Momo): Split if not perfect fit
-        if (ChosenSpace.W != Aabb.W && ChosenSpace.H == Aabb.H) {
+        if (ChosenSpace.W != Aabb->W && ChosenSpace.H == Aabb->H) {
             // Split right
             aabb_packer_node SplitSpaceRight = {
-                ChosenSpace.X + Aabb.W,
+                ChosenSpace.X + Aabb->W,
                 ChosenSpace.Y,
-                ChosenSpace.W - Aabb.W,
+                ChosenSpace.W - Aabb->W,
                 ChosenSpace.H
             };
             Context->Nodes[CurrentNodeCount++] = SplitSpaceRight;
         }
-        else if (ChosenSpace.W == Aabb.W && ChosenSpace.H != Aabb.H) {
+        else if (ChosenSpace.W == Aabb->W && ChosenSpace.H != Aabb->H) {
             // Split down
             aabb_packer_node SplitSpaceDown = {
                 ChosenSpace.X,
-                ChosenSpace.Y + Aabb.H,
+                ChosenSpace.Y + Aabb->H,
                 ChosenSpace.W,
-                ChosenSpace.H - Aabb.H
+                ChosenSpace.H - Aabb->H
             };
             Context->Nodes[CurrentNodeCount++] = SplitSpaceDown;
         }
-        else if (ChosenSpace.W != Aabb.W && ChosenSpace.H != Aabb.H) {
+        else if (ChosenSpace.W != Aabb->W && ChosenSpace.H != Aabb->H) {
             // Split right
             aabb_packer_node SplitSpaceRight = {
-                ChosenSpace.X + Aabb.W,
+                ChosenSpace.X + Aabb->W,
                 ChosenSpace.Y,
-                ChosenSpace.W - Aabb.W,
-                Aabb.H,
+                ChosenSpace.W - Aabb->W,
+                Aabb->H,
             };
             
             // Split down
             aabb_packer_node SplitSpaceDown = {
                 ChosenSpace.X,
-                ChosenSpace.Y + Aabb.H,
+                ChosenSpace.Y + Aabb->H,
                 ChosenSpace.W,
-                ChosenSpace.H - Aabb.H,
+                ChosenSpace.H - Aabb->H,
             };
             
             // Choose to insert the bigger one first before the smaller one
@@ -225,8 +232,8 @@ AabbPacker_Pack(aabb_packer* Context,
         }
         
         // NOTE(Momo): Translate the Aabb
-        Aabbs[i].X = ChosenSpace.X;
-        Aabbs[i].Y = ChosenSpace.Y;
+        Aabb->X = ChosenSpace.X;
+        Aabb->Y = ChosenSpace.Y;
     }
     
     return true;
