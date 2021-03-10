@@ -592,7 +592,7 @@ UpdateMainMode(permanent_state* PermState,
     // Debug Rendering 
 #if REFACTOR
     {
-        scratch Scratchpad(&Mode->Arena);
+        arena_mark Scratchpad(&Mode->Arena);
         string_buffer Buffer = StringBuffer(Scratchpad, 256);
         Push(&Buffer, String("Bullets: "));
         PushI32(&Buffer, (i32)Mode->Bullets.Count);

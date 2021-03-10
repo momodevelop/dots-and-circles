@@ -87,10 +87,10 @@ Render(debug_state* State,
     // For each variable, render:
     // Name: Data
     for (usize I = 0; I < State->Variables.Count; ++I) {
-        scratch Scratchpad = Arena_BeginScratch(&State->Arena);
-        Defer{ Arena_EndScratch(&Scratchpad); };
+        arena_mark Scratch = Arena_Mark(&State->Arena);
+        Defer{ Arena_Revert(&Scratch); };
         
-        string_buffer Buffer = CreateStringBuffer(Scratchpad, 256);
+        string_buffer Buffer = CreateStringBuffer(Scratch.Arena, 256);
         Push(&Buffer, State->Variables[I].Name);
         Push(&Buffer, CreateString(": "));
         

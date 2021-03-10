@@ -22,9 +22,9 @@ static inline void
 CmdJump(debug_console* Console, void* Context, string Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
-    scratch Scratchpad = Arena_BeginScratch(&DebugState->Arena);
-    Defer{ Arena_EndScratch(&Scratchpad); };
-    array<string> ArgList = DelimitSplit(Arguments, Scratchpad, ' ');
+    arena_mark Scratch = Arena_Mark(&DebugState->Arena);
+    Defer{ Arena_Revert(&Scratch); };
+    array<string> ArgList = DelimitSplit(Arguments, Scratch.Arena, ' ');
     if ( ArgList.Count != 2 ) {
         // Expect two arguments
         PushInfo(Console, 

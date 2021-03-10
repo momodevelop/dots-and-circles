@@ -54,50 +54,7 @@ Arena_PushStruct(arena* Arena) {
     return (type*)Arena_PushBlock(Arena, sizeof(type), alignof(type));
 }
 
-// NOTE(Momo): New temporary memory api
-struct arena_mark {
-    u32 OldUsed; 
-};
 
-static inline arena_mark
-Arena_Mark(arena* Arena) {
-    return { Arena->Used };
-}
-
-static inline void
-Arena_Revert(arena* Arena, arena_mark Mark) {
-    Arena->Used = Mark.OldUsed;
-}
-
-// NOTE(Momo): "Temporary Memory" API
-struct scratch {
-    arena* Arena;
-    u32 OldUsed;
-    
-    // Allow conversion to arena* to use functions associated with it
-    operator arena*() { 
-        return Arena; 
-    }
-};
-
-static inline scratch
-Arena_BeginScratch(arena* Arena) {
-    scratch Ret = {};
-    Ret.Arena = Arena;
-    Ret.OldUsed = Arena->Used;
-    return Ret;
-}
-
-// NOTE: Conceptually, you can choose not to call this after
-// BeginScratch() to permanently 'imprint' what was done in scratch
-// onto the memory.
-static inline void
-Arena_EndScratch(scratch* Scratch) {
-    Scratch->Arena->Used = Scratch->OldUsed;
-}
-
-// TODO: Is this function really needed?
-// Doesn't scratch already fulfill everything we need?
 static inline arena
 Arena_SubArena(arena* SrcArena, u32 Capacity) {
     Assert(Capacity);
@@ -128,4 +85,24 @@ Arena_BootupBlock(u32 StructSize,
 
 #define Arena_BootupStruct(Type, Member, Memory, MemorySize) (Type*)Arena_BootupBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
 
+
+// NOTE(Momo): "Temporary Memory" API
+struct arena_mark {
+    arena* Arena;
+    u32 OldUsed;
+};
+
+static inline arena_mark
+Arena_Mark(arena* Arena) {
+    arena_mark Ret = {};
+    Ret.Arena = Arena;
+    Ret.OldUsed = Arena->Used;
+    return Ret;
+}
+
+static inline void
+Arena_Revert(arena_mark* Mark) {
+    Mark->Arena = 0;
+    Mark->Arena->Used = Mark->OldUsed;
+}
 #endif

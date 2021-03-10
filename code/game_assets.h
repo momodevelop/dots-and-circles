@@ -187,13 +187,13 @@ return nullptr; \
     
     // Check file signaure
     {        
-        scratch Scratchpad = Arena_BeginScratch(Arena);
-        Defer{ Arena_EndScratch(&Scratchpad); };
+        arena_mark Scratch = Arena_Mark(Arena);
+        Defer{ Arena_Revert(&Scratch); };
         
         string Signature = CreateString("MOMO");
         void* ReadSignature = Read(&AssetFile,
                                    Platform,
-                                   Arena,
+                                   Scratch.Arena,
                                    &CurFileOffset,
                                    (u32)Signature.Count,
                                    1);
@@ -208,7 +208,7 @@ return nullptr; \
         // Get File Entry
         FileEntryCount = ReadCopy<u32>(&AssetFile,
                                        Platform,
-                                       Scratchpad,
+                                       Scratch.Arena,
                                        &CurFileOffset);
         CheckFile(AssetFile);
     }
@@ -216,13 +216,13 @@ return nullptr; \
     
     for (u32 I = 0; I < FileEntryCount; ++I) 
     {
-        scratch Scratchpad = Arena_BeginScratch(Arena);
-        Defer{ Arena_EndScratch(&Scratchpad); };
+        arena_mark Scratch = Arena_Mark(Arena);
+        Defer{ Arena_Revert(&Scratch); };
         
         // NOTE(Momo): Read header
         auto* FileEntry = Read<game_asset_file_entry>(&AssetFile,
                                                       Platform,
-                                                      Scratchpad,
+                                                      Scratch.Arena,
                                                       &CurFileOffset);
         CheckPtr(FileEntry);
         CheckFile(AssetFile);
@@ -232,7 +232,7 @@ return nullptr; \
                 using data_t = game_asset_file_texture;
                 auto* FileTexture = Read<data_t>(&AssetFile, 
                                                  Platform, 
-                                                 Scratchpad,
+                                                 Scratch.Arena,
                                                  &CurFileOffset);              
                 
                 CheckPtr(FileTexture);
@@ -248,7 +248,7 @@ return nullptr; \
                 
                 void* Pixels = Read(&AssetFile, 
                                     Platform,
-                                    Arena, 
+                                    Scratch.Arena, 
                                     &CurFileOffset,
                                     TextureSize,
                                     1);
@@ -263,7 +263,7 @@ return nullptr; \
                 using data_t = game_asset_file_atlas_aabb;
                 auto* FileAtlasAabb = Read<data_t>(&AssetFile, 
                                                    Platform, 
-                                                   Scratchpad,
+                                                   Scratch.Arena,
                                                    &CurFileOffset);              
                 CheckPtr(FileAtlasAabb);
                 CheckFile(AssetFile);
@@ -276,7 +276,7 @@ return nullptr; \
                 using data_t = game_asset_file_font;
                 auto* FileFont = Read<data_t>(&AssetFile,
                                               Platform,
-                                              Scratchpad,
+                                              Scratch.Arena,
                                               &CurFileOffset);
                 CheckPtr(FileFont);
                 CheckFile(AssetFile);
@@ -290,7 +290,7 @@ return nullptr; \
                 using data_t = game_asset_file_font_glyph;
                 auto* FileFontGlyph = Read<data_t>(&AssetFile,
                                                    Platform,
-                                                   Scratchpad,
+                                                   Scratch.Arena,
                                                    &CurFileOffset);
                 CheckPtr(FileFontGlyph);
                 CheckFile(AssetFile);
@@ -309,7 +309,7 @@ return nullptr; \
                 using data_t = game_asset_file_font_kerning;
                 auto* FileFontKerning = Read<data_t>(&AssetFile,
                                                      Platform,
-                                                     Scratchpad,
+                                                     Scratch.Arena,
                                                      &CurFileOffset);
                 CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
