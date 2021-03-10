@@ -12,14 +12,14 @@ struct stream {
 };
 
 static inline stream
-CreateStream(void* Memory, usize MemorySize) {
+CreateStream(void* Memory, u32 MemorySize) {
     stream Ret = {};
     Ret.Contents = Array_Create((u8*)Memory, MemorySize);
     return Ret;
 }
 
 static inline stream
-CreateStream(arena* Arena, usize Capacity) {
+CreateStream(arena* Arena, u32 Capacity) {
     void* Memory = Arena_PushBlock(Arena, Capacity);
     return CreateStream(Memory, Capacity); 
 } 

@@ -5,17 +5,17 @@ typedef array<char> string;
 typedef list<char> string_buffer;
 
 static inline string_buffer
-CreateStringBuffer(char* Memory, usize Capacity) {
+CreateStringBuffer(char* Memory, u32 Capacity) {
     return CreateList<char>(Memory, Capacity);
 }
 
 static inline string_buffer
-CreateStringBuffer(arena* Arena, usize Capacity) {
+CreateStringBuffer(arena* Arena, u32 Capacity) {
     return CreateList<char>(Arena, Capacity);
 }
 
 static inline string
-CreateString(char* Elements, usize Count) {
+CreateString(char* Elements, u32 Count) {
     return Array_Create(Elements, Count);
 }
 

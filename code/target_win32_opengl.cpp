@@ -537,14 +537,14 @@ Win32FreeOpengl(opengl* Opengl) {
 static inline opengl*
 Win32InitOpengl(HWND Window, 
                 v2u WindowDimensions,
-                usize ExtraMemory) 
+                u32 ExtraMemory) 
 {
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
     // This is kinda what we wanna do if we ever want Renderer 
     // to be its own DLL...
-    usize RendererMemorySize = sizeof(opengl) + ExtraMemory; 
+    u32 RendererMemorySize = sizeof(opengl) + ExtraMemory; 
     void* RendererMemory = Win32AllocateMemory(RendererMemorySize);
     if(!RendererMemory) {
         Win32Log("[Win32::Opengl] Failed to allocate memory\n"); 

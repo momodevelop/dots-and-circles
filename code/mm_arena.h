@@ -3,12 +3,12 @@
 
 struct arena {
     u8* Memory;
-    usize Used;
-    usize Capacity;
+    u32 Used;
+    u32 Capacity;
 };
 
 static inline arena 
-Arena_Create(void* Memory, usize Capacity) {
+Arena_Create(void* Memory, u32 Capacity) {
     Assert(Capacity);
     return { (u8*)Memory, 0, Capacity};
 }
@@ -18,14 +18,14 @@ Arena_Clear(arena* Arena) {
     Arena->Used = 0;
 }
 
-static inline usize 
+static inline u32
 Arena_Remaining(arena Arena) {
     return Arena.Capacity - Arena.Used;
 }
 
 
 static inline void* 
-Arena_PushBlock(arena* Arena, usize Size, u8 Alignment = alignof(void*)) {
+Arena_PushBlock(arena* Arena, u32 Size, u8 Alignment = alignof(void*)) {
     Assert(Size && Alignment);
     u8 Adjust = AlignForwardDiff((u8*)Arena->Memory + Arena->Used, Alignment);
     
@@ -54,20 +54,25 @@ Arena_PushStruct(arena* Arena) {
     return (type*)Arena_PushBlock(Arena, sizeof(type), alignof(type));
 }
 
-// TODO(Momo): Remove
-template<typename type>
-static inline type*
-Arena_PushSiArray(arena* Arena, usize Count) {
-    return (type*)Arena_PushBlock(Arena, sizeof(type) * Count, alignof(type));
+// NOTE(Momo): New temporary memory api
+struct arena_mark {
+    u32 OldUsed; 
+};
+
+static inline arena_mark
+Arena_Mark(arena* Arena) {
+    return { Arena->Used };
 }
 
-
-
+static inline void
+Arena_Revert(arena* Arena, arena_mark Mark) {
+    Arena->Used = Mark.OldUsed;
+}
 
 // NOTE(Momo): "Temporary Memory" API
 struct scratch {
     arena* Arena;
-    usize OldUsed;
+    u32 OldUsed;
     
     // Allow conversion to arena* to use functions associated with it
     operator arena*() { 
@@ -94,7 +99,7 @@ Arena_EndScratch(scratch* Scratch) {
 // TODO: Is this function really needed?
 // Doesn't scratch already fulfill everything we need?
 static inline arena
-Arena_SubArena(arena* SrcArena, usize Capacity) {
+Arena_SubArena(arena* SrcArena, u32 Capacity) {
     Assert(Capacity);
     arena Ret = {};
     
@@ -106,14 +111,14 @@ Arena_SubArena(arena* SrcArena, usize Capacity) {
 }
 
 static inline void*
-Arena_BootupBlock(usize StructSize,
-                  usize OffsetToArena,
+Arena_BootupBlock(u32 StructSize,
+                  u32 OffsetToArena,
                   void* Memory,
-                  usize MemorySize) 
+                  u32 MemorySize) 
 {
     Assert(StructSize < MemorySize);
     void* ArenaMemory = (u8*)Memory + StructSize; 
-    usize ArenaMemorySize = MemorySize - StructSize;
+    u32 ArenaMemorySize = MemorySize - StructSize;
     arena* ArenaPtr = (arena*)((u8*)Memory + OffsetToArena);
     (*ArenaPtr) = Arena_Create(ArenaMemory, ArenaMemorySize);
     

@@ -114,8 +114,8 @@ static inline void*
 Read(platform_file_handle* File,
      platform_api* Platform,
      arena* Arena,
-     usize* FileOffset,
-     usize BlockSize,
+     u32* FileOffset,
+     u32 BlockSize,
      u8 BlockAlignment)
 {
     void* Ret = Arena_PushBlock(Arena, BlockSize, BlockAlignment);
@@ -136,7 +136,7 @@ static inline t*
 Read(platform_file_handle* File,
      platform_api* Platform,
      arena* Arena,
-     usize* FileOffset)
+     u32* FileOffset)
 {
     return (t*)Read(File, Platform, Arena, FileOffset, sizeof(t), alignof(t));
 }
@@ -146,7 +146,7 @@ static inline t
 ReadCopy(platform_file_handle* File,
          platform_api* Platform,
          arena* Arena,
-         usize* FileOffset) 
+         u32* FileOffset) 
 {
     t* Ret = Read<t>(File, Platform, Arena, FileOffset);
     Assert(Ret);
@@ -182,7 +182,7 @@ return nullptr; \
     CheckFile(AssetFile);
     Defer { Platform->CloseFileFp(&AssetFile); }; 
     
-    usize CurFileOffset = 0;
+    u32 CurFileOffset = 0;
     u32 FileEntryCount = 0;
     
     // Check file signaure
@@ -195,7 +195,7 @@ return nullptr; \
                                    Platform,
                                    Arena,
                                    &CurFileOffset,
-                                   Signature.Count,
+                                   (u32)Signature.Count,
                                    1);
         CheckPtr(ReadSignature);
         CheckFile(AssetFile);
@@ -242,7 +242,7 @@ return nullptr; \
                 Texture->Width = FileTexture->Width;
                 Texture->Height = FileTexture->Height;
                 Texture->Channels = FileTexture->Channels;
-                usize TextureSize = Texture->Width * 
+                u32 TextureSize = Texture->Width * 
                     Texture->Height * 
                     Texture->Channels;
                 

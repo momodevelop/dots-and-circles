@@ -72,9 +72,9 @@ UnregisterCommand(debug_console* Console, string Key) {
 
 static inline debug_console
 DebugConsole_Create(arena* Arena, 
-                    usize InfoLineCount, 
-                    usize CharactersPerLine, 
-                    usize CommandsCapacity,
+                    u32 InfoLineCount, 
+                    u32 CharactersPerLine, 
+                    u32 CommandsCapacity,
                     v3f TransitStartPos,
                     v3f TransitEndPos,
                     f32 TransitDuration,

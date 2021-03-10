@@ -16,7 +16,7 @@ struct list : array<type>{
 // Constructors
 template<typename type>
 static inline list<type>
-CreateList(type* Arr, usize Capacity) {
+CreateList(type* Arr, u32 Capacity) {
     list<type> Ret = {};
     Ret.Elements = Arr;
     Ret.Capacity= Capacity;
@@ -25,9 +25,9 @@ CreateList(type* Arr, usize Capacity) {
 
 template<typename type>
 static inline list<type>
-CreateList(arena* Arena, usize Capacity) {
+CreateList(arena* Arena, u32 Capacity) {
     list<type> Ret = {};
-    Ret.Elements = Arena_PushSiArray<type>(Arena, Capacity);
+    Ret.Elements = Arena_PushArray(type, Arena, Capacity);
     Ret.Capacity = Capacity;
     return Ret;
 }

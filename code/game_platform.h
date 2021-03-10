@@ -146,13 +146,13 @@ struct platform_api {
 // Note that Transient Memory, once set, should not be moved!
 struct game_memory {
     void* PermanentMemory;
-    usize PermanentMemorySize;
+    u32 PermanentMemorySize;
     
     void* TransientMemory;
-    usize TransientMemorySize;
+    u32 TransientMemorySize;
     
     void* DebugMemory;
-    usize DebugMemorySize;
+    u32 DebugMemorySize;
 };
 
 struct game_audio {
