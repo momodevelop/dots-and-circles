@@ -244,6 +244,7 @@ GameUpdateFunc(GameUpdate)
     
     // Render Console
     Render(DebugState, TranState->Assets, RenderCommands);
+    //Platform->LogFp("Hello");
     
     return PermState->IsRunning;
 }

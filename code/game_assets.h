@@ -165,7 +165,7 @@ return nullptr; \
     
 #define CheckPtr(Ptr) \
 if ((Ptr) == nullptr ) { \
-Platform->LogFp(#Ptr " is null"); \
+Platform->LogFp("[Assets] " #Ptr " is null"); \
 return nullptr; \
 } \
     
@@ -258,6 +258,9 @@ return nullptr; \
                 Texture->Handle = Platform->AddTextureFp(FileTexture->Width, 
                                                          FileTexture->Height,
                                                          Pixels);
+                if (!Texture->Handle.Success) {
+                    Platform->LogFp("[Assets] Cannot add assets!");
+                }
             } break;
             case AssetType_AtlasAabb: { 
                 using data_t = game_asset_file_atlas_aabb;

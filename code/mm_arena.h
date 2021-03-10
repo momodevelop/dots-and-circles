@@ -95,7 +95,8 @@ Arena_Mark(arena* Arena) {
 
 static inline void
 Arena_Revert(arena_mark* Mark) {
-    Mark->Arena = 0;
     Mark->Arena->Used = Mark->OldUsed;
+    Mark->Arena = 0;
+    
 }
 #endif

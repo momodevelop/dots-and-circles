@@ -15,6 +15,10 @@ SET CommonCompilerFlags=-DSLOW -DINTERNAL  %CommonCompilerFlags%
 pushd %BuildDir%
 cl %CommonCompilerFlags% %CodeDir%\game.cpp -LD -link -EXPORT:GameUpdate
 
+rem We do this because for some reason, compiling will result in the DLL being modified twice and cus our hot reloading feature to be loaded twice. This *should* prevent it.
+
+copy game.dll compiled_game.dll
+del game.dll
 
 :End
 

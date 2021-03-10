@@ -27,6 +27,7 @@ struct renderer {
 };
 
 struct renderer_texture_handle {
+    b32 Success;
     u32 Id;
 };
 
@@ -68,7 +69,10 @@ GetRenderRegion(u32 WindowWidth,
                 u32 RenderWidth, 
                 u32 RenderHeight) 
 {
-    Assert(RenderWidth > 0 && RenderHeight > 0 && WindowWidth > 0 && WindowHeight > 0);
+    // TODO: Minimize case
+    if ( RenderWidth == 0 || RenderHeight == 0 || WindowWidth == 0 || WindowHeight == 0) {
+        return {};
+    }
     aabb2u Ret = {};
     
     f32 OptimalWindowWidth = (f32)WindowHeight * ((f32)RenderWidth / (f32)RenderHeight);

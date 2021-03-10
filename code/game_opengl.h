@@ -247,6 +247,13 @@ enum {
     OpenglVaoBind_Transform
 };
 
+enum {
+    OpenglPredefTexture_Dummy,
+    OpenglPredefTexture_Blank,
+    
+    OpenglPredefTexture_Max
+};
+
 struct opengl {
     renderer Header;
     
@@ -304,7 +311,11 @@ struct opengl {
     
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
-    list<GLuint> Textures;
+    // Index 0 will always be an invalid 'dummy texture
+    // Index 1 will always be a blank texture for items with no texture (but has colors)
+    GLuint* Textures;
+    GLsizei TextureCount;
+    GLsizei TextureCapacity;
     
     v2u WindowDimensions;
     v2u RenderDimensions;
@@ -355,7 +366,9 @@ Opengl_Init(opengl* Opengl,
             u32 MaxEntities,
             u32 MaxTextures) 
 {
-    Opengl->Textures = CreateList<GLuint>(&Opengl->Arena, MaxTextures);
+    Opengl->Textures = Arena_PushArray(GLuint, &Opengl->Arena, MaxTextures);
+    Opengl->TextureCapacity = MaxTextures;
+    Opengl->TextureCount = 0;
     
     Opengl->RenderDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
@@ -586,13 +599,15 @@ Opengl_Init(opengl* Opengl,
     struct pixel { u8 E[4]; };
     {
         pixel Pixel = { 255, 255, 255, 255 };
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, &Opengl->BlankTexture);
-        Opengl->glTextureStorage2D(Opengl->BlankTexture, 1, GL_RGBA8, 1, 1);
-        Opengl->glTextureSubImage2D(Opengl->BlankTexture, 
+        GLuint* BlankTexture = Opengl->Textures + OpenglPredefTexture_Blank;
+        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, BlankTexture);
+        Opengl->glTextureStorage2D((*BlankTexture), 1, GL_RGBA8, 1, 1);
+        Opengl->glTextureSubImage2D((*BlankTexture), 
                                     0, 0, 0, 
                                     1, 1, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     &Pixel);
+        ++Opengl->TextureCount;
     }
     
     // NOTE(Momo): Dummy texture setup
@@ -603,14 +618,17 @@ Opengl_Init(opengl* Opengl,
             { 255, 255, 255, 255 },
             { 125, 125, 125, 255 },
         };
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, &Opengl->DummyTexture);
-        Opengl->glTextureStorage2D(Opengl->DummyTexture, 1, GL_RGBA8, 2, 2);
-        Opengl->glTextureSubImage2D(Opengl->DummyTexture, 
+        
+        GLuint* DummyTexture = Opengl->Textures + OpenglPredefTexture_Dummy;
+        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, DummyTexture);
+        Opengl->glTextureStorage2D((*DummyTexture), 1, GL_RGBA8, 2, 2);
+        Opengl->glTextureSubImage2D((*DummyTexture), 
                                     0, 0, 0, 
                                     2, 2, 
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
+        ++Opengl->TextureCount;
     }
     
     
@@ -654,6 +672,14 @@ Opengl_AddTexture(opengl* Opengl,
                   void* Pixels) 
 {
     renderer_texture_handle Ret = {};
+    
+    if (Opengl->TextureCount >= Opengl->TextureCapacity) {
+        Ret.Success = false;
+        Ret.Id = 0;
+        return Ret;
+    }
+    
+    
     GLuint Entry;
     
     Opengl->glCreateTextures(GL_TEXTURE_2D, 
@@ -676,16 +702,17 @@ Opengl_AddTexture(opengl* Opengl,
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
     
-    Ret.Id = Entry;
-    Push(&Opengl->Textures, Entry);
+    Ret.Id = Opengl->TextureCount;
+    Ret.Success = true;
+    Opengl->Textures[Opengl->TextureCount++] = Entry;
     return Ret;
 }
 
 static inline void
 Opengl_ClearTextures(opengl* Opengl) {
-    Opengl->glDeleteTextures((GLsizei)Opengl->Textures.Count, 
-                             Opengl->Textures.Elements);
-    Clear(&Opengl->Textures);
+    Opengl->glDeleteTextures(Opengl->TextureCount, 
+                             Opengl->Textures + OpenglPredefTexture_Max);
+    Opengl->TextureCount = OpenglPredefTexture_Max;
 }
 
 
@@ -744,9 +771,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 using data_t = renderer_command_draw_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
                 
-                // If the game texture handle does not exist in the lookup table, 
-                // add texture to renderer and register it into the lookup table
-                u32 OpenglTextureHandle = Opengl->BlankTexture;
+                GLuint OpenglTextureHandle = Opengl->Textures[OpenglPredefTexture_Blank];
                 
                 // NOTE(Momo): If the currently set texture is not same as the 
                 // currently processed texture, batch draw all instances before 
@@ -786,10 +811,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
             case renderer_command_draw_textured_quad::TypeId: {
                 using data_t = renderer_command_draw_textured_quad;
                 auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
-                GLuint OpenglTextureHandle = (GLuint)Data->TextureHandle.Id; 
-                if (OpenglTextureHandle == 0) {
-                    OpenglTextureHandle = Opengl->DummyTexture;
-                }
+                GLuint OpenglTextureHandle = Opengl->Textures[Data->TextureHandle.Id]; 
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently
                 // processed texture, batch draw all instances before the current instance.

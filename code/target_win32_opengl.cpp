@@ -248,7 +248,10 @@ Win32LoadGameCode(win32_game_code* Code)
                             &Ignored)) 
     {
         Code->LastWriteTime = Win32GetLastWriteTime(Code->SrcFileName);
-        CopyFile(Code->SrcFileName, Code->TempFileName, FALSE);    
+        BOOL Success = FALSE;
+        do {
+            Success = CopyFile(Code->SrcFileName, Code->TempFileName, FALSE); 
+        } while (!Success); 
         Code->Dll = LoadLibraryA(Code->TempFileName);
         if(Code->Dll) {
             Code->GameUpdate = 
@@ -704,7 +707,6 @@ Win32Init() {
 #if INTERNAL
     // NOTE(Momo): Initialize console
     AllocConsole();    
-    Defer { FreeConsole(); };
     State->StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
     
@@ -715,6 +717,7 @@ Win32Init() {
 
 static inline void
 Win32Free(win32_state* State) {
+    FreeConsole();
     Win32FreeMemory(State); 
 }
 
@@ -1372,8 +1375,8 @@ WinMain(HINSTANCE Instance,
     
     // Load the game code DLL
     win32_game_code GameCode = Win32InitGameCode(State,
-                                                 "game.dll", 
-                                                 "temp_game.dll", 
+                                                 "compiled_game.dll", 
+                                                 "active_game.dll", 
                                                  "lock");
     
     // Initialize game input
