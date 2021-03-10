@@ -44,15 +44,8 @@ Arena_PushBlock(arena* Arena, u32 Size, u8 Alignment = alignof(void*)) {
 #define Arena_PushArray(Type, Arena, Count) \
 (Type*)Arena_PushBlock((Arena), sizeof(Type)*(Count), alignof(Type));
 
-//#define Arena_PushStruct(Type, Arena) \
-//(Type*)Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
-
-// TODO(Momo): Remove
-template<typename type>
-static inline type*
-Arena_PushStruct(arena* Arena) {
-    return (type*)Arena_PushBlock(Arena, sizeof(type), alignof(type));
-}
+#define Arena_PushStruct(Type, Arena) \
+(Type*)Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
 
 
 static inline arena

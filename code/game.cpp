@@ -16,7 +16,6 @@ void (*Log)(const char* Format, ...);
 #include "game_draw.h"
 
 
-#if INTERNAL 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
 CmdJump(debug_console* Console, void* Context, string Arguments) {
@@ -59,7 +58,6 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
     }
     
 }
-#endif
 
 
 
@@ -195,17 +193,17 @@ GameUpdateFunc(GameUpdate)
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
                 PermState->SplashMode = 
-                    Arena_PushStruct<game_mode_splash>(ModeArena); 
+                    Arena_PushStruct(game_mode_splash, ModeArena); 
                 InitSplashMode(PermState);
             } break;
             case GameModeType_Main: {
                 PermState->MainMode = 
-                    Arena_PushStruct<game_mode_main>(ModeArena); 
+                    Arena_PushStruct(game_mode_main, ModeArena); 
                 InitMainMode(PermState, TranState, DebugState);
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
-                    Arena_PushStruct<game_mode_sandbox>(ModeArena); 
+                    Arena_PushStruct(game_mode_sandbox, ModeArena); 
                 InitSandboxMode(PermState);
             } break;
             default: {

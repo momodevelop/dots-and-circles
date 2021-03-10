@@ -172,7 +172,7 @@ return nullptr; \
     
     Platform->ClearTexturesFp();
     
-    game_assets* Ret = Arena_PushStruct<game_assets>(Arena);
+    game_assets* Ret = Arena_PushStruct(game_assets, Arena);
     Ret->Textures = Array_Create<game_asset_texture>(Arena, Texture_Count);
     Ret->AtlasAabbs = Array_Create<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
     Ret->Fonts = Array_Create<game_asset_font>(Arena, Font_Count);
