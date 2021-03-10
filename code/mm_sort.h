@@ -23,9 +23,9 @@ struct sort_entry {
 };
 
 static inline usize
-Sort_QuickSortPartition(sort_entry* Arr,
-                        usize LeftIndex, 
-                        usize OnePastRightIndex) 
+QuickSortPartition(sort_entry* Arr,
+                   usize LeftIndex, 
+                   usize OnePastRightIndex) 
 {
     // Save the rightmost index as pivot
     // This frees up the right most index as a slot
@@ -56,106 +56,28 @@ Sort_QuickSortPartition(sort_entry* Arr,
 
 // NOTE(Momo): This is done inplace
 static inline void 
-Sort_QuickSortRange(sort_entry* Arr, 
-                    usize LeftIndex, 
-                    usize OnePastRightIndex) 
-{
-    if (OnePastRightIndex - LeftIndex <= 1) {
-        return;
-    }
-    usize PivotIndex = Sort_QuickSortPartition(Arr, 
-                                               LeftIndex, 
-                                               OnePastRightIndex);
-    
-    Sort_QuickSortRange(Arr, LeftIndex, PivotIndex);
-    Sort_QuickSortRange(Arr, PivotIndex + 1, OnePastRightIndex);
-    
-    // Don't need to concatenate! O_o
-}
-
-static inline void
-Sort_QuickSort(sort_entry* Arr, 
-               usize ArrCount) 
-{
-    Sort_QuickSortRange(Arr, 0, ArrCount);
-}
-
-
-
-template<typename type, typename comparer>
-static inline usize
-QuickSortPartition(type* Arr,
-                   usize LeftIndex, 
-                   usize OnePastRightIndex,
-                   comparer Comparer) 
-{
-    
-    // Save the rightmost index as pivot
-    // This frees up the right most index as a slot
-    type PivotValue = Arr[OnePastRightIndex - 1]; 
-    usize SmallIndex = LeftIndex;
-    usize LargeIndex = OnePastRightIndex - 1;
-    
-    while(LargeIndex > SmallIndex) {
-        // Check the value left of LargerIndex
-        // If it is bigger than PivotValue, shift it right
-        b32 Result = Comparer(Arr[LargeIndex-1], PivotValue);
-        if (Result) {
-            Arr[LargeIndex] = Arr[LargeIndex - 1];
-            --LargeIndex;
-        }
-        
-        // If the value left of LargeIndex is smaller than pivot,
-        // swap positions with the value in SmallIndex
-        else {
-            Swap(Arr + LargeIndex - 1, Arr + SmallIndex);
-            ++SmallIndex;
-        }
-    }
-    
-    Arr[LargeIndex] = PivotValue;
-    return LargeIndex;
-    
-}
-
-// NOTE(Momo): This is done inplace
-template<typename type, typename comparer>
-static inline void 
-QuickSort(type* Arr, 
-          usize LeftIndex, 
-          usize OnePastRightIndex,
-          comparer Comparer) 
+QuickSortRange(sort_entry* Arr, 
+               usize LeftIndex, 
+               usize OnePastRightIndex) 
 {
     if (OnePastRightIndex - LeftIndex <= 1) {
         return;
     }
     usize PivotIndex = QuickSortPartition(Arr, 
                                           LeftIndex, 
-                                          OnePastRightIndex,
-                                          Comparer);
+                                          OnePastRightIndex);
     
-    QuickSort(Arr, LeftIndex, PivotIndex, Comparer);
-    QuickSort(Arr, PivotIndex + 1, OnePastRightIndex, Comparer);
+    QuickSortRange(Arr, LeftIndex, PivotIndex);
+    QuickSortRange(Arr, PivotIndex + 1, OnePastRightIndex);
     
     // Don't need to concatenate! O_o
 }
 
-template<typename type, typename comparer>
 static inline void
-QuickSort(type* Arr, 
-          usize ArrCount, 
-          comparer Comparer) 
+QuickSort(sort_entry* Arr, 
+          usize ArrCount) 
 {
-    QuickSort<type, comparer>(Arr, 0, ArrCount, Comparer);
+    QuickSortRange(Arr, 0, ArrCount);
 }
-
-template<typename type, typename comparer>
-static inline void
-QuickSort(array<type> Arr, 
-          comparer Comparer) 
-{
-    QuickSort<type, comparer>(Arr.Elements, Arr.Count, Comparer);
-}
-
 
 #endif //MM_SORT_H

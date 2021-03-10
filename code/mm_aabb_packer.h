@@ -48,85 +48,6 @@ AabbPacker_Create(u32 Width,
     return Ret;
 }
 
-static inline b32 
-__AabbPacker_SortWidth(aabb_packer_aabb Lhs, 
-                       aabb_packer_aabb Rhs) {
-    return Rhs.W > Lhs.W ;
-}
-
-
-static inline b32 
-__AabbPacker_SortHeight(aabb_packer_aabb Lhs,
-                        aabb_packer_aabb Rhs) 
-{
-    return Rhs.H > Lhs.H;
-}
-
-static inline b32 
-__AabbPacker_SortPerimeter(aabb_packer_aabb Lhs,
-                           aabb_packer_aabb Rhs)
-{
-    u32 LhsPerimeter = Lhs.W + Lhs.H;
-    u32 RhsPerimeter = Rhs.W + Rhs.H;
-    return RhsPerimeter > LhsPerimeter;
-}
-
-static inline b32
-__AabbPacker_SortArea(aabb_packer_aabb Lhs, 
-                      aabb_packer_aabb Rhs) 
-{
-    u32 LhsArea = Lhs.W * Lhs.H;
-    u32 RhsArea = Rhs.W * Rhs.H;
-    return  RhsArea > LhsArea;
-}
-
-static inline b32
-__AabbPacker_SortBiggerSide(aabb_packer_aabb Lhs,
-                            aabb_packer_aabb Rhs) 
-{
-    u32 LhsBiggerSide = MaxOf(Lhs.W, Lhs.H);
-    u32 RhsBiggerSide = MaxOf(Rhs.W, Rhs.H);
-    return RhsBiggerSide > LhsBiggerSide;
-}
-
-static inline b32
-__AabbPacker_SortPathological(aabb_packer_aabb Lhs, 
-                              aabb_packer_aabb Rhs) 
-{
-    u32 LhsMultipler = MaxOf(Lhs.W, Lhs.H)/MinOf(Lhs.W, Lhs.H) * Lhs.W * Lhs.H;
-    u32 RhsMultipler = MaxOf(Rhs.W, Rhs.H)/MinOf(Rhs.W, Rhs.H) * Rhs.W * Rhs.H;
-    return RhsMultipler > LhsMultipler;
-}
-
-
-static inline void 
-__AabbPacker_Sort(aabb_packer_aabb* Aabbs, 
-                  usize AabbCount, 
-                  aabb_packer_sort_type SortType) {
-    switch(SortType) {
-        case AabbPackerSortType_Width: {
-            QuickSort(Aabbs, AabbCount, __AabbPacker_SortWidth);
-        } break;
-        case AabbPackerSortType_Height: {
-            QuickSort(Aabbs, AabbCount, __AabbPacker_SortHeight);
-        } break;
-        case AabbPackerSortType_Area: {
-            QuickSort(Aabbs, AabbCount, __AabbPacker_SortArea);
-        } break;
-        case AabbPackerSortType_Perimeter: {
-            QuickSort(Aabbs, AabbCount, __AabbPacker_SortPerimeter);
-        } break;
-        case AabbPackerSortType_Pathological: {
-            QuickSort(Aabbs, AabbCount, __AabbPacker_SortPathological);
-        } break;
-        case AabbPackerSortType_BiggerSide: {
-            QuickSort(Aabbs, AabbCount, __AabbPacker_SortBiggerSide);
-        } break;
-        default: {
-            Assert(false);
-        };
-    }
-}
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b32
@@ -141,7 +62,7 @@ AabbPacker_Pack(aabb_packer* Context,
 #if TEST
     __AabbPacker_Sort(Aabbs, AabbCount, SortType);
 #else
-    Sort_QuickSort(SortEntries, AabbCount);
+    QuickSort(SortEntries, AabbCount);
 #endif
     usize CurrentNodeCount = 0;
     Context->Nodes[CurrentNodeCount++] = { 0, 0, Context->Width, Context->Height };

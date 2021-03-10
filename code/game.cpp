@@ -76,10 +76,10 @@ GameUpdateFunc(GameUpdate)
     //  Initialization of the game
     if(!PermState->IsInitialized) {
         // NOTE(Momo): Arenas
-        PermState = BootstrapStruct(permanent_state,
-                                    MainArena,
-                                    GameMemory->PermanentMemory, 
-                                    GameMemory->PermanentMemorySize);
+        PermState = Arena_BootupStruct(permanent_state,
+                                       MainArena,
+                                       GameMemory->PermanentMemory, 
+                                       GameMemory->PermanentMemorySize);
         
         PermState->ModeArena = Arena_SubArena(&PermState->MainArena, 
                                               Arena_Remaining(PermState->MainArena));
@@ -94,10 +94,10 @@ GameUpdateFunc(GameUpdate)
     }
     
     if (!TranState->IsInitialized) {
-        TranState = BootstrapStruct(transient_state,
-                                    Arena,
-                                    GameMemory->TransientMemory, 
-                                    GameMemory->TransientMemorySize);
+        TranState = Arena_BootupStruct(transient_state,
+                                       Arena,
+                                       GameMemory->TransientMemory, 
+                                       GameMemory->TransientMemorySize);
         
         TranState->Assets = AllocateAssets(&TranState->Arena, 
                                            Platform);
@@ -108,10 +108,10 @@ GameUpdateFunc(GameUpdate)
     }
     
     if (!DebugState->IsInitialized) {
-        DebugState = BootstrapStruct(debug_state,
-                                     Arena,
-                                     GameMemory->DebugMemory,
-                                     GameMemory->DebugMemorySize);
+        DebugState = Arena_BootupStruct(debug_state,
+                                        Arena,
+                                        GameMemory->DebugMemory,
+                                        GameMemory->DebugMemorySize);
         
         DebugState->Variables = CreateList<debug_variable>(&DebugState->Arena, 16); 
         
