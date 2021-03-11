@@ -3,7 +3,7 @@
 #define GENERATE_TEST_PNG 1
 
 static inline aabb2u
-Aabb2u(aabb_packer_aabb Aabb) {
+PackerAabbToAabb2u(aabb_packer_aabb Aabb) {
 	return { 
         Aabb.X, 
         Aabb.Y, 
@@ -19,7 +19,7 @@ struct loaded_font {
 };
 
 static inline b32
-AllocateFontFromFile(loaded_font* Ret, const char* Filename) {
+AllocateFontFromFile(loaded_font* Ret, arena* Arena, const char* Filename) {
 	stbtt_fontinfo Font;
     FILE* FontFile = nullptr; 
 	fopen_s(&FontFile, Filename, "rb");
@@ -32,7 +32,7 @@ AllocateFontFromFile(loaded_font* Ret, const char* Filename) {
     u32 Size = ftell(FontFile);
     fseek(FontFile, 0, SEEK_SET);
     
-    void* Buffer = malloc(Size);
+    void* Buffer = Arena_PushBlock(Arena, Size);
     fread(Buffer, Size, 1, FontFile);
     stbtt_InitFont(&Font, (u8*)Buffer, 0);
     
@@ -40,11 +40,6 @@ AllocateFontFromFile(loaded_font* Ret, const char* Filename) {
     Ret->Data = Buffer;
     
     return true;
-}
-
-static inline void
-FreeFont(loaded_font* Font) {
-    free(Font->Data);
 }
 
 
@@ -117,10 +112,12 @@ WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
+GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
     u32 AtlasSize = Width * Height * 4;
-    u8* AtlasMemory = (u8*)malloc(AtlasSize);
-    
+    u8* AtlasMemory = (u8*)Arena_PushBlock(Arena, AtlasSize);
+    if (!AtlasMemory) {
+        return 0;
+    }
     
     for (u32 i = 0; i < AabbCount; ++i) {
         auto Aabb = Aabbs[i];
@@ -168,15 +165,27 @@ GenerateAtlas(const aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Hei
     
 }
 
+#define ToolBuildAssets_MemorySize Megabytes(8)
+
 int main() {
     printf("[Build Assets] Start!\n");
     
+    void* Memory = malloc(ToolBuildAssets_MemorySize);
+    if (!Memory) {
+        printf("[Build Assets] Failed to initialize memory");
+        return 1; 
+    }
+    Defer { free(Memory); };
+    
+    arena Arena = Arena_Create(Memory, ToolBuildAssets_MemorySize);
+    
+    // TODO(Momo): Preload stuff related to font that we actually need and then free
+    // loaded font's data to be more memory efficient.
     loaded_font LoadedFont = {};
-    if (!AllocateFontFromFile(&LoadedFont, "assets/DroidSansMono.ttf")) {
+    if (!AllocateFontFromFile(&LoadedFont, &Arena, "assets/DroidSansMono.ttf")) {
         printf("Failed to load font\n");
         return 1; 
     }
-    Defer { FreeFont(&LoadedFont); };
     
     f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
     
@@ -218,7 +227,7 @@ int main() {
     }
     
     for (u32 i = 0; i < ArrayCount(AtlasFontContexts); ++i) {
-        auto* Font = AtlasFontContexts + i;
+        atlas_context_font* Font = AtlasFontContexts + i;
         Font->Type = AtlasContextType_Font;
         Font->LoadedFont = LoadedFont;
         Font->Codepoint = Codepoint_Start + i;
@@ -232,33 +241,33 @@ int main() {
         ++AabbCounter;
     }
     
+    
+    
+    
     // NOTE(Momo): Pack rects
     u32 AtlasWidth = 1024;
     u32 AtlasHeight = 1024;
+    if (!AabbPacker_Pack(&Arena,
+                         AtlasWidth,
+                         AtlasHeight,
+                         Aabbs,
+                         AabbCount, 
+                         AabbPackerSortType_Height)) 
     {
-        const usize NodeCount = ArrayCount(Aabbs) + 1;
-        
-        aabb_packer_node Nodes[NodeCount] = {};
-        aabb_packer Context = AabbPacker_Create(AtlasWidth, 
-                                                AtlasHeight, 
-                                                Nodes, 
-                                                NodeCount);
-        if (!AabbPacker_Pack(&Context, 
-                             Aabbs,
-                             SortEntries,
-                             AabbCount, 
-                             AabbPackerSortType_Height)) 
-        {
-            printf("[Build Assets] Failed to generate texture\n");
-            return 1;
-        }
+        printf("[Build Assets] Failed to generate texture\n");
+        return 1;
     }
     
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasTexture = GenerateAtlas(Aabbs, 
+    u8* AtlasTexture = GenerateAtlas(&Arena,
+                                     Aabbs, 
                                      AabbCount, 
                                      AtlasWidth, 
                                      AtlasHeight);
+    if (!AtlasTexture) {
+        printf("Build Assets] Cannot generate atlas, not enough memory\n");
+        return 1;
+    }
 #if GENERATE_TEST_PNG 
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
     printf("[Build Assets] Written test atlas: test.png\n");
@@ -285,7 +294,7 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)Aabb.UserData;
-                    aabb2u AtlasAabb = Aabb2u(Aabb);
+                    aabb2u AtlasAabb = PackerAabbToAabb2u(Aabb);
                     WriteAtlasAabb(AssetBuilder, 
                                    Image->Id, 
                                    Image->TextureId, 
@@ -316,7 +325,7 @@ int main() {
                                    Font->TextureId, 
                                    Font->Codepoint, FontPixelScale * Advance,
                                    FontPixelScale * LeftSideBearing,
-                                   Aabb2u(Aabb), 
+                                   PackerAabbToAabb2u(Aabb), 
                                    ScaledBox);
                     
                 } break;
