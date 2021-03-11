@@ -26,7 +26,9 @@ typedef ptrdiff_t iptr;
 #define Megabytes(num) (Megabyte * num)
 #define Gigabytes(num) (Gigabyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
-
+#define Null 0
+#define FALSE 0
+#define TRUE 1
 
 #define AbsOf(X) (((X) < 0) ? (-X) : (X))
 #define MaxOf(X,Y) ((X) > (Y) ? (X) : (Y))

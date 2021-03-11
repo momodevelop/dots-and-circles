@@ -12,34 +12,53 @@ PackerAabbToAabb2u(aabb_packer_aabb Aabb) {
     };    
 }
 
-////////
 struct loaded_font {
 	stbtt_fontinfo Info;
     void* Data;
 };
 
-static inline b32
-AllocateFontFromFile(loaded_font* Ret, arena* Arena, const char* Filename) {
-	stbtt_fontinfo Font;
-    FILE* FontFile = nullptr; 
-	fopen_s(&FontFile, Filename, "rb");
-    if (FontFile == nullptr) {
-        return false;
-    }
-    Defer { fclose(FontFile); };
+struct read_file_result {
+    void* Data;
+    u32 Size;
+};
+static inline read_file_result
+ReadFileIntoMemory(arena* Arena, const char* Filename) {
+    read_file_result Ret = {};
+    FILE* File = Null;
+    fopen_s(&File, Filename, "rb");
     
-    fseek(FontFile, 0, SEEK_END);
-    u32 Size = ftell(FontFile);
-    fseek(FontFile, 0, SEEK_SET);
+    if (File == Null) {
+        return Ret;
+    }
+    Defer { fclose(File); };
+    
+    
+    fseek(File, 0, SEEK_END);
+    u32 Size = ftell(File);
+    fseek(File, 0, SEEK_SET);
     
     void* Buffer = Arena_PushBlock(Arena, Size);
-    fread(Buffer, Size, 1, FontFile);
-    stbtt_InitFont(&Font, (u8*)Buffer, 0);
+    fread(Buffer, Size, 1, File);
+    
+    Ret.Data = Buffer;
+    Ret.Size = Size;
+    
+    return Ret;
+}
+
+static inline b32
+AllocateFontFromFile(loaded_font* Ret, arena* Arena, const char* Filename) {
+    read_file_result ReadFileResult = ReadFileIntoMemory(Arena, Filename);
+	if (!ReadFileResult.Data) {
+        return FALSE;
+    }
+    stbtt_fontinfo Font;
+    stbtt_InitFont(&Font, (u8*)ReadFileResult.Data, 0);
     
     Ret->Info = Font;
-    Ret->Data = Buffer;
+    Ret->Data = ReadFileResult.Data;
     
-    return true;
+    return TRUE;
 }
 
 
@@ -112,7 +131,8 @@ WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) {
+GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) 
+{
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)Arena_PushBlock(Arena, AtlasSize);
     if (!AtlasMemory) {
@@ -125,15 +145,31 @@ GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width,
         auto Type = *(atlas_context_type*)Aabb.UserData;
         switch(Type) {
             case AtlasContextType_Image: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer { Arena_Revert(&Scratch); };
+                
                 auto* Context = (atlas_context_image*)Aabb.UserData;
                 i32 W, H, C;
-                u8* TextureMemory = stbi_load(Context->Filename, &W, &H, &C, 0);
+                
+                read_file_result FileMem = ReadFileIntoMemory(Arena, Context->Filename);
+                
+                // TODO: At the moment, there is no clean way for stbi load to 
+                // output to a given memory without some really ugly hacks. 
+                // so...oh well
+                //
+                // Github Issue: https://github.com/nothings/stb/issues/58          
+                //
+                u8* TextureMemory = stbi_load_from_memory((u8*)FileMem.Data, 
+                                                          FileMem.Size, 
+                                                          &W, &H, &C, 0);
+                
                 Defer { stbi_image_free(TextureMemory); };
                 WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Aabb);
+                
             } break;
             case AtlasContextType_Font: {
                 auto* Context = (atlas_context_font*)Aabb.UserData; 
-                constexpr u32 Channels = 4;
+                const u32 Channels = 4;
                 
                 i32 W, H;
                 u8* FontTextureOneCh = stbtt_GetCodepointTexture(&Context->LoadedFont.Info, 
@@ -144,8 +180,15 @@ GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width,
                 Defer { stbtt_FreeTexture( FontTextureOneCh, nullptr ); };
                 
                 u32 TextureDimensions = (u32)(W * H);
-                u8* FontTexture = (u8*)malloc(TextureDimensions * Channels); 
-                Defer { free(FontTexture); };
+                if (TextureDimensions == 0) 
+                    continue;
+                
+                arena_mark Scratch = Arena_Mark(Arena);
+                u8* FontTexture = (u8*)Arena_PushBlock(Arena,TextureDimensions*Channels); 
+                if (!FontTexture) {
+                    return Null;
+                }
+                Defer { Arena_Revert(&Scratch); };
                 
                 u8* FontTextureItr = FontTexture;
                 for (u32 j = 0, k = 0; j < TextureDimensions; ++j ){
@@ -166,6 +209,7 @@ GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width,
 }
 
 #define ToolBuildAssets_MemorySize Megabytes(8)
+#define MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.Used);
 
 int main() {
     printf("[Build Assets] Start!\n");
@@ -363,6 +407,7 @@ int main() {
     
     printf("[Build Assets] End!\n");
     
+    MemCheck;
     return 0;
     
 }

@@ -1,4 +1,7 @@
 @echo off
+    
+SET me=%~dp0
+    
 
 SET RootDir=%me%..
 SET BuildDir=%RootDir%\build

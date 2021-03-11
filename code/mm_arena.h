@@ -26,14 +26,16 @@ Arena_Remaining(arena Arena) {
 
 static inline void* 
 Arena_PushBlock(arena* Arena, u32 Size, u8 Alignment = alignof(void*)) {
-    Assert(Size && Alignment);
+    if (Size == 0 || Alignment == 0) {
+        return Null;
+    }
     u8 Adjust = AlignForwardDiff((u8*)Arena->Memory + Arena->Used, Alignment);
     
     // if not enough space, return 
     u8* MemoryEnd = (u8*)Arena->Memory + Arena->Capacity;
     u8* BlockEnd = (u8*)Arena->Memory + Arena->Used + Adjust + Size;
     if (BlockEnd > MemoryEnd) {
-        return nullptr;
+        return Null;
     }
     
     void* ret = (u8*)Arena->Memory + Arena->Used + Adjust;
