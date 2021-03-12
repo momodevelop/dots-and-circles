@@ -7,7 +7,7 @@
 struct read_file_result
 {
     void* Memory;
-    usize MemorySize;
+    u32 MemorySize;
 };
 
 static inline maybe<read_file_result>
@@ -50,8 +50,8 @@ struct png_context {
     u32 ImageHeight;
     u32 ImageChannels;
     
-    scratch ImageStreamMark;
-    scratch DepressedImageStreamMark;
+    arena_mark ImageStreamMark;
+    arena_mark DepressedImageStreamMark;
 };
 
 struct png_image {
@@ -119,15 +119,15 @@ struct png_huffman {
 static inline png_huffman
 Huffman(arena* Arena, 
         array<u16> SymLenTable, 
-        usize LenCountTableCap,
-        usize CodeSymTableCap) 
+        u32 LenCountTableCap,
+        u32 CodeSymTableCap) 
 {
     png_huffman Ret = {};
-    Ret.CodeSymTable = Array<u16>(Arena, CodeSymTableCap);
-    Ret.LenCountTable = Array<u16>(Arena, LenCountTableCap);
+    Ret.CodeSymTable = Array_Create<u16>(Arena, CodeSymTableCap);
+    Ret.LenCountTable = Array_Create<u16>(Arena, LenCountTableCap);
     
     // 1. Count the number of codes for each code length
-    for (usize Sym = 0; 
+    for (u32 Sym = 0; 
          Sym < SymLenTable.Count;
          ++Sym) 
     {
@@ -465,28 +465,28 @@ ParseIDATChunk(png_context* Context) {
     if (!Context->IsImageInitialized) {
         printf("Result W/H/C: %d, %d, %d\n", Context->ImageWidth, 
                Context->ImageHeight, Context->ImageChannels);
-        usize ImageSize = Context->ImageWidth * 
+        u32 ImageSize = Context->ImageWidth * 
             Context->ImageHeight * 
             Context->ImageChannels;
         
-        Context->ImageStreamMark = BeginScratch(Context->Arena);
-        Context->ImageStream = Stream(Context->ImageStreamMark, ImageSize);
+        Context->ImageStreamMark = Arena_Mark(Context->Arena);
+        Context->ImageStream = CreateStream(Context->Arena, ImageSize);
         
-        Context->DepressedImageStreamMark = BeginScratch(Context->ImageStreamMark);
-        usize DepressedImageDataSize = (Context->ImageWidth + 1) *
+        Context->DepressedImageStreamMark = Arena_Mark(Context->Arena);
+        u32 DepressedImageDataSize = (Context->ImageWidth + 1) *
             Context->ImageHeight* 
             Context->ImageChannels;
-        Context->DepressedImageStream = Stream(Context->Arena, DepressedImageDataSize);
+        Context->DepressedImageStream = CreateStream(Context->Arena, DepressedImageDataSize);
         
         Context->IsImageInitialized = true;
     }
     
-    scratch Scratch = BeginScratch(Context->Arena);
-    Defer { EndScratch(&Scratch); };
+    arena_mark Scratch = Arena_Mark(Context->Arena);
+    Defer { Arena_Revert(&Scratch); };
     // Deflate
     if (!Deflate(&Context->Stream, 
                  &Context->DepressedImageStream,
-                 Scratch)) 
+                 Scratch.Arena)) 
     {
         return false;
     }
@@ -496,10 +496,10 @@ ParseIDATChunk(png_context* Context) {
 static inline maybe<png_image> 
 ParsePng(arena* Arena, 
          void* PngMemory, 
-         usize PngMemorySize) 
+         u32 PngMemorySize) 
 {
     png_context Context = {};
-    Context.Stream = Stream(PngMemory, PngMemorySize); 
+    Context.Stream = CreateStream(PngMemory, PngMemorySize); 
     Context.Arena = Arena;
     
     // Read the signature
@@ -566,11 +566,11 @@ ParsePng(arena* Arena,
 }
 
 int main() {    
-    usize MemorySize = Megabytes(1);
+    u32 MemorySize = Megabytes(1);
     void * Memory = malloc(MemorySize);
     if (!Memory) { return 1; }
     Defer { free(Memory); };  
-    arena AppArena = Arena(Memory, MemorySize);
+    arena AppArena = Arena_Create(Memory, MemorySize);
     
     maybe<read_file_result> PngFile_ = ReadFileToMemory("test2.png");
     if (!PngFile_){
