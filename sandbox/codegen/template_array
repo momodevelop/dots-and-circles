@@ -1,0 +1,21 @@
+
+
+// A container for arrays, with bounds checking assert.
+// The point of this, I guess, is the option to store the Count on the stack
+// and the Elements on the heap.
+//
+
+struct $0 {
+    usize Count;
+    $1* Elements;
+};
+
+
+static inline array_$0
+$2Create($1* Elements, usize Count) {
+    $0 Ret = {};
+    Ret.Elements = Elements;
+    Ret.Count = Count;
+
+    return Ret;
+}

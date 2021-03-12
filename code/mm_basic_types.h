@@ -38,6 +38,8 @@ typedef ptrdiff_t iptr;
 #define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
 #define Lerp(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
 
+
+
 // Get the ratio of Value within the range [Min,Max] 
 // Return value Will be [0, 1]
 static inline f32

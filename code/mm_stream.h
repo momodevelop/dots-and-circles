@@ -65,7 +65,7 @@ ConsumeBits(stream* S, u32 Amount){
 }
 
 static inline b32
-Write(stream* S, void* Src, usize SrcSize) {
+Write(stream* S, void* Src, u32 SrcSize) {
     if (S->Current + SrcSize >= S->Contents.Count) {
         return false;
     }

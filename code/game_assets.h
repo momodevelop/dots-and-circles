@@ -60,9 +60,14 @@ struct game_assets {
     // TODO: remove?
     arena Arena;
     
-    array<game_asset_texture> Textures;
-    array<game_asset_atlas_aabb> AtlasAabbs;
-    array<game_asset_font> Fonts;
+    game_asset_texture* Textures;
+    u32 TextureCount;
+    
+    game_asset_atlas_aabb* AtlasAabbs;
+    u32 AtlasAabbCount;
+    
+    game_asset_font* Fonts;
+    u32 FontCount;
 };
 
 
@@ -73,7 +78,7 @@ GetAtlasUV(game_assets* Assets,
            game_asset_atlas_aabb* AtlasAabb) 
 {
     auto Texture = Assets->Textures[AtlasAabb->TextureId];
-    aabb2u TextureAabb = {0, 0, Texture.Width, Texture.Height };
+    aabb2u TextureAabb = { 0, 0, Texture.Width, Texture.Height };
     aabb2f NormalizedAabb = Aabb2u_Ratio(AtlasAabb->Aabb, TextureAabb);
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
@@ -173,9 +178,15 @@ return nullptr; \
     Platform->ClearTexturesFp();
     
     game_assets* Ret = Arena_PushStruct(game_assets, Arena);
-    Ret->Textures = Array_Create<game_asset_texture>(Arena, Texture_Count);
-    Ret->AtlasAabbs = Array_Create<game_asset_atlas_aabb>(Arena, AtlasAabb_Count);
-    Ret->Fonts = Array_Create<game_asset_font>(Arena, Font_Count);
+    
+    Ret->TextueCount = Texture_Count;
+    Ret->Textures = Arena_PushArray(game_asset_texture, Arena, Texture_Count);
+    
+    Ret->AtlasAabbs = AtlasAabb_Count;
+    Ret->AtlasAabbs = Arena_PushArray(game_asset_atlas_aabb, Arena, AtlasAabb_Count);
+    
+    Ret->FontCount = Font_Count;
+    Ret->Fonts = Arena_PushArray(game_asset_font, Arena, Font_Count);
     
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();

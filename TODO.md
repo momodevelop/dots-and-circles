@@ -11,3 +11,7 @@
 [] Art assets
 [] Enemy (...32x32?)
 [] Player (32x32?)
+
+#Codegen
+[] Increase robustness of amount of variables we can replace (and the name)
+[] Solve the Find issue

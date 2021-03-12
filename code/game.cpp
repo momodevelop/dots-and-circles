@@ -111,7 +111,11 @@ GameUpdateFunc(GameUpdate)
                                         GameMemory->DebugMemory,
                                         GameMemory->DebugMemorySize);
         
-        DebugState->Variables = CreateList<debug_variable>(&DebugState->Arena, 16); 
+        DebugState->VariableCapacity = 16;
+        DebugState->VariableCount = 0;
+        DebugState->Variables = Arena_PushArray(debug_variable, 
+                                                &DebugState->Arena,
+                                                DebugState->VariableCapacity); 
         
         // Init console
         {
@@ -134,10 +138,10 @@ GameUpdateFunc(GameUpdate)
                                     0.5f,
                                     0.025f);
             
-            RegisterCommand(&DebugState->Console, 
-                            CreateString("jump"), 
-                            CmdJump, 
-                            DebugState);
+            DebugConsole_AddCmd(&DebugState->Console, 
+                                CreateString("jump"), 
+                                CmdJump, 
+                                DebugState);
         }
         
         DebugState->PermanentState = PermState;
@@ -243,7 +247,7 @@ GameUpdateFunc(GameUpdate)
     }
     
     // Render Console
-    Render(DebugState, TranState->Assets, RenderCommands);
+    Debug_Render(DebugState, TranState->Assets, RenderCommands);
     //Platform->LogFp("Hello");
     
     return PermState->IsRunning;

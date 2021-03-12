@@ -10,7 +10,8 @@
 #include "game_assets.h"
 #include "game_draw.h"
 
-using debug_console_callback = void (*)(struct debug_console* Console, void* Context, string Args);
+
+typedef void (*debug_console_callback) (struct debug_console* Console, void* Context, string Args);
 
 struct debug_console_command {
     string Key;
@@ -23,6 +24,13 @@ struct debug_console_string {
     c4f Color;
 };
 
+struct debug_console_command_list {
+    u32 Capacity;
+    u32 Count;
+    debug_console_command* E;
+};
+
+
 struct debug_console {
     b32 IsActive;
     
@@ -34,7 +42,10 @@ struct debug_console {
     v2f Dimensions;
     
     // Buffers
-    array<debug_console_string> InfoBuffers;
+    debug_console_string* InfoBuffers;
+    u32 InfoBufferCount;
+    
+    
     string_buffer InputBuffer;
     string_buffer CommandBuffer;
     
@@ -49,25 +60,37 @@ struct debug_console {
     v3f TransitEndPos;
     timer TransitTimer;
     
-    list<debug_console_command> Commands;
+    // List of commands
+    debug_console_command* Commands;
+    u32 CommandCount;
+    u32 CommandCapacity;
 };
 
 static inline void 
-RegisterCommand(debug_console* Console, 
-                string Key, 
-                debug_console_callback Callback, 
-                void* Context)
+DebugConsole_AddCmd(debug_console* C, 
+                    string Key, 
+                    debug_console_callback Callback, 
+                    void* Context)
 {
     debug_console_command Command = { Key, Callback, Context };
-    Push(&Console->Commands, Command);
+    
+    Assert(C->CommandCount < C->CommandCapacity);
+    C->Commands[C->CommandCount] = Command; 
+    ++C->CommandCount;
 }
 
+
 static inline void 
-UnregisterCommand(debug_console* Console, string Key) {
-    auto Lamb = [Key](const debug_console_command* Cmd) { 
-        return Cmd->Key == Key; 
-    };
-    RemoveIf(&Console->Commands, Lamb);
+DebugConsole_RemoveCmd(debug_console* Console, string Key) {
+    for (u32 I = 0; I = Console->CommandCount; ++I) {
+        if (Console->Commands[I].Key == Key) {
+            // Swap with last element
+            Console->Commands[I] = Console->Commands[Console->CommandCount-1];
+            --Console->CommandCount;
+            return;
+        }
+    }
+    
 }
 
 static inline debug_console
@@ -84,8 +107,10 @@ DebugConsole_Create(arena* Arena,
 {
     debug_console Ret = {};
     
-    Ret.InfoBuffers = Array_Create<debug_console_string>(Arena, InfoLineCount);
-    for (usize I = 0; I < Ret.InfoBuffers.Count; ++I) {
+    Ret.InfoBuffers = Arena_PushArray(debug_console_string, Arena, InfoLineCount);
+    Ret.InfoBufferCount = InfoLineCount;
+    
+    for (usize I = 0; I < Ret.InfoBufferCount; ++I) {
         debug_console_string* InfoBuffer = Ret.InfoBuffers + I;
         InfoBuffer->Buffer = CreateStringBuffer(Arena, CharactersPerLine);
     }
@@ -93,7 +118,10 @@ DebugConsole_Create(arena* Arena,
     Ret.InputBuffer = CreateStringBuffer(Arena, CharactersPerLine);
     Ret.CommandBuffer = CreateStringBuffer(Arena, CharactersPerLine);
     
-    Ret.Commands = CreateList<debug_console_command>(Arena, CommandsCapacity);
+    Ret.Commands = Arena_PushArray(debug_console_command, Arena, CommandsCapacity);
+    Ret.CommandCapacity = CommandsCapacity;
+    Ret.CommandCount = 0;
+    
     Ret.TransitTimer = Timer_Create(TransitDuration);
     
     Ret.InfoBgColor = Color_Grey3;
@@ -113,8 +141,8 @@ DebugConsole_Create(arena* Arena,
 
 static inline void
 PushInfo(debug_console* Console, string String, c4f Color) {
-    for (usize I = 0; I < Console->InfoBuffers.Count - 1; ++I) {
-        usize J = Console->InfoBuffers.Count - 1 - I;
+    for (u32 I = 0; I < Console->InfoBufferCount - 1; ++I) {
+        u32 J = Console->InfoBufferCount - 1 - I;
         debug_console_string* Dest = Console->InfoBuffers + J;
         debug_console_string* Src = Console->InfoBuffers + J - 1;
         Copy(&Dest->Buffer, &Src->Buffer);
@@ -190,8 +218,8 @@ DebugConsole_Update(debug_console* Console,
             string CommandStr = SubString(Console->CommandBuffer, Range); 
             
             // Send a command to a callback
-            for (usize I = 0; I < Console->Commands.Count; ++I) {
-                debug_console_command* Command = &Console->Commands[I];
+            for (usize I = 0; I < Console->CommandCount; ++I) {
+                debug_console_command* Command = Console->Commands + I;
                 if (Command->Key == CommandStr) {
                     Command->Callback(Console, Command->Context, Console->CommandBuffer);
                 }
@@ -217,7 +245,7 @@ Render(debug_console* Console,
     
     f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
-    f32 LineHeight = Console->Dimensions.H / (Console->InfoBuffers.Count + 1);
+    f32 LineHeight = Console->Dimensions.H / (Console->InfoBufferCount + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = GetHeight(Font) * FontSize;
     f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
@@ -250,7 +278,7 @@ Render(debug_console* Console,
     
     // Draw text
     {
-        for (u32 I = 0; I < Console->InfoBuffers.Count ; ++I) {
+        for (u32 I = 0; I < Console->InfoBufferCount ; ++I) {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;

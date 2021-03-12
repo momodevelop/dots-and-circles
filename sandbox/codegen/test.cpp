@@ -3,6 +3,14 @@
 
 #include "../../code/mm_core.h"
 
+struct code_snippet {
+    const char* FileName;
+    const char** Words;
+    u32 WordCount;
+    
+};
+
+
 // For now, we can only replace $0 to $9 in the input file.
 // Should be more than enough for most use cases. 
 //
@@ -15,19 +23,11 @@
 //               ArrayCount(Words));
 //              
 static inline void
-GenerateCode(const char* SrcFileName,
+GenerateCode(code_snippet* Snippets,
+             u32 SnippetCount,
              const char* DestFileName,
-             const char* Words[],
-             u32 WordCount) 
+             const char* CodeGuard = 0)
 {
-    Assert(WordCount <= 9);
-
-    FILE* SrcFile = {};
-    if (fopen_s(&SrcFile, SrcFileName, "r") != 0) {
-        printf("Cannot find file: %s\n", SrcFileName);
-        return;
-    }
-    Defer { fclose(SrcFile); }; 
     
     FILE * DestFile = {};
     if(fopen_s(&DestFile, DestFileName, "w") != 0) {
@@ -35,48 +35,62 @@ GenerateCode(const char* SrcFileName,
         return;
     }
     Defer { fclose(DestFile); };
-   
     printf("Working on %s\n", DestFileName);  
-    while (!feof(SrcFile)) {
-        char CurrentChar = 0;
-        fread(&CurrentChar, 1, 1, SrcFile); 
-
-        if (CurrentChar == '$') {
-            char WordIndex = 0;
-            if (fread(&WordIndex, 1, 1, SrcFile)) {
-                WordIndex -= '0';
-                if (WordIndex > 9) {
-                    printf("Invalid WordIndex: %d\n", WordIndex);
-                    return;
+    
+    for (u32 SnippetIndex = 0; SnippetIndex < SnippetCount; ++SnippetIndex) {
+        code_snippet Snippet = Snippets[SnippetIndex];
+        Assert(Snippet.WordCount <= 9);
+        FILE* SrcFile = {};
+        if (fopen_s(&SrcFile, Snippet.FileName, "r") != 0) {
+            printf("Cannot find file: %s\n", Snippet.FileName);
+            return;
+        }
+        Defer { fclose(SrcFile); }; 
+        
+        while (!feof(SrcFile)) {
+            char CurrentChar = 0;
+            fread(&CurrentChar, 1, 1, SrcFile); 
+            
+            if (CurrentChar == '$') {
+                char WordIndex = 0;
+                if (fread(&WordIndex, 1, 1, SrcFile)) {
+                    WordIndex -= '0';
+                    if (WordIndex > 9) {
+                        printf("Invalid WordIndex: %d\n", WordIndex);
+                        return;
+                    }
+                    const char* Word = Snippet.Words[WordIndex];
+                    fwrite(Word, 1, SiStrLen(Word), DestFile); 
                 }
-                const char* Word = Words[WordIndex];
-                fwrite(Word, 1, SiStrLen(Word), DestFile); 
-            }
-            else {
+                else {
+                    fwrite(&CurrentChar, 1, 1, DestFile);
+                }
+            } else if (CurrentChar == 0) {
+                // Do nothing
+            }else {
                 fwrite(&CurrentChar, 1, 1, DestFile);
             }
-        } else {
-            fwrite(&CurrentChar, 1, 1, DestFile);
+            
         }
-
     }
-
+    
 }
 
-const char* Help = "Expected usage:\n\
-\t$ tool_codegen <input_file> <output_file> <$1_replacement> <$2_replacement>...\n";
 
 int main(int argc, const char* argv[]) {
-    if (argc <= 3) {
-        printf("%s", Help);
-        return 0;
-    }
-
-    u32 WordCount = argc - 3; 
-
-    GenerateCode(argv[1], 
-                 argv[2], 
-                 &argv[3], 
-                 WordCount); 
+    code_snippet Snippets[2] = {};
+    
+    
+    Snippets[0].FileName = "template_array";
+    const char* Words0[] = { "array_int", "int", "ArrayInt_" };
+    Snippets[0].Words = Words0;
+    
+    Snippets[1].FileName = "template_array_find";
+    const char* Word1[] = { "array_int", "u32", "ArrayInt_", "CompareIntUI32" };
+    Snippets[1].Words = Word1;
+    
+    GenerateCode(Snippets, ArrayCount(Snippets), "output.h");
+    
+    printf("Done!\n");
     return 0;
 }

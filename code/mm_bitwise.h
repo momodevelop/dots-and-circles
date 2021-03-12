@@ -51,7 +51,7 @@ AlignForwardDiff(void* ptr, u8 align)  {
 }
 
 static inline void 
-Copy(void* dest, void* src, usize size) {
+Copy(void* dest, void* src, u32 size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
          p < e; ++p, 
          ++q)

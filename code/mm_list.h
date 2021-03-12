@@ -1,6 +1,7 @@
 #ifndef __LIST__
 #define __LIST__
 
+
 template<typename type>
 struct list : array<type>{
     usize Capacity; // Total number of borrowable objects.

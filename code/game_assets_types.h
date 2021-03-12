@@ -4,7 +4,7 @@
 #include "mm_core.h"
 #include "mm_maths.h"
 
-enum game_asset_texture_id : u32 {
+enum game_asset_texture_id {
     Texture_Ryoji,
     Texture_Yuu,
     Texture_AtlasDefault,
@@ -16,13 +16,13 @@ static constexpr u32 Codepoint_Start = 32;
 static constexpr u32 Codepoint_End = 126;
 static constexpr u32 Codepoint_Count = Codepoint_End - Codepoint_Start;
 
-enum game_asset_font_id : u32 {
+enum game_asset_font_id {
     Font_Default,
     Font_Count,
 };
 
 
-enum game_asset_atlas_aabb_id : u32 {
+enum game_asset_atlas_aabb_id {
     AtlasAabb_Ryoji,
     AtlasAabb_Yuu,
     AtlasAabb_Karu00,
@@ -43,12 +43,12 @@ enum game_asset_atlas_aabb_id : u32 {
     AtlasAabb_BulletDot,
     AtlasAabb_BulletCircle,
     AtlasAabb_Enemy,
-
+    
     
     AtlasAabb_Count,
 };
 
-enum game_asset_type : u32 {
+enum game_asset_type {
     AssetType_Texture,
     AssetType_AtlasAabb,
     AssetType_Font,

@@ -1,7 +1,6 @@
 #ifndef __RENDERER_OPENGL__
 #define __RENDERER_OPENGL__
 
-#include "mm_list.h"
 #include "game_renderer.h"
 
 // Opengl typedefs
@@ -165,6 +164,7 @@ typedef void    OpenglFunction(glDeleteTextures)(GLsizei n,
 typedef void    OpenglFunction(glDebugMessageCallbackARB)(GLDEBUGPROC *callback, 
                                                           const void *userParam);
 
+
 // Stuff to work with game
 constexpr static inline f32 QuadModel[] = {
     -0.5f, -0.5f, 0.0f,  // bottom left
@@ -314,8 +314,8 @@ struct opengl {
     // Index 0 will always be an invalid 'dummy texture
     // Index 1 will always be a blank texture for items with no texture (but has colors)
     GLuint* Textures;
-    GLsizei TextureCount;
-    GLsizei TextureCapacity;
+    u32 TextureCount;
+    u32 TextureCapacity;
     
     v2u WindowDimensions;
     v2u RenderDimensions;
@@ -358,6 +358,45 @@ Opengl_Resize(opengl* Opengl,
     Opengl->WindowDimensions.W = WindowWidth;
     Opengl->WindowDimensions.H = WindowHeight;
     Opengl_AlignViewport(Opengl);
+}
+
+static inline void 
+Opengl_AddPredefTextures(opengl* Opengl) {
+    // NOTE(Momo): Blank texture setup
+    struct pixel { u8 E[4]; };
+    {
+        pixel Pixel = { 255, 255, 255, 255 };
+        GLuint* BlankTexture = Opengl->Textures + OpenglPredefTexture_Blank;
+        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, BlankTexture);
+        Opengl->glTextureStorage2D((*BlankTexture), 1, GL_RGBA8, 1, 1);
+        Opengl->glTextureSubImage2D((*BlankTexture), 
+                                    0, 0, 0, 
+                                    1, 1, 
+                                    GL_RGBA, GL_UNSIGNED_BYTE, 
+                                    &Pixel);
+        ++Opengl->TextureCount;
+    }
+    
+    // NOTE(Momo): Dummy texture setup
+    {
+        pixel Pixels[4] = {
+            { 125, 125, 125, 255 },
+            { 255, 255, 255, 255 },
+            { 255, 255, 255, 255 },
+            { 125, 125, 125, 255 },
+        };
+        
+        GLuint* DummyTexture = Opengl->Textures + OpenglPredefTexture_Dummy;
+        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, DummyTexture);
+        Opengl->glTextureStorage2D((*DummyTexture), 1, GL_RGBA8, 2, 2);
+        Opengl->glTextureSubImage2D((*DummyTexture), 
+                                    0, 0, 0, 
+                                    2, 2, 
+                                    GL_RGBA, 
+                                    GL_UNSIGNED_BYTE, 
+                                    &Pixels);
+        ++Opengl->TextureCount;
+    }
 }
 
 static inline b32
@@ -594,47 +633,11 @@ Opengl_Init(opengl* Opengl,
         // TODO(Momo): Log?
         return false;
     }
-    
-    // NOTE(Momo): Blank texture setup
-    struct pixel { u8 E[4]; };
-    {
-        pixel Pixel = { 255, 255, 255, 255 };
-        GLuint* BlankTexture = Opengl->Textures + OpenglPredefTexture_Blank;
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, BlankTexture);
-        Opengl->glTextureStorage2D((*BlankTexture), 1, GL_RGBA8, 1, 1);
-        Opengl->glTextureSubImage2D((*BlankTexture), 
-                                    0, 0, 0, 
-                                    1, 1, 
-                                    GL_RGBA, GL_UNSIGNED_BYTE, 
-                                    &Pixel);
-        ++Opengl->TextureCount;
-    }
-    
-    // NOTE(Momo): Dummy texture setup
-    {
-        pixel Pixels[4] = {
-            { 125, 125, 125, 255 },
-            { 255, 255, 255, 255 },
-            { 255, 255, 255, 255 },
-            { 125, 125, 125, 255 },
-        };
-        
-        GLuint* DummyTexture = Opengl->Textures + OpenglPredefTexture_Dummy;
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, DummyTexture);
-        Opengl->glTextureStorage2D((*DummyTexture), 1, GL_RGBA8, 2, 2);
-        Opengl->glTextureSubImage2D((*DummyTexture), 
-                                    0, 0, 0, 
-                                    2, 2, 
-                                    GL_RGBA, 
-                                    GL_UNSIGNED_BYTE, 
-                                    &Pixels);
-        ++Opengl->TextureCount;
-    }
-    
-    
+    Opengl_AddPredefTextures(Opengl);
     Opengl->Header.IsInitialized = true;
     return true;
 }
+
 
 static inline void 
 Opengl_DrawInstances(opengl* Opengl, 
@@ -673,7 +676,8 @@ Opengl_AddTexture(opengl* Opengl,
 {
     renderer_texture_handle Ret = {};
     
-    if (Opengl->TextureCount >= Opengl->TextureCapacity) {
+    u32 RemainingTextures = Opengl->TextureCapacity - Opengl->TextureCount;
+    if (RemainingTextures == 0) {
         Ret.Success = false;
         Ret.Id = 0;
         return Ret;
@@ -711,8 +715,9 @@ Opengl_AddTexture(opengl* Opengl,
 static inline void
 Opengl_ClearTextures(opengl* Opengl) {
     Opengl->glDeleteTextures(Opengl->TextureCount, 
-                             Opengl->Textures + OpenglPredefTexture_Max);
-    Opengl->TextureCount = OpenglPredefTexture_Max;
+                             Opengl->Textures);
+    
+    Opengl_AddPredefTextures(Opengl);
 }
 
 

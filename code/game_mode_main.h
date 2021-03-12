@@ -115,13 +115,19 @@ struct enemy {
     f32 LifeDuration;
 };
 
+
 struct game_mode_main {
     arena Arena;
     
     player Player;
     
-    list<bullet> Bullets;
-    list<enemy> Enemies;
+    bullet* Bullets;
+    u32 BulletCount;
+    u32 BulletCapacity;
+    
+    enemy* Enemies;
+    u32 EnemyCount;
+    u32 EnemyCapacity;
     
     wave Wave;
     rng_series Rng;
@@ -152,7 +158,9 @@ SpawnEnemy(game_mode_main* Mode,
     
     // TODO: Change to appropriate enemy
     Enemy.ImageAabb = Assets->AtlasAabbs + AtlasAabb_Enemy;
-    Push(&Mode->Enemies, Enemy);
+    
+    Assert(Mode->EnemyCount < Mode->EnemyCapacity);
+    Mode->Enemies[Mode->EnemyCount++] = Enemy;
 }
 
 
@@ -173,7 +181,8 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
     Bullet.MoodType = Mood;
 	Bullet.ImageAabb = Assets->AtlasAabbs + ((Bullet.MoodType == MoodType_Dot) ? AtlasAabb_BulletDot : AtlasAabb_BulletCircle);
     
-    Push(&Mode->Bullets, Bullet);
+    Assert(Mode->BulletCount < Mode->BulletCapacity);
+    Mode->Bullets[Mode->BulletCount++] = Bullet;
 }
 
 
@@ -185,8 +194,14 @@ InitMainMode(permanent_state* PermState,
     game_mode_main* Mode = PermState->MainMode;
     
     Mode->Arena = Arena_SubArena(&PermState->ModeArena, Arena_Remaining(PermState->ModeArena));
-    Mode->Bullets = CreateList<bullet>(&Mode->Arena, 128);
-    Mode->Enemies = CreateList<enemy>(&Mode->Arena, 128);
+    Mode->BulletCapacity = 128;
+    Mode->BulletCount = 0;
+    Mode->Bullets = Arena_PushArray(bullet, &Mode->Arena, Mode->BulletCapacity);
+    
+    Mode->EnemyCapacity = 128;
+    Mode->EnemyCount = 0;
+    Mode->Enemies = Arena_PushArray(enemy, &Mode->Arena, Mode->EnemyCapacity);
+    
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
     
@@ -211,12 +226,12 @@ InitMainMode(permanent_state* PermState,
     
     Mode->Wave.IsDone = true;
     
-    HookU32Variable(DebugState, CreateString("Bullets"), &Mode->Bullets);
+    Debug_HookU32Variable(DebugState, CreateString("Bullets"), &Mode->BulletCount);
 }
 
 static inline void
 UninitMainMode(debug_state* DebugState) {
-    UnhookVariable(DebugState, CreateString("Bullets"));
+    Debug_UnhookVariable(DebugState, CreateString("Bullets"));
 }
 
 static inline void 
@@ -240,11 +255,17 @@ UpdatePlayer(game_mode_main* Mode,
     
 }
 
+static inline void 
+RemoveBullet(game_mode_main* Mode, u32 Index) {
+    Mode->Bullets[Index] = Mode->Bullets[Mode->BulletCount-1];
+    --Mode->BulletCount;
+}
+
 static inline void
 UpdateBullet(game_mode_main* Mode,
              f32 DeltaTime) 
 {
-    for(usize I = 0; I < Mode->Bullets.Count;) {
+    for(u32 I = 0; I < Mode->BulletCount;) {
         bullet* Bullet = Mode->Bullets + I;
         
         f32 SpeedDt = Bullet->Speed * DeltaTime;
@@ -256,7 +277,7 @@ UpdateBullet(game_mode_main* Mode,
             Bullet->Position.X >= Global_DesignSpace.W * 0.5f + Bullet->HitCircle.Radius ||
             Bullet->Position.Y <= -Global_DesignSpace.H * 0.5f - Bullet->HitCircle.Radius ||
             Bullet->Position.Y >= Global_DesignSpace.H * 0.5f + Bullet->HitCircle.Radius) {
-            SwapRemove(&Mode->Bullets, I);
+            RemoveBullet(Mode, I);
             continue;
         }
         ++I;
@@ -271,7 +292,7 @@ UpdateEnemies(game_mode_main* Mode,
               f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
-    for (usize I = 0; I < Mode->Enemies.Count; ++I) 
+    for (u32 I = 0; I < Mode->EnemyCount; ++I) 
     {
         enemy* Enemy = Mode->Enemies + I;
         
@@ -314,7 +335,9 @@ UpdateEnemies(game_mode_main* Mode,
         // Life time
         Enemy->LifeTimer += DeltaTime;
         if (Enemy->LifeTimer > Enemy->LifeDuration) {
-            SwapRemove(&Mode->Enemies, I);
+            // Quick removal
+            Mode->Enemies[I] = Mode->Enemies[Mode->EnemyCount-1];
+            --Mode->EnemyCount;
             continue;
         }
         ++Enemy;
@@ -330,7 +353,7 @@ UpdateCollision(game_mode_main* Mode)
     PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
     
     // Player vs every bullet
-    for (usize I = 0; I < Mode->Bullets.Count;) 
+    for (u32 I = 0; I < Mode->BulletCount;) 
     {
         bullet* Bullet = Mode->Bullets + I;
         circle2f BulletCircle = Bullet->HitCircle;
@@ -338,7 +361,7 @@ UpdateCollision(game_mode_main* Mode)
         
         if (Circle2f_IsIntersecting(PlayerCircle, BulletCircle)) {
             if (Player->MoodType == Bullet->MoodType ) {
-                SwapRemove(&Mode->Bullets, I);
+                RemoveBullet(Mode, I);
                 continue;
             }
         }
@@ -505,10 +528,9 @@ RenderBullets(game_mode_main* Mode,
 	// Bullet Rendering 
     f32 DotLayerOffset = 0.f;
     f32 CircleLayerOffset = 0.f;
-    for (usize I = 0; I < Mode->Bullets.Count; ++I) 
+    for (u32 I = 0; I < Mode->BulletCount; ++I) 
     {
         bullet* Bullet = Mode->Bullets + I;
-        
         
 		m44f S = M44f_Scale(Bullet->Size.X, 
                             Bullet->Size.Y, 
@@ -546,7 +568,7 @@ RenderEnemies(game_mode_main* Mode,
               game_assets* Assets,
               mailbox* RenderCommands) 
 {
-    for(usize I = 0; I < Mode->Enemies.Count; ++I )
+    for(u32 I = 0; I < Mode->EnemyCount; ++I )
 	{
         enemy* Enemy = Mode->Enemies + I;
 		m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
