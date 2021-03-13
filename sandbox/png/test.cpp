@@ -169,7 +169,7 @@ Decode(stream* SrcStream, png_huffman* Huffman) {
     i32 Index = 0;
     
     for (i32 Len = 1; Len <= PngMaxBits; ++Len) {
-        Code |= ConsumeBits(SrcStream, 1);
+        Code |= Stream_ConsumeBits(SrcStream, 1);
         i32 Count = Huffman->LenCountTable[Len];
         if(Code - Count < First)
             return Huffman->CodeSymTable[Index + (Code - First)];
@@ -192,16 +192,16 @@ Deflate(png_context* Context)
 {
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        BFINAL = (u8)ConsumeBits(&Context->Stream, 1);
-        u16 BTYPE = (u8)ConsumeBits(&Context->Stream, 2);
+        BFINAL = (u8)Stream_ConsumeBits(&Context->Stream, 1);
+        u16 BTYPE = (u8)Stream_ConsumeBits(&Context->Stream, 2);
         printf(">>> BFINAL: %d\n", BFINAL);
         printf(">>> BTYPE: %d\n", BTYPE);
         switch(BTYPE) {
             case 0b00: {
                 printf(">>>> No compression\n");
-                ConsumeBits(&Context->Stream, 5);
-                u16 LEN = (u16)ConsumeBits(&Context->Stream, 16);
-                u16 NLEN = (u16)ConsumeBits(&Context->Stream, 16);
+                Stream_ConsumeBits(&Context->Stream, 5);
+                u16 LEN = (u16)Stream_ConsumeBits(&Context->Stream, 16);
+                u16 NLEN = (u16)Stream_ConsumeBits(&Context->Stream, 16);
                 printf(">>>>> LEN: %d\n", LEN);
                 printf(">>>>> NLEN: %d\n", NLEN);
                 if ((u16)LEN != ~((u16)(NLEN))) {
@@ -282,13 +282,13 @@ Deflate(png_context* Context)
                             printf("Invalid Symbol 1\n"); 
                             return false;
                         }
-                        u32 Len = Lens[Sym] + ConsumeBits(&Context->Stream, LenExBits[Sym]);
+                        u32 Len = Lens[Sym] + Stream_ConsumeBits(&Context->Stream, LenExBits[Sym]);
                         Sym = Decode(Context, &DistHuffman);
                         if (Sym < 0) {
                             printf("Invalid Symbol 2\n");
                             return false;
                         }
-                        u32 Dist = Dists[Sym] + ConsumeBits(&Context->Stream, DistExBits[Sym]);
+                        u32 Dist = Dists[Sym] + Stream_ConsumeBits(&Context->Stream, DistExBits[Sym]);
                         while(Len--) {
                             u8 ByteToWrite = Context->ImageData[Context->ImageDataCount - Dist];
                             printf("%02X ", ByteToWrite);
@@ -333,16 +333,16 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
         12, 12, 13, 13};
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        BFINAL = (u8)ConsumeBits(SrcStream, 1);
-        u16 BTYPE = (u8)ConsumeBits(SrcStream, 2);
+        BFINAL = (u8)Stream_ConsumeBits(SrcStream, 1);
+        u16 BTYPE = (u8)Stream_ConsumeBits(SrcStream, 2);
         printf(">>> BFINAL: %d\n", BFINAL);
         printf(">>> BTYPE: %d\n", BTYPE);
         switch(BTYPE) {
             case 0b00: {
                 printf(">>>> No compression\n");
-                ConsumeBits(SrcStream, 5);
-                u16 LEN = (u16)ConsumeBits(SrcStream, 16);
-                u16 NLEN = (u16)ConsumeBits(SrcStream, 16);
+                Stream_ConsumeBits(SrcStream, 5);
+                u16 LEN = (u16)Stream_ConsumeBits(SrcStream, 16);
+                u16 NLEN = (u16)Stream_ConsumeBits(SrcStream, 16);
                 printf(">>>>> LEN: %d\n", LEN);
                 printf(">>>>> NLEN: %d\n", NLEN);
                 if ((u16)LEN != ~((u16)(NLEN))) {
@@ -410,13 +410,13 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                             printf("Invalid Symbol 1\n"); 
                             return false;
                         }
-                        u32 Len = Lens[Sym] + ConsumeBits(SrcStream, LenExBits[Sym]);
+                        u32 Len = Lens[Sym] + Stream_ConsumeBits(SrcStream, LenExBits[Sym]);
                         Sym = Decode(SrcStream, &DistHuffman);
                         if (Sym < 0) {
                             printf("Invalid Symbol 2\n");
                             return false;
                         }
-                        u32 Dist = Dists[Sym] + ConsumeBits(SrcStream, DistExBits[Sym]);
+                        u32 Dist = Dists[Sym] + Stream_ConsumeBits(SrcStream, DistExBits[Sym]);
                         while(Len--) {
                             usize TargetIndex = DestStream->Current - Dist;
                             u8 ByteToWrite = DestStream->Contents[TargetIndex];
@@ -449,11 +449,11 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
 static inline b32
 ParseIDATChunk(png_context* Context) {
     u32 CM, CINFO, FCHECK, FDICT, FLEVEL;
-    CM = ConsumeBits(&Context->Stream, 4);
-    CINFO = ConsumeBits(&Context->Stream, 4);
-    FCHECK = ConsumeBits(&Context->Stream, 5); //not needed?
-    FDICT = ConsumeBits(&Context->Stream, 1);
-    FLEVEL = ConsumeBits(&Context->Stream, 2); //useless?
+    CM = Stream_ConsumeBits(&Context->Stream, 4);
+    CINFO = Stream_ConsumeBits(&Context->Stream, 4);
+    FCHECK = Stream_ConsumeBits(&Context->Stream, 5); //not needed?
+    FDICT = Stream_ConsumeBits(&Context->Stream, 1);
+    FLEVEL = Stream_ConsumeBits(&Context->Stream, 2); //useless?
     printf(">> CM: %d\n\
            >> CINFO: %d\n\
            >> FCHECK: %d\n\
@@ -546,7 +546,7 @@ ParsePng(arena* Arena,
     Consume<png_chunk_footer>(&Context.Stream);
     
     // Search for IDAT header
-    while(!IsEos(&Context.Stream)) {
+    while(!Stream_IsEos(&Context.Stream)) {
         ChunkHeader = Consume<png_chunk_header>(&Context.Stream);
         EndianSwap(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
