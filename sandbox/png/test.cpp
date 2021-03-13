@@ -10,12 +10,12 @@ struct read_file_result
     u32 MemorySize;
 };
 
-static inline maybe<read_file_result>
-ReadFileToMemory(const char* Filename) {
+static inline b32
+ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     FILE* File = {};
     if (fopen_s(&File, Filename, "rb") != 0) { 
         printf("Cannot find file\n");
-        return No();
+        return FALSE;
     }
     Defer{ fclose(File); };
     
@@ -24,14 +24,13 @@ ReadFileToMemory(const char* Filename) {
     i32 Filesize = ftell(File);
     fseek(File, 0, SEEK_SET);
     
-    void* FileMemory = malloc(Filesize);
+    void* FileMemory = Arena_PushBlock(Arena, Filesize);
     fread(FileMemory, 1, Filesize, File); 
     
-    read_file_result Ret = {};
-    Ret.Memory = FileMemory;
-    Ret.MemorySize = Filesize;
+    Result->Memory = FileMemory;
+    Result->MemorySize = Filesize;
     
-    return Yes(Ret);
+    return TRUE;
 }
 
 /// Png start here
@@ -112,24 +111,30 @@ FreePng(png_image Png) {
 }
 
 struct png_huffman {
-    array<u16> CodeSymTable; // Canonical ordered symbols
-    array<u16> LenCountTable;
+    u16* CodeSymTable; // Canonical ordered symbols
+    u32 CodeSymTableSize;
+
+    u16* LenCountTable;
+    u32 LenCountTableSize;
 };
 
 static inline png_huffman
 Huffman(arena* Arena, 
-        array<u16> SymLenTable, 
+        u16* SymLenTable,
+        u32 SymLenTableSize, 
         u32 LenCountTableCap,
         u32 CodeSymTableCap) 
 {
     png_huffman Ret = {};
-    Ret.CodeSymTable = Array_Create<u16>(Arena, CodeSymTableCap);
-    Ret.LenCountTable = Array_Create<u16>(Arena, LenCountTableCap);
+
+    Ret.CodeSymTableSize = CodeSymTableCap;
+    Ret.CodeSymTable = Arena_PushArray(u16, Arena, CodeSymTableCap);
+
+    Ret.LenCountTableSize = LenCountTableCap;
+    Ret.LenCountTable = Arena_PushArray(u16, Arena, LenCountTableCap);
     
     // 1. Count the number of codes for each code length
-    for (u32 Sym = 0; 
-         Sym < SymLenTable.Count;
-         ++Sym) 
+    for (u32 Sym = 0; Sym < SymLenTableSize; ++Sym) 
     {
         u16 Len = SymLenTable[Sym];
         Assert(Len < PngMaxBits);
@@ -138,18 +143,16 @@ Huffman(arena* Arena,
     
     // 2. Numerical value of smallest code for each code length
     u16 LenOffsetTable[PngMaxBits+1] = {};
-    for (usize Len = 1; Len < PngMaxBits; ++Len)
+    for (u32 Len = 1; Len < PngMaxBits; ++Len)
     {
         LenOffsetTable[Len+1] = LenOffsetTable[Len] + Ret.LenCountTable[Len]; 
     }
     
     
     // 3. Assign numerical values to all codes
-    for (usize Sym = 0;
-         Sym < SymLenTable.Count;
-         ++Sym)
+    for (u32 Sym = 0; Sym < SymLenTableSize; ++Sym)
     {
-        u16 Len = SymLenTable[Sym]; 
+        u16 Len = SymLenTable[Sym];
         if (Len > 0) {
             u16 Code = LenOffsetTable[Len]++;
             Ret.CodeSymTable[Code] = (u16)Sym;
@@ -216,8 +219,8 @@ Deflate(png_context* Context)
                     // Fixed huffman
                     printf(">>>> Fixed huffman\n");
                     
-                    BootstrapArray(LitLenTable, u16, PngMaxFixedLitCodes);
-                    BootstrapArray(DistLenTable, u16, PngMaxDistCodes);
+                    u16 LitLenTable[PngMaxFixedLitCodes] = {};
+                    u16 DistLenTable[PngMaxDistCodes] = {};
                     
                     usize Lit = 0;
                     for (; Lit < 144; ++Lit) 
@@ -233,10 +236,12 @@ Deflate(png_context* Context)
                     
                     LitHuffman = Huffman(Context->Arena, 
                                          LitLenTable, 
+                                         PngMaxFixedLitCodes
                                          PngMaxBits+1,
                                          PngMaxFixedLitCodes);
                     DistHuffman = Huffman(Context->Arena,
                                           DistLenTable,
+                                          PngMaxDistCodes
                                           PngMaxBits+1,
                                           PngMaxDistCodes);
                     
@@ -355,8 +360,8 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                     // Fixed huffman
                     printf(">>>> Fixed huffman\n");
                     
-                    BootstrapArray(LitLenTable, u16, PngMaxFixedLitCodes);
-                    BootstrapArray(DistLenTable, u16, PngMaxDistCodes);
+                    u16 LitLenTable[PngMaxFixedLitCodes] = {};
+                    u16 DistLenTable[PngMaxDistCodes] = {};
                     
                     usize Lit = 0;
                     for (; Lit < 144; ++Lit) 
@@ -372,11 +377,12 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                     
                     LitHuffman = Huffman(Arena, 
                                          LitLenTable, 
+                                         PngMaxFixedLitCodes,
                                          PngMaxBits+1,
                                          PngMaxFixedLitCodes);
                     DistHuffman = Huffman(Arena,
-                                          //Advance(&PngStream, ChunkHeader->Length - 2);
                                           DistLenTable,
+                                          PngMaxDistCodes,
                                           PngMaxBits+1,
                                           PngMaxDistCodes);
                     
@@ -570,14 +576,12 @@ int main() {
     void * Memory = malloc(MemorySize);
     if (!Memory) { return 1; }
     Defer { free(Memory); };  
+
     arena AppArena = Arena_Create(Memory, MemorySize);
-    
-    maybe<read_file_result> PngFile_ = ReadFileToMemory("test2.png");
-    if (!PngFile_){
+    read_file_result PngFile = {};
+    if (!ReadFileToMemory(&AppArena, &PngFile, "test2.png")){
         return 1;
     }
-    read_file_result& PngFile = PngFile_.This;
-    Defer { free(PngFile.Memory); }; 
     
     ParsePng(&AppArena, PngFile.Memory, PngFile.MemorySize);
     
