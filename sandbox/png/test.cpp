@@ -401,8 +401,7 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                     if (Sym <= 255) { 
                         u8 ByteToWrite = (u8)(Sym & 0xFF); 
                         printf("%02X ", ByteToWrite);
-                        Write(DestStream, ByteToWrite);
-                        //Context->ImageData[Context->ImageDataCount++] = ByteToWrite;
+                        Stream_WriteStruct(u8, DestStream, ByteToWrite);
                     }
                     else if (Sym >= 257) {
                         Sym -= 257;
@@ -421,7 +420,7 @@ Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                             usize TargetIndex = DestStream->Current - Dist;
                             u8 ByteToWrite = DestStream->Contents[TargetIndex];
                             printf("%02X ", ByteToWrite);
-                            Write(DestStream, ByteToWrite);
+                            Stream_WriteStruct(u8, DestStream, ByteToWrite);
                         }
                     }
                     else { 
@@ -509,7 +508,7 @@ ParsePng(arena* Arena,
     Context.Arena = Arena;
     
     // Read the signature
-    auto* PngHeader = Consume<png_header>(&Context.Stream);  
+    auto* PngHeader = Stream_ConsumeStruct(png_header, &Context.Stream);  
     if (!PngHeader) { return No(); }
     static constexpr u8 PngSignature[] = { 
         137, 80, 78, 71, 13, 10, 26, 10 
@@ -522,10 +521,12 @@ ParsePng(arena* Arena,
     }
     
     // Check for IHDR which MUST appear first
-    auto* ChunkHeader = Consume<png_chunk_header>(&Context.Stream);
+    auto* ChunkHeader = Stream_ConsumeStruct(png_chunk_header, &Context.Stream);
     if (!ChunkHeader){ return No(); }
-    if (ChunkHeader->TypeU32 != FourCC("IHDR")) { return No(); }
-    auto* IHDR = Consume<png_chunk_data_IHDR>(&Context.Stream);
+    if (ChunkHeader->TypeU32 != FourCC("IHDR")) { 
+        return No(); 
+        }
+    auto* IHDR = Stream_ConsumeStruct(png_chunk_data_IHDR, &Context.Stream);
     if (!IHDR) { return No(); }
     
     // Unsupported details
@@ -543,11 +544,11 @@ ParsePng(arena* Arena,
     Context.ImageWidth = IHDR->Width;
     Context.ImageHeight = IHDR->Height;
     Context.ImageChannels = 4;
-    Consume<png_chunk_footer>(&Context.Stream);
+    Stream_ConsumeStruct(png_chunk_footer, &Context.Stream);
     
     // Search for IDAT header
     while(!Stream_IsEos(&Context.Stream)) {
-        ChunkHeader = Consume<png_chunk_header>(&Context.Stream);
+        ChunkHeader = Stream_ConsumeStruct(png_chunk_header, &Context.Stream);
         EndianSwap(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
@@ -563,10 +564,10 @@ ParsePng(arena* Arena,
                 return Yes(Ret);
             } break;
             default: {
-                Consume(&Context.Stream, ChunkHeader->Length);
+                Stream_ConsumeBlock(&Context.Stream, ChunkHeader->Length);
             };
         }
-        Consume<png_chunk_footer>(&Context.Stream);
+        Stream_ConsumeStruct(png_chunk_footer, &Context.Stream);
     }
     return No();
 }

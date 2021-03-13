@@ -33,7 +33,7 @@ Stream_IsEos(stream* S) {
 }
 
 static inline void*
-Consume(stream* S, usize Amount) {
+Stream_ConsumeBlock(stream* S, usize Amount) {
     void* Ret = nullptr;
     if (S->Current + Amount <= S->ContentSize) {
         Ret = S->Contents + S->Current;
@@ -42,11 +42,8 @@ Consume(stream* S, usize Amount) {
     return Ret;
 }
 
-template<typename t>
-static inline t* 
-Consume(stream* S) {
-    return (t*)Consume(S, sizeof(t));
-}
+#define Stream_ConsumeStruct(Type, Stream) (Type*)Stream_ConsumeBlock(Stream, sizeof(Type))
+
 
 // Bits are consumed from LSB to MSB
 static inline u32
@@ -54,7 +51,7 @@ Stream_ConsumeBits(stream* S, u32 Amount){
     Assert(Amount <= 32);
     
     while(S->BitCount < Amount) {
-        u32 Byte = *Consume<u8>(S);
+        u32 Byte = *Stream_ConsumeStruct(u8, S);
         S->BitBuffer |= (Byte << S->BitCount);
         S->BitCount += 8;
     }
