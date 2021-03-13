@@ -3,7 +3,9 @@
 
 // TODO: Linked list of stream chunks?
 struct stream {
-    array<u8> Contents;
+    u8* Contents;
+    u32 ContentSize;
+
     usize Current;
     
     // For bit reading
@@ -12,28 +14,29 @@ struct stream {
 };
 
 static inline stream
-CreateStream(void* Memory, u32 MemorySize) {
+Stream_CreateFromMemory(void* Memory, u32 MemorySize) {
     stream Ret = {};
-    Ret.Contents = Array_Create((u8*)Memory, MemorySize);
+    Ret.Contents = (u8*)Memory;
+    Ret.ContentSize = MemorySize;
     return Ret;
 }
 
 static inline stream
-CreateStream(arena* Arena, u32 Capacity) {
+Stream_CreateFromArena(arena* Arena, u32 Capacity) {
     void* Memory = Arena_PushBlock(Arena, Capacity);
-    return CreateStream(Memory, Capacity); 
+    return Stream_CreateFromMemory(Memory, Capacity); 
 } 
 
 static inline b32
 IsEos(stream* S) {
-    return S->Current >= S->Contents.Count;
+    return S->Current >= S->ContentSize;
 }
 
 static inline void*
 Consume(stream* S, usize Amount) {
     void* Ret = nullptr;
-    if (S->Current + Amount <= S->Contents.Count) {
-        Ret = S->Contents.Elements + S->Current;
+    if (S->Current + Amount <= S->ContentSize) {
+        Ret = S->Contents + S->Current;
     }
     S->Current += Amount;
     return Ret;
@@ -66,10 +69,10 @@ ConsumeBits(stream* S, u32 Amount){
 
 static inline b32
 Write(stream* S, void* Src, u32 SrcSize) {
-    if (S->Current + SrcSize >= S->Contents.Count) {
+    if (S->Current + SrcSize >= S->ContentSize) {
         return false;
     }
-    Copy(S->Contents.Elements + S->Current, Src, SrcSize);
+    Copy(S->Contents + S->Current, Src, SrcSize);
     S->Current += SrcSize; 
     return true;
 }

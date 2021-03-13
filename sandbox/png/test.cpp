@@ -476,13 +476,13 @@ ParseIDATChunk(png_context* Context) {
             Context->ImageChannels;
         
         Context->ImageStreamMark = Arena_Mark(Context->Arena);
-        Context->ImageStream = CreateStream(Context->Arena, ImageSize);
+        Context->ImageStream = Stream_CreateFromArena(Context->Arena, ImageSize);
         
         Context->DepressedImageStreamMark = Arena_Mark(Context->Arena);
         u32 DepressedImageDataSize = (Context->ImageWidth + 1) *
             Context->ImageHeight* 
             Context->ImageChannels;
-        Context->DepressedImageStream = CreateStream(Context->Arena, DepressedImageDataSize);
+        Context->DepressedImageStream = Stream_CreateFromArena(Context->Arena, DepressedImageDataSize);
         
         Context->IsImageInitialized = true;
     }
@@ -505,7 +505,7 @@ ParsePng(arena* Arena,
          u32 PngMemorySize) 
 {
     png_context Context = {};
-    Context.Stream = CreateStream(PngMemory, PngMemorySize); 
+    Context.Stream = Stream_CreateFromMemory(PngMemory, PngMemorySize); 
     Context.Arena = Arena;
     
     // Read the signature
