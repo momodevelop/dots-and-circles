@@ -18,9 +18,6 @@ struct aabb_packer_aabb {
     // NOTE(Momo): Input
     u32 W, H; 
     
-    // NOTE(Momo): For user's use
-    void* UserData;
-    
     // NOTE(Momo): Output
     u32 X, Y;
 };

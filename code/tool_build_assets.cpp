@@ -75,6 +75,7 @@ int main() {
     
     // NOTE(Momo): Initialize the aabb for the aabb_packer's input
     aabb_packer_aabb Aabbs[AabbCount] = {};
+    void* UserDatas[AabbCount] = {};
     u32 AabbCounter = 0;
     for (u32 I = 0; I < ArrayCount(AtlasImageContexts); ++I ) {
         atlas_context_image* Context = AtlasImageContexts + I;
@@ -84,7 +85,8 @@ int main() {
         stbi_info(Context->Filename, &W, &H, &C);
         Aabb->W = (u32)W;
         Aabb->H = (u32)H;
-        Aabb->UserData = Context;
+        
+        UserDatas[AabbCounter] = Context;
         
         ++AabbCounter;
     }
@@ -108,7 +110,7 @@ int main() {
         
         Aabb->W= (u32)(ix1 - ix0);
         Aabb->H= (u32)(iy1 - iy0);
-        Aabb->UserData = Font;
+        UserDatas[AabbCounter] = Font;
         
         ++AabbCounter;
     }
@@ -131,6 +133,7 @@ int main() {
     // NOTE(Momo): Generate atlas from rects
     u8* AtlasTexture = Tab_GenerateAtlas(&Arena,
                                          Aabbs, 
+                                         UserDatas,
                                          AabbCount, 
                                          AtlasWidth, 
                                          AtlasHeight);
@@ -162,10 +165,10 @@ int main() {
         
         for(u32 i = 0; i <  AabbCount; ++i) {
             aabb_packer_aabb Aabb = Aabbs[i];
-            atlas_context_type Type = *(atlas_context_type*)Aabb.UserData;
+            auto Type = *(atlas_context_type*)UserDatas[i];
             switch(Type) {
                 case AtlasContextType_Image: {
-                    auto* Image = (atlas_context_image*)Aabb.UserData;
+                    auto* Image = (atlas_context_image*)UserDatas[i];
                     aabb2u AtlasAabb = Tab_PackerAabbToAabb2u(Aabb);
                     Tab_AssetBuilderWriteAtlasAabb(AssetBuilder, 
                                                    Image->Id, 
@@ -174,7 +177,7 @@ int main() {
                     
                 } break;
                 case AtlasContextType_Font: {
-                    auto* Font  = (atlas_context_font*)Aabb.UserData;
+                    auto* Font  = (atlas_context_font*)UserDatas[i];
                     
                     i32 Advance;
                     i32 LeftSideBearing; 

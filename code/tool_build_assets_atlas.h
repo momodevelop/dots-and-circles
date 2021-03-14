@@ -48,7 +48,12 @@ Tab_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-Tab_GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Width, u32 Height) 
+Tab_GenerateAtlas(arena* Arena, 
+                  aabb_packer_aabb* Aabbs, 
+                  void*UserDatas[],
+                  u32 AabbCount, 
+                  u32 Width, 
+                  u32 Height) 
 {
     u32 AtlasSize = Width * Height * 4;
     u8* AtlasMemory = (u8*)Arena_PushBlock(Arena, AtlasSize);
@@ -56,16 +61,16 @@ Tab_GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Wi
         return 0;
     }
     
-    for (u32 i = 0; i < AabbCount; ++i) {
-        aabb_packer_aabb Aabb = Aabbs[i];
+    for (u32 I = 0; I < AabbCount; ++I) {
+        aabb_packer_aabb Aabb = Aabbs[I];
         
-        auto Type = *(atlas_context_type*)Aabb.UserData;
+        auto Type = *(atlas_context_type*)UserDatas[I];
         switch(Type) {
             case AtlasContextType_Image: {
                 arena_mark Scratch = Arena_Mark(Arena);
                 Defer { Arena_Revert(&Scratch); };
                 
-                auto* Context = (atlas_context_image*)Aabb.UserData;
+                auto* Context = (atlas_context_image*)UserDatas[I];
                 i32 W, H, C;
                 
                 read_file_result FileMem = Tab_ReadFileIntoMemory(Arena, Context->Filename);
@@ -85,7 +90,7 @@ Tab_GenerateAtlas(arena* Arena, aabb_packer_aabb* Aabbs, usize AabbCount, u32 Wi
                 
             } break;
             case AtlasContextType_Font: {
-                auto* Context = (atlas_context_font*)Aabb.UserData; 
+                auto* Context = (atlas_context_font*)UserDatas[I]; 
                 const u32 Channels = 4;
                 
                 i32 W, H;
