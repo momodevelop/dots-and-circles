@@ -99,7 +99,7 @@ EndianSwap(u32* Value) {
                  (Origin >> 24));
 }
 
-
+// TODO(Momo): Delete
 static inline void*
 Consume(void** P, usize Size) {
     void* Ret = (*P);
@@ -107,12 +107,20 @@ Consume(void** P, usize Size) {
     return Ret;
 }    
 
+// TODO(Momo): Delete
 template<typename t>
 static inline t*
 Consume(void** P) {
     return (t*)Read(P, sizeof(t));
 }
 
+static inline void*
+ConsumeBlock(void** P, u32 Size) {
+    void* Ret = (*P);
+    (*P) = (u8*)(*P) + Size; 
+    return Ret;
+}
+#define ConsumeStruct(Type, Memory) ((Type)*)ConsumeBlock(Memory, sizeof(Type)) 
 
 template<typename T>
 static inline void

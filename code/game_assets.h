@@ -179,10 +179,10 @@ return nullptr; \
     
     game_assets* Ret = Arena_PushStruct(game_assets, Arena);
     
-    Ret->TextueCount = Texture_Count;
+    Ret->TextureCount = Texture_Count;
     Ret->Textures = Arena_PushArray(game_asset_texture, Arena, Texture_Count);
     
-    Ret->AtlasAabbs = AtlasAabb_Count;
+    Ret->AtlasAabbCount = AtlasAabb_Count;
     Ret->AtlasAabbs = Arena_PushArray(game_asset_atlas_aabb, Arena, AtlasAabb_Count);
     
     Ret->FontCount = Font_Count;

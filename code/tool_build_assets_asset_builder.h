@@ -1,31 +1,15 @@
-#ifndef TOOL_BUILD_ASSETS_H
-#define TOOL_BUILD_ASSETS_H
+/* date = March 14th 2021 2:38 pm */
+#ifndef TOOL_BUILD_ASSETS_ASSET_BUILDER_H
+#define TOOL_BUILD_ASSETS_ASSET_BUILDER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "mm_core.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-
-#include "game_assets_types.h"  
-
-
-/////
-struct ab_context {
+struct tab_asset_builder {
     FILE* File;
     u32 EntryCount;
     long int EntryCountAt;
 };
 
 static inline void
-Begin(ab_context* Context, const char* Filename, const char* Signature) 
+Tab_AssetBuilderBegin(tab_asset_builder* Context, const char* Filename, const char* Signature) 
 {
     Context->EntryCount = 0;
     Context->File = nullptr; 
@@ -41,14 +25,14 @@ Begin(ab_context* Context, const char* Filename, const char* Signature)
 }
 
 static inline void
-End(ab_context* Context) {
+Tab_AssetBuilderEnd(tab_asset_builder* Context) {
     fseek(Context->File, Context->EntryCountAt, SEEK_SET);
     fwrite(&Context->EntryCount, sizeof(u32), 1, Context->File);
     fclose(Context->File);
 }
 
 static inline void
-WriteEntry(ab_context* Context, game_asset_type AssetType) {
+Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, game_asset_type AssetType) {
     game_asset_file_entry Entry = {};
     Entry.Type = AssetType;
     fwrite(&Entry, sizeof(Entry),  1, Context->File);
@@ -56,14 +40,14 @@ WriteEntry(ab_context* Context, game_asset_type AssetType) {
 }
 
 static inline void 
-WriteTexture(ab_context* Context, 
-             game_asset_texture_id Id, 
-             u32 Width, 
-             u32 Height, 
-             u32 Channels, 
-             u8* Pixels) 
+Tab_AssetBuilderWriteTexture(tab_asset_builder* Context, 
+                game_asset_texture_id Id, 
+                u32 Width, 
+                u32 Height, 
+                u32 Channels, 
+                u8* Pixels) 
 {
-    WriteEntry(Context, AssetType_Texture);
+    // TODO(Momo): WriteEntry(Context, AssetType_Texture);
     
     game_asset_file_texture Texture = {};
     Texture.Id = Id;
@@ -79,10 +63,11 @@ WriteTexture(ab_context* Context,
     }
 }
 
+
 static inline void 
-WriteTexture(ab_context* Context, 
-             game_asset_texture_id Id, 
-             const char* Filename) 
+Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context, 
+                        game_asset_texture_id Id, 
+                        const char* Filename) 
 {
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
@@ -96,17 +81,17 @@ WriteTexture(ab_context* Context,
         Channels = (u32)C;
     }
     Defer { stbi_image_free(LoadedImage); };
-    WriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
+    Tab_AssetBuilderWriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
 }
 
 
 static inline void 
-WriteAtlasAabb(ab_context* Context, 
-               game_asset_atlas_aabb_id Id, 
-               game_asset_texture_id TargetTextureId, 
-               aabb2u Aabb) 
+Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context, 
+                  game_asset_atlas_aabb_id Id, 
+                  game_asset_texture_id TargetTextureId, 
+                  aabb2u Aabb) 
 {
-    WriteEntry(Context,  AssetType_AtlasAabb);
+    Tab_AssetBuilderWriteEntry(Context,  AssetType_AtlasAabb);
     
     game_asset_file_atlas_aabb AtlasAabb = {};
     AtlasAabb.Id = Id;
@@ -116,13 +101,13 @@ WriteAtlasAabb(ab_context* Context,
 }
 
 static inline void
-WriteFont(ab_context* Context, 
-          game_asset_font_id Id, 
-          f32 Ascent, 
-          f32 Descent, 
-          f32 LineGap) 
+Tab_AssetBuilderWriteFont(tab_asset_builder* Context, 
+             game_asset_font_id Id, 
+             f32 Ascent, 
+             f32 Descent, 
+             f32 LineGap) 
 {
-    WriteEntry(Context, AssetType_Font);
+    Tab_AssetBuilderWriteEntry(Context, AssetType_Font);
     
     game_asset_file_font Font = {};
     Font.Id = Id;
@@ -133,16 +118,16 @@ WriteFont(ab_context* Context,
 }
 
 static inline void 
-WriteFontGlyph(ab_context* Context, 
-               game_asset_font_id FontId, 
-               game_asset_texture_id TargetTextureId, 
-               u32 Codepoint, 
-               f32 Advance, 
-               f32 LeftBearing, 
-               aabb2u AtlasAabb, 
-               aabb2f Box) 
+Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context, 
+                  game_asset_font_id FontId, 
+                  game_asset_texture_id TargetTextureId, 
+                  u32 Codepoint, 
+                  f32 Advance, 
+                  f32 LeftBearing, 
+                  aabb2u AtlasAabb, 
+                  aabb2f Box) 
 {
-    WriteEntry(Context, AssetType_FontGlyph);
+    Tab_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
     
     game_asset_file_font_glyph FontGlyph = {};
     FontGlyph.FontId = FontId;
@@ -157,13 +142,13 @@ WriteFontGlyph(ab_context* Context,
 }
 
 static inline void 
-WriteFontKerning(ab_context* Context, 
-                 game_asset_font_id FontId, 
-                 u32 CodepointA,
-                 u32 CodepointB, 
-                 i32 Kerning) 
+Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context, 
+                    game_asset_font_id FontId, 
+                    u32 CodepointA,
+                    u32 CodepointB, 
+                    i32 Kerning) 
 {
-    WriteEntry(Context, AssetType_FontKerning);
+    Tab_AssetBuilderWriteEntry(Context, AssetType_FontKerning);
     
     game_asset_file_font_kerning Font = {};
     Font.FontId = FontId;
@@ -174,4 +159,19 @@ WriteFontKerning(ab_context* Context,
     
 }
 
-#endif //TOOL_BUILD_ASSETS_H
+// TODO(Momo):
+static inline void
+Tab_AssetBuilderWriteSound(tab_asset_builder* Context, 
+              game_asset_sound_id SoundId,
+              u32 DataSize,
+              void* Data) 
+{
+    Tab_AssetBuilderWriteEntry(Context, AssetType_Sound);
+    
+    game_asset_file_sound Sound = {};
+    Sound.SoundId = SoundId;
+    
+    
+}
+
+#endif //TOOL_BUILD_ASSETS_ASSET_BUILDER_H

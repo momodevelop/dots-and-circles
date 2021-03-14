@@ -16,6 +16,10 @@ static constexpr u32 Codepoint_Start = 32;
 static constexpr u32 Codepoint_End = 126;
 static constexpr u32 Codepoint_Count = Codepoint_End - Codepoint_Start;
 
+enum game_asset_sound_id {
+    Sound_Test,
+};
+
 enum game_asset_font_id {
     Font_Default,
     Font_Count,
@@ -54,6 +58,7 @@ enum game_asset_type {
     AssetType_Font,
     AssetType_FontGlyph,
     AssetType_FontKerning,
+    AssetType_Sound,
 };
 
 
@@ -106,6 +111,13 @@ struct game_asset_file_font_kerning {
     u32 CodepointB;
 };
 
+struct game_asset_file_sound {
+    game_asset_sound_id SoundId;
+    // TODO(Momo): What is sound made of?
+    
+    // NOTE(Momo): Data is: 
+    // u16 Data[???]
+};
 #pragma pack(pop)
 
 #endif 
