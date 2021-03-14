@@ -64,4 +64,4 @@ fkey_command[1] = "build assets";
 fkey_command[2] = "build game";
 fkey_command[3] = "build win32";
 fkey_command[4] = "run assets";
-fkey_command[5] = "run wi32";
+fkey_command[5] = "run win32";

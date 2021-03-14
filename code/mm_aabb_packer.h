@@ -14,10 +14,6 @@ enum aabb_packer_sort_type {
     AabbPackerSortType_BiggerSide,
 };
 
-struct aabb_packer_node {
-    u32 X, Y, W, H;
-};
-
 struct aabb_packer_aabb {
     // NOTE(Momo): Input
     u32 W, H; 
@@ -103,21 +99,24 @@ AabbPacker_Pack(arena* Arena,
     __AabbPacker_Sort(Aabbs, SortEntries, AabbCount, SortType);
     
     
-    usize CurrentNodeCount = 0;
+    u32 CurrentNodeCount = 0;
     
-    auto* Nodes = Arena_PushArray(aabb_packer_node, Arena, AabbCount+1);
+    auto* Nodes = Arena_PushArray(aabb2u, Arena, AabbCount+1);
     Nodes[CurrentNodeCount++] = { 0, 0, TotalWidth, TotalHeight };
     
     for (u32 i = 0; i < AabbCount; ++i) {
         aabb_packer_aabb* Aabb = Aabbs + SortEntries[i].Index;
         
         // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
-        usize ChosenSpaceIndex = CurrentNodeCount;
-        for (usize  j = 0; j < ChosenSpaceIndex ; ++j ) {
-            usize Index = ChosenSpaceIndex - j - 1;
-            aabb_packer_node Space = Nodes[Index];
+        u32 ChosenSpaceIndex = CurrentNodeCount;
+        for (u32  j = 0; j < ChosenSpaceIndex ; ++j ) {
+            u32 Index = ChosenSpaceIndex - j - 1;
+            aabb2u Space = Nodes[Index];
+            u32 SpaceW = Aabb2u_Width(Space);
+            u32 SpaceH = Aabb2u_Height(Space);
+            
             // NOTE(Momo): Check if the image fits
-            if (Aabb->W <= Space.W && Aabb->H <= Space.H) {
+            if (Aabb->W <= SpaceW && Aabb->H <= SpaceH) {
                 ChosenSpaceIndex = Index;
                 break;
             }
@@ -131,53 +130,58 @@ AabbPacker_Pack(arena* Arena,
         }
         
         // NOTE(Momo): Swap and pop the chosen space
-        aabb_packer_node ChosenSpace = Nodes[ChosenSpaceIndex];
+        aabb2u ChosenSpace = Nodes[ChosenSpaceIndex];
+        u32 ChosenSpaceW = Aabb2u_Width(ChosenSpace);
+        u32 ChosenSpaceH = Aabb2u_Height(ChosenSpace);
+        
         if (CurrentNodeCount > 0) {
             Nodes[ChosenSpaceIndex] = Nodes[CurrentNodeCount-1];
             --CurrentNodeCount;
         }
         
         // NOTE(Momo): Split if not perfect fit
-        if (ChosenSpace.W != Aabb->W && ChosenSpace.H == Aabb->H) {
+        if (ChosenSpaceW != Aabb->W && ChosenSpaceH == Aabb->H) {
             // Split right
-            aabb_packer_node SplitSpaceRight = {
-                ChosenSpace.X + Aabb->W,
-                ChosenSpace.Y,
-                ChosenSpace.W - Aabb->W,
-                ChosenSpace.H
-            };
+            aabb2u SplitSpaceRight = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X + Aabb->W,
+                                  ChosenSpace.Min.Y,
+                                  ChosenSpaceW - Aabb->W,
+                                  ChosenSpaceH);
             Nodes[CurrentNodeCount++] = SplitSpaceRight;
         }
-        else if (ChosenSpace.W == Aabb->W && ChosenSpace.H != Aabb->H) {
+        else if (ChosenSpaceW == Aabb->W && ChosenSpaceH != Aabb->H) {
             // Split down
-            aabb_packer_node SplitSpaceDown = {
-                ChosenSpace.X,
-                ChosenSpace.Y + Aabb->H,
-                ChosenSpace.W,
-                ChosenSpace.H - Aabb->H
-            };
+            aabb2u SplitSpaceDown = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X,
+                                  ChosenSpace.Min.Y + Aabb->H,
+                                  ChosenSpaceW,
+                                  ChosenSpaceH - Aabb->H);
             Nodes[CurrentNodeCount++] = SplitSpaceDown;
         }
-        else if (ChosenSpace.W != Aabb->W && ChosenSpace.H != Aabb->H) {
+        else if (ChosenSpaceW != Aabb->W && ChosenSpaceH != Aabb->H) {
             // Split right
-            aabb_packer_node SplitSpaceRight = {
-                ChosenSpace.X + Aabb->W,
-                ChosenSpace.Y,
-                ChosenSpace.W - Aabb->W,
-                Aabb->H,
-            };
+            aabb2u SplitSpaceRight = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X + Aabb->W,
+                                  ChosenSpace.Min.Y,
+                                  ChosenSpaceW - Aabb->W,
+                                  Aabb->H);
             
             // Split down
-            aabb_packer_node SplitSpaceDown = {
-                ChosenSpace.X,
-                ChosenSpace.Y + Aabb->H,
-                ChosenSpace.W,
-                ChosenSpace.H - Aabb->H,
-            };
+            aabb2u SplitSpaceDown = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X,
+                                  ChosenSpace.Min.Y + Aabb->H,
+                                  ChosenSpaceW,
+                                  ChosenSpaceH - Aabb->H);
             
             // Choose to insert the bigger one first before the smaller one
-            u32 RightArea = SplitSpaceRight.W * SplitSpaceRight.H;
-            u32 DownArea = SplitSpaceDown.W * SplitSpaceDown.H;
+            u32 SplitSpaceRightW = Aabb2u_Width(SplitSpaceRight);
+            u32 SplitSpaceRightH = Aabb2u_Height(SplitSpaceRight);
+            u32 SplitSpaceDownW = Aabb2u_Width(SplitSpaceDown);
+            u32 SplitSpaceDownH = Aabb2u_Height(SplitSpaceDown);
+            
+            u32 RightArea = SplitSpaceRightW * SplitSpaceRightH;
+            u32 DownArea = SplitSpaceDownW * SplitSpaceDownH;
+            
             if (RightArea > DownArea) {
                 Nodes[CurrentNodeCount++] = SplitSpaceRight;
                 Nodes[CurrentNodeCount++] = SplitSpaceDown;
@@ -190,8 +194,8 @@ AabbPacker_Pack(arena* Arena,
         }
         
         // NOTE(Momo): Translate the Aabb
-        Aabb->X = ChosenSpace.X;
-        Aabb->Y = ChosenSpace.Y;
+        Aabb->X = ChosenSpace.Min.X;
+        Aabb->Y = ChosenSpace.Min.Y;
     }
     
     return true;

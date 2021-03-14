@@ -9,7 +9,8 @@ struct tab_asset_builder {
 };
 
 static inline void
-Tab_AssetBuilderBegin(tab_asset_builder* Context, const char* Filename, const char* Signature) 
+Tab_AssetBuilderBegin(tab_asset_builder* Context, 
+                      const char* Filename, const char* Signature) 
 {
     Context->EntryCount = 0;
     Context->File = nullptr; 
@@ -41,11 +42,11 @@ Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, game_asset_type AssetType
 
 static inline void 
 Tab_AssetBuilderWriteTexture(tab_asset_builder* Context, 
-                game_asset_texture_id Id, 
-                u32 Width, 
-                u32 Height, 
-                u32 Channels, 
-                u8* Pixels) 
+                             game_asset_texture_id Id, 
+                             u32 Width, 
+                             u32 Height, 
+                             u32 Channels, 
+                             u8* Pixels) 
 {
     // TODO(Momo): WriteEntry(Context, AssetType_Texture);
     
@@ -66,8 +67,8 @@ Tab_AssetBuilderWriteTexture(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context, 
-                        game_asset_texture_id Id, 
-                        const char* Filename) 
+                                     game_asset_texture_id Id, 
+                                     const char* Filename) 
 {
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
@@ -87,9 +88,9 @@ Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context, 
-                  game_asset_atlas_aabb_id Id, 
-                  game_asset_texture_id TargetTextureId, 
-                  aabb2u Aabb) 
+                               game_asset_atlas_aabb_id Id, 
+                               game_asset_texture_id TargetTextureId, 
+                               aabb2u Aabb) 
 {
     Tab_AssetBuilderWriteEntry(Context,  AssetType_AtlasAabb);
     
@@ -102,10 +103,10 @@ Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context,
 
 static inline void
 Tab_AssetBuilderWriteFont(tab_asset_builder* Context, 
-             game_asset_font_id Id, 
-             f32 Ascent, 
-             f32 Descent, 
-             f32 LineGap) 
+                          game_asset_font_id Id, 
+                          f32 Ascent, 
+                          f32 Descent, 
+                          f32 LineGap) 
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_Font);
     
@@ -119,13 +120,13 @@ Tab_AssetBuilderWriteFont(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context, 
-                  game_asset_font_id FontId, 
-                  game_asset_texture_id TargetTextureId, 
-                  u32 Codepoint, 
-                  f32 Advance, 
-                  f32 LeftBearing, 
-                  aabb2u AtlasAabb, 
-                  aabb2f Box) 
+                               game_asset_font_id FontId, 
+                               game_asset_texture_id TargetTextureId, 
+                               u32 Codepoint, 
+                               f32 Advance, 
+                               f32 LeftBearing, 
+                               aabb2u AtlasAabb, 
+                               aabb2f Box) 
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
     
@@ -143,10 +144,10 @@ Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context, 
-                    game_asset_font_id FontId, 
-                    u32 CodepointA,
-                    u32 CodepointB, 
-                    i32 Kerning) 
+                                 game_asset_font_id FontId, 
+                                 u32 CodepointA,
+                                 u32 CodepointB, 
+                                 i32 Kerning) 
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_FontKerning);
     
@@ -162,9 +163,9 @@ Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context,
 // TODO(Momo):
 static inline void
 Tab_AssetBuilderWriteSound(tab_asset_builder* Context, 
-              game_asset_sound_id SoundId,
-              u32 DataSize,
-              void* Data) 
+                           game_asset_sound_id SoundId,
+                           u32 DataSize,
+                           void* Data) 
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_Sound);
     

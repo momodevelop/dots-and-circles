@@ -32,7 +32,7 @@ struct atlas_context_font {
 
 static inline void 
 Tab_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                            u8* TextureMemory, aabb_packer_aabb TextureAabb) 
+                           u8* TextureMemory, aabb_packer_aabb TextureAabb) 
 {
     i32 j = 0;
     for (u32 y = TextureAabb.Y; y < TextureAabb.Y + TextureAabb.H; ++y) {
