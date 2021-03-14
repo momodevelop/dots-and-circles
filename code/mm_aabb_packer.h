@@ -1,7 +1,10 @@
 #ifndef __MM_AABB_PACKER__
 #define __MM_AABB_PACKER__
 
-// TODO(Momo): Very low priority, but we should rethink this
+// TODO(Momo): Remove aabb_packer_node, replace with aabbu
+// TODO(Momo): Remove aabb_packer_aabb, replace with aabbu
+
+
 enum aabb_packer_sort_type {
     AabbPackerSortType_Width,
     AabbPackerSortType_Height,
