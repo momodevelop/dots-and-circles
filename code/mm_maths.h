@@ -517,14 +517,24 @@ Aabb2u_Height(aabb2u Aabb) {
 }
 
 static inline aabb2u
-Aabb2u_CreateXYWH(u32 X, u32 Y, u32 Width, u32 Height) {
+Aabb2u_CreateXYWH(u32 X, u32 Y, u32 W, u32 H) {
     aabb2u Ret = {};
     Ret.Min.X = X;
     Ret.Min.Y = Y;
-    Ret.Max.X = X + Width;
-    Ret.Max.Y = Y + Height;
+    Ret.Max.X = X + W;
+    Ret.Max.Y = Y + H;
     return Ret;
 }
+
+static inline aabb2u
+Aabb2u_CreateWH(u32 W, u32 H) {
+    aabb2u Ret = {};
+    Ret.Max.X = W;
+    Ret.Max.Y = H;
+    
+    return Ret;
+}
+
 
 static inline aabb3f
 Aabb3f_Centered(v3f Dimensions, v3f Anchor) {
@@ -578,6 +588,17 @@ Aabb2u_Ratio(aabb2u A, aabb2u B) {
     aabb2f Af = Aabb2u_To_Aabb2f(A);
     aabb2f Bf = Aabb2u_To_Aabb2f(B);
     return Aabb2f_Ratio(Af, Bf);
+}
+
+static inline aabb2u
+Aabb2u_Translate(aabb2u V, u32 X, u32 Y) {
+    aabb2u Ret = V;
+    Ret.Min.X += X;
+    Ret.Min.Y += Y;
+    Ret.Max.X += X;
+    Ret.Max.Y += Y;
+    
+    return Ret;
 }
 
 //~ NOTE(Momo): Circles

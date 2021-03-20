@@ -72,19 +72,18 @@ int main() {
     
     const u32 AabbCount = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
-    
-    // NOTE(Momo): Initialize the aabb for the aabb_packer's input
-    aabb_packer_aabb Aabbs[AabbCount] = {};
+    aabb2u Aabbs[AabbCount] = {};
     void* UserDatas[AabbCount] = {};
     u32 AabbCounter = 0;
     for (u32 I = 0; I < ArrayCount(AtlasImageContexts); ++I ) {
         atlas_context_image* Context = AtlasImageContexts + I;
-        aabb_packer_aabb* Aabb = Aabbs + AabbCounter;
+        aabb2u* Aabb = Aabbs + AabbCounter;
         
         i32 W, H, C;
         stbi_info(Context->Filename, &W, &H, &C);
-        Aabb->W = (u32)W;
-        Aabb->H = (u32)H;
+        
+        (*Aabb) = Aabb2u_CreateWH((u32)W, (u32)H);
+        
         
         UserDatas[AabbCounter] = Context;
         
@@ -100,7 +99,7 @@ int main() {
         Font->FontId = Font_Default;
         Font->TextureId = Texture_AtlasDefault;
         
-        aabb_packer_aabb* Aabb = Aabbs + AabbCounter;
+        aabb2u* Aabb = Aabbs + AabbCounter;
         i32 ix0, iy0, ix1, iy1;
         stbtt_GetCodepointTextureBox(&Font->LoadedFont->Info, 
                                      Font->Codepoint, 
@@ -108,8 +107,7 @@ int main() {
                                      Font->RasterScale, 
                                      &ix0, &iy0, &ix1, &iy1);
         
-        Aabb->W= (u32)(ix1 - ix0);
-        Aabb->H= (u32)(iy1 - iy0);
+        (*Aabb) = Aabb2u_CreateWH((u32)(ix1 - ix0), (u32)(iy1 - iy0));
         UserDatas[AabbCounter] = Font;
         
         ++AabbCounter;
@@ -164,16 +162,15 @@ int main() {
                                      AtlasTexture);
         
         for(u32 i = 0; i <  AabbCount; ++i) {
-            aabb_packer_aabb Aabb = Aabbs[i];
+            aabb2u Aabb = Aabbs[i];
             auto Type = *(atlas_context_type*)UserDatas[i];
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)UserDatas[i];
-                    aabb2u AtlasAabb = Tab_PackerAabbToAabb2u(Aabb);
                     Tab_AssetBuilderWriteAtlasAabb(AssetBuilder, 
                                                    Image->Id, 
                                                    Image->TextureId, 
-                                                   AtlasAabb);
+                                                   Aabb);
                     
                 } break;
                 case AtlasContextType_Font: {
@@ -200,7 +197,7 @@ int main() {
                                                    Font->TextureId, 
                                                    Font->Codepoint, FontPixelScale * Advance,
                                                    FontPixelScale * LeftSideBearing,
-                                                   Tab_PackerAabbToAabb2u(Aabb), 
+                                                   Aabb, 
                                                    ScaledBox);
                     
                 } break;

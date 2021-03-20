@@ -59,9 +59,6 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
     
 }
 
-
-
-
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
