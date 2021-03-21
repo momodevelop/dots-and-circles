@@ -13,7 +13,7 @@
 typedef void (*debug_console_callback) (struct debug_console* Console, void* Context, u8_cstr Args);
 
 struct debug_console_command {
-    u8_str Key;
+    u8_cstr Key;
     debug_console_callback Callback;
     void* Context;
 };
@@ -67,7 +67,7 @@ struct debug_console {
 
 static inline void 
 DebugConsole_AddCmd(debug_console* C, 
-                    u8_str Key, 
+                    u8_cstr Key, 
                     debug_console_callback Callback, 
                     void* Context)
 {
@@ -82,7 +82,7 @@ DebugConsole_AddCmd(debug_console* C,
 static inline void 
 DebugConsole_RemoveCmd(debug_console* Console, u8_cstr Key) {
     for (u32 I = 0; I = Console->CommandCount; ++I) {
-        if (U8CStr_Compare(Console->Commands[I].Key.Str, Key)) {
+        if (U8CStr_Compare(Console->Commands[I].Key, Key)) {
             // Swap with last element
             Console->Commands[I] = Console->Commands[Console->CommandCount-1];
             --Console->CommandCount;
@@ -221,12 +221,12 @@ DebugConsole_Update(debug_console* Console,
                     break;
                 }
             }
-            u8_cstr CommandStr = U8Str_SubString(Console->CommandBuffer.Str, Min, Max); 
+            u8_cstr CommandStr = U8CStr_SubString(Console->CommandBuffer.Str, Min, Max); 
             
             // Send a command to a callback
-            for (usize I = 0; I < Console->CommandCount; ++I) {
+            for (u32 I = 0; I < Console->CommandCount; ++I) {
                 debug_console_command* Command = Console->Commands + I;
-                if (U8CStr_Compare(Command->Key.Str, CommandStr)) {
+                if (U8CStr_Compare(Command->Key, CommandStr)) {
                     Command->Callback(Console, Command->Context, Console->CommandBuffer.Str);
                 }
             }

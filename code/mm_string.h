@@ -39,9 +39,50 @@ U8CStr_Compare(u8_cstr Lhs, u8_cstr Rhs) {
 
 
 static inline u8_cstr
-U8Str_SubString(u8_cstr Src, u32 Min, u32 Max) {
+U8CStr_SubString(u8_cstr Src, u32 Min, u32 Max) {
     Assert(Min <= Max); 
     return U8CStr_Create(Src.Data + Min, Max - Min);
+}
+
+struct u8_cstr_split_res {
+    u8_cstr* Items;
+    u32 ItemCount;
+};
+
+static inline u32
+U8CStr_Find(u8_cstr Str, u8 Item, u32 StartIndex) {
+    for(u32 I = StartIndex; I < Str.Size; ++I) {
+        if(Str.Data[I] == Item) {
+            return I;
+        }
+    }
+    return Str.Size;
+}
+
+static inline u8_cstr_split_res
+U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
+    // NOTE(Momo): We are having faith that the arena given is a bump arena.
+    // i.e. strings that are push into the arena will be contiguous 
+    // in memory, and thus convertible to an array<string> struct.
+    u8_cstr_split_res Ret = {};
+    u32 Min = 0;
+    u32 Max = 0;
+    
+    for (;Max != Str.Size;) {
+        Max = U8CStr_Find(Str, Delimiter, Min);
+        
+        u8_cstr* Link = Arena_PushStruct(u8_cstr, Arena);
+        Assert(Link);
+        (*Link) = U8CStr_SubString(Str, Min, Max);
+        
+        if (Ret.Items == nullptr) {
+            Ret.Items = Link;            
+        }
+        
+        Min = Max + 1;
+        ++Ret.ItemCount;
+    }
+    return Ret;
 }
 
 //~ NOTE(Momo): u8_str
@@ -91,33 +132,6 @@ U8Str_Copy(u8_str* Dest, u8_cstr Src) {
     }
     Dest->Size = Src.Size;
 }
-
-#if 0
-static inline array<string>
-DelimitSplit(string Str, arena* Arena, char Delimiter) {
-    // We are having faith that the arena given is a bump arena.
-    // i.e. strings that are push into the arena will be contiguous 
-    // in memory, and thus convertible to an array<string> struct.
-    array<string> Ret ={}; 
-    range<usize> Range = {};
-    
-    for (;Range.End != Str.Count;) {
-        Range.End = Find(&Str, ' ', Range.Start); 
-        
-        string* Link = Arena_PushStruct(string, Arena);
-        Assert(Link);
-        (*Link) = SubString(Str, Range);
-        
-        if (Ret.Elements == nullptr) {
-            Ret.Elements = Link;            
-        }
-        
-        Range.Start = Range.End + 1;
-        ++Ret.Count;
-    }
-    return Ret;
-}
-#endif
 
 static inline void
 U8Str_NullTerm(u8_str* Dest) {

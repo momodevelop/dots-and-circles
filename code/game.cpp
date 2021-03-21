@@ -15,50 +15,48 @@ void (*Log)(const char* Format, ...);
 #include "game_debug.h"
 #include "game_draw.h"
 
-#if 0
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
-CmdJump(debug_console* Console, void* Context, string Arguments) {
+CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
     arena_mark Scratch = Arena_Mark(&DebugState->Arena);
     Defer{ Arena_Revert(&Scratch); };
-    array<string> ArgList = DelimitSplit(Arguments, Scratch.Arena, ' ');
-    if ( ArgList.Count != 2 ) {
+    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
+    if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
         PushInfo(Console, 
-                 CreateString("Expected only 2 arguments"), 
+                 U8CStr_FromSiStr("Expected only 2 arguments"), 
                  Color_Red);
         return;
     }
     
-    u8_cstr StateToChangeTo = ArgList[1];
-    if (StateToChangeTo == U8Str_CreateFromSiStr("main")) {
+    u8_cstr StateToChangeTo = ArgList.Items[1];
+    if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("main"))) {
         PushInfo(Console, 
-                 CreateString("Jumping to Main"), 
+                 U8CStr_FromSiStr("Jumping to Main"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (U8Str_Compare(StateToChangeTo, U8Str_CreateFromSiStr("splash"))) {
+    else if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("splash"))) {
         PushInfo(Console, 
-                 CreateString("Jumping to Splash"),  
+                 U8CStr_FromSiStr("Jumping to Splash"),  
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (StateToChangeTo == CreateString("sandbox")) {
+    else if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("sandbox"))) {
         PushInfo(Console, 
-                 CreateString("Jumping to Sandbox"), 
+                 U8CStr_FromSiStr("Jumping to Sandbox"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
         PushInfo(Console, 
-                 CreateString("Invalid state to jump to"), 
+                 U8CStr_FromSiStr("Invalid state to jump to"), 
                  Color_Red);
     }
     
 }
-#endif 
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
@@ -135,12 +133,10 @@ GameUpdateFunc(GameUpdate)
                                     0.5f,
                                     0.025f);
             
-#if 0
             DebugConsole_AddCmd(&DebugState->Console, 
-                                U8Str_CreateFromSiStr("jump"), 
+                                U8CStr_FromSiStr("jump"), 
                                 CmdJump, 
                                 DebugState);
-#endif
         }
         
         DebugState->PermanentState = PermState;
