@@ -737,26 +737,26 @@ Win32FreeAudioOutput(win32_audio_output* AudioOutput) {
     Win32FreeMemory(AudioOutput->Buffer);
 }
 
-static inline maybe<win32_audio_output>
-Win32InitAudioOutput(u32 SamplesPerSecond,
+static inline b32
+Win32InitAudioOutput(win32_audio_output* Ret, 
+                     u32 SamplesPerSecond,
                      u16 Channels,
                      u16 BitsPerSample,
                      u32 LatencyFrames,
                      u32 RefreshRate)
 {
-    win32_audio_output Ret = {};
-    Ret.Channels = Channels;
-    Ret.BitsPerSample = BitsPerSample;
-    Ret.SamplesPerSecond = SamplesPerSecond;
-    Ret.LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
-    Ret.BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
-    Ret.Buffer = (i16*)Win32AllocateMemory(Ret.BufferSize); 
-    if (!Ret.Buffer) {
+    Ret->Channels = Channels;
+    Ret->BitsPerSample = BitsPerSample;
+    Ret->SamplesPerSecond = SamplesPerSecond;
+    Ret->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
+    Ret->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
+    Ret->Buffer = (i16*)Win32AllocateMemory(Ret->BufferSize); 
+    if (!Ret->Buffer) {
         Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
-        return No();
+        return FALSE;
     }
     
-    return Yes(Ret);
+    return TRUE;
     
 }
 
@@ -1380,20 +1380,28 @@ WinMain(HINSTANCE Instance,
                                                  "lock");
     
     // Initialize game input
-    game_input GameInput = CreateInput(CreateStringBuffer(&State->Arena, 10));
+    game_input GameInput = Input_Create(U8Str_CreateFromArena(&State->Arena, 10));
     
     // Initialize platform api
     platform_api PlatformApi = Win32InitPlatformApi();
     
     // Initialize Audio-related stuff
-    maybe<win32_audio_output> AudioOutput_ = 
-        Win32InitAudioOutput(48000,
-                             2,
-                             16, // Can only be 8 or 16
-                             2,  // Latency frames
-                             RefreshRate);
-    if (!AudioOutput_) { return 1; }
-    win32_audio_output& AudioOutput = AudioOutput_.This;
+    win32_audio_output AudioOutput = {}; 
+    Win32InitAudioOutput(&AudioOutput,
+                         48000,
+                         2,
+                         16, // Can only be 8 or 16
+                         2,  // Latency frames
+                         RefreshRate);
+    if (!Win32InitAudioOutput(&AudioOutput,
+                              48000,
+                              2,
+                              16, // Can only be 8 or 16
+                              2,  // Latency frames
+                              RefreshRate)) 
+    { 
+        return 1; 
+    }
     Defer{ Win32FreeAudioOutput(&AudioOutput); };
     
     // TODO: Should really initialize from Audio Ouput

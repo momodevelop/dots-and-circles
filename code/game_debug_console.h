@@ -2,7 +2,6 @@
 #define __GAME_CONSOLE__
 
 #include "mm_easing.h"
-#include "mm_list.h"
 #include "mm_colors.h"
 #include "mm_timer.h"
 #include "game_platform.h"
@@ -11,16 +10,16 @@
 #include "game_draw.h"
 
 
-typedef void (*debug_console_callback) (struct debug_console* Console, void* Context, string Args);
+typedef void (*debug_console_callback) (struct debug_console* Console, void* Context, u8_cstr Args);
 
 struct debug_console_command {
-    string Key;
+    u8_str Key;
     debug_console_callback Callback;
     void* Context;
 };
 
-struct debug_console_string {
-    string_buffer Buffer;
+struct debug_console_buffer {
+    u8_str Buffer;
     c4f Color;
 };
 
@@ -42,12 +41,12 @@ struct debug_console {
     v2f Dimensions;
     
     // Buffers
-    debug_console_string* InfoBuffers;
+    debug_console_buffer* InfoBuffers;
     u32 InfoBufferCount;
     
     
-    string_buffer InputBuffer;
-    string_buffer CommandBuffer;
+    u8_str InputBuffer;
+    u8_str CommandBuffer;
     
     // Backspace (to delete character) related
     // Maybe make an easing system?
@@ -68,7 +67,7 @@ struct debug_console {
 
 static inline void 
 DebugConsole_AddCmd(debug_console* C, 
-                    string Key, 
+                    u8_str Key, 
                     debug_console_callback Callback, 
                     void* Context)
 {
@@ -81,9 +80,9 @@ DebugConsole_AddCmd(debug_console* C,
 
 
 static inline void 
-DebugConsole_RemoveCmd(debug_console* Console, string Key) {
+DebugConsole_RemoveCmd(debug_console* Console, u8_cstr Key) {
     for (u32 I = 0; I = Console->CommandCount; ++I) {
-        if (Console->Commands[I].Key == Key) {
+        if (U8CStr_Compare(Console->Commands[I].Key.Str, Key)) {
             // Swap with last element
             Console->Commands[I] = Console->Commands[Console->CommandCount-1];
             --Console->CommandCount;
@@ -107,16 +106,16 @@ DebugConsole_Create(arena* Arena,
 {
     debug_console Ret = {};
     
-    Ret.InfoBuffers = Arena_PushArray(debug_console_string, Arena, InfoLineCount);
+    Ret.InfoBuffers = Arena_PushArray(debug_console_buffer, Arena, InfoLineCount);
     Ret.InfoBufferCount = InfoLineCount;
     
     for (usize I = 0; I < Ret.InfoBufferCount; ++I) {
-        debug_console_string* InfoBuffer = Ret.InfoBuffers + I;
-        InfoBuffer->Buffer = CreateStringBuffer(Arena, CharactersPerLine);
+        debug_console_buffer* InfoBuffer = Ret.InfoBuffers + I;
+        InfoBuffer->Buffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
     }
     
-    Ret.InputBuffer = CreateStringBuffer(Arena, CharactersPerLine);
-    Ret.CommandBuffer = CreateStringBuffer(Arena, CharactersPerLine);
+    Ret.InputBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
+    Ret.CommandBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
     
     Ret.Commands = Arena_PushArray(debug_console_command, Arena, CommandsCapacity);
     Ret.CommandCapacity = CommandsCapacity;
@@ -140,23 +139,23 @@ DebugConsole_Create(arena* Arena,
 
 
 static inline void
-PushInfo(debug_console* Console, string String, c4f Color) {
+PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
     for (u32 I = 0; I < Console->InfoBufferCount - 1; ++I) {
         u32 J = Console->InfoBufferCount - 1 - I;
-        debug_console_string* Dest = Console->InfoBuffers + J;
-        debug_console_string* Src = Console->InfoBuffers + J - 1;
-        Copy(&Dest->Buffer, &Src->Buffer);
+        debug_console_buffer* Dest = Console->InfoBuffers + J;
+        debug_console_buffer* Src = Console->InfoBuffers + J - 1;
+        U8Str_Copy(&Dest->Buffer, Src->Buffer.Str);
         Dest->Color = Src->Color;
     }
     Console->InfoBuffers[0].Color = Color;
-    Clear(&Console->InfoBuffers[0].Buffer);
-    Copy(&Console->InfoBuffers[0].Buffer, &String);
+    U8Str_Clear(&Console->InfoBuffers[0].Buffer);
+    U8Str_Copy(&Console->InfoBuffers[0].Buffer, String);
 }
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
-    if (!IsEmpty(&Console->InputBuffer))
-        Pop(&Console->InputBuffer);
+    if (Console->InputBuffer.Size != 0)
+        U8Str_Pop(&Console->InputBuffer);
 }
 
 // Returns true if there is a new command
@@ -179,10 +178,10 @@ DebugConsole_Update(debug_console* Console,
     
     if (Console->IsActive) {
         Timer_Tick(&Console->TransitTimer, DeltaTime);
-        if (Input->Characters.Count > 0 && 
-            Input->Characters.Count <= Remaining(Console->InputBuffer)) 
+        if (Input->Characters.Size > 0 && 
+            Input->Characters.Size <= U8Str_Remaining(&Console->InputBuffer)) 
         {  
-            Push(&Console->InputBuffer, Input->Characters);
+            U8Str_PushCStr(&Console->InputBuffer, Input->Characters.Str);
         }
         
         // Remove character backspace logic
@@ -210,18 +209,25 @@ DebugConsole_Update(debug_console* Console,
         
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
-            PushInfo(Console, Console->InputBuffer, Color_White);
-            Copy(&Console->CommandBuffer, &Console->InputBuffer);
-            Clear(&Console->InputBuffer);
+            PushInfo(Console, Console->InputBuffer.Str, Color_White);
+            U8Str_Copy(&Console->CommandBuffer, Console->InputBuffer.Str);
+            U8Str_Clear(&Console->InputBuffer);
             
-            range<usize> Range = { 0, Find(&Console->CommandBuffer, ' ') };
-            string CommandStr = SubString(Console->CommandBuffer, Range); 
+            u32 Min = 0;
+            u32 Max = 0;
+            for (u32 I = 0; I < Console->CommandBuffer.Size; ++I) {
+                if (Console->CommandBuffer.Data[I] == ' ') {
+                    Max = I;
+                    break;
+                }
+            }
+            u8_cstr CommandStr = U8Str_SubString(Console->CommandBuffer.Str, Min, Max); 
             
             // Send a command to a callback
             for (usize I = 0; I < Console->CommandCount; ++I) {
                 debug_console_command* Command = Console->Commands + I;
-                if (Command->Key == CommandStr) {
-                    Command->Callback(Console, Command->Context, Console->CommandBuffer);
+                if (U8CStr_Compare(Command->Key.Str, CommandStr)) {
+                    Command->Callback(Console, Command->Context, Console->CommandBuffer.Str);
                 }
             }
         }
@@ -288,7 +294,7 @@ Render(debug_console* Console,
                      Assets,
                      Font_Default, 
                      Position,
-                     Console->InfoBuffers[I].Buffer,
+                     Console->InfoBuffers[I].Buffer.Str,
                      FontSize,
                      Console->InfoBuffers[I].Color);
         }
@@ -303,7 +309,7 @@ Render(debug_console* Console,
                      Assets, 
                      Font_Default, 
                      Position,
-                     Console->InputBuffer,
+                     Console->InputBuffer.Str,
                      FontSize,
                      Console->InputTextColor);
             

@@ -10,6 +10,7 @@ struct splash_image_entity {
     c4f Colors;
     
     game_asset_texture_id TextureHandle;
+    game_asset_atlas_aabb_id TextureAabb;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -44,10 +45,13 @@ Update(splash_image_entity* Entity,
                         Entity->Scale.Y,
                         1.f);
     game_asset_texture* Texture = GetTexture(Assets, Entity->TextureHandle);
+    game_asset_atlas_aabb* TextureAabb = Assets->AtlasAabbs + Entity->TextureAabb;
+    quad2f Uv = GetAtlasUV(Assets, TextureAabb);
     PushDrawTexturedQuad(RenderCommands, 
                          Entity->Colors, 
                          M44f_Concat(T,S),  
-                         Texture->Handle);
+                         Texture->Handle,
+                         Uv);
     
 }
 
@@ -100,7 +104,8 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashImg[0].Position = { 0.f, 0.f, 0.f };
         Mode->SplashImg[0].Scale = { 400.f, 400.f };
         Mode->SplashImg[0].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[0].TextureHandle = Texture_Ryoji;
+        Mode->SplashImg[0].TextureHandle = Texture_AtlasDefault;
+        Mode->SplashImg[0].TextureAabb = AtlasAabb_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 1.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -111,7 +116,8 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashImg[1].Position = { 0.f };
         Mode->SplashImg[1].Scale = { 400.f, 400.f };
         Mode->SplashImg[1].Colors = { 1.f, 1.f, 1.f, 1.f };
-        Mode->SplashImg[1].TextureHandle = Texture_Yuu;
+        Mode->SplashImg[1].TextureHandle = Texture_AtlasDefault;
+        Mode->SplashImg[1].TextureAabb = AtlasAabb_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 1.f;
         Mode->SplashImg[1].Timer = 0.f;

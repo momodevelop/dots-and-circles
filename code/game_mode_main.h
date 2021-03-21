@@ -1,12 +1,6 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
-#include "mm_easing.h"
-#include "mm_maths.h"
-#include "mm_random.h"
-#include "mm_list.h"
-#include "game.h"
-
 // Rendering layers
 // TODO: Organize this better please. 
 // Maybe a map or array or something.
@@ -16,14 +10,14 @@ constexpr static f32 ZLayCircleBullet = 20.f;
 constexpr static f32 ZLayEnemy = 30.f;
 constexpr static f32 ZLayDebug = 40.f;
 
-enum mood_type : u32 {
+enum mood_type {
     MoodType_Dot,
     MoodType_Circle,
     
     MoodType_Count,
 };
 
-enum enemy_mood_pattern_type : u32 {
+enum enemy_mood_pattern_type {
     EnemyMoodPatternType_Dot,
     EnemyMoodPatternType_Circle,
     EnemyMoodPatternType_Both,
@@ -31,13 +25,13 @@ enum enemy_mood_pattern_type : u32 {
     EnemyMoodPatternType_Count,
 };
 
-enum enemy_firing_pattern_type : u32 {
+enum enemy_firing_pattern_type  {
     EnemyFiringPatternType_Homing,
     
     EnemyFiringPatternType_Count,
 };
 
-enum enemy_movement_type : u32 {
+enum enemy_movement_type {
     EnemyMovementType_Static,
     
     EnemyMovementType_Count,
@@ -45,7 +39,7 @@ enum enemy_movement_type : u32 {
 
 
 // Wave
-enum wave_pattern_type : u32 {
+enum wave_pattern_type {
     WavePatternType_SpawnNForDuration,   // Spawns N enemies at a time
 };
 
@@ -226,12 +220,12 @@ InitMainMode(permanent_state* PermState,
     
     Mode->Wave.IsDone = true;
     
-    Debug_HookU32Variable(DebugState, CreateString("Bullets"), &Mode->BulletCount);
+    Debug_HookU32Variable(DebugState, U8CStr_FromSiStr("Bullets"), &Mode->BulletCount);
 }
 
 static inline void
 UninitMainMode(debug_state* DebugState) {
-    Debug_UnhookVariable(DebugState, CreateString("Bullets"));
+    Debug_UnhookVariable(DebugState, U8CStr_FromSiStr("Bullets"));
 }
 
 static inline void 

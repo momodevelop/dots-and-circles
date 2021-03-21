@@ -15,7 +15,7 @@ void (*Log)(const char* Format, ...);
 #include "game_debug.h"
 #include "game_draw.h"
 
-
+#if 0
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
 CmdJump(debug_console* Console, void* Context, string Arguments) {
@@ -32,14 +32,14 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
         return;
     }
     
-    string StateToChangeTo = ArgList[1];
-    if (StateToChangeTo == CreateString("main")) {
+    u8_cstr StateToChangeTo = ArgList[1];
+    if (StateToChangeTo == U8Str_CreateFromSiStr("main")) {
         PushInfo(Console, 
                  CreateString("Jumping to Main"), 
                  Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (StateToChangeTo == CreateString("splash")) {
+    else if (U8Str_Compare(StateToChangeTo, U8Str_CreateFromSiStr("splash"))) {
         PushInfo(Console, 
                  CreateString("Jumping to Splash"),  
                  Color_Yellow);
@@ -58,7 +58,7 @@ CmdJump(debug_console* Console, void* Context, string Arguments) {
     }
     
 }
-
+#endif 
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
@@ -135,10 +135,12 @@ GameUpdateFunc(GameUpdate)
                                     0.5f,
                                     0.025f);
             
+#if 0
             DebugConsole_AddCmd(&DebugState->Console, 
-                                CreateString("jump"), 
+                                U8Str_CreateFromSiStr("jump"), 
                                 CmdJump, 
                                 DebugState);
+#endif
         }
         
         DebugState->PermanentState = PermState;

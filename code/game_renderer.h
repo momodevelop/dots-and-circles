@@ -201,7 +201,7 @@ PushDrawLine(mailbox* Payload,
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
-        Swap(&Line.Min, &Line.Max);
+        Swap(v2f, Line.Min, Line.Max);
     }
     
     v2f LineVector = V2f_Sub(Line.Max, Line.Min);

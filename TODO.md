@@ -1,4 +1,4 @@
-# Engine-ish 
+# Engine
 [] Live Looped Editing
 [] Animation
 [] Figure out animation format for game side
@@ -14,4 +14,3 @@
 
 #Codegen
 [] Increase robustness of amount of variables we can replace (and the name)
-[] Solve the Find issue

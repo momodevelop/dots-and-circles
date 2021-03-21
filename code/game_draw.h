@@ -1,7 +1,6 @@
 #ifndef __GAME_DRAW__
 #define __GAME_DRAW__
 
-#include "mm_array.h"
 
 #include "game_renderer.h"
 #include "game_assets.h"
@@ -12,15 +11,15 @@ DrawText(mailbox* RenderCommands,
          game_assets* Assets,
          game_asset_font_id FontId,
          v3f Position,
-         string String,
+         u8_cstr String,
          f32 Size, 
          c4f Color = Color_White) 
 {
     v3f CurPosition = Position;
     auto* Font = GetFont(Assets, FontId);
     
-    for(u32 i = 0; i < String.Count; ++i) {
-        game_asset_font_glyph* Glyph = Font->Glyphs + HashCodepoint(String[i]);
+    for(u32 I = 0; I < String.Size; ++I) {
+        game_asset_font_glyph* Glyph = Font->Glyphs + HashCodepoint(String.Data[I]);
         aabb2f Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
@@ -47,9 +46,9 @@ DrawText(mailbox* RenderCommands,
                              GetAtlasUV(Assets, Glyph));
         
         CurPosition.X += Glyph->Advance * Size;
-        if (i != String.Count - 1 ) {
+        if (I != String.Size - 1 ) {
             CurPosition.X += 
-                Font->Kernings[HashCodepoint(String[i])][HashCodepoint(String[i+1])] * Size;
+                Font->Kernings[HashCodepoint(String.Data[I])][HashCodepoint(String.Data[I+1])] * Size;
         }
     }
     

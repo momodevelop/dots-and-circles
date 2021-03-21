@@ -30,14 +30,29 @@ typedef ptrdiff_t iptr;
 #define FALSE 0
 #define TRUE 1
 
+#define Glue_(A,B) A##B
+#define Glue(A,B) Glue_(A,B)
+
 #define AbsOf(X) (((X) < 0) ? (-X) : (X))
 #define MaxOf(X,Y) ((X) > (Y) ? (X) : (Y))
 #define MinOf(X,Y) ((X) < (Y) ? (X) : (Y))
-#define Swap(A,B) { auto Temp = (*(A)); (*(A)) = (*(B)); (*(B)) = Temp; }
+
+// NOTE(Momo): We need to do/while to cater for if/else statements
+// that looks like this:
+// >> if (...) 
+// >>     Swap(...); 
+// >> else 
+// >>     ...
+// because it will expand to:
+// >> if (...) 
+// >>    {...}; 
+// >> else 
+// >>    ...
+// which causes an invalid ';' error
+#define Swap(T,A,B) do{ T Glue(zawarudo, __LINE__) = (A); (A) = (B); (B) = Glue(zawarudo, __LINE__); } while(0);
 #define Clamp(Value, Low, High) MaxOf(MinOf(Value, High), Low)
 #define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
 #define Lerp(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
-
 
 
 // Get the ratio of Value within the range [Min,Max] 
@@ -47,44 +62,6 @@ Ratio(f32 Value, f32 Min, f32 Max) {
     return (Value - Min)/(Max - Min); 
 }
 
-
-template<typename t>
-union range {
-    struct {
-        t Start;
-        t End;
-    };
-    struct {
-        t Min; 
-        t Max;
-    };
-};
-
-
-struct no {}; 
-template<typename t>
-struct maybe {
-    t This;
-    b32 IsNone;
-    
-    maybe(t This) : This(This), IsNone(false) {}
-    maybe(no) : IsNone(true) {}
-    
-    operator bool() {
-        return !IsNone;
-    }
-};
-
-template<typename t>
-static inline maybe<t>
-Yes(t Item) {
-    return maybe<t>(Item);
-}
-
-static inline no
-No() {
-    return no{};
-}
 
 
 // C-string
@@ -143,7 +120,7 @@ SiStrReverse(char* Dest) {
     char* BackPtr = Dest;
     for (; *(BackPtr+1) != 0; ++BackPtr);
     for (;Dest < BackPtr; ++Dest, --BackPtr) {
-        Swap(Dest, BackPtr);
+        Swap(char, *Dest, *BackPtr);
     }
 }
 

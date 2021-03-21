@@ -48,7 +48,7 @@ Tab_AssetBuilderWriteTexture(tab_asset_builder* Context,
                              u32 Channels, 
                              u8* Pixels) 
 {
-    // TODO(Momo): WriteEntry(Context, AssetType_Texture);
+    Tab_AssetBuilderWriteEntry(Context, AssetType_Texture);
     
     game_asset_file_texture Texture = {};
     Texture.Id = Id;
@@ -99,6 +99,7 @@ Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context,
     AtlasAabb.TextureId = TargetTextureId;
     AtlasAabb.Aabb = Aabb;
     fwrite(&AtlasAabb, sizeof(AtlasAabb), 1,  Context->File);
+    printf("%d", TargetTextureId);
 }
 
 static inline void

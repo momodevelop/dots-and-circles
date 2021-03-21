@@ -5,16 +5,14 @@
 #include "mm_maths.h"
 
 enum game_asset_texture_id {
-    Texture_Ryoji,
-    Texture_Yuu,
     Texture_AtlasDefault,
     
     Texture_Count,
 };
 
-static constexpr u32 Codepoint_Start = 32;
-static constexpr u32 Codepoint_End = 126;
-static constexpr u32 Codepoint_Count = Codepoint_End - Codepoint_Start;
+static const u32 Codepoint_Start = 32;
+static const u32 Codepoint_End = 126;
+static const u32 Codepoint_Count = Codepoint_End - Codepoint_Start;
 
 enum game_asset_sound_id {
     Sound_Test,

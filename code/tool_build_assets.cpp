@@ -154,6 +154,7 @@ int main() {
         
         
         //Tab_AssetBuilderWriteSound(AssetBuilder, Sound_Test);
+        printf("[Build Assets] Writing Atlas\n");
         Tab_AssetBuilderWriteTexture(AssetBuilder, 
                                      Texture_AtlasDefault, 
                                      AtlasWidth, 
@@ -171,7 +172,6 @@ int main() {
                                                    Image->Id, 
                                                    Image->TextureId, 
                                                    Aabb);
-                    
                 } break;
                 case AtlasContextType_Font: {
                     auto* Font  = (atlas_context_font*)UserDatas[i];
@@ -219,8 +219,7 @@ int main() {
         Tab_AssetBuilderWriteFont(AssetBuilder, Font_Default, 
                                   Ascent * FontPixelScale, 
                                   Descent * FontPixelScale, 
-                                  LineGap * FontPixelScale
-                                  ); 
+                                  LineGap * FontPixelScale); 
         
         for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
             for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {

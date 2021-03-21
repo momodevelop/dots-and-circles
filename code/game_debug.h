@@ -14,7 +14,7 @@ enum debug_variable_type {
 
 struct debug_variable {
     debug_variable_type Type;
-    string Name;
+    u8_cstr Name;
     union {
         void* Data;
         b8* B8;
@@ -41,7 +41,7 @@ struct debug_state {
 
 static inline void
 Debug_HookVariable(debug_state* State, 
-                   string Name, 
+                   u8_cstr Name, 
                    void* Address, 
                    debug_variable_type Type) {
     debug_variable Var = {};
@@ -55,16 +55,16 @@ Debug_HookVariable(debug_state* State,
 
 static inline void
 Debug_HookU32Variable(debug_state* State,
-                      string Name,
+                      u8_cstr Name,
                       void* Address) 
 {
     Debug_HookVariable(State, Name, Address, DebugVariableType_U32);
 }
 
 static inline void
-Debug_UnhookVariable(debug_state* State, string Name) {
+Debug_UnhookVariable(debug_state* State, u8_cstr Name) {
     for (u32 I = 0; I < State->VariableCount; ++I) {
-        if (State->Variables[I].Name == Name) {
+        if (U8CStr_Compare(State->Variables[I].Name, Name)) {
             State->Variables[I] = State->Variables[State->VariableCount-1];
             --State->VariableCount;
             return;
@@ -92,22 +92,22 @@ Debug_Render(debug_state* State,
         arena_mark Scratch = Arena_Mark(&State->Arena);
         Defer{ Arena_Revert(&Scratch); };
         
-        string_buffer Buffer = CreateStringBuffer(Scratch.Arena, 256);
-        Push(&Buffer, State->Variables[I].Name);
-        Push(&Buffer, CreateString(": "));
+        u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
+        U8Str_PushCStr(&Buffer, State->Variables[I].Name);
+        U8Str_PushCStr(&Buffer, U8CStr_FromSiStr(": "));
         
         Assert(State->Variables[I].Data);
         switch(State->Variables[I].Type) {
             case DebugVariableType_B32: {
             } break;
             case DebugVariableType_I32: {
-                PushI32(&Buffer, *State->Variables[I].I32);
+                U8Str_PushI32(&Buffer, *State->Variables[I].I32);
             } break;
             case DebugVariableType_F32: {
                 Assert(false); 
             } break;
             case DebugVariableType_U32: {
-                PushU32(&Buffer, *State->Variables[I].U32);
+                U8Str_PushU32(&Buffer, *State->Variables[I].U32);
             } break;
             default: {
                 // Unsupported type
@@ -119,10 +119,10 @@ Debug_Render(debug_state* State,
                  Assets, 
                  Font_Default, 
                  v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
-                 Buffer,
+                 Buffer.Str,
                  32.f, 
                  Color_White);
-        Clear(&Buffer);
+        U8Str_Clear(&Buffer);
     }
 }
 

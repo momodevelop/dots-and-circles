@@ -22,16 +22,16 @@ struct sort_entry {
     u32 Index;
 };
 
-static inline usize
+static inline u32
 QuickSortPartition(sort_entry* Arr,
-                   usize LeftIndex, 
-                   usize OnePastRightIndex) 
+                   u32 LeftIndex, 
+                   u32 OnePastRightIndex) 
 {
     // Save the rightmost index as pivot
     // This frees up the right most index as a slot
     sort_entry PivotValue = Arr[OnePastRightIndex - 1]; 
-    usize SmallIndex = LeftIndex;
-    usize LargeIndex = OnePastRightIndex - 1;
+    u32 SmallIndex = LeftIndex;
+    u32 LargeIndex = OnePastRightIndex - 1;
     
     while(LargeIndex > SmallIndex) {
         // Check the value left of LargerIndex
@@ -44,7 +44,7 @@ QuickSortPartition(sort_entry* Arr,
         // If the value left of LargeIndex is smaller than pivot,
         // swap positions with the value in SmallIndex
         else {
-            Swap(Arr + LargeIndex - 1, Arr + SmallIndex);
+            Swap(sort_entry, Arr[LargeIndex-1], Arr[SmallIndex]);
             ++SmallIndex;
         }
     }
@@ -57,15 +57,15 @@ QuickSortPartition(sort_entry* Arr,
 // NOTE(Momo): This is done inplace
 static inline void 
 QuickSortRange(sort_entry* Arr, 
-               usize LeftIndex, 
-               usize OnePastRightIndex) 
+               u32 LeftIndex, 
+               u32 OnePastRightIndex) 
 {
     if (OnePastRightIndex - LeftIndex <= 1) {
         return;
     }
-    usize PivotIndex = QuickSortPartition(Arr, 
-                                          LeftIndex, 
-                                          OnePastRightIndex);
+    u32 PivotIndex = QuickSortPartition(Arr, 
+                                        LeftIndex, 
+                                        OnePastRightIndex);
     
     QuickSortRange(Arr, LeftIndex, PivotIndex);
     QuickSortRange(Arr, PivotIndex + 1, OnePastRightIndex);
@@ -75,7 +75,7 @@ QuickSortRange(sort_entry* Arr,
 
 static inline void
 QuickSort(sort_entry* Arr, 
-          usize ArrCount) 
+          u32 ArrCount) 
 {
     QuickSortRange(Arr, 0, ArrCount);
 }

@@ -19,7 +19,7 @@ struct game_input_button {
 };
 
 struct game_input {
-    string_buffer Characters;
+    u8_str Characters;
     union {
         game_input_button Buttons[11];
         struct {
@@ -42,7 +42,7 @@ struct game_input {
 
 
 static inline game_input
-CreateInput(string_buffer Buffer) {
+Input_Create(u8_str Buffer) {
     game_input Ret = {};
     Ret.Characters = Buffer;
     return Ret;
@@ -52,7 +52,7 @@ CreateInput(string_buffer Buffer) {
 static inline b32
 TryPushCharacterInput(game_input* Input, char C) {
     if (C >= 32 && C <= 126) {
-        Push(&Input->Characters, C);
+        U8Str_Push(&Input->Characters, C);
         return true;
     }
     return false;
@@ -60,7 +60,7 @@ TryPushCharacterInput(game_input* Input, char C) {
 
 static inline void
 Update(game_input* Input) {
-    Clear(&Input->Characters);
+    U8Str_Clear(&Input->Characters);
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
     }

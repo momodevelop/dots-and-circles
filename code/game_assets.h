@@ -1,9 +1,6 @@
-#ifndef __GAME_ASSETS__
-#define __GAME_ASSETS__
+#ifndef __GAME_ASSETS_H__
+#define __GAME_ASSETS_H__
 
-#include "mm_core.h"
-
-#include "mm_array.h"
 #include "mm_maths.h"
 #include "mm_arena.h"
 #include "mm_mailbox.h"
@@ -104,14 +101,14 @@ GetFont(game_assets* Assets, game_asset_font_id FontId) {
 }
 
 static inline b32
-CheckAssetSignature(void* Memory, string Signature) {
+CheckAssetSignature(void* Memory, u8_cstr Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    for (u32 i = 0; i < Signature.Count; ++i) {
-        if (MemoryU8[i] != Signature[i]) {
-            return false;
+    for (u32 I = 0; I < Signature.Size; ++I) {
+        if (MemoryU8[I] != Signature.Data[I]) {
+            return FALSE;
         }
     }
-    return true; 
+    return TRUE; 
 }
 
 // TODO: Maybe we create some kind of struct for reading files?
@@ -201,12 +198,12 @@ return nullptr; \
         arena_mark Scratch = Arena_Mark(Arena);
         Defer{ Arena_Revert(&Scratch); };
         
-        string Signature = CreateString("MOMO");
+        u8_cstr Signature = U8CStr_FromSiStr("MOMO");
         void* ReadSignature = Read(&AssetFile,
                                    Platform,
                                    Scratch.Arena,
                                    &CurFileOffset,
-                                   (u32)Signature.Count,
+                                   (u32)Signature.Size,
                                    1);
         CheckPtr(ReadSignature);
         CheckFile(AssetFile);
@@ -331,6 +328,9 @@ return nullptr; \
                 usize HashedCpA = HashCodepoint(FileFontKerning->CodepointA);
                 usize HashedCpB = HashCodepoint(FileFontKerning->CodepointB);
                 Font->Kernings[HashedCpA][HashedCpB] = FileFontKerning->Kerning;
+                
+            } break;
+            case AssetType_Sound: {
                 
             } break;
             default: {
