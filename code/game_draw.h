@@ -2,9 +2,6 @@
 #define __GAME_DRAW__
 
 
-#include "game_renderer.h"
-#include "game_assets.h"
-
 
 static inline void
 DrawText(mailbox* RenderCommands, 

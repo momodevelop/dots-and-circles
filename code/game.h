@@ -3,11 +3,15 @@
 
 #include "mm_core.h"
 
-#include "game_platform.h"
-#include "game_debug_console.h"
 #include "game_renderer.h"
-#include "game_debug.h"
+#include "game_platform.h"
+#include "game_assets_types.h"
 #include "game_assets.h"
+#include "game_draw.h"
+#include "game_debug_console.h"
+#include "game_debug.h"
+
+
 
 
 enum game_mode_type {
@@ -31,7 +35,7 @@ struct transient_state {
 struct permanent_state {
     b32 IsInitialized;
     b32 IsRunning;
-    b32 IsShowInfo;
+    b32 IsPaused;
     
     game_mode_type CurrentGameMode;
     game_mode_type NextGameMode;

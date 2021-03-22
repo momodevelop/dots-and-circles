@@ -1,14 +1,6 @@
 #ifndef __GAME_CONSOLE__
 #define __GAME_CONSOLE__
 
-#include "mm_easing.h"
-#include "mm_colors.h"
-#include "mm_timer.h"
-#include "game_platform.h"
-#include "game_renderer.h"
-#include "game_assets.h"
-#include "game_draw.h"
-
 
 typedef void (*debug_console_callback) (struct debug_console* Console, void* Context, u8_cstr Args);
 
@@ -239,10 +231,11 @@ DebugConsole_Update(debug_console* Console,
     
 }
 
+
 static inline void
-Render(debug_console* Console, 
-       mailbox* RenderCommands,
-       game_assets* Assets) 
+DebugConsole_Render(debug_console* Console, 
+                    mailbox* RenderCommands,
+                    game_assets* Assets) 
 {
     if (Timer_IsBegin(Console->TransitTimer)) {
         return;
@@ -253,7 +246,7 @@ Render(debug_console* Console,
     f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
     f32 LineHeight = Console->Dimensions.H / (Console->InfoBufferCount + 1);
     f32 FontSize = LineHeight * 0.9f;
-    f32 FontHeight = GetHeight(Font) * FontSize;
+    f32 FontHeight = Assets_FontHeight(Font) * FontSize;
     f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
     f32 PaddingWidth = Console->Dimensions.W * 0.005f;
     {

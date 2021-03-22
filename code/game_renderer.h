@@ -17,10 +17,6 @@ Ground rules about this renderer.
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "mm_mailbox.h"
-#include "mm_maths.h"
-#include "mm_colors.h"
-
 // "Inherited" by all renderers
 struct renderer {
     b32 IsInitialized;

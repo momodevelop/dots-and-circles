@@ -1,14 +1,6 @@
 #ifndef __GAME_ASSETS_H__
 #define __GAME_ASSETS_H__
 
-#include "mm_maths.h"
-#include "mm_arena.h"
-#include "mm_mailbox.h"
-#include "mm_string.h"
-
-#include "game_platform.h"
-#include "game_assets_types.h"
-
 // NOTE(Momo): Asset types
 struct game_asset_texture {
     u32 Width, Height, Channels;
@@ -48,7 +40,7 @@ HashCodepoint(u32 Codepoint) {
 }
 
 static inline f32 
-GetHeight(game_asset_font* Font) {
+Assets_FontHeight(game_asset_font* Font) {
     return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
 }
 

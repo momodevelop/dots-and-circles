@@ -4,8 +4,6 @@
 #ifndef __PLATFORM__
 #define __PLATFORM__
 
-#include "mm_core.h"
-#include "game_renderer.h"
 
 // NOTE(Momo): Global Settings
 static constexpr v3f Global_DesignSpace = { 1600.f, 900.f, 200.f };
@@ -21,19 +19,29 @@ struct game_input_button {
 struct game_input {
     u8_str Characters;
     union {
-        game_input_button Buttons[11];
+        game_input_button Buttons[15];
         struct {
             game_input_button ButtonUp;
             game_input_button ButtonDown;
             game_input_button ButtonRight;
             game_input_button ButtonLeft;
+            
             game_input_button ButtonConfirm;
             game_input_button ButtonSwitch;
             game_input_button ButtonBack;
+            
+            // NOTE(Momo): Kinda for debugging
             game_input_button ButtonConsole;
             game_input_button ButtonInspector;
+            
             game_input_button ButtonSaveState;
             game_input_button ButtonLoadState;
+            
+            game_input_button ButtonStartRecord;
+            game_input_button ButtonEndRecord;
+            game_input_button ButtonReplayRecord;
+            
+            game_input_button ButtonPauseState;
         };
     };
     
@@ -139,6 +147,7 @@ struct platform_api {
     platform_read_file* ReadFileFp;
     platform_save_state* SaveStateFp;
     platform_load_state* LoadStateFp;
+    
 };
 
 

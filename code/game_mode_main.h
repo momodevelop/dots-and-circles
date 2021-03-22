@@ -163,7 +163,12 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
     bullet Bullet = {}; 
     Bullet.Position = Position;
 	Bullet.Speed = Speed;
+#if 0
     Bullet.Size = { 16.f, 16.f };
+#else 
+    Bullet.Size = { 64.f, 64.f };
+#endif
+    
     Bullet.HitCircle = {
         { 0.f, 0.f }, 
         Bullet.Size.X * 0.5f 

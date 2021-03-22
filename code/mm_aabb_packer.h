@@ -12,14 +12,6 @@ enum aabb_packer_sort_type {
     AabbPackerSortType_BiggerSide,
 };
 
-struct aabb_packer_aabb {
-    // NOTE(Momo): Input
-    u32 W, H; 
-    
-    // NOTE(Momo): Output
-    u32 X, Y;
-};
-
 static inline void
 __AabbPacker_Sort(aabb2u* Aabbs,
                   sort_entry* SortEntries,

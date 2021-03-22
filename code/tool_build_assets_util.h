@@ -14,19 +14,9 @@ struct read_file_result {
 };
 
 
-static inline aabb2u
-Tab_PackerAabbToAabb2u(aabb_packer_aabb Aabb) {
-	return { 
-        Aabb.X, 
-        Aabb.Y, 
-        Aabb.X + Aabb.W, 
-        Aabb.Y + Aabb.H 
-    };    
-}
-
 static inline read_file_result
 Tab_ReadFileIntoMemory(arena* Arena, 
-                        const char* Filename) {
+                       const char* Filename) {
     read_file_result Ret = {};
     FILE* File = Null;
     fopen_s(&File, Filename, "rb");

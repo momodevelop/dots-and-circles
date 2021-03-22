@@ -16,6 +16,7 @@
 #include "mm_string.h"
 #include "mm_random.h"
 #include "mm_stream.h"
+#include "mm_mailbox.h"
 
 #include "mm_wav.h"
 

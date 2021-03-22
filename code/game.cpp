@@ -8,12 +8,9 @@ void (*Log)(const char* Format, ...);
 #endif
 
 #include "game.h"
-#include "game_assets.h"
-#include "game_mode_splash.h"
 #include "game_mode_main.h"
+#include "game_mode_splash.h"
 #include "game_mode_sandbox.h"
-#include "game_debug.h"
-#include "game_draw.h"
 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
@@ -78,8 +75,9 @@ GameUpdateFunc(GameUpdate)
                                               Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
-        PermState->IsInitialized = true;
-        PermState->IsRunning = true;
+        PermState->IsInitialized = TRUE;
+        PermState->IsRunning = TRUE;
+        PermState->IsPaused = FALSE;
         
         PushSetDesignResolution(RenderCommands, 
                                 (u32)Global_DesignSpace.W, 
@@ -141,19 +139,29 @@ GameUpdateFunc(GameUpdate)
         
         DebugState->PermanentState = PermState;
         DebugState->TransientState = TranState;
-        DebugState->IsInitialized = true;
+        DebugState->IsInitialized = TRUE;
     }
     
-    
-    DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
-    
-    // NOTE(Momo): Save and load state trigger for platform
-    // TODO: Put this somewhere else
+    // NOTE(Momo): Input
+    // TODO(Momo): Consider putting everything into a Debug_Update()
+    // Or, change seperate variable state into inspector and update seperately
     if (IsPoked(Input->ButtonSaveState)) {
         Platform->SaveStateFp();
     }
     else if(IsPoked(Input->ButtonLoadState)) {
         Platform->LoadStateFp();
+    }
+    if (IsPoked(Input->ButtonPauseState)) {
+        PermState->IsPaused = !PermState->IsPaused;
+    }
+    if (IsPoked(Input->ButtonInspector)) {
+        DebugState->IsShowVariables = !DebugState->IsShowVariables;
+    }
+    
+    DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
+    
+    if (PermState->IsPaused) {
+        DeltaTime = 0.f;
     }
     
 #if 0 
@@ -247,4 +255,5 @@ GameUpdateFunc(GameUpdate)
     
     return PermState->IsRunning;
 }
+
 

@@ -29,6 +29,7 @@ struct debug_state {
     b32 IsInitialized;
     arena Arena;
     
+    b32 IsShowVariables;
     debug_variable* Variables;
     u32 VariableCount;
     u32 VariableCapacity;
@@ -84,7 +85,8 @@ Debug_Render(debug_state* State,
 
 {
     // Render console system
-    Render(&State->Console, RenderCommands, Assets);
+    DebugConsole_Render(&State->Console, RenderCommands, Assets);
+    
     
     // For each variable, render:
     // Name: Data

@@ -3,7 +3,8 @@
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 
-
+#include "mm_core.h"
+#include "game_renderer.h"
 #include "game_platform.h"
 #include "game_opengl.h"
 
@@ -949,6 +950,19 @@ Win32ProcessMessages(HWND Window,
                     break;
                     case VK_F4:
                     Input->ButtonLoadState.Now = IsDown;
+                    break;
+                    case VK_F5:
+                    Input->ButtonStartRecord.Now = IsDown;
+                    break;
+                    case VK_F6:
+                    Input->ButtonEndRecord.Now = IsDown;
+                    break;
+                    case VK_F7:
+                    Input->ButtonReplayRecord.Now = IsDown;
+                    break;
+                    case VK_F8:
+                    Input->ButtonPauseState.Now = IsDown;
+                    break;
                     case VK_BACK:
                     Input->ButtonBack.Now = IsDown;
                     break;
@@ -1218,7 +1232,7 @@ PlatformLoadStateFunc(Win32LoadState) {
         Win32Log("[Win32::LoadState] Cannot open file: %s\n", Path);
         return false;
     }
-    
+    Defer { CloseHandle(Win32Handle); }; 
     DWORD BytesRead;
     b8 Success = ReadFile(Win32Handle, 
                           G_GameMemory->Data,
@@ -1226,6 +1240,7 @@ PlatformLoadStateFunc(Win32LoadState) {
                           &BytesRead,
                           0);
     if (Success && G_GameMemory->DataSize == BytesRead) {
+        Win32Log("[Win32::LoadState] State loaded from: %s\n", Path);
         return true;
     }
     Win32Log("[Win32::LoadState] Could not read all bytes: %s\n", Path);
@@ -1252,6 +1267,7 @@ PlatformSaveStateFunc(Win32SaveState) {
         Win32Log("[Win32::SaveState] Cannot open file: %s\n", Path);
         return;
     }
+    Defer { CloseHandle(Win32Handle); }; 
     
     DWORD BytesWritten;
     if(!WriteFile(Win32Handle, 
@@ -1265,12 +1281,10 @@ PlatformSaveStateFunc(Win32SaveState) {
     }
     
     if (BytesWritten != G_GameMemory->DataSize) {
-        Win32Log("Win32::SaveState] Did not complete writing: %s\n", Path);
+        Win32Log("[Win32::SaveState] Did not complete writing: %s\n", Path);
         return;
     }
-    
-    CloseHandle(Win32Handle);
-    
+    Win32Log("[Win32::SaveState] State saved: %s\n", Path);
     
 }
 
