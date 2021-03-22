@@ -1,40 +1,16 @@
+#if 0
+
 #ifndef __GAME_DEBUG__
 #define __GAME_DEBUG__
 
 
 
-enum debug_variable_type {
-    DebugVariableType_B8,
-    DebugVariableType_B32,
-    DebugVariableType_I32,
-    DebugVariableType_U32,
-    DebugVariableType_F32,
-    // TODO: Vector types
-};
-
-struct debug_variable {
-    debug_variable_type Type;
-    u8_cstr Name;
-    union {
-        void* Data;
-        b8* B8;
-        b32* B32;
-        i32* I32;
-        u32* U32;
-        f32* F32;
-    };
-}; 
-
 struct debug_state {
     b32 IsInitialized;
     arena Arena;
     
-    b32 IsShowVariables;
-    debug_variable* Variables;
-    u32 VariableCount;
-    u32 VariableCapacity;
-    
-    debug_console Console;
+    sdw
+        debug_console Console;
     
     struct permanent_state* PermanentState;
     struct transient_state* TransientState;
@@ -60,17 +36,6 @@ Debug_HookU32Variable(debug_state* State,
                       void* Address) 
 {
     Debug_HookVariable(State, Name, Address, DebugVariableType_U32);
-}
-
-static inline void
-Debug_UnhookVariable(debug_state* State, u8_cstr Name) {
-    for (u32 I = 0; I < State->VariableCount; ++I) {
-        if (U8CStr_Compare(State->Variables[I].Name, Name)) {
-            State->Variables[I] = State->Variables[State->VariableCount-1];
-            --State->VariableCount;
-            return;
-        }
-    }
 }
 
 static inline void
@@ -128,4 +93,5 @@ Debug_Render(debug_state* State,
     }
 }
 
+#endif
 #endif

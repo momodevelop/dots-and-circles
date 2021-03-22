@@ -8,11 +8,10 @@
 #include "game_assets_types.h"
 #include "game_assets.h"
 #include "game_draw.h"
+
+
+#include "game_debug_inspector.h"
 #include "game_debug_console.h"
-#include "game_debug.h"
-
-
-
 
 enum game_mode_type {
     GameModeType_Splash,
@@ -50,6 +49,17 @@ struct permanent_state {
     
 };
 
+struct debug_state {
+    b32 IsInitialized;
+    arena Arena;
+    
+    debug_inspector Inspector;
+    debug_console Console;
+    
+    struct permanent_state* PermanentState;
+    struct transient_state* TransientState;
+};
+
 
 // Common functions
 static inline void
@@ -69,5 +79,10 @@ SwitchToUICoords(mailbox* RenderCommands) {
                     v3f{}, 
                     CenterBox);
 }
+
+// NOTE(Momo): Things that require states' definitions
+#include "game_mode_main.h"
+#include "game_mode_splash.h"
+#include "game_mode_sandbox.h"
 
 #endif //GAME_H

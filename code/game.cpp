@@ -8,9 +8,6 @@ void (*Log)(const char* Format, ...);
 #endif
 
 #include "game.h"
-#include "game_mode_main.h"
-#include "game_mode_splash.h"
-#include "game_mode_sandbox.h"
 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
@@ -103,12 +100,11 @@ GameUpdateFunc(GameUpdate)
                                         Arena,
                                         GameMemory->DebugMemory,
                                         GameMemory->DebugMemorySize);
-        
-        DebugState->VariableCapacity = 16;
-        DebugState->VariableCount = 0;
-        DebugState->Variables = Arena_PushArray(debug_variable, 
-                                                &DebugState->Arena,
-                                                DebugState->VariableCapacity); 
+        // Init inspector
+        {
+            DebugState->Inspector = DebugInspector_Create(&DebugState->Arena, 16);
+            
+        }
         
         // Init console
         {
@@ -155,8 +151,9 @@ GameUpdateFunc(GameUpdate)
         PermState->IsPaused = !PermState->IsPaused;
     }
     if (IsPoked(Input->ButtonInspector)) {
-        DebugState->IsShowVariables = !DebugState->IsShowVariables;
+        DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
+    
     
     DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
     
@@ -250,7 +247,8 @@ GameUpdateFunc(GameUpdate)
     }
     
     // Render Console
-    Debug_Render(DebugState, TranState->Assets, RenderCommands);
+    DebugInspector_Render(&DebugState->Inspector, &DebugState->Arena, TranState->Assets,  RenderCommands);
+    DebugConsole_Render(&DebugState->Console, RenderCommands, TranState->Assets);
     //Platform->LogFp("Hello");
     
     return PermState->IsRunning;

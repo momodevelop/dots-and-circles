@@ -225,12 +225,15 @@ InitMainMode(permanent_state* PermState,
     
     Mode->Wave.IsDone = true;
     
-    Debug_HookU32Variable(DebugState, U8CStr_FromSiStr("Bullets"), &Mode->BulletCount);
+    DebugInspector_HookU32Variable(&DebugState->Inspector, 
+                                   U8CStr_FromSiStr("Bullets"), 
+                                   &Mode->BulletCount);
 }
 
 static inline void
 UninitMainMode(debug_state* DebugState) {
-    Debug_UnhookVariable(DebugState, U8CStr_FromSiStr("Bullets"));
+    DebugInspector_UnhookVariable(&DebugState->Inspector, 
+                                  U8CStr_FromSiStr("Bullets"));
 }
 
 static inline void 
@@ -545,8 +548,9 @@ RenderBullets(game_mode_main* Mode,
                 ZPos = ZLayCircleBullet + CircleLayerOffset;
                 CircleLayerOffset += 0.01f;
             } break;
-            default: 
-            Assert(false);
+            default: {
+                Assert(false);
+            }
         }
         m44f T = M44f_Translation(Bullet->Position.X,
                                   Bullet->Position.Y,
