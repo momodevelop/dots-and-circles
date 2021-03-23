@@ -72,9 +72,9 @@ GameUpdateFunc(GameUpdate)
                                               Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
-        PermState->IsInitialized = TRUE;
-        PermState->IsRunning = TRUE;
-        PermState->IsPaused = FALSE;
+        PermState->IsInitialized = True;
+        PermState->IsRunning = True;
+        PermState->IsPaused = False;
         
         PushSetDesignResolution(RenderCommands, 
                                 (u32)Global_DesignSpace.W, 
@@ -135,7 +135,7 @@ GameUpdateFunc(GameUpdate)
         
         DebugState->PermanentState = PermState;
         DebugState->TransientState = TranState;
-        DebugState->IsInitialized = TRUE;
+        DebugState->IsInitialized = True;
     }
     
     // NOTE(Momo): Input

@@ -61,7 +61,7 @@ Copy(void* dest, void* src, u32 size) {
 }
 
 static inline void 
-Zero(void *mem, usize size) {
+ZeroBlock(void *mem, u32 size) {
     for (u8 *p = (u8*)mem, *e = p + size; 
          p < e; 
          ++p)
@@ -70,9 +70,9 @@ Zero(void *mem, usize size) {
     }
 }
 
-#define ZeroStruct(p) Zero((p), sizeof(*(p)))
-#define ZeroStaticArray(a) Zero((a), sizeof((a)))
-#define ZeroDynamicArray(a, c) Zero((a), sizeof(*(a)) * c)
+#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
+#define ZeroStaticArray(a) ZeroBlock((a), sizeof((a)))
+#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
 
 
 static inline u32

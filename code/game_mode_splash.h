@@ -28,7 +28,7 @@ Update(splash_image_entity* Entity,
        f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
-    if (Entity->CountdownTimer <= Entity->CountdownDuration) 
+     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
     // NOTE(Momo): Update

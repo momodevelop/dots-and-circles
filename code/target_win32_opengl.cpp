@@ -132,25 +132,6 @@ RECT_Height(RECT Value) {
     return Value.bottom - Value.top;
 }
 
-static inline void*
-Win32AllocateMemory(usize MemorySize) {
-    return VirtualAllocEx(GetCurrentProcess(),
-                          0, 
-                          MemorySize,
-                          MEM_RESERVE | MEM_COMMIT, 
-                          PAGE_READWRITE);
-}
-
-static inline void
-Win32FreeMemory(void* Memory) {
-    if(Memory) {
-        VirtualFreeEx(GetCurrentProcess(), 
-                      Memory,    
-                      0, 
-                      MEM_RELEASE); 
-    }
-}
-
 
 #if INTERNAL
 static inline void
@@ -177,6 +158,38 @@ PlatformLogFunc(Win32Log) {
 #endif
     // TODO: Logging to text file?
     va_end(VaList);
+}
+
+#if INTERNAL
+static inline void*
+Win32AllocateMemoryAtAddress(usize MemorySize, LPVOID Address ) {
+    return VirtualAllocEx(GetCurrentProcess(),
+                          Address, 
+                          MemorySize,
+                          MEM_RESERVE | MEM_COMMIT, 
+                          PAGE_READWRITE);
+    
+}
+#endif
+
+static inline void*
+Win32AllocateMemory(usize MemorySize ) {
+    return VirtualAllocEx(GetCurrentProcess(),
+                          0, 
+                          MemorySize,
+                          MEM_RESERVE | MEM_COMMIT, 
+                          PAGE_READWRITE);
+    
+}
+
+static inline void
+Win32FreeMemory(void* Memory) {
+    if(Memory) {
+        VirtualFreeEx(GetCurrentProcess(), 
+                      Memory,    
+                      0, 
+                      MEM_RELEASE); 
+    }
 }
 
 static inline LARGE_INTEGER
@@ -696,7 +709,7 @@ Win32Init() {
     // NOTE(Momo): Performance Frequency 
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = I64_To_U32(PerfCountFreq.QuadPart);
+    State->PerformanceFrequency = I64_ToU32(PerfCountFreq.QuadPart);
     
     // NOTE(Momo): Initialize file handle store
     //GlobalFileHandles = CreatePool<HANDLE>(&G_State->Arena, 8);
@@ -709,6 +722,7 @@ Win32Init() {
     // NOTE(Momo): Initialize console
     AllocConsole();    
     State->StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    
 #endif
     
     State->IsRunning = true;
@@ -873,8 +887,8 @@ Win32InitWasapi(win32_wasapi* Wasapi,
 static inline v2u
 Win32GetMonitorDimensions() {
     v2u Ret = {};
-    Ret.W = I32_To_U32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = I32_To_U32(GetSystemMetrics(SM_CYSCREEN));
+    Ret.W = I32_ToU32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = I32_ToU32(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
@@ -1234,11 +1248,13 @@ PlatformLoadStateFunc(Win32LoadState) {
     }
     Defer { CloseHandle(Win32Handle); }; 
     DWORD BytesRead;
-    b8 Success = ReadFile(Win32Handle, 
-                          G_GameMemory->Data,
-                          (DWORD)G_GameMemory->DataSize,
-                          &BytesRead,
-                          0);
+    
+    b32 Success = ReadFile(Win32Handle, 
+                           G_GameMemory->Data,
+                           (DWORD)G_GameMemory->DataSize,
+                           &BytesRead,
+                           0);
+    
     if (Success && G_GameMemory->DataSize == BytesRead) {
         Win32Log("[Win32::LoadState] State loaded from: %s\n", Path);
         return true;
@@ -1316,7 +1332,17 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
                     u32 DebugMemorySize) 
 {
     GameMemory->DataSize = PermanentMemorySize + TransientMemorySize + DebugMemorySize;
+    
+#if INTERNAL
+    SYSTEM_INFO SystemInfo;
+    GetSystemInfo(&G_SystemInfo);
+    
+    GameMemory->Data = 
+        Win32AllocateMemoryAtAddress(GameMemory->DataSize, 
+                                     SystemInfo.lpMinimumApplicationAddress);
+#else
     GameMemory->Data = Win32AllocateMemory(GameMemory->DataSize);
+#endif
     if (!GameMemory->Data) {
         Win32Log("[Win32::GameMemory] Failed to allocate\n");
         return false;

@@ -27,14 +27,14 @@ U8CStr_FromSiStr(const char* SiStr) {
 static inline b32
 U8CStr_Compare(u8_cstr Lhs, u8_cstr Rhs) {
     if(Lhs.Size != Rhs.Size) {
-        return FALSE;
+        return False;
     }
     for (u32 I = 0; I < Lhs.Size; ++I) {
         if (Lhs.Data[I] != Rhs.Data[I]) {
-            return FALSE;
+            return False;
         }
     }
-    return TRUE;
+    return True;
 }
 
 

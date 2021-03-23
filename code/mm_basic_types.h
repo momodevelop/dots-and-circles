@@ -19,6 +19,7 @@ typedef size_t usize;
 typedef uintptr_t uptr;
 typedef ptrdiff_t iptr;
 
+// TODO(Momo): change to retarded name
 #define Kilobyte (1 << 10)
 #define Megabyte (1 << 20)
 #define Gigabyte (1 << 30)
@@ -27,8 +28,8 @@ typedef ptrdiff_t iptr;
 #define Gigabytes(num) (Gigabyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 #define Null 0
-#define FALSE 0
-#define TRUE 1
+#define False 0
+#define True 1
 
 #define Glue_(A,B) A##B
 #define Glue(A,B) Glue_(A,B)
@@ -127,7 +128,7 @@ SiStrReverse(char* Dest) {
 
 
 static inline void 
-SiItoa(char* Dest, i32 Num) {
+SiStrItoa(char* Dest, i32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -208,25 +209,25 @@ namespace zawarudo {
 
 
 static inline u32
-U64_To_U32(u64 Value) {
+U64_ToU32(u64 Value) {
     Assert(Value <= U32_Max);
     return (u32)Value;
 }
 
 static inline u32
-I32_To_U32(i32 Value) {
+I32_ToU32(i32 Value) {
     Assert(Value >= 0);
     return (u32)Value;
 }
 
 static inline u16
-I32_To_U16(i32 Value) {
+I32_ToU16(i32 Value) {
     Assert(Value <= U16_Max && Value >= 0);
     return (u16)Value;
 }
 
 static inline u32
-I64_To_U32(i64 Value) {
+I64_ToU32(i64 Value) {
     Assert(Value <= U32_Max && Value >= 0);
     return (u32)Value;
 }

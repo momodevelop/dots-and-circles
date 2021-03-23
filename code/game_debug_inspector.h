@@ -40,7 +40,7 @@ DebugInspector_Create(arena* Arena, u32 VariableCap) {
     Ret.Vars = Arena_PushArray(debug_inspector_var, 
                                Arena,
                                Ret.VarCap);
-    Ret.IsActive = FALSE;
+    Ret.IsActive = False;
     return Ret;
 }
 

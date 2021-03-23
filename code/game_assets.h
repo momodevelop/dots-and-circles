@@ -97,10 +97,10 @@ CheckAssetSignature(void* Memory, u8_cstr Signature) {
     u8* MemoryU8 = (u8*)Memory;
     for (u32 I = 0; I < Signature.Size; ++I) {
         if (MemoryU8[I] != Signature.Data[I]) {
-            return FALSE;
+            return False;
         }
     }
-    return TRUE; 
+    return True; 
 }
 
 // TODO: Maybe we create some kind of struct for reading files?
@@ -326,7 +326,7 @@ return nullptr; \
                 
             } break;
             default: {
-                Assert(false);
+                Assert(False);
             } break;
             
             
