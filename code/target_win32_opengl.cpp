@@ -1335,7 +1335,7 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
     
 #if INTERNAL
     SYSTEM_INFO SystemInfo;
-    GetSystemInfo(&G_SystemInfo);
+    GetSystemInfo(&SystemInfo);
     
     GameMemory->Data = 
         Win32AllocateMemoryAtAddress(GameMemory->DataSize, 

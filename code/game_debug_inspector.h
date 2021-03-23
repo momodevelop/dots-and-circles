@@ -88,6 +88,7 @@ DebugInspector_Render(debug_inspector* Inspector,
 {
     // For each variable, render:
     // Name: Data
+    f32 OffsetY = 0.f;
     for (u32 I = 0; I < Inspector->VarCount; ++I) {
         arena_mark Scratch = Arena_Mark(Arena);
         Defer{ Arena_Revert(&Scratch); };
@@ -118,11 +119,12 @@ DebugInspector_Render(debug_inspector* Inspector,
         DrawText(RenderCommands, 
                  Assets, 
                  Font_Default, 
-                 v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
+                 v3f{ -800.f + 10.f, 450.f - 32.f + OffsetY, 0.f }, 
                  Buffer.Str,
                  32.f, 
                  Color_White);
         U8Str_Clear(&Buffer);
+        OffsetY -= 32.f;
     }
 }
 
