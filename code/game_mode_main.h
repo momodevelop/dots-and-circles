@@ -403,7 +403,7 @@ UpdateCollision(game_mode_main* Mode)
         DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
         
         if (Circle2f_IsIntersecting(PlayerCircle, DotBulletCircle)) {
-            if (Player->MoodType == DotBullet->MoodType ) {
+            if (Player->MoodType == MoodType_Dot) {
                 RemoveDotBullet(Mode, I);
                 continue;
             }
@@ -418,7 +418,7 @@ UpdateCollision(game_mode_main* Mode)
         CircleBulletHitCircle.Origin = V2f_Add(CircleBulletHitCircle.Origin, CircleBullet->Position);
         
         if (Circle2f_IsIntersecting(PlayerCircle, CircleBulletHitCircle)) {
-            if (Player->MoodType == CircleBullet->MoodType ) {
+            if (Player->MoodType == MoodType_Circle ) {
                 RemoveCircleBullet(Mode, I);
                 continue;
             }
@@ -471,7 +471,7 @@ UpdateWaves(game_mode_main* Mode,
                                MoodType,
                                EnemyFiringPatternType_Homing,
                                EnemyMovementType_Static,
-                               0.5f, 
+                               0.1f, 
                                10.f);
                     
                     Pattern->SpawnTimer = 0.f;

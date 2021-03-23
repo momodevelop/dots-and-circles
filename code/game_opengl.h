@@ -309,13 +309,15 @@ struct opengl {
     GLuint BlankTexture;
     GLuint DummyTexture;
     
+    
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
     // Index 0 will always be an invalid 'dummy texture
     // Index 1 will always be a blank texture for items with no texture (but has colors)
     GLuint* Textures;
     u32 TextureCount;
-    u32 TextureCapacity;
+    u32 TextureCap;
+    u32 EntityCap;
     
     v2u WindowDimensions;
     v2u RenderDimensions;
@@ -406,8 +408,10 @@ Opengl_Init(opengl* Opengl,
             u32 MaxTextures) 
 {
     Opengl->Textures = Arena_PushArray(GLuint, &Opengl->Arena, MaxTextures);
-    Opengl->TextureCapacity = MaxTextures;
+    Opengl->TextureCap = MaxTextures;
     Opengl->TextureCount = 0;
+    
+    Opengl->EntityCap = MaxEntities;
     
     Opengl->RenderDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
@@ -645,6 +649,7 @@ Opengl_DrawInstances(opengl* Opengl,
                      u32 InstancesToDraw, 
                      u32 IndexToDrawFrom) 
 {
+    Assert(InstancesToDraw + IndexToDrawFrom < Opengl->EntityCap);
     if (InstancesToDraw > 0) {
         Opengl->glBindTexture(GL_TEXTURE_2D, Texture);
         Opengl->glTexParameteri(GL_TEXTURE_2D, 
@@ -676,7 +681,7 @@ Opengl_AddTexture(opengl* Opengl,
 {
     renderer_texture_handle Ret = {};
     
-    u32 RemainingTextures = Opengl->TextureCapacity - Opengl->TextureCount;
+    u32 RemainingTextures = Opengl->TextureCap - Opengl->TextureCount;
     if (RemainingTextures == 0) {
         Ret.Success = false;
         Ret.Id = 0;

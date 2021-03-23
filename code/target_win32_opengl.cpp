@@ -661,7 +661,7 @@ return 0; \
     }
     Opengl_Init(Opengl, 
                 WindowDimensions, 
-                128,
+                512,
                 8);
     
 #if INTERNAL
