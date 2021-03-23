@@ -101,10 +101,8 @@ GameUpdateFunc(GameUpdate)
                                         GameMemory->DebugMemory,
                                         GameMemory->DebugMemorySize);
         // Init inspector
-        {
-            DebugState->Inspector = DebugInspector_Create(&DebugState->Arena, 16);
-            
-        }
+        DebugInspector_Init(&DebugState->Inspector);
+        
         
         // Init console
         {
@@ -115,17 +113,17 @@ GameUpdateFunc(GameUpdate)
                 Global_DesignSpace.D * 0.5f - 1.f
             };
             
-            DebugState->Console = 
-                DebugConsole_Create(&DebugState->Arena, 
-                                    5, 
-                                    110, 
-                                    16,
-                                    V3f_Sub(Position, v3f{0.f, 240.f, 0.f}),
-                                    Position,
-                                    0.1f,
-                                    Dimensions,
-                                    0.5f,
-                                    0.025f);
+            DebugConsole_Create(&DebugState->Console,
+                                &DebugState->Arena, 
+                                5, 
+                                110, 
+                                16,
+                                V3f_Sub(Position, v3f{0.f, 240.f, 0.f}),
+                                Position,
+                                0.1f,
+                                Dimensions,
+                                0.5f,
+                                0.025f);
             
             DebugConsole_AddCmd(&DebugState->Console, 
                                 U8CStr_FromSiStr("jump"), 

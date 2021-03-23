@@ -1,5 +1,6 @@
 # Engine
 [] Live Looped Editing
+[] Message system in assets
 [] Animation
 [] Figure out animation format for game side
 [] Figure out animation asset format

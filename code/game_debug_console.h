@@ -84,8 +84,9 @@ DebugConsole_RemoveCmd(debug_console* Console, u8_cstr Key) {
     
 }
 
-static inline debug_console
-DebugConsole_Create(arena* Arena, 
+static inline void
+DebugConsole_Create(debug_console* Console,
+                    arena* Arena, 
                     u32 InfoLineCount, 
                     u32 CharactersPerLine, 
                     u32 CommandsCapacity,
@@ -96,37 +97,33 @@ DebugConsole_Create(arena* Arena,
                     f32 StartPopRepeatDuration,
                     f32 PopRepeatDuration)
 {
-    debug_console Ret = {};
+    Console->InfoBuffers = Arena_PushArray(debug_console_buffer, Arena, InfoLineCount);
+    Console->InfoBufferCount = InfoLineCount;
     
-    Ret.InfoBuffers = Arena_PushArray(debug_console_buffer, Arena, InfoLineCount);
-    Ret.InfoBufferCount = InfoLineCount;
-    
-    for (usize I = 0; I < Ret.InfoBufferCount; ++I) {
-        debug_console_buffer* InfoBuffer = Ret.InfoBuffers + I;
+    for (usize I = 0; I < Console->InfoBufferCount; ++I) {
+        debug_console_buffer* InfoBuffer = Console->InfoBuffers + I;
         InfoBuffer->Buffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
     }
     
-    Ret.InputBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
-    Ret.CommandBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
+    Console->InputBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
+    Console->CommandBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
     
-    Ret.Commands = Arena_PushArray(debug_console_command, Arena, CommandsCapacity);
-    Ret.CommandCapacity = CommandsCapacity;
-    Ret.CommandCount = 0;
+    Console->Commands = Arena_PushArray(debug_console_command, Arena, CommandsCapacity);
+    Console->CommandCapacity = CommandsCapacity;
+    Console->CommandCount = 0;
     
-    Ret.TransitTimer = Timer_Create(TransitDuration);
+    Console->TransitTimer = Timer_Create(TransitDuration);
     
-    Ret.InfoBgColor = Color_Grey3;
-    Ret.InfoTextDefaultColor = Color_White;
-    Ret.InputBgColor = Color_Grey2;
-    Ret.InputTextColor = Color_White;
-    Ret.Dimensions = Dimensions;
-    Ret.Position = TransitStartPos;
-    Ret.TransitStartPos = TransitStartPos;
-    Ret.TransitEndPos = TransitEndPos;
-    Ret.StartPopRepeatTimer = Timer_Create(StartPopRepeatDuration);
-    Ret.PopRepeatTimer = Timer_Create(PopRepeatDuration); 
-    
-    return Ret;
+    Console->InfoBgColor = Color_Grey3;
+    Console->InfoTextDefaultColor = Color_White;
+    Console->InputBgColor = Color_Grey2;
+    Console->InputTextColor = Color_White;
+    Console->Dimensions = Dimensions;
+    Console->Position = TransitStartPos;
+    Console->TransitStartPos = TransitStartPos;
+    Console->TransitEndPos = TransitEndPos;
+    Console->StartPopRepeatTimer = Timer_Create(StartPopRepeatDuration);
+    Console->PopRepeatTimer = Timer_Create(PopRepeatDuration); 
 }
 
 

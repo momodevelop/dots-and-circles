@@ -9,7 +9,6 @@ struct arena {
 
 static inline arena 
 Arena_Create(void* Memory, u32 Capacity) {
-    Assert(Capacity);
     return { (u8*)Memory, 0, Capacity};
 }
 

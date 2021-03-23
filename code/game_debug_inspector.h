@@ -12,7 +12,8 @@ enum debug_inspector_var_type {
 
 struct debug_inspector_var {
     debug_inspector_var_type Type;
-    u8_cstr Name;
+    u8 LabelBuffer[256];
+    u8_str Label;
     union {
         void* Data;
         b8* B8;
@@ -26,50 +27,48 @@ struct debug_inspector_var {
 
 struct debug_inspector {
     b32 IsActive;
-    debug_inspector_var* Vars;
+    debug_inspector_var Vars[32];
     u32 VarCount;
-    u32 VarCap;
 };
 
 
-static inline debug_inspector
-DebugInspector_Create(arena* Arena, u32 VariableCap) {
-    debug_inspector Ret = {};
-    Ret.VarCap = VariableCap;
-    Ret.VarCount = 0;
-    Ret.Vars = Arena_PushArray(debug_inspector_var, 
-                               Arena,
-                               Ret.VarCap);
-    Ret.IsActive = False;
-    return Ret;
+static inline void
+DebugInspector_Init(debug_inspector* Inspector) {
+    Inspector->VarCount = 0;
+    Inspector->IsActive = False;
+    
+    for (u32 I = 0; I < ArrayCount(Inspector->Vars); ++I) {
+        debug_inspector_var* Var = Inspector->Vars + I;
+        Var->Label = U8Str_Create(Var->LabelBuffer, ArrayCount(Var->LabelBuffer));
+    }
 }
 
 static inline void
 DebugInspector_HookVariable(debug_inspector* Inspector, 
-                            u8_cstr Name, 
+                            u8_cstr Label, 
                             void* Address, 
-                            debug_inspector_var_type Type) {
-    debug_inspector_var Var = {};
-    Var.Data = Address;
-    Var.Type = Type;
-    Var.Name = Name;
+                            debug_inspector_var_type Type) 
+{
+    Assert(Inspector->VarCount < ArrayCount(Inspector->Vars));
     
-    Assert(Inspector->VarCount < Inspector->VarCap);
-    Inspector->Vars[Inspector->VarCount++] =  Var;
+    debug_inspector_var* Var = Inspector->Vars + Inspector->VarCount++;
+    Var->Data = Address;
+    Var->Type = Type;
+    U8Str_Copy(&Var->Label, Label);
 }
 
 static inline void
 DebugInspector_HookU32Variable(debug_inspector* Inspector,
-                               u8_cstr Name,
+                               u8_cstr Label,
                                void* Address) 
 {
-    DebugInspector_HookVariable(Inspector, Name, Address, DebugVariableType_U32);
+    DebugInspector_HookVariable(Inspector, Label, Address, DebugVariableType_U32);
 }
 
 static inline void
-DebugInspector_UnhookVariable(debug_inspector* State, u8_cstr Name) {
+DebugInspector_UnhookVariable(debug_inspector* State, u8_cstr Label) {
     for (u32 I = 0; I < State->VarCount; ++I) {
-        if (U8CStr_Compare(State->Vars[I].Name, Name)) {
+        if (U8CStr_Compare(State->Vars[I].Label.Str, Label)) {
             State->Vars[I] = State->Vars[State->VarCount-1];
             --State->VarCount;
             return;
@@ -94,7 +93,7 @@ DebugInspector_Render(debug_inspector* Inspector,
         Defer{ Arena_Revert(&Scratch); };
         
         u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
-        U8Str_PushCStr(&Buffer, Inspector->Vars[I].Name);
+        U8Str_PushCStr(&Buffer, Inspector->Vars[I].Label.Str);
         U8Str_PushCStr(&Buffer, U8CStr_FromSiStr(": "));
         
         Assert(Inspector->Vars[I].Data);
@@ -127,5 +126,6 @@ DebugInspector_Render(debug_inspector* Inspector,
         OffsetY -= 32.f;
     }
 }
+
 
 #endif 

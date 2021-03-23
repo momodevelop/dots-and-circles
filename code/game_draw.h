@@ -15,6 +15,7 @@ DrawText(mailbox* RenderCommands,
     v3f CurPosition = Position;
     auto* Font = GetFont(Assets, FontId);
     
+    f32 ZLayerOffset = 0.f;
     for(u32 I = 0; I < String.Size; ++I) {
         game_asset_font_glyph* Glyph = Font->Glyphs + HashCodepoint(String.Data[I]);
         aabb2f Box = Glyph->Box; 
@@ -31,7 +32,7 @@ DrawText(mailbox* RenderCommands,
         
         m44f T = M44f_Translation(CurPosition.X + Box.Min.X * Size, 
                                   CurPosition.Y + Box.Min.Y * Size,  
-                                  CurPosition.Z);
+                                  CurPosition.Z + ZLayerOffset);
         
         m44f SA = M44f_Concat(S,A);
         m44f TSA = M44f_Concat(T, SA);
@@ -46,7 +47,10 @@ DrawText(mailbox* RenderCommands,
         if (I != String.Size - 1 ) {
             CurPosition.X += 
                 Font->Kernings[HashCodepoint(String.Data[I])][HashCodepoint(String.Data[I+1])] * Size;
+            
         }
+        ZLayerOffset += 0.001f;
+        
     }
     
     
