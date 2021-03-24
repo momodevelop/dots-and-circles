@@ -133,7 +133,7 @@ PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
         u32 J = Console->InfoBufferCount - 1 - I;
         debug_console_buffer* Dest = Console->InfoBuffers + J;
         debug_console_buffer* Src = Console->InfoBuffers + J - 1;
-        U8Str_Copy(&Dest->Buffer, Src->Buffer.Str);
+        U8Str_Copy(&Dest->Buffer, Src->Buffer.CStr);
         Dest->Color = Src->Color;
     }
     Console->InfoBuffers[0].Color = Color;
@@ -170,7 +170,7 @@ DebugConsole_Update(debug_console* Console,
         if (Input->Characters.Size > 0 && 
             Input->Characters.Size <= U8Str_Remaining(&Console->InputBuffer)) 
         {  
-            U8Str_PushCStr(&Console->InputBuffer, Input->Characters.Str);
+            U8Str_PushCStr(&Console->InputBuffer, Input->Characters.CStr);
         }
         
         // Remove character backspace logic
@@ -198,8 +198,8 @@ DebugConsole_Update(debug_console* Console,
         
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
-            PushInfo(Console, Console->InputBuffer.Str, Color_White);
-            U8Str_Copy(&Console->CommandBuffer, Console->InputBuffer.Str);
+            PushInfo(Console, Console->InputBuffer.CStr, Color_White);
+            U8Str_Copy(&Console->CommandBuffer, Console->InputBuffer.CStr);
             U8Str_Clear(&Console->InputBuffer);
             
             u32 Min = 0;
@@ -210,13 +210,13 @@ DebugConsole_Update(debug_console* Console,
                     break;
                 }
             }
-            u8_cstr CommandStr = U8CStr_SubString(Console->CommandBuffer.Str, Min, Max); 
+            u8_cstr CommandStr = U8CStr_SubString(Console->CommandBuffer.CStr, Min, Max); 
             
             // Send a command to a callback
             for (u32 I = 0; I < Console->CommandCount; ++I) {
                 debug_console_command* Command = Console->Commands + I;
                 if (U8CStr_Compare(Command->Key, CommandStr)) {
-                    Command->Callback(Console, Command->Context, Console->CommandBuffer.Str);
+                    Command->Callback(Console, Command->Context, Console->CommandBuffer.CStr);
                 }
             }
         }
@@ -284,7 +284,7 @@ DebugConsole_Render(debug_console* Console,
                      Assets,
                      Font_Default, 
                      Position,
-                     Console->InfoBuffers[I].Buffer.Str,
+                     Console->InfoBuffers[I].Buffer.CStr,
                      FontSize,
                      Console->InfoBuffers[I].Color);
         }
@@ -299,7 +299,7 @@ DebugConsole_Render(debug_console* Console,
                      Assets, 
                      Font_Default, 
                      Position,
-                     Console->InputBuffer.Str,
+                     Console->InputBuffer.CStr,
                      FontSize,
                      Console->InputTextColor);
             

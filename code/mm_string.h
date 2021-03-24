@@ -88,7 +88,7 @@ U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
 //~ NOTE(Momo): u8_str
 struct u8_str {
     union {
-        u8_cstr Str;
+        u8_cstr CStr;
         struct {
             u8* Data;
             u32 Size;
@@ -105,6 +105,7 @@ U8Str_Create(u8* Buffer, u32 Capacity) {
     Ret.Cap = Capacity;
     return Ret;
 }
+#define U8Str_CreateFromBuffer(Buffer) U8Str_Create(Buffer, sizeof(Buffer))
 
 static inline u8_str
 U8Str_CreateFromArena(arena* Arena, u32 Capacity) {
@@ -155,7 +156,7 @@ U8Str_PushCStr(u8_str* Dest, u8_cstr Src) {
 
 static inline void
 U8Str_PushStr(u8_str* Dest, u8_str* Src) {
-    U8Str_PushCStr(Dest, Src->Str);
+    U8Str_PushCStr(Dest, Src->CStr);
 }
 
 static inline void 
@@ -186,7 +187,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
 }
 
 static inline void 
-U8Str_PushI32(u8_str* Dest, i32 Num) {
+U8Str_PushS32(u8_str* Dest, i32 Num) {
     if (Num == 0) {
         U8Str_Push(Dest, '0');
         return;

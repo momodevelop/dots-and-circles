@@ -68,7 +68,7 @@ DebugInspector_HookU32Variable(debug_inspector* Inspector,
 static inline void
 DebugInspector_UnhookVariable(debug_inspector* State, u8_cstr Label) {
     for (u32 I = 0; I < State->VarCount; ++I) {
-        if (U8CStr_Compare(State->Vars[I].Label.Str, Label)) {
+        if (U8CStr_Compare(State->Vars[I].Label.CStr, Label)) {
             State->Vars[I] = State->Vars[State->VarCount-1];
             --State->VarCount;
             return;
@@ -93,7 +93,7 @@ DebugInspector_Render(debug_inspector* Inspector,
         Defer{ Arena_Revert(&Scratch); };
         
         u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
-        U8Str_PushCStr(&Buffer, Inspector->Vars[I].Label.Str);
+        U8Str_PushCStr(&Buffer, Inspector->Vars[I].Label.CStr);
         U8Str_PushCStr(&Buffer, U8CStr_FromSiStr(": "));
         
         Assert(Inspector->Vars[I].Data);
@@ -101,7 +101,7 @@ DebugInspector_Render(debug_inspector* Inspector,
             case DebugVariableType_B32: {
             } break;
             case DebugVariableType_I32: {
-                U8Str_PushI32(&Buffer, *Inspector->Vars[I].I32);
+                U8Str_PushS32(&Buffer, *Inspector->Vars[I].I32);
             } break;
             case DebugVariableType_F32: {
                 Assert(false); 
@@ -119,7 +119,7 @@ DebugInspector_Render(debug_inspector* Inspector,
                  Assets, 
                  Font_Default, 
                  v3f{ -800.f + 10.f, 450.f - 32.f + OffsetY, 0.f }, 
-                 Buffer.Str,
+                 Buffer.CStr,
                  32.f, 
                  Color_White);
         U8Str_Clear(&Buffer);
