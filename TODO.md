@@ -1,4 +1,5 @@
 # Engine
+[] Change GlobalDesignSpace to #define macros cus I give up
 [] Live Looped Editing
 [] Message system in assets
 [] Animation

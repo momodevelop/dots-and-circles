@@ -10,6 +10,7 @@ static const v3f Global_DesignSpace = { 1600.f, 900.f, 200.f };
 static const v3f Global_DesignSpaceAnchor = { 0.5f, 0.5f, 0.5f };
 
 
+
 // Input API /////////////////////////////////////////
 struct game_input_button {
     bool Before : 1;
