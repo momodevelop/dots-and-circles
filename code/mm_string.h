@@ -114,10 +114,13 @@ U8Str_CreateFromArena(arena* Arena, u32 Capacity) {
     return U8Str_Create(Buffer, Capacity);
 }
 
-static inline void
+static inline b32
 U8Str_Pop(u8_str* S) {
-    Assert(S->Size > 0);
+    if (S->Size <= 0) {
+        return False;
+    }
     --S->Size;
+    return True;
 }
 
 static inline u32 
@@ -125,13 +128,16 @@ U8Str_Remaining(u8_str* Buffer) {
     return Buffer->Cap - Buffer->Size;
 }
 
-static inline void
+static inline b32
 U8Str_Copy(u8_str* Dest, u8_cstr Src) {
-    Assert(Src.Size <= Dest->Cap);
+    if (Src.Size > Dest->Cap) {
+        return False;
+    }
     for (u32 I = 0; I < Src.Size; ++I ) {
         Dest->Data[I] = Src.Data[I];
     }
     Dest->Size = Src.Size;
+    return True;
 }
 
 static inline void

@@ -6,8 +6,8 @@
 
 
 // NOTE(Momo): Global Settings
-static constexpr v3f Global_DesignSpace = { 1600.f, 900.f, 200.f };
-static constexpr v3f Global_DesignSpaceAnchor = { 0.5f, 0.5f, 0.5f };
+static const v3f Global_DesignSpace = { 1600.f, 900.f, 200.f };
+static const v3f Global_DesignSpaceAnchor = { 0.5f, 0.5f, 0.5f };
 
 
 // Input API /////////////////////////////////////////

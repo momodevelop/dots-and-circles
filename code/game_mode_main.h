@@ -239,19 +239,8 @@ InitMainMode(permanent_state* PermState,
     
     Mode->Wave.IsDone = true;
     
-    DebugInspector_HookU32Variable(&DebugState->Inspector, 
-                                   U8CStr_FromSiStr("Dots"), 
-                                   &Mode->DotBulletCount);
-    DebugInspector_HookU32Variable(&DebugState->Inspector, 
-                                   U8CStr_FromSiStr("Circles"), 
-                                   &Mode->CircleBulletCount);
 }
 
-static inline void
-UninitMainMode(debug_state* DebugState) {
-    DebugInspector_UnhookVariable(&DebugState->Inspector, 
-                                  U8CStr_FromSiStr("Bullets"));
-}
 
 static inline void 
 UpdatePlayer(game_mode_main* Mode, 
@@ -670,6 +659,7 @@ RenderEnemies(game_mode_main* Mode,
 static inline void
 UpdateMainMode(permanent_state* PermState, 
                transient_state* TranState,
+               debug_state* DebugState,
                mailbox* RenderCommands, 
                game_input* Input,
                f32 DeltaTime) 
@@ -692,38 +682,17 @@ UpdateMainMode(permanent_state* PermState,
     RenderEnemies(Mode, Assets, RenderCommands);
     
     
-    // TODO: We would like better debug rendering system please that is more global
-    // Debug Rendering 
-#if REFACTOR
-    {
-        arena_mark Scratchpad(&Mode->Arena);
-        string_buffer Buffer = StringBuffer(Scratchpad, 256);
-        Push(&Buffer, String("Bullets: "));
-        PushI32(&Buffer, (i32)Mode->Bullets.Count);
-        
-        // Number of dot bullets
-        DrawText(RenderCommands, 
-                 Assets, 
-                 v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
-                 Color_White, 
-                 Font_Default, 
-                 32.f, 
-                 Buffer.Array);
-        Clear(&Buffer);
-        
-        Push(&Buffer, String("Enemies: "));
-        PushI32(&Buffer, (i32)Mode->Enemies.Count);
-        
-        DrawText(RenderCommands, 
-                 Assets, 
-                 v3f{ -800.f + 10.f, 450.f - 64.f, 0.f }, 
-                 Color_White, 
-                 Font_Default, 
-                 32.f, 
-                 Buffer.Array);
-    }
-#else 
-#endif
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Dots: "), 
+                           Mode->DotBulletCount);
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Circles: "), 
+                           Mode->CircleBulletCount);
+    
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Bullets: "), 
+                           Mode->DotBulletCount + Mode->CircleBulletCount);
+    
 }
 
 #endif //GAME_MODE_H

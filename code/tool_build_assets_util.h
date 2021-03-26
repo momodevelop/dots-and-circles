@@ -44,7 +44,7 @@ static inline b32
 Tab_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
     read_file_result ReadFileResult = Tab_ReadFileIntoMemory(Arena, Filename);
 	if (!ReadFileResult.Data) {
-        return FALSE;
+        return False;
     }
     stbtt_fontinfo Font;
     stbtt_InitFont(&Font, (u8*)ReadFileResult.Data, 0);
@@ -52,7 +52,7 @@ Tab_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
     Ret->Info = Font;
     Ret->Data = ReadFileResult.Data;
     
-    return TRUE;
+    return True;
 }
 
 #endif //TOOL_BUILD_ASSETS_UTIL_H

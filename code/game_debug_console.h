@@ -1,8 +1,24 @@
 #ifndef __GAME_CONSOLE__
 #define __GAME_CONSOLE__
 
+#define DebugConsole_CharactersPerLine 110
+#define DebugConsole_InfoLineCount 5
+#define DebugConsole_MaxCommands 16
+#define DebugConsole_PosZ 10.f
+#define DebugConsole_InfoBgColor Color_Grey3
+#define DebugConsole_InputBgColor Color_Grey2
+#define DebugConsole_InputTextColor Color_White
+#define DebugConsole_Width Global_DesignSpace.W
+#define DebugConsole_Height 240.f
+#define DebugConsole_StartPosX 0.f
+#define DebugConsole_StartPosY -900.f/2 - DebugConsole_Height/2
+#define DebugConsole_EndPosX 0.f
+#define DebugConsole_EndPosY -900.f/2 + DebugConsole_Height/2
+#define DebugConsole_TransitionDuration 0.25f
+#define DebugConsole_StartPopDuration 0.5f
+#define DebugConsole_PopRepeatDuration 0.1f
 
-typedef void (*debug_console_callback) (struct debug_console* Console, void* Context, u8_cstr Args);
+typedef void (*debug_console_callback)(struct debug_console* Console, void* Context, u8_cstr Args);
 
 struct debug_console_command {
     u8_cstr Key;
@@ -10,8 +26,9 @@ struct debug_console_command {
     void* Context;
 };
 
-struct debug_console_buffer {
-    u8_str Buffer;
+struct debug_console_line {
+    u8 Buffer[DebugConsole_CharactersPerLine];
+    u8_str Text;
     c4f Color;
 };
 
@@ -25,20 +42,10 @@ struct debug_console_command_list {
 struct debug_console {
     b32 IsActive;
     
-    c4f InfoBgColor;
-    c4f InputBgColor;
-    c4f InputTextColor;
-    c4f InfoTextDefaultColor;
-    v3f Position;
-    v2f Dimensions;
+    v2f Position;
     
-    // Buffers
-    debug_console_buffer* InfoBuffers;
-    u32 InfoBufferCount;
-    
-    
-    u8_str InputBuffer;
-    u8_str CommandBuffer;
+    debug_console_line InfoLines[DebugConsole_InfoLineCount];
+    debug_console_line InputLine;
     
     // Backspace (to delete character) related
     // Maybe make an easing system?
@@ -47,14 +54,11 @@ struct debug_console {
     b32 IsStartPop;
     
     // Enter and Exit transitions for swag!
-    v3f TransitStartPos;
-    v3f TransitEndPos;
     timer TransitTimer;
     
     // List of commands
-    debug_console_command* Commands;
+    debug_console_command Commands[DebugConsole_MaxCommands];
     u32 CommandCount;
-    u32 CommandCapacity;
 };
 
 static inline void 
@@ -63,11 +67,13 @@ DebugConsole_AddCmd(debug_console* C,
                     debug_console_callback Callback, 
                     void* Context)
 {
-    debug_console_command Command = { Key, Callback, Context };
+    debug_console_command Command = {};
+    Command.Key = Key;
+    Command.Callback = Callback;
+    Command.Context = Context;
     
-    Assert(C->CommandCount < C->CommandCapacity);
-    C->Commands[C->CommandCount] = Command; 
-    ++C->CommandCount;
+    Assert(C->CommandCount < ArrayCount(C->Commands));
+    C->Commands[C->CommandCount++] = Command; 
 }
 
 
@@ -86,65 +92,41 @@ DebugConsole_RemoveCmd(debug_console* Console, u8_cstr Key) {
 
 static inline void
 DebugConsole_Create(debug_console* Console,
-                    arena* Arena, 
-                    u32 InfoLineCount, 
-                    u32 CharactersPerLine, 
-                    u32 CommandsCapacity,
-                    v3f TransitStartPos,
-                    v3f TransitEndPos,
-                    f32 TransitDuration,
-                    v2f Dimensions,
-                    f32 StartPopRepeatDuration,
-                    f32 PopRepeatDuration)
+                    arena* Arena)
 {
-    Console->InfoBuffers = Arena_PushArray(debug_console_buffer, Arena, InfoLineCount);
-    Console->InfoBufferCount = InfoLineCount;
-    
-    for (usize I = 0; I < Console->InfoBufferCount; ++I) {
-        debug_console_buffer* InfoBuffer = Console->InfoBuffers + I;
-        InfoBuffer->Buffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
+    for (usize I = 0; I < ArrayCount(Console->InfoLines); ++I) {
+        debug_console_line* InfoLine = Console->InfoLines + I;
+        InfoLine->Text = U8Str_CreateFromBuffer(InfoLine->Buffer);
     }
     
-    Console->InputBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
-    Console->CommandBuffer = U8Str_CreateFromArena(Arena, CharactersPerLine);
-    
-    Console->Commands = Arena_PushArray(debug_console_command, Arena, CommandsCapacity);
-    Console->CommandCapacity = CommandsCapacity;
+    Console->InputLine.Text = U8Str_CreateFromBuffer(Console->InputLine.Buffer);
     Console->CommandCount = 0;
     
-    Console->TransitTimer = Timer_Create(TransitDuration);
+    Console->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
-    Console->InfoBgColor = Color_Grey3;
-    Console->InfoTextDefaultColor = Color_White;
-    Console->InputBgColor = Color_Grey2;
-    Console->InputTextColor = Color_White;
-    Console->Dimensions = Dimensions;
-    Console->Position = TransitStartPos;
-    Console->TransitStartPos = TransitStartPos;
-    Console->TransitEndPos = TransitEndPos;
-    Console->StartPopRepeatTimer = Timer_Create(StartPopRepeatDuration);
-    Console->PopRepeatTimer = Timer_Create(PopRepeatDuration); 
+    Console->Position = v2f{DebugConsole_StartPosX, DebugConsole_StartPosY};
+    Console->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
+    Console->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
 }
 
 
 static inline void
 PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
-    for (u32 I = 0; I < Console->InfoBufferCount - 1; ++I) {
-        u32 J = Console->InfoBufferCount - 1 - I;
-        debug_console_buffer* Dest = Console->InfoBuffers + J;
-        debug_console_buffer* Src = Console->InfoBuffers + J - 1;
-        U8Str_Copy(&Dest->Buffer, Src->Buffer.CStr);
+    for (u32 I = 0; I < ArrayCount(Console->InfoLines) - 1; ++I) {
+        u32 J = ArrayCount(Console->InfoLines) - 1 - I;
+        debug_console_line* Dest = Console->InfoLines + J;
+        debug_console_line* Src = Console->InfoLines + J - 1;
+        U8Str_Copy(&Dest->Text, Src->Text.CStr);
         Dest->Color = Src->Color;
     }
-    Console->InfoBuffers[0].Color = Color;
-    U8Str_Clear(&Console->InfoBuffers[0].Buffer);
-    U8Str_Copy(&Console->InfoBuffers[0].Buffer, String);
+    Console->InfoLines[0].Color = Color;
+    U8Str_Clear(&Console->InfoLines[0].Text);
+    U8Str_Copy(&Console->InfoLines[0].Text, String);
 }
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
-    if (Console->InputBuffer.Size != 0)
-        U8Str_Pop(&Console->InputBuffer);
+    U8Str_Pop(&Console->InputLine.Text);
 }
 
 // Returns true if there is a new command
@@ -159,18 +141,22 @@ DebugConsole_Update(debug_console* Console,
     
     // Transition
     {
+        v2f StartPos = v2f{DebugConsole_StartPosX, DebugConsole_StartPosY};
+        v2f EndPos = v2f{DebugConsole_EndPosX, DebugConsole_EndPosY};
+        
         f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
-        v3f Delta = V3f_Sub(Console->TransitEndPos, Console->TransitStartPos); 
-        v3f DeltaP = V3f_Mul(Delta, P);
-        Console->Position = V3f_Add(Console->TransitStartPos, DeltaP); 
+        v2f Delta = V2f_Sub(EndPos, StartPos); 
+        
+        v2f DeltaP = V2f_Mul(Delta, P);
+        Console->Position = V2f_Add(StartPos, DeltaP); 
     }
     
     if (Console->IsActive) {
         Timer_Tick(&Console->TransitTimer, DeltaTime);
         if (Input->Characters.Size > 0 && 
-            Input->Characters.Size <= U8Str_Remaining(&Console->InputBuffer)) 
+            Input->Characters.Size <= U8Str_Remaining(&Console->InputLine.Text)) 
         {  
-            U8Str_PushCStr(&Console->InputBuffer, Input->Characters.CStr);
+            U8Str_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
         }
         
         // Remove character backspace logic
@@ -198,27 +184,31 @@ DebugConsole_Update(debug_console* Console,
         
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
-            PushInfo(Console, Console->InputBuffer.CStr, Color_White);
-            U8Str_Copy(&Console->CommandBuffer, Console->InputBuffer.CStr);
-            U8Str_Clear(&Console->InputBuffer);
+            PushInfo(Console, Console->InputLine.Text.CStr, Color_White);
             
             u32 Min = 0;
             u32 Max = 0;
-            for (u32 I = 0; I < Console->CommandBuffer.Size; ++I) {
-                if (Console->CommandBuffer.Data[I] == ' ') {
+            for (u32 I = 0; I < Console->InputLine.Text.Size; ++I) {
+                if (Console->InputLine.Text.Data[I] == ' ') {
                     Max = I;
                     break;
                 }
             }
-            u8_cstr CommandStr = U8CStr_SubString(Console->CommandBuffer.CStr, Min, Max); 
+            u8_cstr CommandStr = U8CStr_SubString(Console->InputLine.Text.CStr, 
+                                                  Min, 
+                                                  Max); 
             
             // Send a command to a callback
             for (u32 I = 0; I < Console->CommandCount; ++I) {
                 debug_console_command* Command = Console->Commands + I;
                 if (U8CStr_Compare(Command->Key, CommandStr)) {
-                    Command->Callback(Console, Command->Context, Console->CommandBuffer.CStr);
+                    Command->Callback(Console, 
+                                      Command->Context, 
+                                      Console->InputLine.Text.CStr);
                 }
             }
+            U8Str_Clear(&Console->InputLine.Text);
+            
         }
     }
     else if (!Console->IsActive) {
@@ -238,72 +228,73 @@ DebugConsole_Render(debug_console* Console,
         return;
     }
     game_asset_font* Font = Assets->Fonts + Font_Default;
-    
-    f32 Bottom = Console->Position.Y - Console->Dimensions.H * 0.5f;
-    f32 Left = Console->Position.X - Console->Dimensions.W * 0.5f;
-    f32 LineHeight = Console->Dimensions.H / (Console->InfoBufferCount + 1);
+    v2f Dimensions = v2f{ DebugConsole_Width, DebugConsole_Height };
+    f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
+    f32 Left = Console->Position.X - Dimensions.W * 0.5f;
+    f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Assets_FontHeight(Font) * FontSize;
-    f32 PaddingHeight = (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
-    f32 PaddingWidth = Console->Dimensions.W * 0.005f;
+    
+    f32 PaddingHeight =
+        (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
+    f32 PaddingWidth = Dimensions.W * 0.005f;
     {
-        m44f ScaleMatrix = M44f_Scale(Console->Dimensions.X, 
-                                      Console->Dimensions.Y, 
+        m44f ScaleMatrix = M44f_Scale(Dimensions.X, 
+                                      Dimensions.Y, 
                                       1.f);
         
         m44f PositionMatrix = M44f_Translation(Console->Position.X,
                                                Console->Position.Y,
-                                               Console->Position.Z);
+                                               DebugConsole_PosZ);
         m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
         PushDrawQuad(RenderCommands, 
-                     Console->InfoBgColor, 
+                     DebugConsole_InfoBgColor, 
                      InfoBgTransform);
     }
     
+    // Draw input text
     {
-        m44f ScaleMatrix = M44f_Scale(Console->Dimensions.W, LineHeight, 0.f);
+        m44f ScaleMatrix = M44f_Scale(Dimensions.W, LineHeight, 0.f);
         m44f PositionMatrix = M44f_Translation(Console->Position.X, 
                                                Bottom + LineHeight * 0.5f,
-                                               Console->Position.Z + 0.01f);
+                                               DebugConsole_PosZ+ 0.01f);
         
         m44f InputBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
         PushDrawQuad(RenderCommands, 
-                     Console->InputBgColor, 
+                     DebugConsole_InputBgColor, 
                      InputBgTransform);
     }
     
-    // Draw text
+    // Draw info text
     {
-        for (u32 I = 0; I < Console->InfoBufferCount ; ++I) {
+        for (u32 I = 0; I < ArrayCount(Console->InfoLines) ; ++I) {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
-            Position.Z = Console->Position.Z + 0.02f;
+            Position.Z = DebugConsole_PosZ + 0.01f;
             
             DrawText(RenderCommands,
                      Assets,
                      Font_Default, 
                      Position,
-                     Console->InfoBuffers[I].Buffer.CStr,
+                     Console->InfoLines[I].Text.CStr,
                      FontSize,
-                     Console->InfoBuffers[I].Color);
+                     Console->InfoLines[I].Color);
         }
         
-        {
-            v3f Position = {};
-            Position.X = Left + PaddingWidth;
-            Position.Y = Bottom + PaddingHeight;
-            Position.Z = Console->Position.Z + 0.02f;
-            
-            DrawText(RenderCommands, 
-                     Assets, 
-                     Font_Default, 
-                     Position,
-                     Console->InputBuffer.CStr,
-                     FontSize,
-                     Console->InputTextColor);
-            
-        }
+        v3f Position = {};
+        Position.X = Left + PaddingWidth;
+        Position.Y = Bottom + PaddingHeight;
+        Position.Z = DebugConsole_PosZ + 0.02f;
+        
+        DrawText(RenderCommands, 
+                 Assets, 
+                 Font_Default, 
+                 Position,
+                 Console->InputLine.Text.CStr,
+                 FontSize,
+                 DebugConsole_InputTextColor);
+        
         
     }
 }

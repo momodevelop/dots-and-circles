@@ -1,131 +1,79 @@
-#ifndef __GAME_DEBUG_INSPECTOR_H__
-#define __GAME_DEBUG_INSPECTOR_H__
+/* date = March 24th 2021 10:04 pm */
 
-enum debug_inspector_var_type {
-    DebugVariableType_B8,
-    DebugVariableType_B32,
-    DebugVariableType_I32,
-    DebugVariableType_U32,
-    DebugVariableType_F32,
-    // TODO: Vector types
+#ifndef GAME_DEBUG_INSPECTOR_H
+#define GAME_DEBUG_INSPECTOR_H
+
+struct debug_inspector_entry {
+    u8 Buffer[256];
+    u8_str Text;
 };
-
-struct debug_inspector_var {
-    debug_inspector_var_type Type;
-    u8 LabelBuffer[256];
-    u8_str Label;
-    union {
-        void* Data;
-        b8* B8;
-        b32* B32;
-        i32* I32;
-        u32* U32;
-        f32* F32;
-    };
-}; 
 
 
 struct debug_inspector {
     b32 IsActive;
-    debug_inspector_var Vars[32];
-    u32 VarCount;
+    debug_inspector_entry Entries[32];
+    u32 EntryCount;
 };
-
 
 static inline void
 DebugInspector_Init(debug_inspector* Inspector) {
-    Inspector->VarCount = 0;
+    Inspector->EntryCount = 0;
     Inspector->IsActive = False;
     
-    for (u32 I = 0; I < ArrayCount(Inspector->Vars); ++I) {
-        debug_inspector_var* Var = Inspector->Vars + I;
-        Var->Label = U8Str_Create(Var->LabelBuffer, ArrayCount(Var->LabelBuffer));
+    for (u32 I = 0; I < ArrayCount(Inspector->Entries); ++I) {
+        debug_inspector_entry* Entry = Inspector->Entries + I;
+        Entry->Text = U8Str_CreateFromBuffer(Entry->Buffer);
+        
     }
 }
 
 static inline void
-DebugInspector_HookVariable(debug_inspector* Inspector, 
-                            u8_cstr Label, 
-                            void* Address, 
-                            debug_inspector_var_type Type) 
-{
-    Assert(Inspector->VarCount < ArrayCount(Inspector->Vars));
-    
-    debug_inspector_var* Var = Inspector->Vars + Inspector->VarCount++;
-    Var->Data = Address;
-    Var->Type = Type;
-    U8Str_Copy(&Var->Label, Label);
+DebugInspector_Begin(debug_inspector* Inspector) {
+    Inspector->EntryCount = 0;
 }
 
-static inline void
-DebugInspector_HookU32Variable(debug_inspector* Inspector,
-                               u8_cstr Label,
-                               void* Address) 
-{
-    DebugInspector_HookVariable(Inspector, Label, Address, DebugVariableType_U32);
-}
-
-static inline void
-DebugInspector_UnhookVariable(debug_inspector* State, u8_cstr Label) {
-    for (u32 I = 0; I < State->VarCount; ++I) {
-        if (U8CStr_Compare(State->Vars[I].Label.CStr, Label)) {
-            State->Vars[I] = State->Vars[State->VarCount-1];
-            --State->VarCount;
-            return;
-        }
-    }
-}
-
-
-
-static inline void
-DebugInspector_Render(debug_inspector* Inspector,
-                      arena* Arena,
-                      game_assets* Assets,
-                      mailbox* RenderCommands) 
-
-{
+static inline void 
+DebugInspector_End(debug_inspector* Inspector, 
+                   mailbox* RenderCommands,
+                   game_assets* Assets) {
+    // TODO(Momo): Complete this
     // For each variable, render:
     // Name: Data
     f32 OffsetY = 0.f;
-    for (u32 I = 0; I < Inspector->VarCount; ++I) {
-        arena_mark Scratch = Arena_Mark(Arena);
-        Defer{ Arena_Revert(&Scratch); };
-        
-        u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
-        U8Str_PushCStr(&Buffer, Inspector->Vars[I].Label.CStr);
-        U8Str_PushCStr(&Buffer, U8CStr_FromSiStr(": "));
-        
-        Assert(Inspector->Vars[I].Data);
-        switch(Inspector->Vars[I].Type) {
-            case DebugVariableType_B32: {
-            } break;
-            case DebugVariableType_I32: {
-                U8Str_PushS32(&Buffer, *Inspector->Vars[I].I32);
-            } break;
-            case DebugVariableType_F32: {
-                Assert(false); 
-            } break;
-            case DebugVariableType_U32: {
-                U8Str_PushU32(&Buffer, *Inspector->Vars[I].U32);
-            } break;
-            default: {
-                // Unsupported type
-                Assert(false);
-            }
-        }
-        
+    for (u32 I = 0; I < Inspector->EntryCount; ++I) {
+        debug_inspector_entry* Entry = Inspector->Entries + I;
         DrawText(RenderCommands, 
                  Assets, 
                  Font_Default, 
-                 v3f{ -800.f + 10.f, 450.f - 32.f + OffsetY, 0.f }, 
-                 Buffer.CStr,
+                 v3f{ -800.f + 10.f, 450.f - 32.f + OffsetY, 11.f }, 
+                 Entry->Text.CStr,
                  32.f, 
                  Color_White);
-        U8Str_Clear(&Buffer);
+        U8Str_Clear(&Entry->Text);
         OffsetY -= 32.f;
     }
 }
 
+static inline debug_inspector_entry*
+DebugInspector_PushEntry(debug_inspector* Inspector, u8_cstr Label) {
+    Assert(Inspector->EntryCount < ArrayCount(Inspector->Entries));
+    debug_inspector_entry* Entry = Inspector->Entries + Inspector->EntryCount++;
+    U8Str_Copy(&Entry->Text, Label);
+    return Entry;
+}
 
-#endif 
+static inline void
+DebugInspector_PushU32(debug_inspector* Inspector, u8_cstr Label, u32 Item)
+{
+    debug_inspector_entry* Entry = DebugInspector_PushEntry(Inspector, Label);
+    U8Str_PushU32(&Entry->Text, Item);
+}
+
+static inline void
+DebugInspector_PushS32(debug_inspector* Inspector, u8_cstr Label, i32 Item)
+{
+    debug_inspector_entry* Entry = DebugInspector_PushEntry(Inspector, Label);
+    U8Str_PushS32(&Entry->Text, Item);
+}
+
+#endif //GAME_DEBUG_INSPECTOR_H

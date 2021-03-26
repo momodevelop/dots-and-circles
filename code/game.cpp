@@ -106,25 +106,9 @@ GameUpdateFunc(GameUpdate)
         
         // Init console
         {
-            v2f Dimensions = { Global_DesignSpace.W, 240.f };
-            v3f Position = { 
-                -Global_DesignSpace.W * 0.5f + Dimensions.W * 0.5f, 
-                -Global_DesignSpace.H * 0.5f + Dimensions.H * 0.5f, 
-                Global_DesignSpace.D * 0.5f - 1.f
-            };
             
             DebugConsole_Create(&DebugState->Console,
-                                &DebugState->Arena, 
-                                5, 
-                                110, 
-                                16,
-                                V3f_Sub(Position, v3f{0.f, 240.f, 0.f}),
-                                Position,
-                                0.1f,
-                                Dimensions,
-                                0.5f,
-                                0.025f);
-            
+                                &DebugState->Arena);
             DebugConsole_AddCmd(&DebugState->Console, 
                                 U8CStr_FromSiStr("jump"), 
                                 CmdJump, 
@@ -135,6 +119,17 @@ GameUpdateFunc(GameUpdate)
         DebugState->TransientState = TranState;
         DebugState->IsInitialized = True;
     }
+    
+    DebugInspector_Begin(&DebugState->Inspector);
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Debug Memory:"),
+                           Arena_Remaining(DebugState->Arena));
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Mode Memory:"),
+                           Arena_Remaining(PermState->ModeArena));
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("TranState Memory :"),
+                           Arena_Remaining(TranState->Arena));
     
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
@@ -175,20 +170,6 @@ GameUpdateFunc(GameUpdate)
     
     // Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
-        switch(PermState->CurrentGameMode) {
-            case GameModeType_Splash: {
-            } break;
-            case GameModeType_Main: {
-                UninitMainMode(DebugState);
-            } break;
-            case GameModeType_Sandbox: {
-            } break;
-            default: {
-            }
-        }
-        
-        
-        
         Arena_Clear(&PermState->ModeArena);
         arena* ModeArena = &PermState->ModeArena;
         
@@ -228,6 +209,7 @@ GameUpdateFunc(GameUpdate)
         case GameModeType_Main: {
             UpdateMainMode(PermState, 
                            TranState,
+                           DebugState,
                            RenderCommands, 
                            Input, 
                            DeltaTime);
@@ -245,9 +227,10 @@ GameUpdateFunc(GameUpdate)
     }
     
     // Render Console
-    DebugInspector_Render(&DebugState->Inspector, &DebugState->Arena, TranState->Assets,  RenderCommands);
     DebugConsole_Render(&DebugState->Console, RenderCommands, TranState->Assets);
-    //Platform->LogFp("Hello");
+    
+    
+    DebugInspector_End(&DebugState->Inspector, RenderCommands, TranState->Assets);
     
     return PermState->IsRunning;
 }
