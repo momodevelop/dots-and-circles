@@ -4,11 +4,11 @@
 #define DebugConsole_CharactersPerLine 110
 #define DebugConsole_InfoLineCount 5
 #define DebugConsole_MaxCommands 16
-#define DebugConsole_PosZ 10.f
+#define DebugConsole_PosZ 90.f
 #define DebugConsole_InfoBgColor Color_Grey3
 #define DebugConsole_InputBgColor Color_Grey2
 #define DebugConsole_InputTextColor Color_White
-#define DebugConsole_Width Global_DesignSpace.W
+#define DebugConsole_Width Game_DesignWidth 
 #define DebugConsole_Height 240.f
 #define DebugConsole_StartPosX 0.f
 #define DebugConsole_StartPosY -900.f/2 - DebugConsole_Height/2

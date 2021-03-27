@@ -537,7 +537,7 @@ Aabb2u_CreateWH(u32 W, u32 H) {
 
 
 static inline aabb3f
-Aabb3f_Centered(v3f Dimensions, v3f Anchor) {
+Aabb3f_CreateCentered(v3f Dimensions, v3f Anchor) {
     aabb3f Ret = {};
     Ret.Min.X = Lerp(0.f, -Dimensions.W, Anchor.X);
     Ret.Max.X = Lerp(Dimensions.W, 0.f, Anchor.X);

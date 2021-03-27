@@ -288,10 +288,10 @@ UpdateBullets(game_mode_main* Mode,
         DotBullet->Position = V2f_Add(DotBullet->Position, Velocity);
         
         // Out of bounds self-destruction
-        if (DotBullet->Position.X <= -Global_DesignSpace.W * 0.5f - DotBullet->HitCircle.Radius || 
-            DotBullet->Position.X >= Global_DesignSpace.W * 0.5f + DotBullet->HitCircle.Radius ||
-            DotBullet->Position.Y <= -Global_DesignSpace.H * 0.5f - DotBullet->HitCircle.Radius ||
-            DotBullet->Position.Y >= Global_DesignSpace.H * 0.5f + DotBullet->HitCircle.Radius) {
+        if (DotBullet->Position.X <= -Game_DesignWidth * 0.5f - DotBullet->HitCircle.Radius || 
+            DotBullet->Position.X >= Game_DesignWidth * 0.5f + DotBullet->HitCircle.Radius ||
+            DotBullet->Position.Y <= -Game_DesignHeight * 0.5f - DotBullet->HitCircle.Radius ||
+            DotBullet->Position.Y >= Game_DesignHeight * 0.5f + DotBullet->HitCircle.Radius) {
             RemoveDotBullet(Mode, I);
             continue;
         }
@@ -306,10 +306,10 @@ UpdateBullets(game_mode_main* Mode,
         CircleBullet->Position = V2f_Add(CircleBullet->Position, Velocity);
         
         // Out of bounds self-destruction
-        if (CircleBullet->Position.X <= -Global_DesignSpace.W * 0.5f - CircleBullet->HitCircle.Radius || 
-            CircleBullet->Position.X >= Global_DesignSpace.W * 0.5f + CircleBullet->HitCircle.Radius ||
-            CircleBullet->Position.Y <= -Global_DesignSpace.H * 0.5f - CircleBullet->HitCircle.Radius ||
-            CircleBullet->Position.Y >= Global_DesignSpace.H * 0.5f + CircleBullet->HitCircle.Radius) {
+        if (CircleBullet->Position.X <= -Game_DesignWidth * 0.5f - CircleBullet->HitCircle.Radius || 
+            CircleBullet->Position.X >= Game_DesignWidth * 0.5f + CircleBullet->HitCircle.Radius ||
+            CircleBullet->Position.Y <= -Game_DesignHeight * 0.5f - CircleBullet->HitCircle.Radius ||
+            CircleBullet->Position.Y >= Game_DesignHeight * 0.5f + CircleBullet->HitCircle.Radius) {
             RemoveCircleBullet(Mode, I);
             continue;
         }
@@ -448,8 +448,8 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->Timer += DeltaTime;
                 if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
                     v2f Pos = {
-                        Bilateral(&Mode->Rng) * Global_DesignSpace.W * 0.5f,
-                        Bilateral(&Mode->Rng) * Global_DesignSpace.H * 0.5f
+                        Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
+                        Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f
                     };
                     auto MoodType = 
                         (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);

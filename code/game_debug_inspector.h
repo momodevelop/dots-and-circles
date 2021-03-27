@@ -3,6 +3,10 @@
 #ifndef GAME_DEBUG_INSPECTOR_H
 #define GAME_DEBUG_INSPECTOR_H
 
+#define DebugInspector_PosX -Game_DesignWidth * 0.5f + 10.f
+#define DebugInspector_PosY Game_DesignHeight * 0.5f - 32.f
+#define DebugInspector_PosZ 91.f
+
 struct debug_inspector_entry {
     u8 Buffer[256];
     u8_str Text;
@@ -42,10 +46,15 @@ DebugInspector_End(debug_inspector* Inspector,
     f32 OffsetY = 0.f;
     for (u32 I = 0; I < Inspector->EntryCount; ++I) {
         debug_inspector_entry* Entry = Inspector->Entries + I;
+        v3f Position = v3f{  
+            DebugInspector_PosX, 
+            DebugInspector_PosY + OffsetY,
+            DebugInspector_PosZ
+        }; 
         DrawText(RenderCommands, 
                  Assets, 
                  Font_Default, 
-                 v3f{ -800.f + 10.f, 450.f - 32.f + OffsetY, 11.f }, 
+                 Position, 
                  Entry->Text.CStr,
                  32.f, 
                  Color_White);

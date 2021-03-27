@@ -1403,8 +1403,8 @@ WinMain(HINSTANCE Instance,
     
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     HWND Window = Win32CreateWindow(Instance, 
-                                    (u32)Global_DesignSpace.W,
-                                    (u32)Global_DesignSpace.H,
+                                    Game_DesignWidth,
+                                    Game_DesignHeight,
                                     "Dots and Circles");
     if (!Window) { return 1; }
     
@@ -1459,9 +1459,9 @@ WinMain(HINSTANCE Instance,
     // Initialize game memory
     win32_game_memory GameMemory = {};
     if (!Win32InitGameMemory(&GameMemory,
-                             Megabytes(256),
-                             Megabytes(256),
-                             Megabytes(256))) 
+                             Megabytes(1),
+                             Megabytes(16o),
+                             Megabytes(1))) 
     {
         return 1;
     }

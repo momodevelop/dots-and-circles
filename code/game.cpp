@@ -77,8 +77,8 @@ GameUpdateFunc(GameUpdate)
         PermState->IsPaused = False;
         
         PushSetDesignResolution(RenderCommands, 
-                                (u32)Global_DesignSpace.W, 
-                                (u32)Global_DesignSpace.H);
+                                Game_DesignWidth, 
+                                Game_DesignHeight);
     }
     
     if (!TranState->IsInitialized) {
@@ -121,16 +121,6 @@ GameUpdateFunc(GameUpdate)
     }
     
     DebugInspector_Begin(&DebugState->Inspector);
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Debug Memory:"),
-                           Arena_Remaining(DebugState->Arena));
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Mode Memory:"),
-                           Arena_Remaining(PermState->ModeArena));
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("TranState Memory :"),
-                           Arena_Remaining(TranState->Arena));
-    
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
@@ -196,6 +186,18 @@ GameUpdateFunc(GameUpdate)
         PermState->CurrentGameMode = PermState->NextGameMode;
         PermState->NextGameMode = GameModeType_None;
     }
+    
+    
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Debug Memory: "),
+                           Arena_Remaining(DebugState->Arena));
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("Mode Memory: "),
+                           Arena_Remaining(PermState->ModeArena));
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           U8CStr_FromSiStr("TranState Memory: "),
+                           Arena_Remaining(TranState->Arena));
+    
     
     // State update
     switch(PermState->CurrentGameMode) {
