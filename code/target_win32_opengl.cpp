@@ -58,30 +58,11 @@ static WglFunctionPtr(wglSwapIntervalEXT);
 //static WglFunctionPtr(wglGetExtensionsStringEXT);
 
 
-struct win32_wasapi {
-    IMMDeviceEnumerator* Enumerator;
-    IMMDevice* Device;
-    IAudioClient* AudioClient;
-    IAudioRenderClient* AudioRenderClient;
-};
-
 // File handle pool
 struct win32_handle_pool {
     HANDLE Slots[8];
     i32 FreeList;
 };
-
-struct win32_game_code {
-    HMODULE Dll;
-    game_update* GameUpdate;
-    FILETIME LastWriteTime;
-    b32 IsValid;
-    
-    char SrcFileName[MAX_PATH];
-    char TempFileName[MAX_PATH];
-    char LockFileName[MAX_PATH];        
-};
-
 
 struct win32_state {
     arena Arena;
@@ -112,20 +93,33 @@ struct win32_state {
 #endif
 };
 
-struct win32_game_memory {
-    game_memory Head;
-    
-    void* Data;
-    u32 DataSize;
-};
-
 
 //~ Globals
 win32_state* G_State = {};
 opengl* G_Opengl = {};
-win32_game_memory* G_GameMemory = {};
+struct win32_game_memory* G_GameMemory = {};
 
-//~ Let's go!
+//~ NOTE(Momo): Helper functions and globals
+
+
+static inline u32
+Win32DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
+    // Do we want to cap this?
+    HDC DeviceContext = GetDC(Window);
+    Defer { ReleaseDC(Window, DeviceContext); };
+    
+    u32 RefreshRate = DefaultRefreshRate;
+    {
+        i32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
+        // It is possible for the refresh rate to be 0 or less
+        // because of something called 'adaptive vsync'
+        if (DisplayRefreshRate > 1) {
+            RefreshRate = DisplayRefreshRate;
+        }
+    }
+    return RefreshRate;
+    
+}
 
 static inline LARGE_INTEGER
 Win32FiletimeToLargeInt(FILETIME Filetime) {
@@ -146,6 +140,17 @@ RECT_Height(RECT Value) {
     return Value.bottom - Value.top;
 }
 
+
+static inline FILETIME 
+Win32GetLastWriteTime(const char* Filename) {
+    WIN32_FILE_ATTRIBUTE_DATA Data;
+    FILETIME LastWriteTime = {};
+    
+    if(GetFileAttributesEx(Filename, GetFileExInfoStandard, &Data)) {
+        LastWriteTime = Data.ftLastWriteTime;
+    }
+    return LastWriteTime; 
+}
 
 #if INTERNAL
 static inline void
@@ -187,7 +192,7 @@ Win32AllocateMemoryAtAddress(usize MemorySize, LPVOID Address ) {
 #endif
 
 static inline void*
-Win32AllocateMemory(usize MemorySize ) {
+Win32AllocateMemory(usize MemorySize) {
     return VirtualAllocEx(GetCurrentProcess(),
                           0, 
                           MemorySize,
@@ -213,6 +218,7 @@ Win32GetCurrentCounter(void) {
     return Result;
 }
 
+//~ NOTE(Momo): Win32 State related
 static inline f32
 Win32GetSecondsElapsed(win32_state* State,
                        LARGE_INTEGER Start, 
@@ -242,16 +248,79 @@ Win32BuildExePathFilename(win32_state* State,
     (*Dest) = 0;
 }
 
-static inline FILETIME 
-Win32GetLastWriteTime(const char* Filename) {
-    WIN32_FILE_ATTRIBUTE_DATA Data;
-    FILETIME LastWriteTime = {};
-    
-    if(GetFileAttributesEx(Filename, GetFileExInfoStandard, &Data)) {
-        LastWriteTime = Data.ftLastWriteTime;
+static inline win32_state*
+Win32Init() {
+    // This is kinda what we wanna do if we ever want Renderer 
+    // to be its own DLL...
+    // NOTE(Momo): Arena 
+    u32 PlatformMemorySize = Kilobytes(256);
+    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
+    if(!PlatformMemory) {
+        Win32Log("[Win32::State] Failed to allocate memory\n"); 
+        return 0;
     }
-    return LastWriteTime; 
+    win32_state* State = Arena_BootupStruct(win32_state,
+                                            Arena,
+                                            PlatformMemory, 
+                                            PlatformMemorySize);
+    if (!State) {
+        Win32Log("[Win32::State] Failed to allocate state\n"); 
+        return 0;
+    }
+    
+    // NOTE(Momo): Initialize paths
+    GetModuleFileNameA(0, State->ExeFullPath, 
+                       sizeof(State->ExeFullPath));
+    State->OnePastExeDirectory = State->ExeFullPath;
+    for( char* Itr = State->ExeFullPath; *Itr; ++Itr) {
+        if (*Itr == '\\') {
+            State->OnePastExeDirectory = Itr + 1;
+        }
+    }
+    
+    // NOTE(Momo): Performance Frequency 
+    LARGE_INTEGER PerfCountFreq;
+    QueryPerformanceFrequency(&PerfCountFreq);
+    State->PerformanceFrequency = I64_ToU32(PerfCountFreq.QuadPart);
+    
+    // NOTE(Momo): Initialize file handle store
+    //GlobalFileHandles = CreatePool<HANDLE>(&G_State->Arena, 8);
+    for (u32 I = 0; I < ArrayCount(State->Handles); ++I) {
+        State->HandleFreeList[I] = I;
+    }
+    State->HandleFreeCount = ArrayCount(State->Handles);
+    
+#if INTERNAL
+    // NOTE(Momo): Initialize console
+    AllocConsole();    
+    State->StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+#endif
+    
+    State->IsRunning = true;
+    return State;
 }
+
+
+static inline void
+Win32Free(win32_state* State) {
+    FreeConsole();
+    Win32FreeMemory(State); 
+}
+
+
+//~ NOTE(Momo): game code related
+struct win32_game_code {
+    HMODULE Dll;
+    game_update* GameUpdate;
+    FILETIME LastWriteTime;
+    b32 IsValid;
+    
+    char SrcFileName[MAX_PATH];
+    char TempFileName[MAX_PATH];
+    char LockFileName[MAX_PATH];        
+};
+
 
 static inline win32_game_code 
 Win32InitGameCode(win32_state* State,
@@ -310,6 +379,7 @@ Win32IsGameCodeOutdated(win32_game_code* Code) {
 }
 
 
+//~ NOTE(Momo) Opengl-related
 
 static inline void
 Win32OpenglSetPixelFormat(HDC DeviceContext) {
@@ -419,25 +489,6 @@ return false; \
         Win32Log("[Win32::Opengl] Cannot register class to load wgl extensions\n");
         return false;
     }
-}
-
-static inline u32
-Win32DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
-    // Do we want to cap this?
-    HDC DeviceContext = GetDC(Window);
-    Defer { ReleaseDC(Window, DeviceContext); };
-    
-    u32 RefreshRate = DefaultRefreshRate;
-    {
-        i32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
-        // It is possible for the refresh rate to be 0 or less
-        // because of something called 'adaptive vsync'
-        if (DisplayRefreshRate > 1) {
-            RefreshRate = DisplayRefreshRate;
-        }
-    }
-    return RefreshRate;
-    
 }
 
 static inline void* 
@@ -686,118 +737,13 @@ return 0; \
     return Opengl;
 }
 
-static inline win32_state*
-Win32Init() {
+//~ NOTE(Momo): Game Memory related
+struct win32_game_memory {
+    game_memory Head;
     
-    // This is kinda what we wanna do if we ever want Renderer 
-    // to be its own DLL...
-    
-    
-    // NOTE(Momo): Arena 
-    u32 PlatformMemorySize = Kilobytes(256);
-    void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
-    if(!PlatformMemory) {
-        Win32Log("[Win32::State] Failed to allocate memory\n"); 
-        return 0;
-    }
-    win32_state* State = Arena_BootupStruct(win32_state,
-                                            Arena,
-                                            PlatformMemory, 
-                                            PlatformMemorySize);
-    if (!State) {
-        Win32Log("[Win32::State] Failed to allocate state\n"); 
-        return 0;
-    }
-    
-    // NOTE(Momo): Initialize paths
-    GetModuleFileNameA(0, State->ExeFullPath, 
-                       sizeof(State->ExeFullPath));
-    State->OnePastExeDirectory = State->ExeFullPath;
-    for( char* Itr = State->ExeFullPath; *Itr; ++Itr) {
-        if (*Itr == '\\') {
-            State->OnePastExeDirectory = Itr + 1;
-        }
-    }
-    
-    // NOTE(Momo): Performance Frequency 
-    LARGE_INTEGER PerfCountFreq;
-    QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = I64_ToU32(PerfCountFreq.QuadPart);
-    
-    // NOTE(Momo): Initialize file handle store
-    //GlobalFileHandles = CreatePool<HANDLE>(&G_State->Arena, 8);
-    for (u32 I = 0; I < ArrayCount(State->Handles); ++I) {
-        State->HandleFreeList[I] = I;
-    }
-    State->HandleFreeCount = ArrayCount(State->Handles);
-    
-#if INTERNAL
-    // NOTE(Momo): Initialize console
-    AllocConsole();    
-    State->StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-#endif
-    
-    State->IsRunning = true;
-    return State;
-}
-
-
-static inline void
-Win32Free(win32_state* State) {
-    FreeConsole();
-    Win32FreeMemory(State); 
-}
-
-
-struct win32_audio_output {
-    usize BufferSize;
-    i16* Buffer;
-    
-    u32 LatencySampleCount;
-    u32 SamplesPerSecond;
-    u16 BitsPerSample;
-    u16 Channels;
+    void* Data;
+    u32 DataSize;
 };
-
-static inline void
-Win32FreeAudioOutput(win32_audio_output* AudioOutput) {
-    Win32FreeMemory(AudioOutput->Buffer);
-}
-
-static inline b32
-Win32InitAudioOutput(win32_audio_output* Ret, 
-                     u32 SamplesPerSecond,
-                     u16 Channels,
-                     u16 BitsPerSample,
-                     u32 LatencyFrames,
-                     u32 RefreshRate)
-{
-    Ret->Channels = Channels;
-    Ret->BitsPerSample = BitsPerSample;
-    Ret->SamplesPerSecond = SamplesPerSecond;
-    Ret->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
-    Ret->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
-    Ret->Buffer = (i16*)Win32AllocateMemory(Ret->BufferSize); 
-    if (!Ret->Buffer) {
-        Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
-        return FALSE;
-    }
-    
-    return TRUE;
-    
-}
-
-static inline void
-Win32FreeWasapi(win32_wasapi* Wasapi) {
-#define SAFE_RELEASE(Item) if(Item) (Item)->Release();
-    SAFE_RELEASE(Wasapi->Enumerator);
-    SAFE_RELEASE(Wasapi->AudioClient);
-    SAFE_RELEASE(Wasapi->Device);
-    SAFE_RELEASE(Wasapi->AudioRenderClient);
-#undef SAFE_RELEASE
-}
-
 
 static inline void
 Win32GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
@@ -864,6 +810,63 @@ Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
     return;
     
     
+}
+
+
+//~ NOTE(Momo): Audio related
+struct win32_audio_output {
+    usize BufferSize;
+    i16* Buffer;
+    
+    u32 LatencySampleCount;
+    u32 SamplesPerSecond;
+    u16 BitsPerSample;
+    u16 Channels;
+};
+
+struct win32_wasapi {
+    IMMDeviceEnumerator* Enumerator;
+    IMMDevice* Device;
+    IAudioClient* AudioClient;
+    IAudioRenderClient* AudioRenderClient;
+};
+
+static inline void
+Win32FreeAudioOutput(win32_audio_output* AudioOutput) {
+    Win32FreeMemory(AudioOutput->Buffer);
+}
+
+static inline b32
+Win32InitAudioOutput(win32_audio_output* Ret, 
+                     u32 SamplesPerSecond,
+                     u16 Channels,
+                     u16 BitsPerSample,
+                     u32 LatencyFrames,
+                     u32 RefreshRate)
+{
+    Ret->Channels = Channels;
+    Ret->BitsPerSample = BitsPerSample;
+    Ret->SamplesPerSecond = SamplesPerSecond;
+    Ret->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
+    Ret->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
+    Ret->Buffer = (i16*)Win32AllocateMemory(Ret->BufferSize); 
+    if (!Ret->Buffer) {
+        Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
+        return FALSE;
+    }
+    
+    return TRUE;
+    
+}
+
+static inline void
+Win32FreeWasapi(win32_wasapi* Wasapi) {
+#define SAFE_RELEASE(Item) if(Item) (Item)->Release();
+    SAFE_RELEASE(Wasapi->Enumerator);
+    SAFE_RELEASE(Wasapi->AudioClient);
+    SAFE_RELEASE(Wasapi->Device);
+    SAFE_RELEASE(Wasapi->AudioRenderClient);
+#undef SAFE_RELEASE
 }
 
 
@@ -1030,18 +1033,29 @@ Win32ProcessMessages(HWND Window,
                         Input->ButtonInspector.Now = IsDown;
                     } break;
                     case VK_F3:{
-                        if (Msg.message == WM_KEYDOWN)
+                        if (Msg.message == WM_KEYDOWN) {
                             Win32GameMemory_Save(G_GameMemory, "game_state");
+                        }
                     } break;
                     case VK_F4:{
-                        if (Msg.message == WM_KEYDOWN)
+                        if (Msg.message == WM_KEYDOWN) {
                             Win32GameMemory_Load(G_GameMemory, "game_state");
+                        }
                     } break;
                     case VK_F5:{
-                        if(Msg.message == WM_KEYDOWN)
+                        if(Msg.message == WM_KEYDOWN) {
                             G_State->IsPaused = !G_State->IsPaused;
+                        }
                     } break;
                     case VK_F6:{
+                        if (Msg.message == WM_KEYDOWN) {
+                            Win32BeginRecordingInput(G_State);
+                            
+                            
+                            
+                            
+                        }
+                        
                     } break;
                     case VK_F7:{
                     } break;
