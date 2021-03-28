@@ -100,7 +100,7 @@ AabbPacker_Pack(arena* Arena,
     u32 CurrentNodeCount = 0;
     
     auto* Nodes = Arena_PushArray(aabb2u, Arena, AabbCount+1);
-    Nodes[CurrentNodeCount++] = { 0, 0, TotalWidth, TotalHeight };
+    Nodes[CurrentNodeCount++] = Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
     
     for (u32 i = 0; i < AabbCount; ++i) {
         aabb2u* Aabb = Aabbs + SortEntries[i].Index;

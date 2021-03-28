@@ -6,7 +6,6 @@
 
 
 // NOTE(Momo): Global Settings
-static const v3f Global_DesignSpaceAnchor = { 0.5f, 0.5f, 0.5f };
 
 #define Game_DesignWidth 1600
 #define Game_DesignHeight 900

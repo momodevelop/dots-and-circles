@@ -55,7 +55,7 @@ WglFunction(wglGetExtensionsStringEXT)();
 static WglFunctionPtr(wglCreateContextAttribsARB);
 static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
-static WglFunctionPtr(wglGetExtensionsStringEXT);
+//static WglFunctionPtr(wglGetExtensionsStringEXT);
 
 
 // File handle pool
@@ -348,7 +348,6 @@ Win32OpenglSetPixelFormat(HDC DeviceContext) {
 static inline b32
 Win32OpenglLoadWglExtensions() {
     WNDCLASSA WindowClass = {};
-    game_input GameInput = {};
     // Er yeah...we have to create a 'fake' Opengl context 
     // to load the extensions lol.
     WindowClass.lpfnWndProc = DefWindowProcA;
@@ -896,10 +895,8 @@ static inline v2u
 Win32GetWindowDimensions(HWND Window) {
     RECT Rect = {};
     GetWindowRect(Window, &Rect);
-    return v2u{ 
-        u16(Rect.right - Rect.left),
-        u16(Rect.bottom - Rect.top)
-    };
+    return V2u_Create(u16(Rect.right - Rect.left),
+                      u16(Rect.bottom - Rect.top));
     
 }
 
@@ -907,10 +904,8 @@ static inline v2u
 Win32GetClientDimensions(HWND Window) {
     RECT Rect = {};
     GetClientRect(Window, &Rect);
-    return v2u{ 
-        u32(Rect.right - Rect.left),
-        u32(Rect.bottom - Rect.top)
-    };
+    return V2u_Create(u32(Rect.right - Rect.left),
+                      u32(Rect.bottom - Rect.top));
     
 }
 
@@ -1137,7 +1132,6 @@ PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     return Ret; 
 }
 
-
 static inline 
 PlatformLogFileErrorFunc(Win32LogFileError) {
     switch(Handle->Error) {
@@ -1325,7 +1319,7 @@ Win32FreeGameMemory(win32_game_memory* GameMemory) {
     Win32FreeMemory(GameMemory->Data);
 }
 
-static inline b8
+static inline b32
 Win32InitGameMemory(win32_game_memory* GameMemory,
                     u32 PermanentMemorySize,
                     u32 TransientMemorySize,
@@ -1460,7 +1454,7 @@ WinMain(HINSTANCE Instance,
     win32_game_memory GameMemory = {};
     if (!Win32InitGameMemory(&GameMemory,
                              Megabytes(1),
-                             Megabytes(16o),
+                             Megabytes(16),
                              Megabytes(1))) 
     {
         return 1;

@@ -178,7 +178,7 @@ constexpr static inline u8 QuadIndices[] = {
     0, 2, 3,
 };
 
-constexpr static inline quad2f QuadUV[] = {
+constexpr static inline f32 QuadUV[] = {
     0.0f, 1.0f,  // top left
     1.0f, 1.0f, // top right
     1.0f, 0.f, // bottom right
@@ -804,7 +804,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Texture],
                                              CurrentInstanceIndex * sizeof(quad2f),
-                                             sizeof(quad2f),
+                                             sizeof(QuadUV),
                                              &QuadUV);
                 
                 // NOTE(Momo): Transpose; game is row-major

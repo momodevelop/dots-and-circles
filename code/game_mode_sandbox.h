@@ -16,7 +16,7 @@ struct game_mode_sandbox {
 static inline void 
 InitSandboxMode(permanent_state* PermState) {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
-    Mode->Entity.Position = v3f{ -800.f, 0.f, 0.f };
+    Mode->Entity.Position = V3f_Create(-800.f, 0.f, 0.f);
 }
 
 static inline void

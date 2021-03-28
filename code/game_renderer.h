@@ -145,12 +145,7 @@ PushDrawTexturedQuad(mailbox* Commands,
                      c4f Colors, 
                      m44f Transform, 
                      renderer_texture_handle TextureHandle,
-                     quad2f TextureCoords = {
-                         0.0f, 1.0f,  // top left
-                         1.0f, 1.0f, // top right
-                         1.0f, 0.f, // bottom right
-                         0.f, 0.f, // bottom left
-                     }) 
+                     quad2f TextureCoords = Quad2f_CreateDefaultUV())  
 {
     using data_t = renderer_command_draw_textured_quad;
     auto* Data = Push<data_t>(Commands, data_t::TypeId);
@@ -204,7 +199,8 @@ PushDrawLine(mailbox* Payload,
     f32 LineLength = V2f_Length(LineVector);
     v2f LineMiddle = V2f_Midpoint(Line.Max, Line.Min);
     
-    f32 Angle = V2f_AngleBetween(LineVector, { 1.f, 0.f });
+    v2f XAxis = V2f_Create(1.f, 0.f);
+    f32 Angle = V2f_AngleBetween(LineVector, XAxis);
     
     
     m44f T = M44f_Translation(LineMiddle.X, LineMiddle.Y, 100.f);
@@ -225,38 +221,38 @@ PushDrawLineAabb(mailbox* Commands,
 {
     //Bottom
     PushDrawLine(Commands, 
-                 { 
-                     Aabb.Min.X, 
-                     Aabb.Min.Y,  
-                     Aabb.Max.X, 
-                     Aabb.Min.Y,
-                 },  Thickness, Colors);
+                 Line2f_Create(Aabb.Min.X, 
+                               Aabb.Min.Y,  
+                               Aabb.Max.X, 
+                               Aabb.Min.Y),
+                 Thickness, 
+                 Colors);
     // Left
     PushDrawLine(Commands, 
-                 { 
-                     Aabb.Min.X,
-                     Aabb.Min.Y,
-                     Aabb.Min.X,
-                     Aabb.Max.Y,
-                 },  Thickness, Colors);
+                 Line2f_Create(Aabb.Min.X,
+                               Aabb.Min.Y,
+                               Aabb.Min.X,
+                               Aabb.Max.Y),  
+                 Thickness, 
+                 Colors);
     
     //Top
     PushDrawLine(Commands, 
-                 { 
-                     Aabb.Min.X,
-                     Aabb.Max.Y,
-                     Aabb.Max.X,
-                     Aabb.Max.Y,
-                 }, Thickness, Colors);
+                 Line2f_Create(Aabb.Min.X,
+                               Aabb.Max.Y,
+                               Aabb.Max.X,
+                               Aabb.Max.Y), 
+                 Thickness, 
+                 Colors);
     
     //Right 
     PushDrawLine(Commands, 
-                 { 
-                     Aabb.Max.X,
-                     Aabb.Min.Y,
-                     Aabb.Max.X,
-                     Aabb.Max.Y,
-                 },  Thickness, Colors);
+                 Line2f_Create(Aabb.Max.X,
+                               Aabb.Min.Y,
+                               Aabb.Max.X,
+                               Aabb.Max.Y),  
+                 Thickness, 
+                 Colors);
 }
 
 static inline void 

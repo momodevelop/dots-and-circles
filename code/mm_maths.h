@@ -11,9 +11,9 @@
 //
 
 // NOTE(Momo): Constants
-static const f32 Pi32 = 3.14159265358979323846264338327950288f;
-static const f32 Epsilon32  = 1.19209290E-07f;
-static const f32 Tau32  = Pi32 * 2.f;
+#define Pi32 3.14159265358979323846264338327950288f
+#define Epsilon32 1.19209290E-07f
+#define Tau32 Pi32 * 2.f
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
 
@@ -176,6 +176,15 @@ struct v4f {
 };
 
 //~ NOTE(Momo): v2f functions
+static inline v2f
+V2f_Create(f32 X, f32 Y) {
+    v2f Ret = {};
+    Ret.X = X;
+    Ret.Y = Y;
+    
+    return Ret;
+}
+
 static inline v2f 
 V2f_Add(v2f L, v2f R) {
     L.X += R.X;
@@ -262,7 +271,7 @@ V2f_Length(v2f L)  {
 static inline v2f 
 V2f_Normalize(v2f V)  {
     f32 Len = V2f_Length(V);
-    v2f Ret = V2f_Div(V, V2f_Length(V));
+    v2f Ret = V2f_Div(V, Len);
     return Ret;
 }
 
@@ -309,8 +318,26 @@ V2f_Projection(v2f From, v2f To) {
     return Ret;
 }
 
+//~ NOTE(Momo): v2u Functions
+static inline v2u 
+V2u_Create(u32 X, u32 Y) {
+    v2u Ret = {};
+    Ret.X = X;
+    Ret.Y = Y;
+    
+    return Ret;
+}
 
 //~ NOTE(Momo): v3f Functions
+static inline v3f
+V3f_Create(f32 X, f32 Y, f32 Z) {
+    v3f Ret = {};
+    Ret.X = X;
+    Ret.Y = Y;
+    Ret.Z = Z;
+    return Ret;
+}
+
 static inline v3f 
 V3f_Add(v3f L, v3f R) {
     L.X += R.X;
@@ -402,7 +429,7 @@ V3f_Length(v3f L)  {
 static inline v3f 
 V3f_Normalize(v3f V)  {
     f32 Len = V3f_Length(V);
-    v3f Ret = V3f_Div(Ret, V3f_Length(V));
+    v3f Ret = V3f_Div(V, Len);
     return Ret;
 }
 
@@ -451,17 +478,30 @@ V3f_Projection(v3f From, v3f To) {
 
 static inline v3f 
 V2f_To_V3f(v2f V) {
-    return { V.X, V.Y, 0.f };
+    v3f Ret = {};
+    Ret.X = V.X;
+    Ret.Y = V.Y;
+    Ret.Z = 0.f;
+    
+    return Ret;
 }
 
 static inline v2f
 V2u_To_V2f(v2u V) {
-    return { (f32)V.X, (f32)V.Y };
+    v2f Ret = {};
+    Ret.X = (f32)V.X;
+    Ret.Y = (f32)V.Y;
+    
+    return Ret;
 }
 
 static inline v2f 
 V2i_To_V2f(v2i V) {
-    return { (f32)V.X, (f32)V.Y };
+    v2f Ret = {};
+    Ret.X = (f32)V.X;
+    Ret.Y = (f32)V.Y;
+    
+    return Ret;
 }
 
 //~ NOTE(Momo): AABB 
@@ -486,6 +526,23 @@ struct aabb3f {
 };
 
 
+static inline aabb2u
+Aabb2u_CreateFromV2u(v2u Min, v2u Max) {
+    aabb2u Ret = {};
+    Ret.Min = Min;
+    Ret.Max = Max;
+    
+    return Ret;
+}
+
+static inline aabb2u
+Aabb2u_Create(u32 MinX, u32 MinY, u32 MaxX, u32 MaxY) {
+    v2u Min = V2u_Create(MinX, MinY);
+    v2u Max = V2u_Create(MaxX, MaxY);
+    
+    return Aabb2u_CreateFromV2u(Min, Max);
+    
+}
 
 static inline aabb2f
 Aabb2f_Mul(aabb2f Lhs, f32 Rhs) {
@@ -575,12 +632,13 @@ Aabb2u_To_Aabb2f(aabb2u V) {
 // NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
 static inline aabb2f 
 Aabb2f_Ratio(aabb2f A, aabb2f B) {
-    return  {
-        Ratio(A.Min.X, B.Min.X, B.Max.X),
-        Ratio(A.Min.Y, B.Min.Y, B.Max.Y),
-        Ratio(A.Max.X, B.Min.X, B.Max.X),
-        Ratio(A.Max.Y, B.Min.X, B.Max.Y),
-    };
+    aabb2f Ret = {};
+    Ret.Min.X = Ratio(A.Min.X, B.Min.X, B.Max.X);
+    Ret.Min.Y = Ratio(A.Min.Y, B.Min.Y, B.Max.Y);
+    Ret.Max.X = Ratio(A.Max.X, B.Min.X, B.Max.X);
+    Ret.Max.Y = Ratio(A.Max.Y, B.Min.X, B.Max.Y);
+    
+    return Ret;
 }
 
 static inline aabb2f 
@@ -635,6 +693,17 @@ M44f_Concat(m44f L, m44f R) {
 }
 
 static inline m44f 
+M44f_Identity() {
+    m44f Ret = {};
+    Ret.EE[0][0] = 1.f;
+    Ret.EE[1][1] = 1.f;
+    Ret.EE[2][2] = 1.f;
+    Ret.EE[3][3] = 1.f;
+    
+    return Ret;
+}
+
+static inline m44f 
 M44f_Transpose(m44f M) {
     m44f Ret = {};
     for (int i = 0; i < 4; ++i ) {
@@ -648,59 +717,98 @@ M44f_Transpose(m44f M) {
 
 
 static inline m44f 
-M44f_Translation(f32 x, f32 y, f32 z) {
-    return {
-        1.f, 0.f, 0.f, x,
-        0.f, 1.f, 0.f, y,
-        0.f, 0.f, 1.f, z,
-        0.f, 0.f, 0.f, 1.f
-    };
+M44f_Translation(f32 X, f32 Y, f32 Z) {
+    // NOTE(Momo): 
+    // 1 0 0 x
+    // 0 1 0 y
+    // 0 0 1 z
+    // 0 0 0 1
+    //
+    m44f Ret = M44f_Identity();
+    Ret.EE[0][3] = X;
+    Ret.EE[1][3] = Y;
+    Ret.EE[2][3] = Z;
+    
+    return Ret;
 }
 
 static inline m44f 
-M44f_RotationX(f32 rad) {
-    f32 c = Cos(rad);
-    f32 s = Sin(rad);
-    return {
-        1.f,  0.f,   0.f, 0.f,
-        0.f,  c,    -s,   0.f,  
-        0.f,  s,     c,   0.f,
-        0.f,  0.f,   0.f,  1.f
-    };
+M44f_RotationX(f32 Rad) {
+    // NOTE(Momo): 
+    // 1  0  0  0
+    // 0  c -s  0
+    // 0  s  c  0
+    // 0  0  0  1
+    
+    f32 c = Cos(Rad);
+    f32 s = Sin(Rad);
+    m44f Ret = {};
+    Ret.EE[0][0] = 1.f;
+    Ret.EE[3][3] = 1.f;
+    Ret.EE[1][1] = c;
+    Ret.EE[1][2] = -s;
+    Ret.EE[2][1] = s;
+    Ret.EE[2][2] = c;
+    
+    return Ret;
 }
 
 static inline m44f 
 M44f_RotationY(f32 rad) {
+    // NOTE(Momo): 
+    //  c  0  s  0
+    //  0  1  0  0
+    // -s  0  c  0
+    //  0  0  0  1
+    
     f32 c = Cos(rad);
     f32 s = Sin(rad);
-    return {
-        c,   0.f, s,    0.f,
-        0.f, 1.f, 0.f,  0.f,
-        -s,  0.f, c,    0.f,
-        0.f, 0.f, 0.f,  1.f
-    };
+    m44f Ret = {};
+    Ret.EE[0][0] = c;
+    Ret.EE[0][2] = s;
+    Ret.EE[1][1] = 1.f;
+    Ret.EE[2][0] = -s;
+    Ret.EE[2][2] = c;
+    Ret.EE[3][3] = 1.f;
+    
+    return Ret;
 }
 
 static inline m44f 
 M44f_RotationZ(f32 rad) {
+    // NOTE(Momo): 
+    //  c -s  0  0
+    //  s  c  0  0
+    //  0  0  1  0
+    //  0  0  0  1
+    
     f32 c = Cos(rad);
     f32 s = Sin(rad);
-    return {
-        c,  -s,   0.f, 0.f,
-        s,   c,   0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f, 1.f
-    };
+    m44f Ret = {};
+    Ret.EE[0][0] = c;
+    Ret.EE[0][1] = -s;
+    Ret.EE[1][0] = s;
+    Ret.EE[1][1] = c;
+    Ret.EE[2][2] = 1.f;
+    Ret.EE[3][3] = 1.f;
+    
+    return Ret;
 }
 
 static inline m44f
 M44f_Scale(f32 x, f32 y, f32 z) {
-    return {
-        x, 0.f, 0.f,   0.f,
-        0.f, y, 0.f,   0.f,
-        0.f, 0.f, z,   0.f,
-        0.f, 0.f, 0.f, 1.f
-    };
+    // NOTE(Momo): 
+    //  x  0  0  0
+    //  0  y  0  0
+    //  0  0  z  0
+    //  0  0  0  1
+    m44f Ret = {};
+    Ret.EE[0][0] = x;
+    Ret.EE[1][1] = y;
+    Ret.EE[2][2] = z;
+    Ret.EE[3][3] = 1.f;
+    
+    return Ret; 
 }
 
 static inline m44f 
@@ -725,26 +833,35 @@ M44f_Orthographic(f32 NdcLeft, f32 NdcRight,
 }
 
 
-static inline m44f 
-M44f_Identity() {
-    return {
-        1.f, 0.f, 0.f, 0.f,
-        0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f, 1.f,
-    };
-}
-
 //~ NOTE(Momo): Ray and lines
 struct line2f {
     v2f Min;
     v2f Max;
 };
 
+
 struct ray2f {
     v2f Origin;
     v2f Direction;
 };
+
+static inline line2f
+Line2f_CreateFromV2f(v2f Min, v2f Max) {
+    line2f Ret = {};
+    Ret.Min = Min;
+    Ret.Max = Max;
+    
+    return Ret;
+}
+
+static inline line2f
+Line2f_Create(f32 MinX, f32 MinY, f32 MaxX, f32 MaxY) {
+    v2f Min = V2f_Create(MinX, MinY);
+    v2f Max = V2f_Create(MaxX, MaxY);
+    
+    return Line2f_CreateFromV2f(Min, Max);
+    
+}
 
 static inline ray2f
 Line2f_To_Ray2f(line2f Line) {
@@ -780,25 +897,35 @@ Ray2f_Point(ray2f Ray, f32 Time) {
     return Ret;
 }
 
-// Quad
+//~ NOTE(Momo): Quad
+// TODO(Momo): I don't think this belongs here?
+// A bit to 'freeform' to actually use
 struct quad2f {
     v2f Points[4];
-    inline auto& operator[](usize I) { 
-        Assert(I < 4);
-        return Points[I];
-    }
-    
 };
+
+// TODO(Momo): This definitely doesn't belong here
+static inline quad2f
+Quad2f_CreateDefaultUV() {
+    quad2f Ret = {};
+    Ret.Points[0] = V2f_Create(0.f, 1.f);
+    Ret.Points[1] = V2f_Create(1.f, 1.f);
+    Ret.Points[2] = V2f_Create(1.f, 0.f);
+    Ret.Points[3] = V2f_Create(0.f, 0.f);
+    
+    return Ret;
+}
 
 
 static inline quad2f
 Aabb2f_To_Quad2f(aabb2f Aabb) {
-    return quad2f{
-        Aabb.Min.X, Aabb.Max.Y, // top left
-        Aabb.Max.X, Aabb.Max.Y, // top right
-        Aabb.Max.X, Aabb.Min.Y, // bottom right
-        Aabb.Min.X, Aabb.Min.Y, // bottom left
-    };
+    quad2f Ret = {};
+    Ret.Points[0] = V2f_Create(Aabb.Min.X, Aabb.Max.Y);
+    Ret.Points[1] = V2f_Create(Aabb.Max.X, Aabb.Max.Y);
+    Ret.Points[2] = V2f_Create(Aabb.Max.X, Aabb.Min.Y);
+    Ret.Points[3] = V2f_Create(Aabb.Min.X, Aabb.Min.Y);
+    
+    return Ret;
 }
 
 #endif 

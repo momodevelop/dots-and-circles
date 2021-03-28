@@ -145,7 +145,7 @@ SpawnEnemy(game_mode_main* Mode,
 {
     enemy Enemy = {}; 
     Enemy.Position = Position;
-    Enemy.Size = { 32.f, 32.f };
+    Enemy.Size = V2f_Create(32.f, 32.f);
     
     Enemy.FireTimer = 0.f;
     Enemy.FireDuration = FireRate; 
@@ -168,14 +168,10 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
     bullet Bullet = {}; 
     Bullet.Position = Position;
 	Bullet.Speed = Speed;
-#if 0
-    Bullet.Size = { 16.f, 16.f };
-#else 
-    Bullet.Size = { 64.f, 64.f };
-#endif
+    Bullet.Size = V2f_Create(16.f, 16.f);
     
     Bullet.HitCircle = {
-        { 0.f, 0.f }, 
+        V2f_Create(0.f, 0.f), 
         Bullet.Size.X * 0.5f 
     };
     
@@ -191,6 +187,9 @@ SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Directi
             Assert(Mode->CircleBulletCount < Mode->CircleBulletCap);
             Mode->CircleBullets[Mode->CircleBulletCount++] = Bullet;
         } break;
+        default: {
+            Assert(False);
+        }
     }
     
 }
@@ -226,7 +225,7 @@ InitMainMode(permanent_state* PermState,
     
     Player->Position = {};
     Player->Direction = {};
-    Player->Size = v2f{ 32.f, 32.f };
+    Player->Size = V2f_Create( 32.f, 32.f );
     Player->HitCircle = { v2f{}, 16.f};
     
     // NOTE(Momo): We start as Dot
@@ -447,10 +446,9 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->SpawnTimer += DeltaTime;
                 Pattern->Timer += DeltaTime;
                 if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
-                    v2f Pos = {
-                        Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
-                        Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f
-                    };
+                    v2f Pos = 
+                        V2f_Create(Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
+                                   Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
                     auto MoodType = 
                         (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
                     
@@ -540,11 +538,6 @@ RenderPlayer(game_mode_main* Mode,
     player* Player = &Mode->Player;
     m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
     
-    v3f RenderPos = { 
-        Player->Position.X, 
-        Player->Position.Y, 
-        ZLayPlayer 
-    };
     m44f T = M44f_Translation(Player->Position.X,
                               Player->Position.Y,
                               ZLayPlayer);
@@ -560,7 +553,7 @@ RenderPlayer(game_mode_main* Mode,
                          Player->Position.Y,
                          ZLayPlayer + 0.01f);
     PushDrawTexturedQuad(RenderCommands, 
-                         c4f{ 1.f, 1.f, 1.f, Player->DotImageAlpha}, 
+                         C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha), 
                          M44f_Concat(T,S), 
                          GetTexture(Assets, Player->DotImageAabb->TextureId)->Handle,
                          GetAtlasUV(Assets, Player->DotImageAabb));
@@ -643,7 +636,6 @@ RenderEnemies(game_mode_main* Mode,
     {
         enemy* Enemy = Mode->Enemies + I;
         m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
-        v3f RenderPos = V2f_To_V3f(Enemy->Position);
         m44f T = M44f_Translation(Enemy->Position.X,
                                   Enemy->Position.Y,
                                   ZLayEnemy);
@@ -666,7 +658,7 @@ UpdateMainMode(permanent_state* PermState,
 {
     SwitchToGameCoords(RenderCommands);
     game_mode_main* Mode = PermState->MainMode;
-    PushClearColor(RenderCommands, { 0.15f, 0.15f, 0.15f, 1.f });
+    PushClearColor(RenderCommands, C4f_Create(0.15f, 0.15f, 0.15f, 1.f));
     
     game_assets* Assets = TranState->Assets;
     UpdateInput(Mode, Input);

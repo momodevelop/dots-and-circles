@@ -46,11 +46,9 @@ DebugInspector_End(debug_inspector* Inspector,
     f32 OffsetY = 0.f;
     for (u32 I = 0; I < Inspector->EntryCount; ++I) {
         debug_inspector_entry* Entry = Inspector->Entries + I;
-        v3f Position = v3f{  
-            DebugInspector_PosX, 
-            DebugInspector_PosY + OffsetY,
-            DebugInspector_PosZ
-        }; 
+        v3f Position = V3f_Create(DebugInspector_PosX, 
+                                  DebugInspector_PosY + OffsetY,
+                                  DebugInspector_PosZ); 
         DrawText(RenderCommands, 
                  Assets, 
                  Font_Default, 

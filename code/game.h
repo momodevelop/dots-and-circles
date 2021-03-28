@@ -64,10 +64,10 @@ struct debug_state {
 // Common functions
 static inline void
 SwitchToGameCoords(mailbox* RenderCommands) {
-    v3f DesignSpace = v3f{ Game_DesignWidth, Game_DesignHeight, Game_DesignDepth };
-    v3f DesignAnchor = v3f{ Game_DesignAnchorX, Game_DesignAnchorY, Game_DesignAnchorZ }; 
+    v3f DesignSpace = V3f_Create(Game_DesignWidth, Game_DesignHeight, Game_DesignDepth);
+    v3f DesignAnchor = V3f_Create(Game_DesignAnchorX, Game_DesignAnchorY, Game_DesignAnchorZ); 
     aabb3f CenterBox = Aabb3f_CreateCentered(DesignSpace, DesignAnchor);
-    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushClearColor(RenderCommands, C4f_Create(0.0f, 0.3f, 0.3f, 0.f));
     PushOrthoCamera(RenderCommands, 
                     v3f{}, 
                     CenterBox);
@@ -75,9 +75,9 @@ SwitchToGameCoords(mailbox* RenderCommands) {
 
 static inline void
 SwitchToUICoords(mailbox* RenderCommands) {
-    v3f DesignSpace = v3f{ Game_DesignWidth, Game_DesignHeight, Game_DesignDepth };
+    v3f DesignSpace = V3f_Create(Game_DesignWidth, Game_DesignHeight, Game_DesignDepth);
     aabb3f CenterBox = Aabb3f_CreateCentered(DesignSpace, v3f{});
-    PushClearColor(RenderCommands, { 0.0f, 0.3f, 0.3f, 0.f });
+    PushClearColor(RenderCommands, C4f_Create(0.0f, 0.3f, 0.3f, 0.f));
     PushOrthoCamera(RenderCommands, 
                     v3f{}, 
                     CenterBox);

@@ -79,7 +79,7 @@ DebugConsole_AddCmd(debug_console* C,
 
 static inline void 
 DebugConsole_RemoveCmd(debug_console* Console, u8_cstr Key) {
-    for (u32 I = 0; I = Console->CommandCount; ++I) {
+    for (u32 I = 0; I < Console->CommandCount; ++I) {
         if (U8CStr_Compare(Console->Commands[I].Key, Key)) {
             // Swap with last element
             Console->Commands[I] = Console->Commands[Console->CommandCount-1];
@@ -104,7 +104,7 @@ DebugConsole_Create(debug_console* Console,
     
     Console->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
-    Console->Position = v2f{DebugConsole_StartPosX, DebugConsole_StartPosY};
+    Console->Position = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
     Console->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     Console->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
 }
@@ -141,8 +141,8 @@ DebugConsole_Update(debug_console* Console,
     
     // Transition
     {
-        v2f StartPos = v2f{DebugConsole_StartPosX, DebugConsole_StartPosY};
-        v2f EndPos = v2f{DebugConsole_EndPosX, DebugConsole_EndPosY};
+        v2f StartPos = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
+        v2f EndPos = V2f_Create(DebugConsole_EndPosX, DebugConsole_EndPosY);
         
         f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
         v2f Delta = V2f_Sub(EndPos, StartPos); 
@@ -228,7 +228,7 @@ DebugConsole_Render(debug_console* Console,
         return;
     }
     game_asset_font* Font = Assets->Fonts + Font_Default;
-    v2f Dimensions = v2f{ DebugConsole_Width, DebugConsole_Height };
+    v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
     f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);

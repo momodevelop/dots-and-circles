@@ -36,11 +36,11 @@ static inline f32 EaseInCubic(f32 t)  {
 }
 
 static inline f32 EaseOutCubic(f32 t)  {
-    return 1.f +(--t) * t * t;
+    return 1.f + (t-1) * (t-1) * (t-1);
 }
 
 static inline f32 EaseInOutCubic(f32 t)  {
-    return t < 0.5f ? 4.f * t * t * t : 1.f +(--t) * (2.f * (--t)) * (2.f * t);
+    return t < 0.5f ? 4.f * t * t * t : 1.f + (t-1) * (2.f * (t-2)) * (2.f * (t-2));
 }
 
 static inline f32 EaseInQuart(f32 t)  {
@@ -48,9 +48,10 @@ static inline f32 EaseInQuart(f32 t)  {
     return t * t;
 }
 
-static inline f32 EaseOutQuart(f32 t)  {
-    t = (--t) * t;
-    return 1.f -t * t;
+static inline f32 EaseOutQuart(f32 t) {
+    --t;
+    t = t * t;
+    return 1.f - t * t;
 }
 
 static inline f32 EaseInOutQuart(f32 t)  {
@@ -59,7 +60,8 @@ static inline f32 EaseInOutQuart(f32 t)  {
         return 8.f * t * t;
     }
     else {
-        t = (--t) * t;
+        --t;
+        t = t * t;
         return 1.f -8.f * t * t;
     }
 }
@@ -70,7 +72,8 @@ static inline f32 EaseInQuint(f32 t)  {
 }
 
 static inline f32 EaseOutQuint(f32 t)  {
-    f32 t2 = (--t) * t;
+    --t;
+    f32 t2 = t * t;
     return 1.f +t * t2 * t2;
 }
 
@@ -81,7 +84,8 @@ static inline f32 EaseInOutQuint(f32 t)  {
         return 16.f * t * t2 * t2;
     }
     else {
-        t2 = (--t) * t;
+        --t;
+        t2 = t * t;
         return 1.f +16.f * t * t2 * t2;
     }
 }
@@ -111,7 +115,8 @@ static inline f32 EaseInBack(f32 t)  {
 
 static inline 
 f32 EaseOutBack(f32 t)  {
-    return 1.f +(--t) * t * (2.7f * t + 1.7f);
+    --t;
+    return 1.f + t * t * (2.7f * t + 1.7f);
 }
 
 static inline 
@@ -120,7 +125,8 @@ f32 EaseInOutBack(f32 t)  {
         return t * t * (7.f * t - 2.5f) * 2.f;
     }
     else {
-        return 1.f +(--t) * t * 2.f * (7.f * t + 2.5f);
+        --t;
+        return 1.f + t * t * 2.f * (7.f * t + 2.5f);
     }
 }
 

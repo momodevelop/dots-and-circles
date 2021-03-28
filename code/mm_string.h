@@ -109,7 +109,6 @@ U8Str_Create(u8* Buffer, u32 Capacity) {
 
 static inline u8_str
 U8Str_CreateFromArena(arena* Arena, u32 Capacity) {
-    u8_str Ret = {};
     u8* Buffer = Arena_PushArray(u8, Arena, Capacity);
     return U8Str_Create(Buffer, Capacity);
 }
