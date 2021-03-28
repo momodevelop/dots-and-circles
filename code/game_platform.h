@@ -24,7 +24,7 @@ struct game_input_button {
 struct game_input {
     u8_str Characters;
     union {
-        game_input_button Buttons[15];
+        game_input_button Buttons[10];
         struct {
             game_input_button ButtonUp;
             game_input_button ButtonDown;
@@ -35,18 +35,9 @@ struct game_input {
             game_input_button ButtonSwitch;
             game_input_button ButtonBack;
             
-            // NOTE(Momo): Kinda for debugging
+            // NOTE(Momo): Kinda for in-game debugging
             game_input_button ButtonConsole;
             game_input_button ButtonInspector;
-            
-            game_input_button ButtonSaveState;
-            game_input_button ButtonLoadState;
-            
-            game_input_button ButtonStartRecord;
-            game_input_button ButtonEndRecord;
-            game_input_button ButtonReplayRecord;
-            
-            game_input_button ButtonPauseState;
         };
     };
     
@@ -63,7 +54,7 @@ Input_Create(u8_str Buffer) {
 
 
 static inline b32
-TryPushCharacterInput(game_input* Input, char C) {
+Input_TryPushCharacterInput(game_input* Input, char C) {
     if (C >= 32 && C <= 126) {
         U8Str_Push(&Input->Characters, C);
         return true;
@@ -72,7 +63,7 @@ TryPushCharacterInput(game_input* Input, char C) {
 }
 
 static inline void
-Update(game_input* Input) {
+Input_Update(game_input* Input) {
     U8Str_Clear(&Input->Characters);
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
@@ -135,12 +126,6 @@ typedef PlatformAddTextureFunc(platform_add_texture);
 #define PlatformClearTexturesFunc(Name) void Name()
 typedef PlatformClearTexturesFunc(platform_clear_textures);
 
-#define PlatformSaveStateFunc(Name) void Name() 
-typedef PlatformSaveStateFunc(platform_save_state);
-
-#define PlatformLoadStateFunc(Name) b8 Name()
-typedef PlatformLoadStateFunc(platform_load_state);
-
 struct platform_api {
     platform_log* LogFp;
     platform_get_file_size* GetFileSizeFp;
@@ -150,8 +135,6 @@ struct platform_api {
     platform_close_file* CloseFileFp;
     platform_log_file_error* LogFileErrorFp;
     platform_read_file* ReadFileFp;
-    platform_save_state* SaveStateFp;
-    platform_load_state* LoadStateFp;
     
 };
 

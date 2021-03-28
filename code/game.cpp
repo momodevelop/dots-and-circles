@@ -124,15 +124,6 @@ GameUpdateFunc(GameUpdate)
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
-    if (IsPoked(Input->ButtonSaveState)) {
-        Platform->SaveStateFp();
-    }
-    else if(IsPoked(Input->ButtonLoadState)) {
-        Platform->LoadStateFp();
-    }
-    if (IsPoked(Input->ButtonPauseState)) {
-        PermState->IsPaused = !PermState->IsPaused;
-    }
     if (IsPoked(Input->ButtonInspector)) {
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
@@ -144,7 +135,7 @@ GameUpdateFunc(GameUpdate)
         DeltaTime = 0.f;
     }
     
-#if 0 
+#if 0
     static f32 TSine = 0.f;
     // TODO: Shift this part to game code
     i16* SampleOut = Audio->SampleBuffer;
@@ -228,10 +219,7 @@ GameUpdateFunc(GameUpdate)
         }
     }
     
-    // Render Console
     DebugConsole_Render(&DebugState->Console, RenderCommands, TranState->Assets);
-    
-    
     DebugInspector_End(&DebugState->Inspector, RenderCommands, TranState->Assets);
     
     return PermState->IsRunning;

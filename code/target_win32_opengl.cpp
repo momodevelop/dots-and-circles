@@ -58,6 +58,13 @@ static WglFunctionPtr(wglSwapIntervalEXT);
 //static WglFunctionPtr(wglGetExtensionsStringEXT);
 
 
+struct win32_wasapi {
+    IMMDeviceEnumerator* Enumerator;
+    IMMDevice* Device;
+    IAudioClient* AudioClient;
+    IAudioRenderClient* AudioRenderClient;
+};
+
 // File handle pool
 struct win32_handle_pool {
     HANDLE Slots[8];
@@ -77,12 +84,18 @@ struct win32_game_code {
 
 
 struct win32_state {
+    arena Arena;
+    b32 IsPaused;
     b32 IsRunning;
+    
+    b32 IsRecordingInput;
+    HANDLE RecordingInputHandle;
+    b32 IsPlaybackInput;
+    HANDLE PlaybackInputHandle;
     
     void* PlatformMemoryBlock;
     u32 PlatformMemoryBlockSize;
     
-    arena Arena;
     
     // File paths 
     u32 PerformanceFrequency;
@@ -105,6 +118,7 @@ struct win32_game_memory {
     void* Data;
     u32 DataSize;
 };
+
 
 //~ Globals
 win32_state* G_State = {};
@@ -774,13 +788,6 @@ Win32InitAudioOutput(win32_audio_output* Ret,
     
 }
 
-struct win32_wasapi {
-    IMMDeviceEnumerator* Enumerator;
-    IMMDevice* Device;
-    IAudioClient* AudioClient;
-    IAudioRenderClient* AudioRenderClient;
-};
-
 static inline void
 Win32FreeWasapi(win32_wasapi* Wasapi) {
 #define SAFE_RELEASE(Item) if(Item) (Item)->Release();
@@ -789,6 +796,74 @@ Win32FreeWasapi(win32_wasapi* Wasapi) {
     SAFE_RELEASE(Wasapi->Device);
     SAFE_RELEASE(Wasapi->AudioRenderClient);
 #undef SAFE_RELEASE
+}
+
+
+static inline void
+Win32GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
+    // We just dump the whole game memory into a file
+    HANDLE Win32Handle = CreateFileA(Path,
+                                     GENERIC_WRITE,
+                                     FILE_SHARE_WRITE,
+                                     0,
+                                     CREATE_ALWAYS,
+                                     0,
+                                     0);
+    if (Win32Handle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::SaveState] Cannot open file: %s\n", Path);
+        return;
+    }
+    Defer { CloseHandle(Win32Handle); }; 
+    
+    DWORD BytesWritten;
+    if(!WriteFile(Win32Handle, 
+                  GameMemory->Data,
+                  (DWORD)GameMemory->DataSize,
+                  &BytesWritten,
+                  0)) 
+    {
+        Win32Log("[Win32::SaveState] Cannot write file: %s\n", Path);
+        return;
+    }
+    
+    if (BytesWritten != GameMemory->DataSize) {
+        Win32Log("[Win32::SaveState] Did not complete writing: %s\n", Path);
+        return;
+    }
+    Win32Log("[Win32::SaveState] State saved: %s\n", Path);
+    
+}
+
+static inline void
+Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
+    HANDLE Win32Handle = CreateFileA(Path,
+                                     GENERIC_READ,
+                                     FILE_SHARE_READ,
+                                     0,
+                                     OPEN_EXISTING,
+                                     0,
+                                     0);
+    if (Win32Handle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::LoadState] Cannot open file: %s\n", Path);
+        return;
+    }
+    Defer { CloseHandle(Win32Handle); }; 
+    DWORD BytesRead;
+    
+    b32 Success = ReadFile(Win32Handle, 
+                           GameMemory->Data,
+                           (DWORD)GameMemory->DataSize,
+                           &BytesRead,
+                           0);
+    
+    if (Success && GameMemory->DataSize == BytesRead) {
+        Win32Log("[Win32::LoadState] State loaded from: %s\n", Path);
+        return;
+    }
+    Win32Log("[Win32::LoadState] Could not read all bytes: %s\n", Path);
+    return;
+    
+    
 }
 
 
@@ -921,7 +996,7 @@ Win32ProcessMessages(HWND Window,
             } break;
             case WM_CHAR: {
                 char C = (char)Msg.wParam;
-                TryPushCharacterInput(Input, C);
+                Input_TryPushCharacterInput(Input, C);
             } break;
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
@@ -930,51 +1005,53 @@ Win32ProcessMessages(HWND Window,
                 u32 KeyCode = (u32)Msg.wParam;
                 bool IsDown = Msg.message == WM_KEYDOWN;
                 switch(KeyCode) {
-                    case 'W':
-                    Input->ButtonUp.Now = IsDown;
-                    break;
-                    case 'A':
-                    Input->ButtonLeft.Now = IsDown;
-                    break;
-                    case 'S':
-                    Input->ButtonDown.Now = IsDown;
-                    break;
-                    case 'D':
-                    Input->ButtonRight.Now = IsDown;
-                    break;
-                    case VK_SPACE:
-                    Input->ButtonSwitch.Now = IsDown;
-                    break;
-                    case VK_RETURN:
-                    Input->ButtonConfirm.Now = IsDown;
-                    break;
-                    case VK_F1:
-                    Input->ButtonConsole.Now = IsDown;
-                    break;
-                    case VK_F2:
-                    Input->ButtonInspector.Now = IsDown;
-                    break;
-                    case VK_F3:
-                    Input->ButtonSaveState.Now = IsDown;
-                    break;
-                    case VK_F4:
-                    Input->ButtonLoadState.Now = IsDown;
-                    break;
-                    case VK_F5:
-                    Input->ButtonStartRecord.Now = IsDown;
-                    break;
-                    case VK_F6:
-                    Input->ButtonEndRecord.Now = IsDown;
-                    break;
-                    case VK_F7:
-                    Input->ButtonReplayRecord.Now = IsDown;
-                    break;
-                    case VK_F8:
-                    Input->ButtonPauseState.Now = IsDown;
-                    break;
-                    case VK_BACK:
-                    Input->ButtonBack.Now = IsDown;
-                    break;
+                    case 'W': {
+                        Input->ButtonUp.Now = IsDown;
+                    } break;
+                    case 'A': {
+                        Input->ButtonLeft.Now = IsDown;
+                    } break;
+                    case 'S': {
+                        Input->ButtonDown.Now = IsDown;
+                    } break;
+                    case 'D':{
+                        Input->ButtonRight.Now = IsDown;
+                    } break;
+                    case VK_SPACE:{
+                        Input->ButtonSwitch.Now = IsDown;
+                    } break;
+                    case VK_RETURN:{
+                        Input->ButtonConfirm.Now = IsDown;
+                    } break;
+                    case VK_F1:{
+                        Input->ButtonConsole.Now = IsDown;
+                    } break;
+                    case VK_F2:{
+                        Input->ButtonInspector.Now = IsDown;
+                    } break;
+                    case VK_F3:{
+                        if (Msg.message == WM_KEYDOWN)
+                            Win32GameMemory_Save(G_GameMemory, "game_state");
+                    } break;
+                    case VK_F4:{
+                        if (Msg.message == WM_KEYDOWN)
+                            Win32GameMemory_Load(G_GameMemory, "game_state");
+                    } break;
+                    case VK_F5:{
+                        if(Msg.message == WM_KEYDOWN)
+                            G_State->IsPaused = !G_State->IsPaused;
+                    } break;
+                    case VK_F6:{
+                    } break;
+                    case VK_F7:{
+                    } break;
+                    case VK_F8:{
+                    } break;
+                    case VK_F9: {
+                    } break;
+                    case VK_BACK:{
+                        Input->ButtonBack.Now = IsDown;
+                    } break;
                 } 
                 TranslateMessage(&Msg);
             } break;
@@ -1226,59 +1303,41 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
     }
 }
 
-static inline 
-PlatformLoadStateFunc(Win32LoadState) {
-    const char* Path = "game_state";
-    HANDLE Win32Handle = CreateFileA(Path,
-                                     GENERIC_READ,
-                                     FILE_SHARE_READ,
-                                     0,
-                                     OPEN_EXISTING,
-                                     0,
-                                     0);
-    if (Win32Handle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32::LoadState] Cannot open file: %s\n", Path);
-        return false;
-    }
-    Defer { CloseHandle(Win32Handle); }; 
-    DWORD BytesRead;
-    
-    b32 Success = ReadFile(Win32Handle, 
-                           G_GameMemory->Data,
-                           (DWORD)G_GameMemory->DataSize,
-                           &BytesRead,
-                           0);
-    
-    if (Success && G_GameMemory->DataSize == BytesRead) {
-        Win32Log("[Win32::LoadState] State loaded from: %s\n", Path);
-        return true;
-    }
-    Win32Log("[Win32::LoadState] Could not read all bytes: %s\n", Path);
-    return false;
-    
-    
-}
-
-static inline 
-PlatformSaveStateFunc(Win32SaveState) {
-    // We just dump the whole game memory into a file
-    const char* Path = "game_state";
-    
-    //DeleteFileA(Path);
-    
-    HANDLE Win32Handle = CreateFileA(Path,
-                                     GENERIC_WRITE,
-                                     FILE_SHARE_WRITE,
-                                     0,
-                                     CREATE_ALWAYS,
-                                     0,
-                                     0);
-    if (Win32Handle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32::SaveState] Cannot open file: %s\n", Path);
+#if 0
+static inline void
+Win32PlatformStartRecord(win32_state* State) {
+    if (State->IsRecording) {
         return;
     }
-    Defer { CloseHandle(Win32Handle); }; 
+    // NOTE(Momo): Save state to file
+    const char* Path = "record_state";
+    HANDLE StateFileHandle = CreateFileA(Path,
+                                         GENERIC_WRITE,
+                                         FILE_SHARE_WRITE,
+                                         0,
+                                         CREATE_ALWAYS,
+                                         0,
+                                         0);
+    if (StateFileHandle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::StartRecord] Cannot open file: %s\n", Path);
+        return;
+    }
+    Defer { CloseHandle(StateFileHandle); }; 
     
+    const char* RecordPath = "record_inputs";
+    HANDLE RecordFileHandle = CreateFileA(RecordPath,
+                                          GENERIC_WRITE,
+                                          FILE_SHARE_WRITE,
+                                          0,
+                                          CREATE_ALWAYS,
+                                          0,
+                                          0);
+    if (RecordFileHandle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::StartRecord] Cannot open file: %s\n", RecordPath);
+        return;
+    }
+    
+    // NOTE(Momo): We save the state 
     DWORD BytesWritten;
     if(!WriteFile(Win32Handle, 
                   G_GameMemory->Data,
@@ -1286,18 +1345,36 @@ PlatformSaveStateFunc(Win32SaveState) {
                   &BytesWritten,
                   0)) 
     {
-        Win32Log("[Win32::SaveState] Cannot write file: %s\n", Path);
+        Win32Log("[Win32::StartRecord] Cannot write file: %s\n", Path);
+        CloseHandle(RecordFileHandle);
         return;
     }
     
     if (BytesWritten != G_GameMemory->DataSize) {
-        Win32Log("[Win32::SaveState] Did not complete writing: %s\n", Path);
+        Win32Log("[Win32::StartRecord] Did not complete writing: %s\n", Path);
+        CloseHandle(RecordFileHandle);
         return;
     }
-    Win32Log("[Win32::SaveState] State saved: %s\n", Path);
+    Win32Log("[Win32::StartRecord] State saved: %s\n", Path);
+    
+    // NOTE(Momo): Initialize recording state
+    G_State.IsRecording = True;
+    G_State.RecordDuration = 0.f;
+    G_State.RecordFileHandle = RecordFileHandle;
+    
     
 }
 
+static inline 
+PlatformStopRecordFunc(Win32PlatformStopRecord) {
+    if (!G_State.IsRecording) {
+        return;
+    }
+    G_State.IsRecording = False;
+    CloseHandle(G_State.RecordFileHandle);
+}
+
+#endif
 static inline platform_api
 Win32InitPlatformApi() {
     platform_api PlatformApi = {};
@@ -1308,8 +1385,6 @@ Win32InitPlatformApi() {
     PlatformApi.AddTextureFp = Win32AddTexture;
     PlatformApi.OpenAssetFileFp = Win32OpenAssetFile;
     PlatformApi.CloseFileFp = Win32CloseFile;
-    PlatformApi.SaveStateFp = Win32SaveState;
-    PlatformApi.LoadStateFp = Win32LoadState;
     return PlatformApi;
 }
 
@@ -1416,6 +1491,7 @@ WinMain(HINSTANCE Instance,
     // Initialize game input
     game_input GameInput = Input_Create(U8Str_CreateFromArena(&State->Arena, 10));
     
+    
     // Initialize platform api
     platform_api PlatformApi = Win32InitPlatformApi();
     
@@ -1492,9 +1568,13 @@ WinMain(HINSTANCE Instance,
             Win32LoadGameCode(&GameCode);
         }
         
-        Update(&GameInput);
+        Input_Update(&GameInput);
         Win32ProcessMessages(Window, 
                              &GameInput);
+        
+        // NOTE(Momo): Recording/Playback input
+        
+        
         
         // Compute how much sound to write and where
         // TODO: Functionize this
@@ -1518,12 +1598,16 @@ WinMain(HINSTANCE Instance,
         
         if (GameCode.GameUpdate) 
         {
+            f32 GameDeltaTime = TargetSecsPerFrame;
+            if (State->IsPaused) {
+                GameDeltaTime = 0.f;
+            }
             GameCode.GameUpdate(&GameMemory.Head,
                                 &PlatformApi,
                                 &RenderCommands,
                                 &GameInput,
                                 &GameAudio,
-                                TargetSecsPerFrame);
+                                GameDeltaTime);
         }
         
         
@@ -1546,8 +1630,7 @@ WinMain(HINSTANCE Instance,
                     *DestSample++ = *SrcSample++; // Right
                 }
                 
-                Wasapi.AudioRenderClient->ReleaseBuffer(
-                                                        (UINT32)GameAudio.SampleCount, 0);
+                Wasapi.AudioRenderClient->ReleaseBuffer((UINT32)GameAudio.SampleCount, 0);
             }
             
         }
@@ -1571,6 +1654,7 @@ WinMain(HINSTANCE Instance,
         }
         
         LastCount = Win32GetCurrentCounter();
+        
         Win32SwapBuffers(Window);
     }
     
