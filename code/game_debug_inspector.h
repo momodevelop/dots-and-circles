@@ -33,6 +33,9 @@ DebugInspector_Init(debug_inspector* Inspector) {
 
 static inline void
 DebugInspector_Begin(debug_inspector* Inspector) {
+    if(!Inspector->IsActive)
+        return;
+    
     Inspector->EntryCount = 0;
 }
 
@@ -40,6 +43,9 @@ static inline void
 DebugInspector_End(debug_inspector* Inspector, 
                    mailbox* RenderCommands,
                    game_assets* Assets) {
+    if(!Inspector->IsActive)
+        return;
+    
     // TODO(Momo): Complete this
     // For each variable, render:
     // Name: Data
@@ -72,6 +78,9 @@ DebugInspector_PushEntry(debug_inspector* Inspector, u8_cstr Label) {
 static inline void
 DebugInspector_PushU32(debug_inspector* Inspector, u8_cstr Label, u32 Item)
 {
+    if(!Inspector->IsActive)
+        return;
+    
     debug_inspector_entry* Entry = DebugInspector_PushEntry(Inspector, Label);
     U8Str_PushU32(&Entry->Text, Item);
 }
@@ -79,6 +88,9 @@ DebugInspector_PushU32(debug_inspector* Inspector, u8_cstr Label, u32 Item)
 static inline void
 DebugInspector_PushS32(debug_inspector* Inspector, u8_cstr Label, i32 Item)
 {
+    if(!Inspector->IsActive)
+        return;
+    
     debug_inspector_entry* Entry = DebugInspector_PushEntry(Inspector, Label);
     U8Str_PushS32(&Entry->Text, Item);
 }

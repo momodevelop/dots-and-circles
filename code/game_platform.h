@@ -7,8 +7,8 @@
 
 // NOTE(Momo): Global Settings
 
-#define Game_DesignWidth 1600
-#define Game_DesignHeight 900
+#define Game_DesignWidth 800
+#define Game_DesignHeight 800
 #define Game_DesignDepth 200
 #define Game_DesignAnchorX 0.5f
 #define Game_DesignAnchorY 0.5f

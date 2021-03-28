@@ -11,9 +11,9 @@
 #define DebugConsole_Width Game_DesignWidth 
 #define DebugConsole_Height 240.f
 #define DebugConsole_StartPosX 0.f
-#define DebugConsole_StartPosY -900.f/2 - DebugConsole_Height/2
+#define DebugConsole_StartPosY -Game_DesignHeight/2 - DebugConsole_Height/2
 #define DebugConsole_EndPosX 0.f
-#define DebugConsole_EndPosY -900.f/2 + DebugConsole_Height/2
+#define DebugConsole_EndPosY -Game_DesignHeight/2 + DebugConsole_Height/2
 #define DebugConsole_TransitionDuration 0.25f
 #define DebugConsole_StartPopDuration 0.5f
 #define DebugConsole_PopRepeatDuration 0.1f
