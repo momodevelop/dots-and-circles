@@ -256,7 +256,7 @@ UpdatePlayer(game_mode_main* Mode,
               0.f, 
               Player->DotImageTransitionDuration);
     
-    f32 SpeedDt = Player->Speed * DeltaTime;
+    f32 SpeedDt = 50 * DeltaTime;
     v2f Velocity = V2f_Mul(Player->Direction, SpeedDt);
     Player->Position = V2f_Add(Player->Position, Velocity);
     

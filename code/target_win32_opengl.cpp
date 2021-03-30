@@ -56,8 +56,12 @@ static WglFunctionPtr(wglCreateContextAttribsARB);
 static WglFunctionPtr(wglChoosePixelFormatARB);
 static WglFunctionPtr(wglSwapIntervalEXT);
 //static WglFunctionPtr(wglGetExtensionsStringEXT);
+//~ NOTE(Momo): Consts
+#define Win32_RecordStateFile "record_state"
+#define Win32_RecordInputFile "record_input"
+#define Win32_SaveStateFile "game_state"
 
-
+//~ NOTE(Momo): Structs
 // File handle pool
 struct win32_handle_pool {
     HANDLE Slots[8];
@@ -308,6 +312,97 @@ Win32Free(win32_state* State) {
     Win32FreeMemory(State); 
 }
 
+static inline void
+Win32BeginRecordingInput(win32_state* State, const char* Path) {
+    Assert(!State->IsRecordingInput);
+    HANDLE RecordFileHandle = CreateFileA(Path,
+                                          GENERIC_WRITE,
+                                          FILE_SHARE_WRITE,
+                                          0,
+                                          CREATE_ALWAYS,
+                                          0,
+                                          0);
+    
+    if (RecordFileHandle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::BeginRecordingInput] Cannot open file: %s\n", Path);
+        return;
+    }
+    State->RecordingInputHandle = RecordFileHandle;
+    State->IsRecordingInput = True;
+    Win32Log("[Win32::BeginRecordingInput] Recording has begun: %s\n", Path);
+}
+
+static inline void
+Win32EndRecordingInput(win32_state* State) {
+    Assert(State->IsRecordingInput);
+    CloseHandle(State->RecordingInputHandle);
+    State->IsRecordingInput = False;
+    Win32Log("[Win32::EndRecordingInput] Recording has ended\n");
+}
+
+static inline void
+Win32RecordInput(win32_state* State, game_input* Input) {
+    Assert(State->IsRecordingInput);
+    DWORD BytesWritten;
+    if(!WriteFile(State->RecordingInputHandle,
+                  Input,
+                  sizeof(game_input),
+                  &BytesWritten, 0)) 
+    {
+        Win32Log("[Win32::RecordInput] Cannot write file\n");
+        Win32EndRecordingInput(State);
+        return;
+    }
+    
+    if (BytesWritten != sizeof(game_input)) {
+        Win32Log("[Win32::RecordInput] Did not complete writing\n");
+        Win32EndRecordingInput(State);
+        return;
+    }
+}
+
+static inline void 
+Win32EndPlaybackInput(win32_state* State) {
+    Assert(State->IsPlaybackInput);
+    CloseHandle(State->PlaybackInputHandle);
+    State->IsPlaybackInput = False;
+    Win32Log("[Win32::EndPlaybackInput] Playback has ended\n");
+}
+
+static inline void
+Win32BeginPlaybackInput(win32_state* State, const char* Path) {
+    Assert(!State->IsPlaybackInput);
+    HANDLE RecordFileHandle = CreateFileA(Path,
+                                          GENERIC_READ,
+                                          FILE_SHARE_READ,
+                                          0,
+                                          OPEN_EXISTING,
+                                          0,
+                                          0);
+    
+    if (RecordFileHandle == INVALID_HANDLE_VALUE) {
+        Win32Log("[Win32::BeginPlaybackInput] Cannot open file: %s\n", Path);
+        return;
+    }
+    State->PlaybackInputHandle = RecordFileHandle;
+    State->IsPlaybackInput = True;
+    Win32Log("[Win32::BeginPlaybackInput] Playback has begun: %s\n", Path);
+}
+
+// NOTE(Momo): returns true if 'done' reading all input, false otherwise
+static inline b32 
+Win32PlaybackInput(win32_state* State, game_input* Input) {
+    DWORD BytesRead;
+    BOOL Success = ReadFile(State->PlaybackInputHandle, 
+                            Input,
+                            sizeof(game_input),
+                            &BytesRead,
+                            0);
+    if(!Success || BytesRead != sizeof(game_input)) {
+        return True;
+    }
+    return False;
+}
 
 //~ NOTE(Momo): game code related
 struct win32_game_code {
@@ -796,20 +891,17 @@ Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
     Defer { CloseHandle(Win32Handle); }; 
     DWORD BytesRead;
     
-    b32 Success = ReadFile(Win32Handle, 
-                           GameMemory->Data,
-                           (DWORD)GameMemory->DataSize,
-                           &BytesRead,
-                           0);
+    BOOL Success = ReadFile(Win32Handle, 
+                            GameMemory->Data,
+                            (DWORD)GameMemory->DataSize,
+                            &BytesRead,
+                            0);
     
     if (Success && GameMemory->DataSize == BytesRead) {
         Win32Log("[Win32::LoadState] State loaded from: %s\n", Path);
         return;
     }
     Win32Log("[Win32::LoadState] Could not read all bytes: %s\n", Path);
-    return;
-    
-    
 }
 
 
@@ -1034,30 +1126,44 @@ Win32ProcessMessages(HWND Window,
                     } break;
                     case VK_F3:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32GameMemory_Save(G_GameMemory, "game_state");
+                            Win32GameMemory_Save(G_GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F4:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32GameMemory_Load(G_GameMemory, "game_state");
+                            Win32GameMemory_Load(G_GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F5:{
                         if(Msg.message == WM_KEYDOWN) {
+                            Win32Log("[Win32] Paused!\n");
                             G_State->IsPaused = !G_State->IsPaused;
                         }
                     } break;
                     case VK_F6:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32BeginRecordingInput(G_State);
-                            
-                            
-                            
-                            
+                            if(G_State->IsRecordingInput) {
+                                Win32EndRecordingInput(G_State);
+                            }
+                            else {
+                                Win32GameMemory_Save(G_GameMemory, Win32_RecordStateFile);
+                                Win32BeginRecordingInput(G_State, Win32_RecordInputFile);
+                            }
                         }
                         
                     } break;
                     case VK_F7:{
+                        if (Msg.message == WM_KEYDOWN) {
+                            if(G_State->IsPlaybackInput) {
+                                Win32EndPlaybackInput(G_State);
+                            }
+                            else {
+                                Win32GameMemory_Load(G_GameMemory, Win32_RecordStateFile);
+                                Win32BeginPlaybackInput(G_State, 
+                                                        Win32_RecordInputFile);
+                            }
+                        }
+                        
                     } break;
                     case VK_F8:{
                     } break;
@@ -1320,36 +1426,8 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
 #if 0
 static inline void
 Win32PlatformStartRecord(win32_state* State) {
-    if (State->IsRecording) {
-        return;
-    }
-    // NOTE(Momo): Save state to file
-    const char* Path = "record_state";
-    HANDLE StateFileHandle = CreateFileA(Path,
-                                         GENERIC_WRITE,
-                                         FILE_SHARE_WRITE,
-                                         0,
-                                         CREATE_ALWAYS,
-                                         0,
-                                         0);
-    if (StateFileHandle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32::StartRecord] Cannot open file: %s\n", Path);
-        return;
-    }
-    Defer { CloseHandle(StateFileHandle); }; 
-    
     const char* RecordPath = "record_inputs";
-    HANDLE RecordFileHandle = CreateFileA(RecordPath,
-                                          GENERIC_WRITE,
-                                          FILE_SHARE_WRITE,
-                                          0,
-                                          CREATE_ALWAYS,
-                                          0,
-                                          0);
-    if (RecordFileHandle == INVALID_HANDLE_VALUE) {
-        Win32Log("[Win32::StartRecord] Cannot open file: %s\n", RecordPath);
-        return;
-    }
+    
     
     // NOTE(Momo): We save the state 
     DWORD BytesWritten;
@@ -1453,20 +1531,20 @@ Win32FreeRenderCommands(mailbox* RenderCommands) {
 }
 
 
-static inline b8
+static inline b32
 Win32InitRenderCommands(mailbox* RenderCommands,
                         usize RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
         Win32AllocateMemory(RenderCommandsMemorySize); 
     if (!RenderCommandsMemory) {
         Win32Log("[Win32::RenderCommands] Failed to allocate\n"); 
-        return false;
+        return False;
     }
     (*RenderCommands) = CreateMailbox(RenderCommandsMemory,
                                       RenderCommandsMemorySize);
     Win32Log("[Win32::RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
-    return true;
+    return True;
     
 }
 
@@ -1587,8 +1665,17 @@ WinMain(HINSTANCE Instance,
                              &GameInput);
         
         // NOTE(Momo): Recording/Playback input
-        
-        
+        if (State->IsRecordingInput) {
+            Win32RecordInput(State, &GameInput);
+        }
+        if (State->IsPlaybackInput) {
+            // NOTE(Momo): This will actually modify GameInput
+            if (Win32PlaybackInput(State, &GameInput)) {
+                Win32EndPlaybackInput(State);
+                Win32GameMemory_Load(&GameMemory, Win32_RecordStateFile);
+                Win32BeginPlaybackInput(State, Win32_RecordInputFile);
+            }
+        }
         
         // Compute how much sound to write and where
         // TODO: Functionize this
@@ -1628,6 +1715,7 @@ WinMain(HINSTANCE Instance,
         Opengl_Render(G_Opengl, &RenderCommands);
         Clear(&RenderCommands);
         
+        // NOTE(Momo): 16-bit Sound
         // TODO: Functionize this
         {
             BYTE* SoundBufferData;
@@ -1652,6 +1740,7 @@ WinMain(HINSTANCE Instance,
         f32 SecsElapsed = 
             Win32GetSecondsElapsed(State, LastCount, Win32GetCurrentCounter());
         
+        // NOTE(Momo): Sleep time
         if (TargetSecsPerFrame > SecsElapsed) {
             if (SleepIsGranular) {
                 DWORD MsToSleep = 
