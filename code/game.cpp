@@ -87,8 +87,8 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->TransientMemory, 
                                        GameMemory->TransientMemorySize);
         
-        TranState->Assets = AllocateAssets(&TranState->Arena, 
-                                           Platform);
+        TranState->Assets = Assets_Allocate(&TranState->Arena, 
+                                            Platform);
         Assert(TranState->Assets);
         
         

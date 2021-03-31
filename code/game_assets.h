@@ -131,7 +131,7 @@ GetAtlasUV(assets* Assets,
 
 
 static inline b32
-CheckAssetSignature(void* Memory, u8_cstr Signature) {
+Assets_CheckSignature(void* Memory, u8_cstr Signature) {
     u8* MemoryU8 = (u8*)Memory;
     for (u32 I = 0; I < Signature.Size; ++I) {
         if (MemoryU8[I] != Signature.Data[I]) {
@@ -143,12 +143,12 @@ CheckAssetSignature(void* Memory, u8_cstr Signature) {
 
 // TODO: Maybe we create some kind of struct for reading files?
 static inline void*
-Read(platform_file_handle* File,
-     platform_api* Platform,
-     arena* Arena,
-     u32* FileOffset,
-     u32 BlockSize,
-     u8 BlockAlignment)
+Assets_ReadBlock(platform_file_handle* File,
+                 platform_api* Platform,
+                 arena* Arena,
+                 u32* FileOffset,
+                 u32 BlockSize,
+                 u8 BlockAlignment)
 {
     void* Ret = Arena_PushBlock(Arena, BlockSize, BlockAlignment);
     if(!Ret) {
@@ -161,44 +161,23 @@ Read(platform_file_handle* File,
     (*FileOffset) += BlockSize;
     return Ret;
 }
-
-
-template<typename t>
-static inline t*
-Read(platform_file_handle* File,
-     platform_api* Platform,
-     arena* Arena,
-     u32* FileOffset)
-{
-    return (t*)Read(File, Platform, Arena, FileOffset, sizeof(t), alignof(t));
-}
-
-template<typename t>
-static inline t
-ReadCopy(platform_file_handle* File,
-         platform_api* Platform,
-         arena* Arena,
-         u32* FileOffset) 
-{
-    t* Ret = Read<t>(File, Platform, Arena, FileOffset);
-    Assert(Ret);
-    return *Ret;
-}
+#define Assets_ReadStruct(Type, File, Platform, Arena, FileOffset) \
+(Type*)Assets_ReadBlock(File, Platform, Arena, FileOffset, sizeof(Type), alignof(Type))
 
 static inline assets*
-AllocateAssets(arena* Arena,
-               platform_api* Platform) 
+Assets_Allocate(arena* Arena,
+                platform_api* Platform) 
 {
 #define CheckFile(Handle) \
 if (Handle.Error) { \
 Platform->LogFileErrorFp(&Handle); \
-return nullptr; \
+return False; \
 }
     
 #define CheckPtr(Ptr) \
 if ((Ptr) == nullptr ) { \
 Platform->LogFp("[Assets] " #Ptr " is null"); \
-return nullptr; \
+return False; \
 } \
     
     
@@ -229,25 +208,26 @@ return nullptr; \
         Defer{ Arena_Revert(&Scratch); };
         
         u8_cstr Signature = U8CStr_FromSiStr("MOMO");
-        void* ReadSignature = Read(&AssetFile,
-                                   Platform,
-                                   Scratch.Arena,
-                                   &CurFileOffset,
-                                   (u32)Signature.Size,
-                                   1);
+        void* ReadSignature = Assets_ReadBlock(&AssetFile,
+                                               Platform,
+                                               Scratch.Arena,
+                                               &CurFileOffset,
+                                               (u32)Signature.Size,
+                                               1);
         CheckPtr(ReadSignature);
         CheckFile(AssetFile);
         
-        if (!CheckAssetSignature(ReadSignature, Signature)) {
+        if (!Assets_CheckSignature(ReadSignature, Signature)) {
             Platform->LogFp("[Assets] Wrong asset signature\n");
             return nullptr;
         }
         
         // Get File Entry
-        FileEntryCount = ReadCopy<u32>(&AssetFile,
-                                       Platform,
-                                       Scratch.Arena,
-                                       &CurFileOffset);
+        FileEntryCount = *Assets_ReadStruct(u32,
+                                            &AssetFile,
+                                            Platform,
+                                            Scratch.Arena,
+                                            &CurFileOffset);
         CheckFile(AssetFile);
     }
     
@@ -258,25 +238,27 @@ return nullptr; \
         Defer{ Arena_Revert(&Scratch); };
         
         // NOTE(Momo): Read header
-        auto* FileEntry = Read<asset_file_entry>(&AssetFile,
-                                                 Platform,
-                                                 Scratch.Arena,
-                                                 &CurFileOffset);
+        auto* FileEntry = Assets_ReadStruct(asset_file_entry,
+                                            &AssetFile,
+                                            Platform,
+                                            Scratch.Arena,
+                                            &CurFileOffset);
         CheckPtr(FileEntry);
         CheckFile(AssetFile);
         
         switch(FileEntry->Type) {
             case AssetType_Texture: {
                 using data_t = asset_file_texture;
-                auto* FileTexture = Read<data_t>(&AssetFile, 
-                                                 Platform, 
-                                                 Scratch.Arena,
-                                                 &CurFileOffset);              
+                auto* FileTexture = Assets_ReadStruct(asset_file_texture,
+                                                      &AssetFile, 
+                                                      Platform, 
+                                                      Scratch.Arena,
+                                                      &CurFileOffset);              
                 
                 CheckPtr(FileTexture);
                 CheckFile(AssetFile);
                 
-                auto* Texture = Ret->Textures + FileTexture->Id;
+                texture* Texture = Ret->Textures + FileTexture->Id;
                 Texture->Width = FileTexture->Width;
                 Texture->Height = FileTexture->Height;
                 Texture->Channels = FileTexture->Channels;
@@ -284,12 +266,12 @@ return nullptr; \
                     Texture->Height * 
                     Texture->Channels;
                 
-                void* Pixels = Read(&AssetFile, 
-                                    Platform,
-                                    Scratch.Arena, 
-                                    &CurFileOffset,
-                                    TextureSize,
-                                    1);
+                void* Pixels = Assets_ReadBlock(&AssetFile, 
+                                                Platform,
+                                                Scratch.Arena, 
+                                                &CurFileOffset,
+                                                TextureSize,
+                                                1);
                 CheckPtr(Pixels);
                 CheckFile(AssetFile);
                 
@@ -301,11 +283,12 @@ return nullptr; \
                 }
             } break;
             case AssetType_AtlasAabb: { 
-                using data_t = asset_file_atlas_aabb;
-                auto* FileAtlasAabb = Read<data_t>(&AssetFile, 
-                                                   Platform, 
-                                                   Scratch.Arena,
-                                                   &CurFileOffset);              
+                auto* FileAtlasAabb = 
+                    Assets_ReadStruct(asset_file_atlas_aabb,
+                                      &AssetFile, 
+                                      Platform, 
+                                      Scratch.Arena,
+                                      &CurFileOffset);              
                 CheckPtr(FileAtlasAabb);
                 CheckFile(AssetFile);
                 
@@ -314,11 +297,11 @@ return nullptr; \
                 AtlasAabb->TextureId = FileAtlasAabb->TextureId;
             } break;
             case AssetType_Font: {
-                using data_t = asset_file_font;
-                auto* FileFont = Read<data_t>(&AssetFile,
-                                              Platform,
-                                              Scratch.Arena,
-                                              &CurFileOffset);
+                auto* FileFont = Assets_ReadStruct(asset_file_font,
+                                                   &AssetFile,
+                                                   Platform,
+                                                   Scratch.Arena,
+                                                   &CurFileOffset);
                 CheckPtr(FileFont);
                 CheckFile(AssetFile);
                 
@@ -328,11 +311,11 @@ return nullptr; \
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                using data_t = asset_file_font_glyph;
-                auto* FileFontGlyph = Read<data_t>(&AssetFile,
-                                                   Platform,
-                                                   Scratch.Arena,
-                                                   &CurFileOffset);
+                auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
+                                                        &AssetFile,
+                                                        Platform,
+                                                        Scratch.Arena,
+                                                        &CurFileOffset);
                 CheckPtr(FileFontGlyph);
                 CheckFile(AssetFile);
                 
@@ -346,11 +329,11 @@ return nullptr; \
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                using data_t = asset_file_font_kerning;
-                auto* FileFontKerning = Read<data_t>(&AssetFile,
-                                                     Platform,
-                                                     Scratch.Arena,
-                                                     &CurFileOffset);
+                auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
+                                                          &AssetFile,
+                                                          Platform,
+                                                          Scratch.Arena,
+                                                          &CurFileOffset);
                 CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
                 font* Font = Assets_GetFont(Ret, FileFontKerning->FontId);

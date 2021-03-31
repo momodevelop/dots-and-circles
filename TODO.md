@@ -1,6 +1,5 @@
 # Engine
-[] Live Looped Editing
-[] Message system in assets
+[] Change Assets_Allocate to standard init since trans state stuff is already in heap
 [] Animation
 [] Figure out animation format for game side
 [] Figure out animation asset format
