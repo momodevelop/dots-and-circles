@@ -13,16 +13,16 @@ enum atlas_context_type {
 struct atlas_context_image {
     atlas_context_type Type;
     const char* Filename;
-    game_asset_atlas_aabb_id Id;
-    game_asset_texture_id TextureId;
+    atlas_aabb_id Id;
+    texture_id TextureId;
     u8* Texture;
 };
 
 
 struct atlas_context_font {
     atlas_context_type Type;
-    game_asset_font_id FontId;
-    game_asset_texture_id TextureId;
+    font_id FontId;
+    texture_id TextureId;
     f32 RasterScale;
     u32 Codepoint;
     loaded_font* LoadedFont;

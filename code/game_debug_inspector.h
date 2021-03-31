@@ -42,7 +42,7 @@ DebugInspector_Begin(debug_inspector* Inspector) {
 static inline void 
 DebugInspector_End(debug_inspector* Inspector, 
                    mailbox* RenderCommands,
-                   game_assets* Assets) {
+                   assets* Assets) {
     if(!Inspector->IsActive)
         return;
     

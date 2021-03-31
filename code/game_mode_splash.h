@@ -23,7 +23,7 @@ struct splash_image_entity {
 
 static inline void
 Update(splash_image_entity* Entity, 
-       game_assets* Assets,
+       assets* Assets,
        mailbox* RenderCommands, 
        f32 DeltaTime) 
 {
@@ -44,8 +44,8 @@ Update(splash_image_entity* Entity,
     m44f S = M44f_Scale(Entity->Scale.X,
                         Entity->Scale.Y,
                         1.f);
-    game_asset_texture* Texture = GameAssets_GetTexture(Assets, Entity->TextureHandle);
-    game_asset_atlas_aabb* TextureAabb = Assets->AtlasAabbs + Entity->TextureAabb;
+    texture* Texture = Assets_GetTexture(Assets, Entity->TextureHandle);
+    atlas_aabb* TextureAabb = Assets->AtlasAabbs + Entity->TextureAabb;
     quad2f Uv = GetAtlasUV(Assets, TextureAabb);
     PushDrawTexturedQuad(RenderCommands, 
                          Entity->Colors, 
@@ -69,7 +69,7 @@ struct splash_blackout_entity {
 
 static inline void
 Update(splash_blackout_entity* Entity, 
-       game_assets* Assets, 
+       assets* Assets, 
        mailbox* RenderCommands,
        f32 DeltaTime) 
 {
@@ -145,7 +145,7 @@ UpdateSplashMode(permanent_state* PermState,
 {
     SwitchToGameCoords(RenderCommands);
     game_mode_splash* Mode = PermState->SplashMode;
-    game_assets* Assets = TranState->Assets;
+    assets* Assets = TranState->Assets;
     
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {

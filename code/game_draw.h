@@ -5,7 +5,7 @@
 
 static inline void
 DrawText(mailbox* RenderCommands, 
-         game_assets* Assets,
+         assets* Assets,
          font_id FontId,
          v3f Position,
          u8_cstr String,
@@ -13,11 +13,11 @@ DrawText(mailbox* RenderCommands,
          c4f Color = Color_White) 
 {
     v3f CurPosition = Position;
-    game_asset_font* Font = GameAssets_GetFont(Assets, FontId);
+    font* Font = Assets_GetFont(Assets, FontId);
     
     f32 ZLayerOffset = 0.f;
     for(u32 I = 0; I < String.Size; ++I) {
-        game_asset_font_glyph* Glyph = GameAssets_GetFontGlyph(Font, String.Data[I]);
+        font_glyph* Glyph = Font_GetGlyph(Font, String.Data[I]);
         aabb2f Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
@@ -40,14 +40,14 @@ DrawText(mailbox* RenderCommands,
         PushDrawTexturedQuad(RenderCommands, 
                              Color, 
                              TSA,
-                             GameAssets_GetTexture(Assets, Glyph->TextureId)->Handle,
+                             Assets_GetTexture(Assets, Glyph->TextureId)->Handle,
                              GetAtlasUV(Assets, Glyph));
         
         CurPosition.X += Glyph->Advance * Size;
         if (I != String.Size - 1 ) {
-            u32 Kerning = GameAssets_GetKerning(Font, 
-                                                String.Data[I], 
-                                                String.Data[I+1]);
+            u32 Kerning = Font_GetKerning(Font, 
+                                          String.Data[I], 
+                                          String.Data[I+1]);
             CurPosition.X += Kerning * Size;
             
         }

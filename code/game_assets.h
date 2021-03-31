@@ -2,18 +2,18 @@
 #define __GAME_ASSETS_H__
 
 // NOTE(Momo): Asset types
-struct game_asset_texture {
+struct texture {
     u32 Width, Height, Channels;
     renderer_texture_handle Handle;
 };
 
-struct game_asset_atlas_aabb {
+struct atlas_aabb {
     aabb2u Aabb;
     texture_id TextureId;
 };
 
 
-struct game_asset_font_glyph {
+struct font_glyph {
     aabb2u AtlasAabb;
     aabb2f Box; 
     texture_id TextureId;
@@ -21,75 +21,98 @@ struct game_asset_font_glyph {
     f32 LeftBearing;
 };
 
-struct game_asset_font {
+struct font {
     // NOTE(Momo): We cater for a fixed set of codepoints. 
     // ASCII 32 to 126 
     // Worry about sparseness next time.
     f32 LineGap;
     f32 Ascent;
     f32 Descent;
-    game_asset_font_glyph Glyphs[FontGlyph_Count];
+    font_glyph Glyphs[FontGlyph_Count];
     u32 Kernings[FontGlyph_Count][FontGlyph_Count];
 };
 
-struct game_assets {
-    game_asset_texture* Textures;
+struct assets {
+    texture* Textures;
     u32 TextureCount;
     
-    game_asset_atlas_aabb* AtlasAabbs;
+    atlas_aabb* AtlasAabbs;
     u32 AtlasAabbCount;
     
-    game_asset_font* Fonts;
+    font* Fonts;
     u32 FontCount;
 };
 
-
-static inline game_asset_font*
-GameAssets_GetFont(game_assets* Assets, font_id FontId) {
-    Assert(FontId < Font_Count);
-    return Assets->Fonts + FontId;
-}
-
-static inline game_asset_texture*
-GameAssets_GetTexture(game_assets* Assets, texture_id TextureId) {
-    Assert(TextureId < Texture_Count);
-    return Assets->Textures + TextureId;
-}
-
-static inline game_asset_atlas_aabb*
-GameAssets_GetAtlasAabb(game_assets* Assets, atlas_aabb_id AtlasAabbId) {
-    Assert(AtlasAabbId < AtlasAabb_Count);
-    return Assets->AtlasAabbs + AtlasAabbId;
-}
-
-static inline game_asset_font_glyph* 
-GameAssets_GetFontGlyph(game_asset_font* Font, u32 Codepoint) {
-    game_asset_font_glyph* Ret = Font->Glyphs + FontGlyph_CodepointToId(Codepoint);
-    return Ret;
+//~ NOTE(Momo): Font functions
+static inline f32 
+Font_GetHeight(font* Font) {
+    return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
 }
 
 static inline u32
-GameAssets_GetKerning(game_asset_font* Font, u32 CodepointA, u32 CodepointB) {
-    u32 IndexA = FontGlyph_CodepointToId(CodepointA);
-    u32 IndexB = FontGlyph_CodepointToId(CodepointB);
+Font_GetKerning(font* Font, u32 CodepointA, u32 CodepointB) {
+    Assert(CodepointA >= FontGlyph_CodepointStart);
+    Assert(CodepointA <= FontGlyph_CodepointEnd);
+    
+    Assert(CodepointB >= FontGlyph_CodepointStart);
+    Assert(CodepointB <= FontGlyph_CodepointEnd);
+    u32 IndexA = CodepointA - FontGlyph_CodepointStart;
+    u32 IndexB = CodepointB - FontGlyph_CodepointStart;
     u32 Ret = Font->Kernings[IndexA][IndexB];
     
     return Ret;
 }
 
-
-
-static inline f32 
-GameAssets_GetFontHeight(game_asset_font* Font) {
-    return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
+static inline void
+Font_SetKerning(font* Font, u32 CodepointA, u32 CodepointB, u32 Kerning) {
+    Assert(CodepointA >= FontGlyph_CodepointStart);
+    Assert(CodepointA <= FontGlyph_CodepointEnd);
+    
+    Assert(CodepointB >= FontGlyph_CodepointStart);
+    Assert(CodepointB <= FontGlyph_CodepointEnd);
+    
+    u32 IndexA = CodepointA - FontGlyph_CodepointStart;
+    u32 IndexB = CodepointB - FontGlyph_CodepointStart;
+    Font->Kernings[IndexA][IndexB] = Kerning;
+    
 }
+
+static inline font_glyph* 
+Font_GetGlyph(font* Font, u32 Codepoint) {
+    Assert(Codepoint >= FontGlyph_CodepointStart);
+    Assert(Codepoint <= FontGlyph_CodepointEnd);
+    u32 Index = Codepoint - FontGlyph_CodepointStart;
+    font_glyph* Ret = Font->Glyphs + Index;
+    
+    return Ret;
+}
+
+//~ NOTE(Momo): Asset functions
+static inline font*
+Assets_GetFont(assets* Assets, font_id FontId) {
+    Assert(FontId < Font_Count);
+    return Assets->Fonts + FontId;
+}
+
+static inline texture*
+Assets_GetTexture(assets* Assets, texture_id TextureId) {
+    Assert(TextureId < Texture_Count);
+    return Assets->Textures + TextureId;
+}
+
+static inline atlas_aabb*
+Assets_GetAtlasAabb(assets* Assets, atlas_aabb_id AtlasAabbId) {
+    Assert(AtlasAabbId < AtlasAabb_Count);
+    return Assets->AtlasAabbs + AtlasAabbId;
+}
+
 
 
 // TODO: Maybe we should just pass in ID instead of pointer.
 // Should be waaaay cleaner
 static inline quad2f
-GetAtlasUV(game_assets* Assets, 
-           game_asset_atlas_aabb* AtlasAabb) 
+GetAtlasUV(assets* Assets, 
+           atlas_aabb* AtlasAabb) 
 {
     auto Texture = Assets->Textures[AtlasAabb->TextureId];
     aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
@@ -98,8 +121,8 @@ GetAtlasUV(game_assets* Assets,
 }
 
 static inline quad2f
-GetAtlasUV(game_assets* Assets, 
-           game_asset_font_glyph* Glyph) {
+GetAtlasUV(assets* Assets, 
+           font_glyph* Glyph) {
     auto Texture = Assets->Textures[Glyph->TextureId];
     aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
     aabb2f NormalizedAabb = Aabb2u_Ratio(Glyph->AtlasAabb, TextureAabb);
@@ -162,7 +185,7 @@ ReadCopy(platform_file_handle* File,
     return *Ret;
 }
 
-static inline game_assets*
+static inline assets*
 AllocateAssets(arena* Arena,
                platform_api* Platform) 
 {
@@ -181,16 +204,16 @@ return nullptr; \
     
     Platform->ClearTexturesFp();
     
-    game_assets* Ret = Arena_PushStruct(game_assets, Arena);
+    assets* Ret = Arena_PushStruct(assets, Arena);
     
     Ret->TextureCount = Texture_Count;
-    Ret->Textures = Arena_PushArray(game_asset_texture, Arena, Texture_Count);
+    Ret->Textures = Arena_PushArray(texture, Arena, Texture_Count);
     
     Ret->AtlasAabbCount = AtlasAabb_Count;
-    Ret->AtlasAabbs = Arena_PushArray(game_asset_atlas_aabb, Arena, AtlasAabb_Count);
+    Ret->AtlasAabbs = Arena_PushArray(atlas_aabb, Arena, AtlasAabb_Count);
     
     Ret->FontCount = Font_Count;
-    Ret->Fonts = Arena_PushArray(game_asset_font, Arena, Font_Count);
+    Ret->Fonts = Arena_PushArray(font, Arena, Font_Count);
     
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
@@ -235,16 +258,16 @@ return nullptr; \
         Defer{ Arena_Revert(&Scratch); };
         
         // NOTE(Momo): Read header
-        auto* FileEntry = Read<game_asset_file_entry>(&AssetFile,
-                                                      Platform,
-                                                      Scratch.Arena,
-                                                      &CurFileOffset);
+        auto* FileEntry = Read<asset_file_entry>(&AssetFile,
+                                                 Platform,
+                                                 Scratch.Arena,
+                                                 &CurFileOffset);
         CheckPtr(FileEntry);
         CheckFile(AssetFile);
         
         switch(FileEntry->Type) {
             case AssetType_Texture: {
-                using data_t = game_asset_file_texture;
+                using data_t = asset_file_texture;
                 auto* FileTexture = Read<data_t>(&AssetFile, 
                                                  Platform, 
                                                  Scratch.Arena,
@@ -278,7 +301,7 @@ return nullptr; \
                 }
             } break;
             case AssetType_AtlasAabb: { 
-                using data_t = game_asset_file_atlas_aabb;
+                using data_t = asset_file_atlas_aabb;
                 auto* FileAtlasAabb = Read<data_t>(&AssetFile, 
                                                    Platform, 
                                                    Scratch.Arena,
@@ -291,7 +314,7 @@ return nullptr; \
                 AtlasAabb->TextureId = FileAtlasAabb->TextureId;
             } break;
             case AssetType_Font: {
-                using data_t = game_asset_file_font;
+                using data_t = asset_file_font;
                 auto* FileFont = Read<data_t>(&AssetFile,
                                               Platform,
                                               Scratch.Arena,
@@ -305,7 +328,7 @@ return nullptr; \
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                using data_t = game_asset_file_font_glyph;
+                using data_t = asset_file_font_glyph;
                 auto* FileFontGlyph = Read<data_t>(&AssetFile,
                                                    Platform,
                                                    Scratch.Arena,
@@ -313,9 +336,8 @@ return nullptr; \
                 CheckPtr(FileFontGlyph);
                 CheckFile(AssetFile);
                 
-                auto* Font = Ret->Fonts + FileFontGlyph->FontId;
-                u32 GlyphIndex = FontGlyph_CodepointToId(FileFontGlyph->Codepoint);
-                auto* Glyph = Font->Glyphs + GlyphIndex;
+                font* Font = Assets_GetFont(Ret, FileFontGlyph->FontId);
+                font_glyph* Glyph = Font_GetGlyph(Font, FileFontGlyph->Codepoint);
                 
                 Glyph->AtlasAabb = FileFontGlyph->AtlasAabb;
                 Glyph->TextureId = FileFontGlyph->TextureId;
@@ -324,17 +346,18 @@ return nullptr; \
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                using data_t = game_asset_file_font_kerning;
+                using data_t = asset_file_font_kerning;
                 auto* FileFontKerning = Read<data_t>(&AssetFile,
                                                      Platform,
                                                      Scratch.Arena,
                                                      &CurFileOffset);
                 CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
-                game_asset_font* Font = Ret->Fonts + FileFontKerning->FontId;
-                u32 HashedCpA = FontGlyph_CodepointToId(FileFontKerning->CodepointA);
-                u32 HashedCpB = FontGlyph_CodepointToId(FileFontKerning->CodepointB);
-                Font->Kernings[HashedCpA][HashedCpB] = FileFontKerning->Kerning;
+                font* Font = Assets_GetFont(Ret, FileFontKerning->FontId);
+                Font_SetKerning(Font, 
+                                FileFontKerning->CodepointA, 
+                                FileFontKerning->CodepointB,
+                                FileFontKerning->Kerning);
                 
             } break;
             case AssetType_Sound: {

@@ -61,8 +61,8 @@ struct wave {
 
 struct player {
     // NOTE(Momo): Rendering
-    game_asset_atlas_aabb* DotImageAabb;
-    game_asset_atlas_aabb* CircleImageAabb;
+    atlas_aabb* DotImageAabb;
+    atlas_aabb* CircleImageAabb;
     f32 DotImageAlpha;
     f32 DotImageAlphaTarget;
     f32 DotImageTransitionTimer;
@@ -86,7 +86,7 @@ struct player {
 
 struct bullet {
     // TODO(Momo): remove this?
-	game_asset_atlas_aabb* ImageAabb;
+	atlas_aabb* ImageAabb;
 	v2f Size;
     mood_type MoodType;
     v2f Direction;
@@ -96,7 +96,7 @@ struct bullet {
 };
 
 struct enemy {
-    game_asset_atlas_aabb* ImageAabb;
+    atlas_aabb* ImageAabb;
 	v2f Size; 
 	v2f Position;
     enemy_firing_pattern_type FiringPatternType;
@@ -135,7 +135,7 @@ struct game_mode_main {
 
 static inline void
 SpawnEnemy(game_mode_main* Mode, 
-           game_assets* Assets, 
+           assets* Assets, 
            v2f Position,
            enemy_mood_pattern_type MoodPatternType,
            enemy_firing_pattern_type FiringPatternType, 
@@ -164,7 +164,7 @@ SpawnEnemy(game_mode_main* Mode,
 
 
 static inline void
-SpawnBullet(game_mode_main* Mode, game_assets* Assets, v2f Position, v2f Direction, f32 Speed, mood_type Mood) {
+SpawnBullet(game_mode_main* Mode, assets* Assets, v2f Position, v2f Direction, f32 Speed, mood_type Mood) {
     bullet Bullet = {}; 
     Bullet.Position = Position;
 	Bullet.Speed = Speed;
@@ -217,7 +217,7 @@ InitMainMode(permanent_state* PermState,
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
     
-    game_assets* Assets = TranState->Assets;
+    assets* Assets = TranState->Assets;
     player* Player = &Mode->Player;
     Player->Speed = 300.f;
     Player->DotImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
@@ -319,7 +319,7 @@ UpdateBullets(game_mode_main* Mode,
 
 static inline void 
 UpdateEnemies(game_mode_main* Mode,
-              game_assets* Assets,
+              assets* Assets,
               f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
@@ -417,7 +417,7 @@ UpdateCollision(game_mode_main* Mode)
 
 static inline void
 UpdateWaves(game_mode_main* Mode, 
-            game_assets* Assets,
+            assets* Assets,
             f32 DeltaTime) 
 {
     if (Mode->Wave.IsDone) {
@@ -532,37 +532,46 @@ UpdateInput(game_mode_main* Mode,
 
 static inline void 
 RenderPlayer(game_mode_main* Mode,
-             game_assets* Assets,
+             assets* Assets,
              mailbox* RenderCommands) 
 {
     player* Player = &Mode->Player;
     m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
     
-    m44f T = M44f_Translation(Player->Position.X,
-                              Player->Position.Y,
-                              ZLayPlayer);
-    auto* Texture = GameAssets_GetTexture(Assets, Player->CircleImageAabb->TextureId);
-    PushDrawTexturedQuad(RenderCommands, 
-                         Color_White, 
-                         M44f_Concat(T,S),
-                         Texture->Handle,
-                         GetAtlasUV(Assets, Player->CircleImageAabb));
+    {
+        m44f T = M44f_Translation(Player->Position.X,
+                                  Player->Position.Y,
+                                  ZLayPlayer);
+        
+        texture* Texture = Assets_GetTexture(Assets, 
+                                             Player->CircleImageAabb->TextureId);
+        
+        PushDrawTexturedQuad(RenderCommands, 
+                             Color_White, 
+                             M44f_Concat(T,S),
+                             Texture->Handle,
+                             GetAtlasUV(Assets, Player->CircleImageAabb));
+    }
     
-    
-    T = M44f_Translation(Player->Position.X,
-                         Player->Position.Y,
-                         ZLayPlayer + 0.01f);
-    PushDrawTexturedQuad(RenderCommands, 
-                         C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha), 
-                         M44f_Concat(T,S), 
-                         GameAssets_GetTexture(Assets, Player->DotImageAabb->TextureId)->Handle,
-                         GetAtlasUV(Assets, Player->DotImageAabb));
-    
+    {
+        m44f T = M44f_Translation(Player->Position.X,
+                                  Player->Position.Y,
+                                  ZLayPlayer + 0.01f);
+        
+        texture* Texture = Assets_GetTexture(Assets, 
+                                             Player->DotImageAabb->TextureId);
+        
+        PushDrawTexturedQuad(RenderCommands, 
+                             C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha), 
+                             M44f_Concat(T,S), 
+                             Texture->Handle,
+                             GetAtlasUV(Assets, Player->DotImageAabb));
+    }
 }
 
 static inline void
 RenderBullets(game_mode_main* Mode,
-              game_assets* Assets,
+              assets* Assets,
               mailbox* RenderCommands) 
 {
     // Bullet Rendering.
@@ -572,8 +581,8 @@ RenderBullets(game_mode_main* Mode,
     // Render Dots
     {
         f32 LayerOffset = 0.f;
-        game_asset_atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletDot;
-        game_asset_texture* Texture = Assets->Textures + AtlasAabb->TextureId;
+        atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletDot;
+        texture* Texture = Assets->Textures + AtlasAabb->TextureId;
         for (u32 I = 0; I < Mode->DotBulletCount; ++I) {
             bullet* DotBullet = Mode->DotBullets + I;
             m44f S = M44f_Scale(DotBullet->Size.X, 
@@ -599,8 +608,8 @@ RenderBullets(game_mode_main* Mode,
     // Render Circles
     {
         f32 LayerOffset = 0.f;
-        game_asset_atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletCircle;
-        game_asset_texture* Texture = Assets->Textures + AtlasAabb->TextureId;
+        atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletCircle;
+        texture* Texture = Assets->Textures + AtlasAabb->TextureId;
         for (u32 I = 0; I < Mode->CircleBulletCount; ++I) {
             bullet* CircleBullet = Mode->CircleBullets + I;
             m44f S = M44f_Scale(CircleBullet->Size.X, 
@@ -629,7 +638,7 @@ RenderBullets(game_mode_main* Mode,
 
 static inline void
 RenderEnemies(game_mode_main* Mode, 
-              game_assets* Assets,
+              assets* Assets,
               mailbox* RenderCommands) 
 {
     for(u32 I = 0; I < Mode->EnemyCount; ++I )
@@ -639,10 +648,12 @@ RenderEnemies(game_mode_main* Mode,
         m44f T = M44f_Translation(Enemy->Position.X,
                                   Enemy->Position.Y,
                                   ZLayEnemy);
+        
+        texture* Texture = Assets_GetTexture(Assets, Enemy->ImageAabb->TextureId);
         PushDrawTexturedQuad(RenderCommands,
                              Color_White,
                              M44f_Concat(T,S),
-                             GameAssets_GetTexture(Assets, Enemy->ImageAabb->TextureId)->Handle,
+                             Texture->Handle,
                              GetAtlasUV(Assets, Enemy->ImageAabb));
     }
 }
@@ -660,7 +671,7 @@ UpdateMainMode(permanent_state* PermState,
     game_mode_main* Mode = PermState->MainMode;
     PushClearColor(RenderCommands, C4f_Create(0.15f, 0.15f, 0.15f, 1.f));
     
-    game_assets* Assets = TranState->Assets;
+    assets* Assets = TranState->Assets;
     UpdateInput(Mode, Input);
     UpdatePlayer(Mode, DeltaTime);    
     UpdateBullets(Mode, DeltaTime);

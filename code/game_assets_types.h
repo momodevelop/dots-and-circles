@@ -9,18 +9,13 @@ enum texture_id {
     
     Texture_Count,
 };
+// NOTE(Momo): We cater for a fixed set of codepoints. 
+// ASCII 32 to 126 
+// Worry about sparseness next time.
 
 #define FontGlyph_CodepointStart 32
 #define FontGlyph_CodepointEnd 126
 #define FontGlyph_Count FontGlyph_CodepointEnd - FontGlyph_CodepointStart
-
-static inline u32
-FontGlyph_CodepointToId(u32 Codepoint) {
-    Assert(Codepoint >= FontGlyph_CodepointStart);
-    Assert(Codepoint <= FontGlyph_CodepointEnd);
-    return Codepoint - FontGlyph_CodepointStart;
-}
-
 
 enum sound_id {
     Sound_Test,
@@ -70,11 +65,11 @@ enum asset_type {
 
 // NOTE(Momo): asset pack file structures
 #pragma pack(push, 1)
-struct game_asset_file_entry {
+struct asset_file_entry {
     asset_type Type;
 };
 
-struct game_asset_file_texture {
+struct asset_file_texture {
     texture_id Id;
     u32 Width;
     u32 Height;
@@ -84,7 +79,7 @@ struct game_asset_file_texture {
     
 };
 
-struct game_asset_file_atlas_aabb {
+struct asset_file_atlas_aabb {
     atlas_aabb_id Id;
     texture_id TextureId;
     
@@ -92,14 +87,14 @@ struct game_asset_file_atlas_aabb {
     
 };
 
-struct game_asset_file_font {
+struct asset_file_font {
     font_id Id;
     f32 Ascent;
     f32 Descent;
     f32 LineGap;
 };
 
-struct game_asset_file_font_glyph {
+struct asset_file_font_glyph {
     font_id FontId;
     texture_id TextureId;
     u32 Codepoint;
@@ -110,14 +105,14 @@ struct game_asset_file_font_glyph {
     
 };
 
-struct game_asset_file_font_kerning {
+struct asset_file_font_kerning {
     font_id FontId;
     i32 Kerning;
     u32 CodepointA;
     u32 CodepointB;
 };
 
-struct game_asset_file_sound {
+struct asset_file_sound {
     sound_id SoundId;
     // TODO(Momo): What is sound made of?
     

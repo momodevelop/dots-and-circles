@@ -34,7 +34,7 @@ Tab_AssetBuilderEnd(tab_asset_builder* Context) {
 
 static inline void
 Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, game_asset_type AssetType) {
-    game_asset_file_entry Entry = {};
+    asset_file_entry Entry = {};
     Entry.Type = AssetType;
     fwrite(&Entry, sizeof(Entry),  1, Context->File);
     ++Context->EntryCount;
@@ -42,7 +42,7 @@ Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, game_asset_type AssetType
 
 static inline void 
 Tab_AssetBuilderWriteTexture(tab_asset_builder* Context, 
-                             game_asset_texture_id Id, 
+                             texture_id Id, 
                              u32 Width, 
                              u32 Height, 
                              u32 Channels, 
@@ -50,7 +50,7 @@ Tab_AssetBuilderWriteTexture(tab_asset_builder* Context,
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_Texture);
     
-    game_asset_file_texture Texture = {};
+    asset_file_texture Texture = {};
     Texture.Id = Id;
     Texture.Width = Width;
     Texture.Height = Height;
@@ -67,7 +67,7 @@ Tab_AssetBuilderWriteTexture(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context, 
-                                     game_asset_texture_id Id, 
+                                     texture_id Id, 
                                      const char* Filename) 
 {
     u32 Width = 0, Height = 0, Channels = 0;
@@ -88,13 +88,13 @@ Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context, 
-                               game_asset_atlas_aabb_id Id, 
-                               game_asset_texture_id TargetTextureId, 
+                               atlas_aabb_id Id, 
+                               texture_id TargetTextureId, 
                                aabb2u Aabb) 
 {
     Tab_AssetBuilderWriteEntry(Context,  AssetType_AtlasAabb);
     
-    game_asset_file_atlas_aabb AtlasAabb = {};
+    asset_file_atlas_aabb AtlasAabb = {};
     AtlasAabb.Id = Id;
     AtlasAabb.TextureId = TargetTextureId;
     AtlasAabb.Aabb = Aabb;
@@ -104,14 +104,14 @@ Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context,
 
 static inline void
 Tab_AssetBuilderWriteFont(tab_asset_builder* Context, 
-                          game_asset_font_id Id, 
+                          font_id Id, 
                           f32 Ascent, 
                           f32 Descent, 
                           f32 LineGap) 
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_Font);
     
-    game_asset_file_font Font = {};
+    asset_file_font Font = {};
     Font.Id = Id;
     Font.Ascent = Ascent;
     Font.Descent = Descent;
@@ -121,8 +121,8 @@ Tab_AssetBuilderWriteFont(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context, 
-                               game_asset_font_id FontId, 
-                               game_asset_texture_id TargetTextureId, 
+                               font_id FontId, 
+                               texture_id TargetTextureId, 
                                u32 Codepoint, 
                                f32 Advance, 
                                f32 LeftBearing, 
@@ -131,7 +131,7 @@ Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context,
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
     
-    game_asset_file_font_glyph FontGlyph = {};
+    asset_file_font_glyph FontGlyph = {};
     FontGlyph.FontId = FontId;
     FontGlyph.TextureId = TargetTextureId;
     FontGlyph.Codepoint = Codepoint;
@@ -145,14 +145,14 @@ Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context,
 
 static inline void 
 Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context, 
-                                 game_asset_font_id FontId, 
+                                 font_id FontId, 
                                  u32 CodepointA,
                                  u32 CodepointB, 
                                  i32 Kerning) 
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_FontKerning);
     
-    game_asset_file_font_kerning Font = {};
+    asset_file_font_kerning Font = {};
     Font.FontId = FontId;
     Font.Kerning = Kerning;
     Font.CodepointA = CodepointA;
@@ -170,7 +170,7 @@ Tab_AssetBuilderWriteSound(tab_asset_builder* Context,
 {
     Tab_AssetBuilderWriteEntry(Context, AssetType_Sound);
     
-    game_asset_file_sound Sound = {};
+    asset_file_sound Sound = {};
     Sound.SoundId = SoundId;
     
     

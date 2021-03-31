@@ -222,18 +222,18 @@ DebugConsole_Update(debug_console* Console,
 static inline void
 DebugConsole_Render(debug_console* Console, 
                     mailbox* RenderCommands,
-                    game_assets* Assets) 
+                    assets* Assets) 
 {
     if (Timer_IsBegin(Console->TransitTimer)) {
         return;
     }
-    game_asset_font* Font = Assets->Fonts + Font_Default;
+    font* Font = Assets->Fonts + Font_Default;
     v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
     f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);
     f32 FontSize = LineHeight * 0.9f;
-    f32 FontHeight = GameAssets_GetFontHeight(Font) * FontSize;
+    f32 FontHeight = Font_GetHeight(Font) * FontSize;
     
     f32 PaddingHeight =
         (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 

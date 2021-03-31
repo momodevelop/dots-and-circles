@@ -45,7 +45,7 @@ Debug_UnhookAllVariables(debug_state* State) {
 
 static inline void
 Debug_Render(debug_state* State,
-             game_assets* Assets,
+             assets* Assets,
              mailbox* RenderCommands) 
 
 {
