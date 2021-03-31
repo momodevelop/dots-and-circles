@@ -233,7 +233,7 @@ DebugConsole_Render(debug_console* Console,
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
     f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);
     f32 FontSize = LineHeight * 0.9f;
-    f32 FontHeight = Assets_FontHeight(Font) * FontSize;
+    f32 FontHeight = GameAssets_GetFontHeight(Font) * FontSize;
     
     f32 PaddingHeight =
         (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 

@@ -68,7 +68,7 @@ int main() {
         { AtlasContextType_Image, "assets/bullet_circle.png", AtlasAabb_BulletCircle, Texture_AtlasDefault },
         { AtlasContextType_Image, "assets/enemy.png", AtlasAabb_Enemy, Texture_AtlasDefault },
     };
-    atlas_context_font AtlasFontContexts[Codepoint_Count];
+    atlas_context_font AtlasFontContexts[FontGlyph_Count];
     
     const u32 AabbCount = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
     
@@ -94,7 +94,7 @@ int main() {
         atlas_context_font* Font = AtlasFontContexts + I;
         Font->Type = AtlasContextType_Font;
         Font->LoadedFont = &LoadedFont;
-        Font->Codepoint = Codepoint_Start + I;
+        Font->Codepoint = FontGlyph_CodepointStart + I;
         Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
         Font->FontId = Font_Default;
         Font->TextureId = Texture_AtlasDefault;
@@ -221,8 +221,14 @@ int main() {
                                   Descent * FontPixelScale, 
                                   LineGap * FontPixelScale); 
         
-        for (u32 i = Codepoint_Start; i <= Codepoint_End; ++i) {
-            for(u32 j = Codepoint_Start; j <= Codepoint_End; ++j) {
+        for (u32 i = FontGlyph_CodepointStart;
+             i <= FontGlyph_CodepointEnd; 
+             ++i) 
+        {
+            for(u32 j = FontGlyph_CodepointStart;
+                j <= FontGlyph_CodepointEnd; 
+                ++j) 
+            {
                 i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
                 Tab_AssetBuilderWriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }

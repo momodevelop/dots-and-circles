@@ -9,8 +9,8 @@ struct splash_image_entity {
     v3f Position;
     c4f Colors;
     
-    game_asset_texture_id TextureHandle;
-    game_asset_atlas_aabb_id TextureAabb;
+    texture_id TextureHandle;
+    atlas_aabb_id TextureAabb;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -44,7 +44,7 @@ Update(splash_image_entity* Entity,
     m44f S = M44f_Scale(Entity->Scale.X,
                         Entity->Scale.Y,
                         1.f);
-    game_asset_texture* Texture = GetTexture(Assets, Entity->TextureHandle);
+    game_asset_texture* Texture = GameAssets_GetTexture(Assets, Entity->TextureHandle);
     game_asset_atlas_aabb* TextureAabb = Assets->AtlasAabbs + Entity->TextureAabb;
     quad2f Uv = GetAtlasUV(Assets, TextureAabb);
     PushDrawTexturedQuad(RenderCommands, 

@@ -541,7 +541,7 @@ RenderPlayer(game_mode_main* Mode,
     m44f T = M44f_Translation(Player->Position.X,
                               Player->Position.Y,
                               ZLayPlayer);
-    auto* Texture = GetTexture(Assets, Player->CircleImageAabb->TextureId);
+    auto* Texture = GameAssets_GetTexture(Assets, Player->CircleImageAabb->TextureId);
     PushDrawTexturedQuad(RenderCommands, 
                          Color_White, 
                          M44f_Concat(T,S),
@@ -555,7 +555,7 @@ RenderPlayer(game_mode_main* Mode,
     PushDrawTexturedQuad(RenderCommands, 
                          C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha), 
                          M44f_Concat(T,S), 
-                         GetTexture(Assets, Player->DotImageAabb->TextureId)->Handle,
+                         GameAssets_GetTexture(Assets, Player->DotImageAabb->TextureId)->Handle,
                          GetAtlasUV(Assets, Player->DotImageAabb));
     
 }
@@ -642,7 +642,7 @@ RenderEnemies(game_mode_main* Mode,
         PushDrawTexturedQuad(RenderCommands,
                              Color_White,
                              M44f_Concat(T,S),
-                             GetTexture(Assets, Enemy->ImageAabb->TextureId)->Handle,
+                             GameAssets_GetTexture(Assets, Enemy->ImageAabb->TextureId)->Handle,
                              GetAtlasUV(Assets, Enemy->ImageAabb));
     }
 }

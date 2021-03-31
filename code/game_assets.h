@@ -9,14 +9,14 @@ struct game_asset_texture {
 
 struct game_asset_atlas_aabb {
     aabb2u Aabb;
-    game_asset_texture_id TextureId;
+    texture_id TextureId;
 };
 
 
 struct game_asset_font_glyph {
     aabb2u AtlasAabb;
     aabb2f Box; 
-    game_asset_texture_id TextureId;
+    texture_id TextureId;
     f32 Advance;
     f32 LeftBearing;
 };
@@ -28,27 +28,11 @@ struct game_asset_font {
     f32 LineGap;
     f32 Ascent;
     f32 Descent;
-    game_asset_font_glyph Glyphs[Codepoint_Count];
-    u32 Kernings[Codepoint_Count][Codepoint_Count];
+    game_asset_font_glyph Glyphs[FontGlyph_Count];
+    u32 Kernings[FontGlyph_Count][FontGlyph_Count];
 };
 
-static inline usize
-HashCodepoint(u32 Codepoint) {
-    Assert(Codepoint >= Codepoint_Start);
-    Assert(Codepoint <= Codepoint_End);
-    return Codepoint - Codepoint_Start;
-}
-
-static inline f32 
-Assets_FontHeight(game_asset_font* Font) {
-    return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
-}
-
-
 struct game_assets {
-    // TODO: remove?
-    arena Arena;
-    
     game_asset_texture* Textures;
     u32 TextureCount;
     
@@ -58,6 +42,47 @@ struct game_assets {
     game_asset_font* Fonts;
     u32 FontCount;
 };
+
+
+static inline game_asset_font*
+GameAssets_GetFont(game_assets* Assets, font_id FontId) {
+    Assert(FontId < Font_Count);
+    return Assets->Fonts + FontId;
+}
+
+static inline game_asset_texture*
+GameAssets_GetTexture(game_assets* Assets, texture_id TextureId) {
+    Assert(TextureId < Texture_Count);
+    return Assets->Textures + TextureId;
+}
+
+static inline game_asset_atlas_aabb*
+GameAssets_GetAtlasAabb(game_assets* Assets, atlas_aabb_id AtlasAabbId) {
+    Assert(AtlasAabbId < AtlasAabb_Count);
+    return Assets->AtlasAabbs + AtlasAabbId;
+}
+
+static inline game_asset_font_glyph* 
+GameAssets_GetFontGlyph(game_asset_font* Font, u32 Codepoint) {
+    game_asset_font_glyph* Ret = Font->Glyphs + FontGlyph_CodepointToId(Codepoint);
+    return Ret;
+}
+
+static inline u32
+GameAssets_GetKerning(game_asset_font* Font, u32 CodepointA, u32 CodepointB) {
+    u32 IndexA = FontGlyph_CodepointToId(CodepointA);
+    u32 IndexB = FontGlyph_CodepointToId(CodepointB);
+    u32 Ret = Font->Kernings[IndexA][IndexB];
+    
+    return Ret;
+}
+
+
+
+static inline f32 
+GameAssets_GetFontHeight(game_asset_font* Font) {
+    return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
+}
 
 
 // TODO: Maybe we should just pass in ID instead of pointer.
@@ -81,16 +106,6 @@ GetAtlasUV(game_assets* Assets,
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
 
-
-static inline game_asset_texture*
-GetTexture(game_assets* Assets, game_asset_texture_id TextureId) {
-    return &Assets->Textures[TextureId];
-}
-
-static inline game_asset_font*
-GetFont(game_assets* Assets, game_asset_font_id FontId) {
-    return &Assets->Fonts[FontId];
-}
 
 static inline b32
 CheckAssetSignature(void* Memory, u8_cstr Signature) {
@@ -299,7 +314,7 @@ return nullptr; \
                 CheckFile(AssetFile);
                 
                 auto* Font = Ret->Fonts + FileFontGlyph->FontId;
-                usize GlyphIndex = HashCodepoint(FileFontGlyph->Codepoint);
+                u32 GlyphIndex = FontGlyph_CodepointToId(FileFontGlyph->Codepoint);
                 auto* Glyph = Font->Glyphs + GlyphIndex;
                 
                 Glyph->AtlasAabb = FileFontGlyph->AtlasAabb;
@@ -317,8 +332,8 @@ return nullptr; \
                 CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
                 game_asset_font* Font = Ret->Fonts + FileFontKerning->FontId;
-                usize HashedCpA = HashCodepoint(FileFontKerning->CodepointA);
-                usize HashedCpB = HashCodepoint(FileFontKerning->CodepointB);
+                u32 HashedCpA = FontGlyph_CodepointToId(FileFontKerning->CodepointA);
+                u32 HashedCpB = FontGlyph_CodepointToId(FileFontKerning->CodepointB);
                 Font->Kernings[HashedCpA][HashedCpB] = FileFontKerning->Kerning;
                 
             } break;
