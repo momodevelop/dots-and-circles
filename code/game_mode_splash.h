@@ -145,7 +145,7 @@ UpdateSplashMode(permanent_state* PermState,
 {
     SwitchToGameCoords(RenderCommands);
     game_mode_splash* Mode = PermState->SplashMode;
-    assets* Assets = TranState->Assets;
+    assets* Assets = &TranState->Assets;
     
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {

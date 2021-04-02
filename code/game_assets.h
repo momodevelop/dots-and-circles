@@ -164,9 +164,10 @@ Assets_ReadBlock(platform_file_handle* File,
 #define Assets_ReadStruct(Type, File, Platform, Arena, FileOffset) \
 (Type*)Assets_ReadBlock(File, Platform, Arena, FileOffset, sizeof(Type), alignof(Type))
 
-static inline assets*
-Assets_Allocate(arena* Arena,
-                platform_api* Platform) 
+static inline b32
+Assets_Create(assets* Assets,
+              arena* Arena,
+              platform_api* Platform) 
 {
 #define CheckFile(Handle) \
 if (Handle.Error) { \
@@ -183,16 +184,14 @@ return False; \
     
     Platform->ClearTexturesFp();
     
-    assets* Ret = Arena_PushStruct(assets, Arena);
+    Assets->TextureCount = Texture_Count;
+    Assets->Textures = Arena_PushArray(texture, Arena, Texture_Count);
     
-    Ret->TextureCount = Texture_Count;
-    Ret->Textures = Arena_PushArray(texture, Arena, Texture_Count);
+    Assets->AtlasAabbCount = AtlasAabb_Count;
+    Assets->AtlasAabbs = Arena_PushArray(atlas_aabb, Arena, AtlasAabb_Count);
     
-    Ret->AtlasAabbCount = AtlasAabb_Count;
-    Ret->AtlasAabbs = Arena_PushArray(atlas_aabb, Arena, AtlasAabb_Count);
-    
-    Ret->FontCount = Font_Count;
-    Ret->Fonts = Arena_PushArray(font, Arena, Font_Count);
+    Assets->FontCount = Font_Count;
+    Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
     
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
@@ -219,7 +218,7 @@ return False; \
         
         if (!Assets_CheckSignature(ReadSignature, Signature)) {
             Platform->LogFp("[Assets] Wrong asset signature\n");
-            return nullptr;
+            return False;
         }
         
         // Get File Entry
@@ -248,7 +247,6 @@ return False; \
         
         switch(FileEntry->Type) {
             case AssetType_Texture: {
-                using data_t = asset_file_texture;
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile, 
                                                       Platform, 
@@ -258,7 +256,7 @@ return False; \
                 CheckPtr(FileTexture);
                 CheckFile(AssetFile);
                 
-                texture* Texture = Ret->Textures + FileTexture->Id;
+                texture* Texture = Assets->Textures + FileTexture->Id;
                 Texture->Width = FileTexture->Width;
                 Texture->Height = FileTexture->Height;
                 Texture->Channels = FileTexture->Channels;
@@ -292,7 +290,7 @@ return False; \
                 CheckPtr(FileAtlasAabb);
                 CheckFile(AssetFile);
                 
-                auto* AtlasAabb = Ret->AtlasAabbs + FileAtlasAabb->Id;
+                auto* AtlasAabb = Assets->AtlasAabbs + FileAtlasAabb->Id;
                 AtlasAabb->Aabb = FileAtlasAabb->Aabb;
                 AtlasAabb->TextureId = FileAtlasAabb->TextureId;
             } break;
@@ -305,7 +303,7 @@ return False; \
                 CheckPtr(FileFont);
                 CheckFile(AssetFile);
                 
-                auto* Font = Ret->Fonts + FileFont->Id;
+                auto* Font = Assets->Fonts + FileFont->Id;
                 Font->LineGap = FileFont->LineGap;
                 Font->Ascent = FileFont->Ascent;
                 Font->Descent = FileFont->Descent;
@@ -319,7 +317,7 @@ return False; \
                 CheckPtr(FileFontGlyph);
                 CheckFile(AssetFile);
                 
-                font* Font = Assets_GetFont(Ret, FileFontGlyph->FontId);
+                font* Font = Assets_GetFont(Assets, FileFontGlyph->FontId);
                 font_glyph* Glyph = Font_GetGlyph(Font, FileFontGlyph->Codepoint);
                 
                 Glyph->AtlasAabb = FileFontGlyph->AtlasAabb;
@@ -336,7 +334,7 @@ return False; \
                                                           &CurFileOffset);
                 CheckPtr(FileFontKerning);
                 CheckFile(AssetFile);
-                font* Font = Assets_GetFont(Ret, FileFontKerning->FontId);
+                font* Font = Assets_GetFont(Assets, FileFontKerning->FontId);
                 Font_SetKerning(Font, 
                                 FileFontKerning->CodepointA, 
                                 FileFontKerning->CodepointB,
@@ -344,10 +342,10 @@ return False; \
                 
             } break;
             case AssetType_Sound: {
-                
+                return False;
             } break;
             default: {
-                Assert(false);
+                return False;
             } break;
             
             
@@ -355,8 +353,7 @@ return False; \
     }
     
     
-    
-    return Ret;
+    return True;
     
 #undef CheckFile
 #undef CheckPtr

@@ -87,12 +87,18 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->TransientMemory, 
                                        GameMemory->TransientMemorySize);
         
-        TranState->Assets = Assets_Allocate(&TranState->Arena, 
+#if 0
+        TranState->Assets = Assets_Allocate(&TranState->Arena,
                                             Platform);
-        Assert(TranState->Assets);
+#else
+        b32 Success = Assets_Create(&TranState->Assets,
+                                    &TranState->Arena,
+                                    Platform);
+#endif
+        Assert(Success);
         
         
-        TranState->IsInitialized = true;
+        TranState->IsInitialized = True;
     }
     
     if (!DebugState->IsInitialized) {
@@ -219,8 +225,8 @@ GameUpdateFunc(GameUpdate)
         }
     }
     
-    DebugConsole_Render(&DebugState->Console, RenderCommands, TranState->Assets);
-    DebugInspector_End(&DebugState->Inspector, RenderCommands, TranState->Assets);
+    DebugConsole_Render(&DebugState->Console, RenderCommands, &TranState->Assets);
+    DebugInspector_End(&DebugState->Inspector, RenderCommands, &TranState->Assets);
     
     return PermState->IsRunning;
 }

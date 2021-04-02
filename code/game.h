@@ -28,7 +28,7 @@ struct transient_state {
     b32 IsInitialized;
     
     arena Arena;
-    assets* Assets; 
+    assets Assets; 
 };
 
 struct permanent_state {

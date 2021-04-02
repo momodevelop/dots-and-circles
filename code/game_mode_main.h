@@ -217,7 +217,7 @@ InitMainMode(permanent_state* PermState,
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
     
-    assets* Assets = TranState->Assets;
+    assets* Assets = &TranState->Assets;
     player* Player = &Mode->Player;
     Player->Speed = 300.f;
     Player->DotImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
@@ -671,7 +671,7 @@ UpdateMainMode(permanent_state* PermState,
     game_mode_main* Mode = PermState->MainMode;
     PushClearColor(RenderCommands, C4f_Create(0.15f, 0.15f, 0.15f, 1.f));
     
-    assets* Assets = TranState->Assets;
+    assets* Assets = &TranState->Assets;
     UpdateInput(Mode, Input);
     UpdatePlayer(Mode, DeltaTime);    
     UpdateBullets(Mode, DeltaTime);
