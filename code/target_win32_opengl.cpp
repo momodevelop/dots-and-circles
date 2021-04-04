@@ -1533,15 +1533,15 @@ Win32FreeRenderCommands(mailbox* RenderCommands) {
 
 static inline b32
 Win32InitRenderCommands(mailbox* RenderCommands,
-                        usize RenderCommandsMemorySize) {
+                        u32 RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
         Win32AllocateMemory(RenderCommandsMemorySize); 
     if (!RenderCommandsMemory) {
         Win32Log("[Win32::RenderCommands] Failed to allocate\n"); 
         return False;
     }
-    (*RenderCommands) = CreateMailbox(RenderCommandsMemory,
-                                      RenderCommandsMemorySize);
+    (*RenderCommands) = Mailbox_Create(RenderCommandsMemory,
+                                       RenderCommandsMemorySize);
     Win32Log("[Win32::RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
     return True;
@@ -1713,7 +1713,7 @@ WinMain(HINSTANCE Instance,
         
         
         Opengl_Render(G_Opengl, &RenderCommands);
-        Clear(&RenderCommands);
+        Mailbox_Clear(&RenderCommands);
         
         // NOTE(Momo): 16-bit Sound
         // TODO: Functionize this

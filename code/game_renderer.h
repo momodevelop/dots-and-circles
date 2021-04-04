@@ -60,10 +60,10 @@ struct renderer_command_set_design_resolution {
 };
 
 static inline aabb2u 
-GetRenderRegion(u32 WindowWidth, 
-                u32 WindowHeight, 
-                u32 RenderWidth, 
-                u32 RenderHeight) 
+Renderer_GetRegion(u32 WindowWidth, 
+                   u32 WindowHeight, 
+                   u32 RenderWidth, 
+                   u32 RenderHeight) 
 {
     // TODO: Minimize case
     if ( RenderWidth == 0 || RenderHeight == 0 || WindowWidth == 0 || WindowHeight == 0) {
@@ -102,19 +102,21 @@ GetRenderRegion(u32 WindowWidth,
 
 
 static inline void
-PushSetBasis(mailbox* Commands, m44f Basis) {
-    using data_t = renderer_command_set_basis;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
+Renderer_SetBasis(mailbox* Commands, m44f Basis) {
+    auto* Data = Mailbox_PushStruct(renderer_command_set_basis,
+                                    Commands, 
+                                    renderer_command_set_basis::TypeId);
     Data->Basis = Basis;
 }
 
 static inline void
-PushOrthoCamera(mailbox* Commands, 
-                v3f Position,
-                aabb3f Frustum)   
+Renderer_SetOrthoCamera(mailbox* Commands, 
+                        v3f Position,
+                        aabb3f Frustum)   
 {
-    using data_t = renderer_command_set_basis;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
+    auto* Data = Mailbox_PushStruct(renderer_command_set_basis,
+                                    Commands, 
+                                    renderer_command_set_basis::TypeId);
     
     auto P  = M44f_Orthographic(-1.f, 1.f,
                                 -1.f, 1.f,
@@ -132,23 +134,26 @@ PushOrthoCamera(mailbox* Commands,
 }
 
 static inline void
-PushClearColor(mailbox* Commands, c4f Colors) {
-    using data_t = renderer_command_clear_color;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
+Renderer_ClearColor(mailbox* Commands, c4f Colors) {
+    auto* Data = Mailbox_PushStruct(renderer_command_clear_color,
+                                    Commands, 
+                                    renderer_command_clear_color::TypeId);
     Data->Colors = Colors;
 }
 
 
 
 static inline void
-PushDrawTexturedQuad(mailbox* Commands, 
-                     c4f Colors, 
-                     m44f Transform, 
-                     renderer_texture_handle TextureHandle,
-                     quad2f TextureCoords = Quad2f_CreateDefaultUV())  
+Renderer_DrawTexturedQuad(mailbox* Commands, 
+                          c4f Colors, 
+                          m44f Transform, 
+                          renderer_texture_handle TextureHandle,
+                          quad2f TextureCoords = Quad2f_CreateDefaultUV())  
 {
     using data_t = renderer_command_draw_textured_quad;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
+    auto* Data = Mailbox_PushStruct(renderer_command_draw_textured_quad,
+                                    Commands, 
+                                    renderer_command_draw_textured_quad::TypeId);
     
     Data->Colors = Colors;
     Data->Transform = Transform;
@@ -157,38 +162,22 @@ PushDrawTexturedQuad(mailbox* Commands,
 }
 
 static inline void
-PushDrawTexturedQuad(mailbox* Commands,
-                     c4f Colors, 
-                     m44f Transform, 
-                     renderer_texture_handle TextureHandle,
-                     aabb2f TextureCoords) 
+Renderer_DrawQuad(mailbox* Commands, 
+                  c4f Colors, 
+                  m44f Transform) 
 {
-    using data_t = renderer_command_draw_textured_quad;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
-    
-    Data->Colors = Colors;
-    Data->Transform = Transform;
-    Data->TextureHandle = TextureHandle;
-    Data->TextureCoords = Aabb2f_To_Quad2f(TextureCoords);
-}
-
-
-static inline void
-PushDrawQuad(mailbox* Commands, 
-             c4f Colors, 
-             m44f Transform) 
-{
-    using data_t = renderer_command_draw_quad;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
+    auto* Data = Mailbox_PushStruct(renderer_command_draw_quad,
+                                    Commands, 
+                                    renderer_command_draw_quad::TypeId);
     Data->Colors = Colors;
     Data->Transform = Transform;
 }
 
 static inline void 
-PushDrawLine(mailbox* Payload, 
-             line2f Line, 
-             f32 Thickness,
-             c4f Colors) 
+Renderer_DrawLine(mailbox* Payload, 
+                  line2f Line, 
+                  f32 Thickness,
+                  c4f Colors) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
@@ -210,58 +199,59 @@ PushDrawLine(mailbox* Payload,
     m44f RS = M44f_Concat(R,S);
     m44f TRS = M44f_Concat(T, RS);
     
-    PushDrawQuad(Payload, Colors, TRS);
+    Renderer_DrawQuad(Payload, Colors, TRS);
 }
 
 static inline void 
-PushDrawLineAabb(mailbox* Commands, 
-                 aabb2f Aabb,
-                 f32 Thickness,
-                 c4f Colors) 
+Renderer_DrawAabb(mailbox* Commands, 
+                  aabb2f Aabb,
+                  f32 Thickness,
+                  c4f Colors) 
 {
     //Bottom
-    PushDrawLine(Commands, 
-                 Line2f_Create(Aabb.Min.X, 
-                               Aabb.Min.Y,  
-                               Aabb.Max.X, 
-                               Aabb.Min.Y),
-                 Thickness, 
-                 Colors);
+    Renderer_DrawLine(Commands, 
+                      Line2f_Create(Aabb.Min.X, 
+                                    Aabb.Min.Y,  
+                                    Aabb.Max.X, 
+                                    Aabb.Min.Y),
+                      Thickness, 
+                      Colors);
     // Left
-    PushDrawLine(Commands, 
-                 Line2f_Create(Aabb.Min.X,
-                               Aabb.Min.Y,
-                               Aabb.Min.X,
-                               Aabb.Max.Y),  
-                 Thickness, 
-                 Colors);
+    Renderer_DrawLine(Commands, 
+                      Line2f_Create(Aabb.Min.X,
+                                    Aabb.Min.Y,
+                                    Aabb.Min.X,
+                                    Aabb.Max.Y),  
+                      Thickness, 
+                      Colors);
     
     //Top
-    PushDrawLine(Commands, 
-                 Line2f_Create(Aabb.Min.X,
-                               Aabb.Max.Y,
-                               Aabb.Max.X,
-                               Aabb.Max.Y), 
-                 Thickness, 
-                 Colors);
+    Renderer_DrawLine(Commands, 
+                      Line2f_Create(Aabb.Min.X,
+                                    Aabb.Max.Y,
+                                    Aabb.Max.X,
+                                    Aabb.Max.Y), 
+                      Thickness, 
+                      Colors);
     
     //Right 
-    PushDrawLine(Commands, 
-                 Line2f_Create(Aabb.Max.X,
-                               Aabb.Min.Y,
-                               Aabb.Max.X,
-                               Aabb.Max.Y),  
-                 Thickness, 
-                 Colors);
+    Renderer_DrawLine(Commands, 
+                      Line2f_Create(Aabb.Max.X,
+                                    Aabb.Min.Y,
+                                    Aabb.Max.X,
+                                    Aabb.Max.Y),  
+                      Thickness, 
+                      Colors);
 }
 
 static inline void 
-PushSetDesignResolution(mailbox* Commands, 
-                        u32 Width, 
-                        u32 Height)  
+Renderer_SetDesignResolution(mailbox* Commands, 
+                             u32 Width, 
+                             u32 Height)  
 {
-    using data_t = renderer_command_set_design_resolution;
-    auto* Data = Push<data_t>(Commands, data_t::TypeId);
+    auto* Data = Mailbox_PushStruct(renderer_command_set_design_resolution,
+                                    Commands, 
+                                    renderer_command_set_design_resolution::TypeId);
     Data->Width = Width;
     Data->Height = Height;
 }

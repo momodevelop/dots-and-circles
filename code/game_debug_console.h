@@ -247,9 +247,9 @@ DebugConsole_Render(debug_console* Console,
                                                Console->Position.Y,
                                                DebugConsole_PosZ);
         m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
-        PushDrawQuad(RenderCommands, 
-                     DebugConsole_InfoBgColor, 
-                     InfoBgTransform);
+        Renderer_DrawQuad(RenderCommands, 
+                          DebugConsole_InfoBgColor, 
+                          InfoBgTransform);
     }
     
     // Draw input text
@@ -260,9 +260,9 @@ DebugConsole_Render(debug_console* Console,
                                                DebugConsole_PosZ+ 0.01f);
         
         m44f InputBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
-        PushDrawQuad(RenderCommands, 
-                     DebugConsole_InputBgColor, 
-                     InputBgTransform);
+        Renderer_DrawQuad(RenderCommands, 
+                          DebugConsole_InputBgColor, 
+                          InputBgTransform);
     }
     
     // Draw info text

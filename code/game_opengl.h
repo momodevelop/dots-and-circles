@@ -336,10 +336,10 @@ Opengl_AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
 static inline void 
 Opengl_AlignViewport(opengl* Opengl) 
 {
-    auto Region = GetRenderRegion(Opengl->WindowDimensions.W, 
-                                  Opengl->WindowDimensions.H, 
-                                  Opengl->RenderDimensions.W, 
-                                  Opengl->RenderDimensions.H);
+    aabb2u Region = Renderer_GetRegion(Opengl->WindowDimensions.W, 
+                                       Opengl->WindowDimensions.H, 
+                                       Opengl->RenderDimensions.W, 
+                                       Opengl->RenderDimensions.H);
     
     u32 x, y, w, h;
     x = Region.Min.X;
@@ -738,19 +738,21 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
     Opengl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     for (u32 i = 0; i < Commands->EntryCount; ++i) {
-        auto Entry = GetEntry(Commands, i);
+        mailbox_entry_header* Entry = Mailbox_GetEntry(Commands, i);
         
         switch(Entry->Type) {
             case renderer_command_set_design_resolution::TypeId: {
-                using data_t = renderer_command_set_design_resolution;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (renderer_command_set_design_resolution*)
+                    Mailbox_GetEntryData(Commands, Entry);
+                
                 Opengl->RenderDimensions.W = Data->Width;
                 Opengl->RenderDimensions.H = Data->Height;
                 Opengl_AlignViewport(Opengl);
             } break;
             case renderer_command_set_basis::TypeId: {
-                using data_t = renderer_command_set_basis;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (renderer_command_set_basis*)
+                    Mailbox_GetEntryData(Commands, Entry);
+                
                 Opengl_DrawInstances(Opengl, 
                                      CurrentTexture, 
                                      InstancesToDrawCount, 
@@ -767,19 +769,18 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                                                   1, 
                                                   GL_FALSE, 
                                                   Result.E);
-                
             } break;
             case renderer_command_clear_color::TypeId: {
-                using data_t = renderer_command_clear_color;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (renderer_command_clear_color*)
+                    Mailbox_GetEntryData(Commands, Entry);
                 Opengl->glClearColor(Data->Colors.R, 
                                      Data->Colors.G, 
                                      Data->Colors.B, 
                                      Data->Colors.A);
             } break;
             case renderer_command_draw_quad::TypeId: {
-                using data_t = renderer_command_draw_quad;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (renderer_command_draw_quad*)
+                    Mailbox_GetEntryData(Commands, Entry);
                 
                 GLuint OpenglTextureHandle = Opengl->Textures[OpenglPredefTexture_Blank];
                 
@@ -819,8 +820,9 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 ++CurrentInstanceIndex;
             } break;
             case renderer_command_draw_textured_quad::TypeId: {
-                using data_t = renderer_command_draw_textured_quad;
-                auto* Data = (data_t*)GetDataFromEntry(Commands, Entry);
+                auto* Data = (renderer_command_draw_textured_quad*)
+                    Mailbox_GetEntryData(Commands, Entry);
+                
                 GLuint OpenglTextureHandle = Opengl->Textures[Data->TextureHandle.Id]; 
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently

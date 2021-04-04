@@ -653,7 +653,7 @@ UpdateMainMode(permanent_state* PermState,
 {
     SwitchToGameCoords(RenderCommands);
     game_mode_main* Mode = PermState->MainMode;
-    PushClearColor(RenderCommands, C4f_Create(0.15f, 0.15f, 0.15f, 1.f));
+    Renderer_ClearColor(RenderCommands, C4f_Create(0.15f, 0.15f, 0.15f, 1.f));
     
     assets* Assets = &TranState->Assets;
     UpdateInput(Mode, Input);

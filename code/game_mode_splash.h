@@ -83,7 +83,7 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
                               Entity->Position.Z);
     m44f S = M44f_Scale(Entity->Scale.X, Entity->Scale.Y, 1.f);
     m44f TS = M44f_Concat(T,S);
-    PushDrawQuad(RenderCommands, Entity->Colors, TS);
+    Renderer_DrawQuad(RenderCommands, Entity->Colors, TS);
     
 }
 

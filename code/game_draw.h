@@ -38,11 +38,11 @@ Draw_Text(mailbox* RenderCommands,
         m44f SA = M44f_Concat(S,A);
         m44f TSA = M44f_Concat(T, SA);
         
-        PushDrawTexturedQuad(RenderCommands, 
-                             Color, 
-                             TSA,
-                             Assets_GetTexture(Assets, Glyph->TextureId)->Handle,
-                             GetAtlasUV(Assets, Glyph));
+        Renderer_DrawTexturedQuad(RenderCommands, 
+                                  Color, 
+                                  TSA,
+                                  Assets_GetTexture(Assets, Glyph->TextureId)->Handle,
+                                  GetAtlasUV(Assets, Glyph));
         
         CurPosition.X += Glyph->Advance * Size;
         if (I != String.Size - 1 ) {
@@ -67,11 +67,11 @@ Draw_TexturedQuadFromAtlasAabb(mailbox* RenderCommands,
     atlas_aabb* AtlasAabb = Assets_GetAtlasAabb(Assets, AtlasAabbId);
     texture* Texture = Assets_GetTexture(Assets, AtlasAabb->TextureId);
     
-    PushDrawTexturedQuad(RenderCommands,
-                         Color,
-                         Transform,
-                         Texture->Handle,
-                         GetAtlasUV(Assets, AtlasAabb));
+    Renderer_DrawTexturedQuad(RenderCommands,
+                              Color,
+                              Transform,
+                              Texture->Handle,
+                              GetAtlasUV(Assets, AtlasAabb));
 }
 
 #endif

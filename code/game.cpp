@@ -76,9 +76,9 @@ GameUpdateFunc(GameUpdate)
         PermState->IsRunning = True;
         PermState->IsPaused = False;
         
-        PushSetDesignResolution(RenderCommands, 
-                                Game_DesignWidth, 
-                                Game_DesignHeight);
+        Renderer_SetDesignResolution(RenderCommands, 
+                                     Game_DesignWidth, 
+                                     Game_DesignHeight);
     }
     
     if (!TranState->IsInitialized) {
