@@ -61,8 +61,6 @@ struct wave {
 
 struct player {
     // NOTE(Momo): Rendering
-    atlas_aabb* DotImageAabb;
-    atlas_aabb* CircleImageAabb;
     f32 DotImageAlpha;
     f32 DotImageAlphaTarget;
     f32 DotImageTransitionTimer;
@@ -96,9 +94,9 @@ struct bullet {
 };
 
 struct enemy {
-    atlas_aabb* ImageAabb;
 	v2f Size; 
 	v2f Position;
+    
     enemy_firing_pattern_type FiringPatternType;
     enemy_mood_pattern_type MoodPatternType;
     enemy_movement_type MovementType;
@@ -154,9 +152,6 @@ SpawnEnemy(game_mode_main* Mode,
     Enemy.FiringPatternType = FiringPatternType;
     Enemy.MoodPatternType = MoodPatternType;
     Enemy.MovementType = MovementType;
-    
-    // TODO: Change to appropriate enemy
-    Enemy.ImageAabb = Assets->AtlasAabbs + AtlasAabb_Enemy;
     
     Assert(Mode->EnemyCount < Mode->EnemyCapacity);
     Mode->Enemies[Mode->EnemyCount++] = Enemy;
@@ -219,23 +214,22 @@ InitMainMode(permanent_state* PermState,
     
     assets* Assets = &TranState->Assets;
     player* Player = &Mode->Player;
-    Player->Speed = 300.f;
-    Player->DotImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerDot;
-    Player->CircleImageAabb = Assets->AtlasAabbs + AtlasAabb_PlayerCircle;
-    
-    Player->Position = {};
-    Player->Direction = {};
-    Player->Size = V2f_Create( 32.f, 32.f );
-    Player->HitCircle = { v2f{}, 16.f};
-    
-    // NOTE(Momo): We start as Dot
-    Player->MoodType = MoodType_Dot;
-    Player->DotImageAlpha = 1.f;
-    Player->DotImageAlphaTarget = 1.f;
-    
-    Player->DotImageTransitionDuration = 0.05f;
-    Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
-    
+    {
+        Player->Speed = 300.f;
+        
+        Player->Position = {};
+        Player->Direction = {};
+        Player->Size = V2f_Create( 32.f, 32.f );
+        Player->HitCircle = { v2f{}, 16.f};
+        
+        // NOTE(Momo): We start as Dot
+        Player->MoodType = MoodType_Dot;
+        Player->DotImageAlpha = 1.f;
+        Player->DotImageAlphaTarget = 1.f;
+        
+        Player->DotImageTransitionDuration = 0.1f;
+        Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
+    }
     Mode->Wave.IsDone = true;
     
 }
@@ -542,30 +536,25 @@ RenderPlayer(game_mode_main* Mode,
         m44f T = M44f_Translation(Player->Position.X,
                                   Player->Position.Y,
                                   ZLayPlayer);
+        c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
-        texture* Texture = Assets_GetTexture(Assets, 
-                                             Player->CircleImageAabb->TextureId);
-        
-        PushDrawTexturedQuad(RenderCommands, 
-                             Color_White, 
-                             M44f_Concat(T,S),
-                             Texture->Handle,
-                             GetAtlasUV(Assets, Player->CircleImageAabb));
+        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                       Assets,
+                                       AtlasAabb_PlayerCircle,
+                                       M44f_Concat(T,S), 
+                                       Color);
     }
     
     {
         m44f T = M44f_Translation(Player->Position.X,
                                   Player->Position.Y,
                                   ZLayPlayer + 0.01f);
-        
-        texture* Texture = Assets_GetTexture(Assets, 
-                                             Player->DotImageAabb->TextureId);
-        
-        PushDrawTexturedQuad(RenderCommands, 
-                             C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha), 
-                             M44f_Concat(T,S), 
-                             Texture->Handle,
-                             GetAtlasUV(Assets, Player->DotImageAabb));
+        c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
+        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                       Assets,
+                                       AtlasAabb_PlayerDot,
+                                       M44f_Concat(T,S), 
+                                       Color);
     }
 }
 
@@ -593,12 +582,11 @@ RenderBullets(game_mode_main* Mode,
                                       DotBullet->Position.Y,
                                       ZLayDotBullet + LayerOffset);
             
-            
-            PushDrawTexturedQuad(RenderCommands,
-                                 Color_White,
-                                 M44f_Concat(T,S),
-                                 Texture->Handle,
-                                 GetAtlasUV(Assets, AtlasAabb));
+            Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                           Assets,
+                                           AtlasAabb_BulletDot,
+                                           M44f_Concat(T,S), 
+                                           Color_White);
             LayerOffset += 0.01f;
             
         }
@@ -608,8 +596,6 @@ RenderBullets(game_mode_main* Mode,
     // Render Circles
     {
         f32 LayerOffset = 0.f;
-        atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletCircle;
-        texture* Texture = Assets->Textures + AtlasAabb->TextureId;
         for (u32 I = 0; I < Mode->CircleBulletCount; ++I) {
             bullet* CircleBullet = Mode->CircleBullets + I;
             m44f S = M44f_Scale(CircleBullet->Size.X, 
@@ -620,12 +606,11 @@ RenderBullets(game_mode_main* Mode,
                                       CircleBullet->Position.Y,
                                       ZLayCircleBullet + LayerOffset);
             
-            
-            PushDrawTexturedQuad(RenderCommands,
-                                 Color_White,
-                                 M44f_Concat(T,S),
-                                 Texture->Handle,
-                                 GetAtlasUV(Assets, AtlasAabb));
+            Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                           Assets,
+                                           AtlasAabb_BulletCircle,
+                                           M44f_Concat(T,S), 
+                                           Color_White);
             LayerOffset += 0.01f;
             
         }
@@ -649,12 +634,11 @@ RenderEnemies(game_mode_main* Mode,
                                   Enemy->Position.Y,
                                   ZLayEnemy);
         
-        texture* Texture = Assets_GetTexture(Assets, Enemy->ImageAabb->TextureId);
-        PushDrawTexturedQuad(RenderCommands,
-                             Color_White,
-                             M44f_Concat(T,S),
-                             Texture->Handle,
-                             GetAtlasUV(Assets, Enemy->ImageAabb));
+        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                       Assets,
+                                       AtlasAabb_Enemy,
+                                       M44f_Concat(T,S), 
+                                       Color_White);
     }
 }
 

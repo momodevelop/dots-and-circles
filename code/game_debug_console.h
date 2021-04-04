@@ -273,13 +273,13 @@ DebugConsole_Render(debug_console* Console,
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
             Position.Z = DebugConsole_PosZ + 0.01f;
             
-            DrawText(RenderCommands,
-                     Assets,
-                     Font_Default, 
-                     Position,
-                     Console->InfoLines[I].Text.CStr,
-                     FontSize,
-                     Console->InfoLines[I].Color);
+            Draw_Text(RenderCommands,
+                      Assets,
+                      Font_Default, 
+                      Position,
+                      Console->InfoLines[I].Text.CStr,
+                      FontSize,
+                      Console->InfoLines[I].Color);
         }
         
         v3f Position = {};
@@ -287,13 +287,13 @@ DebugConsole_Render(debug_console* Console,
         Position.Y = Bottom + PaddingHeight;
         Position.Z = DebugConsole_PosZ + 0.02f;
         
-        DrawText(RenderCommands, 
-                 Assets, 
-                 Font_Default, 
-                 Position,
-                 Console->InputLine.Text.CStr,
-                 FontSize,
-                 DebugConsole_InputTextColor);
+        Draw_Text(RenderCommands, 
+                  Assets, 
+                  Font_Default, 
+                  Position,
+                  Console->InputLine.Text.CStr,
+                  FontSize,
+                  DebugConsole_InputTextColor);
         
         
     }

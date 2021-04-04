@@ -9,7 +9,6 @@ struct splash_image_entity {
     v3f Position;
     c4f Colors;
     
-    texture_id TextureHandle;
     atlas_aabb_id TextureAabb;
     
     f32 CountdownTimer;
@@ -22,10 +21,10 @@ struct splash_image_entity {
 };
 
 static inline void
-Update(splash_image_entity* Entity, 
-       assets* Assets,
-       mailbox* RenderCommands, 
-       f32 DeltaTime) 
+UpdateSplashImageEntity(splash_image_entity* Entity, 
+                        assets* Assets,
+                        mailbox* RenderCommands, 
+                        f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
@@ -44,14 +43,12 @@ Update(splash_image_entity* Entity,
     m44f S = M44f_Scale(Entity->Scale.X,
                         Entity->Scale.Y,
                         1.f);
-    texture* Texture = Assets_GetTexture(Assets, Entity->TextureHandle);
-    atlas_aabb* TextureAabb = Assets->AtlasAabbs + Entity->TextureAabb;
-    quad2f Uv = GetAtlasUV(Assets, TextureAabb);
-    PushDrawTexturedQuad(RenderCommands, 
-                         Entity->Colors, 
-                         M44f_Concat(T,S),  
-                         Texture->Handle,
-                         Uv);
+    Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                   Assets,
+                                   Entity->TextureAabb,
+                                   M44f_Concat(T,S),
+                                   Entity->Colors);
+    
     
 }
 
@@ -68,10 +65,10 @@ struct splash_blackout_entity {
 };
 
 static inline void
-Update(splash_blackout_entity* Entity, 
-       assets* Assets, 
-       mailbox* RenderCommands,
-       f32 DeltaTime) 
+UpdateSplashBlackout(splash_blackout_entity* Entity, 
+                     assets* Assets, 
+                     mailbox* RenderCommands,
+                     f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
@@ -104,7 +101,6 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashImg[0].Position = V3f_Create( 0.f, 0.f, 0.f );
         Mode->SplashImg[0].Scale = V3f_Create(400.f, 400.f, 1.f);
         Mode->SplashImg[0].Colors = C4f_Create(1.f, 1.f, 1.f, 1.f);
-        Mode->SplashImg[0].TextureHandle = Texture_AtlasDefault;
         Mode->SplashImg[0].TextureAabb = AtlasAabb_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 1.f;
@@ -116,7 +112,6 @@ InitSplashMode(permanent_state* PermState) {
         Mode->SplashImg[1].Position = {};
         Mode->SplashImg[1].Scale = V3f_Create(400.f, 400.f, 1.f);
         Mode->SplashImg[1].Colors = C4f_Create(1.f, 1.f, 1.f, 1.f);
-        Mode->SplashImg[1].TextureHandle = Texture_AtlasDefault;
         Mode->SplashImg[1].TextureAabb = AtlasAabb_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 1.f;
@@ -149,20 +144,20 @@ UpdateSplashMode(permanent_state* PermState,
     
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
-        Update(Mode->SplashImg + I, 
-               Assets, 
-               RenderCommands, 
-               DeltaTime);
+        UpdateSplashImageEntity(Mode->SplashImg + I, 
+                                Assets, 
+                                RenderCommands, 
+                                DeltaTime);
     }
     
-    Update(&Mode->SplashBlackout,
-           Assets,
-           RenderCommands,
-           DeltaTime);
+    UpdateSplashBlackout(&Mode->SplashBlackout,
+                         Assets,
+                         RenderCommands,
+                         DeltaTime);
     
     // NOTE(Momo): Exit 
     if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.Duration) {
-        PermState->NextGameMode = GameModeType_Splash;
+        PermState->NextGameMode = GameModeType_Main;
     }
     
 }

@@ -1,5 +1,6 @@
 # Engine
-[] Change Assets_Allocate to standard init since trans state stuff is already in heap
+[] Update naming for game_renderer
+[] Update naming for game_assets
 [] Animation
 [] Figure out animation format for game side
 [] Figure out animation asset format

@@ -1,16 +1,17 @@
 #ifndef __GAME_DRAW__
 #define __GAME_DRAW__
 
-
+// NOTE(Momo): These are functions combining game_renderer.h and game_assets.h.
+// Mostly shortcut functions to draw items
 
 static inline void
-DrawText(mailbox* RenderCommands, 
-         assets* Assets,
-         font_id FontId,
-         v3f Position,
-         u8_cstr String,
-         f32 Size, 
-         c4f Color = Color_White) 
+Draw_Text(mailbox* RenderCommands, 
+          assets* Assets,
+          font_id FontId,
+          v3f Position,
+          u8_cstr String,
+          f32 Size, 
+          c4f Color = Color_White) 
 {
     v3f CurPosition = Position;
     font* Font = Assets_GetFont(Assets, FontId);
@@ -54,9 +55,23 @@ DrawText(mailbox* RenderCommands,
         ZLayerOffset += 0.001f;
         
     }
+}
+
+static inline void
+Draw_TexturedQuadFromAtlasAabb(mailbox* RenderCommands,
+                               assets* Assets,
+                               atlas_aabb_id AtlasAabbId,
+                               m44f Transform,
+                               c4f Color) 
+{
+    atlas_aabb* AtlasAabb = Assets_GetAtlasAabb(Assets, AtlasAabbId);
+    texture* Texture = Assets_GetTexture(Assets, AtlasAabb->TextureId);
     
-    
-    
+    PushDrawTexturedQuad(RenderCommands,
+                         Color,
+                         Transform,
+                         Texture->Handle,
+                         GetAtlasUV(Assets, AtlasAabb));
 }
 
 #endif

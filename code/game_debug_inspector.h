@@ -55,13 +55,13 @@ DebugInspector_End(debug_inspector* Inspector,
         v3f Position = V3f_Create(DebugInspector_PosX, 
                                   DebugInspector_PosY + OffsetY,
                                   DebugInspector_PosZ); 
-        DrawText(RenderCommands, 
-                 Assets, 
-                 Font_Default, 
-                 Position, 
-                 Entry->Text.CStr,
-                 32.f, 
-                 Color_White);
+        Draw_Text(RenderCommands, 
+                  Assets, 
+                  Font_Default, 
+                  Position, 
+                  Entry->Text.CStr,
+                  32.f, 
+                  Color_White);
         U8Str_Clear(&Entry->Text);
         OffsetY -= 32.f;
     }
