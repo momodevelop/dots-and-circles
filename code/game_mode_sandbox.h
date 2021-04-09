@@ -59,6 +59,51 @@ UpdateSandboxMode(permanent_state* PermState,
                   game_input* Input,
                   f32 DeltaTime) 
 {
+#if 0
+    static inline void
+        Win32PlatformStartRecord(win32_state* State) {
+        const char* RecordPath = "record_inputs";
+        
+        
+        // NOTE(Momo): We save the state 
+        DWORD BytesWritten;
+        if(!WriteFile(Win32Handle, 
+                      G_GameMemory->Data,
+                      (DWORD)G_GameMemory->DataSize,
+                      &BytesWritten,
+                      0)) 
+        {
+            Win32Log("[Win32::StartRecord] Cannot write file: %s\n", Path);
+            CloseHandle(RecordFileHandle);
+            return;
+        }
+        
+        if (BytesWritten != G_GameMemory->DataSize) {
+            Win32Log("[Win32::StartRecord] Did not complete writing: %s\n", Path);
+            CloseHandle(RecordFileHandle);
+            return;
+        }
+        Win32Log("[Win32::StartRecord] State saved: %s\n", Path);
+        
+        // NOTE(Momo): Initialize recording state
+        G_State.IsRecording = True;
+        G_State.RecordDuration = 0.f;
+        G_State.RecordFileHandle = RecordFileHandle;
+        
+        
+    }
+    
+    static inline 
+        PlatformStopRecordFunc(Win32PlatformStopRecord) {
+        if (!G_State.IsRecording) {
+            return;
+        }
+        G_State.IsRecording = False;
+        CloseHandle(G_State.RecordFileHandle);
+    }
+    
+#endif
+    
     // Animation?
 }
 

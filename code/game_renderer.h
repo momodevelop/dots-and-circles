@@ -27,19 +27,24 @@ struct renderer_texture_handle {
     u32 Id;
 };
 
+
+enum renderer_command_type {
+    RendererCommandType_ClearColor,
+    RendererCommandType_SetBasis,
+    RendererCommandType_DrawTexturedQuad,
+    RendererCommandType_DrawQuad,
+    RendererCommandType_SetDesignResolution,
+};
+
 struct renderer_command_clear_color {
-    static constexpr u32 TypeId = __LINE__;
     c4f Colors;
 };
 
 struct renderer_command_set_basis {
-    static constexpr u32 TypeId = __LINE__;
     m44f Basis;
 };
 
 struct renderer_command_draw_textured_quad {
-    static constexpr u32 TypeId = __LINE__;
-    
     renderer_texture_handle TextureHandle;
     c4f Colors;
     m44f Transform;
@@ -48,13 +53,11 @@ struct renderer_command_draw_textured_quad {
 
 
 struct renderer_command_draw_quad {
-    static constexpr u32 TypeId = __LINE__;
     c4f Colors;
     m44f Transform;
 };
 
 struct renderer_command_set_design_resolution {
-    static constexpr u32 TypeId = __LINE__;
     u32 Width;
     u32 Height;
 };
@@ -65,7 +68,6 @@ Renderer_GetRegion(u32 WindowWidth,
                    u32 RenderWidth, 
                    u32 RenderHeight) 
 {
-    // TODO: Minimize case
     if ( RenderWidth == 0 || RenderHeight == 0 || WindowWidth == 0 || WindowHeight == 0) {
         return {};
     }
@@ -105,7 +107,7 @@ static inline void
 Renderer_SetBasis(mailbox* Commands, m44f Basis) {
     auto* Data = Mailbox_PushStruct(renderer_command_set_basis,
                                     Commands, 
-                                    renderer_command_set_basis::TypeId);
+                                    RendererCommandType_SetBasis);
     Data->Basis = Basis;
 }
 
@@ -116,7 +118,7 @@ Renderer_SetOrthoCamera(mailbox* Commands,
 {
     auto* Data = Mailbox_PushStruct(renderer_command_set_basis,
                                     Commands, 
-                                    renderer_command_set_basis::TypeId);
+                                    RendererCommandType_SetBasis);
     
     auto P  = M44f_Orthographic(-1.f, 1.f,
                                 -1.f, 1.f,
@@ -136,8 +138,8 @@ Renderer_SetOrthoCamera(mailbox* Commands,
 static inline void
 Renderer_ClearColor(mailbox* Commands, c4f Colors) {
     auto* Data = Mailbox_PushStruct(renderer_command_clear_color,
-                                    Commands, 
-                                    renderer_command_clear_color::TypeId);
+                                    Commands,
+                                    RendererCommandType_ClearColor);
     Data->Colors = Colors;
 }
 
@@ -153,7 +155,7 @@ Renderer_DrawTexturedQuad(mailbox* Commands,
     using data_t = renderer_command_draw_textured_quad;
     auto* Data = Mailbox_PushStruct(renderer_command_draw_textured_quad,
                                     Commands, 
-                                    renderer_command_draw_textured_quad::TypeId);
+                                    RendererCommandType_DrawTexturedQuad);
     
     Data->Colors = Colors;
     Data->Transform = Transform;
@@ -168,7 +170,7 @@ Renderer_DrawQuad(mailbox* Commands,
 {
     auto* Data = Mailbox_PushStruct(renderer_command_draw_quad,
                                     Commands, 
-                                    renderer_command_draw_quad::TypeId);
+                                    RendererCommandType_DrawQuad);
     Data->Colors = Colors;
     Data->Transform = Transform;
 }
@@ -251,7 +253,7 @@ Renderer_SetDesignResolution(mailbox* Commands,
 {
     auto* Data = Mailbox_PushStruct(renderer_command_set_design_resolution,
                                     Commands, 
-                                    renderer_command_set_design_resolution::TypeId);
+                                    RendererCommandType_SetDesignResolution);
     Data->Width = Width;
     Data->Height = Height;
 }

@@ -1423,50 +1423,6 @@ PlatformGetFileSizeFunc(Win32GetFileSize)
     }
 }
 
-#if 0
-static inline void
-Win32PlatformStartRecord(win32_state* State) {
-    const char* RecordPath = "record_inputs";
-    
-    
-    // NOTE(Momo): We save the state 
-    DWORD BytesWritten;
-    if(!WriteFile(Win32Handle, 
-                  G_GameMemory->Data,
-                  (DWORD)G_GameMemory->DataSize,
-                  &BytesWritten,
-                  0)) 
-    {
-        Win32Log("[Win32::StartRecord] Cannot write file: %s\n", Path);
-        CloseHandle(RecordFileHandle);
-        return;
-    }
-    
-    if (BytesWritten != G_GameMemory->DataSize) {
-        Win32Log("[Win32::StartRecord] Did not complete writing: %s\n", Path);
-        CloseHandle(RecordFileHandle);
-        return;
-    }
-    Win32Log("[Win32::StartRecord] State saved: %s\n", Path);
-    
-    // NOTE(Momo): Initialize recording state
-    G_State.IsRecording = True;
-    G_State.RecordDuration = 0.f;
-    G_State.RecordFileHandle = RecordFileHandle;
-    
-    
-}
-
-static inline 
-PlatformStopRecordFunc(Win32PlatformStopRecord) {
-    if (!G_State.IsRecording) {
-        return;
-    }
-    G_State.IsRecording = False;
-    CloseHandle(G_State.RecordFileHandle);
-}
-
-#endif
 static inline platform_api
 Win32InitPlatformApi() {
     platform_api PlatformApi = {};
@@ -1660,6 +1616,7 @@ WinMain(HINSTANCE Instance,
             Win32LoadGameCode(&GameCode);
         }
         
+#if 0
         Input_Update(&GameInput);
         Win32ProcessMessages(Window, 
                              &GameInput);
@@ -1677,6 +1634,7 @@ WinMain(HINSTANCE Instance,
             }
         }
         
+#endif
         // Compute how much sound to write and where
         // TODO: Functionize this
         game_audio GameAudio = {};

@@ -11,7 +11,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include "assets_types.h"  
+#include "game_assets_types.h"  
 
 #include "tool_build_assets_util.h"
 #include "tool_build_assets_atlas.h"

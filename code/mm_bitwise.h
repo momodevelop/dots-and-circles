@@ -51,7 +51,7 @@ AlignForwardDiff(void* ptr, u8 align)  {
 }
 
 static inline void 
-Copy(void* dest, void* src, u32 size) {
+CopyBlock(void* dest, void* src, u32 size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
          p < e; ++p, 
          ++q)
@@ -99,21 +99,6 @@ EndianSwap(u32* Value) {
                  (Origin >> 24));
 }
 
-// TODO(Momo): Delete
-static inline void*
-Consume(void** P, usize Size) {
-    void* Ret = (*P);
-    (*P) = (u8*)(*P) + Size; 
-    return Ret;
-}    
-
-// TODO(Momo): Delete
-template<typename t>
-static inline t*
-Consume(void** P) {
-    return (t*)Read(P, sizeof(t));
-}
-
 static inline void*
 ConsumeBlock(void** P, u32 Size) {
     void* Ret = (*P);
@@ -121,6 +106,12 @@ ConsumeBlock(void** P, u32 Size) {
     return Ret;
 }
 #define ConsumeStruct(Type, Memory) ((Type)*)ConsumeBlock(Memory, sizeof(Type)) 
+
+static inline void
+WriteBlock(void** P, void* Item, u32 ItemSize) {
+    
+}
+
 
 template<typename T>
 static inline void

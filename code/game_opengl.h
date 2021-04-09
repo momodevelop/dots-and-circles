@@ -741,7 +741,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
         mailbox_entry_header* Entry = Mailbox_GetEntry(Commands, i);
         
         switch(Entry->Type) {
-            case renderer_command_set_design_resolution::TypeId: {
+            case RendererCommandType_SetDesignResolution: {
                 auto* Data = (renderer_command_set_design_resolution*)
                     Mailbox_GetEntryData(Commands, Entry);
                 
@@ -749,7 +749,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 Opengl->RenderDimensions.H = Data->Height;
                 Opengl_AlignViewport(Opengl);
             } break;
-            case renderer_command_set_basis::TypeId: {
+            case RendererCommandType_SetBasis: {
                 auto* Data = (renderer_command_set_basis*)
                     Mailbox_GetEntryData(Commands, Entry);
                 
@@ -770,7 +770,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                                                   GL_FALSE, 
                                                   Result.E);
             } break;
-            case renderer_command_clear_color::TypeId: {
+            case RendererCommandType_ClearColor: {
                 auto* Data = (renderer_command_clear_color*)
                     Mailbox_GetEntryData(Commands, Entry);
                 Opengl->glClearColor(Data->Colors.R, 
@@ -778,7 +778,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                                      Data->Colors.B, 
                                      Data->Colors.A);
             } break;
-            case renderer_command_draw_quad::TypeId: {
+            case RendererCommandType_DrawQuad: {
                 auto* Data = (renderer_command_draw_quad*)
                     Mailbox_GetEntryData(Commands, Entry);
                 
@@ -819,7 +819,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 ++InstancesToDrawCount;
                 ++CurrentInstanceIndex;
             } break;
-            case renderer_command_draw_textured_quad::TypeId: {
+            case RendererCommandType_DrawTexturedQuad: {
                 auto* Data = (renderer_command_draw_textured_quad*)
                     Mailbox_GetEntryData(Commands, Entry);
                 

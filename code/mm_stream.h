@@ -5,7 +5,7 @@
 struct stream {
     u8* Contents;
     u32 ContentSize;
-
+    
     usize Current;
     
     // For bit reading
@@ -69,7 +69,7 @@ Stream_WriteBlock(stream* S, void* Src, u32 SrcSize) {
     if (S->Current + SrcSize >= S->ContentSize) {
         return false;
     }
-    Copy(S->Contents + S->Current, Src, SrcSize);
+    CopyBlock(S->Contents + S->Current, Src, SrcSize);
     S->Current += SrcSize; 
     return true;
 }

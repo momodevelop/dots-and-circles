@@ -33,7 +33,7 @@ Tab_AssetBuilderEnd(tab_asset_builder* Context) {
 }
 
 static inline void
-Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, game_asset_type AssetType) {
+Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, asset_type AssetType) {
     asset_file_entry Entry = {};
     Entry.Type = AssetType;
     fwrite(&Entry, sizeof(Entry),  1, Context->File);
@@ -164,7 +164,7 @@ Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context,
 // TODO(Momo):
 static inline void
 Tab_AssetBuilderWriteSound(tab_asset_builder* Context, 
-                           game_asset_sound_id SoundId,
+                           sound_id SoundId,
                            u32 DataSize,
                            void* Data) 
 {

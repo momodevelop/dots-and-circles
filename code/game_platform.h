@@ -24,7 +24,7 @@ struct game_input_button {
 struct game_input {
     u8_str Characters;
     union {
-        game_input_button Buttons[10];
+        game_input_button Buttons[9];
         struct {
             game_input_button ButtonUp;
             game_input_button ButtonDown;
