@@ -4,9 +4,67 @@
 #include "game.h"
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
+enum anime_id {
+    Anime_KaruFront,
+};
+
+struct anime {
+    //atlas_aabb_id* Frames;
+    atlas_aabb_id Frames[3];
+    u32 FrameCount;
+} TestAnime;
+
+// TODO(Momo): Fake function
+static inline anime
+Assets_GetAnime(anime_id Id) 
+{
+    anime Ret = {};
+    Ret.Frames[0] = AtlasAabb_Karu00;
+    Ret.Frames[1] = AtlasAabb_Karu01;
+    Ret.Frames[2] = AtlasAabb_Karu02; 
+    Ret.FrameCount = 3;
+    return Ret;
+}
+
+struct anime_component {
+    anime_id AnimeId;
+    u32 CurrentFrameIndex;
+    f32 TimerPerFrame;
+    f32 DurationPerFrame;
+};
+
+static inline void
+AnimeComponent_Create(anime_component* A,
+                      anime_id Id, 
+                      f32 DurationPerFrame) 
+{
+    A->AnimeId = Id;
+    A->CurrentFrameIndex = 0;
+    A->TimerPerFrame = 0.f;
+    A->DurationPerFrame = DurationPerFrame;
+}
+
+static inline void
+AnimeComponent_Update(anime_component* A, f32 DeltaTime) {
+    anime Anime = Assets_GetAnime(Anime_KaruFront);
+    A->TimerPerFrame += DeltaTime;
+    
+    A->TimerPerFrame += DeltaTime;
+    if (A->TimerPerFrame >= 0.25f) 
+    {
+        A->TimerPerFrame = 0.f;
+        ++A->CurrentFrameIndex;
+        if (A->CurrentFrameIndex >= Anime.FrameCount) {
+            A->CurrentFrameIndex = 0;
+        }
+    }
+}
+
 struct game_mode_sandbox_entity {
-    v3f Position;
-    v3f Direction; 
+    v3f Pos;
+    v3f Size;
+    
+    anime_component Anime;
 };
 
 struct game_mode_sandbox {
@@ -16,40 +74,10 @@ struct game_mode_sandbox {
 static inline void 
 InitSandboxMode(permanent_state* PermState) {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
-    Mode->Entity.Position = V3f_Create(-800.f, 0.f, 0.f);
-}
-
-static inline void
-UpdateInput(game_mode_sandbox* Mode,
-            game_input* Input)
-{
-    v3f Direction = {};
-    game_mode_sandbox_entity* Player = &Mode->Entity; 
-    b8 IsMovementButtonDown = false;
-    if(IsDown(Input->ButtonLeft)) {
-        Direction.X = -1.f;
-        IsMovementButtonDown = true;
-    };
+    Mode->Entity.Pos = V3f_Create(0.f, 0.f, 0.f);
+    Mode->Entity.Size = V3f_Create(48.f*2, 48.f*2, 1.f);
+    AnimeComponent_Create(&Mode->Entity.Anime, Anime_KaruFront, 0.25f);
     
-    if(IsDown(Input->ButtonRight)) {
-        Direction.X = 1.f;
-        IsMovementButtonDown = true;
-    }
-    
-    if(IsDown(Input->ButtonUp)) {
-        Direction.Y = 1.f;
-        IsMovementButtonDown = true;
-    }
-    if(IsDown(Input->ButtonDown)) {
-        Direction.Y = -1.f;
-        IsMovementButtonDown = true;
-    }
-    
-    if (IsMovementButtonDown) 
-        Player->Direction = V3f_Normalize(Direction);
-    else {
-        Player->Direction = {};
-    }
 }
 
 static inline void
@@ -59,52 +87,28 @@ UpdateSandboxMode(permanent_state* PermState,
                   game_input* Input,
                   f32 DeltaTime) 
 {
-#if 0
-    static inline void
-        Win32PlatformStartRecord(win32_state* State) {
-        const char* RecordPath = "record_inputs";
-        
-        
-        // NOTE(Momo): We save the state 
-        DWORD BytesWritten;
-        if(!WriteFile(Win32Handle, 
-                      G_GameMemory->Data,
-                      (DWORD)G_GameMemory->DataSize,
-                      &BytesWritten,
-                      0)) 
-        {
-            Win32Log("[Win32::StartRecord] Cannot write file: %s\n", Path);
-            CloseHandle(RecordFileHandle);
-            return;
-        }
-        
-        if (BytesWritten != G_GameMemory->DataSize) {
-            Win32Log("[Win32::StartRecord] Did not complete writing: %s\n", Path);
-            CloseHandle(RecordFileHandle);
-            return;
-        }
-        Win32Log("[Win32::StartRecord] State saved: %s\n", Path);
-        
-        // NOTE(Momo): Initialize recording state
-        G_State.IsRecording = True;
-        G_State.RecordDuration = 0.f;
-        G_State.RecordFileHandle = RecordFileHandle;
-        
+    game_mode_sandbox* Mode = PermState->SandboxMode;     
+    assets* Assets = &TranState->Assets;
+    game_mode_sandbox_entity* Entity = &Mode->Entity;
+    
+    AnimeComponent_Update(&Entity->Anime, DeltaTime);
+    
+    // TODO(Momo): Draw function?
+    m44f T = M44f_Translation(Entity->Pos.X, Entity->Pos.Y, Entity->Pos.Z);
+    m44f S = M44f_Scale(Entity->Size.X, Entity->Size.Y, Entity->Size.Z);
+    m44f Transform = M44f_Concat(T,S);
+    c4f Color = Color_White;
+    anime_component* AnimeCom = &Entity->Anime;
+    {
+        anime Anime = Assets_GetAnime(AnimeCom->AnimeId);
+        atlas_aabb_id AtlasAabbId = Anime.Frames[AnimeCom->CurrentFrameIndex];
+        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+                                       Assets,
+                                       AtlasAabbId,
+                                       Transform,
+                                       Color);
         
     }
-    
-    static inline 
-        PlatformStopRecordFunc(Win32PlatformStopRecord) {
-        if (!G_State.IsRecording) {
-            return;
-        }
-        G_State.IsRecording = False;
-        CloseHandle(G_State.RecordFileHandle);
-    }
-    
-#endif
-    
-    // Animation?
 }
 
 

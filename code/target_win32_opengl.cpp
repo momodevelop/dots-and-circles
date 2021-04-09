@@ -1616,9 +1616,8 @@ WinMain(HINSTANCE Instance,
             Win32LoadGameCode(&GameCode);
         }
         
-#if 0
+        
         Input_Update(&GameInput);
-#endif
         Win32ProcessMessages(Window, 
                              &GameInput);
         
