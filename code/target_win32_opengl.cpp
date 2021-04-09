@@ -1618,6 +1618,7 @@ WinMain(HINSTANCE Instance,
         
 #if 0
         Input_Update(&GameInput);
+#endif
         Win32ProcessMessages(Window, 
                              &GameInput);
         
@@ -1634,7 +1635,7 @@ WinMain(HINSTANCE Instance,
             }
         }
         
-#endif
+        
         // Compute how much sound to write and where
         // TODO: Functionize this
         game_audio GameAudio = {};
