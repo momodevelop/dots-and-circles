@@ -40,10 +40,12 @@ struct game_input {
             game_input_button ButtonConsole;
             game_input_button ButtonInspector;
         };
-        
     };
     
     
+    v2f DesignMousePos;
+    v2f WindowMousePos;
+    v2f RenderMousePos;
 };
 
 

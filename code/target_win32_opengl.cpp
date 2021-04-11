@@ -1098,30 +1098,26 @@ Win32ProcessMessages(HWND Window,
             case WM_LBUTTONUP: {
             } break;
             case WM_MOUSEMOVE: {
-                i32 WindowMouseX = GET_X_LPARAM(Msg.lParam);
-                i32 WindowMouseY = GET_Y_LPARAM(Msg.lParam);
-                Win32Log("%d, %d\n", WindowMouseX, WindowMouseY);
+                // NOTE(Momo): This is the actual conversion from screen space to 
+                // design space. I'm not 100% if this should be here but I guess
+                // only time will tell.
+                
+                Input->WindowMousePos.X = (f32)GET_X_LPARAM(Msg.lParam);
+                Input->WindowMousePos.Y = (f32)GET_Y_LPARAM(Msg.lParam);
                 
                 v2u WindowDims = G_Opengl->WindowDimensions;
                 aabb2u RenderRegion = G_Opengl->RenderRegion;
                 
-                i32 RenderMouseX = WindowMouseX - RenderRegion.Min.X;
-                i32 RenderMouseY = WindowMouseY - RenderRegion.Min.Y;
-                
-                Win32Log("%d, %d\n", RenderMouseX, RenderMouseY);
+                Input->RenderMousePos.X = Input->WindowMousePos.X - RenderRegion.Min.X;
+                Input->RenderMousePos.Y = Input->WindowMousePos.Y - RenderRegion.Min.Y;
                 
                 v2f DesignDimsF = V2f_CreateFromV2u(G_Opengl->DesignDimensions);
                 v2u RenderDimsU = Aabb2u_Dimensions(RenderRegion);
                 v2f RenderDimsF = V2f_CreateFromV2u(RenderDimsU);
                 v2f DesignToRenderRatio = V2f_Ratio(DesignDimsF, RenderDimsF);
                 
-                Win32Log("%f, %f\n", DesignToRenderRatio.W, DesignToRenderRatio.H);
-                
-                f32 DesignMouseX = RenderMouseX * DesignToRenderRatio.W;
-                f32 DesignMouseY = RenderMouseY * DesignToRenderRatio.H;
-                
-                Win32Log("%f, %f\n", DesignMouseX, DesignMouseY);
-                
+                Input->DesignMousePos.X = Input->RenderMousePos.X * DesignToRenderRatio.W;
+                Input->DesignMousePos.Y = Input->RenderMousePos.Y * DesignToRenderRatio.H;
                 
             } break;
             case WM_SYSKEYDOWN:

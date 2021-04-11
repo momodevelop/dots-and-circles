@@ -1,6 +1,8 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
+#define MOUSE_MOVEMENT 1
+
 // Rendering layers
 // TODO: Organize this better please. 
 // Maybe a map or array or something.
@@ -250,9 +252,12 @@ UpdatePlayer(game_mode_main* Mode,
               0.f, 
               Player->DotImageTransitionDuration);
     
+#if !MOUSE_MOVEMENT
     f32 SpeedDt = Player->Speed * DeltaTime;
     v2f Velocity = V2f_Mul(Player->Direction, SpeedDt);
     Player->Position = V2f_Add(Player->Position, Velocity);
+#endif
+    
     
 }
 
@@ -477,6 +482,8 @@ UpdateInput(game_mode_main* Mode,
 {
     v2f Direction = {};
     player* Player = &Mode->Player; 
+#if !MOUSE_MOVEMENT
+    
     b8 IsMovementButtonDown = false;
     if(IsDown(Input->ButtonLeft)) {
         Direction.X = -1.f;
@@ -502,6 +509,16 @@ UpdateInput(game_mode_main* Mode,
     else {
         Player->Direction = {};
     }
+#else 
+    // TODO(Momo): Hacky way to convert screen space to world space
+    // It should really be based on camera position and all that...
+    // I guess we should have a camera class to manage all this if we 
+    // really want
+    Player->Position.X = Input->DesignMousePos.X - Game_DesignWidth * 0.5f;
+    Player->Position.Y = -(Input->DesignMousePos.Y - Game_DesignHeight * 0.5f);
+    
+    
+#endif
     
     
     // NOTE(Momo): Absorb Mode Switch
@@ -662,6 +679,7 @@ UpdateMainMode(permanent_state* PermState,
     UpdateWaves(Mode, Assets, DeltaTime);
     UpdateEnemies(Mode, Assets, DeltaTime); 
     UpdateCollision(Mode);
+    
     
     
     RenderPlayer(Mode, Assets, RenderCommands);
