@@ -255,7 +255,7 @@ enum {
 };
 
 struct opengl {
-    renderer Header;
+    b32 IsInitialized = True;
     
     arena Arena;
     
@@ -320,7 +320,8 @@ struct opengl {
     u32 EntityCap;
     
     v2u WindowDimensions;
-    v2u RenderDimensions;
+    v2u DesignDimensions;
+    aabb2u RenderRegion;
 };
 
 static inline void 
@@ -336,10 +337,10 @@ Opengl_AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
 static inline void 
 Opengl_AlignViewport(opengl* Opengl) 
 {
-    aabb2u Region = Renderer_GetRegion(Opengl->WindowDimensions.W, 
-                                       Opengl->WindowDimensions.H, 
-                                       Opengl->RenderDimensions.W, 
-                                       Opengl->RenderDimensions.H);
+    aabb2u Region = Renderer_CalcRenderRegion(Opengl->WindowDimensions.W, 
+                                              Opengl->WindowDimensions.H, 
+                                              Opengl->DesignDimensions.W, 
+                                              Opengl->DesignDimensions.H);
     
     u32 x, y, w, h;
     x = Region.Min.X;
@@ -349,7 +350,13 @@ Opengl_AlignViewport(opengl* Opengl)
     
     Opengl->glViewport(x, y, w, h);
     Opengl->glScissor(x, y, w, h);
+    
+    // NOTE(Momo): Cache this to make calculations 
+    // for window-space to render-space more CPU friendly.
+    Opengl->RenderRegion = Region;
 }
+
+
 
 
 static inline void 
@@ -413,7 +420,7 @@ Opengl_Init(opengl* Opengl,
     
     Opengl->EntityCap = MaxEntities;
     
-    Opengl->RenderDimensions = WindowDimensions;
+    Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     
     Opengl->glEnable(GL_DEPTH_TEST);
@@ -635,10 +642,10 @@ Opengl_Init(opengl* Opengl,
         char msg[Kilobyte];
         Opengl->glGetProgramInfoLog(Opengl->Shader, Kilobyte, nullptr, msg);
         // TODO(Momo): Log?
-        return false;
+        return False;
     }
     Opengl_AddPredefTextures(Opengl);
-    Opengl->Header.IsInitialized = true;
+    Opengl->IsInitialized = True;
     return true;
 }
 
@@ -745,8 +752,8 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 auto* Data = (renderer_command_set_design_resolution*)
                     Mailbox_GetEntryData(Commands, Entry);
                 
-                Opengl->RenderDimensions.W = Data->Width;
-                Opengl->RenderDimensions.H = Data->Height;
+                Opengl->DesignDimensions.W = Data->Width;
+                Opengl->DesignDimensions.H = Data->Height;
                 Opengl_AlignViewport(Opengl);
             } break;
             case RendererCommandType_SetBasis: {

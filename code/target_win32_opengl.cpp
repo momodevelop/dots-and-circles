@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <windowsx.h>
 #include <ShellScalingAPI.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
@@ -1093,6 +1094,36 @@ Win32ProcessMessages(HWND Window,
                 char C = (char)Msg.wParam;
                 Input_TryPushCharacterInput(Input, C);
             } break;
+            case WM_LBUTTONDOWN:
+            case WM_LBUTTONUP: {
+            } break;
+            case WM_MOUSEMOVE: {
+                i32 WindowMouseX = GET_X_LPARAM(Msg.lParam);
+                i32 WindowMouseY = GET_Y_LPARAM(Msg.lParam);
+                Win32Log("%d, %d\n", WindowMouseX, WindowMouseY);
+                
+                v2u WindowDims = G_Opengl->WindowDimensions;
+                aabb2u RenderRegion = G_Opengl->RenderRegion;
+                
+                i32 RenderMouseX = WindowMouseX - RenderRegion.Min.X;
+                i32 RenderMouseY = WindowMouseY - RenderRegion.Min.Y;
+                
+                Win32Log("%d, %d\n", RenderMouseX, RenderMouseY);
+                
+                v2f DesignDimsF = V2f_CreateFromV2u(G_Opengl->DesignDimensions);
+                v2u RenderDimsU = Aabb2u_Dimensions(RenderRegion);
+                v2f RenderDimsF = V2f_CreateFromV2u(RenderDimsU);
+                v2f DesignToRenderRatio = V2f_Ratio(DesignDimsF, RenderDimsF);
+                
+                Win32Log("%f, %f\n", DesignToRenderRatio.W, DesignToRenderRatio.H);
+                
+                f32 DesignMouseX = RenderMouseX * DesignToRenderRatio.W;
+                f32 DesignMouseY = RenderMouseY * DesignToRenderRatio.H;
+                
+                Win32Log("%f, %f\n", DesignMouseX, DesignMouseY);
+                
+                
+            } break;
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
@@ -1200,7 +1231,7 @@ Win32WindowCallback(HWND Window,
         } break;
         case WM_WINDOWPOSCHANGED: {
             if(G_Opengl && 
-               G_Opengl->Header.IsInitialized) 
+               G_Opengl->IsInitialized) 
             {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);

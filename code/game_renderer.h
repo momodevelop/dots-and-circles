@@ -17,10 +17,6 @@ Ground rules about this renderer.
 #ifndef RENDERER_H
 #define RENDERER_H
 
-// "Inherited" by all renderers
-struct renderer {
-    b32 IsInitialized;
-};
 
 struct renderer_texture_handle {
     b32 Success;
@@ -63,10 +59,10 @@ struct renderer_command_set_design_resolution {
 };
 
 static inline aabb2u 
-Renderer_GetRegion(u32 WindowWidth, 
-                   u32 WindowHeight, 
-                   u32 RenderWidth, 
-                   u32 RenderHeight) 
+Renderer_CalcRenderRegion(u32 WindowWidth, 
+                          u32 WindowHeight, 
+                          u32 RenderWidth, 
+                          u32 RenderHeight) 
 {
     if ( RenderWidth == 0 || RenderHeight == 0 || WindowWidth == 0 || WindowHeight == 0) {
         return {};

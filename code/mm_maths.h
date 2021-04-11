@@ -185,6 +185,11 @@ V2f_Create(f32 X, f32 Y) {
     return Ret;
 }
 
+static inline v2f
+V2f_CreateFromV2u(v2u V) {
+    return V2f_Create((f32)V.X, (f32)V.Y);
+}
+
 static inline v2f 
 V2f_Add(v2f L, v2f R) {
     L.X += R.X;
@@ -213,6 +218,17 @@ V2f_Div(v2f L, f32 R) {
     Assert(!F32_IsEqual(R, 0));
     L.X /= R;
     L.Y /= R;
+    
+    return L;
+}
+
+static inline v2f
+V2f_Ratio(v2f L, v2f R) {
+    Assert(!F32_IsEqual(R.X, 0));
+    Assert(!F32_IsEqual(R.Y, 0));
+    
+    L.X /= R.X;
+    L.Y /= R.Y;
     
     return L;
 }
@@ -544,6 +560,26 @@ Aabb2u_Create(u32 MinX, u32 MinY, u32 MaxX, u32 MaxY) {
     
 }
 
+
+static inline u32
+Aabb2u_Width(aabb2u A) {
+    return A.Max.X - A.Min.X;
+}
+
+static inline u32
+Aabb2u_Height(aabb2u A) {
+    return A.Max.Y - A.Min.Y; 
+}
+
+static inline v2u
+Aabb2u_Dimensions(aabb2u A) {
+    v2u Ret = {};
+    Ret.W = Aabb2u_Width(A);
+    Ret.H = Aabb2u_Height(A);
+    
+    return Ret;
+}
+
 static inline aabb2f
 Aabb2f_Mul(aabb2f Lhs, f32 Rhs) {
     Lhs.Min = V2f_Mul(Lhs.Min, Rhs);
@@ -551,27 +587,26 @@ Aabb2f_Mul(aabb2f Lhs, f32 Rhs) {
     return Lhs;
 }
 
+static inline f32
+Aabb2f_Width(aabb2f A) {
+    return A.Max.X - A.Min.X;
+}
 
 static inline f32
-Aabb2f_Width(aabb2f Aabb) {
-    return Aabb.Max.X - Aabb.Min.X;
-}
-
-static inline f32
-Aabb2f_Height(aabb2f Aabb) {
-    return Aabb.Max.Y - Aabb.Min.Y; 
+Aabb2f_Height(aabb2f A) {
+    return A.Max.Y - A.Min.Y; 
 }
 
 
-static inline u32
-Aabb2u_Width(aabb2u Aabb) {
-    return Aabb.Max.X - Aabb.Min.X;
+static inline v2f
+Aabb2f_Dimensions(aabb2f A) {
+    v2f Ret = {};
+    Ret.W = Aabb2f_Width(A);
+    Ret.H = Aabb2f_Height(A);
+    
+    return Ret;
 }
 
-static inline u32
-Aabb2u_Height(aabb2u Aabb) {
-    return Aabb.Max.Y - Aabb.Min.Y; 
-}
 
 static inline aabb2u
 Aabb2u_CreateXYWH(u32 X, u32 Y, u32 W, u32 H) {

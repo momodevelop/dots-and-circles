@@ -24,6 +24,7 @@ struct game_input_button {
 struct game_input {
     u8_str Characters;
     union {
+        // TODO(Momo): maybe we don't do buttons but do mouse?
         game_input_button Buttons[9];
         struct {
             game_input_button ButtonUp;
@@ -39,6 +40,7 @@ struct game_input {
             game_input_button ButtonConsole;
             game_input_button ButtonInspector;
         };
+        
     };
     
     
