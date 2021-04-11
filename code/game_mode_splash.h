@@ -88,6 +88,7 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
 }
 
 struct game_mode_splash {
+    game_camera Camera;
     splash_image_entity SplashImg[2];
     splash_blackout_entity SplashBlackout;
 };
@@ -96,6 +97,15 @@ struct game_mode_splash {
 static inline void
 InitSplashMode(permanent_state* PermState) {
     game_mode_splash* Mode = PermState->SplashMode;
+    
+    Mode->Camera.Position = V3f_Create(0.f, 0.f, 0.f);
+    Mode->Camera.Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+    Mode->Camera.Color = C4f_Create(0.f, 0.3f, 0.3f, 1.f);
+    Mode->Camera.Dimensions = V3f_Create(Game_DesignWidth,
+                                         Game_DesignHeight,
+                                         Game_DesignDepth);
+    
+    
     // NOTE(Momo): Create entities
     {
         Mode->SplashImg[0].Position = V3f_Create( 0.f, 0.f, 0.f );
@@ -138,8 +148,9 @@ UpdateSplashMode(permanent_state* PermState,
                  game_input* Input,
                  f32 DeltaTime)
 {
-    SwitchToGameCoords(RenderCommands);
     game_mode_splash* Mode = PermState->SplashMode;
+    Camera_Set(&Mode->Camera, RenderCommands);
+    
     assets* Assets = &TranState->Assets;
     
     

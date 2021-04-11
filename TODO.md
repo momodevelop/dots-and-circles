@@ -1,7 +1,7 @@
 # Engine
-[] Update naming for game_renderer
-[] Update naming for game_assets
+[] Relook at camera/render space/design space/screen space.
 [] Animation
+
 [] Figure out animation format for game side
 [] Figure out animation asset format
 [] Log to text file

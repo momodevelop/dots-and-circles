@@ -115,6 +115,7 @@ struct game_mode_main {
     arena Arena;
     
     player Player;
+    game_camera Camera;
     
     bullet* CircleBullets;
     u32 CircleBulletCount;
@@ -197,6 +198,16 @@ InitMainMode(permanent_state* PermState,
              debug_state* DebugState) 
 {
     game_mode_main* Mode = PermState->MainMode;
+    
+    // NOTE(Momo): Init camera
+    {
+        Mode->Camera.Position = V3f_Create(0.f, 0.f, 0.f);
+        Mode->Camera.Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.Color = Color_Grey2;
+        Mode->Camera.Dimensions = V3f_Create(Game_DesignWidth,
+                                             Game_DesignHeight,
+                                             Game_DesignDepth);
+    }
     
     Mode->Arena = Arena_SubArena(&PermState->ModeArena, Arena_Remaining(PermState->ModeArena));
     Mode->DotBulletCap = 128;
@@ -668,9 +679,8 @@ UpdateMainMode(permanent_state* PermState,
                game_input* Input,
                f32 DeltaTime) 
 {
-    SwitchToGameCoords(RenderCommands);
     game_mode_main* Mode = PermState->MainMode;
-    Renderer_ClearColor(RenderCommands, C4f_Create(0.15f, 0.15f, 0.15f, 1.f));
+    Camera_Set(&Mode->Camera, RenderCommands);
     
     assets* Assets = &TranState->Assets;
     UpdateInput(Mode, Input);

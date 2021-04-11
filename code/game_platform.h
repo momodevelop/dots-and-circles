@@ -10,10 +10,6 @@
 #define Game_DesignWidth 800
 #define Game_DesignHeight 800
 #define Game_DesignDepth 200
-#define Game_DesignAnchorX 0.5f
-#define Game_DesignAnchorY 0.5f
-#define Game_DesignAnchorZ 0.5f
-
 
 // Input API /////////////////////////////////////////
 struct game_input_button {
