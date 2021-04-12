@@ -80,14 +80,11 @@ struct player {
     
     // Gameplay
     mood_type MoodType;
-    f32 Speed;
 };
 
 
 struct bullet {
-    // TODO(Momo): remove this?
-	atlas_aabb* ImageAabb;
-	v2f Size;
+    v2f Size;
     mood_type MoodType;
     v2f Direction;
 	v2f Position;
@@ -228,8 +225,6 @@ InitMainMode(permanent_state* PermState,
     assets* Assets = &TranState->Assets;
     player* Player = &Mode->Player;
     {
-        Player->Speed = 300.f;
-        
         Player->Position = {};
         Player->Direction = {};
         Player->Size = V2f_Create( 32.f, 32.f );
@@ -243,7 +238,7 @@ InitMainMode(permanent_state* PermState,
         Player->DotImageTransitionDuration = 0.1f;
         Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
     }
-    Mode->Wave.IsDone = true;
+    Mode->Wave.IsDone = True;
     
 }
 

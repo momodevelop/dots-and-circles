@@ -87,14 +87,10 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->TransientMemory, 
                                        GameMemory->TransientMemorySize);
         
-#if 0
-        TranState->Assets = Assets_Allocate(&TranState->Arena,
-                                            Platform);
-#else
         b32 Success = Assets_Create(&TranState->Assets,
                                     &TranState->Arena,
                                     Platform);
-#endif
+        
         Assert(Success);
         
         
