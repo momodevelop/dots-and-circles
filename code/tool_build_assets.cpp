@@ -35,18 +35,7 @@ int main() {
     
     arena Arena = Arena_Create(Memory, ToolBuildAssets_MemorySize);
     
-    // TODO(Momo): Preload stuff related to font that we actually need and then free
-    // loaded font's data to be more memory efficient.
-    loaded_font LoadedFont = {};
-    if (!Tab_LoadFont(&LoadedFont, &Arena, "assets/DroidSansMono.ttf")) 
-    {
-        printf("Failed to load font\n");
-        return 1; 
-    }
-    
-    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
-    
-    // TODO(Momo): Make this read from external file?
+    //~ NOTE(Momo): Initialize context for images in atlas
     atlas_context_image AtlasImageContexts[] = {
         { AtlasContextType_Image, "assets/ryoji.png",  AtlasAabb_Ryoji, Texture_AtlasDefault },
         { AtlasContextType_Image, "assets/yuu.png",    AtlasAabb_Yuu,    Texture_AtlasDefault },
@@ -68,10 +57,24 @@ int main() {
         { AtlasContextType_Image, "assets/bullet_circle.png", AtlasAabb_BulletCircle, Texture_AtlasDefault },
         { AtlasContextType_Image, "assets/enemy.png", AtlasAabb_Enemy, Texture_AtlasDefault },
     };
+    
+    //~ NOTE(Momo): Load font
+    
+    // TODO(Momo): Preload stuff related to font that we actually need and then free
+    // loaded font's data to be more memory efficient.
+    loaded_font LoadedFont = {};
+    if (!Tab_LoadFont(&LoadedFont, &Arena, "assets/DroidSansMono.ttf")) 
+    {
+        printf("Failed to load font\n");
+        return 1; 
+    }
+    
+    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
+    
+    //~ NOTE(Momo): Initialize contexts for font images in atlas
     atlas_context_font AtlasFontContexts[FontGlyph_Count];
     
     const u32 AabbCount = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
-    
     aabb2u Aabbs[AabbCount] = {};
     void* UserDatas[AabbCount] = {};
     u32 AabbCounter = 0;
@@ -114,7 +117,7 @@ int main() {
     }
     
     
-    // NOTE(Momo): Pack rects
+    //~ NOTE(Momo): Pack rects
     u32 AtlasWidth = 1024;
     u32 AtlasHeight = 1024;
     if (!AabbPacker_Pack(&Arena,
@@ -145,15 +148,15 @@ int main() {
 #endif
     printf("[Build Assets] Atlas generated\n");
     
+    //~ NOTE(Momo): Actual asset building
     printf("[Build Assets] Building Assets\n");
-    // NOTE(Momo): Actual asset building
+    
     tab_asset_builder AssetBuilder_ = {};
     tab_asset_builder* AssetBuilder = &AssetBuilder_;
     Tab_AssetBuilderBegin(AssetBuilder, "yuu", "MOMO");
+    
+    // NOTE(Momo): Write atlas
     {
-        
-        
-        //Tab_AssetBuilderWriteSound(AssetBuilder, Sound_Test);
         printf("[Build Assets] Writing Atlas\n");
         Tab_AssetBuilderWriteTexture(AssetBuilder, 
                                      Texture_AtlasDefault, 
@@ -162,6 +165,7 @@ int main() {
                                      4, 
                                      AtlasTexture);
         
+        // NOTE(Momo): Write atlas aabb for images in font
         for(u32 i = 0; i <  AabbCount; ++i) {
             aabb2u Aabb = Aabbs[i];
             auto Type = *(atlas_context_type*)UserDatas[i];
@@ -204,7 +208,10 @@ int main() {
                 
             }
         }
-        
+    }
+    
+    // NOTE(Momo): Font info
+    {
         i32 Ascent, Descent, LineGap;
         stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
         
@@ -220,7 +227,10 @@ int main() {
                                   Ascent * FontPixelScale, 
                                   Descent * FontPixelScale, 
                                   LineGap * FontPixelScale); 
-        
+    }
+    
+    // NOTE(Momo): Kerning info
+    {
         printf("[Build Assets] Writing kerning...\n");
         for (u32 i = FontGlyph_CodepointStart;
              i <= FontGlyph_CodepointEnd; 
@@ -234,9 +244,11 @@ int main() {
                 Tab_AssetBuilderWriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }
-        
-        
-        //NOTE(Momo): Anime
+    }
+    
+    
+    //NOTE(Momo): Anime
+    {
         printf("[Build Assets] Writing Anime...\n");
         {
             // Test frames: Karu_front
@@ -255,8 +267,6 @@ int main() {
     Tab_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");
     printf("[Build Assets] End!\n");
-    
-    MemCheck;
     return 0;
     
 }
