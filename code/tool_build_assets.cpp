@@ -215,12 +215,13 @@ int main() {
                                  &BoundingBox.Max.X,
                                  &BoundingBox.Max.Y
                                  );
-        
+        printf("[Build Assets] Writing font information...\n");
         Tab_AssetBuilderWriteFont(AssetBuilder, Font_Default, 
                                   Ascent * FontPixelScale, 
                                   Descent * FontPixelScale, 
                                   LineGap * FontPixelScale); 
         
+        printf("[Build Assets] Writing kerning...\n");
         for (u32 i = FontGlyph_CodepointStart;
              i <= FontGlyph_CodepointEnd; 
              ++i) 
@@ -234,6 +235,22 @@ int main() {
             }
         }
         
+        
+        //NOTE(Momo): Anime
+        printf("[Build Assets] Writing Anime...\n");
+        {
+            // Test frames: Karu_front
+            atlas_aabb_id Frames[] = {
+                AtlasAabb_Karu30,
+                AtlasAabb_Karu31,
+                AtlasAabb_Karu32,
+            };
+            
+            Tab_AssetBuilderWriteAnime(AssetBuilder, 
+                                       Anime_KaruFront,
+                                       Frames,
+                                       ArrayCount(Frames));
+        }
     }
     Tab_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");

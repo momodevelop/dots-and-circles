@@ -161,6 +161,22 @@ Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context,
     
 }
 
+static inline void 
+Tab_AssetBuilderWriteAnime(tab_asset_builder* Context, 
+                           anime_id AnimeId, 
+                           atlas_aabb_id* Frames,
+                           u32 FrameCount) 
+{
+    Tab_AssetBuilderWriteEntry(Context, AssetType_Anime);
+    
+    asset_file_anime Anime = {};
+    Anime.AnimeId = AnimeId;
+    Anime.FrameCount = FrameCount;
+    
+    fwrite(&Anime, sizeof(Anime), 1, Context->File);
+    fwrite(Frames, sizeof(atlas_aabb_id), FrameCount, Context->File);
+}
+
 // TODO(Momo):
 static inline void
 Tab_AssetBuilderWriteSound(tab_asset_builder* Context, 

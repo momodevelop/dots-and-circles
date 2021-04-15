@@ -7,6 +7,11 @@ struct texture {
     renderer_texture_handle Handle;
 };
 
+struct anime {
+    atlas_aabb_id *Frames;
+    u32 FrameCount;
+};
+
 struct atlas_aabb {
     aabb2u Aabb;
     texture_id TextureId;
@@ -41,6 +46,9 @@ struct assets {
     
     font* Fonts;
     u32 FontCount;
+    
+    anime* Animes;
+    u32 AnimeCount;
 };
 
 //~ NOTE(Momo): Font functions
@@ -104,6 +112,12 @@ static inline atlas_aabb*
 Assets_GetAtlasAabb(assets* Assets, atlas_aabb_id AtlasAabbId) {
     Assert(AtlasAabbId < AtlasAabb_Count);
     return Assets->AtlasAabbs + AtlasAabbId;
+}
+
+static inline anime*
+Assets_GetAnime(assets* Assets, anime_id AnimeId) {
+    Assert(AnimeId < Anime_Count);
+    return Assets->Animes + AnimeId;
 }
 
 
@@ -193,6 +207,8 @@ return False; \
     Assets->FontCount = Font_Count;
     Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
     
+    Assets->AnimeCount = Anime_Count;
+    Assets->Animes = Arena_PushArray(anime, Arena, Anime_Count);
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     CheckFile(AssetFile);
@@ -233,20 +249,28 @@ return False; \
     
     for (u32 I = 0; I < FileEntryCount; ++I) 
     {
-        arena_mark Scratch = Arena_Mark(Arena);
-        Defer{ Arena_Revert(&Scratch); };
         
         // NOTE(Momo): Read header
-        auto* FileEntry = Assets_ReadStruct(asset_file_entry,
-                                            &AssetFile,
-                                            Platform,
-                                            Scratch.Arena,
-                                            &CurFileOffset);
-        CheckPtr(FileEntry);
-        CheckFile(AssetFile);
+        asset_file_entry FileEntry = {};
+        {
+            arena_mark Scratch = Arena_Mark(Arena);
+            Defer{ Arena_Revert(&Scratch); };
+            
+            auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
+                                                   &AssetFile,
+                                                   Platform,
+                                                   Scratch.Arena,
+                                                   &CurFileOffset);
+            CheckPtr(FileEntryPtr);
+            CheckFile(AssetFile);
+            FileEntry = *FileEntryPtr;
+        }
         
-        switch(FileEntry->Type) {
+        switch(FileEntry.Type) {
             case AssetType_Texture: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
+                
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile, 
                                                       Platform, 
@@ -281,6 +305,9 @@ return False; \
                 }
             } break;
             case AssetType_AtlasAabb: { 
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
+                
                 auto* FileAtlasAabb = 
                     Assets_ReadStruct(asset_file_atlas_aabb,
                                       &AssetFile, 
@@ -295,6 +322,9 @@ return False; \
                 AtlasAabb->TextureId = FileAtlasAabb->TextureId;
             } break;
             case AssetType_Font: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
+                
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
                                                    Platform,
@@ -309,6 +339,9 @@ return False; \
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
+                
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
                                                         Platform,
@@ -327,6 +360,9 @@ return False; \
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
+                
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
                                                           Platform,
@@ -343,6 +379,35 @@ return False; \
             } break;
             case AssetType_Sound: {
                 return False;
+            } break;
+            case AssetType_Anime: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                
+                auto* FileAnime = Assets_ReadStruct(asset_file_anime,
+                                                    &AssetFile,
+                                                    Platform,
+                                                    Scratch.Arena,
+                                                    &CurFileOffset);
+                
+                CheckPtr(FileAnime);
+                CheckFile(AssetFile);
+                
+                anime* Anime = Assets_GetAnime(Assets, FileAnime->AnimeId);
+                Anime->FrameCount = FileAnime->FrameCount;
+                
+                // NOTE(Momo): we have to revert here so that our arena's 
+                // memory does not screw up. A bit janky but hey.
+                Arena_Revert(&Scratch); 
+                
+                Anime->Frames = (atlas_aabb_id*)
+                    Assets_ReadBlock(&AssetFile,
+                                     Platform, 
+                                     Arena, 
+                                     &CurFileOffset,
+                                     sizeof(atlas_aabb_id) * Anime->FrameCount,
+                                     1);
+                
+                
             } break;
             default: {
                 return False;

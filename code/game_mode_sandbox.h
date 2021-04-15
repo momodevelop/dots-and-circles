@@ -4,27 +4,6 @@
 #include "game.h"
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
-enum anime_id {
-    Anime_KaruFront,
-};
-
-struct anime {
-    //atlas_aabb_id* Frames;
-    atlas_aabb_id Frames[3];
-    u32 FrameCount;
-} TestAnime;
-
-// TODO(Momo): Fake function
-static inline anime
-Assets_GetAnime(anime_id Id) 
-{
-    anime Ret = {};
-    Ret.Frames[0] = AtlasAabb_Karu00;
-    Ret.Frames[1] = AtlasAabb_Karu01;
-    Ret.Frames[2] = AtlasAabb_Karu02; 
-    Ret.FrameCount = 3;
-    return Ret;
-}
 
 struct anime_component {
     anime_id AnimeId;
@@ -45,8 +24,8 @@ AnimeComponent_Create(anime_component* A,
 }
 
 static inline void
-AnimeComponent_Update(anime_component* A, f32 DeltaTime) {
-    anime Anime = Assets_GetAnime(Anime_KaruFront);
+AnimeComponent_Update(anime_component* A, assets* Ass, f32 DeltaTime) {
+    anime* Anime = Assets_GetAnime(Ass, Anime_KaruFront);
     A->TimerPerFrame += DeltaTime;
     
     A->TimerPerFrame += DeltaTime;
@@ -54,7 +33,7 @@ AnimeComponent_Update(anime_component* A, f32 DeltaTime) {
     {
         A->TimerPerFrame = 0.f;
         ++A->CurrentFrameIndex;
-        if (A->CurrentFrameIndex >= Anime.FrameCount) {
+        if (A->CurrentFrameIndex >= Anime->FrameCount) {
             A->CurrentFrameIndex = 0;
         }
     }
@@ -91,7 +70,7 @@ UpdateSandboxMode(permanent_state* PermState,
     assets* Assets = &TranState->Assets;
     game_mode_sandbox_entity* Entity = &Mode->Entity;
     
-    AnimeComponent_Update(&Entity->Anime, DeltaTime);
+    AnimeComponent_Update(&Entity->Anime, Assets, DeltaTime);
     
     // TODO(Momo): Draw function?
     m44f T = M44f_Translation(Entity->Pos.X, Entity->Pos.Y, Entity->Pos.Z);
@@ -100,8 +79,8 @@ UpdateSandboxMode(permanent_state* PermState,
     c4f Color = Color_White;
     anime_component* AnimeCom = &Entity->Anime;
     {
-        anime Anime = Assets_GetAnime(AnimeCom->AnimeId);
-        atlas_aabb_id AtlasAabbId = Anime.Frames[AnimeCom->CurrentFrameIndex];
+        anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
+        atlas_aabb_id AtlasAabbId = Anime->Frames[AnimeCom->CurrentFrameIndex];
         Draw_TexturedQuadFromAtlasAabb(RenderCommands,
                                        Assets,
                                        AtlasAabbId,

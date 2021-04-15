@@ -26,6 +26,11 @@ enum font_id {
     Font_Count,
 };
 
+enum anime_id {
+    Anime_KaruFront,
+    
+    Anime_Count,
+};
 
 enum atlas_aabb_id {
     AtlasAabb_Ryoji,
@@ -60,6 +65,7 @@ enum asset_type {
     AssetType_FontGlyph,
     AssetType_FontKerning,
     AssetType_Sound,
+    AssetType_Anime,
 };
 
 
@@ -110,6 +116,13 @@ struct asset_file_font_kerning {
     i32 Kerning;
     u32 CodepointA;
     u32 CodepointB;
+};
+
+struct asset_file_anime {
+    anime_id AnimeId;
+    u32 FrameCount;
+    // NOTE(Momo): Data is:
+    // atlas_aabb_id Data[Framecount]
 };
 
 struct asset_file_sound {

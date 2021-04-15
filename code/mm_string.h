@@ -2,7 +2,6 @@
 #define MM_STRING
 
 //~ NOTE(Momo): u8_cstr
-
 // TODO(Momo): Support for UTF8??
 struct u8_cstr {
     u8* Data;
