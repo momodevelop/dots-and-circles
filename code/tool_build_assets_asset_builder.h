@@ -2,15 +2,16 @@
 #ifndef TOOL_BUILD_ASSETS_ASSET_BUILDER_H
 #define TOOL_BUILD_ASSETS_ASSET_BUILDER_H
 
-struct tab_asset_builder {
+struct tba_asset_builder {
     FILE* File;
     u32 EntryCount;
     long int EntryCountAt;
 };
 
 static inline void
-Tab_AssetBuilderBegin(tab_asset_builder* Context, 
-                      const char* Filename, const char* Signature) 
+Tba_AssetBuilderBegin(tba_asset_builder* Context, 
+                      const char* Filename, 
+                      const char* Signature) 
 {
     Context->EntryCount = 0;
     Context->File = nullptr; 
@@ -26,14 +27,16 @@ Tab_AssetBuilderBegin(tab_asset_builder* Context,
 }
 
 static inline void
-Tab_AssetBuilderEnd(tab_asset_builder* Context) {
+Tba_AssetBuilderEnd(tba_asset_builder* Context) 
+{
     fseek(Context->File, Context->EntryCountAt, SEEK_SET);
     fwrite(&Context->EntryCount, sizeof(u32), 1, Context->File);
     fclose(Context->File);
 }
 
 static inline void
-Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, asset_type AssetType) {
+Tba_AssetBuilderWriteEntry(tba_asset_builder* Context, asset_type AssetType) 
+{
     asset_file_entry Entry = {};
     Entry.Type = AssetType;
     fwrite(&Entry, sizeof(Entry),  1, Context->File);
@@ -41,14 +44,14 @@ Tab_AssetBuilderWriteEntry(tab_asset_builder* Context, asset_type AssetType) {
 }
 
 static inline void 
-Tab_AssetBuilderWriteTexture(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteTexture(tba_asset_builder* Context, 
                              texture_id Id, 
                              u32 Width, 
                              u32 Height, 
                              u32 Channels, 
                              u8* Pixels) 
 {
-    Tab_AssetBuilderWriteEntry(Context, AssetType_Texture);
+    Tba_AssetBuilderWriteEntry(Context, AssetType_Texture);
     
     asset_file_texture Texture = {};
     Texture.Id = Id;
@@ -66,7 +69,7 @@ Tab_AssetBuilderWriteTexture(tab_asset_builder* Context,
 
 
 static inline void 
-Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteTextureFromFile(tba_asset_builder* Context, 
                                      texture_id Id, 
                                      const char* Filename) 
 {
@@ -82,34 +85,33 @@ Tab_AssetBuilderWriteTextureFromFile(tab_asset_builder* Context,
         Channels = (u32)C;
     }
     Defer { stbi_image_free(LoadedImage); };
-    Tab_AssetBuilderWriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
+    Tba_AssetBuilderWriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
 }
 
 
 static inline void 
-Tab_AssetBuilderWriteAtlasAabb(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteAtlasAabb(tba_asset_builder* Context, 
                                atlas_aabb_id Id, 
                                texture_id TargetTextureId, 
                                aabb2u Aabb) 
 {
-    Tab_AssetBuilderWriteEntry(Context,  AssetType_AtlasAabb);
+    Tba_AssetBuilderWriteEntry(Context,  AssetType_AtlasAabb);
     
     asset_file_atlas_aabb AtlasAabb = {};
     AtlasAabb.Id = Id;
     AtlasAabb.TextureId = TargetTextureId;
     AtlasAabb.Aabb = Aabb;
     fwrite(&AtlasAabb, sizeof(AtlasAabb), 1,  Context->File);
-    printf("%d", TargetTextureId);
 }
 
 static inline void
-Tab_AssetBuilderWriteFont(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteFont(tba_asset_builder* Context, 
                           font_id Id, 
                           f32 Ascent, 
                           f32 Descent, 
                           f32 LineGap) 
 {
-    Tab_AssetBuilderWriteEntry(Context, AssetType_Font);
+    Tba_AssetBuilderWriteEntry(Context, AssetType_Font);
     
     asset_file_font Font = {};
     Font.Id = Id;
@@ -120,7 +122,7 @@ Tab_AssetBuilderWriteFont(tab_asset_builder* Context,
 }
 
 static inline void 
-Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteFontGlyph(tba_asset_builder* Context, 
                                font_id FontId, 
                                texture_id TargetTextureId, 
                                u32 Codepoint, 
@@ -129,7 +131,7 @@ Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context,
                                aabb2u AtlasAabb, 
                                aabb2f Box) 
 {
-    Tab_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
+    Tba_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
     
     asset_file_font_glyph FontGlyph = {};
     FontGlyph.FontId = FontId;
@@ -144,13 +146,13 @@ Tab_AssetBuilderWriteFontGlyph(tab_asset_builder* Context,
 }
 
 static inline void 
-Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteFontKerning(tba_asset_builder* Context, 
                                  font_id FontId, 
                                  u32 CodepointA,
                                  u32 CodepointB, 
                                  i32 Kerning) 
 {
-    Tab_AssetBuilderWriteEntry(Context, AssetType_FontKerning);
+    Tba_AssetBuilderWriteEntry(Context, AssetType_FontKerning);
     
     asset_file_font_kerning Font = {};
     Font.FontId = FontId;
@@ -162,12 +164,12 @@ Tab_AssetBuilderWriteFontKerning(tab_asset_builder* Context,
 }
 
 static inline void 
-Tab_AssetBuilderWriteAnime(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteAnime(tba_asset_builder* Context, 
                            anime_id AnimeId, 
                            atlas_aabb_id* Frames,
                            u32 FrameCount) 
 {
-    Tab_AssetBuilderWriteEntry(Context, AssetType_Anime);
+    Tba_AssetBuilderWriteEntry(Context, AssetType_Anime);
     
     asset_file_anime Anime = {};
     Anime.AnimeId = AnimeId;
@@ -179,12 +181,12 @@ Tab_AssetBuilderWriteAnime(tab_asset_builder* Context,
 
 // TODO(Momo):
 static inline void
-Tab_AssetBuilderWriteSound(tab_asset_builder* Context, 
+Tba_AssetBuilderWriteSound(tba_asset_builder* Context, 
                            sound_id SoundId,
                            u32 DataSize,
                            void* Data) 
 {
-    Tab_AssetBuilderWriteEntry(Context, AssetType_Sound);
+    Tba_AssetBuilderWriteEntry(Context, AssetType_Sound);
     
     asset_file_sound Sound = {};
     Sound.SoundId = SoundId;

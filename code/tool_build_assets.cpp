@@ -24,11 +24,11 @@
 
 
 int main() {
-    printf("[Build Assets] Start!\n");
+    printf("Start!\n");
     
     void* Memory = malloc(ToolBuildAssets_MemorySize);
     if (!Memory) {
-        printf("[Build Assets] Failed to initialize memory");
+        printf("Failed to initialize memory");
         return 1; 
     }
     Defer { free(Memory); };
@@ -63,9 +63,9 @@ int main() {
     // TODO(Momo): Preload stuff related to font that we actually need and then free
     // loaded font's data to be more memory efficient.
     loaded_font LoadedFont = {};
-    if (!Tab_LoadFont(&LoadedFont, &Arena, "assets/DroidSansMono.ttf")) 
+    if (!Tba_LoadFont(&LoadedFont, &Arena, "assets/DroidSansMono.ttf")) 
     {
-        printf("Failed to load font\n");
+        printf("[Atlas] Failed to load font\n");
         return 1; 
     }
     
@@ -127,38 +127,37 @@ int main() {
                          AabbCount, 
                          AabbPackerSortType_Height)) 
     {
-        printf("[Build Assets] Failed to generate texture\n");
+        printf("[Atlas] Failed to generate texture\n");
         return 1;
     }
     
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasTexture = Tab_GenerateAtlas(&Arena,
+    u8* AtlasTexture = Tba_GenerateAtlas(&Arena,
                                          Aabbs, 
                                          UserDatas,
                                          AabbCount, 
                                          AtlasWidth, 
                                          AtlasHeight);
     if (!AtlasTexture) {
-        printf("Build Assets] Cannot generate atlas, not enough memory\n");
+        printf("[Atlas] Cannot generate atlas, not enough memory\n");
         return 1;
     }
 #if GENERATE_TEST_PNG 
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
-    printf("[Build Assets] Written test atlas: test.png\n");
+    printf("[Atlas] Written test atlas: test.png\n");
 #endif
-    printf("[Build Assets] Atlas generated\n");
+    printf("[Atlas] Atlas generated\n");
     
     //~ NOTE(Momo): Actual asset building
     printf("[Build Assets] Building Assets\n");
     
-    tab_asset_builder AssetBuilder_ = {};
-    tab_asset_builder* AssetBuilder = &AssetBuilder_;
-    Tab_AssetBuilderBegin(AssetBuilder, "yuu", "MOMO");
+    tba_asset_builder AssetBuilder_ = {};
+    tba_asset_builder* AssetBuilder = &AssetBuilder_;
+    Tba_AssetBuilderBegin(AssetBuilder, "yuu", "MOMO");
     
     // NOTE(Momo): Write atlas
     {
-        printf("[Build Assets] Writing Atlas\n");
-        Tab_AssetBuilderWriteTexture(AssetBuilder, 
+        Tba_AssetBuilderWriteTexture(AssetBuilder, 
                                      Texture_AtlasDefault, 
                                      AtlasWidth, 
                                      AtlasHeight, 
@@ -172,7 +171,7 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)UserDatas[i];
-                    Tab_AssetBuilderWriteAtlasAabb(AssetBuilder, 
+                    Tba_AssetBuilderWriteAtlasAabb(AssetBuilder, 
                                                    Image->Id, 
                                                    Image->TextureId, 
                                                    Aabb);
@@ -196,7 +195,7 @@ int main() {
                                           &Box.Max.Y);
                     
                     aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
-                    Tab_AssetBuilderWriteFontGlyph(AssetBuilder, 
+                    Tba_AssetBuilderWriteFontGlyph(AssetBuilder, 
                                                    Font->FontId, 
                                                    Font->TextureId, 
                                                    Font->Codepoint, FontPixelScale * Advance,
@@ -223,7 +222,7 @@ int main() {
                                  &BoundingBox.Max.Y
                                  );
         printf("[Build Assets] Writing font information...\n");
-        Tab_AssetBuilderWriteFont(AssetBuilder, Font_Default, 
+        Tba_AssetBuilderWriteFont(AssetBuilder, Font_Default, 
                                   Ascent * FontPixelScale, 
                                   Descent * FontPixelScale, 
                                   LineGap * FontPixelScale); 
@@ -241,7 +240,7 @@ int main() {
                 ++j) 
             {
                 i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
-                Tab_AssetBuilderWriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
+                Tba_AssetBuilderWriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }
     }
@@ -258,15 +257,14 @@ int main() {
                 AtlasAabb_Karu32,
             };
             
-            Tab_AssetBuilderWriteAnime(AssetBuilder, 
+            Tba_AssetBuilderWriteAnime(AssetBuilder, 
                                        Anime_KaruFront,
                                        Frames,
                                        ArrayCount(Frames));
         }
     }
-    Tab_AssetBuilderEnd(AssetBuilder);
+    Tba_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");
-    printf("[Build Assets] End!\n");
     return 0;
     
 }

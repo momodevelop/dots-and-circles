@@ -15,7 +15,7 @@ struct read_file_result {
 
 
 static inline read_file_result
-Tab_ReadFileIntoMemory(arena* Arena, 
+Tba_ReadFileIntoMemory(arena* Arena, 
                        const char* Filename) {
     read_file_result Ret = {};
     FILE* File = Null;
@@ -41,8 +41,8 @@ Tab_ReadFileIntoMemory(arena* Arena,
 }
 
 static inline b32
-Tab_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
-    read_file_result ReadFileResult = Tab_ReadFileIntoMemory(Arena, Filename);
+Tba_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
+    read_file_result ReadFileResult = Tba_ReadFileIntoMemory(Arena, Filename);
 	if (!ReadFileResult.Data) {
         return False;
     }

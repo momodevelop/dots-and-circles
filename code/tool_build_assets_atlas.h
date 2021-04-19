@@ -31,7 +31,7 @@ struct atlas_context_font {
 
 
 static inline void 
-Tab_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
+Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
                            u8* TextureMemory, aabb2u TextureAabb) 
 {
     i32 j = 0;
@@ -51,7 +51,7 @@ Tab_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-Tab_GenerateAtlas(arena* Arena, 
+Tba_GenerateAtlas(arena* Arena, 
                   aabb2u* Aabbs, 
                   void* UserDatas[],
                   u32 AabbCount, 
@@ -76,7 +76,7 @@ Tab_GenerateAtlas(arena* Arena,
                 auto* Context = (atlas_context_image*)UserDatas[I];
                 i32 W, H, C;
                 
-                read_file_result FileMem = Tab_ReadFileIntoMemory(Arena, Context->Filename);
+                read_file_result FileMem = Tba_ReadFileIntoMemory(Arena, Context->Filename);
                 
                 // TODO: At the moment, there is no clean way for stbi load to 
                 // output to a given memory without some really ugly hacks. 
@@ -89,7 +89,7 @@ Tab_GenerateAtlas(arena* Arena,
                                                           &W, &H, &C, 0);
                 
                 Defer { stbi_image_free(TextureMemory); };
-                Tab_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Aabb);
+                Tba_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Aabb);
                 
             } break;
             case AtlasContextType_Font: {
@@ -121,7 +121,7 @@ Tab_GenerateAtlas(arena* Arena,
                         FontTextureItr[k++] = FontTextureOneCh[j];
                     }
                 }
-                Tab_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, FontTexture, Aabb);
+                Tba_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, FontTexture, Aabb);
                 
             } break;
             
