@@ -27,6 +27,7 @@
 #define GL_UNSIGNED_BYTE                0x1401
 #define GL_TRIANGLES                    0x0004
 #define GL_NEAREST                      0x2600
+#define GL_LINEAR                       0x2601
 #define GL_TEXTURE_MIN_FILTER           0x2801
 #define GL_TEXTURE_MAG_FILTER           0x2800
 #define GL_DEBUG_SOURCE_API 0x8246
