@@ -114,17 +114,10 @@ struct game_mode_main {
     player Player;
     game_camera Camera;
     
-    bullet* CircleBullets;
-    u32 CircleBulletCount;
-    u32 CircleBulletCap;
     
-    bullet* DotBullets;
-    u32 DotBulletCount;
-    u32 DotBulletCap;
-    
-    enemy* Enemies;
-    u32 EnemyCount;
-    u32 EnemyCapacity;
+    flist<bullet,128> CircleBullets;
+    flist<bullet,128> DotBullets;
+    flist<enemy,128> Enemies;
     
     wave Wave;
     rng_series Rng;
@@ -153,8 +146,7 @@ SpawnEnemy(game_mode_main* Mode,
     Enemy.MoodPatternType = MoodPatternType;
     Enemy.MovementType = MovementType;
     
-    Assert(Mode->EnemyCount < Mode->EnemyCapacity);
-    Mode->Enemies[Mode->EnemyCount++] = Enemy;
+    FList_Push(&Mode->Enemies, Enemy);
 }
 
 
@@ -175,12 +167,10 @@ SpawnBullet(game_mode_main* Mode, assets* Assets, v2f Position, v2f Direction, f
     }
     switch (Mood) {
         case MoodType_Dot: {
-            Assert(Mode->DotBulletCount < Mode->DotBulletCap);
-            Mode->DotBullets[Mode->DotBulletCount++] = Bullet;
+            FList_Push(&Mode->DotBullets, Bullet);
         } break;
         case MoodType_Circle: {
-            Assert(Mode->CircleBulletCount < Mode->CircleBulletCap);
-            Mode->CircleBullets[Mode->CircleBulletCount++] = Bullet;
+            FList_Push(&Mode->CircleBullets, Bullet);
         } break;
         default: {
             Assert(False);
@@ -207,17 +197,9 @@ InitMainMode(permanent_state* PermState,
     }
     
     Mode->Arena = Arena_SubArena(&PermState->ModeArena, Arena_Remaining(PermState->ModeArena));
-    Mode->DotBulletCap = 128;
-    Mode->DotBulletCount = 0;
-    Mode->DotBullets = Arena_PushArray(bullet, &Mode->Arena, Mode->DotBulletCap);
-    
-    Mode->CircleBulletCap = 128;
-    Mode->CircleBulletCount = 0;
-    Mode->CircleBullets = Arena_PushArray(bullet, &Mode->Arena, Mode->CircleBulletCap);
-    
-    Mode->EnemyCapacity = 128;
-    Mode->EnemyCount = 0;
-    Mode->Enemies = Arena_PushArray(enemy, &Mode->Arena, Mode->EnemyCapacity);
+    FList_Init(&Mode->DotBullets);
+    FList_Init(&Mode->CircleBullets);
+    FList_Init(&Mode->Enemies);
     
     Mode->Wave.IsDone = true;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
@@ -267,25 +249,12 @@ UpdatePlayer(game_mode_main* Mode,
     
 }
 
-static inline void 
-RemoveDotBullet(game_mode_main* Mode, u32 Index) {
-    Mode->DotBullets[Index] = Mode->DotBullets[Mode->DotBulletCount-1];
-    --Mode->DotBulletCount;
-}
-
-
-static inline void 
-RemoveCircleBullet(game_mode_main* Mode, u32 Index) {
-    Mode->CircleBullets[Index] = Mode->CircleBullets[Mode->CircleBulletCount-1];
-    --Mode->CircleBulletCount;
-}
-
 static inline void
 UpdateBullets(game_mode_main* Mode,
               f32 DeltaTime) 
 {
-    for(u32 I = 0; I < Mode->DotBulletCount;) {
-        bullet* DotBullet = Mode->DotBullets + I;
+    for(u32 I = 0; I < Mode->DotBullets.Count;) {
+        bullet* DotBullet = Mode->DotBullets.Data + I;
         
         f32 SpeedDt = DotBullet->Speed * DeltaTime;
         v2f Velocity = V2f_Mul(DotBullet->Direction, SpeedDt);
@@ -296,14 +265,14 @@ UpdateBullets(game_mode_main* Mode,
             DotBullet->Position.X >= Game_DesignWidth * 0.5f + DotBullet->HitCircle.Radius ||
             DotBullet->Position.Y <= -Game_DesignHeight * 0.5f - DotBullet->HitCircle.Radius ||
             DotBullet->Position.Y >= Game_DesignHeight * 0.5f + DotBullet->HitCircle.Radius) {
-            RemoveDotBullet(Mode, I);
+            FList_Slear(&Mode->DotBullets, I);
             continue;
         }
         ++I;
     }
     
-    for(u32 I = 0; I < Mode->CircleBulletCount;) {
-        bullet* CircleBullet = Mode->CircleBullets + I;
+    for(u32 I = 0; I < Mode->CircleBullets.Count;) {
+        bullet* CircleBullet = Mode->CircleBullets.Data + I;
         
         f32 SpeedDt = CircleBullet->Speed * DeltaTime;
         v2f Velocity = V2f_Mul(CircleBullet->Direction, SpeedDt);
@@ -314,7 +283,7 @@ UpdateBullets(game_mode_main* Mode,
             CircleBullet->Position.X >= Game_DesignWidth * 0.5f + CircleBullet->HitCircle.Radius ||
             CircleBullet->Position.Y <= -Game_DesignHeight * 0.5f - CircleBullet->HitCircle.Radius ||
             CircleBullet->Position.Y >= Game_DesignHeight * 0.5f + CircleBullet->HitCircle.Radius) {
-            RemoveCircleBullet(Mode, I);
+            FList_Slear(&Mode->CircleBullets, I);
             continue;
         }
         ++I;
@@ -328,9 +297,9 @@ UpdateEnemies(game_mode_main* Mode,
               f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
-    for (u32 I = 0; I < Mode->EnemyCount; ++I) 
+    for (u32 I = 0; I < Mode->Enemies.Count; ++I) 
     {
-        enemy* Enemy = Mode->Enemies + I;
+        enemy* Enemy = FList_Get(&Mode->Enemies, I);
         
         // Movement
         switch( Enemy->MovementType ) {
@@ -372,8 +341,7 @@ UpdateEnemies(game_mode_main* Mode,
         Enemy->LifeTimer += DeltaTime;
         if (Enemy->LifeTimer > Enemy->LifeDuration) {
             // Quick removal
-            Mode->Enemies[I] = Mode->Enemies[Mode->EnemyCount-1];
-            --Mode->EnemyCount;
+            FList_Slear(&Mode->Enemies, I);
             continue;
         }
         ++Enemy;
@@ -389,30 +357,30 @@ UpdateCollision(game_mode_main* Mode)
     PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
     
     // Player vs every bullet
-    for (u32 I = 0; I < Mode->DotBulletCount;) 
+    for (u32 I = 0; I < Mode->DotBullets.Count;) 
     {
-        bullet* DotBullet = Mode->DotBullets + I;
+        bullet* DotBullet = FList_Get(&Mode->DotBullets,I);
         circle2f DotBulletCircle = DotBullet->HitCircle;
         DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
         
         if (Circle2f_IsIntersecting(PlayerCircle, DotBulletCircle)) {
             if (Player->MoodType == MoodType_Dot) {
-                RemoveDotBullet(Mode, I);
+                FList_Slear(&Mode->DotBullets, I);
                 continue;
             }
         }
         ++I;
     }
     
-    for (u32 I = 0; I < Mode->CircleBulletCount;) 
+    for (u32 I = 0; I < Mode->CircleBullets.Count;) 
     {
-        bullet* CircleBullet = Mode->CircleBullets + I;
+        bullet* CircleBullet = Mode->CircleBullets.Data + I;
         circle2f CircleBulletHitCircle = CircleBullet->HitCircle;
         CircleBulletHitCircle.Origin = V2f_Add(CircleBulletHitCircle.Origin, CircleBullet->Position);
         
         if (Circle2f_IsIntersecting(PlayerCircle, CircleBulletHitCircle)) {
             if (Player->MoodType == MoodType_Circle ) {
-                RemoveCircleBullet(Mode, I);
+                FList_Slear(&Mode->CircleBullets, I);
                 continue;
             }
         }
@@ -595,8 +563,8 @@ RenderBullets(game_mode_main* Mode,
         f32 LayerOffset = 0.f;
         atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletDot;
         texture* Texture = Assets->Textures + AtlasAabb->TextureId;
-        for (u32 I = 0; I < Mode->DotBulletCount; ++I) {
-            bullet* DotBullet = Mode->DotBullets + I;
+        for (u32 I = 0; I < Mode->DotBullets.Count; ++I) {
+            bullet* DotBullet = Mode->DotBullets.Data + I;
             m44f S = M44f_Scale(DotBullet->Size.X, 
                                 DotBullet->Size.Y, 
                                 1.f);
@@ -619,8 +587,8 @@ RenderBullets(game_mode_main* Mode,
     // Render Circles
     {
         f32 LayerOffset = 0.f;
-        for (u32 I = 0; I < Mode->CircleBulletCount; ++I) {
-            bullet* CircleBullet = Mode->CircleBullets + I;
+        for (u32 I = 0; I < Mode->CircleBullets.Count; ++I) {
+            bullet* CircleBullet = Mode->CircleBullets.Data + I;
             m44f S = M44f_Scale(CircleBullet->Size.X, 
                                 CircleBullet->Size.Y, 
                                 1.f);
@@ -649,9 +617,9 @@ RenderEnemies(game_mode_main* Mode,
               assets* Assets,
               mailbox* RenderCommands) 
 {
-    for(u32 I = 0; I < Mode->EnemyCount; ++I )
+    for(u32 I = 0; I < Mode->Enemies.Count; ++I )
     {
-        enemy* Enemy = Mode->Enemies + I;
+        enemy* Enemy = Mode->Enemies.Data + I;
         m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
         m44f T = M44f_Translation(Enemy->Position.X,
                                   Enemy->Position.Y,
@@ -694,14 +662,14 @@ UpdateMainMode(permanent_state* PermState,
     
     DebugInspector_PushU32(&DebugState->Inspector, 
                            U8CStr_FromSiStr("Dots: "), 
-                           Mode->DotBulletCount);
+                           Mode->DotBullets.Count);
     DebugInspector_PushU32(&DebugState->Inspector, 
                            U8CStr_FromSiStr("Circles: "), 
-                           Mode->CircleBulletCount);
+                           Mode->CircleBullets.Count);
     
     DebugInspector_PushU32(&DebugState->Inspector, 
                            U8CStr_FromSiStr("Bullets: "), 
-                           Mode->DotBulletCount + Mode->CircleBulletCount);
+                           Mode->DotBullets.Count + Mode->CircleBullets.Count);
     
 }
 

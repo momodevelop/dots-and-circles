@@ -18,6 +18,10 @@
 #include "mm_stream.h"
 #include "mm_mailbox.h"
 
+#include "mm_flist.h"
+
 #include "mm_wav.h"
+
+
 
 #endif // __MM_CORE_H__
