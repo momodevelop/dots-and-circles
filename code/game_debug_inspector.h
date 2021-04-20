@@ -7,18 +7,28 @@
 #define DebugInspector_PosY Game_DesignHeight * 0.5f - 32.f
 #define DebugInspector_PosZ 91.f
 
+struct debug_inspector_entry {
+    u8 Buffer[256];
+    u8_str Text;
+};
 
-typedef u8_fstr<256> debug_inspector_entry;
 
 struct debug_inspector {
     b32 IsActive;
-    flist<debug_inspector_entry,32> Entries;
+    debug_inspector_entry Entries[32];
+    u32 EntryCount;
 };
 
 static inline void
 DebugInspector_Init(debug_inspector* Inspector) {
+    Inspector->EntryCount = 0;
     Inspector->IsActive = False;
     
+    for (u32 I = 0; I < ArrayCount(Inspector->Entries); ++I) {
+        debug_inspector_entry* Entry = Inspector->Entries + I;
+        Entry->Text = U8Str_CreateFromBuffer(Entry->Buffer);
+        
+    }
 }
 
 static inline void
@@ -26,7 +36,7 @@ DebugInspector_Begin(debug_inspector* Inspector) {
     if(!Inspector->IsActive)
         return;
     
-    FList_Init(&Inspector->Entries);
+    Inspector->EntryCount = 0;
 }
 
 static inline void 
@@ -36,9 +46,12 @@ DebugInspector_End(debug_inspector* Inspector,
     if(!Inspector->IsActive)
         return;
     
+    // TODO(Momo): Complete this
+    // For each variable, render:
+    // Name: Data
     f32 OffsetY = 0.f;
-    for (u32 I = 0; I < Inspector->Entries.Count; ++I) {
-        debug_inspector_entry* Entry = FList_Get(&Inspector->Entries, I);
+    for (u32 I = 0; I < Inspector->EntryCount; ++I) {
+        debug_inspector_entry* Entry = Inspector->Entries + I;
         v3f Position = V3f_Create(DebugInspector_PosX, 
                                   DebugInspector_PosY + OffsetY,
                                   DebugInspector_PosZ); 
@@ -46,18 +59,19 @@ DebugInspector_End(debug_inspector* Inspector,
                   Assets, 
                   Font_Default, 
                   Position, 
-                  U8FStr_ToCStr(Entry),
+                  Entry->Text.CStr,
                   32.f, 
                   Color_White);
-        U8FStr_Clear(Entry);
+        U8Str_Clear(&Entry->Text);
         OffsetY -= 32.f;
     }
 }
 
 static inline debug_inspector_entry*
 DebugInspector_PushEntry(debug_inspector* Inspector, u8_cstr Label) {
-    debug_inspector_entry* Entry = FList_Push(&Inspector->Entries, {});
-    U8FStr_Copy(Entry, Label);
+    Assert(Inspector->EntryCount < ArrayCount(Inspector->Entries));
+    debug_inspector_entry* Entry = Inspector->Entries + Inspector->EntryCount++;
+    U8Str_Copy(&Entry->Text, Label);
     return Entry;
 }
 
@@ -68,7 +82,7 @@ DebugInspector_PushU32(debug_inspector* Inspector, u8_cstr Label, u32 Item)
         return;
     
     debug_inspector_entry* Entry = DebugInspector_PushEntry(Inspector, Label);
-    U8FStr_PushU32(Entry, Item);
+    U8Str_PushU32(&Entry->Text, Item);
 }
 
 static inline void
@@ -78,7 +92,7 @@ DebugInspector_PushS32(debug_inspector* Inspector, u8_cstr Label, i32 Item)
         return;
     
     debug_inspector_entry* Entry = DebugInspector_PushEntry(Inspector, Label);
-    U8FStr_PushS32(Entry, Item);
+    U8Str_PushS32(&Entry->Text, Item);
 }
 
 #endif //GAME_DEBUG_INSPECTOR_H

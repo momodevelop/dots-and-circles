@@ -1,15 +1,16 @@
 #include <stdio.h>
+#include "../../code/mm_core.h"
 
 template<typename type>
 struct array {
     type* Data;
-    int Count;
+    u32 Count;
 };
 
-template<typename type, u32 Cap>
-struct farray {
-    type Data[Cap];
-}
+template<typename type>
+struct list : array<type> {
+    u32 Capacity;
+};
 
 // if we want to specialize...
 typedef array<u8> u8_cstr;

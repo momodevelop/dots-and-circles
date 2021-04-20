@@ -17,7 +17,7 @@ Draw_Text(mailbox* RenderCommands,
     font* Font = Assets_GetFont(Assets, FontId);
     
     f32 ZLayerOffset = 0.f;
-    for(u32 I = 0; I < String.Count; ++I) {
+    for(u32 I = 0; I < String.Size; ++I) {
         font_glyph* Glyph = Font_GetGlyph(Font, String.Data[I]);
         aabb2f Box = Glyph->Box; 
         
@@ -45,7 +45,7 @@ Draw_Text(mailbox* RenderCommands,
                                   GetAtlasUV(Assets, Glyph));
         
         CurPosition.X += Glyph->Advance * Size;
-        if (I != String.Count - 1 ) {
+        if (I != String.Size - 1 ) {
             u32 Kerning = Font_GetKerning(Font, 
                                           String.Data[I], 
                                           String.Data[I+1]);
