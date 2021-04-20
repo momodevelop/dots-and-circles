@@ -819,7 +819,10 @@ return 0; \
         Win32SetOpenglFunction(glDeleteTextures);
         Win32SetOpenglFunction(glDebugMessageCallbackARB);
     }
-    Opengl_Init(Opengl, WindowDimensions);
+    Opengl_Init(Opengl, 
+                WindowDimensions, 
+                512,
+                8);
     
 #if INTERNAL
     Opengl->glEnable(GL_DEBUG_OUTPUT);
