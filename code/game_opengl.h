@@ -307,10 +307,6 @@ struct opengl {
     // NOTE(Momo): We only need one blueprint which is a 1x1 square.
     GLuint Model; 
     
-    GLuint BlankTexture;
-    GLuint DummyTexture;
-    
-    
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
     // Index 0 will always be an invalid 'dummy texture
