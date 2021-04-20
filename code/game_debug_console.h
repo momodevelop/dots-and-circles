@@ -57,8 +57,7 @@ struct debug_console {
     timer TransitTimer;
     
     // List of commands
-    debug_console_command Commands[DebugConsole_MaxCommands];
-    u32 CommandCount;
+    flist<debug_console_command,DebugConsole_MaxCommands> Commands;
 };
 
 static inline void 
@@ -72,23 +71,9 @@ DebugConsole_AddCmd(debug_console* C,
     Command.Callback = Callback;
     Command.Context = Context;
     
-    Assert(C->CommandCount < ArrayCount(C->Commands));
-    C->Commands[C->CommandCount++] = Command; 
+    FList_Push(&C->Commands, Command);
 }
 
-
-static inline void 
-DebugConsole_RemoveCmd(debug_console* Console, u8_cstr Key) {
-    for (u32 I = 0; I < Console->CommandCount; ++I) {
-        if (U8CStr_Compare(Console->Commands[I].Key, Key)) {
-            // Swap with last element
-            Console->Commands[I] = Console->Commands[Console->CommandCount-1];
-            --Console->CommandCount;
-            return;
-        }
-    }
-    
-}
 
 static inline void
 DebugConsole_Create(debug_console* Console,
@@ -100,7 +85,6 @@ DebugConsole_Create(debug_console* Console,
     }
     
     Console->InputLine.Text = U8Str_CreateFromBuffer(Console->InputLine.Buffer);
-    Console->CommandCount = 0;
     
     Console->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
@@ -111,7 +95,7 @@ DebugConsole_Create(debug_console* Console,
 
 
 static inline void
-PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
+DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
     for (u32 I = 0; I < ArrayCount(Console->InfoLines) - 1; ++I) {
         u32 J = ArrayCount(Console->InfoLines) - 1 - I;
         debug_console_line* Dest = Console->InfoLines + J;
@@ -127,6 +111,17 @@ PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
     U8Str_Pop(&Console->InputLine.Text);
+}
+
+static inline void 
+DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
+    for (u32 I = 0; I < C->Commands.Count; ++I) {
+        if (U8CStr_Compare(C->Commands.Data[I].Key, Key)) {
+            FList_Slear(&C->Commands, I);
+            return;
+        }
+    }
+    
 }
 
 // Returns true if there is a new command
@@ -153,8 +148,8 @@ DebugConsole_Update(debug_console* Console,
     
     if (Console->IsActive) {
         Timer_Tick(&Console->TransitTimer, DeltaTime);
-        if (Input->Characters.Size > 0 && 
-            Input->Characters.Size <= U8Str_Remaining(&Console->InputLine.Text)) 
+        if (Input->Characters.Count > 0 && 
+            Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
         {  
             U8Str_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
         }
@@ -184,11 +179,11 @@ DebugConsole_Update(debug_console* Console,
         
         // Execute command
         if (IsPoked(Input->ButtonConfirm)) {
-            PushInfo(Console, Console->InputLine.Text.CStr, Color_White);
+            DebugConsole_PushInfo(Console, Console->InputLine.Text.CStr, Color_White);
             
             u32 Min = 0;
             u32 Max = 0;
-            for (u32 I = 0; I < Console->InputLine.Text.Size; ++I) {
+            for (u32 I = 0; I < Console->InputLine.Text.Count; ++I) {
                 if (Console->InputLine.Text.Data[I] == ' ') {
                     Max = I;
                     break;
@@ -199,8 +194,8 @@ DebugConsole_Update(debug_console* Console,
                                                   Max); 
             
             // Send a command to a callback
-            for (u32 I = 0; I < Console->CommandCount; ++I) {
-                debug_console_command* Command = Console->Commands + I;
+            for (u32 I = 0; I < Console->Commands.Count; ++I) {
+                debug_console_command* Command = FList_Get(&Console->Commands, I);
                 if (U8CStr_Compare(Command->Key, CommandStr)) {
                     Command->Callback(Console, 
                                       Command->Context, 

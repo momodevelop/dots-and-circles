@@ -19,35 +19,35 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
     if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
-        PushInfo(Console, 
-                 U8CStr_FromSiStr("Expected only 2 arguments"), 
-                 Color_Red);
+        DebugConsole_PushInfo(Console, 
+                              U8CStr_FromSiStr("Expected only 2 arguments"), 
+                              Color_Red);
         return;
     }
     
     u8_cstr StateToChangeTo = ArgList.Items[1];
     if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("main"))) {
-        PushInfo(Console, 
-                 U8CStr_FromSiStr("Jumping to Main"), 
-                 Color_Yellow);
+        DebugConsole_PushInfo(Console, 
+                              U8CStr_FromSiStr("Jumping to Main"), 
+                              Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
     else if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("splash"))) {
-        PushInfo(Console, 
-                 U8CStr_FromSiStr("Jumping to Splash"),  
-                 Color_Yellow);
+        DebugConsole_PushInfo(Console, 
+                              U8CStr_FromSiStr("Jumping to Splash"),  
+                              Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
     else if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("sandbox"))) {
-        PushInfo(Console, 
-                 U8CStr_FromSiStr("Jumping to Sandbox"), 
-                 Color_Yellow);
+        DebugConsole_PushInfo(Console, 
+                              U8CStr_FromSiStr("Jumping to Sandbox"), 
+                              Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
-        PushInfo(Console, 
-                 U8CStr_FromSiStr("Invalid state to jump to"), 
-                 Color_Red);
+        DebugConsole_PushInfo(Console, 
+                              U8CStr_FromSiStr("Invalid state to jump to"), 
+                              Color_Red);
     }
     
 }

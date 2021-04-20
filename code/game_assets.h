@@ -147,7 +147,7 @@ GetAtlasUV(assets* Assets,
 static inline b32
 Assets_CheckSignature(void* Memory, u8_cstr Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    for (u32 I = 0; I < Signature.Size; ++I) {
+    for (u32 I = 0; I < Signature.Count; ++I) {
         if (MemoryU8[I] != Signature.Data[I]) {
             return False;
         }
@@ -227,7 +227,7 @@ return False; \
                                                Platform,
                                                Scratch.Arena,
                                                &CurFileOffset,
-                                               (u32)Signature.Size,
+                                               (u32)Signature.Count,
                                                1);
         CheckPtr(ReadSignature);
         CheckFile(AssetFile);

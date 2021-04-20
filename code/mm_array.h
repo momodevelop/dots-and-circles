@@ -3,67 +3,79 @@
 #ifndef MM_ARRAY_H
 #define MM_ARRAY_H
 
-template<typename type>
-struct array {
-    type* Data;
+//~ NOTE(Momo): Short for fixed-array list
+template<typename type, u32 Cap>
+struct flist {
+    type Data[Cap];
     u32 Count;
-    
-    auto& operator[](u32 Index) {
-        Assert(Index < Count);
-        return this->Data[Index];
+};
+
+template<typename type, u32 Cap>
+static inline void 
+FList_Init(flist<type, Cap>* L) {
+    L->Count = 0;
+}
+
+template<typename type, u32 Cap>
+static inline constexpr u32
+FList_Capacity(flist<type,Cap> L) {
+    return Cap;
+}
+
+template<typename type, u32 Cap>
+static inline type*
+FList_Push(flist<type,Cap>* L, type Item) {
+    if(L->Count < Cap) {
+        type* Ret = L->Data + L->Count++;
+        (*Ret) = Item;
+        return Ret;
     }
-};
+    return Null;
+}
 
-template<typename type>
-static inline array<type>
-Array_Create(type* Data, u32 Size) {
-    array<type> Ret = {};
-    Ret.Data = Data;
-    Ret.Size = Size;
+// NOTE(Momo): "Swap last element and remove"
+template<typename type, u32 Cap>
+static inline b32
+FList_Slear(flist<type,Cap>* L, u32 Index) {
+    if (Index < L->Count) {
+        L->Data[Index] = L->Data[L->Count-1];
+        --L->Count;
+        return True;
+    }
+    else {
+        return False;
+    }
+}
+
+
+template<typename type, u32 Cap>
+static inline type*
+FList_Get(flist<type, Cap>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
+    }
+    else {
+        return Null;
+    }
+}
+
+template<typename type, u32 Cap>
+static inline type*
+FList_Last(flist<type, Cap>* L) {
+    if (L->Count == 0){
+        return Null;
+    }
+    else {
+        return L->Data + L->Count;
+    }
     
-    return Ret;
 }
 
-template<typename type>
-static inline array<type>
-Array_FromArena(arena* Arena, u32 Size) {
-    type* Data = Arena_PushArray(type, Arena, Size);
-    return Array_Create<type>(Data, Size);
-}
-
-template<typename type>
-struct list : array<type> {
-    u32 Cap;
-};
-
-template<typename type>
-static inline list<type>
-List_Create(type* Data, u32 Capacity) {
-    list<type> Ret = {};
-    Ret.Data = Data;
-    Ret.Cap = Capacity;
-    
-    return Ret;
-}
-
-template<typename type>
-static inline list<type>
-List_FromArena(arena* Arena, u32 Capacity) {
-    type* Data = Arena_PushArray(type, Arena, Capacity);
-    return List_Create<type>(Data, Capacity);
-}
-
-
-template<typename type>
-static inline void
-List_Push(list<type>* L, type Item) {
-    L->Data[L->Count++] = Item;
-}
-
-template<typename type>
+template<typename type, u32 Cap>
 static inline u32
-List_Remaining(list<type>* L) {
-    return L->Cap - L->Count;
+FList_Remaining(flist<type,Cap>* L) {
+    return Cap - L->Count;
 }
+
 
 #endif //MM_ARRAY_H

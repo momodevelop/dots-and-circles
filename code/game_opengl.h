@@ -369,20 +369,8 @@ Opengl_Resize(opengl* Opengl,
 
 static inline void 
 Opengl_AddPredefTextures(opengl* Opengl) {
-    // NOTE(Momo): Blank texture setup
     struct pixel { u8 E[4]; };
-    {
-        pixel Pixel = { 255, 255, 255, 255 };
-        GLuint BlankTexture;
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, &BlankTexture);
-        Opengl->glTextureStorage2D(BlankTexture, 1, GL_RGBA8, 1, 1);
-        Opengl->glTextureSubImage2D(BlankTexture, 
-                                    0, 0, 0, 
-                                    1, 1, 
-                                    GL_RGBA, GL_UNSIGNED_BYTE, 
-                                    &Pixel);
-        FList_Push(&Opengl->Textures, BlankTexture);
-    }
+    
     
     // NOTE(Momo): Dummy texture setup
     {
@@ -404,12 +392,29 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     &Pixels);
         FList_Push(&Opengl->Textures, DummyTexture);
     }
+    
+    // NOTE(Momo): Blank texture setup
+    {
+        pixel Pixel = { 255, 255, 255, 255 };
+        GLuint BlankTexture;
+        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, &BlankTexture);
+        Opengl->glTextureStorage2D(BlankTexture, 1, GL_RGBA8, 1, 1);
+        Opengl->glTextureSubImage2D(BlankTexture, 
+                                    0, 0, 0, 
+                                    1, 1, 
+                                    GL_RGBA, GL_UNSIGNED_BYTE, 
+                                    &Pixel);
+        FList_Push(&Opengl->Textures, BlankTexture);
+    }
+    
+    
 }
 
 static inline b32
 Opengl_Init(opengl* Opengl,
             v2u WindowDimensions) 
 {
+    FList_Init(&Opengl->Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     
