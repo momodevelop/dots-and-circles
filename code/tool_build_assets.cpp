@@ -15,6 +15,7 @@
 
 #include "tool_build_assets_util.h"
 #include "tool_build_assets_atlas.h"
+#include "tool_build_assets_msg.h"
 #include "tool_build_assets_asset_builder.h"
 
 #define GENERATE_TEST_PNG 1
@@ -247,22 +248,33 @@ int main() {
     
     
     //NOTE(Momo): Anime
+    printf("[Build Assets] Writing Anime...\n");
     {
-        printf("[Build Assets] Writing Anime...\n");
-        {
-            // Test frames: Karu_front
-            atlas_aabb_id Frames[] = {
-                AtlasAabb_Karu30,
-                AtlasAabb_Karu31,
-                AtlasAabb_Karu32,
-            };
-            
-            Tba_AssetBuilderWriteAnime(AssetBuilder, 
-                                       Anime_KaruFront,
-                                       Frames,
-                                       ArrayCount(Frames));
+        
+        // Test frames: Karu_front
+        atlas_aabb_id Frames[] = {
+            AtlasAabb_Karu30,
+            AtlasAabb_Karu31,
+            AtlasAabb_Karu32,
+        };
+        
+        Tba_AssetBuilderWriteAnime(AssetBuilder, 
+                                   Anime_KaruFront,
+                                   Frames,
+                                   ArrayCount(Frames));
+    }
+    
+    // NOTE(Momo): Msg
+    printf("[Build Assets] Writing Msg...\n");
+    {
+        for(u32 I = 0; I < ArrayCount(Tba_MessageContexts); ++I) {
+            tba_message_context* Ctx = Tba_MessageContexts + I;
+            Tba_AssetBuilderWriteMsg(AssetBuilder,
+                                     Ctx->Id,
+                                     Ctx->Str);
         }
     }
+    
     Tba_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");
     return 0;

@@ -172,11 +172,26 @@ Tba_AssetBuilderWriteAnime(tba_asset_builder* Context,
     Tba_AssetBuilderWriteEntry(Context, AssetType_Anime);
     
     asset_file_anime Anime = {};
-    Anime.AnimeId = AnimeId;
+    Anime.Id = AnimeId;
     Anime.FrameCount = FrameCount;
     
     fwrite(&Anime, sizeof(Anime), 1, Context->File);
     fwrite(Frames, sizeof(atlas_aabb_id), FrameCount, Context->File);
+}
+
+static inline void 
+Tba_AssetBuilderWriteMsg(tba_asset_builder* Context, 
+                         msg_id MsgId,
+                         const char* Message) 
+{
+    Tba_AssetBuilderWriteEntry(Context, AssetType_Message);
+    
+    asset_file_msg Msg = {};
+    Msg.Id = MsgId;
+    Msg.Count = SiStrLen(Message) - 1;
+    
+    fwrite(&Msg, sizeof(Msg), 1, Context->File);
+    fwrite(Message, sizeof(char), Msg.Count, Context->File);
 }
 
 // TODO(Momo):

@@ -414,7 +414,7 @@ static inline b32
 Opengl_Init(opengl* Opengl,
             v2u WindowDimensions) 
 {
-    FList_Init(&Opengl->Textures);
+    FList_Clear(&Opengl->Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     
@@ -723,7 +723,7 @@ static inline void
 Opengl_ClearTextures(opengl* Opengl) {
     Opengl->glDeleteTextures(Opengl->Textures.Count, 
                              Opengl->Textures.Data);
-    FList_Init(&Opengl->Textures);
+    FList_Clear(&Opengl->Textures);
     Opengl_AddPredefTextures(Opengl);
 }
 

@@ -1,4 +1,5 @@
 # Engine
+[] Make assets, platform and render commands global
 [] Sound
 [] Log to text file
 [] Quaternions?

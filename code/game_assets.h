@@ -17,7 +17,6 @@ struct atlas_aabb {
     texture_id TextureId;
 };
 
-
 struct font_glyph {
     aabb2u AtlasAabb;
     aabb2f Box; 
@@ -37,6 +36,8 @@ struct font {
     u32 Kernings[FontGlyph_Count][FontGlyph_Count];
 };
 
+typedef u8_cstr msg;
+
 struct assets {
     texture* Textures;
     u32 TextureCount;
@@ -49,6 +50,9 @@ struct assets {
     
     anime* Animes;
     u32 AnimeCount;
+    
+    msg* Msgs;
+    u32 MsgCount;
 };
 
 //~ NOTE(Momo): Font functions
@@ -118,6 +122,13 @@ static inline anime*
 Assets_GetAnime(assets* Assets, anime_id AnimeId) {
     Assert(AnimeId < Anime_Count);
     return Assets->Animes + AnimeId;
+}
+
+
+static inline msg*
+Assets_GetMsg(assets* Assets, msg_id MsgId) {
+    Assert(MsgId < Msg_Count);
+    return Assets->Msgs + MsgId;
 }
 
 
@@ -382,6 +393,37 @@ return False; \
             case AssetType_Sound: {
                 return False;
             } break;
+            case AssetType_Message: {
+                arena_mark Scratch = Arena_Mark(Arena);
+                
+                auto* File = Assets_ReadStruct(asset_file_msg,
+                                               &AssetFile,
+                                               Platform,
+                                               Scratch.Arena,
+                                               &CurFileOffset);
+                
+                CheckPtr(File);
+                CheckFile(AssetFile);
+                
+                msg* Msg = Assets_GetMsg(Assets, File->Id);
+                Msg->Count = File->Count;
+                
+                
+                // NOTE(Momo): we have to revert here so that our arena's 
+                // memory does not screw up. A bit janky but hey.
+                Arena_Revert(&Scratch); 
+                
+                Msg->Data = (u8*)
+                    Assets_ReadBlock(&AssetFile,
+                                     Platform, 
+                                     Arena, 
+                                     &CurFileOffset,
+                                     sizeof(u8) * Msg->Count,
+                                     1);
+                
+                
+                
+            } break;
             case AssetType_Anime: {
                 arena_mark Scratch = Arena_Mark(Arena);
                 
@@ -394,7 +436,7 @@ return False; \
                 CheckPtr(FileAnime);
                 CheckFile(AssetFile);
                 
-                anime* Anime = Assets_GetAnime(Assets, FileAnime->AnimeId);
+                anime* Anime = Assets_GetAnime(Assets, FileAnime->Id);
                 Anime->FrameCount = FileAnime->FrameCount;
                 
                 // NOTE(Momo): we have to revert here so that our arena's 

@@ -58,6 +58,14 @@ enum atlas_aabb_id {
     AtlasAabb_Count,
 };
 
+enum msg_id {
+    Msg_ConsoleJumpToMain,
+    Msg_ConsoleJumpToSandbox,
+    Msg_ConsoleJumpToMenu,
+    
+    Msg_Count,
+};
+
 enum asset_type {
     AssetType_Texture,
     AssetType_AtlasAabb,
@@ -66,6 +74,7 @@ enum asset_type {
     AssetType_FontKerning,
     AssetType_Sound,
     AssetType_Anime,
+    AssetType_Message,
 };
 
 
@@ -73,6 +82,13 @@ enum asset_type {
 #pragma pack(push, 1)
 struct asset_file_entry {
     asset_type Type;
+};
+
+struct asset_file_msg {
+    msg_id Id;
+    u32 Count;
+    // NOTE(Momo): Data is:
+    // u8 String[Count]
 };
 
 struct asset_file_texture {
@@ -119,7 +135,7 @@ struct asset_file_font_kerning {
 };
 
 struct asset_file_anime {
-    anime_id AnimeId;
+    anime_id Id;
     u32 FrameCount;
     // NOTE(Momo): Data is:
     // atlas_aabb_id Data[Framecount]
