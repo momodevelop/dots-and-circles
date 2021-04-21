@@ -6,30 +6,27 @@
 #define DebugInspector_PosX -Game_DesignWidth * 0.5f + 10.f
 #define DebugInspector_PosY Game_DesignHeight * 0.5f - 32.f
 #define DebugInspector_PosZ 91.f
-#define DebugInspector_EntryTextSize 256
-#define DebugInspector_EntryCap 32
 
 struct debug_inspector_entry {
+    u8 Buffer[256];
     u8_str Text;
 };
 
 
 struct debug_inspector {
     b32 IsActive;
-    
-    // TODO(Momo): Create list
-    debug_inspector_entry Entries[DebugInspector_EntryCap];
+    debug_inspector_entry Entries[32];
     u32 EntryCount;
 };
 
 static inline void
-DebugInspector_Init(debug_inspector* Inspector, arena* Arena) {
+DebugInspector_Init(debug_inspector* Inspector) {
     Inspector->EntryCount = 0;
     Inspector->IsActive = False;
     
     for (u32 I = 0; I < ArrayCount(Inspector->Entries); ++I) {
         debug_inspector_entry* Entry = Inspector->Entries + I;
-        Entry->Text = U8Str_CreateFromArena(Arena, DebugInspector_EntryTextSize);
+        Entry->Text = U8Str_CreateFromBuffer(Entry->Buffer);
         
     }
 }

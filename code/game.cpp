@@ -102,9 +102,8 @@ GameUpdateFunc(GameUpdate)
                                         Arena,
                                         GameMemory->DebugMemory,
                                         GameMemory->DebugMemorySize);
-        
         // Init inspector
-        DebugInspector_Init(&DebugState->Inspector, &DebugState->Arena);
+        DebugInspector_Init(&DebugState->Inspector);
         
         
         // Init console
