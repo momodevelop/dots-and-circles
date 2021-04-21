@@ -48,6 +48,7 @@ struct game_mode_sandbox_entity {
 
 struct game_mode_sandbox {
     game_mode_sandbox_entity Entity;
+    v2f PrevMousePos;
 };
 
 static inline void 
@@ -59,6 +60,9 @@ InitSandboxMode(permanent_state* PermState) {
     
 }
 
+
+
+
 static inline void
 UpdateSandboxMode(permanent_state* PermState, 
                   transient_state* TranState,
@@ -66,6 +70,7 @@ UpdateSandboxMode(permanent_state* PermState,
                   game_input* Input,
                   f32 DeltaTime) 
 {
+#if 0
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     assets* Assets = &TranState->Assets;
     game_mode_sandbox_entity* Entity = &Mode->Entity;
@@ -88,6 +93,8 @@ UpdateSandboxMode(permanent_state* PermState,
                                        Color);
         
     }
+#endif
+    
 }
 
 
