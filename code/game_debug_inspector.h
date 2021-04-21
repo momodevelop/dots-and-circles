@@ -72,7 +72,7 @@ DebugInspector_PushU32(debug_inspector* Inspector, u8_cstr Label, u32 Item)
 }
 
 static inline void
-DebugInspector_PushS32(debug_inspector* Inspector, u8_cstr Label, i32 Item)
+DebugInspector_PushS32(debug_inspector* Inspector, u8_cstr Label, s32 Item)
 {
     if(!Inspector->IsActive)
         return;

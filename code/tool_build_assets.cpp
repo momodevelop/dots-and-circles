@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mm_core.h"
+#include "momo.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -83,7 +83,7 @@ int main() {
         atlas_context_image* Context = AtlasImageContexts + I;
         aabb2u* Aabb = Aabbs + AabbCounter;
         
-        i32 W, H, C;
+        s32 W, H, C;
         stbi_info(Context->Filename, &W, &H, &C);
         
         (*Aabb) = Aabb2u_CreateWH((u32)W, (u32)H);
@@ -104,7 +104,7 @@ int main() {
         Font->TextureId = Texture_AtlasDefault;
         
         aabb2u* Aabb = Aabbs + AabbCounter;
-        i32 ix0, iy0, ix1, iy1;
+        s32 ix0, iy0, ix1, iy1;
         stbtt_GetCodepointTextureBox(&Font->LoadedFont->Info, 
                                      Font->Codepoint, 
                                      Font->RasterScale, 
@@ -180,8 +180,8 @@ int main() {
                 case AtlasContextType_Font: {
                     auto* Font  = (atlas_context_font*)UserDatas[i];
                     
-                    i32 Advance;
-                    i32 LeftSideBearing; 
+                    s32 Advance;
+                    s32 LeftSideBearing; 
                     stbtt_GetCodepointHMetrics(&LoadedFont.Info, 
                                                Font->Codepoint, 
                                                &Advance, 
@@ -212,7 +212,7 @@ int main() {
     
     // NOTE(Momo): Font info
     {
-        i32 Ascent, Descent, LineGap;
+        s32 Ascent, Descent, LineGap;
         stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
         
         aabb2i BoundingBox = {}; 
@@ -240,7 +240,7 @@ int main() {
                 j <= FontGlyph_CodepointEnd; 
                 ++j) 
             {
-                i32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (i32)i, (i32)j);
+                s32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (s32)i, (s32)j);
                 Tba_AssetBuilderWriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }

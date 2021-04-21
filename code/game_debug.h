@@ -68,7 +68,7 @@ Debug_Render(debug_state* State,
             case DebugVariableType_B32: {
             } break;
             case DebugVariableType_I32: {
-                U8Str_PushI32(&Buffer, *State->Variables[I].I32);
+                U8Str_PushI32(&Buffer, *State->Variables[I].s32);
             } break;
             case DebugVariableType_F32: {
                 Assert(false); 

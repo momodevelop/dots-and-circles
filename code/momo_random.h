@@ -580,10 +580,10 @@ Between(rng_series *Series, f32 Min, f32 Max)
     return(Result);
 }
 
-static inline i32 
-Between(rng_series *Series, i32 Min, i32 Max)
+static inline s32 
+Between(rng_series *Series, s32 Min, s32 Max)
 {
-    i32 Result = Min + (i32)(Next(Series)%((Max + 1) - Min));
+    s32 Result = Min + (s32)(Next(Series)%((Max + 1) - Min));
     
     return(Result);
 }

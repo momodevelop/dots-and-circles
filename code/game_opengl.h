@@ -52,9 +52,9 @@
 #define GL_DEBUG_TYPE_OTHER 0x8251
 #define GL_DEBUG_TYPE_MARKER 0x8268
 
-typedef i32  GLenum;
-typedef i32  GLint; 
-typedef i32  GLsizei;
+typedef s32  GLenum;
+typedef s32  GLint; 
+typedef s32  GLsizei;
 typedef u32  GLuint;
 typedef c8   GLchar;
 typedef u32  GLbitfield;

@@ -556,7 +556,7 @@ int main(int argc, char* argv[]) {
             // -1 because there is a chance we might overshoot the frame...
             f32 TimeToSleep = TargetMsPerFrame - SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) - 1;
             if (TimeToSleep > 0) {
-                SDL_Delay((i32)TimeToSleep);
+                SDL_Delay((s32)TimeToSleep);
             }
             //Assert(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);
             while(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);

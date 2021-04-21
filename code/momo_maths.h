@@ -117,18 +117,18 @@ struct v2u {
 
 struct v2i {
     union {
-        i32 Elements[2];
+        s32 Elements[2];
         struct {
-            i32 X;
-            i32 Y;
+            s32 X;
+            s32 Y;
         };
         struct {
-            i32 U;
-            i32 V;
+            s32 U;
+            s32 V;
         };
         struct {
-            i32 W;
-            i32 H;
+            s32 W;
+            s32 H;
         };
     };
     GenerateSubscriptOp(2)

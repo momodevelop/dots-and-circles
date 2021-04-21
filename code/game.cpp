@@ -148,10 +148,10 @@ GameUpdateFunc(GameUpdate)
 #if 0
     static f32 TSine = 0.f;
     // TODO: Shift this part to game code
-    i16* SampleOut = Audio->SampleBuffer;
+    s16* SampleOut = Audio->SampleBuffer;
     for(usize I = 0; I < Audio->SampleCount; ++I) {
-        const i16 Volume = 3000;
-        i16 SampleValue = (i16)(Sin(TSine) * Volume);
+        const s16 Volume = 3000;
+        s16 SampleValue = (s16)(Sin(TSine) * Volume);
         // Based on number of channels!
         *SampleOut++ = SampleValue; // Left Speaker
         *SampleOut++ = SampleValue; // Right Speaker

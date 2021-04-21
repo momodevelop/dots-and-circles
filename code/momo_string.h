@@ -194,7 +194,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
     u32 StartPoint = Dest->Count; 
     
     for(; Num != 0; Num /= 10) {
-        i32 DigitToConvert = Num % 10;
+        s32 DigitToConvert = Num % 10;
         b32 Success = U8Str_Push(Dest, (u8)(DigitToConvert + '0'));
         if (!Success) {
             return False;
@@ -212,7 +212,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
 }
 
 static inline b32
-U8Str_PushS32(u8_str* Dest, i32 Num) {
+U8Str_PushS32(u8_str* Dest, s32 Num) {
     if (Num == 0) {
         if(!U8Str_Push(Dest, '0')) {
             return False;
@@ -226,7 +226,7 @@ U8Str_PushS32(u8_str* Dest, i32 Num) {
     Num = AbsOf(Num);
     
     for(; Num != 0; Num /= 10) {
-        i32 DigitToConvert = Num % 10;
+        s32 DigitToConvert = Num % 10;
         U8Str_Push(Dest, (char)(DigitToConvert + '0'));
     }
     
@@ -307,7 +307,7 @@ U8FStr_PushU32(u8_fstr<Cap>* Dest, u32 Num) {
     u32 StartPoint = Dest->Count; 
     
     for(; Num != 0; Num /= 10) {
-        i32 DigitToConvert = Num % 10;
+        s32 DigitToConvert = Num % 10;
         if(!U8FStr_Push(Dest, (u8)(DigitToConvert + '0'))){
             return False;
         }
@@ -326,7 +326,7 @@ U8FStr_PushU32(u8_fstr<Cap>* Dest, u32 Num) {
 
 template<u32 Cap>
 static inline b32
-U8FStr_PushS32(u8_fstr<Cap>* Dest, i32 Num) {
+U8FStr_PushS32(u8_fstr<Cap>* Dest, s32 Num) {
     if (Num == 0) {
         if (!U8FStr_Push(Dest, '0')) {
             return False;
@@ -340,7 +340,7 @@ U8FStr_PushS32(u8_fstr<Cap>* Dest, i32 Num) {
     Num = AbsOf(Num);
     
     for(; Num != 0; Num /= 10) {
-        i32 DigitToConvert = Num % 10;
+        s32 DigitToConvert = Num % 10;
         if (!U8FStr_Push(Dest, (char)(DigitToConvert + '0'))) {
             return False;
         }

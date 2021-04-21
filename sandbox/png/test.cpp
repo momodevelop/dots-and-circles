@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../code/mm_core.h"
+#include "../../code/momo.h"
 #include "../../code/mm_bitwise.h"
 #include "../../code/mm_stream.h"
 
@@ -21,7 +21,7 @@ ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     
     
     fseek(File, 0, SEEK_END);
-    i32 Filesize = ftell(File);
+    s32 Filesize = ftell(File);
     fseek(File, 0, SEEK_SET);
     
     void* FileMemory = Arena_PushBlock(Arena, Filesize);
@@ -164,13 +164,13 @@ Huffman(arena* Arena,
 
 static inline u32
 Decode(stream* SrcStream, png_huffman* Huffman) {
-    i32 Code = 0;
-    i32 First = 0;
-    i32 Index = 0;
+    s32 Code = 0;
+    s32 First = 0;
+    s32 Index = 0;
     
-    for (i32 Len = 1; Len <= PngMaxBits; ++Len) {
+    for (s32 Len = 1; Len <= PngMaxBits; ++Len) {
         Code |= Stream_ConsumeBits(SrcStream, 1);
-        i32 Count = Huffman->LenCountTable[Len];
+        s32 Count = Huffman->LenCountTable[Len];
         if(Code - Count < First)
             return Huffman->CodeSymTable[Index + (Code - First)];
         Index += Count;

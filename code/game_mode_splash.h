@@ -2,7 +2,6 @@
 #define GAME_MODE_SPLASH_H
 
 #include "game.h"
-#include "mm_easing.h"
 
 struct splash_image_entity {
     v3f Scale;

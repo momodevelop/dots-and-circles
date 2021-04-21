@@ -76,7 +76,7 @@ Tba_AssetBuilderWriteTextureFromFile(tba_asset_builder* Context,
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
     {
-        i32 W, H, C;
+        s32 W, H, C;
         LoadedImage = stbi_load(Filename, &W, &H, &C, 0);
         Assert(LoadedImage != nullptr);
         
@@ -150,7 +150,7 @@ Tba_AssetBuilderWriteFontKerning(tba_asset_builder* Context,
                                  font_id FontId, 
                                  u32 CodepointA,
                                  u32 CodepointB, 
-                                 i32 Kerning) 
+                                 s32 Kerning) 
 {
     Tba_AssetBuilderWriteEntry(Context, AssetType_FontKerning);
     

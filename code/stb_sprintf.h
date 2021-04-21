@@ -3,7 +3,7 @@
 // http://github.com/nothings/stb
 //
 // allowed types:  sc uidBboXx p AaGgEef n
-// lengths      :  hh h ll j z t I64 I32 I
+// lengths      :  hh h ll j z t s64 s32 I
 //
 // Contributors:
 //    Fabian "ryg" Giesen (reformatting)
@@ -1013,10 +1013,10 @@ STBSP__PUBLICDEF int STB_SPRINTF_DECORATE(vsprintfcb)(STBSP_SPRINTFCB *callback,
       case 'd': // integer
          // get the integer and abs it
          if (fl & STBSP__INTMAX) {
-            stbsp__int64 i64 = va_arg(va, stbsp__int64);
-            n64 = (stbsp__uint64)i64;
-            if ((f[0] != 'u') && (i64 < 0)) {
-               n64 = (stbsp__uint64)-i64;
+            stbsp__int64 s64 = va_arg(va, stbsp__int64);
+            n64 = (stbsp__uint64)s64;
+            if ((f[0] != 'u') && (s64 < 0)) {
+               n64 = (stbsp__uint64)-s64;
                fl |= STBSP__NEGATIVE;
             }
          } else {

@@ -34,7 +34,7 @@ static inline void
 Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
                            u8* TextureMemory, aabb2u TextureAabb) 
 {
-    i32 j = 0;
+    s32 j = 0;
     u32 TextureAabbW = Aabb2u_Width(TextureAabb);
     u32 TextureAabbH = Aabb2u_Height(TextureAabb);
     
@@ -74,7 +74,7 @@ Tba_GenerateAtlas(arena* Arena,
                 Defer { Arena_Revert(&Scratch); };
                 
                 auto* Context = (atlas_context_image*)UserDatas[I];
-                i32 W, H, C;
+                s32 W, H, C;
                 
                 read_file_result FileMem = Tba_ReadFileIntoMemory(Arena, Context->Filename);
                 
@@ -96,7 +96,7 @@ Tba_GenerateAtlas(arena* Arena,
                 auto* Context = (atlas_context_font*)UserDatas[I]; 
                 const u32 Channels = 4;
                 
-                i32 W, H;
+                s32 W, H;
                 u8* FontTextureOneCh = stbtt_GetCodepointTexture(&Context->LoadedFont->Info, 
                                                                  Context->RasterScale,
                                                                  Context->RasterScale, 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../code/mm_core.h"
+#include "../../code/momo.h"
 
 struct code_snippet {
     const char* FileName;

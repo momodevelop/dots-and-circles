@@ -9,10 +9,10 @@ typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
 typedef float f32;
 typedef double f64;
 typedef size_t usize;
@@ -127,7 +127,7 @@ SiStrReverse(char* Dest) {
 
 
 static inline void 
-SiStrItoa(char* Dest, i32 Num) {
+SiStrItoa(char* Dest, s32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -144,7 +144,7 @@ SiStrItoa(char* Dest, i32 Num) {
     
     char* It = Dest;
     for(; Num != 0; Num /= 10) {
-        i32 DigitToConvert = Num % 10;
+        s32 DigitToConvert = Num % 10;
         *(It++) = (char)(DigitToConvert + '0');
     }
     
@@ -214,19 +214,19 @@ U64_ToU32(u64 Value) {
 }
 
 static inline u32
-I32_ToU32(i32 Value) {
+S32_ToU32(s32 Value) {
     Assert(Value >= 0);
     return (u32)Value;
 }
 
 static inline u16
-I32_ToU16(i32 Value) {
+S32_ToU16(s32 Value) {
     Assert(Value <= U16_Max && Value >= 0);
     return (u16)Value;
 }
 
 static inline u32
-I64_ToU32(i64 Value) {
+S64_ToU32(s64 Value) {
     Assert(Value <= U32_Max && Value >= 0);
     return (u32)Value;
 }

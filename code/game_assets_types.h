@@ -1,8 +1,6 @@
 #ifndef GAME_ASSETS_TYPES 
 #define GAME_ASSETS_TYPES
 
-#include "mm_core.h"
-#include "mm_maths.h"
 
 enum texture_id {
     Texture_AtlasDefault,
@@ -129,7 +127,7 @@ struct asset_file_font_glyph {
 
 struct asset_file_font_kerning {
     font_id FontId;
-    i32 Kerning;
+    s32 Kerning;
     u32 CodepointA;
     u32 CodepointB;
 };

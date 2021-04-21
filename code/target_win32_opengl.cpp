@@ -66,7 +66,7 @@ static WglFunctionPtr(wglSwapIntervalEXT);
 // File handle pool
 struct win32_handle_pool {
     HANDLE Slots[8];
-    i32 FreeList;
+    s32 FreeList;
 };
 
 struct win32_state {
@@ -115,7 +115,7 @@ Win32DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
     
     u32 RefreshRate = DefaultRefreshRate;
     {
-        i32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
+        s32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
         // It is possible for the refresh rate to be 0 or less
         // because of something called 'adaptive vsync'
         if (DisplayRefreshRate > 1) {
@@ -286,7 +286,7 @@ Win32Init() {
     // NOTE(Momo): Performance Frequency 
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = I64_ToU32(PerfCountFreq.QuadPart);
+    State->PerformanceFrequency = S64_ToU32(PerfCountFreq.QuadPart);
     
     // NOTE(Momo): Initialize file handle store
     //GlobalFileHandles = CreatePool<HANDLE>(&G_State->Arena, 8);
@@ -479,11 +479,11 @@ Win32IsGameCodeOutdated(win32_game_code* Code) {
 
 static inline void
 Win32OpenglSetPixelFormat(HDC DeviceContext) {
-    i32 SuggestedPixelFormatIndex = 0;
+    s32 SuggestedPixelFormatIndex = 0;
     u32 ExtendedPick = 0;
     
     if (wglChoosePixelFormatARB) {
-        i32 IntAttribList[] = {
+        s32 IntAttribList[] = {
             WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
             WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
             WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
@@ -748,7 +748,7 @@ Win32InitOpengl(HWND Window,
     Win32OpenglSetPixelFormat(DeviceContext);
     
     
-    i32 Win32OpenglAttribs[] {
+    s32 Win32OpenglAttribs[] {
         WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
         WGL_CONTEXT_MINOR_VERSION_ARB, 5,
         WGL_CONTEXT_FLAG_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB
@@ -906,7 +906,7 @@ Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
 //~ NOTE(Momo): Audio related
 struct win32_audio_output {
     usize BufferSize;
-    i16* Buffer;
+    s16* Buffer;
     
     u32 LatencySampleCount;
     u32 SamplesPerSecond;
@@ -939,7 +939,7 @@ Win32InitAudioOutput(win32_audio_output* Ret,
     Ret->SamplesPerSecond = SamplesPerSecond;
     Ret->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
     Ret->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
-    Ret->Buffer = (i16*)Win32AllocateMemory(Ret->BufferSize); 
+    Ret->Buffer = (s16*)Win32AllocateMemory(Ret->BufferSize); 
     if (!Ret->Buffer) {
         Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
         return FALSE;
@@ -1054,8 +1054,8 @@ Win32InitWasapi(win32_wasapi* Wasapi,
 static inline v2u
 Win32GetMonitorDimensions() {
     v2u Ret = {};
-    Ret.W = I32_ToU32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = I32_ToU32(GetSystemMetrics(SM_CYSCREEN));
+    Ret.W = S32_ToU32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.H = S32_ToU32(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
@@ -1704,10 +1704,10 @@ WinMain(HINSTANCE Instance,
             if (SUCCEEDED(Wasapi.AudioRenderClient->
                           GetBuffer((UINT32)GameAudio.SampleCount, &SoundBufferData))) 
             {
-                i16* SrcSample = AudioOutput.Buffer;
-                i16* DestSample = (i16*)SoundBufferData;
+                s16* SrcSample = AudioOutput.Buffer;
+                s16* DestSample = (s16*)SoundBufferData;
                 // Buffer structure:
-                // i16   i16    i16  i16   i16  i16
+                // s16   s16    s16  s16   s16  s16
                 // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
                 for(usize I = 0; I < GameAudio.SampleCount; ++I ){
                     *DestSample++ = *SrcSample++; // Left

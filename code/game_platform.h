@@ -153,7 +153,7 @@ struct game_memory {
 };
 
 struct game_audio {
-    i16* SampleBuffer;
+    s16* SampleBuffer;
     usize SampleCount;
 };
 
