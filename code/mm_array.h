@@ -41,7 +41,7 @@ struct flist {
 
 template<typename type, u32 Cap>
 static inline void 
-FList_Init(flist<type, Cap>* L) {
+FList_Clear(flist<type, Cap>* L) {
     L->Count = 0;
 }
 

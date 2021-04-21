@@ -197,11 +197,11 @@ InitMainMode(permanent_state* PermState,
     }
     
     Mode->Arena = Arena_SubArena(&PermState->ModeArena, Arena_Remaining(PermState->ModeArena));
-    FList_Init(&Mode->DotBullets);
-    FList_Init(&Mode->CircleBullets);
-    FList_Init(&Mode->Enemies);
+    FList_Clear(&Mode->DotBullets);
+    FList_Clear(&Mode->CircleBullets);
+    FList_Clear(&Mode->Enemies);
     
-    Mode->Wave.IsDone = true;
+    Mode->Wave.IsDone = True;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
     
     assets* Assets = &TranState->Assets;

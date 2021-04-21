@@ -26,7 +26,7 @@ DebugInspector_Begin(debug_inspector* Inspector) {
     if(!Inspector->IsActive)
         return;
     
-    FList_Init(&Inspector->Entries);
+    FList_Clear(&Inspector->Entries);
 }
 
 static inline void 
