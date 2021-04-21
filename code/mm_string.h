@@ -250,6 +250,21 @@ U8FStr_Clear(u8_fstr<Cap>* S) {
 }
 
 template<u32 Cap>
+static inline u32
+U8FStr_Remaining(u8_fstr<Cap> S) {
+    return Cap - S.Count;
+}
+
+template<u32 Cap>
+static inline u8_cstr
+U8FStr_ToCStr(u8_fstr<Cap> S) {
+    u8_cstr Ret = {};
+    Ret.Data = S.Data;
+    Ret.Count = S.Count;
+    return Ret;
+}
+
+template<u32 Cap>
 static inline u8_cstr
 U8FStr_ToCStr(u8_fstr<Cap>* S) {
     u8_cstr Ret = {};
@@ -342,7 +357,7 @@ U8FStr_PushS32(u8_fstr<Cap>* Dest, i32 Num) {
 
 template<u32 Cap>
 static inline b32
-U8FStr_Copy(u8_fstr<Cap>* Dest, u8_cstr Src) {
+U8FStr_CopyCStr(u8_fstr<Cap>* Dest, u8_cstr Src) {
     if (Src.Count > Cap) {
         return False;
     }
@@ -353,5 +368,39 @@ U8FStr_Copy(u8_fstr<Cap>* Dest, u8_cstr Src) {
     return True;
 }
 
+
+template<u32 Cap, u32 Cap2>
+static inline b32
+U8FStr_Copy(u8_fstr<Cap>* Dest, u8_fstr<Cap2>* Src) {
+    return U8FStr_CopyCStr(Dest, U8FStr_ToCStr(Src));
+}
+
+template<u32 Cap>
+static inline b32
+U8FStr_Pop(u8_fstr<Cap>* S) {
+    if (S->Count <= 0) {
+        return False;
+    }
+    --S->Count;
+    return True;
+}
+
+template<u32 Cap>
+static inline b32
+U8FStr_PushCStr(u8_fstr<Cap>* Dest, u8_cstr Src) {
+    if (Dest->Count + Src.Count <= Cap) {
+        for ( u32 I = 0; I < Src.Count; ++I ) {
+            Dest->Data[Dest->Count++] = Src.Data[I];
+        }
+        return True;
+    }
+    return False;
+}
+
+template<u32 Cap, u32 Cap2>
+static inline b32
+U8FStr_PushFStr(u8_fstr<Cap>* Dest, u8_fstr<Cap2>* Src) {
+    return U8FStr_PushCStr(Dest, U8FStr_ToCStr(Src));
+}
 
 #endif

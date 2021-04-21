@@ -3,6 +3,47 @@
 #ifndef MM_ARRAY_H
 #define MM_ARRAY_H
 
+//~ NOTE(Momo): General array struct
+template<typename type>
+struct array {
+    type* Data;
+    u32 Count;
+};
+
+template<typename type>
+struct list {
+    union {
+        array<type> Arr;
+        struct {
+            type* Data;
+            u32 Count;
+        };
+    };
+};
+
+//~ NOTE(Momo): Array of fixed size
+template<typename type, u32 Cap>
+struct farray {
+    type Data[Cap];
+    
+    inline type& operator*() {
+        return Data[0];
+    }
+    
+    inline type* operator+(u32 Index) {
+        Assert(Index < Cap);
+        return Data + Index;
+    }
+    
+    auto& operator[](u32 Index) {
+        Assert(Index < Cap);
+        return Data[Index];
+    }
+};
+
+
+
+
 //~ NOTE(Momo): Short for fixed-array list
 template<typename type, u32 Cap>
 struct flist {
@@ -14,12 +55,6 @@ template<typename type, u32 Cap>
 static inline void 
 FList_Init(flist<type, Cap>* L) {
     L->Count = 0;
-}
-
-template<typename type, u32 Cap>
-static inline constexpr u32
-FList_Capacity(flist<type,Cap> L) {
-    return Cap;
 }
 
 template<typename type, u32 Cap>

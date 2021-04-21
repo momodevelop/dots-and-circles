@@ -27,24 +27,16 @@ struct debug_console_command {
 };
 
 struct debug_console_line {
-    u8 Buffer[DebugConsole_CharactersPerLine];
-    u8_str Text;
+    u8_fstr<DebugConsole_CharactersPerLine> Text;
     c4f Color;
 };
-
-struct debug_console_command_list {
-    u32 Capacity;
-    u32 Count;
-    debug_console_command* E;
-};
-
 
 struct debug_console {
     b32 IsActive;
     
     v2f Position;
     
-    debug_console_line InfoLines[DebugConsole_InfoLineCount];
+    farray<debug_console_line, DebugConsole_InfoLineCount> InfoLines;
     debug_console_line InputLine;
     
     // Backspace (to delete character) related
@@ -79,13 +71,6 @@ static inline void
 DebugConsole_Create(debug_console* Console,
                     arena* Arena)
 {
-    for (usize I = 0; I < ArrayCount(Console->InfoLines); ++I) {
-        debug_console_line* InfoLine = Console->InfoLines + I;
-        InfoLine->Text = U8Str_CreateFromBuffer(InfoLine->Buffer);
-    }
-    
-    Console->InputLine.Text = U8Str_CreateFromBuffer(Console->InputLine.Buffer);
-    
     Console->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
     Console->Position = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
@@ -98,19 +83,19 @@ static inline void
 DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
     for (u32 I = 0; I < ArrayCount(Console->InfoLines) - 1; ++I) {
         u32 J = ArrayCount(Console->InfoLines) - 1 - I;
-        debug_console_line* Dest = Console->InfoLines + J;
-        debug_console_line* Src = Console->InfoLines + J - 1;
-        U8Str_Copy(&Dest->Text, Src->Text.CStr);
+        debug_console_line* Dest = Console->InfoLines.Data + J;
+        debug_console_line* Src = Console->InfoLines.Data + J - 1;
+        U8FStr_Copy(&Dest->Text, &Src->Text);
         Dest->Color = Src->Color;
     }
     Console->InfoLines[0].Color = Color;
-    U8Str_Clear(&Console->InfoLines[0].Text);
-    U8Str_Copy(&Console->InfoLines[0].Text, String);
+    U8FStr_Clear(&Console->InfoLines[0].Text);
+    U8FStr_CopyCStr(&Console->InfoLines[0].Text, String);
 }
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
-    U8Str_Pop(&Console->InputLine.Text);
+    U8FStr_Pop(&Console->InputLine.Text);
 }
 
 static inline void 
@@ -149,9 +134,9 @@ DebugConsole_Update(debug_console* Console,
     if (Console->IsActive) {
         Timer_Tick(&Console->TransitTimer, DeltaTime);
         if (Input->Characters.Count > 0 && 
-            Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
+            Input->Characters.Count <= U8FStr_Remaining(Console->InputLine.Text)) 
         {  
-            U8Str_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
+            U8FStr_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
         }
         
         // Remove character backspace logic
@@ -178,8 +163,10 @@ DebugConsole_Update(debug_console* Console,
         }
         
         // Execute command
+        
+        u8_cstr InputLineCStr = U8FStr_ToCStr(Console->InputLine.Text);
         if (IsPoked(Input->ButtonConfirm)) {
-            DebugConsole_PushInfo(Console, Console->InputLine.Text.CStr, Color_White);
+            DebugConsole_PushInfo(Console, InputLineCStr, Color_White);
             
             u32 Min = 0;
             u32 Max = 0;
@@ -189,20 +176,19 @@ DebugConsole_Update(debug_console* Console,
                     break;
                 }
             }
-            u8_cstr CommandStr = U8CStr_SubString(Console->InputLine.Text.CStr, 
+            u8_cstr CommandStr = U8CStr_SubString(InputLineCStr, 
                                                   Min, 
                                                   Max); 
-            
             // Send a command to a callback
             for (u32 I = 0; I < Console->Commands.Count; ++I) {
                 debug_console_command* Command = FList_Get(&Console->Commands, I);
                 if (U8CStr_Compare(Command->Key, CommandStr)) {
                     Command->Callback(Console, 
                                       Command->Context, 
-                                      Console->InputLine.Text.CStr);
+                                      InputLineCStr);
                 }
             }
-            U8Str_Clear(&Console->InputLine.Text);
+            U8FStr_Clear(&Console->InputLine.Text);
             
         }
     }
@@ -226,6 +212,7 @@ DebugConsole_Render(debug_console* Console,
     v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
+    int test = ArrayCount(Console->InfoLines);
     f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Font_GetHeight(Font) * FontSize;
@@ -247,7 +234,6 @@ DebugConsole_Render(debug_console* Console,
                           InfoBgTransform);
     }
     
-    // Draw input text
     {
         m44f ScaleMatrix = M44f_Scale(Dimensions.W, LineHeight, 0.f);
         m44f PositionMatrix = M44f_Translation(Console->Position.X, 
@@ -268,11 +254,12 @@ DebugConsole_Render(debug_console* Console,
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
             Position.Z = DebugConsole_PosZ + 0.01f;
             
+            u8_cstr InfoLineCStr = U8FStr_ToCStr(Console->InfoLines[I].Text);
             Draw_Text(RenderCommands,
                       Assets,
                       Font_Default, 
                       Position,
-                      Console->InfoLines[I].Text.CStr,
+                      InfoLineCStr,
                       FontSize,
                       Console->InfoLines[I].Color);
         }
@@ -282,11 +269,12 @@ DebugConsole_Render(debug_console* Console,
         Position.Y = Bottom + PaddingHeight;
         Position.Z = DebugConsole_PosZ + 0.02f;
         
+        u8_cstr InputLineCStr = U8FStr_ToCStr(Console->InputLine.Text);
         Draw_Text(RenderCommands, 
                   Assets, 
                   Font_Default, 
                   Position,
-                  Console->InputLine.Text.CStr,
+                  InputLineCStr,
                   FontSize,
                   DebugConsole_InputTextColor);
         

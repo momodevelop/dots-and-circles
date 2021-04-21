@@ -57,7 +57,7 @@ DebugInspector_End(debug_inspector* Inspector,
 static inline debug_inspector_entry*
 DebugInspector_PushEntry(debug_inspector* Inspector, u8_cstr Label) {
     debug_inspector_entry* Entry = FList_Push(&Inspector->Entries, {});
-    U8FStr_Copy(Entry, Label);
+    U8FStr_CopyCStr(Entry, Label);
     return Entry;
 }
 
