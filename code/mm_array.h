@@ -19,34 +19,22 @@ struct list {
             u32 Count;
         };
     };
+    u32 Cap;
 };
 
-//~ NOTE(Momo): Array of fixed size
-template<typename type, u32 Cap>
-struct farray {
-    type Data[Cap];
-    
-    inline type& operator*() {
-        return Data[0];
-    }
-    
-    inline type* operator+(u32 Index) {
-        Assert(Index < Cap);
-        return Data + Index;
-    }
-    
-    auto& operator[](u32 Index) {
-        Assert(Index < Cap);
-        return Data[Index];
-    }
-};
-
-
+template<typename type>
+static inline void
+List_Init(list<type>* L, type* Data, u32 Cap) {
+    L->Data = Data;
+    L->Cap = Cap;
+    L->Count = 0;
+}
 
 
 //~ NOTE(Momo): Short for fixed-array list
 template<typename type, u32 Cap>
 struct flist {
+    static constexpr u32 Cap = Cap;
     type Data[Cap];
     u32 Count;
 };
@@ -111,6 +99,5 @@ static inline u32
 FList_Remaining(flist<type,Cap>* L) {
     return Cap - L->Count;
 }
-
 
 #endif //MM_ARRAY_H

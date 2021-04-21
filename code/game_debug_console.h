@@ -36,7 +36,7 @@ struct debug_console {
     
     v2f Position;
     
-    farray<debug_console_line, DebugConsole_InfoLineCount> InfoLines;
+    debug_console_line InfoLines[DebugConsole_InfoLineCount];
     debug_console_line InputLine;
     
     // Backspace (to delete character) related
@@ -83,8 +83,8 @@ static inline void
 DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
     for (u32 I = 0; I < ArrayCount(Console->InfoLines) - 1; ++I) {
         u32 J = ArrayCount(Console->InfoLines) - 1 - I;
-        debug_console_line* Dest = Console->InfoLines.Data + J;
-        debug_console_line* Src = Console->InfoLines.Data + J - 1;
+        debug_console_line* Dest = Console->InfoLines + J;
+        debug_console_line* Src = Console->InfoLines + J - 1;
         U8FStr_Copy(&Dest->Text, &Src->Text);
         Dest->Color = Src->Color;
     }
@@ -92,6 +92,7 @@ DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
     U8FStr_Clear(&Console->InfoLines[0].Text);
     U8FStr_CopyCStr(&Console->InfoLines[0].Text, String);
 }
+
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
@@ -101,7 +102,7 @@ DebugConsole_Pop(debug_console* Console) {
 static inline void 
 DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
     for (u32 I = 0; I < C->Commands.Count; ++I) {
-        if (U8CStr_Compare(C->Commands.Data[I].Key, Key)) {
+        if (U8CStr_Cmp(C->Commands.Data[I].Key, Key)) {
             FList_Slear(&C->Commands, I);
             return;
         }
@@ -176,13 +177,16 @@ DebugConsole_Update(debug_console* Console,
                     break;
                 }
             }
-            u8_cstr CommandStr = U8CStr_SubString(InputLineCStr, 
-                                                  Min, 
-                                                  Max); 
+            u8_cstr CommandStr = {};
+            U8CStr_SubString(&CommandStr,
+                             InputLineCStr, 
+                             Min, 
+                             Max); 
+            
             // Send a command to a callback
             for (u32 I = 0; I < Console->Commands.Count; ++I) {
                 debug_console_command* Command = FList_Get(&Console->Commands, I);
-                if (U8CStr_Compare(Command->Key, CommandStr)) {
+                if (U8CStr_Cmp(Command->Key, CommandStr)) {
                     Command->Callback(Console, 
                                       Command->Context, 
                                       InputLineCStr);
@@ -212,7 +216,6 @@ DebugConsole_Render(debug_console* Console,
     v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
-    int test = ArrayCount(Console->InfoLines);
     f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Font_GetHeight(Font) * FontSize;

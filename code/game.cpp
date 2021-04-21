@@ -16,37 +16,44 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     permanent_state* PermState = DebugState->PermanentState;
     arena_mark Scratch = Arena_Mark(&DebugState->Arena);
     Defer{ Arena_Revert(&Scratch); };
+    u8_cstr Buffer = {};
+    
     u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
     if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
+        U8CStr_InitSiStr(&Buffer, "Expected only 2 arguments");
         DebugConsole_PushInfo(Console, 
-                              U8CStr_FromSiStr("Expected only 2 arguments"), 
+                              Buffer, 
                               Color_Red);
         return;
     }
     
     u8_cstr StateToChangeTo = ArgList.Items[1];
-    if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("main"))) {
+    if (U8CStr_CmpSiStr(StateToChangeTo, "main")) {
+        U8CStr_InitSiStr(&Buffer, "Jumping to Main");
         DebugConsole_PushInfo(Console, 
-                              U8CStr_FromSiStr("Jumping to Main"), 
+                              Buffer, 
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("splash"))) {
+    else if (U8CStr_CmpSiStr(StateToChangeTo, "splash")) {
+        U8CStr_InitSiStr(&Buffer, "Jumping to Splash");
         DebugConsole_PushInfo(Console, 
-                              U8CStr_FromSiStr("Jumping to Splash"),  
+                              Buffer,  
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (U8CStr_Compare(StateToChangeTo, U8CStr_FromSiStr("sandbox"))) {
+    else if (U8CStr_CmpSiStr(StateToChangeTo, "sandbox")) {
+        U8CStr_InitSiStr(&Buffer, "Jumping to Sandbox");
         DebugConsole_PushInfo(Console, 
-                              U8CStr_FromSiStr("Jumping to Sandbox"), 
+                              Buffer, 
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
+        U8CStr_InitSiStr(&Buffer, "Invalid state to jump to");
         DebugConsole_PushInfo(Console, 
-                              U8CStr_FromSiStr("Invalid state to jump to"), 
+                              Buffer, 
                               Color_Red);
     }
     
@@ -108,11 +115,12 @@ GameUpdateFunc(GameUpdate)
         
         // Init console
         {
-            
+            u8_cstr Buffer = {};
+            U8CStr_InitSiStr(&Buffer, "jump");
             DebugConsole_Create(&DebugState->Console,
                                 &DebugState->Arena);
             DebugConsole_AddCmd(&DebugState->Console, 
-                                U8CStr_FromSiStr("jump"), 
+                                Buffer, 
                                 CmdJump, 
                                 DebugState);
         }
@@ -180,15 +188,18 @@ GameUpdateFunc(GameUpdate)
         PermState->NextGameMode = GameModeType_None;
     }
     
-    
+    u8_cstr Buffer = {};
+    U8CStr_InitSiStr(&Buffer, "Debug Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Debug Memory: "),
+                           Buffer,
                            Arena_Remaining(DebugState->Arena));
+    U8CStr_InitSiStr(&Buffer, "Mode Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Mode Memory: "),
+                           Buffer,
                            Arena_Remaining(PermState->ModeArena));
+    U8CStr_InitSiStr(&Buffer, "TranState Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("TranState Memory: "),
+                           Buffer,
                            Arena_Remaining(TranState->Arena));
     
     

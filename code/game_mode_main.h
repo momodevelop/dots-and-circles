@@ -659,16 +659,19 @@ UpdateMainMode(permanent_state* PermState,
     RenderBullets(Mode, Assets, RenderCommands);
     RenderEnemies(Mode, Assets, RenderCommands);
     
-    
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Dots: "), 
+    u8_cstr Buffer = {};
+    U8CStr_InitSiStr(&Buffer, "Dots: ");
+    DebugInspector_PushU32(&DebugState->Inspector,
+                           Buffer,
                            Mode->DotBullets.Count);
+    U8CStr_InitSiStr(&Buffer, "Circles: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Circles: "), 
+                           Buffer, 
                            Mode->CircleBullets.Count);
     
+    U8CStr_InitSiStr(&Buffer, "Bullets: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
-                           U8CStr_FromSiStr("Bullets: "), 
+                           Buffer, 
                            Mode->DotBullets.Count + Mode->CircleBullets.Count);
     
 }

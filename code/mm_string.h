@@ -9,23 +9,20 @@ struct u8_cstr {
     u32 Count;
 };
 
-static inline u8_cstr
-U8CStr_Create(u8* Data, u32 Count) {
-    u8_cstr Ret = {};
-    Ret.Data = Data;
-    Ret.Count = Count;
-    
-    return Ret;
+static inline void
+U8CStr_Init(u8_cstr* S, u8* Data, u32 Count) {
+    S->Data = Data;
+    S->Count = Count;
 }
 
 // Assumes C-String
-static inline u8_cstr
-U8CStr_FromSiStr(const char* SiStr) {
-    return U8CStr_Create((u8*)SiStr, SiStrLen(SiStr));
+static inline void
+U8CStr_InitSiStr(u8_cstr* S, const char* SiStr) {
+    U8CStr_Init(S, (u8*)SiStr, SiStrLen(SiStr));
 }
 
 static inline b32
-U8CStr_Compare(u8_cstr Lhs, u8_cstr Rhs) {
+U8CStr_Cmp(u8_cstr Lhs, u8_cstr Rhs) {
     if(Lhs.Count != Rhs.Count) {
         return False;
     }
@@ -38,10 +35,20 @@ U8CStr_Compare(u8_cstr Lhs, u8_cstr Rhs) {
 }
 
 
-static inline u8_cstr
-U8CStr_SubString(u8_cstr Src, u32 Min, u32 Max) {
+static inline b32
+U8CStr_CmpSiStr(u8_cstr Lhs, const char* Rhs) {
+    for(u32 I = 0; I < Lhs.Count; ++I) {
+        if (Lhs.Data[I] != Rhs[I]) {
+            return False;
+        }
+    }
+    return True;
+}
+
+static inline void
+U8CStr_SubString(u8_cstr* Dest, u8_cstr Src, u32 Min, u32 Max) {
     Assert(Min <= Max); 
-    return U8CStr_Create(Src.Data + Min, Max - Min);
+    U8CStr_Init(Dest, Src.Data + Min, Max - Min);
 }
 
 struct u8_cstr_split_res {
@@ -73,7 +80,7 @@ U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
         
         u8_cstr* Link = Arena_PushStruct(u8_cstr, Arena);
         Assert(Link);
-        (*Link) = U8CStr_SubString(Str, Min, Max);
+        U8CStr_SubString(Link, Str, Min, Max);
         
         if (Ret.Items == nullptr) {
             Ret.Items = Link;            
@@ -367,6 +374,7 @@ U8FStr_CopyCStr(u8_fstr<Cap>* Dest, u8_cstr Src) {
     Dest->Count = Src.Count;
     return True;
 }
+
 
 
 template<u32 Cap, u32 Cap2>

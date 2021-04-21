@@ -222,7 +222,9 @@ return False; \
         arena_mark Scratch = Arena_Mark(Arena);
         Defer{ Arena_Revert(&Scratch); };
         
-        u8_cstr Signature = U8CStr_FromSiStr("MOMO");
+        u8_cstr Signature = {};
+        U8CStr_InitSiStr(&Signature, "MOMO");
+        
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
                                                Platform,
                                                Scratch.Arena,
