@@ -38,9 +38,14 @@ struct font {
 
 typedef u8_cstr msg;
 
+
 struct assets {
+#if 0
     texture* Textures;
     u32 TextureCount;
+#endif
+    
+    
     
     atlas_aabb* AtlasAabbs;
     u32 AtlasAabbCount;

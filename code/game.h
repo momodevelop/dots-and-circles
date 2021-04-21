@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "mm_core.h"
+#include "momo.h"
 
 #include "game_renderer.h"
 #include "game_platform.h"

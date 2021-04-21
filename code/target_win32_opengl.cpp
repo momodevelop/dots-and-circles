@@ -4,7 +4,7 @@
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 
-#include "mm_core.h"
+#include "momo.h"
 #include "game_renderer.h"
 #include "game_platform.h"
 #include "game_opengl.h"
