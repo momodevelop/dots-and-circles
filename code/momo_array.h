@@ -44,11 +44,16 @@ List_Init(list<type>* L, type* Data, u32 Cap) {
 }
 
 template<typename type>
-static inline void
+static inline b32
 List_InitFromArena(list<type>* L, arena* Arena, u32 Cap) {
-    L->Data = Arena_PushArray(type, Arena, Cap);
+    type* Buffer = Arena_PushArray(type, Arena, Cap);
+    if (!Buffer) {
+        return False;
+    }
+    L->Data = Buffer;
     L->Cap = Cap;
     L->Count = 0;
+    return True;
 }
 
 

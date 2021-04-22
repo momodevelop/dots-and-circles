@@ -7,6 +7,13 @@ struct arena {
     u32 Capacity;
 };
 
+static inline void
+Arena_Init(arena* A, void* Memory, u32 Capacity) {
+    A->Memory = (u8*)Memory;
+    A->Used = 0; 
+    A->Capacity = Capacity;
+}
+
 static inline arena 
 Arena_Create(void* Memory, u32 Capacity) {
     return { (u8*)Memory, 0, Capacity};

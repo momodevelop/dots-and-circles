@@ -96,12 +96,13 @@ struct win32_state {
 #if INTERNAL
     HANDLE StdOut;
 #endif
+    
+    opengl* Opengl;
 };
 
 
 //~ Globals
 win32_state* G_State = {};
-opengl* G_Opengl = {};
 struct win32_game_memory* G_GameMemory = {};
 
 //~ NOTE(Momo): Helper functions and globals
@@ -705,44 +706,23 @@ OpenglDebugCallbackFunc(Win32OpenglDebugCallback) {
 };
 #endif
 
-static inline void
-Win32FreeOpengl(opengl* Opengl) {
-    Win32Log("[Win32::Opengl] Freeing opengl\n");
-    Win32FreeMemory(Opengl);
-}
-
-static inline opengl*
-Win32InitOpengl(HWND Window, 
-                v2u WindowDimensions,
-                u32 ExtraMemory) 
+static inline b32
+Win32InitOpengl(win32_state* State,
+                HWND Window, 
+                v2u WindowDimensions) 
 {
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
-    // This is kinda what we wanna do if we ever want Renderer 
-    // to be its own DLL...
-    u32 RendererMemorySize = sizeof(opengl) + ExtraMemory; 
-    void* RendererMemory = Win32AllocateMemory(RendererMemorySize);
-    if(!RendererMemory) {
-        Win32Log("[Win32::Opengl] Failed to allocate memory\n"); 
-        return 0;
-    }
-    
-    opengl* Opengl = Arena_BootupStruct(opengl,
-                                        Arena,
-                                        RendererMemory, 
-                                        RendererMemorySize);
+    opengl* Opengl = Arena_PushStruct(opengl, &State->Arena);
     
     if (!Opengl) {
         Win32Log("[Win32::Opengl] Failed to allocate opengl\n"); 
-        return 0;
+        return False;
     }
     
-    Win32Log("[Win32::Opengl] Allocated: %d bytes\n", RendererMemorySize);
-    
     if (!Win32OpenglLoadWglExtensions()) {
-        Win32FreeOpengl(Opengl);
-        return 0;
+        return False;
     }
     
     Win32OpenglSetPixelFormat(DeviceContext);
@@ -765,8 +745,7 @@ Win32InitOpengl(HWND Window,
     if (!OpenglContext) {
         //OpenglContext = wglCreateContext(DeviceContext);
         Win32Log("[Win32::Opengl] Cannot create opengl context");
-        Win32FreeOpengl(Opengl);
-        return 0;
+        return False;
     }
     
     if(wglMakeCurrent(DeviceContext, OpenglContext)) {
@@ -776,8 +755,7 @@ Win32InitOpengl(HWND Window,
 Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
 if (!Opengl->Name) { \
 Win32Log("[Win32::Opengl] Cannot load opengl function '" #Name "' \n"); \
-Win32FreeOpengl(Opengl); \
-return 0; \
+return False; \
 }
         
         Win32SetOpenglFunction(glEnable);
@@ -819,7 +797,7 @@ return 0; \
         Win32SetOpenglFunction(glDeleteTextures);
         Win32SetOpenglFunction(glDebugMessageCallbackARB);
     }
-    Opengl_Init(Opengl, WindowDimensions);
+    Opengl_Init(Opengl, &State->Arena, WindowDimensions);
     
 #if INTERNAL
     Opengl->glEnable(GL_DEBUG_OUTPUT);
@@ -827,7 +805,8 @@ return 0; \
     Opengl->glDebugMessageCallbackARB(Win32OpenglDebugCallback, nullptr);
 #endif
     
-    return Opengl;
+    State->Opengl = Opengl;
+    return True;
 }
 
 //~ NOTE(Momo): Game Memory related
@@ -1102,13 +1081,13 @@ Win32ProcessMessages(HWND Window,
                 Input->WindowMousePos.X = (f32)GET_X_LPARAM(Msg.lParam);
                 Input->WindowMousePos.Y = (f32)GET_Y_LPARAM(Msg.lParam);
                 
-                v2u WindowDims = G_Opengl->WindowDimensions;
-                aabb2u RenderRegion = G_Opengl->RenderRegion;
+                v2u WindowDims = G_State->Opengl->WindowDimensions;
+                aabb2u RenderRegion = G_State->Opengl->RenderRegion;
                 
                 Input->RenderMousePos.X = Input->WindowMousePos.X - RenderRegion.Min.X;
                 Input->RenderMousePos.Y = Input->WindowMousePos.Y - RenderRegion.Min.Y;
                 
-                v2f DesignDimsF = V2f_CreateFromV2u(G_Opengl->DesignDimensions);
+                v2f DesignDimsF = V2f_CreateFromV2u(G_State->Opengl->DesignDimensions);
                 v2u RenderDimsU = Aabb2u_Dimensions(RenderRegion);
                 v2f RenderDimsF = V2f_CreateFromV2u(RenderDimsU);
                 v2f DesignToRenderRatio = V2f_Ratio(DesignDimsF, RenderDimsF);
@@ -1223,14 +1202,15 @@ Win32WindowCallback(HWND Window,
             G_State->IsRunning = false;
         } break;
         case WM_WINDOWPOSCHANGED: {
-            if(G_Opengl && 
-               G_Opengl->IsInitialized) 
+            opengl* Opengl = G_State->Opengl;
+            if(Opengl && 
+               Opengl->IsInitialized) 
             {
                 v2u WindowWH = Win32GetWindowDimensions(Window);
                 v2u ClientWH = Win32GetClientDimensions(Window);
                 Win32Log("[Win32::Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
                 Win32Log("[Win32::Resize] Window: %d x %d\n", WindowWH.W, WindowWH.H);
-                Opengl_Resize(G_Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
+                Opengl_Resize(Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
         
@@ -1389,12 +1369,12 @@ PlatformCloseFileFunc(Win32CloseFile) {
 }
 static inline
 PlatformAddTextureFunc(Win32AddTexture) {
-    return Opengl_AddTexture(G_Opengl, Width, Height, Pixels);
+    return Opengl_AddTexture(G_State->Opengl, Width, Height, Pixels);
 }
 
 static inline 
 PlatformClearTexturesFunc(Win32ClearTextures) {
-    return Opengl_ClearTextures(G_Opengl);
+    return Opengl_ClearTextures(G_State->Opengl);
 }
 
 static inline 
@@ -1621,14 +1601,13 @@ WinMain(HINSTANCE Instance,
     Defer { Win32FreeRenderCommands(&RenderCommands); };
     
     // Initialize OpenGL
-    opengl* Opengl = Win32InitOpengl(Window, 
-                                     Win32GetClientDimensions(Window),
-                                     Kilobytes(128));
-    if (!Opengl) {
+    if(!Win32InitOpengl(State,
+                        Window, 
+                        Win32GetClientDimensions(Window)))
+    {
         return 1;
     }
-    Defer { Win32FreeOpengl(Opengl); };
-    G_Opengl = Opengl;
+    
     
     // Set sleep granularity to 1ms
     b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
@@ -1697,7 +1676,7 @@ WinMain(HINSTANCE Instance,
         }
         
         
-        Opengl_Render(G_Opengl, &RenderCommands);
+        Opengl_Render(State->Opengl, &RenderCommands);
         Mailbox_Clear(&RenderCommands);
         
         // NOTE(Momo): 16-bit Sound

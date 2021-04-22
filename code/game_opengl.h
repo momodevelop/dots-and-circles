@@ -6,7 +6,7 @@
 // Configuration
 #define Opengl_Max_Textures 8
 #define Opengl_Max_Entities 512
-
+#define Opengl_RequiredMemory 
 // Opengl typedefs
 #define GL_TRUE                 1
 #define GL_FALSE                0
@@ -261,8 +261,7 @@ enum {
 
 struct opengl {
     b32 IsInitialized = True;
-    
-    arena Arena;
+
     
     // Bindings that needs to be filled by platform
     OpenglFunctionPtr(glEnable);
@@ -412,9 +411,10 @@ Opengl_AddPredefTextures(opengl* Opengl) {
 
 static inline b32
 Opengl_Init(opengl* Opengl,
+            arena* Arena,
             v2u WindowDimensions) 
 {
-    List_InitFromArena(&Opengl->Textures, &Opengl->Arena, Opengl_Max_Textures);
+    List_InitFromArena(&Opengl->Textures, Arena, Opengl_Max_Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     

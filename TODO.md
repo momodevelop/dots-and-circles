@@ -1,4 +1,5 @@
 # Engine
+[] Shift GameMemory into Win32State
 [] Make assets, platform and render commands global
 [] Sound
 [] Log to text file
