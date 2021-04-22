@@ -1561,7 +1561,10 @@ WinMain(HINSTANCE Instance,
                                                  "lock");
     
     // Initialize game input
-    game_input GameInput = Input_Create(U8Str_CreateFromArena(&State->Arena, 10));
+    game_input GameInput = {};
+    if(!Input_Init(&GameInput, &State->Arena)) {
+        return 1;
+    }
     
     
     // Initialize platform api

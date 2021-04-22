@@ -45,11 +45,9 @@ struct game_input {
 };
 
 
-static inline game_input
-Input_Create(u8_str Buffer) {
-    game_input Ret = {};
-    Ret.Characters = Buffer;
-    return Ret;
+static inline b32
+Input_Init(game_input* Input, arena* Arena) {
+    return U8Str_InitFromArena(&Input->Characters, Arena, 10);
 }
 
 

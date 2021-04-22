@@ -1,12 +1,3 @@
-// This is purely for convienience.
-// There are some things that are easier to debug 
-// with console logging than other methods.
-// TODO: Perhaps we have REAL in game logging?
-#define GLOBAL_LOG 0
-#if GLOBAL_LOG
-void (*Log)(const char* Format, ...);
-#endif
-
 #include "game.h"
 
 // cmd: jump main/menu/atlas_test/etc...
@@ -21,7 +12,7 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
     if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
-        U8CStr_InitSiStr(&Buffer, "Expected only 2 arguments");
+        U8CStr_InitFromSiStr(&Buffer, "Expected only 2 arguments");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               Color_Red);
@@ -30,28 +21,28 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     
     u8_cstr StateToChangeTo = ArgList.Items[1];
     if (U8CStr_CmpSiStr(StateToChangeTo, "main")) {
-        U8CStr_InitSiStr(&Buffer, "Jumping to Main");
+        U8CStr_InitFromSiStr(&Buffer, "Jumping to Main");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
     else if (U8CStr_CmpSiStr(StateToChangeTo, "splash")) {
-        U8CStr_InitSiStr(&Buffer, "Jumping to Splash");
+        U8CStr_InitFromSiStr(&Buffer, "Jumping to Splash");
         DebugConsole_PushInfo(Console, 
                               Buffer,  
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
     else if (U8CStr_CmpSiStr(StateToChangeTo, "sandbox")) {
-        U8CStr_InitSiStr(&Buffer, "Jumping to Sandbox");
+        U8CStr_InitFromSiStr(&Buffer, "Jumping to Sandbox");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else {
-        U8CStr_InitSiStr(&Buffer, "Invalid state to jump to");
+        U8CStr_InitFromSiStr(&Buffer, "Invalid state to jump to");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               Color_Red);
@@ -94,9 +85,9 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->TransientMemory, 
                                        GameMemory->TransientMemorySize);
         
-        b32 Success = Assets_Create(&TranState->Assets,
-                                    &TranState->Arena,
-                                    Platform);
+        b32 Success = Assets_Init(&TranState->Assets,
+                                  &TranState->Arena,
+                                  Platform);
         
         Assert(Success);
         
@@ -110,15 +101,15 @@ GameUpdateFunc(GameUpdate)
                                         GameMemory->DebugMemory,
                                         GameMemory->DebugMemorySize);
         // Init inspector
-        DebugInspector_Init(&DebugState->Inspector);
+        DebugInspector_Init(&DebugState->Inspector, &DebugState->Arena);
         
         
         // Init console
         {
             u8_cstr Buffer = {};
-            U8CStr_InitSiStr(&Buffer, "jump");
-            DebugConsole_Create(&DebugState->Console,
-                                &DebugState->Arena);
+            U8CStr_InitFromSiStr(&Buffer, "jump");
+            DebugConsole_Init(&DebugState->Console,
+                              &DebugState->Arena);
             DebugConsole_AddCmd(&DebugState->Console, 
                                 Buffer, 
                                 CmdJump, 
@@ -130,13 +121,13 @@ GameUpdateFunc(GameUpdate)
         DebugState->IsInitialized = True;
     }
     
-    DebugInspector_Begin(&DebugState->Inspector);
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
     if (IsPoked(Input->ButtonInspector)) {
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
+    DebugInspector_Begin(&DebugState->Inspector);
     
     
     DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
@@ -189,15 +180,15 @@ GameUpdateFunc(GameUpdate)
     }
     
     u8_cstr Buffer = {};
-    U8CStr_InitSiStr(&Buffer, "Debug Memory: ");
+    U8CStr_InitFromSiStr(&Buffer, "Debug Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            Arena_Remaining(DebugState->Arena));
-    U8CStr_InitSiStr(&Buffer, "Mode Memory: ");
+    U8CStr_InitFromSiStr(&Buffer, "Mode Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            Arena_Remaining(PermState->ModeArena));
-    U8CStr_InitSiStr(&Buffer, "TranState Memory: ");
+    U8CStr_InitFromSiStr(&Buffer, "TranState Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            Arena_Remaining(TranState->Arena));

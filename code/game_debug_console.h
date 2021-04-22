@@ -1,7 +1,7 @@
 #ifndef __GAME_CONSOLE__
 #define __GAME_CONSOLE__
 
-#define DebugConsole_CharactersPerLine 110
+#define DebugConsole_LineLength 110
 #define DebugConsole_InfoLineCount 5
 #define DebugConsole_MaxCommands 16
 #define DebugConsole_PosZ 90.f
@@ -27,7 +27,7 @@ struct debug_console_command {
 };
 
 struct debug_console_line {
-    u8_fstr<DebugConsole_CharactersPerLine> Text;
+    u8_str Text;
     c4f Color;
 };
 
@@ -49,8 +49,23 @@ struct debug_console {
     timer TransitTimer;
     
     // List of commands
-    flist<debug_console_command,DebugConsole_MaxCommands> Commands;
+    list<debug_console_command> Commands;
 };
+
+
+static inline void
+DebugConsole_Init(debug_console* C,
+                  arena* Arena)
+{
+    C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
+    
+    C->Position = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
+    C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
+    C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
+    
+    List_InitFromArena(&C->Commands, Arena, DebugConsole_MaxCommands);
+    U8Str_InitFromArena(&C->InputLine.Text, Arena, DebugConsole_LineLength);
+}
 
 static inline void 
 DebugConsole_AddCmd(debug_console* C, 
@@ -63,20 +78,9 @@ DebugConsole_AddCmd(debug_console* C,
     Command.Callback = Callback;
     Command.Context = Context;
     
-    FList_Push(&C->Commands, Command);
+    List_PushItem(&C->Commands, Command);
 }
 
-
-static inline void
-DebugConsole_Create(debug_console* Console,
-                    arena* Arena)
-{
-    Console->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
-    
-    Console->Position = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
-    Console->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
-    Console->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
-}
 
 
 static inline void
@@ -85,25 +89,25 @@ DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
         u32 J = ArrayCount(Console->InfoLines) - 1 - I;
         debug_console_line* Dest = Console->InfoLines + J;
         debug_console_line* Src = Console->InfoLines + J - 1;
-        U8FStr_Copy(&Dest->Text, &Src->Text);
+        U8Str_Copy(&Dest->Text, &Src->Text);
         Dest->Color = Src->Color;
     }
     Console->InfoLines[0].Color = Color;
-    U8FStr_Clear(&Console->InfoLines[0].Text);
-    U8FStr_CopyCStr(&Console->InfoLines[0].Text, String);
+    U8Str_Clear(&Console->InfoLines[0].Text);
+    U8Str_CopyCStr(&Console->InfoLines[0].Text, String);
 }
 
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
-    U8FStr_Pop(&Console->InputLine.Text);
+    U8Str_Pop(&Console->InputLine.Text);
 }
 
 static inline void 
 DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
     for (u32 I = 0; I < C->Commands.Count; ++I) {
         if (U8CStr_Cmp(C->Commands.Data[I].Key, Key)) {
-            FList_Slear(&C->Commands, I);
+            List_Slear(&C->Commands, I);
             return;
         }
     }
@@ -135,9 +139,9 @@ DebugConsole_Update(debug_console* Console,
     if (Console->IsActive) {
         Timer_Tick(&Console->TransitTimer, DeltaTime);
         if (Input->Characters.Count > 0 && 
-            Input->Characters.Count <= U8FStr_Remaining(Console->InputLine.Text)) 
+            Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
         {  
-            U8FStr_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
+            U8Str_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
         }
         
         // Remove character backspace logic
@@ -165,7 +169,7 @@ DebugConsole_Update(debug_console* Console,
         
         // Execute command
         
-        u8_cstr InputLineCStr = U8FStr_ToCStr(Console->InputLine.Text);
+        u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
         if (IsPoked(Input->ButtonConfirm)) {
             DebugConsole_PushInfo(Console, InputLineCStr, Color_White);
             
@@ -185,14 +189,14 @@ DebugConsole_Update(debug_console* Console,
             
             // Send a command to a callback
             for (u32 I = 0; I < Console->Commands.Count; ++I) {
-                debug_console_command* Command = FList_Get(&Console->Commands, I);
+                debug_console_command* Command = Console->Commands + I;
                 if (U8CStr_Cmp(Command->Key, CommandStr)) {
                     Command->Callback(Console, 
                                       Command->Context, 
                                       InputLineCStr);
                 }
             }
-            U8FStr_Clear(&Console->InputLine.Text);
+            U8Str_Clear(&Console->InputLine.Text);
             
         }
     }
@@ -257,7 +261,7 @@ DebugConsole_Render(debug_console* Console,
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
             Position.Z = DebugConsole_PosZ + 0.01f;
             
-            u8_cstr InfoLineCStr = U8FStr_ToCStr(Console->InfoLines[I].Text);
+            u8_cstr InfoLineCStr = Console->InfoLines[I].Text.CStr;
             Draw_Text(RenderCommands,
                       Assets,
                       Font_Default, 
@@ -272,7 +276,7 @@ DebugConsole_Render(debug_console* Console,
         Position.Y = Bottom + PaddingHeight;
         Position.Z = DebugConsole_PosZ + 0.02f;
         
-        u8_cstr InputLineCStr = U8FStr_ToCStr(Console->InputLine.Text);
+        u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
         Draw_Text(RenderCommands, 
                   Assets, 
                   Font_Default, 

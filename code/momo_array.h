@@ -3,7 +3,7 @@
 #ifndef MM_ARRAY_H
 #define MM_ARRAY_H
 
-//~ NOTE(Momo): General array struct
+//~ NOTE(Momo): array
 template<typename type>
 struct array {
     type* Data;
@@ -11,16 +11,29 @@ struct array {
 };
 
 template<typename type>
-struct list {
-    union {
-        array<type> Arr;
-        struct {
-            type* Data;
-            u32 Count;
-        };
-    };
+static inline type*
+Array_Get(array<type>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
+    }
+    else {
+        return Null;
+    }
+}
+
+template<typename type>
+static inline type* 
+operator+(array<type> L, u32 Index) {
+    return Array_Get(&L, Index);
+}
+
+//~ NOTE(Momo): list
+template<typename type>
+struct list : array<type> {
     u32 Cap;
 };
+
+
 
 template<typename type>
 static inline void
@@ -30,25 +43,39 @@ List_Init(list<type>* L, type* Data, u32 Cap) {
     L->Count = 0;
 }
 
-
-//~ NOTE(Momo): Short for fixed-array list
-template<typename type, u32 Cap>
-struct flist {
-    static constexpr u32 Cap = Cap;
-    type Data[Cap];
-    u32 Count;
-};
-
-template<typename type, u32 Cap>
-static inline void 
-FList_Clear(flist<type, Cap>* L) {
+template<typename type>
+static inline void
+List_InitFromArena(list<type>* L, arena* Arena, u32 Cap) {
+    L->Data = Arena_PushArray(type, Arena, Cap);
+    L->Cap = Cap;
     L->Count = 0;
 }
 
-template<typename type, u32 Cap>
+
+
+template<typename type>
+static inline void 
+List_Clear(list<type>* L) {
+    L->Count = 0;
+}
+
+// NOTE(Momo): Push, but does not override whatever's in
+// the container because user might have already initialized
+// something important before that remained inside
+template<typename type>
 static inline type*
-FList_Push(flist<type,Cap>* L, type Item) {
-    if(L->Count < Cap) {
+List_Push(list<type>* L) {
+    if(L->Count < L->Cap) {
+        type* Ret = L->Data + L->Count++;
+        return Ret;
+    }
+    return Null;
+}
+
+template<typename type>
+static inline type*
+List_PushItem(list<type>* L, type Item) {
+    if(L->Count < L->Cap) {
         type* Ret = L->Data + L->Count++;
         (*Ret) = Item;
         return Ret;
@@ -57,9 +84,9 @@ FList_Push(flist<type,Cap>* L, type Item) {
 }
 
 // NOTE(Momo): "Swap last element and remove"
-template<typename type, u32 Cap>
+template<typename type>
 static inline b32
-FList_Slear(flist<type,Cap>* L, u32 Index) {
+List_Slear(list<type>* L, u32 Index) {
     if (Index < L->Count) {
         L->Data[Index] = L->Data[L->Count-1];
         --L->Count;
@@ -71,20 +98,9 @@ FList_Slear(flist<type,Cap>* L, u32 Index) {
 }
 
 
-template<typename type, u32 Cap>
+template<typename type>
 static inline type*
-FList_Get(flist<type, Cap>* L, u32 Index) {
-    if(Index < L->Count) {
-        return L->Data + Index;
-    }
-    else {
-        return Null;
-    }
-}
-
-template<typename type, u32 Cap>
-static inline type*
-FList_Last(flist<type, Cap>* L) {
+List_Last(list<type>* L) {
     if (L->Count == 0){
         return Null;
     }
@@ -94,10 +110,10 @@ FList_Last(flist<type, Cap>* L) {
     
 }
 
-template<typename type, u32 Cap>
+template<typename type>
 static inline u32
-FList_Remaining(flist<type,Cap>* L) {
-    return Cap - L->Count;
+List_Remaining(list<type>* L) {
+    return L->Cap - L->Count;
 }
 
 #endif //MM_ARRAY_H

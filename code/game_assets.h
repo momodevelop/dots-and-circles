@@ -40,11 +40,9 @@ typedef u8_cstr msg;
 
 
 struct assets {
-
+    
     texture* Textures;
     u32 TextureCount;
-
-    
     
     atlas_aabb* AtlasAabbs;
     u32 AtlasAabbCount;
@@ -194,9 +192,9 @@ Assets_ReadBlock(platform_file_handle* File,
 (Type*)Assets_ReadBlock(File, Platform, Arena, FileOffset, sizeof(Type), alignof(Type))
 
 static inline b32
-Assets_Create(assets* Assets,
-              arena* Arena,
-              platform_api* Platform) 
+Assets_Init(assets* Assets,
+            arena* Arena,
+            platform_api* Platform) 
 {
 #define CheckFile(Handle) \
 if (Handle.Error) { \
@@ -238,7 +236,7 @@ return False; \
         Defer{ Arena_Revert(&Scratch); };
         
         u8_cstr Signature = {};
-        U8CStr_InitSiStr(&Signature, "MOMO");
+        U8CStr_InitFromSiStr(&Signature, "MOMO");
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
                                                Platform,

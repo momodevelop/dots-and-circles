@@ -84,6 +84,10 @@ Arena_BootupBlock(u32 StructSize,
 struct arena_mark {
     arena* Arena;
     u32 OldUsed;
+    
+    operator arena*() {
+        return Arena;
+    }
 };
 
 static inline arena_mark

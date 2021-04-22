@@ -1,16 +1,15 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
-#define MOUSE_MOVEMENT 1
 
-// Rendering layers
-// TODO: Organize this better please. 
-// Maybe a map or array or something.
-constexpr static f32 ZLayPlayer =  0.f;
-constexpr static f32 ZLayDotBullet = 10.f;
-constexpr static f32 ZLayCircleBullet = 20.f;
-constexpr static f32 ZLayEnemy = 30.f;
-constexpr static f32 ZLayDebug = 40.f;
+#define ZLayPlayer 0.f
+#define ZLayDotBullet 10.f
+#define ZLayCircleBullet 20.f
+#define ZLayEnemy 30.f
+#define ZLayDebug 40.f
+#define CircleCap 128
+#define DotCap 128
+#define EnemyCap 128
 
 enum mood_type {
     MoodType_Dot,
@@ -109,15 +108,15 @@ struct enemy {
 
 
 struct game_mode_main {
-    arena Arena;
+    arena_mark ArenaMark;
     
     player Player;
     game_camera Camera;
     
     
-    flist<bullet,128> CircleBullets;
-    flist<bullet,128> DotBullets;
-    flist<enemy,128> Enemies;
+    list<bullet> CircleBullets;
+    list<bullet> DotBullets;
+    list<enemy> Enemies;
     
     wave Wave;
     rng_series Rng;
@@ -146,7 +145,7 @@ SpawnEnemy(game_mode_main* Mode,
     Enemy.MoodPatternType = MoodPatternType;
     Enemy.MovementType = MovementType;
     
-    FList_Push(&Mode->Enemies, Enemy);
+    List_PushItem(&Mode->Enemies, Enemy);
 }
 
 
@@ -167,10 +166,10 @@ SpawnBullet(game_mode_main* Mode, assets* Assets, v2f Position, v2f Direction, f
     }
     switch (Mood) {
         case MoodType_Dot: {
-            FList_Push(&Mode->DotBullets, Bullet);
+            List_PushItem(&Mode->DotBullets, Bullet);
         } break;
         case MoodType_Circle: {
-            FList_Push(&Mode->CircleBullets, Bullet);
+            List_PushItem(&Mode->CircleBullets, Bullet);
         } break;
         default: {
             Assert(False);
@@ -196,10 +195,10 @@ InitMainMode(permanent_state* PermState,
                                              Game_DesignDepth);
     }
     
-    Mode->Arena = Arena_SubArena(&PermState->ModeArena, Arena_Remaining(PermState->ModeArena));
-    FList_Clear(&Mode->DotBullets);
-    FList_Clear(&Mode->CircleBullets);
-    FList_Clear(&Mode->Enemies);
+    Mode->ArenaMark = Arena_Mark(&PermState->ModeArena);
+    List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
+    List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
+    List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
     
     Mode->Wave.IsDone = True;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
@@ -240,12 +239,6 @@ UpdatePlayer(game_mode_main* Mode,
               0.f, 
               Player->DotImageTransitionDuration);
     
-#if !MOUSE_MOVEMENT
-    f32 SpeedDt = Player->Speed * DeltaTime;
-    v2f Velocity = V2f_Mul(Player->Direction, SpeedDt);
-    Player->Position = V2f_Add(Player->Position, Velocity);
-#endif
-    
     
 }
 
@@ -265,7 +258,7 @@ UpdateBullets(game_mode_main* Mode,
             DotBullet->Position.X >= Game_DesignWidth * 0.5f + DotBullet->HitCircle.Radius ||
             DotBullet->Position.Y <= -Game_DesignHeight * 0.5f - DotBullet->HitCircle.Radius ||
             DotBullet->Position.Y >= Game_DesignHeight * 0.5f + DotBullet->HitCircle.Radius) {
-            FList_Slear(&Mode->DotBullets, I);
+            List_Slear(&Mode->DotBullets, I);
             continue;
         }
         ++I;
@@ -283,7 +276,7 @@ UpdateBullets(game_mode_main* Mode,
             CircleBullet->Position.X >= Game_DesignWidth * 0.5f + CircleBullet->HitCircle.Radius ||
             CircleBullet->Position.Y <= -Game_DesignHeight * 0.5f - CircleBullet->HitCircle.Radius ||
             CircleBullet->Position.Y >= Game_DesignHeight * 0.5f + CircleBullet->HitCircle.Radius) {
-            FList_Slear(&Mode->CircleBullets, I);
+            List_Slear(&Mode->CircleBullets, I);
             continue;
         }
         ++I;
@@ -299,7 +292,7 @@ UpdateEnemies(game_mode_main* Mode,
     player* Player = &Mode->Player;
     for (u32 I = 0; I < Mode->Enemies.Count; ++I) 
     {
-        enemy* Enemy = FList_Get(&Mode->Enemies, I);
+        enemy* Enemy = Mode->Enemies + I;
         
         // Movement
         switch( Enemy->MovementType ) {
@@ -341,7 +334,7 @@ UpdateEnemies(game_mode_main* Mode,
         Enemy->LifeTimer += DeltaTime;
         if (Enemy->LifeTimer > Enemy->LifeDuration) {
             // Quick removal
-            FList_Slear(&Mode->Enemies, I);
+            List_Slear(&Mode->Enemies, I);
             continue;
         }
         ++Enemy;
@@ -359,13 +352,13 @@ UpdateCollision(game_mode_main* Mode)
     // Player vs every bullet
     for (u32 I = 0; I < Mode->DotBullets.Count;) 
     {
-        bullet* DotBullet = FList_Get(&Mode->DotBullets,I);
+        bullet* DotBullet = Mode->DotBullets + I;
         circle2f DotBulletCircle = DotBullet->HitCircle;
         DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
         
         if (Circle2f_IsIntersecting(PlayerCircle, DotBulletCircle)) {
             if (Player->MoodType == MoodType_Dot) {
-                FList_Slear(&Mode->DotBullets, I);
+                List_Slear(&Mode->DotBullets, I);
                 continue;
             }
         }
@@ -380,7 +373,7 @@ UpdateCollision(game_mode_main* Mode)
         
         if (Circle2f_IsIntersecting(PlayerCircle, CircleBulletHitCircle)) {
             if (Player->MoodType == MoodType_Circle ) {
-                FList_Slear(&Mode->CircleBullets, I);
+                List_Slear(&Mode->CircleBullets, I);
                 continue;
             }
         }
@@ -456,44 +449,13 @@ UpdateInput(game_mode_main* Mode,
 {
     v2f Direction = {};
     player* Player = &Mode->Player; 
-#if !MOUSE_MOVEMENT
     
-    b8 IsMovementButtonDown = false;
-    if(IsDown(Input->ButtonLeft)) {
-        Direction.X = -1.f;
-        IsMovementButtonDown = true;
-    };
-    
-    if(IsDown(Input->ButtonRight)) {
-        Direction.X = 1.f;
-        IsMovementButtonDown = true;
-    }
-    
-    if(IsDown(Input->ButtonUp)) {
-        Direction.Y = 1.f;
-        IsMovementButtonDown = true;
-    }
-    if(IsDown(Input->ButtonDown)) {
-        Direction.Y = -1.f;
-        IsMovementButtonDown = true;
-    }
-    
-    if (IsMovementButtonDown) 
-        Player->Direction = V2f_Normalize(Direction);
-    else {
-        Player->Direction = {};
-    }
-#else 
     // TODO(Momo): Hacky way to convert screen space to world space
     // It should really be based on camera position and all that...
     // I guess we should have a camera class to manage all this if we 
     // really want
     Player->Position.X = Input->DesignMousePos.X - Game_DesignWidth * 0.5f;
     Player->Position.Y = -(Input->DesignMousePos.Y - Game_DesignHeight * 0.5f);
-    
-    
-#endif
-    
     
     // NOTE(Momo): Absorb Mode Switch
     if(IsPoked(Input->ButtonSwitch)) {
@@ -660,16 +622,16 @@ UpdateMainMode(permanent_state* PermState,
     RenderEnemies(Mode, Assets, RenderCommands);
     
     u8_cstr Buffer = {};
-    U8CStr_InitSiStr(&Buffer, "Dots: ");
+    U8CStr_InitFromSiStr(&Buffer, "Dots: ");
     DebugInspector_PushU32(&DebugState->Inspector,
                            Buffer,
                            Mode->DotBullets.Count);
-    U8CStr_InitSiStr(&Buffer, "Circles: ");
+    U8CStr_InitFromSiStr(&Buffer, "Circles: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->CircleBullets.Count);
     
-    U8CStr_InitSiStr(&Buffer, "Bullets: ");
+    U8CStr_InitFromSiStr(&Buffer, "Bullets: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->DotBullets.Count + Mode->CircleBullets.Count);
