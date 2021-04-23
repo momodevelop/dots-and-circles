@@ -69,6 +69,13 @@ struct win32_handle_pool {
     s32 FreeList;
 };
 
+struct win32_game_memory {
+    game_memory Head;
+    
+    void* Data;
+    u32 DataSize;
+};
+
 struct win32_state {
     arena Arena;
     b32 IsPaused;
@@ -98,12 +105,13 @@ struct win32_state {
 #endif
     
     opengl* Opengl;
+    win32_game_memory* GameMemory = {};
+    
 };
 
 
 //~ Globals
 win32_state* G_State = {};
-struct win32_game_memory* G_GameMemory = {};
 
 //~ NOTE(Momo): Helper functions and globals
 
@@ -809,13 +817,6 @@ return False; \
     return True;
 }
 
-//~ NOTE(Momo): Game Memory related
-struct win32_game_memory {
-    game_memory Head;
-    
-    void* Data;
-    u32 DataSize;
-};
 
 static inline void
 Win32GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
@@ -1129,12 +1130,12 @@ Win32ProcessMessages(HWND Window,
                     } break;
                     case VK_F3:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32GameMemory_Save(G_GameMemory, Win32_SaveStateFile);
+                            Win32GameMemory_Save(G_State->GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F4:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32GameMemory_Load(G_GameMemory, Win32_SaveStateFile);
+                            Win32GameMemory_Load(G_State->GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F5:{
@@ -1149,7 +1150,7 @@ Win32ProcessMessages(HWND Window,
                                 Win32EndRecordingInput(G_State);
                             }
                             else {
-                                Win32GameMemory_Save(G_GameMemory, Win32_RecordStateFile);
+                                Win32GameMemory_Save(G_State->GameMemory, Win32_RecordStateFile);
                                 Win32BeginRecordingInput(G_State, Win32_RecordInputFile);
                             }
                         }
@@ -1161,7 +1162,7 @@ Win32ProcessMessages(HWND Window,
                                 Win32EndPlaybackInput(G_State);
                             }
                             else {
-                                Win32GameMemory_Load(G_GameMemory, Win32_RecordStateFile);
+                                Win32GameMemory_Load(G_State->GameMemory, Win32_RecordStateFile);
                                 Win32BeginPlaybackInput(G_State, 
                                                         Win32_RecordInputFile);
                             }
@@ -1591,7 +1592,7 @@ WinMain(HINSTANCE Instance,
         return 1;
     }
     Defer { Win32FreeGameMemory(&GameMemory); };
-    G_GameMemory = &GameMemory;
+    G_State->GameMemory = &GameMemory;
     
     // Initialize RenderCommands
     mailbox RenderCommands = {};
