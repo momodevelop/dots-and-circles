@@ -64,7 +64,13 @@ DebugConsole_Init(debug_console* C,
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
     List_InitFromArena(&C->Commands, Arena, DebugConsole_MaxCommands);
+    
+    for (u32 I = 0; I < DebugConsole_InfoLineCount; ++I ){
+        U8Str_InitFromArena(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
+    }
     U8Str_InitFromArena(&C->InputLine.Text, Arena, DebugConsole_LineLength);
+    
+    
 }
 
 static inline void 
