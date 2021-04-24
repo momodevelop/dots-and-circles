@@ -8,7 +8,24 @@ template<typename type>
 struct array {
     type* Data;
     u32 Count;
+    
+    auto& operator[](u32 Index) {
+        Assert(Index < Count); 
+        return Data[Index];
+    }
 };
+
+template<typename type>
+static inline b32
+Array_InitFromArena(array<type>* L, arena* Arena, u32 Count) {
+    type* Buffer = Arena_PushArray(type, Arena, Count);
+    if (!Buffer) {
+        return False;
+    }
+    L->Data = Buffer;
+    L->Count = Count;
+    return True;
+}
 
 template<typename type>
 static inline type*

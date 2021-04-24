@@ -36,7 +36,7 @@ struct debug_console {
     
     v2f Position;
     
-    debug_console_line InfoLines[DebugConsole_InfoLineCount];
+    array<debug_console_line> InfoLines;
     debug_console_line InputLine;
     
     // Backspace (to delete character) related
@@ -65,6 +65,12 @@ DebugConsole_Init(debug_console* C,
     
     List_InitFromArena(&C->Commands, Arena, DebugConsole_MaxCommands);
     U8Str_InitFromArena(&C->InputLine.Text, Arena, DebugConsole_LineLength);
+    
+    Array_InitFromArena(&C->InfoLines, Arena, DebugConsole_InfoLineCount);
+    for (u32 I = 0; I < C->InfoLines.Count; ++I) {
+        U8Str_InitFromArena(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
+    }
+    
 }
 
 static inline void 
@@ -85,8 +91,8 @@ DebugConsole_AddCmd(debug_console* C,
 
 static inline void
 DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
-    for (u32 I = 0; I < ArrayCount(Console->InfoLines) - 1; ++I) {
-        u32 J = ArrayCount(Console->InfoLines) - 1 - I;
+    for (u32 I = 0; I < Console->InfoLines.Count - 1; ++I) {
+        u32 J = Console->InfoLines.Count - 1 - I;
         debug_console_line* Dest = Console->InfoLines + J;
         debug_console_line* Src = Console->InfoLines + J - 1;
         U8Str_Copy(&Dest->Text, &Src->Text);
@@ -220,7 +226,7 @@ DebugConsole_Render(debug_console* Console,
     v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
-    f32 LineHeight = Dimensions.H / (ArrayCount(Console->InfoLines) + 1);
+    f32 LineHeight = Dimensions.H / (Console->InfoLines.Count + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Font_GetHeight(Font) * FontSize;
     
@@ -255,7 +261,7 @@ DebugConsole_Render(debug_console* Console,
     
     // Draw info text
     {
-        for (u32 I = 0; I < ArrayCount(Console->InfoLines) ; ++I) {
+        for (u32 I = 0; I < Console->InfoLines.Count ; ++I) {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
