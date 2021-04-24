@@ -106,7 +106,8 @@ DebugConsole_Pop(debug_console* Console) {
 static inline void 
 DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
     for (u32 I = 0; I < C->Commands.Count; ++I) {
-        if (U8CStr_Cmp(C->Commands.Data[I].Key, Key)) {
+        debug_console_command* Cmd = C->Commands + I;
+        if (U8CStr_Cmp(Cmd->Key, Key)) {
             List_Slear(&C->Commands, I);
             return;
         }

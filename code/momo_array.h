@@ -29,10 +29,34 @@ operator+(array<type> L, u32 Index) {
 
 //~ NOTE(Momo): list
 template<typename type>
-struct list : array<type> {
+struct list {
+    union {
+        array<type> Arr;
+        struct {
+            type* Data;
+            u32 Count;
+        };
+    };
     u32 Cap;
 };
 
+
+template<typename type>
+static inline type*
+List_Get(list<type>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
+    }
+    else {
+        return Null;
+    }
+}
+
+template<typename type>
+static inline type* 
+operator+(list<type> L, u32 Index) {
+    return List_Get(&L, Index);
+}
 
 
 template<typename type>

@@ -247,7 +247,7 @@ UpdateBullets(game_mode_main* Mode,
               f32 DeltaTime) 
 {
     for(u32 I = 0; I < Mode->DotBullets.Count;) {
-        bullet* DotBullet = Mode->DotBullets.Data + I;
+        bullet* DotBullet = Mode->DotBullets + I;
         
         f32 SpeedDt = DotBullet->Speed * DeltaTime;
         v2f Velocity = V2f_Mul(DotBullet->Direction, SpeedDt);
@@ -265,7 +265,7 @@ UpdateBullets(game_mode_main* Mode,
     }
     
     for(u32 I = 0; I < Mode->CircleBullets.Count;) {
-        bullet* CircleBullet = Mode->CircleBullets.Data + I;
+        bullet* CircleBullet = Mode->CircleBullets + I;
         
         f32 SpeedDt = CircleBullet->Speed * DeltaTime;
         v2f Velocity = V2f_Mul(CircleBullet->Direction, SpeedDt);
@@ -367,7 +367,7 @@ UpdateCollision(game_mode_main* Mode)
     
     for (u32 I = 0; I < Mode->CircleBullets.Count;) 
     {
-        bullet* CircleBullet = Mode->CircleBullets.Data + I;
+        bullet* CircleBullet = Mode->CircleBullets + I;
         circle2f CircleBulletHitCircle = CircleBullet->HitCircle;
         CircleBulletHitCircle.Origin = V2f_Add(CircleBulletHitCircle.Origin, CircleBullet->Position);
         
@@ -526,7 +526,7 @@ RenderBullets(game_mode_main* Mode,
         atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletDot;
         texture* Texture = Assets->Textures + AtlasAabb->TextureId;
         for (u32 I = 0; I < Mode->DotBullets.Count; ++I) {
-            bullet* DotBullet = Mode->DotBullets.Data + I;
+            bullet* DotBullet = Mode->DotBullets + I;
             m44f S = M44f_Scale(DotBullet->Size.X, 
                                 DotBullet->Size.Y, 
                                 1.f);
@@ -550,7 +550,7 @@ RenderBullets(game_mode_main* Mode,
     {
         f32 LayerOffset = 0.f;
         for (u32 I = 0; I < Mode->CircleBullets.Count; ++I) {
-            bullet* CircleBullet = Mode->CircleBullets.Data + I;
+            bullet* CircleBullet = Mode->CircleBullets + I;
             m44f S = M44f_Scale(CircleBullet->Size.X, 
                                 CircleBullet->Size.Y, 
                                 1.f);
@@ -581,7 +581,7 @@ RenderEnemies(game_mode_main* Mode,
 {
     for(u32 I = 0; I < Mode->Enemies.Count; ++I )
     {
-        enemy* Enemy = Mode->Enemies.Data + I;
+        enemy* Enemy = Mode->Enemies + I;
         m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
         m44f T = M44f_Translation(Enemy->Position.X,
                                   Enemy->Position.Y,
