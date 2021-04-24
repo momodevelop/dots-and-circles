@@ -17,5 +17,6 @@
 #include "game_mode_main.h"
 #include "game_mode_splash.h"
 #include "game_mode_sandbox.h"
+#include "game_mode_anime_test.h"
 
 #endif //GAME_H

@@ -41,6 +41,13 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
+    else if (U8CStr_CmpSiStr(StateToChangeTo, "anime")) {
+        U8CStr_InitFromSiStr(&Buffer, "Jumping to Anime");
+        DebugConsole_PushInfo(Console, 
+                              Buffer, 
+                              Color_Yellow);
+        PermState->NextGameMode = GameModeType_AnimeTest;
+    }
     else {
         U8CStr_InitFromSiStr(&Buffer, "Invalid state to jump to");
         DebugConsole_PushInfo(Console, 
@@ -171,6 +178,11 @@ GameUpdateFunc(GameUpdate)
                     Arena_PushStruct(game_mode_sandbox, ModeArena); 
                 InitSandboxMode(PermState);
             } break;
+            case GameModeType_AnimeTest: {
+                PermState->AnimeTestMode = 
+                    Arena_PushStruct(game_mode_anime_test, ModeArena); 
+                InitAnimeTestMode(PermState);
+            } break;
             default: {
             }
         }
@@ -217,6 +229,13 @@ GameUpdateFunc(GameUpdate)
                               RenderCommands, 
                               Input, 
                               DeltaTime);
+        } break;
+        case GameModeType_AnimeTest: {
+            UpdateAnimeTestMode(PermState, 
+                                TranState,
+                                RenderCommands, 
+                                Input, 
+                                DeltaTime);
         } break;
         default: {
             Assert(false);

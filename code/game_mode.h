@@ -8,7 +8,7 @@ enum game_mode_type {
     GameModeType_Main,
     GameModeType_Menu,
     GameModeType_Sandbox,
-    
+    GameModeType_AnimeTest,
     GameModeType_None
 };
 
@@ -32,6 +32,7 @@ struct permanent_state {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
         struct game_mode_sandbox* SandboxMode;
+        struct game_mode_anime_test* AnimeTestMode;
     };
     
     arena MainArena;
