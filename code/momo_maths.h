@@ -700,6 +700,15 @@ struct circle2f {
     f32 Radius;
 };
 
+static inline circle2f
+Circle2f_Create(v2f Origin, f32 Radius) {
+    circle2f Ret = {};
+    Ret.Origin = Origin;
+    Ret.Radius = Radius;
+    
+    return Ret;
+}
+
 static inline b32
 Circle2f_IsIntersecting(circle2f L, circle2f R) {
 	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);

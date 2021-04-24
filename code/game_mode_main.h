@@ -581,7 +581,7 @@ RenderEnemies(game_mode_main* Mode,
 {
     for(u32 I = 0; I < Mode->Enemies.Count; ++I )
     {
-        enemy* Enemy = Mode->Enemies.Data + I;
+        enemy* Enemy = Mode->Enemies + I;
         m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
         m44f T = M44f_Translation(Enemy->Position.X,
                                   Enemy->Position.Y,

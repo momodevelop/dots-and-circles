@@ -5,7 +5,7 @@
 
 // Configuration
 #define Opengl_Max_Textures 8
-#define Opengl_Max_Entities 512
+#define Opengl_Max_Entities 4096
 #define Opengl_RequiredMemory 
 // Opengl typedefs
 #define GL_TRUE                 1
@@ -261,7 +261,7 @@ enum {
 
 struct opengl {
     b32 IsInitialized = True;
-
+    
     
     // Bindings that needs to be filled by platform
     OpenglFunctionPtr(glEnable);
