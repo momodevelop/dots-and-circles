@@ -59,9 +59,7 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
-#if GLOBAL_LOG
-    Log = Platform->Log;
-#endif
+    G_Platform = Platform;
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TranState = (transient_state*)GameMemory->TransientMemory;
     auto* DebugState = (debug_state*)GameMemory->DebugMemory; 
@@ -131,7 +129,7 @@ GameUpdateFunc(GameUpdate)
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
-    if (IsPoked(Input->ButtonInspector)) {
+    if (Button_IsPoked(Input->ButtonInspector)) {
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
     DebugInspector_Begin(&DebugState->Inspector);

@@ -3,6 +3,8 @@
 
 #include "momo.h"
 
+static struct platform_api* G_Platform = {};
+
 #include "game_renderer.h"
 #include "game_platform.h"
 #include "game_assets_types.h"

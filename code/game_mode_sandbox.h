@@ -11,6 +11,8 @@ struct game_mode_sandbox {
     game_mode_sandbox_bullet Bullets[2500];
     game_camera Camera;
     
+    v2f PrevMousePosition;
+    b32 FirstTime;
 };
 
 static inline void 
@@ -44,6 +46,7 @@ InitSandboxMode(permanent_state* PermState) {
         }
     }
     
+    Mode->FirstTime = False;
     
 }
 
@@ -59,9 +62,12 @@ UpdateSandboxMode(permanent_state* PermState,
 {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     assets* Assets = &TranState->Assets;
+    
+    // Update
+    
+    
+    // Render
     Camera_Set(&Mode->Camera, RenderCommands);
-    
-    
     f32 ZOrder = 0.f;
     for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
         

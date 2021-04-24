@@ -458,7 +458,7 @@ UpdateInput(game_mode_main* Mode,
     Player->Position.Y = -(Input->DesignMousePos.Y - Game_DesignHeight * 0.5f);
     
     // NOTE(Momo): Absorb Mode Switch
-    if(IsPoked(Input->ButtonSwitch)) {
+    if(Button_IsPoked(Input->ButtonSwitch)) {
         Player->MoodType = 
             (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
         
@@ -469,8 +469,9 @@ UpdateInput(game_mode_main* Mode,
             case MoodType_Circle: {
                 Player->DotImageAlphaTarget = 0.f;
             }break;
-            default:
-            Assert(false);
+            default:{ 
+                Assert(false);
+            }
         }
         Player->DotImageTransitionTimer = 0.f;
     }

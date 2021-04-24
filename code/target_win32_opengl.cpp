@@ -1071,9 +1071,6 @@ Win32ProcessMessages(HWND Window,
                 char C = (char)Msg.wParam;
                 Input_TryPushCharacterInput(Input, C);
             } break;
-            case WM_LBUTTONDOWN:
-            case WM_LBUTTONUP: {
-            } break;
             case WM_MOUSEMOVE: {
                 // NOTE(Momo): This is the actual conversion from screen space to 
                 // design space. I'm not 100% if this should be here but I guess
@@ -1097,28 +1094,19 @@ Win32ProcessMessages(HWND Window,
                 Input->DesignMousePos.Y = Input->RenderMousePos.Y * DesignToRenderRatio.H;
                 
             } break;
+            case WM_LBUTTONUP:
+            case WM_LBUTTONDOWN: {
+                u32 Code = (u32)Msg.wParam;
+                b32 IsDown = Msg.message == WM_LBUTTONDOWN;
+                Input->ButtonSwitch.Now = IsDown;
+            } break;
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
             case WM_KEYUP: {
                 u32 KeyCode = (u32)Msg.wParam;
-                bool IsDown = Msg.message == WM_KEYDOWN;
+                b32 IsDown = Msg.message == WM_KEYDOWN;
                 switch(KeyCode) {
-                    case 'W': {
-                        Input->ButtonUp.Now = IsDown;
-                    } break;
-                    case 'A': {
-                        Input->ButtonLeft.Now = IsDown;
-                    } break;
-                    case 'S': {
-                        Input->ButtonDown.Now = IsDown;
-                    } break;
-                    case 'D':{
-                        Input->ButtonRight.Now = IsDown;
-                    } break;
-                    case VK_SPACE:{
-                        Input->ButtonSwitch.Now = IsDown;
-                    } break;
                     case VK_RETURN:{
                         Input->ButtonConfirm.Now = IsDown;
                     } break;

@@ -126,7 +126,7 @@ DebugConsole_Update(debug_console* Console,
                     game_input* Input,
                     f32 DeltaTime) 
 {
-    if (IsPoked(Input->ButtonConsole)) {
+    if (Button_IsPoked(Input->ButtonConsole)) {
         Console->IsActive = !Console->IsActive; 
     }
     
@@ -151,7 +151,7 @@ DebugConsole_Update(debug_console* Console,
         }
         
         // Remove character backspace logic
-        if (IsDown(Input->ButtonBack)) {
+        if (Button_IsDown(Input->ButtonBack)) {
             if(!Console->IsStartPop) {
                 DebugConsole_Pop(Console);
                 Console->IsStartPop = true;
@@ -176,7 +176,7 @@ DebugConsole_Update(debug_console* Console,
         // Execute command
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
-        if (IsPoked(Input->ButtonConfirm)) {
+        if (Button_IsPoked(Input->ButtonConfirm)) {
             DebugConsole_PushInfo(Console, InputLineCStr, Color_White);
             
             u32 Min = 0;

@@ -21,18 +21,13 @@ struct game_input {
     u8_str Characters;
     union {
         // TODO(Momo): maybe we don't do buttons but do mouse?
-        game_input_button Buttons[9];
+        game_input_button Buttons[5];
         struct {
-            game_input_button ButtonUp;
-            game_input_button ButtonDown;
-            game_input_button ButtonRight;
-            game_input_button ButtonLeft;
-            
-            game_input_button ButtonConfirm;
             game_input_button ButtonSwitch;
-            game_input_button ButtonBack;
             
             // NOTE(Momo): Kinda for in-game debugging
+            game_input_button ButtonConfirm;
+            game_input_button ButtonBack;
             game_input_button ButtonConsole;
             game_input_button ButtonInspector;
         };
@@ -70,26 +65,26 @@ Input_Update(game_input* Input) {
 
 // before: 0, now: 1
 static inline b32 
-IsPoked(game_input_button Button) {
+Button_IsPoked(game_input_button Button) {
     return !Button.Before && Button.Now;
 }
 
 // before: 1, now: 0
 static inline b32
-IsReleased(game_input_button Button) {
+Button_IsReleased(game_input_button Button) {
     return Button.Before && !Button.Now;
 }
 
 
 // before: X, now: 1
 static inline b32
-IsDown(game_input_button Button) {
+Button_IsDown(game_input_button Button) {
     return Button.Now;
 }
 
 // before: 1, now: 1
 static inline b32
-IsHeld(game_input_button Button) {
+Button_IsHeld(game_input_button Button) {
     return Button.Before && Button.Now;
 }
 
