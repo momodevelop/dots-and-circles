@@ -11,7 +11,7 @@ struct game_mode_sandbox {
     game_mode_sandbox_bullet Bullets[2500];
     game_camera Camera;
     
-    v2f PrevMousePosition;
+    v2f PrevMousePos;
     b32 FirstTime;
 };
 
@@ -64,7 +64,11 @@ UpdateSandboxMode(permanent_state* PermState,
     assets* Assets = &TranState->Assets;
     
     // Update
-    
+    if (Button_IsPoked(Input->ButtonSwitch)) {
+        if(Mode->FirstTime) {
+            Mode->PrevMousePos = Input->;
+        }
+    }
     
     // Render
     Camera_Set(&Mode->Camera, RenderCommands);
