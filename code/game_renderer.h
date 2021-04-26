@@ -172,10 +172,11 @@ Renderer_DrawQuad(mailbox* Commands,
 }
 
 static inline void 
-Renderer_DrawLine(mailbox* Payload, 
-                  line2f Line, 
-                  f32 Thickness,
-                  c4f Colors) 
+Renderer_DrawLine2f(mailbox* Payload, 
+                    line2f Line,
+                    f32 Thickness,
+                    c4f Colors,
+                    f32 PosZ) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.Y
     if (Line.Min.Y > Line.Max.Y) {
@@ -189,8 +190,8 @@ Renderer_DrawLine(mailbox* Payload,
     v2f XAxis = V2f_Create(1.f, 0.f);
     f32 Angle = V2f_AngleBetween(LineVector, XAxis);
     
-    
-    m44f T = M44f_Translation(LineMiddle.X, LineMiddle.Y, 100.f);
+    //TODO: Change line3f
+    m44f T = M44f_Translation(LineMiddle.X, LineMiddle.Y, PosZ);
     m44f R = M44f_RotationZ(Angle);
     m44f S = M44f_Scale(LineLength, Thickness, 1.f) ;
     
@@ -201,45 +202,50 @@ Renderer_DrawLine(mailbox* Payload,
 }
 
 static inline void 
-Renderer_DrawAabb(mailbox* Commands, 
-                  aabb2f Aabb,
-                  f32 Thickness,
-                  c4f Colors) 
+Renderer_DrawAabb2f(mailbox* Commands, 
+                    aabb2f Aabb,
+                    f32 Thickness,
+                    c4f Colors,
+                    f32 PosZ ) 
 {
     //Bottom
-    Renderer_DrawLine(Commands, 
-                      Line2f_Create(Aabb.Min.X, 
-                                    Aabb.Min.Y,  
-                                    Aabb.Max.X, 
-                                    Aabb.Min.Y),
-                      Thickness, 
-                      Colors);
+    Renderer_DrawLine2f(Commands, 
+                        Line2f_Create(Aabb.Min.X, 
+                                      Aabb.Min.Y,  
+                                      Aabb.Max.X, 
+                                      Aabb.Min.Y),
+                        Thickness, 
+                        Colors,
+                        PosZ);
     // Left
-    Renderer_DrawLine(Commands, 
-                      Line2f_Create(Aabb.Min.X,
-                                    Aabb.Min.Y,
-                                    Aabb.Min.X,
-                                    Aabb.Max.Y),  
-                      Thickness, 
-                      Colors);
+    Renderer_DrawLine2f(Commands, 
+                        Line2f_Create(Aabb.Min.X,
+                                      Aabb.Min.Y,
+                                      Aabb.Min.X,
+                                      Aabb.Max.Y),  
+                        Thickness, 
+                        Colors,
+                        PosZ);
     
     //Top
-    Renderer_DrawLine(Commands, 
-                      Line2f_Create(Aabb.Min.X,
-                                    Aabb.Max.Y,
-                                    Aabb.Max.X,
-                                    Aabb.Max.Y), 
-                      Thickness, 
-                      Colors);
+    Renderer_DrawLine2f(Commands, 
+                        Line2f_Create(Aabb.Min.X,
+                                      Aabb.Max.Y,
+                                      Aabb.Max.X,
+                                      Aabb.Max.Y), 
+                        Thickness, 
+                        Colors,
+                        PosZ);
     
     //Right 
-    Renderer_DrawLine(Commands, 
-                      Line2f_Create(Aabb.Max.X,
-                                    Aabb.Min.Y,
-                                    Aabb.Max.X,
-                                    Aabb.Max.Y),  
-                      Thickness, 
-                      Colors);
+    Renderer_DrawLine2f(Commands, 
+                        Line2f_Create(Aabb.Max.X,
+                                      Aabb.Min.Y,
+                                      Aabb.Max.X,
+                                      Aabb.Max.Y),  
+                        Thickness, 
+                        Colors,
+                        PosZ);
 }
 
 static inline void 

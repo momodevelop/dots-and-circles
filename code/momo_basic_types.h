@@ -34,7 +34,7 @@ typedef ptrdiff_t iptr;
 #define Glue_(A,B) A##B
 #define Glue(A,B) Glue_(A,B)
 
-#define AbsOf(X) (((X) < 0) ? (-X) : (X))
+#define AbsOf(X) (((X) < 0) ? (-(X)) : (X))
 #define MaxOf(X,Y) ((X) > (Y) ? (X) : (Y))
 #define MinOf(X,Y) ((X) < (Y) ? (X) : (Y))
 

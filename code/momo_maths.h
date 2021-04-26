@@ -22,6 +22,7 @@
 // NOTE(Momo): Common Functions
 static inline b32
 F32_IsEqual(f32 L, f32 R) {
+    f32 Test = AbsOf(L - R);
     return AbsOf(L - R) <= Epsilon32;
 }
 
@@ -303,7 +304,7 @@ V2f_AngleBetween(v2f L, v2f R) {
 
 
 static inline b32
-V2f_IsPerpendicular(v2f L, v2f R) { 
+V2f_IsPerp(v2f L, v2f R) { 
     f32 LRDot = V2f_Dot(L,R);
     return F32_IsEqual(LRDot, 0); 
 }
@@ -323,7 +324,7 @@ V2f_IsOppDir(v2f L, v2f R) {
 }
 
 static inline v2f 
-V2f_Projection(v2f From, v2f To) { 
+V2f_Project(v2f From, v2f To) { 
     // (To . From)/LenSq(To) * To
     f32 ToLenSq = V2f_LengthSq(To);
     Assert(!F32_IsEqual(ToLenSq, 0)); 
@@ -481,7 +482,7 @@ V3f_IsOppDir(v3f L, v3f R) {
 }
 
 static inline v3f 
-V3f_Projection(v3f From, v3f To) { 
+V3f_Project(v3f From, v3f To) { 
     // (To . From)/LenSq(To) * To
     f32 ToLenSq = V3f_LengthSq(To);
     Assert(!F32_IsEqual(ToLenSq, 0)); 
@@ -886,7 +887,7 @@ struct line2f {
 
 struct ray2f {
     v2f Origin;
-    v2f Direction;
+    v2f Dir;
 };
 
 static inline line2f
@@ -908,10 +909,10 @@ Line2f_Create(f32 MinX, f32 MinY, f32 MaxX, f32 MaxY) {
 }
 
 static inline ray2f
-Line2f_To_Ray2f(line2f Line) {
+Ray2f_CreateFromLine2f(line2f L) {
     ray2f Ret = {};
-    Ret.Origin = Line.Min;
-    Ret.Direction = V2f_Sub(Line.Max, Line.Min);
+    Ret.Origin = L.Min;
+    Ret.Dir = V2f_Sub(L.Max, L.Min);
     return Ret;
 }
 
@@ -922,8 +923,8 @@ Ray2f_IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeRes
     
     v2f p1 = Lhs.Origin;
     v2f p2 = Rhs.Origin;
-    v2f v1 = Lhs.Direction;
-    v2f v2 = Rhs.Direction;
+    v2f v1 = Lhs.Dir;
+    v2f v2 = Rhs.Dir;
     
     
     t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
@@ -936,7 +937,7 @@ Ray2f_IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeRes
 static inline v2f
 Ray2f_Point(ray2f Ray, f32 Time) {
     // O + D * T
-    v2f DirTime = V2f_Mul(Ray.Direction, Time);
+    v2f DirTime = V2f_Mul(Ray.Dir, Time);
     v2f Ret = V2f_Add(Ray.Origin, DirTime);
     return Ret;
 }

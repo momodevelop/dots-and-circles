@@ -15,6 +15,16 @@ static struct platform_api* G_Platform = {};
 #include "game_debug_inspector.h"
 #include "game_debug_console.h"
 
+
+static inline v2f
+Hack_ScreenToWorldSpace(v2f ScreenPos) {
+    v2f Ret = {};
+    Ret.X = ScreenPos.X - Game_DesignWidth * 0.5f;
+    Ret.Y = -(ScreenPos.Y - Game_DesignHeight * 0.5f);
+    
+    return Ret;
+}
+
 #include "game_mode.h"
 #include "game_mode_main.h"
 #include "game_mode_splash.h"

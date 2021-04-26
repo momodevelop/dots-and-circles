@@ -1,7 +1,7 @@
 # Engine
-[] Shift GameMemory into Win32State
-[] Make assets, platform and render commands global
 [] Sound
+[] Figure out camera, screen to world space, and shit like that
+[] Make assets, platform and render commands global
 [] Log to text file
 [] Quaternions?
 [] Introspection?

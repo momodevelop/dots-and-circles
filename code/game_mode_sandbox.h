@@ -6,13 +6,15 @@
 struct game_mode_sandbox_bullet {
     v2f Position;
     circle2f HitCircle;
+    b32 IsHit;
 };
 struct game_mode_sandbox {
     game_mode_sandbox_bullet Bullets[2500];
     game_camera Camera;
     
     v2f PrevMousePos;
-    b32 FirstTime;
+    v2f CurMousePos; 
+    u32 ClickCount;
 };
 
 static inline void 
@@ -46,11 +48,9 @@ InitSandboxMode(permanent_state* PermState) {
         }
     }
     
-    Mode->FirstTime = False;
+    Mode->ClickCount = 0;
     
 }
-
-
 
 
 static inline void
@@ -63,19 +63,44 @@ UpdateSandboxMode(permanent_state* PermState,
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     assets* Assets = &TranState->Assets;
     
-    // Update
+    // NOTE(Momo): Update
     if (Button_IsPoked(Input->ButtonSwitch)) {
-        if(Mode->FirstTime) {
-            Mode->PrevMousePos = Input->;
+        Mode->PrevMousePos = Mode->CurMousePos;
+        Mode->CurMousePos = Hack_ScreenToWorldSpace(Input->DesignMousePos);
+        ++Mode->ClickCount;
+    }
+    
+    
+    // NOTE(Momo): Line to circle collision
+    line2f BonkLine = Line2f_CreateFromV2f(Mode->PrevMousePos, Mode->CurMousePos);
+    if (Mode->ClickCount >= 2) {
+        if (!V2f_IsEqual(Mode->PrevMousePos, Mode->CurMousePos)) {
+            
+            for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
+                game_mode_sandbox_bullet* B = Mode->Bullets + I;
+                if (B->IsHit) {
+                    continue;
+                }
+                circle2f C = B->HitCircle;
+                C.Origin = B->Position;
+                
+                if (Bonk2f_IsCircleLineIntersect(C, BonkLine)) {
+                    B->IsHit = True;
+                }
+            }
         }
     }
     
-    // Render
+    // NOTE(Momo): Render
     Camera_Set(&Mode->Camera, RenderCommands);
+    
+    // NOTE(Momo): Render Bullets
     f32 ZOrder = 0.f;
     for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
-        
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
+        if (B->IsHit) {
+            continue;
+        }
         m44f S = M44f_Scale(B->HitCircle.Radius*2, B->HitCircle.Radius*2, 1.f);
         m44f T = M44f_Translation(B->Position.X,
                                   B->Position.Y,
@@ -85,8 +110,15 @@ UpdateSandboxMode(permanent_state* PermState,
                                        Assets,
                                        AtlasAabb_BulletDot,
                                        M44f_Concat(T,S), 
-                                       Color_White);
+                                       c4f{1.f, 1.f, 1.f, 0.5f});
     }
+    
+    // NOTE(Momo) Render Lines
+    if (Mode->ClickCount >= 2) {
+        ZOrder = 10.f;
+        Renderer_DrawLine2f(RenderCommands, BonkLine, 1.f, Color_Green, ZOrder);
+    }
+    
 }
 
 #endif 

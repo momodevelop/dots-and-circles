@@ -454,8 +454,7 @@ UpdateInput(game_mode_main* Mode,
     // It should really be based on camera position and all that...
     // I guess we should have a camera class to manage all this if we 
     // really want
-    Player->Position.X = Input->DesignMousePos.X - Game_DesignWidth * 0.5f;
-    Player->Position.Y = -(Input->DesignMousePos.Y - Game_DesignHeight * 0.5f);
+    Player->Position = Hack_ScreenToWorldSpace(Input->DesignMousePos);
     
     // NOTE(Momo): Absorb Mode Switch
     if(Button_IsPoked(Input->ButtonSwitch)) {

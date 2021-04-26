@@ -6,6 +6,7 @@
 
 #include "momo_basic_types.h"
 #include "momo_maths.h"
+#include "momo_bonk.h"
 #include "momo_colors.h"
 #include "momo_easing.h"
 #include "momo_bitwise.h"

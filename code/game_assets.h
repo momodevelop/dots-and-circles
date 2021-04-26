@@ -223,6 +223,9 @@ return False; \
     Assets->AnimeCount = Anime_Count;
     Assets->Animes = Arena_PushArray(anime, Arena, Anime_Count);
     
+    Assets->MsgCount = Msg_Count;
+    Assets->Msgs = Arena_PushArray(msg, Arena, Msg_Count);
+    
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     CheckFile(AssetFile);
     Defer { Platform->CloseFileFp(&AssetFile); }; 
