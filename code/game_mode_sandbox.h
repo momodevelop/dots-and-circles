@@ -7,6 +7,7 @@ struct game_mode_sandbox_bullet {
     v2f Position;
     circle2f HitCircle;
     b32 IsHit;
+    v2f Velocity;
 };
 struct game_mode_sandbox {
     game_mode_sandbox_bullet Bullets[2500];
@@ -15,6 +16,8 @@ struct game_mode_sandbox {
     v2f PrevMousePos;
     v2f CurMousePos; 
     u32 ClickCount;
+    
+    f32 PlayerCircleRadius;
 };
 
 static inline void 
@@ -46,9 +49,11 @@ InitSandboxMode(permanent_state* PermState) {
             OffsetX = 0.f;
             OffsetY += BulletRadius * 2;
         }
+        B->Velocity = V2f_Create(50.f, 0.f);
     }
     
     Mode->ClickCount = 0;
+    Mode->PlayerCircleRadius = 16.f;
     
 }
 
@@ -70,6 +75,18 @@ UpdateSandboxMode(permanent_state* PermState,
         ++Mode->ClickCount;
     }
     
+    // NOTE(Momo): Update Bullets
+    for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
+        game_mode_sandbox_bullet* B = Mode->Bullets + I;
+        if (B->IsHit) {
+            continue;
+        }
+        
+        v2f TimedVelocity = V2f_Mul(B->Velocity, DeltaTime);
+        B->Position =  V2f_Add(B->Position, TimedVelocity);
+        
+    }
+    
     
     // NOTE(Momo): Line to circle collision
     line2f BonkLine = Line2f_CreateFromV2f(Mode->PrevMousePos, Mode->CurMousePos);
@@ -84,9 +101,15 @@ UpdateSandboxMode(permanent_state* PermState,
                 circle2f C = B->HitCircle;
                 C.Origin = B->Position;
                 
-                if (Bonk2f_IsCircleLineIntersect(C, BonkLine)) {
+                circle2f PC = Circle2f_Create(Mode->PrevMousePos,
+                                              Mode->PlayerCircleRadius);
+                v2f PCVel = V2f_Sub(Mode->CurMousePos, Mode->PrevMousePos);
+                v2f TimedVelocity = V2f_Mul(B->Velocity, DeltaTime);
+                
+                if (Bonk2_IsDynaCircleXDynaCircle(PC, PCVel, C, TimedVelocity)) {
                     B->IsHit = True;
                 }
+                
             }
         }
     }
@@ -116,7 +139,30 @@ UpdateSandboxMode(permanent_state* PermState,
     // NOTE(Momo) Render Lines
     if (Mode->ClickCount >= 2) {
         ZOrder = 10.f;
-        Renderer_DrawLine2f(RenderCommands, BonkLine, 1.f, Color_Green, ZOrder);
+        Renderer_DrawLine2f(RenderCommands, 
+                            BonkLine,
+                            Mode->PlayerCircleRadius * 2,
+                            Color_Green,
+                            ZOrder);
+        
+        circle2f StartCircle = Circle2f_Create(BonkLine.Min, 
+                                               Mode->PlayerCircleRadius);
+        Renderer_DrawCircle2f(RenderCommands,
+                              StartCircle,
+                              1.f, 
+                              8, 
+                              Color_Green, 
+                              ZOrder);
+        
+        
+        circle2f EndCircle = Circle2f_Create(BonkLine.Max, 
+                                             Mode->PlayerCircleRadius);
+        Renderer_DrawCircle2f(RenderCommands,
+                              EndCircle,
+                              1.f, 
+                              8, 
+                              Color_Green, 
+                              ZOrder);
     }
     
 }

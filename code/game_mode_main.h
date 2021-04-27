@@ -356,7 +356,7 @@ UpdateCollision(game_mode_main* Mode)
         circle2f DotBulletCircle = DotBullet->HitCircle;
         DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
         
-        if (Circle2f_IsIntersecting(PlayerCircle, DotBulletCircle)) {
+        if (Bonk2_IsCircleXCircle(PlayerCircle, DotBulletCircle)) {
             if (Player->MoodType == MoodType_Dot) {
                 List_Slear(&Mode->DotBullets, I);
                 continue;
@@ -371,7 +371,7 @@ UpdateCollision(game_mode_main* Mode)
         circle2f CircleBulletHitCircle = CircleBullet->HitCircle;
         CircleBulletHitCircle.Origin = V2f_Add(CircleBulletHitCircle.Origin, CircleBullet->Position);
         
-        if (Circle2f_IsIntersecting(PlayerCircle, CircleBulletHitCircle)) {
+        if (Bonk2_IsCircleXCircle(PlayerCircle, CircleBulletHitCircle)) {
             if (Player->MoodType == MoodType_Circle ) {
                 List_Slear(&Mode->CircleBullets, I);
                 continue;

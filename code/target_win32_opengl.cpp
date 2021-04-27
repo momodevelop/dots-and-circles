@@ -1195,10 +1195,17 @@ Win32WindowCallback(HWND Window,
             if(Opengl && 
                Opengl->IsInitialized) 
             {
+#if 0
                 v2u WindowWH = Win32GetWindowDimensions(Window);
-                v2u ClientWH = Win32GetClientDimensions(Window);
-                Win32Log("[Win32::Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
                 Win32Log("[Win32::Resize] Window: %d x %d\n", WindowWH.W, WindowWH.H);
+#endif
+                
+                v2u ClientWH = Win32GetClientDimensions(Window);
+                if (Opengl->WindowDimensions.W == ClientWH.W  &&
+                    Opengl->WindowDimensions.H == ClientWH.H ) {
+                    return Result;
+                }
+                Win32Log("[Win32::Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
                 Opengl_Resize(Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;

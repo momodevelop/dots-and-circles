@@ -770,7 +770,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                                                   uProjectionLoc, 
                                                   1, 
                                                   GL_FALSE, 
-                                                  Result.E);
+                                                  (const GLfloat*)&Result);
             } break;
             case RendererCommandType_ClearColor: {
                 auto* Data = (renderer_command_clear_color*)

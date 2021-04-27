@@ -15,7 +15,7 @@
 #define Epsilon32 1.19209290E-07f
 #define Tau32 Pi32 * 2.f
 
-#define GenerateSubscriptOp(Amt) inline auto& operator[](usize I) { Assert(I < Amt); return Elements[I]; }
+#define GenerateSubscriptOp(Amt) inline auto& operator[](u32 I) { Assert(I < Amt); return Elements[I]; }
 
 
 
@@ -163,7 +163,7 @@ struct v3f {
 
 struct v4f {
     union {
-        f32 E[4];
+        f32 Elements[4];
         struct {
             union {
                 v3f XYZ;
@@ -174,6 +174,7 @@ struct v4f {
             f32 W;
         };
     };
+    GenerateSubscriptOp(4);
 };
 
 //~ NOTE(Momo): v2f functions
@@ -302,7 +303,6 @@ V2f_AngleBetween(v2f L, v2f R) {
     return Ret;
 }
 
-
 static inline b32
 V2f_IsPerp(v2f L, v2f R) { 
     f32 LRDot = V2f_Dot(L,R);
@@ -332,6 +332,20 @@ V2f_Project(v2f From, v2f To) {
     f32 ToDotFrom = V2f_Dot(To, From);
     f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
     v2f Ret = V2f_Mul(To, UnitProjectionScalar);
+    return Ret;
+}
+
+static inline v2f
+V2f_Rotate(v2f V, f32 Rad) {
+    // Technically, we can use matrices but
+    // meh, it's easy to code this out without it.
+    // Removes dependencies too
+    f32 C = Cos(Rad);
+    f32 S = Sin(Rad);
+    
+    v2f Ret = {};
+    Ret.X = (C * V.X) - (S * V.Y);
+    Ret.Y = (S * V.X) + (C * V.Y);
     return Ret;
 }
 
@@ -710,19 +724,66 @@ Circle2f_Create(v2f Origin, f32 Radius) {
     return Ret;
 }
 
-static inline b32
-Circle2f_IsIntersecting(circle2f L, circle2f R) {
-	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);
-	f32 RSq = L.Radius + R.Radius;
-    RSq *= RSq;
-	return DistSq < RSq;
+
+//~ NOTE(Momo): 2x2 Matrices
+union m22f {
+    v2f Elements[4];
+    GenerateSubscriptOp(2);
+};
+
+static inline m22f 
+M22f_Concat(m22f L, m22f R) {
+    m22f Ret = {};
+    for (u8 r = 0; r < 2; r++) { 
+        for (u8 c = 0; c < 2; c++) { 
+            for (u8 i = 0; i < 2; i++) 
+                Ret[r][c] += L[r][i] *  R[i][c]; 
+        } 
+    } 
+    return Ret;
 }
 
-//~ NOTE(Momo): Matrices
-//
+static inline v2f
+M22f_ConcatV2f(m22f L, v2f R) {
+    v2f Ret = {};
+    Ret[0] = L[0][0] * R[0] + L[0][1] * R[1];
+    Ret[1] = L[1][0] * R[0] + L[1][1] * R[1];
+    
+    return Ret;
+}
+
+
+static inline m22f 
+M22f_Identity() {
+    m22f Ret = {};
+    Ret[0][0] = 1.f;
+    Ret[1][1] = 1.f;
+    
+    return Ret;
+}
+
+
+static inline m22f 
+M22f_Rotation(f32 Rad) {
+    // NOTE(Momo): 
+    // c -s
+    // s  c
+    
+    f32 c = Cos(Rad);
+    f32 s = Sin(Rad);
+    m22f Ret = {};
+    Ret[0][0] = c;
+    Ret[0][1] = -s;
+    Ret[1][0] = s;
+    Ret[1][1] = c;
+    
+    return Ret;
+}
+
+//~ NOTE(Momo): 4x4 Matrices
 union m44f {
-    f32 E[16];
-    f32 EE[4][4];
+    v4f Elements[4];
+    GenerateSubscriptOp(4);
 };
 
 static inline m44f 
@@ -731,7 +792,7 @@ M44f_Concat(m44f L, m44f R) {
     for (u8 r = 0; r < 4; r++) { 
         for (u8 c = 0; c < 4; c++) { 
             for (u8 i = 0; i < 4; i++) 
-                Ret.EE[r][c] += L.EE[r][i] *  R.EE[i][c]; 
+                Ret[r][c] += L[r][i] *  R[i][c]; 
         } 
     } 
     return Ret;
@@ -740,10 +801,10 @@ M44f_Concat(m44f L, m44f R) {
 static inline m44f 
 M44f_Identity() {
     m44f Ret = {};
-    Ret.EE[0][0] = 1.f;
-    Ret.EE[1][1] = 1.f;
-    Ret.EE[2][2] = 1.f;
-    Ret.EE[3][3] = 1.f;
+    Ret[0][0] = 1.f;
+    Ret[1][1] = 1.f;
+    Ret[2][2] = 1.f;
+    Ret[3][3] = 1.f;
     
     return Ret;
 }
@@ -753,7 +814,7 @@ M44f_Transpose(m44f M) {
     m44f Ret = {};
     for (int i = 0; i < 4; ++i ) {
         for (int j = 0; j < 4; ++j) {
-            Ret.EE[i][j] = M.EE[j][i];
+            Ret[i][j] = M[j][i];
         }
     }
     
@@ -770,9 +831,9 @@ M44f_Translation(f32 X, f32 Y, f32 Z) {
     // 0 0 0 1
     //
     m44f Ret = M44f_Identity();
-    Ret.EE[0][3] = X;
-    Ret.EE[1][3] = Y;
-    Ret.EE[2][3] = Z;
+    Ret[0][3] = X;
+    Ret[1][3] = Y;
+    Ret[2][3] = Z;
     
     return Ret;
 }
@@ -788,12 +849,12 @@ M44f_RotationX(f32 Rad) {
     f32 c = Cos(Rad);
     f32 s = Sin(Rad);
     m44f Ret = {};
-    Ret.EE[0][0] = 1.f;
-    Ret.EE[3][3] = 1.f;
-    Ret.EE[1][1] = c;
-    Ret.EE[1][2] = -s;
-    Ret.EE[2][1] = s;
-    Ret.EE[2][2] = c;
+    Ret[0][0] = 1.f;
+    Ret[3][3] = 1.f;
+    Ret[1][1] = c;
+    Ret[1][2] = -s;
+    Ret[2][1] = s;
+    Ret[2][2] = c;
     
     return Ret;
 }
@@ -809,12 +870,12 @@ M44f_RotationY(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     m44f Ret = {};
-    Ret.EE[0][0] = c;
-    Ret.EE[0][2] = s;
-    Ret.EE[1][1] = 1.f;
-    Ret.EE[2][0] = -s;
-    Ret.EE[2][2] = c;
-    Ret.EE[3][3] = 1.f;
+    Ret[0][0] = c;
+    Ret[0][2] = s;
+    Ret[1][1] = 1.f;
+    Ret[2][0] = -s;
+    Ret[2][2] = c;
+    Ret[3][3] = 1.f;
     
     return Ret;
 }
@@ -830,12 +891,12 @@ M44f_RotationZ(f32 rad) {
     f32 c = Cos(rad);
     f32 s = Sin(rad);
     m44f Ret = {};
-    Ret.EE[0][0] = c;
-    Ret.EE[0][1] = -s;
-    Ret.EE[1][0] = s;
-    Ret.EE[1][1] = c;
-    Ret.EE[2][2] = 1.f;
-    Ret.EE[3][3] = 1.f;
+    Ret[0][0] = c;
+    Ret[0][1] = -s;
+    Ret[1][0] = s;
+    Ret[1][1] = c;
+    Ret[2][2] = 1.f;
+    Ret[3][3] = 1.f;
     
     return Ret;
 }
@@ -848,10 +909,10 @@ M44f_Scale(f32 x, f32 y, f32 z) {
     //  0  0  z  0
     //  0  0  0  1
     m44f Ret = {};
-    Ret.EE[0][0] = x;
-    Ret.EE[1][1] = y;
-    Ret.EE[2][2] = z;
-    Ret.EE[3][3] = 1.f;
+    Ret[0][0] = x;
+    Ret[1][1] = y;
+    Ret[2][2] = z;
+    Ret[3][3] = 1.f;
     
     return Ret; 
 }
@@ -866,13 +927,13 @@ M44f_Orthographic(f32 NdcLeft, f32 NdcRight,
                   b8 FlipZ) 
 {
     m44f Ret = {};
-    Ret.EE[0][0] = (NdcRight-NdcLeft)/(Right-Left);
-    Ret.EE[1][1] = (NdcTop-NdcBottom)/(Top-Bottom);
-    Ret.EE[2][2] = (FlipZ ? -1.f : 1.f) * (NdcFar-NdcNear)/(Far-Near);
-    Ret.EE[3][3] = 1.f;
-    Ret.EE[0][3] = -(Right+Left)/(Right-Left);
-    Ret.EE[1][3] = -(Top+Bottom)/(Top-Bottom);
-    Ret.EE[2][3] = -(Far+Near)/(Far-Near);
+    Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
+    Ret[1][1] = (NdcTop-NdcBottom)/(Top-Bottom);
+    Ret[2][2] = (FlipZ ? -1.f : 1.f) * (NdcFar-NdcNear)/(Far-Near);
+    Ret[3][3] = 1.f;
+    Ret[0][3] = -(Right+Left)/(Right-Left);
+    Ret[1][3] = -(Top+Bottom)/(Top-Bottom);
+    Ret[2][3] = -(Far+Near)/(Far-Near);
     
     return Ret;
 }

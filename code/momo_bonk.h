@@ -4,7 +4,7 @@
 #define MOMO_BONK_H
 
 static inline b32
-Bonk2f_IsCircleLineIntersect(circle2f C, line2f L) {
+Bonk2_IsCircleXLine(circle2f C, line2f L) {
     // NOTE(Momo): Extend the ends of the lines based on radius of the circle, and use that to form a parametric equation of the line (ray)
     ray2f R = Ray2f_CreateFromLine2f(L);
     v2f NormalizedDir = V2f_Normalize(R.Dir);
@@ -36,8 +36,37 @@ Bonk2f_IsCircleLineIntersect(circle2f C, line2f L) {
     f32 CircleRadiusSq = C.Radius * C.Radius;
     f32 CircleDistFromLineSq = V2f_DistanceSq(OriginToCircle, 
                                               OriginToClosestPtOnLine);
-    
     return CircleRadiusSq > CircleDistFromLineSq;
+}
+
+// NOTE(Momo): DynaCircle is short for 'dynamic circle'
+static inline b32
+Bonk2_IsDynaCircleXCircle(circle2f DynaCircle,
+                          v2f Velocity,
+                          circle2f Circle) 
+{
+    line2f Line = Line2f_CreateFromV2f(DynaCircle.Origin,
+                                       V2f_Add(DynaCircle.Origin, Velocity));
+    Circle.Radius += DynaCircle.Radius;
+    return Bonk2_IsCircleXLine(Circle, Line);
+}
+
+static inline b32
+Bonk2_IsDynaCircleXDynaCircle(circle2f CircleA,
+                              v2f VelocityA,
+                              circle2f CircleB,
+                              v2f VelocityB) 
+{
+    v2f RelativeVel = V2f_Sub(VelocityB, VelocityA); 
+    return Bonk2_IsDynaCircleXCircle(CircleB, RelativeVel, CircleA);
+}
+
+static inline b32
+Bonk2_IsCircleXCircle(circle2f L, circle2f R) {
+	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);
+	f32 RSq = L.Radius + R.Radius;
+    RSq *= RSq;
+	return DistSq < RSq;
 }
 
 #endif //MOMO_BONK_H

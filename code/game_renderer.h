@@ -201,6 +201,37 @@ Renderer_DrawLine2f(mailbox* Payload,
     Renderer_DrawQuad(Payload, Colors, TRS);
 }
 
+static inline void
+Renderer_DrawCircle2f(mailbox* Commands,
+                      circle2f Circle,
+                      f32 Thickness, 
+                      u32 LineCount,
+                      c4f Color,
+                      f32 PosZ) 
+{
+    // NOTE(Momo): Essentially a bunch of lines
+    // We can't really have a surface with less than 3 lines
+    Assert(LineCount >= 3);
+    f32 AngleIncrement = Tau32 / LineCount;
+    v2f Pt1 = V2f_Create(0.f, Circle.Radius); 
+    v2f Pt2 = V2f_Rotate(Pt1, AngleIncrement);
+    
+    for (u32 I = 0; I < LineCount; ++I) {
+        v2f LinePt1 = V2f_Add(Pt1, Circle.Origin);
+        v2f LinePt2 = V2f_Add(Pt2, Circle.Origin);
+        line2f Line = Line2f_CreateFromV2f(LinePt1, LinePt2);
+        Renderer_DrawLine2f(Commands, 
+                            Line,
+                            Thickness,
+                            Color,
+                            PosZ);
+        
+        Pt1 = Pt2;
+        Pt2 = V2f_Rotate(Pt1, AngleIncrement);
+        
+    }
+}
+
 static inline void 
 Renderer_DrawAabb2f(mailbox* Commands, 
                     aabb2f Aabb,
