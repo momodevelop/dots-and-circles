@@ -6,7 +6,7 @@ struct stream {
     u8* Contents;
     u32 ContentSize;
     
-    usize Current;
+    u32 Current;
     
     // For bit reading
     u32 BitBuffer;
@@ -33,7 +33,7 @@ Stream_IsEos(stream* S) {
 }
 
 static inline void*
-Stream_ConsumeBlock(stream* S, usize Amount) {
+Stream_ConsumeBlock(stream* S, u32 Amount) {
     void* Ret = nullptr;
     if (S->Current + Amount <= S->ContentSize) {
         Ret = S->Contents + S->Current;

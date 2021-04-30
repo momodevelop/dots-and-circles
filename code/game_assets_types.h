@@ -17,10 +17,13 @@ enum texture_id {
 
 enum sound_id {
     Sound_Test,
+    
+    Sound_Count,
 };
 
 enum font_id {
     Font_Default,
+    
     Font_Count,
 };
 
@@ -141,8 +144,7 @@ struct asset_file_anime {
 
 struct asset_file_sound {
     sound_id SoundId;
-    // TODO(Momo): What is sound made of?
-    
+    u32 DataSize;
     // NOTE(Momo): Data is: 
     // u16 Data[???]
 };

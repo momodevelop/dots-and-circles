@@ -76,7 +76,12 @@ Tba_GenerateAtlas(arena* Arena,
                 auto* Context = (atlas_context_image*)UserDatas[I];
                 s32 W, H, C;
                 
-                read_file_result FileMem = Tba_ReadFileIntoMemory(Arena, Context->Filename);
+                read_file_result FileMem = {};
+                if(!Tba_ReadFileIntoMemory(&FileMem,
+                                           Arena, 
+                                           Context->Filename)){
+                    return Null;
+                }
                 
                 // TODO: At the moment, there is no clean way for stbi load to 
                 // output to a given memory without some really ugly hacks. 

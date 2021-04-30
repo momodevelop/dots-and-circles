@@ -396,7 +396,7 @@ return False; \
                 
             } break;
             case AssetType_Sound: {
-                return False;
+                
             } break;
             case AssetType_Message: {
                 arena_mark Scratch = Arena_Mark(Arena);

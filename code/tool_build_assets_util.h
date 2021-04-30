@@ -14,15 +14,16 @@ struct read_file_result {
 };
 
 
-static inline read_file_result
-Tba_ReadFileIntoMemory(arena* Arena, 
+static inline b32
+Tba_ReadFileIntoMemory(read_file_result* Result,
+                       arena* Arena, 
                        const char* Filename) {
-    read_file_result Ret = {};
+    
     FILE* File = Null;
     fopen_s(&File, Filename, "rb");
     
     if (File == Null) {
-        return Ret;
+        return False;
     }
     Defer { fclose(File); };
     
@@ -34,16 +35,19 @@ Tba_ReadFileIntoMemory(arena* Arena,
     void* Buffer = Arena_PushBlock(Arena, Size);
     fread(Buffer, Size, 1, File);
     
-    Ret.Data = Buffer;
-    Ret.Size = Size;
+    Result->Data = Buffer;
+    Result->Size = Size;
     
-    return Ret;
+    return True;
 }
 
 static inline b32
 Tba_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
-    read_file_result ReadFileResult = Tba_ReadFileIntoMemory(Arena, Filename);
-	if (!ReadFileResult.Data) {
+    read_file_result ReadFileResult = {};
+    if (!Tba_ReadFileIntoMemory(&ReadFileResult,
+                                Arena, 
+                                Filename)) 
+    {
         return False;
     }
     stbtt_fontinfo Font;

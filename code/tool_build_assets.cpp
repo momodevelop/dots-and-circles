@@ -37,27 +37,16 @@ int main() {
     arena Arena = Arena_Create(Memory, ToolBuildAssets_MemorySize);
     
     //~ NOTE(Momo): Initialize context for images in atlas
-    atlas_context_image AtlasImageContexts[] = {
-        { AtlasContextType_Image, "assets/ryoji.png",  AtlasAabb_Ryoji, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/yuu.png",    AtlasAabb_Yuu,    Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu00.png", AtlasAabb_Karu00, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu01.png", AtlasAabb_Karu01, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu02.png", AtlasAabb_Karu02, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu10.png", AtlasAabb_Karu10, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu11.png", AtlasAabb_Karu11, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu12.png", AtlasAabb_Karu12, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu20.png", AtlasAabb_Karu20, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu21.png", AtlasAabb_Karu21, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu22.png", AtlasAabb_Karu22, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu30.png", AtlasAabb_Karu30, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu31.png", AtlasAabb_Karu31, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/karu32.png", AtlasAabb_Karu32, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_white.png", AtlasAabb_PlayerDot, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/player_black.png", AtlasAabb_PlayerCircle, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_dot.png", AtlasAabb_BulletDot, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/bullet_circle.png", AtlasAabb_BulletCircle, Texture_AtlasDefault },
-        { AtlasContextType_Image, "assets/enemy.png", AtlasAabb_Enemy, Texture_AtlasDefault },
-    };
+    atlas_context_image AtlasImageContexts[ArrayCount(Tba_AtlasAabbContexts)];
+    for (u32 I = 0; I < ArrayCount(Tba_AtlasAabbContexts); ++I) {
+        tba_atlas_aabb_context* TbaCtx = Tba_AtlasAabbContexts + I;
+        atlas_context_image* AtlasCtx = AtlasImageContexts + I;
+        AtlasCtx->Type = AtlasContextType_Image;
+        AtlasCtx->Filename = TbaCtx->Filename;
+        AtlasCtx->Id = TbaCtx->AtlasAabbId;
+        AtlasCtx->TextureId = TbaCtx->TextureId;
+    }
+    
     
     //~ NOTE(Momo): Load font
     
@@ -250,33 +239,56 @@ int main() {
     //NOTE(Momo): Anime
     printf("[Build Assets] Writing Anime...\n");
     {
-        
-        // Test frames: Karu_front
-        atlas_aabb_id Frames[] = {
-            AtlasAabb_Karu30,
-            AtlasAabb_Karu31,
-            AtlasAabb_Karu32,
-        };
-        
-        Tba_AssetBuilderWriteAnime(AssetBuilder, 
-                                   Anime_KaruFront,
-                                   Frames,
-                                   ArrayCount(Frames));
+        for(u32 I = 0; I < ArrayCount(Tba_AnimeContexts); ++I) {
+            tba_anime_context * Ctx = Tba_AnimeContexts + I;
+            Tba_AssetBuilderWriteAnime(AssetBuilder, 
+                                       Ctx->Id,
+                                       Ctx->Frames,
+                                       Ctx->FrameCount);
+        }
     }
     
     // NOTE(Momo): Msg
     printf("[Build Assets] Writing Msg...\n");
     {
-        for(u32 I = 0; I < ArrayCount(Tba_MessageContexts); ++I) {
-            tba_message_context* Ctx = Tba_MessageContexts + I;
+        for(u32 I = 0; I < ArrayCount(Tba_MsgContexts); ++I) {
+            tba_msg_context* Ctx = Tba_MsgContexts + I;
             Tba_AssetBuilderWriteMsg(AssetBuilder,
                                      Ctx->Id,
                                      Ctx->Str);
         }
     }
     
+#if 0
+    printf("[Build Assets] Writing Sound...\n");
+    {
+        for(u32 I = 0; I < ArrayCount(Tba_SoundContexts); ++I) {
+            tba_sound_context* Ctx = Tba_SoundContexts + I;
+            
+            arena_mark Mark = Arena_Mark(&Arena);
+            Defer { Arena_Revert(&Mark); };
+            
+            read_file_result FileResult = {};
+            if(!Tba_ReadFileIntoMemory(&FileResult, Mark, Ctx->Filename)) {
+                return 1;
+            }
+            
+            wav_load_result WavResult = {};
+            if(!Wav_LoadFromMemory(&WavResult,
+                                   FileResult.Data,
+                                   FileResult.Size)) {
+                return 1;
+            }
+            Tba_AssetBuilderWriteWav(AssetBuilder,
+                                     Ctx->Id,
+                                     &WavResult);
+        }
+    }
+#endif
+    
     Tba_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");
+    
     return 0;
     
 }

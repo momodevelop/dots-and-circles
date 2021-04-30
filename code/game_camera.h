@@ -23,10 +23,25 @@ Camera_Set(game_camera* C, mailbox* RenderCommands) {
                             CenterBox);
 }
 
-static inline void
-Camera_ScreenToWorld(game_camera* C) {
-    // TODO(Momo): 
+static inline v2f
+Camera_ScreenToView(game_camera* C, v2f ScreenPos) {
+    v2f Ret = {};
+    Ret.X = ScreenPos.X - C->Dimensions.W * 0.5f;
+    Ret.Y = -(ScreenPos.Y - C->Dimensions.H * 0.5f);
     
+    return Ret;
+}
+
+// TODO(Momo): Largely untested!!
+static inline v2f
+Camera_ScreenToWorld(game_camera* C, v2f ScreenPos) {
+    
+    v2f Ret = Camera_ScreenToView(C, ScreenPos);
+    Ret.X -= C->Position.X;
+    Ret.Y -= C->Position.Y;
+    
+    
+    return Ret;
 }
 
 #endif //GAME_CAMERA_H

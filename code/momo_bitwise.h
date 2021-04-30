@@ -85,13 +85,13 @@ constexpr FourCC(const char String[5]) {
 }
 
 static inline void
-EndianSwap(u16* Value) {
+EndianSwapU16(u16* Value) {
     u16 Origin = (*Value);
     (*Value) = ((Origin << 8) | Origin >> 8);
 }
 
 static inline void
-EndianSwap(u32* Value) {
+EndianSwapU32(u32* Value) {
     u32 Origin = (*Value);
     (*Value) =  ((Origin << 24) |
                  ((Origin & 0xFF00) << 8) |

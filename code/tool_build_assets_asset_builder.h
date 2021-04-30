@@ -196,16 +196,18 @@ Tba_AssetBuilderWriteMsg(tba_asset_builder* Context,
 
 // TODO(Momo):
 static inline void
-Tba_AssetBuilderWriteSound(tba_asset_builder* Context, 
-                           sound_id SoundId,
-                           u32 DataSize,
-                           void* Data) 
+Tba_AssetBuilderWriteWav(tba_asset_builder* Context, 
+                         sound_id SoundId,
+                         wav_load_result* WavResult) 
 {
     Tba_AssetBuilderWriteEntry(Context, AssetType_Sound);
     
     asset_file_sound Sound = {};
     Sound.SoundId = SoundId;
+    Sound.DataSize = WavResult->DataChunk.Size;
     
+    fwrite(&Sound, sizeof(Sound), 1, Context->File);
+    fwrite(WavResult->Data, sizeof(char), Sound.DataSize, Context->File);
     
 }
 

@@ -72,15 +72,13 @@ struct player {
 	// Collision
     circle2f HitCircle;
     
-    
     // Physics
     v2f Position;
-    v2f Direction; 
+    v2f PrevPosition;
     
     // Gameplay
     mood_type MoodType;
 };
-
 
 struct bullet {
     v2f Size;
@@ -207,7 +205,7 @@ InitMainMode(permanent_state* PermState,
     player* Player = &Mode->Player;
     {
         Player->Position = {};
-        Player->Direction = {};
+        Player->PrevPosition = {};
         Player->Size = V2f_Create( 32.f, 32.f );
         Player->HitCircle = { v2f{}, 16.f};
         
@@ -238,7 +236,6 @@ UpdatePlayer(game_mode_main* Mode,
         Clamp(Player->DotImageTransitionTimer, 
               0.f, 
               Player->DotImageTransitionDuration);
-    
     
 }
 
@@ -343,10 +340,12 @@ UpdateEnemies(game_mode_main* Mode,
 }
 
 static inline void
-UpdateCollision(game_mode_main* Mode)
+UpdateCollision(game_mode_main* Mode,
+                f32 DeltaTime)
 {
     player* Player = &Mode->Player;
     circle2f PlayerCircle = Player->HitCircle;
+    v2f PlayerVel = V2f_Sub(Player->Position, Player->PrevPosition);
     PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
     
     // Player vs every bullet
@@ -354,9 +353,21 @@ UpdateCollision(game_mode_main* Mode)
     {
         bullet* DotBullet = Mode->DotBullets + I;
         circle2f DotBulletCircle = DotBullet->HitCircle;
+        v2f DotBulletVel = V2f_Mul(DotBullet->Direction, DotBullet->Speed * DeltaTime);
         DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
         
-        if (Bonk2_IsCircleXCircle(PlayerCircle, DotBulletCircle)) {
+        
+        
+#if 1
+        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
+                                          PlayerVel,
+                                          DotBulletCircle,
+                                          DotBulletVel)) 
+#else
+        if (Bonk2_IsCircleXCircle(PlayerCircle, DotBulletCircle))
+#endif
+        
+        {
             if (Player->MoodType == MoodType_Dot) {
                 List_Slear(&Mode->DotBullets, I);
                 continue;
@@ -367,18 +378,25 @@ UpdateCollision(game_mode_main* Mode)
     
     for (u32 I = 0; I < Mode->CircleBullets.Count;) 
     {
-        bullet* CircleBullet = Mode->CircleBullets.Data + I;
-        circle2f CircleBulletHitCircle = CircleBullet->HitCircle;
-        CircleBulletHitCircle.Origin = V2f_Add(CircleBulletHitCircle.Origin, CircleBullet->Position);
+        bullet* CircleBullet = Mode->CircleBullets + I;
+        circle2f CircleBulletCircle = CircleBullet->HitCircle;
+        v2f CircleBulletVel = V2f_Mul(CircleBullet->Direction, CircleBullet->Speed * DeltaTime);
+        CircleBulletCircle.Origin = V2f_Add(CircleBulletCircle.Origin, CircleBullet->Position);
         
-        if (Bonk2_IsCircleXCircle(PlayerCircle, CircleBulletHitCircle)) {
-            if (Player->MoodType == MoodType_Circle ) {
+        
+        
+        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
+                                          PlayerVel,
+                                          CircleBulletCircle,
+                                          CircleBulletVel)) {
+            if (Player->MoodType == MoodType_Circle) {
                 List_Slear(&Mode->CircleBullets, I);
                 continue;
             }
         }
         ++I;
     }
+    
 }
 
 static inline void
@@ -450,11 +468,10 @@ UpdateInput(game_mode_main* Mode,
     v2f Direction = {};
     player* Player = &Mode->Player; 
     
-    // TODO(Momo): Hacky way to convert screen space to world space
-    // It should really be based on camera position and all that...
-    // I guess we should have a camera class to manage all this if we 
-    // really want
-    Player->Position = Hack_ScreenToWorldSpace(Input->DesignMousePos);
+    Player->PrevPosition = Player->Position;
+    Player->Position = Camera_ScreenToWorld(&Mode->Camera,
+                                            Input->DesignMousePos);
+    
     
     // NOTE(Momo): Absorb Mode Switch
     if(Button_IsPoked(Input->ButtonSwitch)) {
@@ -613,7 +630,7 @@ UpdateMainMode(permanent_state* PermState,
     UpdateBullets(Mode, DeltaTime);
     UpdateWaves(Mode, Assets, DeltaTime);
     UpdateEnemies(Mode, Assets, DeltaTime); 
-    UpdateCollision(Mode);
+    UpdateCollision(Mode, DeltaTime);
     
     
     

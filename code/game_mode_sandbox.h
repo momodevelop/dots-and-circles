@@ -49,7 +49,7 @@ InitSandboxMode(permanent_state* PermState) {
             OffsetX = 0.f;
             OffsetY += BulletRadius * 2;
         }
-        B->Velocity = V2f_Create(50.f, 0.f);
+        B->Velocity = V2f_Create(0.f, 0.f);
     }
     
     Mode->ClickCount = 0;
@@ -71,7 +71,8 @@ UpdateSandboxMode(permanent_state* PermState,
     // NOTE(Momo): Update
     if (Button_IsPoked(Input->ButtonSwitch)) {
         Mode->PrevMousePos = Mode->CurMousePos;
-        Mode->CurMousePos = Hack_ScreenToWorldSpace(Input->DesignMousePos);
+        Mode->CurMousePos = Camera_ScreenToWorld(&Mode->Camera, 
+                                                 Input->DesignMousePos);
         ++Mode->ClickCount;
     }
     
