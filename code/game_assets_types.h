@@ -33,30 +33,30 @@ enum anime_id {
     Anime_Count,
 };
 
-enum atlas_aabb_id {
-    AtlasAabb_Ryoji,
-    AtlasAabb_Yuu,
-    AtlasAabb_Karu00,
-    AtlasAabb_Karu01,
-    AtlasAabb_Karu02,
-    AtlasAabb_Karu10,
-    AtlasAabb_Karu11,
-    AtlasAabb_Karu12,
-    AtlasAabb_Karu20,
-    AtlasAabb_Karu21,
-    AtlasAabb_Karu22,
-    AtlasAabb_Karu30,
-    AtlasAabb_Karu31,
-    AtlasAabb_Karu32,
+enum image_id {
+    Image_Ryoji,
+    Image_Yuu,
+    Image_Karu00,
+    Image_Karu01,
+    Image_Karu02,
+    Image_Karu10,
+    Image_Karu11,
+    Image_Karu12,
+    Image_Karu20,
+    Image_Karu21,
+    Image_Karu22,
+    Image_Karu30,
+    Image_Karu31,
+    Image_Karu32,
     
-    AtlasAabb_PlayerDot,
-    AtlasAabb_PlayerCircle,
-    AtlasAabb_BulletDot,
-    AtlasAabb_BulletCircle,
-    AtlasAabb_Enemy,
+    Image_PlayerDot,
+    Image_PlayerCircle,
+    Image_BulletDot,
+    Image_BulletCircle,
+    Image_Enemy,
     
     
-    AtlasAabb_Count,
+    Image_Count,
 };
 
 enum msg_id {
@@ -69,7 +69,7 @@ enum msg_id {
 
 enum asset_type {
     AssetType_Texture,
-    AssetType_AtlasAabb,
+    AssetType_Image,
     AssetType_Font,
     AssetType_FontGlyph,
     AssetType_FontKerning,
@@ -102,8 +102,8 @@ struct asset_file_texture {
     
 };
 
-struct asset_file_atlas_aabb {
-    atlas_aabb_id Id;
+struct asset_file_image {
+    image_id Id;
     
     texture_id TextureId;
     aabb2u Aabb;
@@ -124,7 +124,7 @@ struct asset_file_font_glyph {
     f32 Advance;
     f32 LeftBearing;
     aabb2f Box; 
-    aabb2u AtlasAabb;
+    aabb2u Image;
     
 };
 
@@ -139,7 +139,7 @@ struct asset_file_anime {
     anime_id Id;
     u32 FrameCount;
     // NOTE(Momo): Data is:
-    // atlas_aabb_id Data[FrameCount]
+    // image_id Data[FrameCount]
 };
 
 struct asset_file_sound {

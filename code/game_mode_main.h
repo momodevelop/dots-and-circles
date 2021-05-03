@@ -508,9 +508,9 @@ RenderPlayer(game_mode_main* Mode,
                                   ZLayPlayer);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
-        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+        Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
-                                       AtlasAabb_PlayerCircle,
+                                       Image_PlayerCircle,
                                        M44f_Concat(T,S), 
                                        Color);
     }
@@ -520,9 +520,9 @@ RenderPlayer(game_mode_main* Mode,
                                   Player->Position.Y,
                                   ZLayPlayer + 0.01f);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
-        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+        Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
-                                       AtlasAabb_PlayerDot,
+                                       Image_PlayerDot,
                                        M44f_Concat(T,S), 
                                        Color);
     }
@@ -540,8 +540,8 @@ RenderBullets(game_mode_main* Mode,
     // Render Dots
     {
         f32 LayerOffset = 0.f;
-        atlas_aabb* AtlasAabb = Assets->AtlasAabbs + AtlasAabb_BulletDot;
-        texture* Texture = Assets->Textures + AtlasAabb->TextureId;
+        image* Image = Assets->Images + Image_BulletDot;
+        texture* Texture = Assets->Textures + Image->TextureId;
         for (u32 I = 0; I < Mode->DotBullets.Count; ++I) {
             bullet* DotBullet = Mode->DotBullets.Data + I;
             m44f S = M44f_Scale(DotBullet->Size.X, 
@@ -552,9 +552,9 @@ RenderBullets(game_mode_main* Mode,
                                       DotBullet->Position.Y,
                                       ZLayDotBullet + LayerOffset);
             
-            Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+            Draw_TexturedQuadFromImage(RenderCommands,
                                            Assets,
-                                           AtlasAabb_BulletDot,
+                                           Image_BulletDot,
                                            M44f_Concat(T,S), 
                                            Color_White);
             LayerOffset += 0.01f;
@@ -576,9 +576,9 @@ RenderBullets(game_mode_main* Mode,
                                       CircleBullet->Position.Y,
                                       ZLayCircleBullet + LayerOffset);
             
-            Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+            Draw_TexturedQuadFromImage(RenderCommands,
                                            Assets,
-                                           AtlasAabb_BulletCircle,
+                                           Image_BulletCircle,
                                            M44f_Concat(T,S), 
                                            Color_White);
             LayerOffset += 0.01f;
@@ -604,9 +604,9 @@ RenderEnemies(game_mode_main* Mode,
                                   Enemy->Position.Y,
                                   ZLayEnemy);
         
-        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+        Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
-                                       AtlasAabb_Enemy,
+                                       Image_Enemy,
                                        M44f_Concat(T,S), 
                                        Color_White);
     }

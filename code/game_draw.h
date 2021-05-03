@@ -58,20 +58,20 @@ Draw_Text(mailbox* RenderCommands,
 }
 
 static inline void
-Draw_TexturedQuadFromAtlasAabb(mailbox* RenderCommands,
+Draw_TexturedQuadFromImage(mailbox* RenderCommands,
                                assets* Assets,
-                               atlas_aabb_id AtlasAabbId,
+                               image_id ImageId,
                                m44f Transform,
                                c4f Color) 
 {
-    atlas_aabb* AtlasAabb = Assets_GetAtlasAabb(Assets, AtlasAabbId);
-    texture* Texture = Assets_GetTexture(Assets, AtlasAabb->TextureId);
+    image* Image = Assets_GetImage(Assets, ImageId);
+    texture* Texture = Assets_GetTexture(Assets, Image->TextureId);
     
     Renderer_DrawTexturedQuad(RenderCommands,
                               Color,
                               Transform,
                               Texture->Handle,
-                              GetAtlasUV(Assets, AtlasAabb));
+                              GetAtlasUV(Assets, Image));
 }
 
 #endif

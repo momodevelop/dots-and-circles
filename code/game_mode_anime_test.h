@@ -82,10 +82,10 @@ UpdateAnimeTestMode(permanent_state* PermState,
     anime_component* AnimeCom = &Entity->Anime;
     {
         anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
-        atlas_aabb_id AtlasAabbId = Anime->Frames[AnimeCom->CurrentFrameIndex];
-        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+        image_id ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
+        Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
-                                       AtlasAabbId,
+                                       ImageId,
                                        Transform,
                                        Color);
         

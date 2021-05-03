@@ -8,17 +8,17 @@ struct texture {
 };
 
 struct anime {
-    atlas_aabb_id *Frames;
+    image_id *Frames;
     u32 FrameCount;
 };
 
-struct atlas_aabb {
+struct image {
     aabb2u Aabb;
     texture_id TextureId;
 };
 
 struct font_glyph {
-    aabb2u AtlasAabb;
+    aabb2u Image;
     aabb2f Box; 
     texture_id TextureId;
     f32 Advance;
@@ -44,8 +44,8 @@ struct assets {
     texture* Textures;
     u32 TextureCount;
     
-    atlas_aabb* AtlasAabbs;
-    u32 AtlasAabbCount;
+    image* Images;
+    u32 ImageCount;
     
     font* Fonts;
     u32 FontCount;
@@ -114,10 +114,10 @@ Assets_GetTexture(assets* Assets, texture_id TextureId) {
     return Assets->Textures + TextureId;
 }
 
-static inline atlas_aabb*
-Assets_GetAtlasAabb(assets* Assets, atlas_aabb_id AtlasAabbId) {
-    Assert(AtlasAabbId < AtlasAabb_Count);
-    return Assets->AtlasAabbs + AtlasAabbId;
+static inline image*
+Assets_GetImage(assets* Assets, image_id ImageId) {
+    Assert(ImageId < Image_Count);
+    return Assets->Images + ImageId;
 }
 
 static inline anime*
@@ -139,11 +139,11 @@ Assets_GetMsg(assets* Assets, msg_id MsgId) {
 // Should be waaaay cleaner
 static inline quad2f
 GetAtlasUV(assets* Assets, 
-           atlas_aabb* AtlasAabb) 
+           image* Image) 
 {
-    auto Texture = Assets->Textures[AtlasAabb->TextureId];
+    auto Texture = Assets->Textures[Image->TextureId];
     aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
-    aabb2f NormalizedAabb = Aabb2u_Ratio(AtlasAabb->Aabb, TextureAabb);
+    aabb2f NormalizedAabb = Aabb2u_Ratio(Image->Aabb, TextureAabb);
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
 
@@ -152,7 +152,7 @@ GetAtlasUV(assets* Assets,
            font_glyph* Glyph) {
     auto Texture = Assets->Textures[Glyph->TextureId];
     aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
-    aabb2f NormalizedAabb = Aabb2u_Ratio(Glyph->AtlasAabb, TextureAabb);
+    aabb2f NormalizedAabb = Aabb2u_Ratio(Glyph->Image, TextureAabb);
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
 
@@ -214,8 +214,8 @@ return False; \
     Assets->TextureCount = Texture_Count;
     Assets->Textures = Arena_PushArray(texture, Arena, Texture_Count);
     
-    Assets->AtlasAabbCount = AtlasAabb_Count;
-    Assets->AtlasAabbs = Arena_PushArray(atlas_aabb, Arena, AtlasAabb_Count);
+    Assets->ImageCount = Image_Count;
+    Assets->Images = Arena_PushArray(image, Arena, Image_Count);
     
     Assets->FontCount = Font_Count;
     Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
@@ -322,22 +322,22 @@ return False; \
                     Platform->LogFp("[Assets] Cannot add assets!");
                 }
             } break;
-            case AssetType_AtlasAabb: { 
+            case AssetType_Image: { 
                 arena_mark Scratch = Arena_Mark(Arena);
                 Defer{ Arena_Revert(&Scratch); };
                 
-                auto* FileAtlasAabb = 
-                    Assets_ReadStruct(asset_file_atlas_aabb,
+                auto* FileImage = 
+                    Assets_ReadStruct(asset_file_image,
                                       &AssetFile, 
                                       Platform, 
                                       Scratch.Arena,
                                       &CurFileOffset);              
-                CheckPtr(FileAtlasAabb);
+                CheckPtr(FileImage);
                 CheckFile(AssetFile);
                 
-                auto* AtlasAabb = Assets->AtlasAabbs + FileAtlasAabb->Id;
-                AtlasAabb->Aabb = FileAtlasAabb->Aabb;
-                AtlasAabb->TextureId = FileAtlasAabb->TextureId;
+                auto* Image = Assets->Images + FileImage->Id;
+                Image->Aabb = FileImage->Aabb;
+                Image->TextureId = FileImage->TextureId;
             } break;
             case AssetType_Font: {
                 arena_mark Scratch = Arena_Mark(Arena);
@@ -371,7 +371,7 @@ return False; \
                 font* Font = Assets_GetFont(Assets, FileFontGlyph->FontId);
                 font_glyph* Glyph = Font_GetGlyph(Font, FileFontGlyph->Codepoint);
                 
-                Glyph->AtlasAabb = FileFontGlyph->AtlasAabb;
+                Glyph->Image = FileFontGlyph->Image;
                 Glyph->TextureId = FileFontGlyph->TextureId;
                 Glyph->Advance = FileFontGlyph->Advance;
                 Glyph->LeftBearing = FileFontGlyph->LeftBearing;
@@ -448,12 +448,12 @@ return False; \
                 // memory does not screw up. A bit janky but hey.
                 Arena_Revert(&Scratch); 
                 
-                Anime->Frames = (atlas_aabb_id*)
+                Anime->Frames = (image_id*)
                     Assets_ReadBlock(&AssetFile,
                                      Platform, 
                                      Arena, 
                                      &CurFileOffset,
-                                     sizeof(atlas_aabb_id) * Anime->FrameCount,
+                                     sizeof(image_id) * Anime->FrameCount,
                                      1);
                 
                 

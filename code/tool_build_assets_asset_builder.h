@@ -90,18 +90,18 @@ Tba_AssetBuilderWriteTextureFromFile(tba_asset_builder* Context,
 
 
 static inline void 
-Tba_AssetBuilderWriteAtlasAabb(tba_asset_builder* Context, 
-                               atlas_aabb_id Id, 
+Tba_AssetBuilderWriteImage(tba_asset_builder* Context, 
+                               image_id Id, 
                                texture_id TargetTextureId, 
                                aabb2u Aabb) 
 {
-    Tba_AssetBuilderWriteEntry(Context,  AssetType_AtlasAabb);
+    Tba_AssetBuilderWriteEntry(Context,  AssetType_Image);
     
-    asset_file_atlas_aabb AtlasAabb = {};
-    AtlasAabb.Id = Id;
-    AtlasAabb.TextureId = TargetTextureId;
-    AtlasAabb.Aabb = Aabb;
-    fwrite(&AtlasAabb, sizeof(AtlasAabb), 1,  Context->File);
+    asset_file_image Image = {};
+    Image.Id = Id;
+    Image.TextureId = TargetTextureId;
+    Image.Aabb = Aabb;
+    fwrite(&Image, sizeof(Image), 1,  Context->File);
 }
 
 static inline void
@@ -128,7 +128,7 @@ Tba_AssetBuilderWriteFontGlyph(tba_asset_builder* Context,
                                u32 Codepoint, 
                                f32 Advance, 
                                f32 LeftBearing, 
-                               aabb2u AtlasAabb, 
+                               aabb2u Image, 
                                aabb2f Box) 
 {
     Tba_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
@@ -137,7 +137,7 @@ Tba_AssetBuilderWriteFontGlyph(tba_asset_builder* Context,
     FontGlyph.FontId = FontId;
     FontGlyph.TextureId = TargetTextureId;
     FontGlyph.Codepoint = Codepoint;
-    FontGlyph.AtlasAabb = AtlasAabb;
+    FontGlyph.Image = Image;
     FontGlyph.LeftBearing = LeftBearing;
     FontGlyph.Advance = Advance;
     FontGlyph.Box = Box;
@@ -166,7 +166,7 @@ Tba_AssetBuilderWriteFontKerning(tba_asset_builder* Context,
 static inline void 
 Tba_AssetBuilderWriteAnime(tba_asset_builder* Context, 
                            anime_id AnimeId, 
-                           atlas_aabb_id* Frames,
+                           image_id* Frames,
                            u32 FrameCount) 
 {
     Tba_AssetBuilderWriteEntry(Context, AssetType_Anime);
@@ -176,7 +176,7 @@ Tba_AssetBuilderWriteAnime(tba_asset_builder* Context,
     Anime.FrameCount = FrameCount;
     
     fwrite(&Anime, sizeof(Anime), 1, Context->File);
-    fwrite(Frames, sizeof(atlas_aabb_id), FrameCount, Context->File);
+    fwrite(Frames, sizeof(image_id), FrameCount, Context->File);
 }
 
 static inline void 

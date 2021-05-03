@@ -37,13 +37,13 @@ int main() {
     arena Arena = Arena_Create(Memory, Tba_MemorySize);
     
     //~ NOTE(Momo): Initialize context for images in atlas
-    atlas_context_image AtlasImageContexts[ArrayCount(Tba_AtlasAabbContexts)];
-    for (u32 I = 0; I < ArrayCount(Tba_AtlasAabbContexts); ++I) {
-        tba_atlas_aabb_context* TbaCtx = Tba_AtlasAabbContexts + I;
+    atlas_context_image AtlasImageContexts[ArrayCount(Tba_ImageContexts)];
+    for (u32 I = 0; I < ArrayCount(Tba_ImageContexts); ++I) {
+        tba_image_context* TbaCtx = Tba_ImageContexts + I;
         atlas_context_image* AtlasCtx = AtlasImageContexts + I;
         AtlasCtx->Type = AtlasContextType_Image;
         AtlasCtx->Filename = TbaCtx->Filename;
-        AtlasCtx->Id = TbaCtx->AtlasAabbId;
+        AtlasCtx->Id = TbaCtx->ImageId;
         AtlasCtx->TextureId = TbaCtx->TextureId;
     }
     
@@ -161,7 +161,7 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)UserDatas[i];
-                    Tba_AssetBuilderWriteAtlasAabb(AssetBuilder, 
+                    Tba_AssetBuilderWriteImage(AssetBuilder, 
                                                    Image->Id, 
                                                    Image->TextureId, 
                                                    Aabb);

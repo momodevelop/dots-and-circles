@@ -13,7 +13,7 @@ enum atlas_context_type {
 struct atlas_context_image {
     atlas_context_type Type;
     const char* Filename;
-    atlas_aabb_id Id;
+    image_id Id;
     texture_id TextureId;
     u8* Texture;
 };

@@ -130,9 +130,9 @@ UpdateSandboxMode(permanent_state* PermState,
                                   B->Position.Y,
                                   ZOrder += 0.001f);
         
-        Draw_TexturedQuadFromAtlasAabb(RenderCommands,
+        Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
-                                       AtlasAabb_BulletDot,
+                                       Image_BulletDot,
                                        M44f_Concat(T,S), 
                                        c4f{1.f, 1.f, 1.f, 0.5f});
     }
