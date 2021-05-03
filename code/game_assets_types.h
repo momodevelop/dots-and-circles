@@ -104,8 +104,8 @@ struct asset_file_texture {
 
 struct asset_file_atlas_aabb {
     atlas_aabb_id Id;
-    texture_id TextureId;
     
+    texture_id TextureId;
     aabb2u Aabb;
     
 };
@@ -139,11 +139,12 @@ struct asset_file_anime {
     anime_id Id;
     u32 FrameCount;
     // NOTE(Momo): Data is:
-    // atlas_aabb_id Data[Framecount]
+    // atlas_aabb_id Data[FrameCount]
 };
 
 struct asset_file_sound {
-    sound_id SoundId;
+    sound_id Id;
+    
     u32 DataSize;
     // NOTE(Momo): Data is: 
     // u16 Data[???]

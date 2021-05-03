@@ -203,7 +203,7 @@ Tba_AssetBuilderWriteWav(tba_asset_builder* Context,
     Tba_AssetBuilderWriteEntry(Context, AssetType_Sound);
     
     asset_file_sound Sound = {};
-    Sound.SoundId = SoundId;
+    Sound.Id = SoundId;
     Sound.DataSize = WavResult->DataChunk.Size;
     
     fwrite(&Sound, sizeof(Sound), 1, Context->File);
