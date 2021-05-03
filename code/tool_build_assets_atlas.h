@@ -23,6 +23,7 @@ struct atlas_context_font {
     atlas_context_type Type;
     font_id FontId;
     texture_id TextureId;
+    image_id ImageId;
     f32 RasterScale;
     u32 Codepoint;
     loaded_font* LoadedFont;

@@ -36,18 +36,6 @@ int main() {
     
     arena Arena = Arena_Create(Memory, Tba_MemorySize);
     
-    //~ NOTE(Momo): Initialize context for images in atlas
-    atlas_context_image AtlasImageContexts[ArrayCount(Tba_ImageContexts)];
-    for (u32 I = 0; I < ArrayCount(Tba_ImageContexts); ++I) {
-        tba_image_context* TbaCtx = Tba_ImageContexts + I;
-        atlas_context_image* AtlasCtx = AtlasImageContexts + I;
-        AtlasCtx->Type = AtlasContextType_Image;
-        AtlasCtx->Filename = TbaCtx->Filename;
-        AtlasCtx->Id = TbaCtx->ImageId;
-        AtlasCtx->TextureId = TbaCtx->TextureId;
-    }
-    
-    
     //~ NOTE(Momo): Load font
     
     // TODO(Momo): Preload stuff related to font that we actually need and then free
@@ -58,8 +46,23 @@ int main() {
         printf("[Atlas] Failed to load font\n");
         return 1; 
     }
-    
     f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
+    
+    //~ NOTE(Momo): Initialize context for images in atlas
+    
+    
+    atlas_context_image AtlasImageContexts[ArrayCount(Tba_ImageContexts)] = {};
+    for (u32 I = 0; I < ArrayCount(Tba_ImageContexts); ++I) {
+        tba_image_context* TbaCtx = Tba_ImageContexts + I;
+        atlas_context_image* AtlasCtx = AtlasImageContexts + I;
+        
+        AtlasCtx->Type = AtlasContextType_Image;
+        AtlasCtx->Filename = TbaCtx->Filename;
+        AtlasCtx->Id = TbaCtx->ImageId;
+        AtlasCtx->TextureId = TbaCtx->TextureId;
+    }
+    
+    
     
     //~ NOTE(Momo): Initialize contexts for font images in atlas
     atlas_context_font AtlasFontContexts[FontGlyph_Count];
@@ -90,6 +93,7 @@ int main() {
         Font->Codepoint = FontGlyph_CodepointStart + I;
         Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
         Font->FontId = Font_Default;
+        Font->ImageId = image_id(Image_FontStart + I);
         Font->TextureId = Texture_AtlasDefault;
         
         aabb2u* Aabb = Aabbs + AabbCounter;
@@ -162,9 +166,9 @@ int main() {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)UserDatas[i];
                     Tba_AssetBuilderWriteImage(AssetBuilder, 
-                                                   Image->Id, 
-                                                   Image->TextureId, 
-                                                   Aabb);
+                                               Image->Id, 
+                                               Image->TextureId, 
+                                               Aabb);
                 } break;
                 case AtlasContextType_Font: {
                     auto* Font  = (atlas_context_font*)UserDatas[i];
@@ -187,10 +191,11 @@ int main() {
                     aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
                     Tba_AssetBuilderWriteFontGlyph(AssetBuilder, 
                                                    Font->FontId, 
-                                                   Font->TextureId, 
+                                                   Font->ImageId,
+                                                   Font->TextureId,
                                                    Font->Codepoint, FontPixelScale * Advance,
                                                    FontPixelScale * LeftSideBearing,
-                                                   Aabb, 
+                                                   Aabb,
                                                    ScaledBox);
                     
                 } break;

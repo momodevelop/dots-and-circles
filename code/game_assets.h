@@ -18,9 +18,8 @@ struct image {
 };
 
 struct font_glyph {
-    aabb2u Image;
-    aabb2f Box; 
-    texture_id TextureId;
+    image_id ImageId;
+    aabb2f Box;
     f32 Advance;
     f32 LeftBearing;
 };
@@ -138,24 +137,14 @@ Assets_GetMsg(assets* Assets, msg_id MsgId) {
 // TODO: Maybe we should just pass in ID instead of pointer.
 // Should be waaaay cleaner
 static inline quad2f
-GetAtlasUV(assets* Assets, 
-           image* Image) 
+Assets_GetAtlasUV(assets* Assets, 
+                  image* Image) 
 {
     auto Texture = Assets->Textures[Image->TextureId];
     aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
     aabb2f NormalizedAabb = Aabb2u_Ratio(Image->Aabb, TextureAabb);
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
-
-static inline quad2f
-GetAtlasUV(assets* Assets, 
-           font_glyph* Glyph) {
-    auto Texture = Assets->Textures[Glyph->TextureId];
-    aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
-    aabb2f NormalizedAabb = Aabb2u_Ratio(Glyph->Image, TextureAabb);
-    return Aabb2f_To_Quad2f(NormalizedAabb);
-}
-
 
 static inline b32
 Assets_CheckSignature(void* Memory, u8_cstr Signature) {
@@ -371,8 +360,7 @@ return False; \
                 font* Font = Assets_GetFont(Assets, FileFontGlyph->FontId);
                 font_glyph* Glyph = Font_GetGlyph(Font, FileFontGlyph->Codepoint);
                 
-                Glyph->Image = FileFontGlyph->Image;
-                Glyph->TextureId = FileFontGlyph->TextureId;
+                Glyph->ImageId = FileFontGlyph->ImageId;
                 Glyph->Advance = FileFontGlyph->Advance;
                 Glyph->LeftBearing = FileFontGlyph->LeftBearing;
                 Glyph->Box = FileFontGlyph->Box;

@@ -55,6 +55,8 @@ enum image_id {
     Image_BulletCircle,
     Image_Enemy,
     
+    Image_FontStart,
+    Image_FontEnd = Image_FontStart + FontGlyph_Count,
     
     Image_Count,
 };
@@ -119,13 +121,11 @@ struct asset_file_font {
 
 struct asset_file_font_glyph {
     font_id FontId;
-    texture_id TextureId;
+    image_id ImageId;
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;
     aabb2f Box; 
-    aabb2u Image;
-    
 };
 
 struct asset_file_font_kerning {

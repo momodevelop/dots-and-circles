@@ -91,9 +91,9 @@ Tba_AssetBuilderWriteTextureFromFile(tba_asset_builder* Context,
 
 static inline void 
 Tba_AssetBuilderWriteImage(tba_asset_builder* Context, 
-                               image_id Id, 
-                               texture_id TargetTextureId, 
-                               aabb2u Aabb) 
+                           image_id Id, 
+                           texture_id TargetTextureId, 
+                           aabb2u Aabb) 
 {
     Tba_AssetBuilderWriteEntry(Context,  AssetType_Image);
     
@@ -124,20 +124,22 @@ Tba_AssetBuilderWriteFont(tba_asset_builder* Context,
 static inline void 
 Tba_AssetBuilderWriteFontGlyph(tba_asset_builder* Context, 
                                font_id FontId, 
-                               texture_id TargetTextureId, 
+                               image_id ImageId,
+                               texture_id TextureId, 
                                u32 Codepoint, 
                                f32 Advance, 
                                f32 LeftBearing, 
-                               aabb2u Image, 
+                               aabb2u ImageAabb, 
                                aabb2f Box) 
 {
+    Tba_AssetBuilderWriteImage(Context, ImageId, TextureId, ImageAabb);
+    
     Tba_AssetBuilderWriteEntry(Context, AssetType_FontGlyph);
     
     asset_file_font_glyph FontGlyph = {};
     FontGlyph.FontId = FontId;
-    FontGlyph.TextureId = TargetTextureId;
+    FontGlyph.ImageId = ImageId;
     FontGlyph.Codepoint = Codepoint;
-    FontGlyph.Image = Image;
     FontGlyph.LeftBearing = LeftBearing;
     FontGlyph.Advance = Advance;
     FontGlyph.Box = Box;
@@ -194,7 +196,6 @@ Tba_AssetBuilderWriteMsg(tba_asset_builder* Context,
     fwrite(Message, sizeof(char), Msg.Count, Context->File);
 }
 
-// TODO(Momo):
 static inline void
 Tba_AssetBuilderWriteWav(tba_asset_builder* Context, 
                          sound_id SoundId,
