@@ -18,23 +18,23 @@
 #include "tool_build_assets_msg.h"
 #include "tool_build_assets_asset_builder.h"
 
-#define GENERATE_TEST_PNG 1
 
-#define ToolBuildAssets_MemorySize Megabytes(8)
-#define MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.Used);
+#define Tba_GenerateTestPng 1
+#define Tba_MemorySize Megabytes(8)
+#define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.Used)
 
 
 int main() {
     printf("Start!\n");
     
-    void* Memory = malloc(ToolBuildAssets_MemorySize);
+    void* Memory = malloc(Tba_MemorySize);
     if (!Memory) {
         printf("Failed to initialize memory");
         return 1; 
     }
     Defer { free(Memory); };
     
-    arena Arena = Arena_Create(Memory, ToolBuildAssets_MemorySize);
+    arena Arena = Arena_Create(Memory, Tba_MemorySize);
     
     //~ NOTE(Momo): Initialize context for images in atlas
     atlas_context_image AtlasImageContexts[ArrayCount(Tba_AtlasAabbContexts)];
@@ -132,7 +132,7 @@ int main() {
         printf("[Atlas] Cannot generate atlas, not enough memory\n");
         return 1;
     }
-#if GENERATE_TEST_PNG 
+#if Tba_GenerateTestPng 
     stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
     printf("[Atlas] Written test atlas: test.png\n");
 #endif
@@ -289,6 +289,7 @@ int main() {
     Tba_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");
     
+    Tba_MemCheck;
     return 0;
     
 }
