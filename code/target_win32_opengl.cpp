@@ -12,6 +12,8 @@
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 
+
+
 //~ WGL Bindings
 #define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
@@ -61,6 +63,10 @@ static WglFunctionPtr(wglSwapIntervalEXT);
 #define Win32_RecordStateFile "record_state"
 #define Win32_RecordInputFile "record_input"
 #define Win32_SaveStateFile "game_state"
+#define Win32_AudioSamplePerFrame 48000
+#define Win32_AudioChannels 2
+#define Win32_AudioBitsPerSamples 16
+#define Win32_AudioLatencyFrames 1
 
 //~ NOTE(Momo): Structs
 // File handle pool
@@ -885,7 +891,7 @@ Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
 
 //~ NOTE(Momo): Audio related
 struct win32_audio_output {
-    usize BufferSize;
+    u32 BufferSize;
     s16* Buffer;
     
     u32 LatencySampleCount;
@@ -922,10 +928,10 @@ Win32InitAudioOutput(win32_audio_output* Ret,
     Ret->Buffer = (s16*)Win32AllocateMemory(Ret->BufferSize); 
     if (!Ret->Buffer) {
         Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
-        return FALSE;
+        return False;
     }
     
-    return TRUE;
+    return True;
     
 }
 
@@ -1548,17 +1554,12 @@ WinMain(HINSTANCE Instance,
     
     // Initialize Audio-related stuff
     win32_audio_output AudioOutput = {}; 
-    Win32InitAudioOutput(&AudioOutput,
-                         48000,
-                         2,
-                         16, // Can only be 8 or 16
-                         2,  // Latency frames
-                         RefreshRate);
+    
     if (!Win32InitAudioOutput(&AudioOutput,
-                              48000,
-                              2,
-                              16, // Can only be 8 or 16
-                              2,  // Latency frames
+                              Win32_AudioSamplePerFrame,
+                              Win32_AudioChannels,
+                              Win32_AudioBitsPerSamples, // Can only be 8 or 16
+                              Win32_AudioLatencyFrames,  // Latency frames
                               RefreshRate)) 
     { 
         return 1; 

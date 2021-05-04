@@ -145,9 +145,9 @@ struct asset_file_anime {
 struct asset_file_sound {
     sound_id Id;
     
-    u32 DataSize;
+    u32 DataCount;
     // NOTE(Momo): Data is: 
-    // u16 Data[???]
+    // s16 Data[DataCount]
 };
 #pragma pack(pop)
 

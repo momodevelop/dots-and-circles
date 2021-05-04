@@ -35,6 +35,11 @@ struct font {
     u32 Kernings[FontGlyph_Count][FontGlyph_Count];
 };
 
+struct sound {
+    s16* Data;
+    u32 DataCount;
+};
+
 typedef u8_cstr msg;
 
 
@@ -54,6 +59,9 @@ struct assets {
     
     msg* Msgs;
     u32 MsgCount;
+    
+    sound* Sounds;
+    u32 SoundCount;
 };
 
 //~ NOTE(Momo): Font functions
@@ -130,6 +138,13 @@ static inline msg*
 Assets_GetMsg(assets* Assets, msg_id MsgId) {
     Assert(MsgId < Msg_Count);
     return Assets->Msgs + MsgId;
+}
+
+
+static inline sound*
+Assets_GetSound(assets* Assets, sound_id SoundId) {
+    Assert(SoundId < Sound_Count);
+    return Assets->Sounds + SoundId;
 }
 
 
@@ -214,6 +229,9 @@ return False; \
     
     Assets->MsgCount = Msg_Count;
     Assets->Msgs = Arena_PushArray(msg, Arena, Msg_Count);
+    
+    Assets->SoundCount = Sound_Count;
+    Assets->Sounds = Arena_PushArray(sound, Arena, Sound_Count);
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     CheckFile(AssetFile);
@@ -384,7 +402,40 @@ return False; \
                 
             } break;
             case AssetType_Sound: {
-                Platform->LogFp("Sound detected\n");
+                arena_mark Scratch = Arena_Mark(Arena);
+                
+                auto* File = Assets_ReadStruct(asset_file_sound,
+                                               &AssetFile,
+                                               Platform,
+                                               Scratch.Arena,
+                                               &CurFileOffset);
+                
+                if (File == Null) { 
+                    Platform->LogFp("[Assets] Sound is null"); 
+                    Arena_Revert(&Scratch); 
+                    return False; 
+                }
+                if (AssetFile.Error) {
+                    Platform->LogFileErrorFp(&AssetFile); 
+                    Arena_Revert(&Scratch); 
+                    return False; 
+                }
+                
+                sound* Sound = Assets_GetSound(Assets, File->Id);
+                Sound->DataCount = File->DataCount;
+                
+                // NOTE(Momo): we have to revert here so that our arena's 
+                // memory does not screw up. A bit janky but hey.
+                Arena_Revert(&Scratch); 
+                
+                Sound->Data = (s16*)
+                    Assets_ReadBlock(&AssetFile,
+                                     Platform, 
+                                     Arena, 
+                                     &CurFileOffset,
+                                     sizeof(s16) * Sound->DataCount,
+                                     1);
+                
             } break;
             case AssetType_Message: {
                 arena_mark Scratch = Arena_Mark(Arena);
@@ -394,9 +445,17 @@ return False; \
                                                Platform,
                                                Scratch.Arena,
                                                &CurFileOffset);
+                if (File == Null) { 
+                    Platform->LogFp("[Assets] Msg is null"); 
+                    Arena_Revert(&Scratch); 
+                    return False; 
+                }
                 
-                CheckPtr(File);
-                CheckFile(AssetFile);
+                if (AssetFile.Error) {
+                    Platform->LogFileErrorFp(&AssetFile); 
+                    Arena_Revert(&Scratch); 
+                    return False; 
+                }
                 
                 msg* Msg = Assets_GetMsg(Assets, File->Id);
                 Msg->Count = File->Count;
@@ -420,17 +479,26 @@ return False; \
             case AssetType_Anime: {
                 arena_mark Scratch = Arena_Mark(Arena);
                 
-                auto* FileAnime = Assets_ReadStruct(asset_file_anime,
-                                                    &AssetFile,
-                                                    Platform,
-                                                    Scratch.Arena,
-                                                    &CurFileOffset);
+                auto* File = Assets_ReadStruct(asset_file_anime,
+                                               &AssetFile,
+                                               Platform,
+                                               Scratch.Arena,
+                                               &CurFileOffset);
                 
-                CheckPtr(FileAnime);
-                CheckFile(AssetFile);
+                if (File == Null) { 
+                    Platform->LogFp("[Assets] Anime is null"); 
+                    Arena_Revert(&Scratch); 
+                    return False; 
+                }
                 
-                anime* Anime = Assets_GetAnime(Assets, FileAnime->Id);
-                Anime->FrameCount = FileAnime->FrameCount;
+                if (AssetFile.Error) {
+                    Platform->LogFileErrorFp(&AssetFile); 
+                    Arena_Revert(&Scratch); 
+                    return False; 
+                }
+                
+                anime* Anime = Assets_GetAnime(Assets, File->Id);
+                Anime->FrameCount = File->FrameCount;
                 
                 // NOTE(Momo): we have to revert here so that our arena's 
                 // memory does not screw up. A bit janky but hey.
@@ -443,7 +511,6 @@ return False; \
                                      &CurFileOffset,
                                      sizeof(image_id) * Anime->FrameCount,
                                      1);
-                
                 
             } break;
             default: {

@@ -282,6 +282,7 @@ int main() {
             if(!Wav_LoadFromMemory(&WavResult,
                                    FileResult.Data,
                                    FileResult.Size)) {
+                printf("test1");
                 return 1;
             }
             Tba_AssetBuilderWriteWav(AssetBuilder,

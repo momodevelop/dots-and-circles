@@ -74,7 +74,7 @@ GameUpdateFunc(GameUpdate)
         PermState->ModeArena = Arena_SubArena(&PermState->MainArena, 
                                               Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
-        PermState->NextGameMode = GameModeType_Sandbox;
+        PermState->NextGameMode = GameModeType_Splash;
         PermState->IsInitialized = True;
         PermState->IsRunning = True;
         PermState->IsPaused = False;
@@ -141,17 +141,30 @@ GameUpdateFunc(GameUpdate)
         DeltaTime = 0.f;
     }
     
-#if 1
+#if 0
     static f32 TSine = 0.f;
+    static u32 SoundCounter = 0;
     // TODO: Shift this part to game code
     s16* SampleOut = Audio->SampleBuffer;
-    for(usize I = 0; I < Audio->SampleCount; ++I) {
-        const s16 Volume = 3000;
-        s16 SampleValue = (s16)(Sin(TSine) * Volume);
+    sound* Sound = Assets_GetSound(&TranState->Assets, Sound_Test);
+    for(u32 I = 0; I < Audio->SampleCount; ++I) {
+        
+        const f32 Volume = 0.2f;
+        s16 SampleValue = s16(Sound->Data[SoundCounter++] * Volume);
+        if (SoundCounter >= Sound->DataCount) {
+            SoundCounter = 0;
+        }
         // Based on number of channels!
         *SampleOut++ = SampleValue; // Left Speaker
         *SampleOut++ = SampleValue; // Right Speaker
         TSine += DeltaTime;
+    }
+#else
+    s16* SampleOut = Audio->SampleBuffer;
+    for(u32 I = 0; I < Audio->SampleCount; ++I) {
+        // Based on number of channels!
+        *SampleOut++ = 0; // Left Speaker
+        *SampleOut++ = 0; // Right Speaker
     }
 #endif
     
