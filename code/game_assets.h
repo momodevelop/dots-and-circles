@@ -384,7 +384,7 @@ return False; \
                 
             } break;
             case AssetType_Sound: {
-                
+                Platform->LogFp("Sound detected\n");
             } break;
             case AssetType_Message: {
                 arena_mark Scratch = Arena_Mark(Arena);

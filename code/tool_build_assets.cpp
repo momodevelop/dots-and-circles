@@ -264,7 +264,7 @@ int main() {
         }
     }
     
-#if 0
+    
     printf("[Build Assets] Writing Sound...\n");
     {
         for(u32 I = 0; I < ArrayCount(Tba_SoundContexts); ++I) {
@@ -289,7 +289,6 @@ int main() {
                                      &WavResult);
         }
     }
-#endif
     
     Tba_AssetBuilderEnd(AssetBuilder);
     printf("[Build Assets] Assets Built\n");

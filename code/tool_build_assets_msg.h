@@ -55,7 +55,7 @@ struct tba_sound_context {
 
 static tba_sound_context
 Tba_SoundContexts[] {
-    Sound_Test, "test_sound.wav",
+    Sound_Test, "assets/test_sound.wav",
 };
 
 //~ NOTE(Momo): Animation

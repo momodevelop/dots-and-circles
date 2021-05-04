@@ -79,11 +79,13 @@ Wav_LoadFromMemory(wav_load_result* Result,
     if (FmtChunk->AudioFormat != 1) {
         return False;
     }
-    if (FmtChunk->ByteRate == 
-        (FmtChunk->SampleRate * FmtChunk->NumChannels * FmtChunk->BitsPerSample/8)) {
+    
+    u32 BytesPerSample = FmtChunk->BitsPerSample/8;
+    if (FmtChunk->ByteRate != 
+        FmtChunk->SampleRate * FmtChunk->NumChannels * BytesPerSample) {
         return False;
     }
-    if (FmtChunk->BlockAlign == FmtChunk->NumChannels * FmtChunk->BitsPerSample/8) {
+    if (FmtChunk->BlockAlign != FmtChunk->NumChannels * BytesPerSample) {
         return False;
     }
     
