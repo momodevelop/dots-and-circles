@@ -267,6 +267,7 @@ Assets_Init(assets* Assets,
             Platform->LogFp("[Assets] Cannot get file entry count\n");
             return False;
         }
+        FileEntryCount = *FileEntryCountPtr;
     }
     
     
