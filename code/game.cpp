@@ -59,7 +59,10 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
+#if INTERNAL
     G_Platform = Platform;
+#endif 
+    
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TranState = (transient_state*)GameMemory->TransientMemory;
     auto* DebugState = (debug_state*)GameMemory->DebugMemory; 
@@ -142,7 +145,6 @@ GameUpdateFunc(GameUpdate)
     }
     
 #if 0
-    static f32 TSine = 0.f;
     static u32 SoundCounter = 0;
     // TODO: Shift this part to game code
     s16* SampleOut = Audio->SampleBuffer;
@@ -152,12 +154,12 @@ GameUpdateFunc(GameUpdate)
         const f32 Volume = 0.2f;
         s16 SampleValue = s16(Sound->Data[SoundCounter++] * Volume);
         if (SoundCounter >= Sound->DataCount) {
-            SoundCounter = 0;
+            SampleValue = 0;
         }
         // Based on number of channels!
         *SampleOut++ = SampleValue; // Left Speaker
         *SampleOut++ = SampleValue; // Right Speaker
-        TSine += DeltaTime;
+        
     }
 #else
     s16* SampleOut = Audio->SampleBuffer;
@@ -168,6 +170,19 @@ GameUpdateFunc(GameUpdate)
     }
 #endif
     
+#if 1
+    static game_audio_mixer Mixer = {};
+    static b32 PlayOnce = False;
+    
+    if (!PlayOnce) {
+        AudioMixer_Init(&Mixer, 0.3f);
+        
+        AudioMixer_Play(&Mixer, Sound_Test, False);
+        PlayOnce = True;
+    }
+    AudioMixer_Update(&Mixer, Audio, &TranState->Assets);
+    
+#endif
     // Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
         Arena_Clear(&PermState->ModeArena);

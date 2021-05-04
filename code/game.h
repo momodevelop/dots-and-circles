@@ -3,7 +3,9 @@
 
 #include "momo.h"
 
+#if INTERNAL
 static struct platform_api* G_Platform = {};
+#endif 
 
 #include "game_renderer.h"
 #include "game_platform.h"
@@ -13,7 +15,7 @@ static struct platform_api* G_Platform = {};
 #include "game_assets.h"
 #include "game_draw.h"
 #include "game_camera.h"
-
+#include "game_audio_mixer.h"
 #include "game_debug_inspector.h"
 #include "game_debug_console.h"
 
