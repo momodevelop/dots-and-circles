@@ -88,6 +88,7 @@ GameUpdateFunc(GameUpdate)
     }
     
     if (!TranState->IsInitialized) {
+        Platform->LogFp("Initializing Transient State\n");
         TranState = Arena_BootupStruct(transient_state,
                                        Arena,
                                        GameMemory->TransientMemory, 
@@ -99,6 +100,8 @@ GameUpdateFunc(GameUpdate)
         
         Assert(Success);
         
+        
+        AudioMixer_Init(&TranState->Mixer, 0.3f);
         
         TranState->IsInitialized = True;
     }
@@ -144,46 +147,7 @@ GameUpdateFunc(GameUpdate)
         DeltaTime = 0.f;
     }
     
-#if 0
-    static u32 SoundCounter = 0;
-    // TODO: Shift this part to game code
-    s16* SampleOut = Audio->SampleBuffer;
-    sound* Sound = Assets_GetSound(&TranState->Assets, Sound_Test);
-    for(u32 I = 0; I < Audio->SampleCount; ++I) {
-        
-        const f32 Volume = 0.2f;
-        s16 SampleValue = s16(Sound->Data[SoundCounter++] * Volume);
-        if (SoundCounter >= Sound->DataCount) {
-            SampleValue = 0;
-        }
-        // Based on number of channels!
-        *SampleOut++ = SampleValue; // Left Speaker
-        *SampleOut++ = SampleValue; // Right Speaker
-        
-    }
-#else
-    s16* SampleOut = Audio->SampleBuffer;
-    for(u32 I = 0; I < Audio->SampleCount; ++I) {
-        // Based on number of channels!
-        *SampleOut++ = 0; // Left Speaker
-        *SampleOut++ = 0; // Right Speaker
-    }
-#endif
-    
-#if 1
-    static game_audio_mixer Mixer = {};
-    static b32 PlayOnce = False;
-    
-    if (!PlayOnce) {
-        AudioMixer_Init(&Mixer, 0.3f);
-        
-        AudioMixer_Play(&Mixer, Sound_Test, False);
-        PlayOnce = True;
-    }
-    AudioMixer_Update(&Mixer, Audio, &TranState->Assets);
-    
-#endif
-    // Clean state/Switch states
+    // NOTE(Momo): Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
         Arena_Clear(&PermState->ModeArena);
         arena* ModeArena = &PermState->ModeArena;
@@ -270,6 +234,10 @@ GameUpdateFunc(GameUpdate)
     
     DebugConsole_Render(&DebugState->Console, RenderCommands, &TranState->Assets);
     DebugInspector_End(&DebugState->Inspector, RenderCommands, &TranState->Assets);
+    
+    AudioMixer_Update(&TranState->Mixer, Audio, &TranState->Assets);
+    
+    
     
     return PermState->IsRunning;
 }

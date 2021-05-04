@@ -9,10 +9,10 @@ static struct platform_api* G_Platform = {};
 
 #include "game_renderer.h"
 #include "game_platform.h"
-#include "game_assets_types.h"
 
-
+#include "game_assets_file.h"
 #include "game_assets.h"
+
 #include "game_draw.h"
 #include "game_camera.h"
 #include "game_audio_mixer.h"

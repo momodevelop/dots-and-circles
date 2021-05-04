@@ -172,7 +172,6 @@ Assets_CheckSignature(void* Memory, u8_cstr Signature) {
     return True; 
 }
 
-// TODO: Maybe we create some kind of struct for reading files?
 static inline void*
 Assets_ReadBlock(platform_file_handle* File,
                  platform_api* Platform,
@@ -183,13 +182,17 @@ Assets_ReadBlock(platform_file_handle* File,
 {
     void* Ret = Arena_PushBlock(Arena, BlockSize, BlockAlignment);
     if(!Ret) {
-        return nullptr; 
+        return Null; 
     }
     Platform->ReadFileFp(File,
                          (*FileOffset),
                          BlockSize,
                          Ret);
     (*FileOffset) += BlockSize;
+    if (File->Error) {
+        Platform->LogFileErrorFp(File);
+        return Null;
+    }
     return Ret;
 }
 #define Assets_ReadStruct(Type, File, Platform, Arena, FileOffset) \
@@ -200,19 +203,6 @@ Assets_Init(assets* Assets,
             arena* Arena,
             platform_api* Platform) 
 {
-#define CheckFile(Handle) \
-if (Handle.Error) { \
-Platform->LogFileErrorFp(&Handle); \
-return False; \
-}
-    
-#define CheckPtr(Ptr) \
-if ((Ptr) == nullptr ) { \
-Platform->LogFp("[Assets] " #Ptr " is null"); \
-return False; \
-} \
-    
-    
     Platform->ClearTexturesFp();
     
     Assets->TextureCount = Texture_Count;
@@ -234,7 +224,10 @@ return False; \
     Assets->Sounds = Arena_PushArray(sound, Arena, Sound_Count);
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
-    CheckFile(AssetFile);
+    if (AssetFile.Error) {
+        Platform->LogFileErrorFp(&AssetFile);
+        return False;
+    }
     Defer { Platform->CloseFileFp(&AssetFile); }; 
     
     u32 CurFileOffset = 0;
@@ -246,7 +239,7 @@ return False; \
         Defer{ Arena_Revert(&Scratch); };
         
         u8_cstr Signature = {};
-        U8CStr_InitFromSiStr(&Signature, "MOMO");
+        U8CStr_InitFromSiStr(&Signature, Game_AssetFileSignature);
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
                                                Platform,
@@ -254,8 +247,10 @@ return False; \
                                                &CurFileOffset,
                                                (u32)Signature.Count,
                                                1);
-        CheckPtr(ReadSignature);
-        CheckFile(AssetFile);
+        if (ReadSignature == Null) {
+            Platform->LogFp("[Assets] Cannot read signature\n");
+            return False;
+        }
         
         if (!Assets_CheckSignature(ReadSignature, Signature)) {
             Platform->LogFp("[Assets] Wrong asset signature\n");
@@ -263,12 +258,15 @@ return False; \
         }
         
         // Get File Entry
-        FileEntryCount = *Assets_ReadStruct(u32,
-                                            &AssetFile,
-                                            Platform,
-                                            Scratch.Arena,
-                                            &CurFileOffset);
-        CheckFile(AssetFile);
+        u32* FileEntryCountPtr = Assets_ReadStruct(u32,
+                                                   &AssetFile,
+                                                   Platform,
+                                                   Scratch.Arena,
+                                                   &CurFileOffset);
+        if (FileEntryCountPtr == Null) {
+            Platform->LogFp("[Assets] Cannot get file entry count\n");
+            return False;
+        }
     }
     
     
@@ -286,8 +284,10 @@ return False; \
                                                    Platform,
                                                    Scratch.Arena,
                                                    &CurFileOffset);
-            CheckPtr(FileEntryPtr);
-            CheckFile(AssetFile);
+            if (FileEntryPtr == Null) {
+                Platform->LogFp("[Assets] Cannot get file entry\n");
+                return False;
+            }
             FileEntry = *FileEntryPtr;
         }
         
@@ -301,10 +301,10 @@ return False; \
                                                       Platform, 
                                                       Scratch.Arena,
                                                       &CurFileOffset);              
-                
-                CheckPtr(FileTexture);
-                CheckFile(AssetFile);
-                
+                if (FileTexture == Null) {
+                    Platform->LogFp("[Assets] Error getting texture\n");
+                    return False;
+                }
                 texture* Texture = Assets->Textures + FileTexture->Id;
                 Texture->Width = FileTexture->Width;
                 Texture->Height = FileTexture->Height;
@@ -319,14 +319,16 @@ return False; \
                                                 &CurFileOffset,
                                                 TextureSize,
                                                 1);
-                CheckPtr(Pixels);
-                CheckFile(AssetFile);
-                
+                if (Pixels == Null) {
+                    Platform->LogFp("[Assets] Error getting texture pixels\n");
+                    return False;
+                }
                 Texture->Handle = Platform->AddTextureFp(FileTexture->Width, 
                                                          FileTexture->Height,
                                                          Pixels);
                 if (!Texture->Handle.Success) {
                     Platform->LogFp("[Assets] Cannot add assets!");
+                    return False;
                 }
             } break;
             case AssetType_Image: { 
@@ -339,10 +341,13 @@ return False; \
                                       Platform, 
                                       Scratch.Arena,
                                       &CurFileOffset);              
-                CheckPtr(FileImage);
-                CheckFile(AssetFile);
                 
-                auto* Image = Assets->Images + FileImage->Id;
+                if (FileImage == Null) {
+                    Platform->LogFp("[Assets] Error getting image\n");
+                    return False;
+                }
+                
+                auto* Image = Assets_GetImage(Assets, FileImage->Id);
                 Image->Aabb = FileImage->Aabb;
                 Image->TextureId = FileImage->TextureId;
             } break;
@@ -355,8 +360,11 @@ return False; \
                                                    Platform,
                                                    Scratch.Arena,
                                                    &CurFileOffset);
-                CheckPtr(FileFont);
-                CheckFile(AssetFile);
+                
+                if (FileFont == Null) {
+                    Platform->LogFp("[Assets] Error getting font\n");
+                    return False;
+                }
                 
                 auto* Font = Assets->Fonts + FileFont->Id;
                 Font->LineGap = FileFont->LineGap;
@@ -372,8 +380,12 @@ return False; \
                                                         Platform,
                                                         Scratch.Arena,
                                                         &CurFileOffset);
-                CheckPtr(FileFontGlyph);
-                CheckFile(AssetFile);
+                
+                
+                if (FileFontGlyph == Null) {
+                    Platform->LogFp("[Assets] Error getting font glyph\n");
+                    return False;
+                }
                 
                 font* Font = Assets_GetFont(Assets, FileFontGlyph->FontId);
                 font_glyph* Glyph = Font_GetGlyph(Font, FileFontGlyph->Codepoint);
@@ -392,8 +404,11 @@ return False; \
                                                           Platform,
                                                           Scratch.Arena,
                                                           &CurFileOffset);
-                CheckPtr(FileFontKerning);
-                CheckFile(AssetFile);
+                if (FileFontKerning == Null) {
+                    Platform->LogFp("[Assets] Error getting font kerning\n");
+                    return False;
+                }
+                
                 font* Font = Assets_GetFont(Assets, FileFontKerning->FontId);
                 Font_SetKerning(Font, 
                                 FileFontKerning->CodepointA, 
@@ -411,12 +426,7 @@ return False; \
                                                &CurFileOffset);
                 
                 if (File == Null) { 
-                    Platform->LogFp("[Assets] Sound is null"); 
-                    Arena_Revert(&Scratch); 
-                    return False; 
-                }
-                if (AssetFile.Error) {
-                    Platform->LogFileErrorFp(&AssetFile); 
+                    Platform->LogFp("[Assets] Error getitng sound\n"); 
                     Arena_Revert(&Scratch); 
                     return False; 
                 }
@@ -451,11 +461,6 @@ return False; \
                     return False; 
                 }
                 
-                if (AssetFile.Error) {
-                    Platform->LogFileErrorFp(&AssetFile); 
-                    Arena_Revert(&Scratch); 
-                    return False; 
-                }
                 
                 msg* Msg = Assets_GetMsg(Assets, File->Id);
                 Msg->Count = File->Count;
@@ -487,12 +492,6 @@ return False; \
                 
                 if (File == Null) { 
                     Platform->LogFp("[Assets] Anime is null"); 
-                    Arena_Revert(&Scratch); 
-                    return False; 
-                }
-                
-                if (AssetFile.Error) {
-                    Platform->LogFileErrorFp(&AssetFile); 
                     Arena_Revert(&Scratch); 
                     return False; 
                 }

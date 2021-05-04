@@ -1,15 +1,18 @@
 #ifndef GAME_ASSETS_TYPES 
 #define GAME_ASSETS_TYPES
 
+#define Game_AssetFileName "yuu"
+#define Game_AssetFileSignature "MOMO"
 
 enum texture_id {
     Texture_AtlasDefault,
     
     Texture_Count,
 };
-// NOTE(Momo): We cater for a fixed set of codepoints. 
-// ASCII 32 to 126 
-// Worry about sparseness next time.
+
+// NOTE(Momo): For now we cater for a fixed set of codepoints. 
+// Namely ASCII 32 to 126. Worry about unicode next time.
+
 
 #define FontGlyph_CodepointStart 32
 #define FontGlyph_CodepointEnd 126

@@ -29,8 +29,8 @@ Tba_ImageContexts[] = {
     {  "assets/karu32.png", Image_Karu32, Texture_AtlasDefault },
     {  "assets/player_white.png", Image_PlayerDot, Texture_AtlasDefault },
     {  "assets/player_black.png", Image_PlayerCircle, Texture_AtlasDefault },
-    {  "assets/bullet_dot.png", Image_BulletDot, Texture_AtlasDefault },
-    {  "assets/bullet_circle.png", Image_BulletCircle, Texture_AtlasDefault },
+    {  "assets/bullet_circle.png", Image_BulletDot, Texture_AtlasDefault },
+    {  "assets/bullet_dot.png", Image_BulletCircle, Texture_AtlasDefault },
     {  "assets/enemy.png", Image_Enemy, Texture_AtlasDefault },
 };
 

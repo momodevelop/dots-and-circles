@@ -19,12 +19,15 @@ struct transient_state {
     
     arena Arena;
     assets Assets; 
+    game_audio_mixer Mixer;
+    
 };
 
 struct permanent_state {
     b32 IsInitialized;
     b32 IsRunning;
     b32 IsPaused;
+    f32 Volume;
     
     game_mode_type CurrentGameMode;
     game_mode_type NextGameMode;

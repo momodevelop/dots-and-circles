@@ -11,12 +11,12 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#include "game_assets_types.h"  
+#include "game_assets_file.h"  
 
+#include "tool_build_assets.h"
 #include "tool_build_assets_util.h"
 #include "tool_build_assets_atlas.h"
-#include "tool_build_assets_msg.h"
-#include "tool_build_assets_asset_builder.h"
+#include "tool_build_assets_data.h"
 
 
 #define Tba_GenerateTestPng 1
@@ -145,18 +145,20 @@ int main() {
     //~ NOTE(Momo): Actual asset building
     printf("[Build Assets] Building Assets\n");
     
-    tba_asset_builder AssetBuilder_ = {};
-    tba_asset_builder* AssetBuilder = &AssetBuilder_;
-    Tba_AssetBuilderBegin(AssetBuilder, "yuu", "MOMO");
+    tba_context AssetBuilder_ = {};
+    tba_context* AssetBuilder = &AssetBuilder_;
+    Tba_Begin(AssetBuilder, 
+              Game_AssetFileName,
+              Game_AssetFileSignature);
     
     // NOTE(Momo): Write atlas
     {
-        Tba_AssetBuilderWriteTexture(AssetBuilder, 
-                                     Texture_AtlasDefault, 
-                                     AtlasWidth, 
-                                     AtlasHeight, 
-                                     4, 
-                                     AtlasTexture);
+        Tba_WriteTexture(AssetBuilder, 
+                         Texture_AtlasDefault, 
+                         AtlasWidth, 
+                         AtlasHeight, 
+                         4, 
+                         AtlasTexture);
         
         // NOTE(Momo): Write atlas aabb for images in font
         for(u32 i = 0; i <  AabbCount; ++i) {
@@ -165,10 +167,10 @@ int main() {
             switch(Type) {
                 case AtlasContextType_Image: {
                     auto* Image = (atlas_context_image*)UserDatas[i];
-                    Tba_AssetBuilderWriteImage(AssetBuilder, 
-                                               Image->Id, 
-                                               Image->TextureId, 
-                                               Aabb);
+                    Tba_WriteImage(AssetBuilder, 
+                                   Image->Id, 
+                                   Image->TextureId, 
+                                   Aabb);
                 } break;
                 case AtlasContextType_Font: {
                     auto* Font  = (atlas_context_font*)UserDatas[i];
@@ -189,14 +191,14 @@ int main() {
                                           &Box.Max.Y);
                     
                     aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
-                    Tba_AssetBuilderWriteFontGlyph(AssetBuilder, 
-                                                   Font->FontId, 
-                                                   Font->ImageId,
-                                                   Font->TextureId,
-                                                   Font->Codepoint, FontPixelScale * Advance,
-                                                   FontPixelScale * LeftSideBearing,
-                                                   Aabb,
-                                                   ScaledBox);
+                    Tba_WriteFontGlyph(AssetBuilder, 
+                                       Font->FontId, 
+                                       Font->ImageId,
+                                       Font->TextureId,
+                                       Font->Codepoint, FontPixelScale * Advance,
+                                       FontPixelScale * LeftSideBearing,
+                                       Aabb,
+                                       ScaledBox);
                     
                 } break;
                 
@@ -217,10 +219,10 @@ int main() {
                                  &BoundingBox.Max.Y
                                  );
         printf("[Build Assets] Writing font information...\n");
-        Tba_AssetBuilderWriteFont(AssetBuilder, Font_Default, 
-                                  Ascent * FontPixelScale, 
-                                  Descent * FontPixelScale, 
-                                  LineGap * FontPixelScale); 
+        Tba_WriteFont(AssetBuilder, Font_Default, 
+                      Ascent * FontPixelScale, 
+                      Descent * FontPixelScale, 
+                      LineGap * FontPixelScale); 
     }
     
     // NOTE(Momo): Kerning info
@@ -235,7 +237,7 @@ int main() {
                 ++j) 
             {
                 s32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (s32)i, (s32)j);
-                Tba_AssetBuilderWriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
+                Tba_WriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
             }
         }
     }
@@ -246,10 +248,10 @@ int main() {
     {
         for(u32 I = 0; I < ArrayCount(Tba_AnimeContexts); ++I) {
             tba_anime_context * Ctx = Tba_AnimeContexts + I;
-            Tba_AssetBuilderWriteAnime(AssetBuilder, 
-                                       Ctx->Id,
-                                       Ctx->Frames,
-                                       Ctx->FrameCount);
+            Tba_WriteAnime(AssetBuilder, 
+                           Ctx->Id,
+                           Ctx->Frames,
+                           Ctx->FrameCount);
         }
     }
     
@@ -258,9 +260,9 @@ int main() {
     {
         for(u32 I = 0; I < ArrayCount(Tba_MsgContexts); ++I) {
             tba_msg_context* Ctx = Tba_MsgContexts + I;
-            Tba_AssetBuilderWriteMsg(AssetBuilder,
-                                     Ctx->Id,
-                                     Ctx->Str);
+            Tba_WriteMsg(AssetBuilder,
+                         Ctx->Id,
+                         Ctx->Str);
         }
     }
     
@@ -285,13 +287,13 @@ int main() {
                 printf("test1");
                 return 1;
             }
-            Tba_AssetBuilderWriteWav(AssetBuilder,
-                                     Ctx->Id,
-                                     &WavResult);
+            Tba_WriteWav(AssetBuilder,
+                         Ctx->Id,
+                         &WavResult);
         }
     }
     
-    Tba_AssetBuilderEnd(AssetBuilder);
+    Tba_End(AssetBuilder);
     printf("[Build Assets] Assets Built\n");
     
     Tba_MemCheck;

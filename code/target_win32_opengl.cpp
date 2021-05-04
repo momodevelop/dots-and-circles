@@ -8,6 +8,7 @@
 #include "game_renderer.h"
 #include "game_platform.h"
 #include "game_opengl.h"
+#include "game_assets_file.h"
 
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
@@ -1304,7 +1305,7 @@ enum platform_file_error {
 static inline 
 PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     platform_file_handle Ret = {}; 
-    const char* Path = "yuu";
+    const char* Path = Game_AssetFileName;
     
     // Check if there are free handlers to go around
     if (G_State->HandleFreeCount == 0) {
@@ -1468,7 +1469,7 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
 #endif
     if (!GameMemory->Data) {
         Win32Log("[Win32::GameMemory] Failed to allocate\n");
-        return false;
+        return False;
     }
     
     GameMemory->Head.PermanentMemorySize = PermanentMemorySize;
@@ -1483,7 +1484,7 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
     Win32Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", TransientMemorySize);
     Win32Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", DebugMemorySize);
     
-    return true;
+    return True;
 }
 
 static inline void
@@ -1617,6 +1618,8 @@ WinMain(HINSTANCE Instance,
             Win32Log("[Win32] Reloading game code!\n");
             Win32UnloadGameCode(&GameCode);
             Win32LoadGameCode(&GameCode);
+            ZeroBlock(State->GameMemory->Head.TransientMemory, 
+                      State->GameMemory->Head.TransientMemorySize);
         }
         
         
