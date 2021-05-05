@@ -15,8 +15,7 @@ struct platform_input_button {
 struct platform_input {
     u8_str Characters;
     union {
-        // TODO(Momo): maybe we don't do buttons but do mouse?
-        platform_input_button Buttons[5];
+        platform_input_button Buttons[6];
         struct {
             platform_input_button ButtonSwitch;
             
@@ -25,6 +24,7 @@ struct platform_input {
             platform_input_button ButtonBack;
             platform_input_button ButtonConsole;
             platform_input_button ButtonInspector;
+            platform_input_button ButtonPause;
         };
     };
     

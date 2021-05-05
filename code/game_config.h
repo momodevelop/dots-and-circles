@@ -10,7 +10,7 @@
 
 #define Game_AudioSampleRate 48000
 #define Game_AudioChannels 2
-#define Game_AudioBitRate 16
+#define Game_AudioBitsPerSample 16
 
 #define Game_AssetFileName "yuu"
 #define Game_AssetFileSignature "MOMO"

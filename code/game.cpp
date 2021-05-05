@@ -79,7 +79,6 @@ GameUpdateFunc(GameUpdate)
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Splash;
         PermState->IsInitialized = True;
-        PermState->IsRunning = True;
         PermState->IsPaused = False;
         
         Renderer_SetDesignResolution(RenderCommands, 
@@ -139,10 +138,12 @@ GameUpdateFunc(GameUpdate)
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
     DebugInspector_Begin(&DebugState->Inspector);
-    
-    
     DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
     
+    // NOTE(Momo): Pause
+    if (Button_IsPoked(Input->ButtonPause)) {
+        PermState->IsPaused = !PermState->IsPaused;
+    }
     if (PermState->IsPaused) {
         DeltaTime = 0.f;
     }
@@ -231,7 +232,7 @@ GameUpdateFunc(GameUpdate)
                                 DeltaTime);
         } break;
         default: {
-            Assert(false);
+            return False;
         }
     }
     
@@ -242,7 +243,7 @@ GameUpdateFunc(GameUpdate)
     
     
     
-    return PermState->IsRunning;
+    return True;
 }
 
 

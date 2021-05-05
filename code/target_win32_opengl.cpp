@@ -65,9 +65,6 @@ static WglFunctionPtr(wglSwapIntervalEXT);
 #define Win32_RecordStateFile "record_state"
 #define Win32_RecordInputFile "record_input"
 #define Win32_SaveStateFile "game_state"
-#define Win32_AudioSamplePerFrame 48000
-#define Win32_AudioChannels 2
-#define Win32_AudioBitsPerSamples 16
 #define Win32_AudioLatencyFrames 1
 
 //~ NOTE(Momo): Structs
@@ -86,7 +83,6 @@ struct win32_game_memory {
 
 struct win32_state {
     arena Arena;
-    b32 IsPaused;
     b32 IsRunning;
     
     b32 IsRecordingInput;
@@ -319,7 +315,7 @@ Win32Init() {
     
 #endif
     
-    State->IsRunning = true;
+    State->IsRunning = True;
     return State;
 }
 
@@ -1135,10 +1131,7 @@ Win32ProcessMessages(HWND Window,
                         }
                     } break;
                     case VK_F5:{
-                        if(Msg.message == WM_KEYDOWN) {
-                            Win32Log("[Win32] Paused!\n");
-                            G_State->IsPaused = !G_State->IsPaused;
-                        }
+                        Input->ButtonPause.Now = IsDown;
                     } break;
                     case VK_F6:{
                         if (Msg.message == WM_KEYDOWN) {
@@ -1558,9 +1551,9 @@ WinMain(HINSTANCE Instance,
     win32_audio_output AudioOutput = {}; 
     
     if (!Win32InitAudioOutput(&AudioOutput,
-                              Win32_AudioSamplePerFrame,
-                              Win32_AudioChannels,
-                              Win32_AudioBitsPerSamples, // Can only be 8 or 16
+                              Game_AudioSampleRate,
+                              Game_AudioChannels,
+                              Game_AudioBitsPerSample, // Can only be 8 or 16
                               Win32_AudioLatencyFrames,  // Latency frames
                               RefreshRate)) 
     { 
@@ -1665,12 +1658,13 @@ WinMain(HINSTANCE Instance,
         if (GameCode.GameUpdate) 
         {
             f32 GameDeltaTime = TargetSecsPerFrame;
-            State->IsRunning = GameCode.GameUpdate(&GameMemory.Head,
-                                                   &PlatformApi,
-                                                   &RenderCommands,
-                                                   &GameInput,
-                                                   &Audio,
-                                                   GameDeltaTime);
+            b32 IsGameRunning = GameCode.GameUpdate(&GameMemory.Head,
+                                                    &PlatformApi,
+                                                    &RenderCommands,
+                                                    &GameInput,
+                                                    &Audio,
+                                                    GameDeltaTime);
+            State->IsRunning = IsGameRunning && State->IsRunning;
         }
         
         
@@ -1689,7 +1683,7 @@ WinMain(HINSTANCE Instance,
                 // Buffer structure:
                 // s16   s16    s16  s16   s16  s16
                 // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
-                for(usize I = 0; I < Audio.SampleCount; ++I ){
+                for(u32 I = 0; I < Audio.SampleCount; ++I ){
                     *DestSample++ = *SrcSample++; // Left
                     *DestSample++ = *SrcSample++; // Right
                 }
