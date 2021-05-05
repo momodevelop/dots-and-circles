@@ -65,6 +65,7 @@ static WglFunctionPtr(wglSwapIntervalEXT);
 #define Win32_RecordStateFile "record_state"
 #define Win32_RecordInputFile "record_input"
 #define Win32_SaveStateFile "game_state"
+#define Win32_AudioLatencyFrames 1
 
 //~ NOTE(Momo): Structs
 // File handle pool
@@ -117,6 +118,8 @@ struct win32_state {
 win32_state* G_State = {};
 
 //~ NOTE(Momo): Helper functions and globals
+
+
 static inline u32
 Win32DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
     // Do we want to cap this?
@@ -885,80 +888,99 @@ Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
 
 
 //~ NOTE(Momo): Audio related
-
-struct win32_audio {
-    // Wasapi
-    IMMDeviceEnumerator* Enumerator;
-    IMMDevice* Device;
-    IAudioClient* AudioClient;
-    IAudioRenderClient* AudioRenderClient;
-    
-    // Secondary Buffer
+struct win32_audio_output {
     u32 BufferSize;
     s16* Buffer;
     
-    // For calculations
     u32 LatencySampleCount;
     u32 SamplesPerSecond;
     u16 BitsPerSample;
     u16 Channels;
 };
 
+struct win32_wasapi {
+    IMMDeviceEnumerator* Enumerator;
+    IMMDevice* Device;
+    IAudioClient* AudioClient;
+    IAudioRenderClient* AudioRenderClient;
+};
+
 static inline void
-Win32AudioFree(win32_audio* Audio) {
+Win32FreeAudioOutput(win32_audio_output* AudioOutput) {
+    Win32FreeMemory(AudioOutput->Buffer);
+}
+
+static inline b32
+Win32InitAudioOutput(win32_audio_output* Ret, 
+                     u32 SamplesPerSecond,
+                     u16 Channels,
+                     u16 BitsPerSample,
+                     u32 LatencyFrames,
+                     u32 RefreshRate)
+{
+    Ret->Channels = Channels;
+    Ret->BitsPerSample = BitsPerSample;
+    Ret->SamplesPerSecond = SamplesPerSecond;
+    Ret->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
+    Ret->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
+    Ret->Buffer = (s16*)Win32AllocateMemory(Ret->BufferSize); 
+    if (!Ret->Buffer) {
+        Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
+        return False;
+    }
+    
+    return True;
+    
+}
+
+static inline void
+Win32FreeWasapi(win32_wasapi* Wasapi) {
 #define SAFE_RELEASE(Item) if(Item) (Item)->Release();
-    SAFE_RELEASE(Audio->Enumerator);
-    SAFE_RELEASE(Audio->AudioClient);
-    SAFE_RELEASE(Audio->Device);
-    SAFE_RELEASE(Audio->AudioRenderClient);
+    SAFE_RELEASE(Wasapi->Enumerator);
+    SAFE_RELEASE(Wasapi->AudioClient);
+    SAFE_RELEASE(Wasapi->Device);
+    SAFE_RELEASE(Wasapi->AudioRenderClient);
 #undef SAFE_RELEASE
-    Win32FreeMemory(Audio->Buffer);
 }
 
 
-static inline b32
-Win32AudioInit(win32_audio* Audio,
-               u32 SamplesPerSecond, 
-               u16 BitsPerSample,
-               u16 Channels,
-               u32 RefreshRate,
-               u32 LatencyFrames) 
+static inline b8
+Win32InitWasapi(win32_wasapi* Wasapi,
+                u32 SamplesPerSecond, 
+                u16 BitsPerSample,
+                u16 Channels,
+                usize BufferSize) 
 {
-    Audio->Channels = Channels;
-    Audio->BitsPerSample = BitsPerSample;
-    Audio->SamplesPerSecond = SamplesPerSecond;
-    Audio->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
-    
     if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
         Win32Log("[Win32::Audio] Failed CoInitializeEx\n");
-        return False;
+        return false;
     }
     
     
     if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), 
                                 NULL,
                                 CLSCTX_ALL, 
-                                IID_PPV_ARGS(&Audio->Enumerator))))
+                                IID_PPV_ARGS(&Wasapi->Enumerator))))
     {
         Win32Log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
-        return False;
+        return false;
     }
     
-    if (FAILED(Audio->Enumerator->GetDefaultAudioEndpoint(
-                                                          eRender, 
-                                                          eConsole, 
-                                                          &Audio->Device))) 
+    if (FAILED(Wasapi->Enumerator->GetDefaultAudioEndpoint(
+                                                           eRender, 
+                                                           eConsole, 
+                                                           &Wasapi->Device))) 
     {
         Win32Log("[Win32::Audio] Failed to get audio endpoint\n");
-        return False;
+        return false;
     }
     
-    if(FAILED(Audio->Device->Activate(__uuidof(IAudioClient), 
-                                      CLSCTX_ALL, 
-                                      NULL, 
-                                      (LPVOID*)&Audio->AudioClient))) {
+    if(FAILED(Wasapi->Device->Activate(__uuidof(IAudioClient), 
+                                       CLSCTX_ALL, 
+                                       NULL, 
+                                       (LPVOID*)&Wasapi->AudioClient))) {
         Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return False;
+        return false;
     }
     
     WAVEFORMATEXTENSIBLE WaveFormat;
@@ -977,87 +999,41 @@ Win32AudioInit(win32_audio* Audio,
     
     
     // buffer size in 100 nanoseconds
-    //REFERENCE_TIME BufferDuration = 10000000ULL * BufferSize / SamplesPerSecond;         
-    if (FAILED(Audio->AudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 
-                                              AUDCLNT_STREAMFLAGS_NOPERSIST, 
-                                              0, 0, 
-                                              &WaveFormat.Format, nullptr)))
+    REFERENCE_TIME BufferDuration = 
+        10000000ULL * BufferSize / SamplesPerSecond;         
+    if (FAILED(Wasapi->AudioClient->Initialize(
+                                               AUDCLNT_SHAREMODE_SHARED, 
+                                               AUDCLNT_STREAMFLAGS_NOPERSIST, 
+                                               BufferDuration, 0, 
+                                               &WaveFormat.Format, nullptr)))
     {
         Win32Log("[Win32::Audio] Failed to initialize audio client\n");
-        return False;
+        return false;
     }
     
-    if (FAILED(Audio->AudioClient->GetService(IID_PPV_ARGS(&Audio->AudioRenderClient))))
+    if (FAILED(Wasapi->AudioClient->GetService(IID_PPV_ARGS(&Wasapi->AudioRenderClient))))
     {
         Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return False;
+        return false;
     }
     
     UINT32 SoundFrameCount;
-    if (FAILED(Audio->AudioClient->GetBufferSize(&SoundFrameCount)))
+    if (FAILED(Wasapi->AudioClient->GetBufferSize(&SoundFrameCount)))
     {
         Win32Log("[Win32::Audio] Failed to get buffer size\n");
-        return False;
+        return false;
     }
     
-    //Ret->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
-    Audio->BufferSize = SoundFrameCount;
-    Audio->Buffer = (s16*)Win32AllocateMemory(Audio->BufferSize); 
-    if (!Audio->Buffer) {
-        Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
-        return False;
+    if (BufferSize != SoundFrameCount) {
+        Win32Log("[Win32::Audio] Buffer size not expected\n");
+        return false;
     }
-    
     
     Win32Log("[Win32::Audio] Loaded!\n");
-    
-    // TODO(Momo): Fill the buffer with 0 first
-    
-    Audio->AudioClient->Start();
-    
-    return True;
+    return true;
 }
 
-static inline platform_audio
-Win32AudioBegin(win32_audio* Audio) { 
-    platform_audio Ret = {};
-    
-    UINT32 SoundPaddingSize;
-    UINT32 SamplesToWrite = 0;
-    if (SUCCEEDED(Audio->AudioClient->
-                  GetCurrentPadding(&SoundPaddingSize))) {
-        SamplesToWrite = 
-            (UINT32)Audio->BufferSize - SoundPaddingSize;
-        
-        // Cap the samples to write to how much latency is allowed.
-        if (SamplesToWrite > Audio->LatencySampleCount) {
-            SamplesToWrite = Audio->LatencySampleCount;
-        }
-    }
-    
-    Ret.SampleBuffer = Audio->Buffer;
-    Ret.SampleCount = SamplesToWrite; 
-}
 
-static inline void
-Win32AudioEnd(win32_audio* Audio, platform_audio Output) {
-    BYTE* SoundBufferData;
-    if (SUCCEEDED(Audio->AudioRenderClient->
-                  GetBuffer((UINT32)Output.SampleCount, &SoundBufferData))) 
-    {
-        s16* SrcSample = Output.SampleBuffer;
-        s16* DestSample = (s16*)SoundBufferData;
-        // Buffer structure:
-        // s16   s16    s16  s16   s16  s16
-        // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
-        for(u32 I = 0; I < Output.SampleCount; ++I ){
-            *DestSample++ = *SrcSample++; // Left
-            *DestSample++ = *SrcSample++; // Right
-        }
-        
-        Audio->AudioRenderClient->ReleaseBuffer((UINT32)Output.SampleCount, 0);
-    }
-}
 
 static inline v2u
 Win32GetMonitorDimensions() {
@@ -1572,16 +1548,30 @@ WinMain(HINSTANCE Instance,
     platform_api PlatformApi = Win32InitPlatformApi();
     
     // Initialize Audio-related stuff
-    win32_audio Audio = {};
-    if(!Win32AudioInit(&Audio,
-                       Game_AudioSamplesPerSecond,
-                       Game_AudioBitsPerSample,
-                       Game_AudioChannels,
-                       RefreshRate,
-                       Game_AudioLatencyFrames)) {
+    win32_audio_output AudioOutput = {}; 
+    
+    if (!Win32InitAudioOutput(&AudioOutput,
+                              Game_AudioSampleRate,
+                              Game_AudioChannels,
+                              Game_AudioBitsPerSample, // Can only be 8 or 16
+                              Win32_AudioLatencyFrames,  // Latency frames
+                              RefreshRate)) 
+    { 
+        return 1; 
+    }
+    Defer{ Win32FreeAudioOutput(&AudioOutput); };
+    
+    // TODO: Should really initialize from Audio Ouput
+    win32_wasapi Wasapi = {};
+    if(!Win32InitWasapi(&Wasapi,
+                        AudioOutput.SamplesPerSecond,
+                        AudioOutput.BitsPerSample,
+                        AudioOutput.Channels,
+                        AudioOutput.BufferSize)) {
         return 1;
     }
-    Defer { Win32AudioFree(&Audio); }; 
+    Defer { Win32FreeWasapi(&Wasapi); }; 
+    Wasapi.AudioClient->Start();
     
     // Initialize game memory
     win32_game_memory GameMemory = {};
@@ -1647,7 +1637,23 @@ WinMain(HINSTANCE Instance,
         
         // Compute how much sound to write and where
         // TODO: Functionize this
-        platform_audio GameAudio = Win32AudioBegin(&Audio);
+        platform_audio Audio = {};
+        {
+            UINT32 SoundPaddingSize;
+            UINT32 SamplesToWrite = 0;
+            if (SUCCEEDED(Wasapi.AudioClient->
+                          GetCurrentPadding(&SoundPaddingSize))) {
+                SamplesToWrite = 
+                    (UINT32)AudioOutput.BufferSize - SoundPaddingSize;
+                
+                // Cap the samples to write to how much latency is allowed.
+                if (SamplesToWrite > AudioOutput.LatencySampleCount) {
+                    SamplesToWrite = AudioOutput.LatencySampleCount;
+                }
+            }
+            Audio.SampleBuffer = AudioOutput.Buffer;
+            Audio.SampleCount = SamplesToWrite; 
+        }
         
         if (GameCode.GameUpdate) 
         {
@@ -1656,7 +1662,7 @@ WinMain(HINSTANCE Instance,
                                                     &PlatformApi,
                                                     &RenderCommands,
                                                     &GameInput,
-                                                    &GameAudio,
+                                                    &Audio,
                                                     GameDeltaTime);
             State->IsRunning = IsGameRunning && State->IsRunning;
         }
@@ -1667,7 +1673,25 @@ WinMain(HINSTANCE Instance,
         
         // NOTE(Momo): 16-bit Sound
         // TODO: Functionize this
-        Win32AudioEnd(&Audio, AudioOutput);
+        {
+            BYTE* SoundBufferData;
+            if (SUCCEEDED(Wasapi.AudioRenderClient->
+                          GetBuffer((UINT32)Audio.SampleCount, &SoundBufferData))) 
+            {
+                s16* SrcSample = AudioOutput.Buffer;
+                s16* DestSample = (s16*)SoundBufferData;
+                // Buffer structure:
+                // s16   s16    s16  s16   s16  s16
+                // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
+                for(u32 I = 0; I < Audio.SampleCount; ++I ){
+                    *DestSample++ = *SrcSample++; // Left
+                    *DestSample++ = *SrcSample++; // Right
+                }
+                
+                Wasapi.AudioRenderClient->ReleaseBuffer((UINT32)Audio.SampleCount, 0);
+            }
+            
+        }
         
         f32 SecsElapsed = 
             Win32GetSecondsElapsed(State, LastCount, Win32GetCurrentCounter());
