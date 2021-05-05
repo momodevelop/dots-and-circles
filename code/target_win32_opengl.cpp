@@ -1653,6 +1653,7 @@ WinMain(HINSTANCE Instance,
             }
             Audio.SampleBuffer = AudioOutput.Buffer;
             Audio.SampleCount = SamplesToWrite; 
+            Audio.Channels = AudioOutput.Channels;
         }
         
         if (GameCode.GameUpdate) 
@@ -1680,12 +1681,14 @@ WinMain(HINSTANCE Instance,
             {
                 s16* SrcSample = AudioOutput.Buffer;
                 s16* DestSample = (s16*)SoundBufferData;
-                // Buffer structure:
+                // Buffer structure for stereo:
                 // s16   s16    s16  s16   s16  s16
                 // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
                 for(u32 I = 0; I < Audio.SampleCount; ++I ){
-                    *DestSample++ = *SrcSample++; // Left
-                    *DestSample++ = *SrcSample++; // Right
+                    for (u32 J = 0; J < Audio.Channels; ++J) {
+                        *DestSample++ = *SrcSample++;
+                    }
+                    
                 }
                 
                 Wasapi.AudioRenderClient->ReleaseBuffer((UINT32)Audio.SampleCount, 0);

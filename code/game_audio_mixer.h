@@ -105,8 +105,9 @@ AudioMixer_Update(game_audio_mixer* Mixer,
         }
         
         // Based on number of channels!
-        *SampleOut++ = SampleValue; // Left Speaker
-        *SampleOut++ = SampleValue; // Right Speaker
+        for (u32 J = 0; J < Audio->Channels; ++J) {
+            *SampleOut++ = SampleValue;
+        }
         
     }
 }

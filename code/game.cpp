@@ -77,7 +77,7 @@ GameUpdateFunc(GameUpdate)
         PermState->ModeArena = Arena_SubArena(&PermState->MainArena, 
                                               Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
-        PermState->NextGameMode = GameModeType_Splash;
+        PermState->NextGameMode = GameModeType_Main;
         PermState->IsInitialized = True;
         PermState->IsPaused = False;
         

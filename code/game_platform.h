@@ -142,7 +142,8 @@ struct game_memory {
 
 struct platform_audio {
     s16* SampleBuffer;
-    usize SampleCount;
+    u32 SampleCount;
+    u32 Channels;
 };
 
 // Game function typedefs
