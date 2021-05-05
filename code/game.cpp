@@ -101,7 +101,7 @@ GameUpdateFunc(GameUpdate)
         Assert(Success);
         
         
-        AudioMixer_Init(&TranState->Mixer, 0.3f);
+        AudioMixer_Init(&TranState->Mixer, 1.f);
         
         TranState->IsInitialized = True;
     }
@@ -161,7 +161,9 @@ GameUpdateFunc(GameUpdate)
             case GameModeType_Main: {
                 PermState->MainMode = 
                     Arena_PushStruct(game_mode_main, ModeArena); 
-                InitMainMode(PermState, TranState, DebugState);
+                if (!InitMainMode(PermState, TranState, DebugState)){
+                    return False;
+                }
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
@@ -174,6 +176,7 @@ GameUpdateFunc(GameUpdate)
                 InitAnimeTestMode(PermState);
             } break;
             default: {
+                return False;
             }
         }
         

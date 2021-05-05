@@ -65,7 +65,7 @@ static inline void
 UpdateAnimeTestMode(permanent_state* PermState, 
                     transient_state* TranState,
                     mailbox* RenderCommands, 
-                    game_input* Input,
+                    platform_input* Input,
                     f32 DeltaTime) 
 {
     game_mode_anime_test* Mode = PermState->AnimeTestMode;     

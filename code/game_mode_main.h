@@ -118,6 +118,9 @@ struct game_mode_main {
     
     wave Wave;
     rng_series Rng;
+    
+    // Audio handles
+    game_audio_mixer_handle BgmHandle;
 };
 
 
@@ -176,7 +179,7 @@ SpawnBullet(game_mode_main* Mode, assets* Assets, v2f Position, v2f Direction, f
     
 }
 
-static inline void 
+static inline b32 
 InitMainMode(permanent_state* PermState,
              transient_state* TranState,
              debug_state* DebugState) 
@@ -218,7 +221,9 @@ InitMainMode(permanent_state* PermState,
         Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
     }
     Mode->Wave.IsDone = True;
+    Mode->BgmHandle = AudioMixer_Play(&TranState->Mixer, Sound_MainBgm, True);
     
+    return !Mode->BgmHandle.Error;
 }
 
 
@@ -463,7 +468,7 @@ UpdateWaves(game_mode_main* Mode,
 
 static inline void
 UpdateInput(game_mode_main* Mode,
-            game_input* Input)
+            platform_input* Input)
 {
     v2f Direction = {};
     player* Player = &Mode->Player; 
@@ -509,10 +514,10 @@ RenderPlayer(game_mode_main* Mode,
         c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
         Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_PlayerCircle,
-                                       M44f_Concat(T,S), 
-                                       Color);
+                                   Assets,
+                                   Image_PlayerCircle,
+                                   M44f_Concat(T,S), 
+                                   Color);
     }
     
     {
@@ -521,10 +526,10 @@ RenderPlayer(game_mode_main* Mode,
                                   ZLayPlayer + 0.01f);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
         Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_PlayerDot,
-                                       M44f_Concat(T,S), 
-                                       Color);
+                                   Assets,
+                                   Image_PlayerDot,
+                                   M44f_Concat(T,S), 
+                                   Color);
     }
 }
 
@@ -553,10 +558,10 @@ RenderBullets(game_mode_main* Mode,
                                       ZLayDotBullet + LayerOffset);
             
             Draw_TexturedQuadFromImage(RenderCommands,
-                                           Assets,
-                                           Image_BulletDot,
-                                           M44f_Concat(T,S), 
-                                           Color_White);
+                                       Assets,
+                                       Image_BulletDot,
+                                       M44f_Concat(T,S), 
+                                       Color_White);
             LayerOffset += 0.01f;
             
         }
@@ -577,10 +582,10 @@ RenderBullets(game_mode_main* Mode,
                                       ZLayCircleBullet + LayerOffset);
             
             Draw_TexturedQuadFromImage(RenderCommands,
-                                           Assets,
-                                           Image_BulletCircle,
-                                           M44f_Concat(T,S), 
-                                           Color_White);
+                                       Assets,
+                                       Image_BulletCircle,
+                                       M44f_Concat(T,S), 
+                                       Color_White);
             LayerOffset += 0.01f;
             
         }
@@ -605,10 +610,10 @@ RenderEnemies(game_mode_main* Mode,
                                   ZLayEnemy);
         
         Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_Enemy,
-                                       M44f_Concat(T,S), 
-                                       Color_White);
+                                   Assets,
+                                   Image_Enemy,
+                                   M44f_Concat(T,S), 
+                                   Color_White);
     }
 }
 
@@ -618,7 +623,7 @@ UpdateMainMode(permanent_state* PermState,
                transient_state* TranState,
                debug_state* DebugState,
                mailbox* RenderCommands, 
-               game_input* Input,
+               platform_input* Input,
                f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;

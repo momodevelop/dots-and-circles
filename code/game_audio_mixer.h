@@ -16,6 +16,7 @@ struct game_audio_mixer_instance {
 };
 
 struct game_audio_mixer_handle {
+    b32 Error;
     u32 Id;
 };
 
@@ -42,6 +43,11 @@ AudioMixer_Play(game_audio_mixer* Mixer,
                 sound_id SoundId, 
                 b32 Loop) 
 {
+    game_audio_mixer_handle Ret = {};
+    if (Mixer->FreeListCount == 0) {
+        Ret.Error = True;
+        return Ret;
+    }
     u32 Index = Mixer->FreeList[Mixer->FreeListCount - 1];
     game_audio_mixer_instance* Instance = Mixer->Instances + Index;
     Instance->IsLoop = Loop;
@@ -51,7 +57,10 @@ AudioMixer_Play(game_audio_mixer* Mixer,
     
     --Mixer->FreeListCount;
     
-    return { Index };
+    Ret.Id = Index;
+    Ret.Error = False;
+    
+    return Ret;
 }
 
 
@@ -66,7 +75,7 @@ AudioMixer_Stop(game_audio_mixer* Mixer,
 
 static inline void
 AudioMixer_Update(game_audio_mixer* Mixer, 
-                  game_audio* Audio,
+                  platform_audio* Audio,
                   assets* Assets) 
 {
     s16* SampleOut = Audio->SampleBuffer;

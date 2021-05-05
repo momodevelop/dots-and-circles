@@ -11,6 +11,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#include "game_config.h"
 #include "game_assets_file.h"  
 
 #include "tool_build_assets.h"
@@ -284,7 +285,6 @@ int main() {
             if(!Wav_LoadFromMemory(&WavResult,
                                    FileResult.Data,
                                    FileResult.Size)) {
-                printf("test1");
                 return 1;
             }
             Tba_WriteWav(AssetBuilder,

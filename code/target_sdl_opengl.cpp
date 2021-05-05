@@ -420,7 +420,7 @@ int main(int argc, char* argv[]) {
     mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
     
     // NOTE(Momo): Input
-    game_input Input = {};
+    platform_input Input = {};
 #if INTERNAL
     char DebugTextInputBuffer[10];
     Input.DebugTextInputBuffer = StringBuffer(DebugTextInputBuffer, 10);

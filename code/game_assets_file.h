@@ -1,9 +1,6 @@
 #ifndef GAME_ASSETS_TYPES 
 #define GAME_ASSETS_TYPES
 
-#define Game_AssetFileName "yuu"
-#define Game_AssetFileSignature "MOMO"
-
 enum texture_id {
     Texture_AtlasDefault,
     
@@ -20,6 +17,7 @@ enum texture_id {
 
 enum sound_id {
     Sound_Test,
+    Sound_MainBgm,
     
     Sound_Count,
 };

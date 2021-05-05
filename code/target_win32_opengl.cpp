@@ -5,10 +5,11 @@
 #include <audioclient.h>
 
 #include "momo.h"
+
+#include "game_config.h"
 #include "game_renderer.h"
 #include "game_platform.h"
 #include "game_opengl.h"
-#include "game_assets_file.h"
 
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
@@ -358,12 +359,12 @@ Win32EndRecordingInput(win32_state* State) {
 }
 
 static inline void
-Win32RecordInput(win32_state* State, game_input* Input) {
+Win32RecordInput(win32_state* State, platform_input* Input) {
     Assert(State->IsRecordingInput);
     DWORD BytesWritten;
     if(!WriteFile(State->RecordingInputHandle,
                   Input,
-                  sizeof(game_input),
+                  sizeof(platform_input),
                   &BytesWritten, 0)) 
     {
         Win32Log("[Win32::RecordInput] Cannot write file\n");
@@ -371,7 +372,7 @@ Win32RecordInput(win32_state* State, game_input* Input) {
         return;
     }
     
-    if (BytesWritten != sizeof(game_input)) {
+    if (BytesWritten != sizeof(platform_input)) {
         Win32Log("[Win32::RecordInput] Did not complete writing\n");
         Win32EndRecordingInput(State);
         return;
@@ -408,14 +409,14 @@ Win32BeginPlaybackInput(win32_state* State, const char* Path) {
 
 // NOTE(Momo): returns true if 'done' reading all input, false otherwise
 static inline b32 
-Win32PlaybackInput(win32_state* State, game_input* Input) {
+Win32PlaybackInput(win32_state* State, platform_input* Input) {
     DWORD BytesRead;
     BOOL Success = ReadFile(State->PlaybackInputHandle, 
                             Input,
-                            sizeof(game_input),
+                            sizeof(platform_input),
                             &BytesRead,
                             0);
-    if(!Success || BytesRead != sizeof(game_input)) {
+    if(!Success || BytesRead != sizeof(platform_input)) {
         return True;
     }
     return False;
@@ -1066,7 +1067,7 @@ Win32GetClientDimensions(HWND Window) {
 
 static inline void
 Win32ProcessMessages(HWND Window, 
-                     game_input* Input)
+                     platform_input* Input)
 {
     MSG Msg = {};
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
@@ -1544,7 +1545,7 @@ WinMain(HINSTANCE Instance,
                                                  "lock");
     
     // Initialize game input
-    game_input GameInput = {};
+    platform_input GameInput = {};
     if(!Input_Init(&GameInput, &State->Arena)) {
         return 1;
     }
@@ -1643,7 +1644,7 @@ WinMain(HINSTANCE Instance,
         
         // Compute how much sound to write and where
         // TODO: Functionize this
-        game_audio GameAudio = {};
+        platform_audio Audio = {};
         {
             UINT32 SoundPaddingSize;
             UINT32 SamplesToWrite = 0;
@@ -1657,22 +1658,19 @@ WinMain(HINSTANCE Instance,
                     SamplesToWrite = AudioOutput.LatencySampleCount;
                 }
             }
-            GameAudio.SampleBuffer = AudioOutput.Buffer;
-            GameAudio.SampleCount = SamplesToWrite; 
+            Audio.SampleBuffer = AudioOutput.Buffer;
+            Audio.SampleCount = SamplesToWrite; 
         }
         
         if (GameCode.GameUpdate) 
         {
             f32 GameDeltaTime = TargetSecsPerFrame;
-            if (State->IsPaused) {
-                GameDeltaTime = 0.f;
-            }
-            GameCode.GameUpdate(&GameMemory.Head,
-                                &PlatformApi,
-                                &RenderCommands,
-                                &GameInput,
-                                &GameAudio,
-                                GameDeltaTime);
+            State->IsRunning = GameCode.GameUpdate(&GameMemory.Head,
+                                                   &PlatformApi,
+                                                   &RenderCommands,
+                                                   &GameInput,
+                                                   &Audio,
+                                                   GameDeltaTime);
         }
         
         
@@ -1684,19 +1682,19 @@ WinMain(HINSTANCE Instance,
         {
             BYTE* SoundBufferData;
             if (SUCCEEDED(Wasapi.AudioRenderClient->
-                          GetBuffer((UINT32)GameAudio.SampleCount, &SoundBufferData))) 
+                          GetBuffer((UINT32)Audio.SampleCount, &SoundBufferData))) 
             {
                 s16* SrcSample = AudioOutput.Buffer;
                 s16* DestSample = (s16*)SoundBufferData;
                 // Buffer structure:
                 // s16   s16    s16  s16   s16  s16
                 // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
-                for(usize I = 0; I < GameAudio.SampleCount; ++I ){
+                for(usize I = 0; I < Audio.SampleCount; ++I ){
                     *DestSample++ = *SrcSample++; // Left
                     *DestSample++ = *SrcSample++; // Right
                 }
                 
-                Wasapi.AudioRenderClient->ReleaseBuffer((UINT32)GameAudio.SampleCount, 0);
+                Wasapi.AudioRenderClient->ReleaseBuffer((UINT32)Audio.SampleCount, 0);
             }
             
         }

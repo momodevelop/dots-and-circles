@@ -7,6 +7,7 @@
 static struct platform_api* G_Platform = {};
 #endif 
 
+#include "game_config.h"
 #include "game_renderer.h"
 #include "game_platform.h"
 

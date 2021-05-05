@@ -8,7 +8,7 @@
 - Introspection?
 
 # Game
-- game_audio to control sounds
+- platform_audio to control sounds
 	-
 
 - Enemy (...32x32?)

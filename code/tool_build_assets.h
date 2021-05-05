@@ -11,8 +11,8 @@ struct tba_context {
 
 static inline void
 Tba_Begin(tba_context* Context, 
-                    const char* Filename, 
-                    const char* Signature) 
+          const char* Filename, 
+          const char* Signature) 
 {
     Context->EntryCount = 0;
     Context->File = nullptr; 
@@ -46,11 +46,11 @@ Tba_WriteEntry(tba_context* Context, asset_type AssetType)
 
 static inline void 
 Tba_WriteTexture(tba_context* Context, 
-                             texture_id Id, 
-                             u32 Width, 
-                             u32 Height, 
-                             u32 Channels, 
-                             u8* Pixels) 
+                 texture_id Id, 
+                 u32 Width, 
+                 u32 Height, 
+                 u32 Channels, 
+                 u8* Pixels) 
 {
     Tba_WriteEntry(Context, AssetType_Texture);
     
@@ -71,8 +71,8 @@ Tba_WriteTexture(tba_context* Context,
 
 static inline void 
 Tba_WriteTextureFromFile(tba_context* Context, 
-                                     texture_id Id, 
-                                     const char* Filename) 
+                         texture_id Id, 
+                         const char* Filename) 
 {
     u32 Width = 0, Height = 0, Channels = 0;
     u8* LoadedImage = nullptr;
@@ -92,9 +92,9 @@ Tba_WriteTextureFromFile(tba_context* Context,
 
 static inline void 
 Tba_WriteImage(tba_context* Context, 
-                           image_id Id, 
-                           texture_id TargetTextureId, 
-                           aabb2u Aabb) 
+               image_id Id, 
+               texture_id TargetTextureId, 
+               aabb2u Aabb) 
 {
     Tba_WriteEntry(Context,  AssetType_Image);
     
@@ -107,10 +107,10 @@ Tba_WriteImage(tba_context* Context,
 
 static inline void
 Tba_WriteFont(tba_context* Context, 
-                          font_id Id, 
-                          f32 Ascent, 
-                          f32 Descent, 
-                          f32 LineGap) 
+              font_id Id, 
+              f32 Ascent, 
+              f32 Descent, 
+              f32 LineGap) 
 {
     Tba_WriteEntry(Context, AssetType_Font);
     
@@ -124,14 +124,14 @@ Tba_WriteFont(tba_context* Context,
 
 static inline void 
 Tba_WriteFontGlyph(tba_context* Context, 
-                               font_id FontId, 
-                               image_id ImageId,
-                               texture_id TextureId, 
-                               u32 Codepoint, 
-                               f32 Advance, 
-                               f32 LeftBearing, 
-                               aabb2u ImageAabb, 
-                               aabb2f Box) 
+                   font_id FontId, 
+                   image_id ImageId,
+                   texture_id TextureId, 
+                   u32 Codepoint, 
+                   f32 Advance, 
+                   f32 LeftBearing, 
+                   aabb2u ImageAabb, 
+                   aabb2f Box) 
 {
     Tba_WriteImage(Context, ImageId, TextureId, ImageAabb);
     
@@ -150,10 +150,10 @@ Tba_WriteFontGlyph(tba_context* Context,
 
 static inline void 
 Tba_WriteFontKerning(tba_context* Context, 
-                                 font_id FontId, 
-                                 u32 CodepointA,
-                                 u32 CodepointB, 
-                                 s32 Kerning) 
+                     font_id FontId, 
+                     u32 CodepointA,
+                     u32 CodepointB, 
+                     s32 Kerning) 
 {
     Tba_WriteEntry(Context, AssetType_FontKerning);
     
@@ -168,9 +168,9 @@ Tba_WriteFontKerning(tba_context* Context,
 
 static inline void 
 Tba_WriteAnime(tba_context* Context, 
-                           anime_id AnimeId, 
-                           image_id* Frames,
-                           u32 FrameCount) 
+               anime_id AnimeId, 
+               image_id* Frames,
+               u32 FrameCount) 
 {
     Tba_WriteEntry(Context, AssetType_Anime);
     
@@ -184,8 +184,8 @@ Tba_WriteAnime(tba_context* Context,
 
 static inline void 
 Tba_WriteMsg(tba_context* Context, 
-                         msg_id MsgId,
-                         const char* Message) 
+             msg_id MsgId,
+             const char* Message) 
 {
     Tba_WriteEntry(Context, AssetType_Message);
     
@@ -199,9 +199,14 @@ Tba_WriteMsg(tba_context* Context,
 
 static inline void
 Tba_WriteWav(tba_context* Context, 
-                         sound_id SoundId,
-                         wav_load_result* WavResult) 
+             sound_id SoundId,
+             wav_load_result* WavResult) 
 {
+    // We restrict the type of sound the game allows here
+    Assert(WavResult->FmtChunk.NumChannels == Game_AudioChannels);
+    Assert(WavResult->FmtChunk.SampleRate == Game_AudioSampleRate);
+    Assert(WavResult->FmtChunk.BitsPerSample == Game_AudioBitRate);
+    
     Tba_WriteEntry(Context, AssetType_Sound);
     
     asset_file_sound Sound = {};

@@ -5,31 +5,26 @@
 #define __PLATFORM__
 
 
-// NOTE(Momo): Global Settings
-
-#define Game_DesignWidth 800
-#define Game_DesignHeight 800
-#define Game_DesignDepth 200
 
 // Input API /////////////////////////////////////////
-struct game_input_button {
+struct platform_input_button {
     bool Before : 1;
     bool Now : 1;
 };
 
-struct game_input {
+struct platform_input {
     u8_str Characters;
     union {
         // TODO(Momo): maybe we don't do buttons but do mouse?
-        game_input_button Buttons[5];
+        platform_input_button Buttons[5];
         struct {
-            game_input_button ButtonSwitch;
+            platform_input_button ButtonSwitch;
             
             // NOTE(Momo): Kinda for in-game debugging
-            game_input_button ButtonConfirm;
-            game_input_button ButtonBack;
-            game_input_button ButtonConsole;
-            game_input_button ButtonInspector;
+            platform_input_button ButtonConfirm;
+            platform_input_button ButtonBack;
+            platform_input_button ButtonConsole;
+            platform_input_button ButtonInspector;
         };
     };
     
@@ -41,13 +36,13 @@ struct game_input {
 
 
 static inline b32
-Input_Init(game_input* Input, arena* Arena) {
+Input_Init(platform_input* Input, arena* Arena) {
     return U8Str_InitFromArena(&Input->Characters, Arena, 10);
 }
 
 
 static inline b32
-Input_TryPushCharacterInput(game_input* Input, char C) {
+Input_TryPushCharacterInput(platform_input* Input, char C) {
     if (C >= 32 && C <= 126) {
         U8Str_Push(&Input->Characters, C);
         return True;
@@ -56,7 +51,7 @@ Input_TryPushCharacterInput(game_input* Input, char C) {
 }
 
 static inline void
-Input_Update(game_input* Input) {
+Input_Update(platform_input* Input) {
     U8Str_Clear(&Input->Characters);
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
@@ -65,26 +60,26 @@ Input_Update(game_input* Input) {
 
 // before: 0, now: 1
 static inline b32 
-Button_IsPoked(game_input_button Button) {
+Button_IsPoked(platform_input_button Button) {
     return !Button.Before && Button.Now;
 }
 
 // before: 1, now: 0
 static inline b32
-Button_IsReleased(game_input_button Button) {
+Button_IsReleased(platform_input_button Button) {
     return Button.Before && !Button.Now;
 }
 
 
 // before: X, now: 1
 static inline b32
-Button_IsDown(game_input_button Button) {
+Button_IsDown(platform_input_button Button) {
     return Button.Now;
 }
 
 // before: 1, now: 1
 static inline b32
-Button_IsHeld(game_input_button Button) {
+Button_IsHeld(platform_input_button Button) {
     return Button.Before && Button.Now;
 }
 
@@ -145,7 +140,7 @@ struct game_memory {
     u32 DebugMemorySize;
 };
 
-struct game_audio {
+struct platform_audio {
     s16* SampleBuffer;
     usize SampleCount;
 };
@@ -155,8 +150,8 @@ struct game_audio {
 #define GameUpdateFunc(Name) b32 Name(game_memory* GameMemory, \
 platform_api* Platform, \
 mailbox* RenderCommands, \
-game_input* Input, \
-game_audio* Audio,\
+platform_input* Input, \
+platform_audio* Audio,\
 f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
 
