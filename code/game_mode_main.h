@@ -221,9 +221,9 @@ InitMainMode(permanent_state* PermState,
         Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
     }
     Mode->Wave.IsDone = True;
-    Mode->BgmHandle = AudioMixer_Play(&TranState->Mixer, Sound_MainBgm, True);
     
-    return !Mode->BgmHandle.Error;
+    return AudioMixer_Play(&TranState->Mixer, Sound_Test, False, &Mode->BgmHandle);
+    ;
 }
 
 
@@ -458,8 +458,9 @@ UpdateWaves(game_mode_main* Mode,
                 }
                 
             } break;
-            default:
-            Assert(false);
+            default: {
+                Assert(false);
+            }
         }
         
     }

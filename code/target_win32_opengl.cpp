@@ -889,10 +889,8 @@ Win32GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
 //~ NOTE(Momo): Audio related
 struct win32_audio {
     // Wasapi
-    IMMDeviceEnumerator* Enumerator;
-    IMMDevice* Device;
-    IAudioClient* AudioClient;
-    IAudioRenderClient* AudioRenderClient;
+    IAudioClient2* Client;
+    IAudioRenderClient* RenderClient;
     
     // "Secondary" buffer
     u32 BufferSize;
@@ -908,12 +906,9 @@ struct win32_audio {
 
 static inline void
 Win32AudioFree(win32_audio* Audio) {
-#define SAFE_RELEASE(Item) if(Item) (Item)->Release();
-    SAFE_RELEASE(Audio->Enumerator);
-    SAFE_RELEASE(Audio->AudioClient);
-    SAFE_RELEASE(Audio->Device);
-    SAFE_RELEASE(Audio->AudioRenderClient);
-#undef SAFE_RELEASE
+    Audio->Client->Stop();
+    Audio->Client->Release();
+    Audio->RenderClient->Release();
     Win32FreeMemory(Audio->Buffer);
 }
 
@@ -930,97 +925,112 @@ Win32AudioInit(win32_audio* Audio,
     Audio->BitsPerSample = BitsPerSample;
     Audio->SamplesPerSecond = SamplesPerSecond;
     Audio->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
-    Audio->BufferSize = SamplesPerSecond * (BitsPerSample / 8) * Channels;
-    Audio->Buffer = (s16*)Win32AllocateMemory(Audio->BufferSize); 
     
+    HRESULT Hr = CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY);
+    if (FAILED(Hr)) {
+        Win32Log("[Win32::Audio] Failed CoInitializeEx\n");
+        return False;
+    }
+    
+    IMMDeviceEnumerator* DeviceEnumerator;
+    Hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), 
+                          Null,
+                          CLSCTX_ALL, 
+                          __uuidof(IMMDeviceEnumerator),
+                          (LPVOID*)(&DeviceEnumerator));
+    
+    if (FAILED(Hr)) {
+        Win32Log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
+        return False;
+    }
+    Defer { DeviceEnumerator->Release(); };
+    
+    
+    IMMDevice* Device;
+    Hr = DeviceEnumerator->GetDefaultAudioEndpoint(eRender, 
+                                                   eConsole, 
+                                                   &Device);
+    if (FAILED(Hr)) {
+        Win32Log("[Win32::Audio] Failed to get audio endpoint\n");
+        return False;
+    }
+    Defer { Device->Release(); };
+    
+    Hr = Device->Activate(__uuidof(IAudioClient2), 
+                          CLSCTX_ALL, 
+                          Null, 
+                          (LPVOID*)&Audio->Client);
+    if(FAILED(Hr)) {
+        Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
+        return False;
+    }
+    
+    WAVEFORMATEX WaveFormat = {};
+    WaveFormat.wFormatTag = WAVE_FORMAT_PCM;
+    WaveFormat.wBitsPerSample = BitsPerSample;
+    WaveFormat.nChannels = Channels;
+    WaveFormat.nSamplesPerSec = SamplesPerSecond;
+    WaveFormat.nBlockAlign = (WaveFormat.nChannels * WaveFormat.wBitsPerSample / 8);
+    WaveFormat.nAvgBytesPerSec = WaveFormat.nSamplesPerSec * WaveFormat.nBlockAlign;
+    
+    // buffer size in 100 nanoseconds
+#if 0
+    REFERENCE_TIME BufferDuration = 10000000ULL * Audio->BufferSize / SamplesPerSecond; 
+#else
+    
+#if 0
+    const int64_t REFTIMES_PER_SEC = 10000000; // hundred nanoseconds
+    REFERENCE_TIME BufferDuration = REFTIMES_PER_SEC * 2;
+#endif
+    REFERENCE_TIME BufferDuration = 0;
+    Hr = Audio->Client->GetDevicePeriod(Null, &BufferDuration);
+    
+#endif
+    
+    DWORD StreamFlags = ( AUDCLNT_STREAMFLAGS_RATEADJUST 
+                         | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
+                         | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY );
+    
+    Hr = Audio->Client->Initialize(AUDCLNT_SHAREMODE_SHARED, 
+                                   StreamFlags, 
+                                   BufferDuration,
+                                   0, 
+                                   &WaveFormat, 
+                                   Null);
+    if (FAILED(Hr))
+    {
+        Win32Log("[Win32::Audio] Failed to initialize audio client\n");
+        return False;
+    }
+    
+    if (FAILED(Audio->Client->GetService(__uuidof(IAudioRenderClient),
+                                         (LPVOID*)(&Audio->RenderClient))))
+    {
+        Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
+        return False;
+    }
+    
+    UINT32 SoundFrameCount;
+    Hr = Audio->Client->GetBufferSize(&SoundFrameCount);
+    if (FAILED(Hr))
+    {
+        Win32Log("[Win32::Audio] Failed to get buffer size\n");
+        return False;
+    }
+    
+    Audio->BufferSize = SoundFrameCount;
+    Audio->Buffer = (s16*)Win32AllocateMemory(Audio->BufferSize);
     if (!Audio->Buffer) {
         Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
         return False;
     }
     
-    if (FAILED(CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY))) {
-        Win32Log("[Win32::Audio] Failed CoInitializeEx\n");
-        return false;
-    }
-    
-    
-    if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), 
-                                NULL,
-                                CLSCTX_ALL, 
-                                IID_PPV_ARGS(&Audio->Enumerator))))
-    {
-        Win32Log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
-        return false;
-    }
-    
-    if (FAILED(Audio->Enumerator->GetDefaultAudioEndpoint(
-                                                          eRender, 
-                                                          eConsole, 
-                                                          &Audio->Device))) 
-    {
-        Win32Log("[Win32::Audio] Failed to get audio endpoint\n");
-        return false;
-    }
-    
-    if(FAILED(Audio->Device->Activate(__uuidof(IAudioClient), 
-                                      CLSCTX_ALL, 
-                                      NULL, 
-                                      (LPVOID*)&Audio->AudioClient))) {
-        Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return false;
-    }
-    
-    WAVEFORMATEXTENSIBLE WaveFormat;
-    WaveFormat.Format.cbSize = sizeof(WaveFormat);
-    WaveFormat.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    WaveFormat.Format.wBitsPerSample = BitsPerSample;
-    WaveFormat.Format.nChannels = Channels;
-    WaveFormat.Format.nSamplesPerSec = SamplesPerSecond;
-    WaveFormat.Format.nBlockAlign = 
-        (WaveFormat.Format.nChannels * WaveFormat.Format.wBitsPerSample / 8);
-    WaveFormat.Format.nAvgBytesPerSec = 
-        WaveFormat.Format.nSamplesPerSec * WaveFormat.Format.nBlockAlign;
-    WaveFormat.Samples.wValidBitsPerSample = BitsPerSample;
-    WaveFormat.dwChannelMask = KSAUDIO_SPEAKER_STEREO;
-    WaveFormat.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    
-    
-    // buffer size in 100 nanoseconds
-    REFERENCE_TIME BufferDuration = 
-        10000000ULL * Audio->BufferSize / SamplesPerSecond;         
-    if (FAILED(Audio->AudioClient->Initialize(
-                                              AUDCLNT_SHAREMODE_SHARED, 
-                                              AUDCLNT_STREAMFLAGS_NOPERSIST, 
-                                              BufferDuration, 0, 
-                                              &WaveFormat.Format, nullptr)))
-    {
-        Win32Log("[Win32::Audio] Failed to initialize audio client\n");
-        return false;
-    }
-    
-    if (FAILED(Audio->AudioClient->GetService(IID_PPV_ARGS(&Audio->AudioRenderClient))))
-    {
-        Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return false;
-    }
-    
-    UINT32 SoundFrameCount;
-    if (FAILED(Audio->AudioClient->GetBufferSize(&SoundFrameCount)))
-    {
-        Win32Log("[Win32::Audio] Failed to get buffer size\n");
-        return false;
-    }
-    
-    if (Audio->BufferSize != SoundFrameCount) {
-        Win32Log("[Win32::Audio] Buffer size not expected\n");
-        return false;
-    }
     
     Win32Log("[Win32::Audio] Loaded!\n");
     
-    Audio->AudioClient->Start();
+    Audio->Client->Start();
     
-    return true;
+    return True;
 }
 
 static inline platform_audio
@@ -1029,8 +1039,11 @@ Win32AudioPrepare(win32_audio* Audio) {
     
     UINT32 SoundPaddingSize;
     UINT32 SamplesToWrite = 0;
-    if (SUCCEEDED(Audio->AudioClient->
-                  GetCurrentPadding(&SoundPaddingSize))) {
+    
+    // Padding is how much valid data is queued up in the sound buffer
+    // if there's enough padding then we could skip writing more data
+    HRESULT Hr = Audio->Client->GetCurrentPadding(&SoundPaddingSize);
+    if (SUCCEEDED(Hr)) {
         SamplesToWrite = (UINT32)Audio->BufferSize - SoundPaddingSize;
         
         // Cap the samples to write to how much latency is allowed.
@@ -1052,8 +1065,7 @@ Win32AudioFlush(win32_audio* Audio,
 {
     // NOTE(Momo): Kinda assumes 16-bit Sound
     BYTE* SoundBufferData;
-    if (SUCCEEDED(Audio->AudioRenderClient->
-                  GetBuffer((UINT32)Output.SampleCount, &SoundBufferData))) 
+    if (SUCCEEDED(Audio->RenderClient->GetBuffer((UINT32)Output.SampleCount, &SoundBufferData))) 
     {
         s16* SrcSample = Output.SampleBuffer;
         s16* DestSample = (s16*)SoundBufferData;
@@ -1067,7 +1079,7 @@ Win32AudioFlush(win32_audio* Audio,
             
         }
         
-        Audio->AudioRenderClient->ReleaseBuffer((UINT32)Output.SampleCount, 0);
+        Audio->RenderClient->ReleaseBuffer((UINT32)Output.SampleCount, 0);
     }
 }
 
