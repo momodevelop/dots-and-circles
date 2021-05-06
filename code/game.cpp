@@ -1,3 +1,4 @@
+
 #include "game.h"
 
 // cmd: jump main/menu/atlas_test/etc...
@@ -100,7 +101,8 @@ GameUpdateFunc(GameUpdate)
         Assert(Success);
         
         
-        AudioMixer_Init(&TranState->Mixer, 1.f);
+        Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->Arena);
+        Assert(Success);
         
         TranState->IsInitialized = True;
     }

@@ -119,6 +119,15 @@ List_Slear(list<type>* L, u32 Index) {
     }
 }
 
+template<typename type>
+static inline b32
+List_Pop(list<type>* L) {
+    if (L->Count != 0) {
+        --L->Count;
+        return True;
+    }
+    return False;
+}
 
 template<typename type>
 static inline type*
@@ -127,7 +136,7 @@ List_Last(list<type>* L) {
         return Null;
     }
     else {
-        return L->Data + L->Count;
+        return L->Data + L->Count - 1;
     }
     
 }

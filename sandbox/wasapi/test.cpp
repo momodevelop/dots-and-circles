@@ -75,7 +75,7 @@ int main()
 {
     void* fileBytes;
     uint32_t fileSize;
-    bool result = win32LoadEntireFile("test_sound.wav", &fileBytes, &fileSize);
+    bool result = win32LoadEntireFile("test.wav", &fileBytes, &fileSize);
     assert(result);
 
     WavFile* wav = (WavFile*)fileBytes;
@@ -94,7 +94,7 @@ int main()
     assert(wav->blockAlign == wav->numChannels * wav->bitsPerSample/8);
     assert(wav->byteRate == wav->sampleRate * wav->blockAlign);
 
-    uint32_t numWavSamples = wav->dataChunkSize / (wav->numChannels * sizeof(uint16_t));
+    uint32_t numWavSamples = wav->dataChunkSize;
     uint16_t* wavSamples = &wav->samples;
 
     HRESULT hr = CoInitializeEx(nullptr, COINIT_SPEED_OVER_MEMORY);
@@ -177,10 +177,11 @@ int main()
 
         for (UINT32 frameIndex = 0; frameIndex < numFramesToWrite; ++frameIndex)
         {
-            *buffer++ = wavSamples[wavPlaybackSample]; // left
+            *buffer++ = wavSamples[wavPlaybackSample++]; // left
             *buffer++ = wavSamples[wavPlaybackSample]; // right
 
             ++wavPlaybackSample;
+            
             wavPlaybackSample %= numWavSamples;
         }
         hr = audioRenderClient->ReleaseBuffer(numFramesToWrite, 0);
