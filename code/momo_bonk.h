@@ -4,6 +4,14 @@
 #define MOMO_BONK_H
 
 static inline b32
+Bonk2_IsCircleXCircle(circle2f L, circle2f R) {
+	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);
+	f32 RSq = L.Radius + R.Radius;
+    RSq *= RSq;
+	return DistSq < RSq;
+}
+
+static inline b32
 Bonk2_IsCircleXLine(circle2f C, line2f L) {
     // NOTE(Momo): Extend the ends of the lines based on radius of the circle, and use that to form a parametric equation of the line (ray)
     ray2f R = Ray2f_CreateFromLine2f(L);
@@ -57,16 +65,26 @@ Bonk2_IsDynaCircleXDynaCircle(circle2f CircleA,
                               circle2f CircleB,
                               v2f VelocityB) 
 {
-    v2f RelativeVel = V2f_Sub(VelocityB, VelocityA); 
-    return Bonk2_IsDynaCircleXCircle(CircleB, RelativeVel, CircleA);
-}
-
-static inline b32
-Bonk2_IsCircleXCircle(circle2f L, circle2f R) {
-	f32 DistSq = V2f_DistanceSq(L.Origin, R.Origin);
-	f32 RSq = L.Radius + R.Radius;
-    RSq *= RSq;
-	return DistSq < RSq;
+    
+    f32 VelAMag = V2f_LengthSq(VelocityA);
+    f32 VelBMag = V2f_LengthSq(VelocityB);
+    b32 VelADead = F32_IsEqual(VelAMag, 0.f);
+    b32 VelBDead = F32_IsEqual(VelBMag, 0.f);
+    
+    
+    if (VelADead && VelBDead) {
+        return Bonk2_IsCircleXCircle(CircleA, CircleB);
+    }
+    else if (VelADead) {
+        return Bonk2_IsDynaCircleXCircle(CircleB, VelocityB, CircleA);
+    }
+    else if (VelBDead) {
+        return Bonk2_IsDynaCircleXCircle(CircleA, VelocityA, CircleB);
+    }
+    else {
+        v2f RelativeVel = V2f_Sub(VelocityB, VelocityA); 
+        return Bonk2_IsDynaCircleXCircle(CircleB, RelativeVel, CircleA);
+    }
 }
 
 #endif //MOMO_BONK_H

@@ -1207,9 +1207,11 @@ Win32ProcessMessages(HWND Window,
                         }
                         
                     } break;
-                    case VK_F8:{
+                    case VK_F11:{
+                        Input->ButtonSpeedDown.Now = IsDown;
                     } break;
-                    case VK_F9: {
+                    case VK_F12: {
+                        Input->ButtonSpeedUp.Now = IsDown;
                     } break;
                     case VK_BACK:{
                         Input->ButtonBack.Now = IsDown;

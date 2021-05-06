@@ -361,17 +361,11 @@ UpdateCollision(game_mode_main* Mode,
         v2f DotBulletVel = V2f_Mul(DotBullet->Direction, DotBullet->Speed * DeltaTime);
         DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
         
-        
-        
-#if 1
         if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
                                           PlayerVel,
                                           DotBulletCircle,
                                           DotBulletVel)) 
-#else
-        if (Bonk2_IsCircleXCircle(PlayerCircle, DotBulletCircle))
-#endif
-        
+            
         {
             if (Player->MoodType == MoodType_Dot) {
                 List_Slear(&Mode->DotBullets, I);
@@ -618,6 +612,13 @@ RenderEnemies(game_mode_main* Mode,
     }
 }
 
+static inline void 
+RenderDebugLines(game_mode_main* Mode, mailbox* RenderCommands){
+    circle2f Circle = {};
+    Circle.Origin = Mode->Player.Position;
+    Circle.Radius = Mode->Player.HitCircle.Radius;
+    Renderer_DrawCircle2f(RenderCommands, Circle, 1.f, 8, Color_Green, ZLayDebug);
+}
 
 static inline void
 UpdateMainMode(permanent_state* PermState, 
@@ -638,11 +639,10 @@ UpdateMainMode(permanent_state* PermState,
     UpdateEnemies(Mode, Assets, DeltaTime); 
     UpdateCollision(Mode, DeltaTime);
     
-    
-    
     RenderPlayer(Mode, Assets, RenderCommands);
     RenderBullets(Mode, Assets, RenderCommands);
     RenderEnemies(Mode, Assets, RenderCommands);
+    RenderDebugLines(Mode, RenderCommands);
     
     u8_cstr Buffer = {};
     U8CStr_InitFromSiStr(&Buffer, "Dots: ");

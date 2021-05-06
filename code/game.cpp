@@ -85,6 +85,7 @@ GameUpdateFunc(GameUpdate)
         Renderer_SetDesignResolution(RenderCommands, 
                                      Game_DesignWidth, 
                                      Game_DesignHeight);
+        PermState->GameSpeed = 1.f;
     }
     
     if (!TranState->IsInitialized) {
@@ -149,6 +150,16 @@ GameUpdateFunc(GameUpdate)
     if (PermState->IsPaused) {
         DeltaTime = 0.f;
     }
+    
+    // NOTE(Momo): Speed up/down
+    if (Button_IsPoked(Input->ButtonSpeedDown)) {
+        PermState->GameSpeed -= 0.1f;
+    }
+    if (Button_IsPoked(Input->ButtonSpeedUp)) {
+        PermState->GameSpeed += 0.1f;
+    }
+    DeltaTime *= PermState->GameSpeed;
+    
     
     // NOTE(Momo): Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {

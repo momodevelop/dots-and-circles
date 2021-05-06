@@ -26,6 +26,7 @@ struct transient_state {
 struct permanent_state {
     b32 IsInitialized;
     b32 IsPaused;
+    f32 GameSpeed;
     
     game_mode_type CurrentGameMode;
     game_mode_type NextGameMode;

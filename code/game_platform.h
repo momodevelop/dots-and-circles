@@ -15,7 +15,7 @@ struct platform_input_button {
 struct platform_input {
     u8_str Characters;
     union {
-        platform_input_button Buttons[6];
+        platform_input_button Buttons[8];
         struct {
             platform_input_button ButtonSwitch;
             
@@ -25,6 +25,8 @@ struct platform_input {
             platform_input_button ButtonConsole;
             platform_input_button ButtonInspector;
             platform_input_button ButtonPause;
+            platform_input_button ButtonSpeedUp;
+            platform_input_button ButtonSpeedDown;
         };
     };
     
