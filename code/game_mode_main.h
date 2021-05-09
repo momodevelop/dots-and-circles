@@ -276,7 +276,7 @@ UpdateMainMode(permanent_state* PermState,
                mailbox* RenderCommands, 
                platform_input* Input,
                f32 DeltaTime) 
-{
+{// NOTE(Momo): jj
     game_mode_main* Mode = PermState->MainMode;
     Camera_Set(&Mode->Camera, RenderCommands);
     

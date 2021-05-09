@@ -44,6 +44,13 @@ operator+(array<type> L, u32 Index) {
     return Array_Get(&L, Index);
 }
 
+template<typename type, typename pred>
+Array_ForEach(array<type>* L, pred Pred) {
+    for (u32 I = 0; I < L->Count; ++I) {
+        Pred(L->Data + I);
+    }
+}
+
 //~ NOTE(Momo): list
 template<typename type>
 struct list : array<type> {
@@ -147,6 +154,12 @@ List_Remaining(list<type>* L) {
     return L->Cap - L->Count;
 }
 
+template<typename type, typename pred>
+List_ForEach(list<type>* L, pred Pred) {
+    for (u32 I = 0; I < L->Count; ++I) {
+        Pred(L->Data + I);
+    }
+}
 
 //~ NOTE(Momo): Queue
 
