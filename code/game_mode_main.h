@@ -1,15 +1,25 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
+#define CircleCap 128
+#define DotCap 128
+#define EnemyCap 128
 
 #define ZLayPlayer 0.f
 #define ZLayDotBullet 10.f
 #define ZLayCircleBullet 20.f
 #define ZLayEnemy 30.f
 #define ZLayDebug 40.f
-#define CircleCap 128
-#define DotCap 128
-#define EnemyCap 128
+
+
+#define Particle_Duration 3.0f
+struct particle {
+    f32 Timer;
+    image_id ImageId;
+    v2f Position;
+    v2f Direction;
+};
+
 
 enum mood_type {
     MoodType_Dot,
@@ -115,6 +125,7 @@ struct game_mode_main {
     list<bullet> CircleBullets;
     list<bullet> DotBullets;
     list<enemy> Enemies;
+    queue<particle> Particles;
     
     wave Wave;
     rng_series Rng;
@@ -179,6 +190,9 @@ SpawnBullet(game_mode_main* Mode, assets* Assets, v2f Position, v2f Direction, f
     
 }
 
+#include "game_mode_main_update.h"
+#include "game_mode_main_render.h"
+
 static inline b32 
 InitMainMode(permanent_state* PermState,
              transient_state* TranState,
@@ -196,10 +210,26 @@ InitMainMode(permanent_state* PermState,
                                              Game_DesignDepth);
     }
     
+    b32 Success = False;
     Mode->ArenaMark = Arena_Mark(&PermState->ModeArena);
-    List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
-    List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
-    List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
+    
+    Success = List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
+    if (!Success) {
+        Arena_Revert(&Mode->ArenaMark);
+        return False;
+    }
+    
+    Success = List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
+    if (!Success) {
+        Arena_Revert(&Mode->ArenaMark);
+        return False;
+    }
+    
+    Success = List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
+    if (!Success) {
+        Arena_Revert(&Mode->ArenaMark);
+        return False;
+    }
     
     Mode->Wave.IsDone = True;
     Mode->Rng = Seed(0); // TODO: Used system clock for seed.
@@ -222,403 +252,22 @@ InitMainMode(permanent_state* PermState,
     }
     Mode->Wave.IsDone = True;
     
-    return AudioMixer_Play(&TranState->Mixer, Sound_Test, False, &Mode->BgmHandle);
-    ;
-}
-
-
-static inline void 
-UpdatePlayer(game_mode_main* Mode, 
-             f32 DeltaTime) 
-{
-    player* Player = &Mode->Player; 
-    Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
-                                 Player->DotImageAlphaTarget, 
-                                 Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
+    Success = Queue_InitFromArena(&Mode->Particles, Mode->ArenaMark, 128);
+    if (!Success) {
+        Arena_Revert(&Mode->ArenaMark);
+        return False;
+    }
     
-    Player->DotImageTransitionTimer += DeltaTime;
-    Player->DotImageTransitionTimer = 
-        Clamp(Player->DotImageTransitionTimer, 
-              0.f, 
-              Player->DotImageTransitionDuration);
+    Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, False, &Mode->BgmHandle);
+    if (!Success) {
+        Arena_Revert(&Mode->ArenaMark);
+        return False;
+    }
+    
+    return True; 
     
 }
 
-static inline void
-UpdateBullets(game_mode_main* Mode,
-              f32 DeltaTime) 
-{
-    for(u32 I = 0; I < Mode->DotBullets.Count;) {
-        bullet* DotBullet = Mode->DotBullets.Data + I;
-        
-        f32 SpeedDt = DotBullet->Speed * DeltaTime;
-        v2f Velocity = V2f_Mul(DotBullet->Direction, SpeedDt);
-        DotBullet->Position = V2f_Add(DotBullet->Position, Velocity);
-        
-        // Out of bounds self-destruction
-        if (DotBullet->Position.X <= -Game_DesignWidth * 0.5f - DotBullet->HitCircle.Radius || 
-            DotBullet->Position.X >= Game_DesignWidth * 0.5f + DotBullet->HitCircle.Radius ||
-            DotBullet->Position.Y <= -Game_DesignHeight * 0.5f - DotBullet->HitCircle.Radius ||
-            DotBullet->Position.Y >= Game_DesignHeight * 0.5f + DotBullet->HitCircle.Radius) {
-            List_Slear(&Mode->DotBullets, I);
-            continue;
-        }
-        ++I;
-    }
-    
-    for(u32 I = 0; I < Mode->CircleBullets.Count;) {
-        bullet* CircleBullet = Mode->CircleBullets.Data + I;
-        
-        f32 SpeedDt = CircleBullet->Speed * DeltaTime;
-        v2f Velocity = V2f_Mul(CircleBullet->Direction, SpeedDt);
-        CircleBullet->Position = V2f_Add(CircleBullet->Position, Velocity);
-        
-        // Out of bounds self-destruction
-        if (CircleBullet->Position.X <= -Game_DesignWidth * 0.5f - CircleBullet->HitCircle.Radius || 
-            CircleBullet->Position.X >= Game_DesignWidth * 0.5f + CircleBullet->HitCircle.Radius ||
-            CircleBullet->Position.Y <= -Game_DesignHeight * 0.5f - CircleBullet->HitCircle.Radius ||
-            CircleBullet->Position.Y >= Game_DesignHeight * 0.5f + CircleBullet->HitCircle.Radius) {
-            List_Slear(&Mode->CircleBullets, I);
-            continue;
-        }
-        ++I;
-    }
-}
-
-
-static inline void 
-UpdateEnemies(game_mode_main* Mode,
-              assets* Assets,
-              f32 DeltaTime) 
-{
-    player* Player = &Mode->Player;
-    for (u32 I = 0; I < Mode->Enemies.Count; ++I) 
-    {
-        enemy* Enemy = Mode->Enemies + I;
-        
-        // Movement
-        switch( Enemy->MovementType ) {
-            case EnemyMovementType_Static:
-            // Do nothing
-            break;
-            default: 
-            Assert(false);
-        }
-        
-        // Fire
-        Enemy->FireTimer += DeltaTime;
-        if (Enemy->FireTimer > Enemy->FireDuration) {       
-            mood_type MoodType = {};
-            switch (Enemy->MoodPatternType) {
-                case EnemyMoodPatternType_Dot: 
-                MoodType = MoodType_Dot;
-                break;
-                case EnemyMoodPatternType_Circle:
-                MoodType = MoodType_Circle;
-                break;
-                default:
-                Assert(false);
-            }
-            
-            v2f Dir = {};
-            switch (Enemy->FiringPatternType) {
-                case EnemyFiringPatternType_Homing: 
-                Dir = V2f_Sub(Player->Position, Enemy->Position);
-                break;
-                default:
-                Assert(false);
-            }
-            SpawnBullet(Mode, Assets, Enemy->Position, Dir, 200.f, MoodType);
-            Enemy->FireTimer = 0.f;
-        }
-        
-        // Life time
-        Enemy->LifeTimer += DeltaTime;
-        if (Enemy->LifeTimer > Enemy->LifeDuration) {
-            // Quick removal
-            List_Slear(&Mode->Enemies, I);
-            continue;
-        }
-        ++Enemy;
-        
-    }
-}
-
-static inline void
-UpdateCollision(game_mode_main* Mode,
-                f32 DeltaTime)
-{
-    player* Player = &Mode->Player;
-    circle2f PlayerCircle = Player->HitCircle;
-    v2f PlayerVel = V2f_Sub(Player->Position, Player->PrevPosition);
-    PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
-    
-    // Player vs every bullet
-    for (u32 I = 0; I < Mode->DotBullets.Count;) 
-    {
-        bullet* DotBullet = Mode->DotBullets + I;
-        circle2f DotBulletCircle = DotBullet->HitCircle;
-        v2f DotBulletVel = V2f_Mul(DotBullet->Direction, DotBullet->Speed * DeltaTime);
-        DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
-        
-        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
-                                          PlayerVel,
-                                          DotBulletCircle,
-                                          DotBulletVel)) 
-            
-        {
-            if (Player->MoodType == MoodType_Dot) {
-                List_Slear(&Mode->DotBullets, I);
-                continue;
-            }
-        }
-        ++I;
-    }
-    
-    for (u32 I = 0; I < Mode->CircleBullets.Count;) 
-    {
-        bullet* CircleBullet = Mode->CircleBullets + I;
-        circle2f CircleBulletCircle = CircleBullet->HitCircle;
-        v2f CircleBulletVel = V2f_Mul(CircleBullet->Direction, CircleBullet->Speed * DeltaTime);
-        CircleBulletCircle.Origin = V2f_Add(CircleBulletCircle.Origin, CircleBullet->Position);
-        
-        
-        
-        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
-                                          PlayerVel,
-                                          CircleBulletCircle,
-                                          CircleBulletVel)) {
-            if (Player->MoodType == MoodType_Circle) {
-                List_Slear(&Mode->CircleBullets, I);
-                continue;
-            }
-        }
-        ++I;
-    }
-    
-}
-
-static inline void
-UpdateWaves(game_mode_main* Mode, 
-            assets* Assets,
-            f32 DeltaTime) 
-{
-    if (Mode->Wave.IsDone) {
-        // TODO: Random wave type
-        Mode->Wave.Type = WavePatternType_SpawnNForDuration;
-        // Initialize the wave
-        switch (Mode->Wave.Type) {
-            case WavePatternType_SpawnNForDuration: {
-                auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
-                Pattern->EnemiesPerSpawn = 1;
-                Pattern->SpawnTimer = 0.f;
-                Pattern->SpawnDuration = 3.f;
-                Pattern->Timer = 0.f;
-                Pattern->Duration = 30.f;
-            } break;
-            default: 
-            Assert(false);
-        }
-        Mode->Wave.IsDone = false;
-    }
-    else {
-        // Update the wave.
-        switch(Mode->Wave.Type) {
-            case WavePatternType_SpawnNForDuration: {
-                auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
-                Pattern->SpawnTimer += DeltaTime;
-                Pattern->Timer += DeltaTime;
-                if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
-                    v2f Pos = 
-                        V2f_Create(Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
-                                   Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
-                    auto MoodType = 
-                        (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
-                    
-                    SpawnEnemy(Mode, 
-                               Assets,
-                               Pos,
-                               MoodType,
-                               EnemyFiringPatternType_Homing,
-                               EnemyMovementType_Static,
-                               0.1f, 
-                               10.f);
-                    
-                    Pattern->SpawnTimer = 0.f;
-                }
-                
-                if (Pattern->Timer >= Pattern->Duration) {
-                    Mode->Wave.IsDone = true;
-                }
-                
-            } break;
-            default: {
-                Assert(false);
-            }
-        }
-        
-    }
-    
-}
-
-static inline void
-UpdateInput(game_mode_main* Mode,
-            platform_input* Input)
-{
-    v2f Direction = {};
-    player* Player = &Mode->Player; 
-    
-    Player->PrevPosition = Player->Position;
-    Player->Position = Camera_ScreenToWorld(&Mode->Camera,
-                                            Input->DesignMousePos);
-    
-    
-    // NOTE(Momo): Absorb Mode Switch
-    if(Button_IsPoked(Input->ButtonSwitch)) {
-        Player->MoodType = 
-            (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
-        
-        switch(Player->MoodType) {
-            case MoodType_Dot: {
-                Player->DotImageAlphaTarget = 1.f;
-            } break;
-            case MoodType_Circle: {
-                Player->DotImageAlphaTarget = 0.f;
-            }break;
-            default:{ 
-                Assert(false);
-            }
-        }
-        Player->DotImageTransitionTimer = 0.f;
-    }
-}
-
-
-static inline void 
-RenderPlayer(game_mode_main* Mode,
-             assets* Assets,
-             mailbox* RenderCommands) 
-{
-    player* Player = &Mode->Player;
-    m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
-    
-    {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
-                                  ZLayPlayer);
-        c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
-        
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Image_PlayerCircle,
-                                   M44f_Concat(T,S), 
-                                   Color);
-    }
-    
-    {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
-                                  ZLayPlayer + 0.01f);
-        c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Image_PlayerDot,
-                                   M44f_Concat(T,S), 
-                                   Color);
-    }
-}
-
-static inline void
-RenderBullets(game_mode_main* Mode,
-              assets* Assets,
-              mailbox* RenderCommands) 
-{
-    // Bullet Rendering.
-    // NOTE(Momo): Circles are in front of Dots and are therefore 'nearer'.
-    // Thus we have to render Dots first before Circles.
-    
-    // Render Dots
-    {
-        f32 LayerOffset = 0.f;
-        image* Image = Assets->Images + Image_BulletDot;
-        texture* Texture = Assets->Textures + Image->TextureId;
-        for (u32 I = 0; I < Mode->DotBullets.Count; ++I) {
-            bullet* DotBullet = Mode->DotBullets.Data + I;
-            m44f S = M44f_Scale(DotBullet->Size.X, 
-                                DotBullet->Size.Y, 
-                                1.f);
-            
-            m44f T = M44f_Translation(DotBullet->Position.X,
-                                      DotBullet->Position.Y,
-                                      ZLayDotBullet + LayerOffset);
-            
-            Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_BulletDot,
-                                       M44f_Concat(T,S), 
-                                       Color_White);
-            LayerOffset += 0.01f;
-            
-        }
-        
-    }
-    
-    // Render Circles
-    {
-        f32 LayerOffset = 0.f;
-        for (u32 I = 0; I < Mode->CircleBullets.Count; ++I) {
-            bullet* CircleBullet = Mode->CircleBullets.Data + I;
-            m44f S = M44f_Scale(CircleBullet->Size.X, 
-                                CircleBullet->Size.Y, 
-                                1.f);
-            
-            m44f T = M44f_Translation(CircleBullet->Position.X,
-                                      CircleBullet->Position.Y,
-                                      ZLayCircleBullet + LayerOffset);
-            
-            Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_BulletCircle,
-                                       M44f_Concat(T,S), 
-                                       Color_White);
-            LayerOffset += 0.01f;
-            
-        }
-        
-    }
-    
-    
-    
-}
-
-static inline void
-RenderEnemies(game_mode_main* Mode, 
-              assets* Assets,
-              mailbox* RenderCommands) 
-{
-    for(u32 I = 0; I < Mode->Enemies.Count; ++I )
-    {
-        enemy* Enemy = Mode->Enemies + I;
-        m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
-        m44f T = M44f_Translation(Enemy->Position.X,
-                                  Enemy->Position.Y,
-                                  ZLayEnemy);
-        
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Image_Enemy,
-                                   M44f_Concat(T,S), 
-                                   Color_White);
-    }
-}
-
-static inline void 
-RenderDebugLines(game_mode_main* Mode, mailbox* RenderCommands){
-    circle2f Circle = {};
-    Circle.Origin = Mode->Player.Position;
-    Circle.Radius = Mode->Player.HitCircle.Radius;
-    Renderer_DrawCircle2f(RenderCommands, Circle, 1.f, 8, Color_Green, ZLayDebug);
-}
 
 static inline void
 UpdateMainMode(permanent_state* PermState, 
@@ -638,10 +287,12 @@ UpdateMainMode(permanent_state* PermState,
     UpdateWaves(Mode, Assets, DeltaTime);
     UpdateEnemies(Mode, Assets, DeltaTime); 
     UpdateCollision(Mode, DeltaTime);
+    UpdateParticles(Mode, DeltaTime);
     
     RenderPlayer(Mode, Assets, RenderCommands);
     RenderBullets(Mode, Assets, RenderCommands);
     RenderEnemies(Mode, Assets, RenderCommands);
+    RenderParticles(Mode, Assets, RenderCommands);
     RenderDebugLines(Mode, RenderCommands);
     
     u8_cstr Buffer = {};

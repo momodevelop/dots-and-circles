@@ -147,4 +147,136 @@ List_Remaining(list<type>* L) {
     return L->Cap - L->Count;
 }
 
+
+//~ NOTE(Momo): Queue
+
+template<typename type>
+struct queue {
+    type* Data;
+    u32 Count;
+    u32 Begin;
+    u32 End;
+};
+
+template<typename type>
+static inline void
+Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
+    Q->Begin = Q->End = BufferCount;
+    Q->Count = BufferCount;
+    Q->Data = Buffer;
+    
+}
+
+template<typename type>
+static inline b32
+Queue_InitFromArena(queue<type>* Q, arena* Arena, u32 Count) {
+    type* Buffer = Arena_PushArray(type, Arena, Count);
+    if (!Buffer) {
+        return False;
+    }
+    Q->Begin = Q->End = Count;
+    Q->Count = Count;
+    
+    return True;
+}
+
+template<typename type>
+static inline b32 
+Queue_IsEmpty(queue<type>* Q) {
+    return Q->Begin == Q->Count || 
+        Q->End == Q->Count;
+}
+
+template<typename type>
+static inline b32
+Queue_IsFull(queue<type>* Q) {
+    b32 NormalCase = (Q->Begin == 0 && Q->End == Q->Count-1);
+    b32 BackwardCase = Q->End == (Q->Begin-1);
+    
+    return !Queue_IsEmpty(Q) && (NormalCase || BackwardCase);
+}
+
+template<typename type>
+static inline b32 
+Queue_PushItem(queue<type>* Q, type Item) {
+    if (Queue_IsFull(Q)) {
+        return False;
+    }
+    else if (Queue_IsEmpty(Q)) {
+        Q->Begin = Q->End = 0;
+    }
+    else if (Q->End == Q->Count - 1) {
+        // End is already at the back of the array
+        Q->End = 0;
+    }
+    else {
+        // Normal case: just advance End
+        ++Q->End;
+    }
+    
+    Q->Data[Q->End] = Item;
+    
+    return True;
+}
+
+template<typename type>
+static inline type*
+Queue_Next(queue<type>* Q) {
+    if (Queue_IsEmpty(Q)) {
+        return Null;
+    }
+    return Q->Data + Q->Begin;
+}
+
+template<typename type>
+static inline b32
+Queue_Pop(queue<type>* Q) {
+    if (Queue_IsEmpty(Q)) {
+        return False;
+    }
+    if (Q->Begin == Q->End) {
+        // One item case
+        Q->Begin = Q->End = Q->Count;
+    }
+    else if (Q->Begin == Q->Count - 1) {
+        // Begin is at the end of the array,
+        // so we reset to the front of the array
+        Q->Begin = 0;
+    }
+    else {
+        // Normal case: just advance Begin
+        ++Q->Begin;
+    }
+    
+    return True;
+    
+}
+
+template<typename type, typename pred>
+static inline void
+Queue_ForEach(queue<type>* Q, pred Pred) {
+    if (Queue_IsEmpty(Q)) {
+        // Empty case
+        return;
+    }
+    if (Q->Begin <= Q->End) {
+        for (u32 I = Q->Begin; I <= Q->End; ++I) {
+            Pred(Q->Data + I);
+        }
+    }
+    else {
+        for (u32 I = Q->Begin; I < Q->Count; ++I) {
+            Pred(Q->Data + I);
+        }
+        
+        for (u32 I = 0; I <= Q->End; ++I) {
+            Pred(Q->Data + I);
+        }
+    }
+}
+
+
+
+
+
 #endif //MM_ARRAY_H

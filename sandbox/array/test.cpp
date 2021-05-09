@@ -1,38 +1,68 @@
 #include <stdio.h>
+#include "../../code/momo.h"
 
-template<typename type>
-struct array {
-    type* Data;
-    int Count;
+
+#define Particle_Duration 3.0f
+struct particle {
+    u32 Index;
 };
 
-template<typename type, u32 Cap>
-struct farray {
-    type Data[Cap];
+
+static inline void
+PrintPred(particle* P) {
+    printf("%d", P->Index);
 }
-
-// if we want to specialize...
-typedef array<u8> u8_cstr;
-
-template<typename type>
-static inline array<type>
-Array_Create(type* Data, u32 Size) {
-    array<type> Ret = {};
-    Ret.Data = Data;
-    Ret.Size = Size;
-    
-    return Ret;
-}
-
-
-static inline u8_cstr
-U8CStr_FromSiStr(const char* SiStr) {
-    
-}
-
-
 
 int main() {
+    queue<particle> Q;
+    particle Particles[8];
+    Queue_Init(&Q, Particles, ArrayCount(Particles));
+    printf("Testing empty\n");
+    Queue_ForEach(&Q, PrintPred);
+    
+    u32 I = 0;
+    
+    printf("Testing half full\n");
+    Queue_PushItem(&Q, {I++}); 
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_ForEach(&Q, PrintPred);
+    printf("\n");
+    //01234
+    
+    printf("Testing dequeue\n");
+    Queue_Pop(&Q);
+    Queue_Pop(&Q);
+    Queue_ForEach(&Q, PrintPred);
+    printf("\n");
+    // 23
+    
+    printf("Testing queue until overshot\n");
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_PushItem(&Q, {I++});
+    Queue_ForEach(&Q, PrintPred);
+    printf("\n");
+    // 23456789
+    
+    
+    printf("Testing that overshoting won't work\n");
+    Queue_PushItem(&Q, {0});
+    Queue_ForEach(&Q, PrintPred);
+    printf("\n");
+    
+    printf("Test removing all but one items\n");
+    for(int i = 0; i < 7; ++i) {
+        Queue_Pop(&Q);
+    }
+    
+    Queue_ForEach(&Q, PrintPred);
+    
+    
 }
 
 
