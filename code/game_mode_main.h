@@ -293,7 +293,7 @@ UpdateMainMode(permanent_state* PermState,
     RenderBullets(Mode, Assets, RenderCommands);
     RenderEnemies(Mode, Assets, RenderCommands);
     RenderParticles(Mode, Assets, RenderCommands);
-    RenderDebugLines(Mode, RenderCommands);
+    //RenderDebugLines(Mode, RenderCommands);
     
     u8_cstr Buffer = {};
     U8CStr_InitFromSiStr(&Buffer, "Dots: ");

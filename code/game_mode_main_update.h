@@ -69,7 +69,7 @@ UpdateBullets(game_mode_main* Mode,
         
         // Out of bounds self-destruction
         if (IsBulletOnScreen(B)) {
-            List_Slear(&Mode->DotBullets, I);
+            List_Slear(&Mode->CircleBullets, I);
             continue;
         }
         ++I;
