@@ -45,6 +45,7 @@ operator+(array<type> L, u32 Index) {
 }
 
 template<typename type, typename pred>
+static inline void
 Array_ForEach(array<type>* L, pred Pred) {
     for (u32 I = 0; I < L->Count; ++I) {
         Pred(L->Data + I);
@@ -155,6 +156,7 @@ List_Remaining(list<type>* L) {
 }
 
 template<typename type, typename pred>
+static inline void
 List_ForEach(list<type>* L, pred Pred) {
     for (u32 I = 0; I < L->Count; ++I) {
         Pred(L->Data + I);

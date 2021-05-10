@@ -349,6 +349,7 @@ V2f_Rotate(v2f V, f32 Rad) {
     return Ret;
 }
 
+
 //~ NOTE(Momo): v2u Functions
 static inline v2u 
 V2u_Create(u32 X, u32 Y) {
@@ -724,6 +725,11 @@ Circle2f_Create(v2f Origin, f32 Radius) {
     return Ret;
 }
 
+static inline circle2f
+Circle2f_Offset(circle2f Lhs, v2f Offset) {
+    Lhs.Origin = V2f_Add(Lhs.Origin, Offset);
+    return Lhs;
+}
 
 //~ NOTE(Momo): 2x2 Matrices
 union m22f {

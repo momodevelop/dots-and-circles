@@ -21,6 +21,4 @@ pushd %BuildDir%
 cl %CommonCompilerFlags% %CodeDir%\target_win32_opengl.cpp -link %CommonLinkerFlags%
 
 
-:End
-
 popd

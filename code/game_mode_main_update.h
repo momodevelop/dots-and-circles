@@ -77,7 +77,6 @@ UpdateBullets(game_mode_main* Mode,
     }
 }
 
-
 static inline void 
 UpdateEnemies(game_mode_main* Mode,
               assets* Assets,
@@ -169,17 +168,17 @@ UpdateCollision(game_mode_main* Mode,
     
     for (u32 I = 0; I < Mode->CircleBullets.Count;) 
     {
-        bullet* CircleBullet = Mode->CircleBullets + I;
-        circle2f CircleBulletCircle = CircleBullet->HitCircle;
-        v2f CircleBulletVel = V2f_Mul(CircleBullet->Direction, CircleBullet->Speed * DeltaTime);
-        CircleBulletCircle.Origin = V2f_Add(CircleBulletCircle.Origin, CircleBullet->Position);
+        bullet* B = Mode->CircleBullets + I;
+        circle2f BCircle = B->HitCircle;
+        v2f BVel = V2f_Mul(B->Direction, B->Speed * DeltaTime);
+        BCircle.Origin = V2f_Add(BCircle.Origin, B->Position);
         
         
         
         if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
                                           PlayerVel,
-                                          CircleBulletCircle,
-                                          CircleBulletVel)) {
+                                          BCircle,
+                                          BVel)) {
             if (Player->MoodType == MoodType_Circle) {
                 List_Slear(&Mode->CircleBullets, I);
                 continue;
