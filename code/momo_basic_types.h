@@ -231,6 +231,4 @@ S64_ToU32(s64 Value) {
     return (u32)Value;
 }
 
-
-
 #endif //MM_BASIC_TYPES_H

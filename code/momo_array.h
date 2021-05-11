@@ -44,20 +44,24 @@ operator+(array<type> L, u32 Index) {
     return Array_Get(&L, Index);
 }
 
-template<typename type, typename pred>
-static inline void
-Array_ForEach(array<type>* L, pred Pred) {
-    for (u32 I = 0; I < L->Count; ++I) {
-        Pred(L->Data + I);
-    }
-}
-
 //~ NOTE(Momo): list
 template<typename type>
 struct list : array<type> {
     u32 Cap;
 };
 
+template<typename type>
+struct list_iterator {
+    list<type>* List;
+    u32 Index;
+    
+    // Convertable to type*
+    // i.e. type* Item = ListIterator;
+    // or pass it to a function taking in type*
+    operator type*() {
+        return List->Data + Index;
+    }
+};
 
 
 template<typename type>
@@ -129,6 +133,13 @@ List_Slear(list<type>* L, u32 Index) {
 
 template<typename type>
 static inline b32
+List_SlearByIterator(list<type>* L, list_iterator<type> Itr) {
+    Assert(Itr.List == L);
+    return List_Slear(L, Itr.Index);
+}
+
+template<typename type>
+static inline b32
 List_Pop(list<type>* L) {
     if (L->Count != 0) {
         --L->Count;
@@ -155,13 +166,40 @@ List_Remaining(list<type>* L) {
     return L->Cap - L->Count;
 }
 
-template<typename type, typename pred>
-static inline void
-List_ForEach(list<type>* L, pred Pred) {
-    for (u32 I = 0; I < L->Count; ++I) {
-        Pred(L->Data + I);
-    }
+// NOTE(Momo): iterator
+template<typename type>
+static inline list_iterator<type>
+List_Begin(list<type>* L) {
+    list_iterator<type> Ret = {};
+    Ret.List = L;
+    Ret.Index = 0;
+    return Ret;
 }
+
+template<typename type>
+static inline list_iterator<type>
+List_End(list<type>* L) {
+    list_iterator<type> Ret = {};
+    Ret.List = L;
+    Ret.Index = L->Count;
+    
+    return Ret;
+}
+
+template<typename type>
+static inline b32
+operator!=(list_iterator<type> Lhs, list_iterator<type> Rhs) {
+    return Lhs.Index != Rhs.Index || Lhs.List != Rhs.List;
+}
+
+template<typename type>
+static inline list_iterator<type>& 
+operator++(list_iterator<type>& L){
+    ++L.Index;
+    return L;
+}
+
+
 
 //~ NOTE(Momo): Queue
 
@@ -264,33 +302,7 @@ Queue_Pop(queue<type>* Q) {
     }
     
     return True;
-    
 }
-
-template<typename type, typename pred>
-static inline void
-Queue_ForEach(queue<type>* Q, pred Pred) {
-    if (Queue_IsEmpty(Q)) {
-        // Empty case
-        return;
-    }
-    if (Q->Begin <= Q->End) {
-        for (u32 I = Q->Begin; I <= Q->End; ++I) {
-            Pred(Q->Data + I);
-        }
-    }
-    else {
-        for (u32 I = Q->Begin; I < Q->Count; ++I) {
-            Pred(Q->Data + I);
-        }
-        
-        for (u32 I = 0; I <= Q->End; ++I) {
-            Pred(Q->Data + I);
-        }
-    }
-}
-
-
 
 
 

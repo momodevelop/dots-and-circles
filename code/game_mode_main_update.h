@@ -28,11 +28,11 @@ UpdateParticle(particle* P) {
 
 static inline void 
 UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
-    Queue_ForEach(&Mode->Particles, UpdateParticle);
+    
 }
 
 static inline b32
-IsBulletOnScreen(bullet* B) {
+IsBulletOutsideScreen(bullet* B) {
     return (B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
             B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
             B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
@@ -51,29 +51,26 @@ static inline void
 UpdateBullets(game_mode_main* Mode,
               f32 DeltaTime) 
 {
-    for(u32 I = 0; I < Mode->DotBullets.Count;) {
-        bullet* B = Mode->DotBullets.Data + I;
-        UpdateBullet(B, DeltaTime);
-        
-        // Out of bounds self-destruction
-        if (IsBulletOnScreen(B)) {
-            List_Slear(&Mode->DotBullets, I);
+    auto Beg = List_Begin(&Mode->DotBullets);
+    auto End = List_End(&Mode->DotBullets);
+    while(Beg != End) {
+        UpdateBullet(Beg, DeltaTime);
+        if (IsBulletOutsideScreen(Beg)) {
+            List_SlearByIterator(&Mode->DotBullets, Beg);
             continue;
         }
-        ++I;
+        ++Beg;
     }
     
-    for(u32 I = 0; I < Mode->CircleBullets.Count;) {
-        bullet* B = Mode->CircleBullets.Data + I;
-        UpdateBullet(B, DeltaTime);
-        
-        // Out of bounds self-destruction
-        if (IsBulletOnScreen(B)) {
-            List_Slear(&Mode->CircleBullets, I);
+    Beg = List_Begin(&Mode->CircleBullets);
+    End = List_End(&Mode->CircleBullets);
+    while(Beg != End) {
+        UpdateBullet(Beg, DeltaTime);
+        if (IsBulletOutsideScreen(Beg)) {
+            List_SlearByIterator(&Mode->CircleBullets, Beg);
             continue;
         }
-        ++I;
-        
+        ++Beg;
     }
 }
 
