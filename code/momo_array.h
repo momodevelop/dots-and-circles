@@ -50,17 +50,8 @@ struct list : array<type> {
     u32 Cap;
 };
 
-template<typename type>
 struct list_iterator {
-    list<type>* List;
     u32 Index;
-    
-    // Convertable to type*
-    // i.e. type* Item = ListIterator;
-    // or pass it to a function taking in type*
-    operator type*() {
-        return List->Data + Index;
-    }
 };
 
 
@@ -133,8 +124,7 @@ List_Slear(list<type>* L, u32 Index) {
 
 template<typename type>
 static inline b32
-List_SlearByIterator(list<type>* L, list_iterator<type> Itr) {
-    Assert(Itr.List == L);
+List_SlearByIterator(list<type>* L, list_iterator Itr) {
     return List_Slear(L, Itr.Index);
 }
 
@@ -155,7 +145,7 @@ List_Last(list<type>* L) {
         return Null;
     }
     else {
-        return L->Data + L->Count - 1;
+        return Array_Get(L, L->Count - 1);
     }
     
 }
@@ -168,33 +158,34 @@ List_Remaining(list<type>* L) {
 
 // NOTE(Momo): iterator
 template<typename type>
-static inline list_iterator<type>
+static inline list_iterator
 List_Begin(list<type>* L) {
-    list_iterator<type> Ret = {};
-    Ret.List = L;
+    list_iterator Ret = {};
     Ret.Index = 0;
     return Ret;
 }
 
 template<typename type>
-static inline list_iterator<type>
+static inline list_iterator
 List_End(list<type>* L) {
-    list_iterator<type> Ret = {};
-    Ret.List = L;
+    list_iterator Ret = {};
     Ret.Index = L->Count;
-    
     return Ret;
 }
 
 template<typename type>
-static inline b32
-operator!=(list_iterator<type> Lhs, list_iterator<type> Rhs) {
-    return Lhs.Index != Rhs.Index || Lhs.List != Rhs.List;
+static inline type*
+List_GetFromIterator(list<type>* L, list_iterator Itr) {
+    return Array_Get(L, Itr.Index);
 }
 
-template<typename type>
-static inline list_iterator<type>& 
-operator++(list_iterator<type>& L){
+static inline b32
+operator!=(list_iterator Lhs, list_iterator Rhs) {
+    return Lhs.Index != Rhs.Index;
+}
+
+static inline list_iterator& 
+operator++(list_iterator& L){
     ++L.Index;
     return L;
 }
