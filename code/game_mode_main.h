@@ -18,6 +18,7 @@ struct particle {
     image_id ImageId;
     v2f Position;
     v2f Direction;
+    f32 Speed;
 };
 
 

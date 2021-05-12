@@ -203,21 +203,6 @@ Queue_IsFull(queue<type>* Q) {
 }
 
 template<typename type>
-static inline b32
-Queue_IsIndexValid(queue<type>* Q, u32 Index) {
-    if (Queue_IsEmpty(Q)) {
-        return False;
-    }
-    if (Q->Begin <= Q->End) {
-        return Index >= Q->Begin && Index <= Q->End;
-    }
-    else {
-        // Case where End is behind Begin
-        return Index <= Q->End || (Index >= Q->Begin && Index < Q->Count);
-    }
-}
-
-template<typename type>
 static inline b32 
 Queue_PushItem(queue<type>* Q, type Item) {
     if (Queue_IsFull(Q)) {

@@ -22,29 +22,39 @@ UpdatePlayer(game_mode_main* Mode,
 }
 
 static inline void
-UpdateParticle(particle* P) {
-    
+UpdateParticlesSub(queue<particle>* Q, f32 DeltaTime, u32 Begin, u32 End) {
+    for (u32 I = Begin; I <= End; ++I ) {
+        particle* P = Q->Data + I;
+        P->Timer += DeltaTime;
+        
+        P->Position += P->Direction * P->Speed * DeltaTime;
+    }
 }
 
 static inline void 
 UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
+    queue<particle>* Q = &Mode->Particles;
+    if (Queue_IsEmpty(Q)) {
+        return;
+    }
+    // Clean up old particles
+    particle * P = Queue_Next(Q);
+    while(P != Null && P->Timer >= Particle_Duration) {
+        Queue_Pop(Q);
+        P = Queue_Next(Q);
+    }
+    
+    // Then update the living ones
+    if (Q->Begin <= Q->End) {
+        UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->End);
+    }
+    else {
+        UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->Count - 1);
+        UpdateParticlesSub(Q, DeltaTime, 0, Q->End);
+    }
+    
 }
 
-static inline b32
-IsBulletOutsideScreen(bullet* B) {
-    return (B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
-            B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
-            B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
-            B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius);
-}
-
-
-static inline void 
-UpdateBullet(bullet* B, f32 DeltaTime) {
-    f32 SpeedDt = B->Speed * DeltaTime;
-    v2f Velocity = V2f_Mul(B->Direction, SpeedDt);
-    B->Position = V2f_Add(B->Position, Velocity);
-}
 
 static inline void
 UpdateBulletsSub(list<bullet>* L,
@@ -53,8 +63,14 @@ UpdateBulletsSub(list<bullet>* L,
     for(u32 I = 0; I < L->Count;) {
         bullet* B = Array_Get(L, I);
         
-        UpdateBullet(B, DeltaTime);
-        if (IsBulletOutsideScreen(B)) {
+        f32 SpeedDt = B->Speed * DeltaTime;
+        v2f Velocity = V2f_Mul(B->Direction, SpeedDt);
+        B->Position = V2f_Add(B->Position, Velocity);
+        
+        if (B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
+            B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
+            B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
+            B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius) {
             List_Slear(L, I);
             continue;
         }

@@ -132,9 +132,34 @@ RenderDebugLines(game_mode_main* Mode, mailbox* RenderCommands){
 }
 
 static inline void
+RenderParticlesSub(queue<particle>* Q, 
+                   assets* Assets,
+                   mailbox* RenderCommands,
+                   u32 Begin, u32 End) 
+{
+    
+}
+
+static inline void
 RenderParticles(game_mode_main* Mode, 
                 assets* Assets, 
-                mailbox* RenderCommands) {
+                mailbox* RenderCommands)
+
+{
+    queue<particle>* Q = &Mode->Particles;
+    if (Queue_IsEmpty(Q)) {
+        return;
+    }
+    
+    // Then update the living ones
+    if (Q->Begin <= Q->End) {
+        RenderParticlesSub(Q, Assets, RenderCommands, Q->Begin, Q->End);
+    }
+    else {
+        RenderParticlesSub(Q, Assets, RenderCommands, Q->Begin, Q->Count - 1);
+        RenderParticlesSub(Q, Assets, RenderCommands, 0, Q->End);
+    }
+    
 }
 
 
