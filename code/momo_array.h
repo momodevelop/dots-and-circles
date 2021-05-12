@@ -124,7 +124,7 @@ List_Slear(list<type>* L, u32 Index) {
 
 template<typename type>
 static inline b32
-List_SlearByIterator(list<type>* L, list_iterator Itr) {
+List_Slear(list<type>* L, list_iterator Itr) {
     return List_Slear(L, Itr.Index);
 }
 
@@ -159,38 +159,28 @@ List_Remaining(list<type>* L) {
 // NOTE(Momo): iterator
 template<typename type>
 static inline list_iterator
-List_Begin(list<type>* L) {
-    list_iterator Ret = {};
-    Ret.Index = 0;
-    return Ret;
-}
-
-template<typename type>
-static inline list_iterator
-List_End(list<type>* L) {
-    list_iterator Ret = {};
-    Ret.Index = L->Count;
-    return Ret;
+List_Itr_Create(list<type>* L) {
+    return { 0 };
 }
 
 template<typename type>
 static inline type*
-List_GetFromIterator(list<type>* L, list_iterator Itr) {
+List_Itr_Get(list<type>* L, list_iterator Itr) {
     return Array_Get(L, Itr.Index);
 }
 
+template<typename type>
+static inline list_iterator
+List_Itr_Next(list<type>* L, list_iterator Itr) {
+    ++Itr.Index;
+    return Itr;
+}
+
+template<typename type>
 static inline b32
-operator!=(list_iterator Lhs, list_iterator Rhs) {
-    return Lhs.Index != Rhs.Index;
+List_Itr_IsValid(list<type>* L, list_iterator Itr) {
+    return Itr.Index >= 0 && Itr.Index < L->Count;
 }
-
-static inline list_iterator& 
-operator++(list_iterator& L){
-    ++L.Index;
-    return L;
-}
-
-
 
 //~ NOTE(Momo): Queue
 
@@ -200,6 +190,10 @@ struct queue {
     u32 Count;
     u32 Begin;
     u32 End;
+};
+
+struct queue_iterator {
+    u32 Index;
 };
 
 template<typename type>
@@ -295,6 +289,41 @@ Queue_Pop(queue<type>* Q) {
     return True;
 }
 
+template<typename type>
+static inline queue_iterator
+Queue_Itr_Create(queue<type>* Q) {
+    return { 0 };
+}
+
+template<typename type>
+static inline type*
+Queue_Itr_Get(queue<type>* Q, queue_iterator Itr) {
+    return Array_Get(Q, Itr.Index);
+}
+
+template<typename type>
+static inline queue_iterator
+Queue_Itr_Next(queue<type>* Q, queue_iterator Itr) {
+    ++Itr.Index;
+    return Itr;
+}
+
+template<typename type>
+static inline b32
+Queue_Itr_IsValid(queue<type>* Q, queue_iterator Itr) {
+    if (Queue_IsEmpty(Q)) {
+        return False;
+    }
+    if (Q->Begin <= Q->End) {
+        return Itr.Index >= Q->Begin && Itr.Index <= Q->End;
+    }
+    else {
+        // Case where End is behind Begin
+        return Itr.Index <= Q->End || (Itr.Index >= Q->Begin && Itr.Index < Q->Count)
+    }
+    
+    
+}
 
 
 #endif //MM_ARRAY_H

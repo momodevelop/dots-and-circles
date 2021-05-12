@@ -48,30 +48,30 @@ UpdateBullet(bullet* B, f32 DeltaTime) {
 }
 
 static inline void
+UpdateBulletsSub(list<bullet>* L,
+                 f32 DeltaTime) 
+{
+    list_iterator Itr = List_Itr_Create(L);
+    while(List_Itr_IsValid(L, Itr)) {
+        bullet* B =  List_Itr_Get(L, Itr);
+        
+        UpdateBullet(B, DeltaTime);
+        if (IsBulletOutsideScreen(B)) {
+            List_Slear(L, Itr);
+            continue;
+        }
+        
+        Itr = List_Itr_Next(L, Itr);
+    }
+    
+}
+
+static inline void
 UpdateBullets(game_mode_main* Mode,
               f32 DeltaTime) 
 {
-    list<bullet>* L = &Mode->DotBullets;
-    for(auto Beg = List_Begin(L); Beg != List_End(L);) {
-        bullet* B =  List_GetFromIterator(L, Beg);
-        UpdateBullet(B, DeltaTime);
-        if (IsBulletOutsideScreen(B)) {
-            List_SlearByIterator(L, Beg);
-            continue;
-        }
-        ++Beg;
-    }
-    
-    L = &Mode->CircleBullets;
-    for(auto Beg = List_Begin(L); Beg != List_End(L);) {
-        bullet* B =  List_GetFromIterator(L, Beg);
-        UpdateBullet(B, DeltaTime);
-        if (IsBulletOutsideScreen(B)) {
-            List_SlearByIterator(&Mode->CircleBullets, Beg);
-            continue;
-        }
-        ++Beg;
-    }
+    UpdateBulletsSub(&Mode->DotBullets, DeltaTime);
+    UpdateBulletsSub(&Mode->CircleBullets, DeltaTime);
 }
 
 static inline void 
