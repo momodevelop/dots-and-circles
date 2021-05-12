@@ -124,12 +124,6 @@ List_Slear(list<type>* L, u32 Index) {
 
 template<typename type>
 static inline b32
-List_Slear(list<type>* L, list_iterator Itr) {
-    return List_Slear(L, Itr.Index);
-}
-
-template<typename type>
-static inline b32
 List_Pop(list<type>* L) {
     if (L->Count != 0) {
         --L->Count;
@@ -154,32 +148,6 @@ template<typename type>
 static inline u32
 List_Remaining(list<type>* L) {
     return L->Cap - L->Count;
-}
-
-// NOTE(Momo): iterator
-template<typename type>
-static inline list_iterator
-List_Itr_Create(list<type>* L) {
-    return { 0 };
-}
-
-template<typename type>
-static inline type*
-List_Itr_Get(list<type>* L, list_iterator Itr) {
-    return Array_Get(L, Itr.Index);
-}
-
-template<typename type>
-static inline list_iterator
-List_Itr_Next(list<type>* L, list_iterator Itr) {
-    ++Itr.Index;
-    return Itr;
-}
-
-template<typename type>
-static inline b32
-List_Itr_IsValid(list<type>* L, list_iterator Itr) {
-    return Itr.Index >= 0 && Itr.Index < L->Count;
 }
 
 //~ NOTE(Momo): Queue
@@ -235,6 +203,21 @@ Queue_IsFull(queue<type>* Q) {
 }
 
 template<typename type>
+static inline b32
+Queue_IsIndexValid(queue<type>* Q, u32 Index) {
+    if (Queue_IsEmpty(Q)) {
+        return False;
+    }
+    if (Q->Begin <= Q->End) {
+        return Index >= Q->Begin && Index <= Q->End;
+    }
+    else {
+        // Case where End is behind Begin
+        return Index <= Q->End || (Index >= Q->Begin && Index < Q->Count);
+    }
+}
+
+template<typename type>
 static inline b32 
 Queue_PushItem(queue<type>* Q, type Item) {
     if (Queue_IsFull(Q)) {
@@ -287,42 +270,6 @@ Queue_Pop(queue<type>* Q) {
     }
     
     return True;
-}
-
-template<typename type>
-static inline queue_iterator
-Queue_Itr_Create(queue<type>* Q) {
-    return { 0 };
-}
-
-template<typename type>
-static inline type*
-Queue_Itr_Get(queue<type>* Q, queue_iterator Itr) {
-    return Array_Get(Q, Itr.Index);
-}
-
-template<typename type>
-static inline queue_iterator
-Queue_Itr_Next(queue<type>* Q, queue_iterator Itr) {
-    ++Itr.Index;
-    return Itr;
-}
-
-template<typename type>
-static inline b32
-Queue_Itr_IsValid(queue<type>* Q, queue_iterator Itr) {
-    if (Queue_IsEmpty(Q)) {
-        return False;
-    }
-    if (Q->Begin <= Q->End) {
-        return Itr.Index >= Q->Begin && Itr.Index <= Q->End;
-    }
-    else {
-        // Case where End is behind Begin
-        return Itr.Index <= Q->End || (Itr.Index >= Q->Begin && Itr.Index < Q->Count)
-    }
-    
-    
 }
 
 

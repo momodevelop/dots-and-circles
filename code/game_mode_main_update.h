@@ -28,7 +28,6 @@ UpdateParticle(particle* P) {
 
 static inline void 
 UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
-    
 }
 
 static inline b32
@@ -51,17 +50,15 @@ static inline void
 UpdateBulletsSub(list<bullet>* L,
                  f32 DeltaTime) 
 {
-    list_iterator Itr = List_Itr_Create(L);
-    while(List_Itr_IsValid(L, Itr)) {
-        bullet* B =  List_Itr_Get(L, Itr);
+    for(u32 I = 0; I < L->Count;) {
+        bullet* B = Array_Get(L, I);
         
         UpdateBullet(B, DeltaTime);
         if (IsBulletOutsideScreen(B)) {
-            List_Slear(L, Itr);
+            List_Slear(L, I);
             continue;
         }
-        
-        Itr = List_Itr_Next(L, Itr);
+        ++I;
     }
     
 }
