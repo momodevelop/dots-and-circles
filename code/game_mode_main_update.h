@@ -27,7 +27,9 @@ UpdateParticlesSub(queue<particle>* Q, f32 DeltaTime, u32 Begin, u32 End) {
         particle* P = Q->Data + I;
         P->Timer += DeltaTime;
         
-        P->Position += P->Direction * P->Speed * DeltaTime;
+        v2f Velocity = V2f_Mul(P->Direction, P->Speed * DeltaTime);
+        
+        P->Position = V2f_Add(P->Position, Velocity);
     }
 }
 

@@ -138,6 +138,21 @@ RenderParticlesSub(queue<particle>* Q,
                    u32 Begin, u32 End) 
 {
     
+    for (u32 I = 0; I <= End; ++I ) {
+        particle* P = Queue_Get(Q, I);
+        Assert(P);
+        
+        m44f S = M44f_Scale(1.f, 1.f, 1.f);
+        m44f T = M44f_Translation(P->Position.X,
+                                  P->Position.Y,
+                                  ZLayParticles);
+        
+        Draw_TexturedQuadFromImage(RenderCommands,
+                                   Assets,
+                                   P->ImageId,
+                                   M44f_Concat(T,S));
+        
+    }
 }
 
 static inline void

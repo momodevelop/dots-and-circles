@@ -4,12 +4,13 @@
 // NOTE(Momo): These are functions combining game_renderer.h and game_assets.h.
 // Mostly shortcut functions to draw items
 
+
 static inline void
 Draw_TexturedQuadFromImage(mailbox* RenderCommands,
                            assets* Assets,
                            image_id ImageId,
                            m44f Transform,
-                           c4f Color) 
+                           c4f Color = Color_White) 
 {
     image* Image = Assets_GetImage(Assets, ImageId);
     texture* Texture = Assets_GetTexture(Assets, Image->TextureId);
@@ -21,6 +22,8 @@ Draw_TexturedQuadFromImage(mailbox* RenderCommands,
                               Texture->Handle,
                               AtlasUV);
 }
+
+
 
 static inline void
 Draw_Text(mailbox* RenderCommands, 

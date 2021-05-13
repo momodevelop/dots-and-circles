@@ -7,8 +7,10 @@
 
 #define ZLayPlayer 0.f
 #define ZLayDotBullet 10.f
-#define ZLayCircleBullet 20.f
-#define ZLayEnemy 30.f
+#define ZLayCircleBullet 15.f
+#define ZLayEnemy 20.f
+#define ZLayParticles 25.f
+
 #define ZLayDebug 40.f
 
 

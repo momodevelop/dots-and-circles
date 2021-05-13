@@ -257,5 +257,30 @@ Queue_Pop(queue<type>* Q) {
     return True;
 }
 
+// NOTE(Momo): Not part of standard 'Queue' API, but in case you want to get
+// someone from the queue
 
+template<typename type>
+static inline type*
+Queue_Get(queue<type>* Q, u32 Index) {
+    if (Queue_IsEmpty(Q)) {
+        return Null;
+    }
+    if (Q->Begin <= Q->End) {
+        if (Index < Q->Begin || Index > Q->End) {
+            return Null;
+        }
+        else {
+            return Q->Data + Index;
+        }
+    }
+    else {
+        if (Index <= Q->End || (Index >= Q->Begin && Index < Q->Count)) {
+            return Q->Data + Index;
+        }
+        else {
+            return Null;
+        }
+    }
+}
 #endif //MM_ARRAY_H
