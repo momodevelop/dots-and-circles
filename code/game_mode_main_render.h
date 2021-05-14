@@ -149,7 +149,7 @@ RenderParticlesSub(queue<particle>* Q,
         
         Draw_TexturedQuadFromImage(RenderCommands,
                                    Assets,
-                                   P->ImageId,
+                                   Image_BulletDot,
                                    M44f_Concat(T,S));
         
     }

@@ -203,10 +203,10 @@ Queue_IsFull(queue<type>* Q) {
 }
 
 template<typename type>
-static inline b32 
-Queue_PushItem(queue<type>* Q, type Item) {
+static inline type* 
+Queue_Push(queue<type>* Q) {
     if (Queue_IsFull(Q)) {
-        return False;
+        return Null;
     }
     else if (Queue_IsEmpty(Q)) {
         Q->Begin = Q->End = 0;
@@ -219,10 +219,7 @@ Queue_PushItem(queue<type>* Q, type Item) {
         // Normal case: just advance End
         ++Q->End;
     }
-    
-    Q->Data[Q->End] = Item;
-    
-    return True;
+    return Q->Data + Q->End;
 }
 
 template<typename type>

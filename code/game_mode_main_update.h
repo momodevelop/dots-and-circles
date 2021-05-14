@@ -233,10 +233,9 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->Timer += DeltaTime;
                 if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
                     v2f Pos = 
-                        V2f_Create(Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
-                                   Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
-                    auto MoodType = 
-                        (enemy_mood_pattern_type)Choice(&Mode->Rng, MoodType_Count);
+                        V2f_Create(Rng_Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
+                                   Rng_Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
+                    auto MoodType = (enemy_mood_pattern_type)Rng_Choice(&Mode->Rng, MoodType_Count);
                     
                     SpawnEnemy(Mode, 
                                Assets,

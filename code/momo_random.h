@@ -4,8 +4,8 @@
 // Very pseudo, much wow.
 // TODO: make a REAL rng.
 
-#define MaxNumber 0x05f5c21f
-#define MinNumber 0x000025a0
+#define Rng_MaxNumber 0x05f5c21f
+#define Rng_MinNumber 0x000025a0
 
 constexpr static u32 Table[] =
 {
@@ -529,7 +529,7 @@ struct rng_series
 };
 
 static inline rng_series 
-Seed(u32 Value)
+Rng_Seed(u32 Value)
 {
     rng_series Series = {};
     Series.Index = Value % ArrayCount(Table);
@@ -537,7 +537,7 @@ Seed(u32 Value)
 }
 
 static inline u32 
-Next(rng_series *Series)
+Rng_Next(rng_series *Series)
 {
     u32 Result = Table[Series->Index++];
     if(Series->Index >= ArrayCount(Table)) {
@@ -548,16 +548,16 @@ Next(rng_series *Series)
 }
 
 static inline u32 
-Choice(rng_series *Series, u32 ChoiceCount) {
-    return Next(Series) % ChoiceCount;
+Rng_Choice(rng_series *Series, u32 ChoiceCount) {
+    return Rng_Next(Series) % ChoiceCount;
 }
 
 // Get number within [0, 1]
 static inline f32 
-Unilateral(rng_series *Series)
+Rng_Unilateral(rng_series *Series)
 {
-    f32 Divisor = 1.0f / (f32)MaxNumber;
-    f32 Result = Divisor*(f32)Next(Series);
+    f32 Divisor = 1.0f / (f32)Rng_MaxNumber;
+    f32 Result = Divisor*(f32)Rng_Next(Series);
     
     return(Result);
 }
@@ -565,25 +565,25 @@ Unilateral(rng_series *Series)
 
 // Get number within [-1, 1]
 static inline f32 
-Bilateral(rng_series *Series)
+Rng_Bilateral(rng_series *Series)
 {
-    f32 Result = 2.0f * Unilateral(Series) - 1.0f;
+    f32 Result = 2.0f * Rng_Unilateral(Series) - 1.0f;
     
     return(Result);
 }
 
 static inline f32 
-Between(rng_series *Series, f32 Min, f32 Max)
+Rng_Between(rng_series *Series, f32 Min, f32 Max)
 {
-    f32 Result = Lerp(Min, Unilateral(Series), Max);
+    f32 Result = Lerp(Min, Rng_Unilateral(Series), Max);
     
     return(Result);
 }
 
 static inline s32 
-Between(rng_series *Series, s32 Min, s32 Max)
+Rng_Between(rng_series *Series, s32 Min, s32 Max)
 {
-    s32 Result = Min + (s32)(Next(Series)%((Max + 1) - Min));
+    s32 Result = Min + (s32)(Rng_Next(Series)%((Max + 1) - Min));
     
     return(Result);
 }
