@@ -395,6 +395,7 @@ Png_Parse(png_image* Png,
                     return PngError_UnsupportedIDATFormat;
                 }
                 
+                // NOTE(Momo): Allow space for unfiltered image
                 u32 UnfilteredImageSize = (IHDR->Width + 1) * Png_ImageChannels;
                 arena_mark UnfilteredImageStreamMark = Arena_Mark(Arena);
                 stream UnfilteredImageStream = Stream_CreateFromArena(Arena, UnfilteredImageSize);
