@@ -14,19 +14,20 @@ SpawnEnemy(game_mode_main* Mode,
            f32 FireRate,
            f32 LifeDuration) 
 {
-    enemy Enemy = {}; 
-    Enemy.Position = Position;
-    Enemy.Size = V2f_Create(32.f, 32.f);
+    enemy* Enemy = List_Push(&Mode->Enemies);
+    Enemy->Position = Position;
+    Enemy->Size = V2f_Create(32.f, 32.f);
     
-    Enemy.FireTimer = 0.f;
-    Enemy.FireDuration = FireRate; 
-    Enemy.LifeDuration = LifeDuration;
+    Enemy->FireTimer = 0.f;
+    Enemy->FireDuration = FireRate; 
+    Enemy->LifeTimer = 0.f;
+    Enemy->LifeDuration = LifeDuration;
     
-    Enemy.FiringPatternType = FiringPatternType;
-    Enemy.MoodPatternType = MoodPatternType;
-    Enemy.MovementType = MovementType;
+    Enemy->FiringPatternType = FiringPatternType;
+    Enemy->MoodPatternType = MoodPatternType;
+    Enemy->MovementType = MovementType;
     
-    List_PushItem(&Mode->Enemies, Enemy);
+    
 }
 
 static inline void
@@ -53,30 +54,29 @@ SpawnBullet(game_mode_main* Mode,
             f32 Speed, 
             mood_type Mood) 
 {
-    bullet Bullet = {}; 
-    Bullet.Position = Position;
-	Bullet.Speed = Speed;
-    Bullet.Size = V2f_Create(16.f, 16.f);
-    
-    Bullet.HitCircle = {
-        V2f_Create(0.f, 0.f), 
-        Bullet.Size.X * 0.5f 
-    };
-    
-    if (V2f_LengthSq(Direction) > 0.f) {
-	    Bullet.Direction = V2f_Normalize(Direction);
-    }
+    bullet* B = Null;
     switch (Mood) {
         case MoodType_Dot: {
-            List_PushItem(&Mode->DotBullets, Bullet);
+            B = List_Push(&Mode->DotBullets);
         } break;
         case MoodType_Circle: {
-            List_PushItem(&Mode->CircleBullets, Bullet);
+            B = List_Push(&Mode->CircleBullets);
         } break;
         default: {
             Assert(False);
         }
     }
+    B->Position = Position;
+	B->Speed = Speed;
+    B->Size = V2f_Create(16.f, 16.f);
+    
+    B->HitCircle = Circle2f_Create(V2f_Create(0.f, 0.f), 
+                                   B->Size.X * 0.5f);
+    
+    if (V2f_LengthSq(Direction) > 0.f) {
+	    B->Direction = V2f_Normalize(Direction);
+    }
+    B->MoodType = Mood;
     
 }
 

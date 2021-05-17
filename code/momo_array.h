@@ -89,20 +89,11 @@ List_Clear(list<type>* L) {
 // something important before that remained inside
 template<typename type>
 static inline type*
-List_Push(list<type>* L) {
+List_Push(list<type>* L, type InitItem = {}) {
     if(L->Count < L->Cap) {
         type* Ret = L->Data + L->Count++;
-        return Ret;
-    }
-    return Null;
-}
-
-template<typename type>
-static inline type*
-List_PushItem(list<type>* L, type Item) {
-    if(L->Count < L->Cap) {
-        type* Ret = L->Data + L->Count++;
-        (*Ret) = Item;
+        // ZII: Zero is initialization
+        (*Ret) = InitItem;
         return Ret;
     }
     return Null;
@@ -204,7 +195,7 @@ Queue_IsFull(queue<type>* Q) {
 
 template<typename type>
 static inline type* 
-Queue_Push(queue<type>* Q) {
+Queue_Push(queue<type>* Q, type InitItem = {}) {
     if (Queue_IsFull(Q)) {
         return Null;
     }

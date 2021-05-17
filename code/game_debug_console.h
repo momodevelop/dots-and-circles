@@ -79,12 +79,11 @@ DebugConsole_AddCmd(debug_console* C,
                     debug_console_callback Callback, 
                     void* Context)
 {
-    debug_console_command Command = {};
-    Command.Key = Key;
-    Command.Callback = Callback;
-    Command.Context = Context;
+    debug_console_command* Command = List_Push(&C->Commands);
+    Command->Key = Key;
+    Command->Callback = Callback;
+    Command->Context = Context;
     
-    List_PushItem(&C->Commands, Command);
 }
 
 

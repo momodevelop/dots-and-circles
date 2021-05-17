@@ -235,7 +235,7 @@ UpdateMainMode(permanent_state* PermState,
     UpdateBullets(Mode, DeltaTime);
     UpdateWaves(Mode, Assets, DeltaTime);
     UpdateEnemies(Mode, Assets, DeltaTime); 
-    UpdateCollision(Mode, DeltaTime);
+    UpdateCollision(Mode, Assets, DeltaTime);
     UpdateParticles(Mode, DeltaTime);
     
     RenderPlayer(Mode, Assets, RenderCommands);
@@ -259,6 +259,11 @@ UpdateMainMode(permanent_state* PermState,
                            Buffer, 
                            Mode->DotBullets.Count + Mode->CircleBullets.Count);
     
+    
+    U8CStr_InitFromSiStr(&Buffer, "Enemies: ");
+    DebugInspector_PushU32(&DebugState->Inspector, 
+                           Buffer, 
+                           Mode->Enemies.Count);
 }
 
 #endif //GAME_MODE_H

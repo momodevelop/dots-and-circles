@@ -148,56 +148,54 @@ UpdateEnemies(game_mode_main* Mode,
 }
 
 static inline void
-UpdateCollision(game_mode_main* Mode,
-                f32 DeltaTime)
+UpdateCollisionSub(game_mode_main* Mode,
+                   player* Player,
+                   list<bullet>* Bullets,
+                   assets* Assets,
+                   f32 DeltaTime) 
 {
-    player* Player = &Mode->Player;
     circle2f PlayerCircle = Player->HitCircle;
     v2f PlayerVel = V2f_Sub(Player->Position, Player->PrevPosition);
     PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
     
     // Player vs every bullet
-    for (u32 I = 0; I < Mode->DotBullets.Count;) 
+    for (u32 I = 0; I < Bullets->Count;) 
     {
-        bullet* DotBullet = Mode->DotBullets + I;
-        circle2f DotBulletCircle = DotBullet->HitCircle;
-        v2f DotBulletVel = V2f_Mul(DotBullet->Direction, DotBullet->Speed * DeltaTime);
-        DotBulletCircle.Origin = V2f_Add(DotBulletCircle.Origin, DotBullet->Position);
+        bullet* B = Array_Get(Bullets, I);
+        circle2f BCircle = B->HitCircle;
+        v2f BVel = V2f_Mul(B->Direction, B->Speed * DeltaTime);
+        BCircle.Origin = V2f_Add(BCircle.Origin, B->Position);
         
         if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
                                           PlayerVel,
-                                          DotBulletCircle,
-                                          DotBulletVel)) 
+                                          BCircle,
+                                          BVel)) 
             
         {
-            if (Player->MoodType == MoodType_Dot) {
-                List_Slear(&Mode->DotBullets, I);
+            if (Player->MoodType == B->MoodType) {
+#if 0
+                SpawnParticleRandomDirectionAndSpeed(Mode,
+                                                     Assets,
+                                                     {});
+#endif
+                
+                List_Slear(Bullets, I);
                 continue;
             }
         }
         ++I;
     }
     
-    for (u32 I = 0; I < Mode->CircleBullets.Count;) 
-    {
-        bullet* B = Mode->CircleBullets + I;
-        circle2f BCircle = B->HitCircle;
-        v2f BVel = V2f_Mul(B->Direction, B->Speed * DeltaTime);
-        BCircle.Origin = V2f_Add(BCircle.Origin, B->Position);
-        
-        
-        
-        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
-                                          PlayerVel,
-                                          BCircle,
-                                          BVel)) {
-            if (Player->MoodType == MoodType_Circle) {
-                List_Slear(&Mode->CircleBullets, I);
-                continue;
-            }
-        }
-        ++I;
-    }
+}
+
+
+static inline void
+UpdateCollision(game_mode_main* Mode,
+                assets* Assets,
+                f32 DeltaTime)
+{
+    UpdateCollisionSub(Mode, &Mode->Player, &Mode->DotBullets, Assets, DeltaTime);
+    UpdateCollisionSub(Mode, &Mode->Player, &Mode->CircleBullets, Assets, DeltaTime);
     
 }
 

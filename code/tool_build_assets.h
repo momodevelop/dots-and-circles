@@ -204,7 +204,7 @@ Tba_WriteWav(tba_context* Context,
 {
     // We restrict the type of sound the game allows here
     Assert(WavResult->FmtChunk.NumChannels == Game_AudioChannels);
-    Assert(WavResult->FmtChunk.SampleRate == Game_AudioSampleRate);
+    Assert(WavResult->FmtChunk.SampleRate == Game_AudioSamplesPerSecond);
     Assert(WavResult->FmtChunk.BitsPerSample == Game_AudioBitsPerSample);
     
     Tba_WriteEntry(Context, AssetType_Sound);

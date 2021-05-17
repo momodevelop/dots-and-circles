@@ -48,8 +48,9 @@ AudioMixer_Init(game_audio_mixer* Mixer,
     
     for (u32 I = 0; I < Mixer->Instances.Count; ++I ){
         Mixer->Instances[I] = {};
-        List_PushItem(&Mixer->FreeList, I);
-        
+        u32* Item = List_Push(&Mixer->FreeList);
+        Assert(Item);
+        (*Item) = I;
     }
     
     return True;
@@ -81,16 +82,23 @@ AudioMixer_Play(game_audio_mixer* Mixer,
 }
 
 
-static inline void
+static inline b32
 AudioMixer_Stop(game_audio_mixer* Mixer,
                 game_audio_mixer_handle Handle) 
 {
     if (Handle.Id < Mixer->Instances.Count) {
         game_audio_mixer_instance* Instance = Mixer->Instances + Handle.Id;
         Instance->IsPlaying = False;
-        List_PushItem(&Mixer->FreeList, Handle.Id);
+        u32* Item = List_Push(&Mixer->FreeList);
+        if (Item == Null) {
+            return False;
+        }
+        (*Item) = Handle.Id;
+        return True;
     }
+    return False;
 }
+
 
 static inline void
 AudioMixer_Update(game_audio_mixer* Mixer, 
