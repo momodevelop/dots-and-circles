@@ -17,7 +17,6 @@ ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     }
     Defer{ fclose(File); };
     
-    
     fseek(File, 0, SEEK_END);
     s32 Filesize = ftell(File);
     fseek(File, 0, SEEK_SET);
@@ -32,7 +31,6 @@ ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
 }
 
 
-
 int main() {    
     u32 MemorySize = Megabytes(1);
     void * Memory = malloc(MemorySize);
@@ -41,7 +39,7 @@ int main() {
     
     arena AppArena = Arena_Create(Memory, MemorySize);
     read_file_result PngFile = {};
-    if (!ReadFileToMemory(&AppArena, &PngFile, "test.png")){
+    if (!ReadFileToMemory(&AppArena, &PngFile, "test2.png")){
         return 1;
     }
     png_image Png = {};

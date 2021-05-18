@@ -51,7 +51,7 @@ Wav_LoadFromMemory(wav_load_result* Result,
     stream Stream = Stream_CreateFromMemory(Memory, MemorySize);
     
     // NOTE(Momo): Load Riff Chunk
-    auto* RiffChunk = Stream_ConsumeStruct(wav_riff_chunk, &Stream);
+    auto* RiffChunk = Stream_Consume<wav_riff_chunk>(&Stream);
     if (!RiffChunk) {
         return False;
     }
@@ -65,7 +65,7 @@ Wav_LoadFromMemory(wav_load_result* Result,
     }
     
     // NOTE(Momo): Load fmt Chunk
-    auto* FmtChunk = Stream_ConsumeStruct(wav_fmt_chunk, &Stream);
+    auto* FmtChunk = Stream_Consume<wav_fmt_chunk>(&Stream);
     if (!FmtChunk) {
         return False;
     }
@@ -90,7 +90,7 @@ Wav_LoadFromMemory(wav_load_result* Result,
     }
     
     // NOTE(Momo): Load data Chunk
-    auto* DataChunk = Stream_ConsumeStruct(wav_data_chunk, &Stream);
+    auto* DataChunk = Stream_Consume<wav_data_chunk>(&Stream);
     if (!DataChunk) {
         return False;
     }

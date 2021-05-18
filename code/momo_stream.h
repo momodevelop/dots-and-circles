@@ -21,11 +21,19 @@ Stream_CreateFromMemory(void* Memory, u32 MemorySize) {
     return Ret;
 }
 
+
 static inline stream
 Stream_CreateFromArena(arena* Arena, u32 Capacity) {
     void* Memory = Arena_PushBlock(Arena, Capacity);
     return Stream_CreateFromMemory(Memory, Capacity); 
 } 
+
+static inline void
+Stream_GotoBeginning(stream* S) {
+    S->BitBuffer = 0;
+    S->BitCount = 0;
+    S->Current = 0;
+}
 
 static inline b32
 Stream_IsEos(stream* S) {
@@ -42,8 +50,11 @@ Stream_ConsumeBlock(stream* S, u32 Amount) {
     return Ret;
 }
 
-#define Stream_ConsumeStruct(Type, Stream) (Type*)Stream_ConsumeBlock(Stream, sizeof(Type))
-
+template<typename type>
+static inline type*
+Stream_Consume(stream* S) {
+    return (type*)Stream_ConsumeBlock(S, sizeof(type));
+}
 
 // Bits are consumed from LSB to MSB
 static inline u32
@@ -51,7 +62,7 @@ Stream_ConsumeBits(stream* S, u32 Amount){
     Assert(Amount <= 32);
     
     while(S->BitCount < Amount) {
-        u32 Byte = *Stream_ConsumeStruct(u8, S);
+        u32 Byte = *Stream_Consume<u8>(S);
         S->BitBuffer |= (Byte << S->BitCount);
         S->BitCount += 8;
     }
@@ -64,7 +75,7 @@ Stream_ConsumeBits(stream* S, u32 Amount){
     return Result;
 }
 
-static inline b32
+static inline b8
 Stream_WriteBlock(stream* S, void* Src, u32 SrcSize) {
     if (S->Current + SrcSize >= S->ContentSize) {
         return false;
@@ -74,7 +85,13 @@ Stream_WriteBlock(stream* S, void* Src, u32 SrcSize) {
     return true;
 }
 
-#define Stream_WriteStruct(Type, Stream, Struct) Stream_WriteBlock((Stream), &(Struct), sizeof(Struct))
+template<typename type>
+static inline b8
+Stream_Write(stream* S, type Struct) {
+    return Stream_WriteBlock(S, &Struct, sizeof(type));
+}
+
+
 
 
 #endif

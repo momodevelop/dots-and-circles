@@ -7,6 +7,7 @@
 // Dynamic Huffman
 // Different filter methods
 // Different channels
+// Consider removing 'DestStream' from Png_Deflate to reduce footprint.
 
 #define Png_Debug 1
 #define Png_MaxBits 15
@@ -112,6 +113,9 @@ enum png_error {
     PngError_BadSymbol,
     PngError_BadBTYPE,
     PngError_UnsupportedIDATFormat,
+    PngError_CannotReadFilterType,
+    PngError_NotEnoughPixels,
+    PngError_BadFilterType,
     PngError_DynamicHuffmanNotSupported,
 };
 
@@ -272,8 +276,7 @@ Png_Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                     // NOTE(Momo): Normal case
                     if (Sym <= 255) { 
                         u8 ByteToWrite = (u8)(Sym & 0xFF); 
-                        Png_Log("%02X ", ByteToWrite);
-                        Stream_WriteStruct(u8, DestStream, ByteToWrite);
+                        Stream_Write<u8>(DestStream, ByteToWrite);
                     }
                     // NOTE(Momo): Extra code case
                     else if (Sym >= 257) {
@@ -290,8 +293,7 @@ Png_Deflate(stream* SrcStream, stream* DestStream, arena* Arena)
                         while(Len--) {
                             u32 TargetIndex = DestStream->Current - Dist;
                             u8 ByteToWrite = DestStream->Contents[TargetIndex];
-                            Png_Log("%02X ", ByteToWrite);
-                            Stream_WriteStruct(u8, DestStream, ByteToWrite);
+                            Stream_Write<u8>(DestStream, ByteToWrite);
                         }
                     }
                     else { 
@@ -319,7 +321,7 @@ Png_Parse(png_image* Png,
 {
     stream Stream = Stream_CreateFromMemory(PngMemory, PngMemorySize); 
     
-    auto* PngHeader = Stream_ConsumeStruct(png_header, &Stream);  
+    auto* PngHeader = Stream_Consume<png_header>(&Stream);  
     if (!PngHeader) { 
         return PngError_CannotReadHeader; 
     }
@@ -333,7 +335,7 @@ Png_Parse(png_image* Png,
         }
     }
     
-    auto* ChunkHeader = Stream_ConsumeStruct(png_chunk_header, &Stream);
+    auto* ChunkHeader = Stream_Consume<png_chunk_header>(&Stream);
     if (!ChunkHeader) { 
         return PngError_CannotReadChunkHeader; 
     }
@@ -342,7 +344,7 @@ Png_Parse(png_image* Png,
     if (ChunkHeader->TypeU32 != FourCC("IHDR")) { 
         return PngError_FirstHeaderIsNotIHDR; 
     }
-    auto* IHDR = Stream_ConsumeStruct(png_chunk_data_IHDR, &Stream);
+    auto* IHDR = Stream_Consume<png_chunk_data_IHDR>(&Stream);
     if (!IHDR) { 
         return PngError_CannotReadIHDR; 
     }
@@ -360,7 +362,7 @@ Png_Parse(png_image* Png,
     
     // Just consume the footer. 
     // TODO: CRC check with footer
-    Stream_ConsumeStruct(png_chunk_footer, &Stream);
+    Stream_Consume<png_chunk_footer>(&Stream);
     
     b32 IsImageInitialized = False;
     u32 ImageSize = IHDR->Width * IHDR->Height * Png_ImageChannels;
@@ -372,7 +374,7 @@ Png_Parse(png_image* Png,
     
     // Search for IDAT header
     while(!Stream_IsEos(&Stream)) {
-        ChunkHeader = Stream_ConsumeStruct(png_chunk_header, &Stream);
+        ChunkHeader = Stream_Consume<png_chunk_header>(&Stream);
         EndianSwapU32(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
@@ -387,7 +389,7 @@ Png_Parse(png_image* Png,
                 
                 Png_Log(">> CM: %d\n>> CINFO: %d\n>> FCHECK: %d\n>> FDICT: %d\n>>FLEVEL: %d\n",
                         CM, 
-                        CINFO, 
+                        CINFO,
                         FCHECK, 
                         FDICT, 
                         FLEVEL); 
@@ -405,16 +407,58 @@ Png_Parse(png_image* Png,
                     return DeflateError;
                 }
                 
-                // TODO: Filter
+                
+                // NOTE(Momo): Filter
+                // Data always starts with 1 byte indicating the type of filter
+                // followed by the rest of the chunk.
+                Stream_GotoBeginning(&UnfilteredImageStream);
+                while(!Stream_IsEos(&UnfilteredImageStream)) {
+                    u8* FilterType = Stream_Consume<u8>(&UnfilteredImageStream);
+                    if (FilterType == Null) {
+                        return PngError_CannotReadFilterType;
+                    }
+                    Png_Log("%02X: ", (u32)(*FilterType));
+                    switch(*FilterType) {
+                        case 0: { // None
+                            for (u32 I = 0; I < IHDR->Width; ++I ){
+                                for (u32 J = 0; J < Png_ImageChannels; ++J) {
+                                    u8* PixelByte = Stream_Consume<u8>(&UnfilteredImageStream);
+                                    if (PixelByte == Null) {
+                                        Arena_Revert(&ActualImageStreamMark);
+                                        return PngError_NotEnoughPixels;
+                                    }
+                                    Png_Log("%02X ", (u32)(*PixelByte));
+                                    Stream_Write<u8>(&ActualImageStream, *PixelByte);
+                                    
+                                }
+                            }
+                            
+                            
+                            
+                        } break;
+                        /*case 1: { // Sub
+                        } break;
+                        case 2: { // Up
+                        } break;
+                        case 3: { // Average
+                        } break;
+                        case 4: { // Paeth
+                        } break;*/
+                        default: {
+                            return PngError_BadFilterType;
+                        };
+                    };
+                    Png_Log("\n");
+                }
                 
                 Stream_ConsumeBlock(&Stream, ChunkHeader->Length);
+                
             } break;
             case FourCC("IEND"): {
                 Png->Width = IHDR->Width;
                 Png->Height = IHDR->Height;
                 Png->Channels = Png_ImageChannels;
                 
-                //TODO: filtering
                 return PngError_None;
             } break;
             default: {
@@ -422,7 +466,7 @@ Png_Parse(png_image* Png,
                 Stream_ConsumeBlock(&Stream, ChunkHeader->Length);
             };
         }
-        Stream_ConsumeStruct(png_chunk_footer, &Stream);
+        Stream_Consume<png_chunk_footer>(&Stream);
     }
     
     return PngError_BadFormat;

@@ -105,13 +105,17 @@ ConsumeBlock(void** P, u32 Size) {
     (*P) = (u8*)(*P) + Size; 
     return Ret;
 }
-#define ConsumeStruct(Type, Memory) ((Type)*)ConsumeBlock(Memory, sizeof(Type)) 
+
+template<typename type>
+static inline void
+Consume(void** Memory) {
+    return (type*)ConsumeBlock(Memory, sizeof(type));
+}
 
 static inline void
 WriteBlock(void** P, void* Item, u32 ItemSize) {
-    
+    // TODO
 }
-
 
 template<typename T>
 static inline void

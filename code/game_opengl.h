@@ -389,7 +389,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
-        List_PushItem(&Opengl->Textures, DummyTexture);
+        List_Push(&Opengl->Textures, DummyTexture);
     }
     
     // NOTE(Momo): Blank texture setup
@@ -403,7 +403,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     1, 1, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     &Pixel);
-        List_PushItem(&Opengl->Textures, BlankTexture);
+        List_Push(&Opengl->Textures, BlankTexture);
     }
     
     
@@ -715,7 +715,7 @@ Opengl_AddTexture(opengl* Opengl,
     
     Ret.Id = Opengl->Textures.Count;
     Ret.Success = True;
-    List_PushItem(&Opengl->Textures, Entry);
+    List_Push(&Opengl->Textures, Entry);
     return Ret;
 }
 
