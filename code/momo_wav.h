@@ -48,7 +48,8 @@ Wav_LoadFromMemory(wav_load_result* Result,
                    void* Memory, 
                    u32 MemorySize) 
 {
-    stream Stream = Stream_CreateFromMemory(Memory, MemorySize);
+    stream Stream = {};
+    Stream_Create(&Stream, Memory, MemorySize);
     
     // NOTE(Momo): Load Riff Chunk
     auto* RiffChunk = Stream_Consume<wav_riff_chunk>(&Stream);
