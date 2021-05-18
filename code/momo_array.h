@@ -46,8 +46,15 @@ operator+(array<type> L, u32 Index) {
 
 //~ NOTE(Momo): list
 template<typename type>
-struct list : array<type> {
+struct list {
+    type* Data;
+    u32 Count;
     u32 Cap;
+    
+    auto& operator[](u32 Index) {
+        Assert(Index < Count); 
+        return Data[Index];
+    }
 };
 
 struct list_iterator {
@@ -130,7 +137,7 @@ List_Last(list<type>* L) {
         return Null;
     }
     else {
-        return Array_Get(L, L->Count - 1);
+        return List_Get(L, L->Count - 1);
     }
     
 }
@@ -139,6 +146,23 @@ template<typename type>
 static inline u32
 List_Remaining(list<type>* L) {
     return L->Cap - L->Count;
+}
+
+template<typename type>
+static inline type*
+List_Get(list<type>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
+    }
+    else {
+        return Null;
+    }
+}
+
+template<typename type>
+static inline type* 
+operator+(list<type> L, u32 Index) {
+    return List_Get(&L, Index);
 }
 
 //~ NOTE(Momo): Queue
