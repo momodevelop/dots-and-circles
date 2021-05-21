@@ -134,7 +134,7 @@ DebugConsole_Update(debug_console* Console,
         MM_V2f StartPos = MM_V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
         MM_V2f EndPos = MM_V2f_Create(DebugConsole_EndPosX, DebugConsole_EndPosY);
         
-        f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
+        f32 P = MM_Ease_InQuad(Timer_Percent(Console->TransitTimer));
         MM_V2f Delta = MM_V2f_Sub(EndPos, StartPos); 
         
         MM_V2f DeltaP = MM_V2f_Mul(Delta, P);
