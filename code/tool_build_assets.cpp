@@ -116,12 +116,12 @@ int main() {
     //~ NOTE(Momo): Pack rects
     u32 AtlasWidth = 1024;
     u32 AtlasHeight = 1024;
-    if (!AabbPacker_Pack(&Arena,
-                         AtlasWidth,
-                         AtlasHeight,
-                         Aabbs,
-                         AabbCount, 
-                         AabbPackerSortType_Height)) 
+    if (!MM_AabbPacker_Pack(&Arena,
+                            AtlasWidth,
+                            AtlasHeight,
+                            Aabbs,
+                            AabbCount, 
+                            MM_AabbPacker_SORT_TYPE_HEIGHT)) 
     {
         printf("[Atlas] Failed to generate texture\n");
         return 1;
