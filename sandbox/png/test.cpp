@@ -9,7 +9,7 @@ struct read_file_result
 };
 
 static inline b32
-ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
+ReadFileToMemory(MM_Arena* Arena, read_file_result* Result, const char* Filename) {
     FILE* File = {};
     if (fopen_s(&File, Filename, "rb") != 0) { 
         printf("Cannot find file\n");
@@ -37,7 +37,7 @@ int main() {
     if (!Memory) { return 1; }
     Defer { free(Memory); };  
     
-    arena AppArena = Arena_Create(Memory, MemorySize);
+    MM_Arena AppArena = Arena_Create(Memory, MemorySize);
     read_file_result PngFile = {};
     if (!ReadFileToMemory(&AppArena, &PngFile, "test2.png")){
         return 1;

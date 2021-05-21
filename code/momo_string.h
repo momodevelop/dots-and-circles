@@ -76,8 +76,8 @@ U8CStr_Find(u8_cstr Str, u8 Item, u32 StartIndex) {
 }
 
 static inline u8_cstr_split_res
-U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
-    // NOTE(Momo): We are having faith that the arena given is a bump arena.
+U8CStr_SplitByDelimiter(u8_cstr Str, MM_Arena* Arena, u8 Delimiter) {
+    // NOTE(Momo): We are having faith that the MM_Arena given is a bump arena.
     // i.e. strings that are push into the arena will be contiguous 
     // in memory, and thus convertible to an array<string> struct.
     u8_cstr_split_res Ret = {};
@@ -122,7 +122,7 @@ U8Str_Init(u8_str* S, u8* Buffer, u32 Capacity) {
 
 
 static inline b32
-U8Str_InitFromArena(u8_str* S, arena* Arena, u32 Capacity) {
+U8Str_InitFromArena(u8_str* S, MM_Arena* Arena, u32 Capacity) {
     u8* Buffer = MM_Arena_PushArray(u8, Arena, Capacity);
     if(!Buffer) {
         return False;

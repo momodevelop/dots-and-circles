@@ -15,7 +15,7 @@ struct debug_inspector {
 };
 
 static inline void
-DebugInspector_Init(debug_inspector* Inspector, arena* Arena) {
+DebugInspector_Init(debug_inspector* Inspector, MM_Arena* Arena) {
     Inspector->IsActive = False;
     list<u8_str>* Entries = &Inspector->Entries;
     List_InitFromArena(Entries, Arena, DebugInspector_EntryCount);

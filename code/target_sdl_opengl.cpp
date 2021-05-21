@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
     Defer { free(ProgramMemory); };
     
     // NOTE(Momo): Memory Arena for platform
-    arena PlatformArena = Arena(ProgramMemory, TotalMemorySize);
+    MM_Arena PlatformArena = Arena(ProgramMemory, TotalMemorySize);
     
     // NOTE(Momo): Game
     game_memory GameMemory = {};

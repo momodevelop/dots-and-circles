@@ -35,7 +35,7 @@ int main() {
     }
     Defer { free(Memory); };
     
-    arena Arena = Arena_Create(Memory, Tba_MemorySize);
+    MM_Arena Arena = Arena_Create(Memory, Tba_MemorySize);
     
     //~ NOTE(Momo): Load font
     
@@ -273,7 +273,7 @@ int main() {
         for(u32 I = 0; I < ArrayCount(Tba_SoundContexts); ++I) {
             tba_sound_context* Ctx = Tba_SoundContexts + I;
             
-            arena_mark Mark = MM_Arena_Mark(&Arena);
+            MM_ArenaMark Mark = MM_Arena_Mark(&Arena);
             Defer { MM_Arena_Revert(&Mark); };
             
             read_file_result FileResult = {};

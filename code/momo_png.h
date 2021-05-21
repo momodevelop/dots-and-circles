@@ -21,7 +21,7 @@
 
 struct png_context {
     stream Stream;
-    arena* Arena; 
+    MM_Arena* Arena; 
     
     b32 IsImageInitialized;
     stream ImageStream;
@@ -31,8 +31,8 @@ struct png_context {
     u32 ImageHeight;
     u32 ImageChannels;
     
-    arena_mark ImageStreamMark;
-    arena_mark DepressedImageStreamMark;
+    MM_ArenaMark ImageStreamMark;
+    MM_ArenaMark DepressedImageStreamMark;
 };
 
 
@@ -137,7 +137,7 @@ Png_HuffmanDecode(bitstream* SrcStream, png_huffman* Huffman) {
 }
 
 static inline png_huffman
-Png_Huffman(arena* Arena, 
+Png_Huffman(MM_Arena* Arena, 
             u16* SymLenTable,
             u32 SymLenTableSize, 
             u32 LenCountTableCap,
@@ -182,7 +182,7 @@ Png_Huffman(arena* Arena,
 
 
 static inline png_error
-Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena) 
+Png_Deflate(bitstream* SrcStream, stream* DestStream, MM_Arena* Arena) 
 {
     
     static const short Lens[29] = { /* Size base for length codes 257..285 */
@@ -202,7 +202,7 @@ Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena)
     
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        arena_mark Scratch = MM_Arena_Mark(Arena);
+        MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
         Defer { MM_Arena_Revert(&Scratch); };
         
         BFINAL = (u8)Bitstream_ConsumeBits(SrcStream, 1);
@@ -312,7 +312,7 @@ Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena)
 
 static inline png_error
 Png_Parse(png_image* Png,
-          arena* Arena,
+          MM_Arena* Arena,
           void* PngMemory,
           u32 PngMemorySize) 
 {
@@ -386,7 +386,7 @@ Png_Parse(png_image* Png,
     
     // NOTE(Momo): For reserving memory for unfiltered data that is generated 
     // as we decode the file
-    arena_mark ActualImageStreamMark = MM_Arena_Mark(Arena);
+    MM_ArenaMark ActualImageStreamMark = MM_Arena_Mark(Arena);
     stream ActualImageStream = {};
     Stream_CreateFromArena(&ActualImageStream, Arena, ImageSize);
     
@@ -417,7 +417,7 @@ Png_Parse(png_image* Png,
                 
                 // NOTE(Momo): Allow space for unfiltered image
                 u32 UnfilteredImageSize = IHDR->Width * (ImageChannels + 1);
-                arena_mark UnfilteredImageStreamMark = MM_Arena_Mark(Arena);
+                MM_ArenaMark UnfilteredImageStreamMark = MM_Arena_Mark(Arena);
                 
                 stream UnfilteredImageStream = {};
                 Stream_CreateFromArena(&UnfilteredImageStream, Arena, UnfilteredImageSize);

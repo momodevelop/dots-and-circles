@@ -83,14 +83,14 @@ __AabbPacker_Sort(aabb2u* Aabbs,
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b32
-AabbPacker_Pack(arena* Arena,
+AabbPacker_Pack(MM_Arena* Arena,
                 u32 TotalWidth,
                 u32 TotalHeight,
                 aabb2u* Aabbs, 
                 u32 AabbCount, 
                 aabb_packer_sort_type SortType) 
 {
-    arena_mark Scratch = MM_Arena_Mark(Arena);
+    MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
     Defer { MM_Arena_Revert(&Scratch); };
     auto* SortEntries = MM_Arena_PushArray(sort_entry, Arena, AabbCount);
     

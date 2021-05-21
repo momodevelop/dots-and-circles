@@ -6,11 +6,11 @@ static inline void
 CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
-    arena_mark Scratch = MM_Arena_Mark(&DebugState->Arena);
+    MM_ArenaMark Scratch = MM_Arena_Mark(&DebugState->Arena);
     Defer{ MM_Arena_Revert(&Scratch); };
     u8_cstr Buffer = {};
     
-    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
+    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch, ' ');
     if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
         U8CStr_InitFromSiStr(&Buffer, "Expected only 2 arguments");
@@ -76,7 +76,7 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->PermanentMemorySize);
         
         PermState->ModeArena = MM_Arena_SubArena(&PermState->MainArena, 
-                                              MM_Arena_Remaining(PermState->MainArena));
+                                                 MM_Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Main;
         PermState->IsInitialized = True;
@@ -164,7 +164,7 @@ GameUpdateFunc(GameUpdate)
     // NOTE(Momo): Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
         MM_Arena_Clear(&PermState->ModeArena);
-        arena* ModeArena = &PermState->ModeArena;
+        MM_Arena* ModeArena = &PermState->ModeArena;
         
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {

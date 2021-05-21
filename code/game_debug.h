@@ -7,7 +7,7 @@
 
 struct debug_state {
     b32 IsInitialized;
-    arena Arena;
+    MM_Arena Arena;
     
     sdw
         debug_console Console;
@@ -56,7 +56,7 @@ Debug_Render(debug_state* State,
     // For each variable, render:
     // Name: Data
     for (u32 I = 0; I < State->VariableCount; ++I) {
-        arena_mark Scratch = MM_Arena_Mark(&State->Arena);
+        MM_ArenaMark Scratch = MM_Arena_Mark(&State->Arena);
         Defer{ MM_Arena_Revert(&Scratch); };
         
         u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
