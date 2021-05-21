@@ -14,7 +14,7 @@ enum aabb_packer_sort_type {
 
 static inline void
 __AabbPacker_Sort(MM_Aabb2u* Aabbs,
-                  sort_entry* SortEntries,
+                  MM_Sort_Entry* SortEntries,
                   u32 SortEntryCount,
                   aabb_packer_sort_type SortType)
 {
@@ -23,16 +23,16 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
                 f32 Key = -(f32)AabbW;
-                SortEntries[I].Key = Key;
-                SortEntries[I].Index = I;
+                SortEntries[I].key = Key;
+                SortEntries[I].index = I;
             }
         } break;
         case AabbPackerSortType_Height: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)AabbH;
-                SortEntries[I].Key = Key;
-                SortEntries[I].Index = I;
+                SortEntries[I].key = Key;
+                SortEntries[I].index = I;
             }
         } break;
         case AabbPackerSortType_Area: {
@@ -40,8 +40,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
                 u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)(AabbW * AabbH);
-                SortEntries[I].Key = Key;
-                SortEntries[I].Index = I;
+                SortEntries[I].key = Key;
+                SortEntries[I].index = I;
             }
         } break;
         case AabbPackerSortType_Perimeter: {
@@ -49,8 +49,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
                 u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)(AabbW + AabbH);
-                SortEntries[I].Key = Key;
-                SortEntries[I].Index = I;
+                SortEntries[I].key = Key;
+                SortEntries[I].index = I;
             }
         } break;
         case AabbPackerSortType_BiggerSide: {
@@ -58,8 +58,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
                 u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)(MaxOf(AabbW, AabbH));
-                SortEntries[I].Key = Key;
-                SortEntries[I].Index = I;
+                SortEntries[I].key = Key;
+                SortEntries[I].index = I;
             }
         } break;
         case AabbPackerSortType_Pathological: {
@@ -70,14 +70,14 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
                 u32 MaxOfWH = MaxOf(AabbW, AabbH);
                 u32 MinOfWH = MinOf(AabbW, AabbH);
                 f32 Key = -(f32)(MaxOfWH/MinOfWH * AabbW * AabbH);
-                SortEntries[I].Key = Key;
-                SortEntries[I].Index = I;
+                SortEntries[I].key = Key;
+                SortEntries[I].index = I;
             }
         } break;
         
     }
     
-    QuickSort(SortEntries, SortEntryCount);
+    MM_Sort_QuickSort(SortEntries, SortEntryCount);
     
 }
 
@@ -92,7 +92,7 @@ AabbPacker_Pack(MM_Arena* Arena,
 {
     MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
     Defer { MM_Arena_Revert(&Scratch); };
-    auto* SortEntries = MM_Arena_PushArray(sort_entry, Arena, AabbCount);
+    auto* SortEntries = MM_Arena_PushArray(MM_Sort_Entry, Arena, AabbCount);
     
     __AabbPacker_Sort(Aabbs, SortEntries, AabbCount, SortType);
     
@@ -103,7 +103,7 @@ AabbPacker_Pack(MM_Arena* Arena,
     Nodes[CurrentNodeCount++] = MM_Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
     
     for (u32 i = 0; i < AabbCount; ++i) {
-        MM_Aabb2u* Aabb = Aabbs + SortEntries[i].Index;
+        MM_Aabb2u* Aabb = Aabbs + SortEntries[i].index;
         u32 AabbW = MM_Aabb2u_Width(*Aabb);
         u32 AabbH = MM_Aabb2u_Height(*Aabb);
         
