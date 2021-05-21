@@ -63,12 +63,12 @@ DebugConsole_Init(debug_console* C,
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
-    MM_List_InitFromArena(&C->Commands, Arena, DebugConsole_MaxCommands);
-    MM_U8Str_InitFromArena(&C->InputLine.Text, Arena, DebugConsole_LineLength);
+    MM_List_New(&C->Commands, Arena, DebugConsole_MaxCommands);
+    MM_U8Str_New(&C->InputLine.Text, Arena, DebugConsole_LineLength);
     
-    MM_Array_InitFromArena(&C->InfoLines, Arena, DebugConsole_InfoLineCount);
+    MM_Array_New(&C->InfoLines, Arena, DebugConsole_InfoLineCount);
     for (u32 I = 0; I < C->InfoLines.count; ++I) {
-        MM_U8Str_InitFromArena(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
+        MM_U8Str_New(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
     }
     
 }

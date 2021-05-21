@@ -39,7 +39,7 @@ struct platform_input {
 
 static inline b32
 Input_Init(platform_input* Input, MM_Arena* Arena) {
-    return MM_U8Str_InitFromArena(&Input->Characters, Arena, 10);
+    return MM_U8Str_New(&Input->Characters, Arena, 10);
 }
 
 

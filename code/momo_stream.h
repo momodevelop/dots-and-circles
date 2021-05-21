@@ -2,167 +2,167 @@
 #define __MM_STREAM__
 
 // TODO: Linked list of stream chunks?
-struct stream {
-    u8* Contents;
-    u32 ContentSize;
+struct MM_Stream {
+    u8* contents;
+    u32 content_size;
     
-    u32 Current;
+    u32 current;
 };
 
 
 static inline b8
-Stream_Create(stream* Stream, void* Memory, u32 MemorySize) {
-    if ( Memory == Null || MemorySize == 0) {
+MM_Stream_Create(MM_Stream* s, void* memory, u32 memory_size) {
+    if ( memory == Null || memory_size == 0) {
         return false;
     }
-    Stream->Contents = (u8*)Memory;
-    Stream->ContentSize = MemorySize;
+    s->contents = (u8*)memory;
+    s->content_size = memory_size;
     return true;
 }
 
 
 
 static inline b8
-Stream_CreateFromArena(stream* Stream, MM_Arena* Arena, u32 Capacity) {
-    void* Memory = MM_Arena_PushBlock(Arena, Capacity);
-    return Stream_Create(Stream, Memory, Capacity); 
+MM_Stream_New(MM_Stream* s, MM_Arena* arena, u32 capacity) {
+    void* memory = MM_Arena_PushBlock(arena, capacity);
+    return MM_Stream_Create(s, memory, capacity); 
 } 
 
 static inline void
-Stream_Reset(stream* S) {
-    S->Current = 0;
+MM_Stream_Reset(MM_Stream* s) {
+    s->current = 0;
 }
 
 static inline b32
-Stream_IsEos(stream* S) {
-    return S->Current >= S->ContentSize;
+MM_Stream_IsEos(MM_Stream* s) {
+    return s->current >= s->content_size;
 }
 
 static inline void*
-Stream_ConsumeBlock(stream* S, u32 Amount) {
-    void* Ret = nullptr;
-    if (S->Current + Amount <= S->ContentSize) {
-        Ret = S->Contents + S->Current;
+MM_Stream_ConsumeBlock(MM_Stream* s, u32 amount) {
+    void* ret = nullptr;
+    if (s->current + amount <= s->content_size) {
+        ret = s->contents + s->current;
     }
-    S->Current += Amount;
-    return Ret;
+    s->current += amount;
+    return ret;
 }
 
-template<typename type>
-static inline type*
-Stream_Consume(stream* S) {
-    return (type*)Stream_ConsumeBlock(S, sizeof(type));
+template<typename T>
+static inline T*
+MM_Stream_Consume(MM_Stream* s) {
+    return (T*)MM_Stream_ConsumeBlock(s, sizeof(T));
 }
 
 
 static inline b8
-Stream_WriteBlock(stream* S, void* Src, u32 SrcSize) {
-    if (S->Current + SrcSize >= S->ContentSize) {
+MM_Stream_WriteBlock(MM_Stream* s, void* Src, u32 src_size) {
+    if (s->current + src_size >= s->content_size) {
         return false;
     }
-    CopyBlock(S->Contents + S->Current, Src, SrcSize);
-    S->Current += SrcSize; 
+    CopyBlock(s->contents + s->current, Src, src_size);
+    s->current += src_size; 
     return true;
 }
 
-template<typename type>
+template<typename T>
 static inline b8
-Stream_Write(stream* S, type Struct) {
-    return Stream_WriteBlock(S, &Struct, sizeof(type));
+MM_Stream_Write(MM_Stream* s, T item) {
+    return MM_Stream_WriteBlock(s, &item, sizeof(T));
 }
 
 
 //~ NOTE(Momo): Bitstream
 
-struct bitstream {
-    u8* Contents;
-    u32 ContentSize;
+struct MM_Bitstream {
+    u8* contents;
+    u32 content_size;
     
-    u32 Current;
+    u32 current;
     
     // For bit reading
-    u32 BitBuffer;
-    u32 BitCount;
+    u32 bit_buffer;
+    u32 bit_count;
 };
 
 static inline b8
-Bitstream_Create(bitstream* Stream, void* Memory, u32 MemorySize) {
-    if ( Memory == Null || MemorySize == 0) {
+MM_Bitstream_Create(MM_Bitstream* s, void* memory, u32 memory_size) {
+    if ( memory == Null || memory_size == 0) {
         return false;
     }
-    Stream->Contents = (u8*)Memory;
-    Stream->ContentSize = MemorySize;
+    s->contents = (u8*)memory;
+    s->content_size = memory_size;
     return true;
 }
 
 
 
 static inline b8
-Bitstream_CreateFromArena(bitstream* Stream, MM_Arena* Arena, u32 Capacity) {
-    void* Memory = MM_Arena_PushBlock(Arena, Capacity);
-    return Bitstream_Create(Stream, Memory, Capacity); 
+MM_Bitstream_New(MM_Bitstream* s, MM_Arena* arena, u32 capacity) {
+    void* memory = MM_Arena_PushBlock(arena, capacity);
+    return MM_Bitstream_Create(s, memory, capacity); 
 } 
 
 static inline void
-Bitstream_Reset(bitstream* S) {
-    S->Current = 0;
+MM_Bitstream_Reset(MM_Bitstream* s) {
+    s->current = 0;
 }
 
 static inline b32
-Bitstream_IsEos(bitstream* S) {
-    return S->Current >= S->ContentSize;
+MM_Bitstream_IsEos(MM_Bitstream* s) {
+    return s->current >= s->content_size;
 }
 
 static inline void*
-Bitstream_ConsumeBlock(bitstream* S, u32 Amount) {
-    void* Ret = nullptr;
-    if (S->Current + Amount <= S->ContentSize) {
-        Ret = S->Contents + S->Current;
+MM_Bitstream_ConsumeBlock(MM_Bitstream* s, u32 amount) {
+    void* ret = nullptr;
+    if (s->current + amount <= s->content_size) {
+        ret = s->contents + s->current;
     }
-    S->Current += Amount;
-    return Ret;
+    s->current += amount;
+    return ret;
 }
 
-template<typename type>
-static inline type*
-Bitstream_Consume(bitstream* S) {
-    return (type*)Bitstream_ConsumeBlock(S, sizeof(type));
+template<typename T>
+static inline T*
+MM_Bitstream_Consume(MM_Bitstream* s) {
+    return (T*)MM_Bitstream_ConsumeBlock(s, sizeof(T));
 }
 
 
 static inline b8
-Bitstream_WriteBlock(bitstream* S, void* Src, u32 SrcSize) {
-    if (S->Current + SrcSize >= S->ContentSize) {
+MM_Bitstream_WriteBlock(MM_Bitstream* s, void* Src, u32 src_size) {
+    if (s->current + src_size >= s->content_size) {
         return false;
     }
-    CopyBlock(S->Contents + S->Current, Src, SrcSize);
-    S->Current += SrcSize; 
+    CopyBlock(s->contents + s->current, Src, src_size);
+    s->current += src_size; 
     return true;
 }
 
-template<typename type>
+template<typename T>
 static inline b8
-Bitstream_Write(bitstream* S, type Struct) {
-    return Bitstream_WriteBlock(S, &Struct, sizeof(type));
+MM_Bitstream_Write(MM_Bitstream* s, T item) {
+    return MM_Bitstream_WriteBlock(s, &item, sizeof(T));
 }
 
 // Bits are consumed from LSB to MSB
 static inline u32
-Bitstream_ConsumeBits(bitstream* S, u32 Amount){
-    Assert(Amount <= 32);
+MM_Bitstream_ConsumeBits(MM_Bitstream* s, u32 amount){
+    Assert(amount <= 32);
     
-    while(S->BitCount < Amount) {
-        u32 Byte = *Bitstream_Consume<u8>(S);
-        S->BitBuffer |= (Byte << S->BitCount);
-        S->BitCount += 8;
+    while(s->bit_count < amount) {
+        u32 Byte = *MM_Bitstream_Consume<u8>(s);
+        s->bit_buffer |= (Byte << s->bit_count);
+        s->bit_count += 8;
     }
     
-    u32 Result = S->BitBuffer & ((1 << Amount) - 1); 
+    u32 ret = s->bit_buffer & ((1 << amount) - 1); 
     
-    S->BitCount -= Amount;
-    S->BitBuffer >>= Amount;
+    s->bit_count -= amount;
+    s->bit_buffer >>= amount;
     
-    return Result;
+    return ret;
 }
 
 

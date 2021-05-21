@@ -17,7 +17,7 @@ struct MM_Array {
 
 template<typename T>
 static inline b8
-MM_Array_InitFromArena(MM_Array<T>* a, MM_Arena* arena, u32 count) {
+MM_Array_New(MM_Array<T>* a, MM_Arena* arena, u32 count) {
     T* buffer = MM_Arena_PushArray(T, arena, count);
     if (!buffer) {
         return false;
@@ -59,7 +59,7 @@ struct MM_List {
 
 template<typename T>
 static inline b8
-MM_List_InitFromArena(MM_List<T>* l, MM_Arena* arena, u32 cap) {
+MM_List_New(MM_List<T>* l, MM_Arena* arena, u32 cap) {
     T* buffer = MM_Arena_PushArray(T, arena, cap);
     if (!buffer) {
         return false;
@@ -175,7 +175,7 @@ MM_Queue_Init(MM_Queue<T>* q, T* buffer, u32 buffer_count) {
 
 template<typename T>
 static inline b8
-MM_Queue_InitFromArena(MM_Queue<T>* q, MM_Arena* arena, u32 count) {
+MM_Queue_New(MM_Queue<T>* q, MM_Arena* arena, u32 count) {
     T* buffer = MM_Arena_PushArray(T, arena, count);
     if (!buffer) {
         return false;
