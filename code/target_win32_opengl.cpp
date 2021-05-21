@@ -286,7 +286,7 @@ Win32Init() {
     }
     
     // NOTE(Momo): Initialize paths
-    GetModulefilenameA(0, State->exe_full_path, 
+    GetModuleFileNameA(0, State->exe_full_path, 
                        sizeof(State->exe_full_path));
     State->OnePastExeDirectory = State->exe_full_path;
     for( char* Itr = State->exe_full_path; *Itr; ++Itr) {
@@ -1350,7 +1350,7 @@ enum platform_file_error {
 static inline 
 PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     platform_file_handle Ret = {}; 
-    const char* Path = Game_Assetfilename;
+    const char* Path = Game_AssetFileName;
     
     // Check if there are free handlers to go around
     if (G_State->HandleFreeCount == 0) {
