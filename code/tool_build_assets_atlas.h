@@ -60,7 +60,7 @@ Tba_GenerateAtlas(arena* Arena,
                   u32 Height) 
 {
     u32 AtlasSize = Width * Height * 4;
-    u8* AtlasMemory = (u8*)Arena_PushBlock(Arena, AtlasSize);
+    u8* AtlasMemory = (u8*)MM_Arena_PushBlock(Arena, AtlasSize);
     if (!AtlasMemory) {
         return 0;
     }
@@ -71,8 +71,8 @@ Tba_GenerateAtlas(arena* Arena,
         auto Type = *(atlas_context_type*)UserDatas[I];
         switch(Type) {
             case AtlasContextType_Image: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                Defer { Arena_Revert(&Scratch); };
+                arena_mark Scratch = MM_Arena_Mark(Arena);
+                Defer { MM_Arena_Revert(&Scratch); };
                 
                 auto* Context = (atlas_context_image*)UserDatas[I];
                 s32 W, H, C;
@@ -114,12 +114,12 @@ Tba_GenerateAtlas(arena* Arena,
                 if (TextureDimensions == 0) 
                     continue;
                 
-                arena_mark Scratch = Arena_Mark(Arena);
-                u8* FontTexture = (u8*)Arena_PushBlock(Arena,TextureDimensions*Channels); 
+                arena_mark Scratch = MM_Arena_Mark(Arena);
+                u8* FontTexture = (u8*)MM_Arena_PushBlock(Arena,TextureDimensions*Channels); 
                 if (!FontTexture) {
                     return Null;
                 }
-                Defer { Arena_Revert(&Scratch); };
+                Defer { MM_Arena_Revert(&Scratch); };
                 
                 u8* FontTextureItr = FontTexture;
                 for (u32 j = 0, k = 0; j < TextureDimensions; ++j ){

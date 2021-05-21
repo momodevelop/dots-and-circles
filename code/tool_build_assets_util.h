@@ -32,7 +32,7 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
     u32 Size = ftell(File);
     fseek(File, 0, SEEK_SET);
     
-    void* Buffer = Arena_PushBlock(Arena, Size);
+    void* Buffer = MM_Arena_PushBlock(Arena, Size);
     fread(Buffer, Size, 1, File);
     
     Result->Data = Buffer;

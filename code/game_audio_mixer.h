@@ -32,16 +32,16 @@ AudioMixer_Init(game_audio_mixer* Mixer,
                 u32 MaxInstances,
                 arena* Arena) 
 {
-    arena_mark Mark = Arena_Mark(Arena);
+    arena_mark Mark = MM_Arena_Mark(Arena);
     b32 Success = Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
     if (!Success) {
-        Arena_Revert(&Mark);
+        MM_Arena_Revert(&Mark);
         return False;
     }
     
     Success = List_InitFromArena(&Mixer->FreeList, Arena, MaxInstances);
     if (!Success) {
-        Arena_Revert(&Mark);
+        MM_Arena_Revert(&Mark);
         return False;
     }
     Mixer->Volume = MasterVolume;

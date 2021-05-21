@@ -2,95 +2,96 @@
 #define __MOMO_ARENA__
 
 struct arena {
-    u8* Memory;
-    u32 Used;
-    u32 Capacity;
+    u8* memory;
+    u32 used;
+    u32 capacity;
 };
 
-static inline void
-Arena_Init(arena* A, void* Memory, u32 Capacity) {
-    A->Memory = (u8*)Memory;
-    A->Used = 0; 
-    A->Capacity = Capacity;
+static inline b8
+MM_Arena_Init(arena* A, void* memory, u32 capacity) {
+    if (!memory || !capacity) {
+        return false;
+    }
+    A->memory = (u8*)memory;
+    A->used = 0; 
+    A->capacity = capacity;
+    return true;
 }
 
-static inline arena 
-Arena_Create(void* Memory, u32 Capacity) {
-    return { (u8*)Memory, 0, Capacity};
-}
 
 static inline void 
-Arena_Clear(arena* Arena) {
-    Arena->Used = 0;
+MM_Arena_Clear(arena* a) {
+    a->used = 0;
 }
 
 static inline u32
-Arena_Remaining(arena Arena) {
-    return Arena.Capacity - Arena.Used;
+MM_Arena_Remaining(arena a) {
+    return a.capacity - a.used;
 }
 
 
 static inline void* 
-Arena_PushBlock(arena* Arena, u32 Size, u8 Alignment = alignof(void*)) {
-    if (Size == 0 || Alignment == 0) {
+MM_Arena_PushBlock(arena* a, u32 size, u8 alignment = alignof(void*)) {
+    if (size == 0 || alignment == 0) {
         return Null;
     }
-    u8 Adjust = AlignForwardDiff((u8*)Arena->Memory + Arena->Used, Alignment);
+    u8 adjust = AlignForwardDiff((u8*)a->memory + a->used, alignment);
     
     // if not enough space, return 
-    u8* MemoryEnd = (u8*)Arena->Memory + Arena->Capacity;
-    u8* BlockEnd = (u8*)Arena->Memory + Arena->Used + Adjust + Size;
-    if (BlockEnd > MemoryEnd) {
+    u8* memoryEnd = (u8*)a->memory + a->capacity;
+    u8* blockEnd = (u8*)a->memory + a->used + adjust + size;
+    if (blockEnd > memoryEnd) {
         return Null;
     }
     
-    void* ret = (u8*)Arena->Memory + Arena->Used + Adjust;
-    Arena->Used += Adjust + Size;
+    void* ret = (u8*)a->memory + a->used + adjust;
+    a->used += adjust + size;
     return ret;
 }
 
-#define Arena_PushArray(Type, Arena, Count) \
-(Type*)Arena_PushBlock((Arena), sizeof(Type)*(Count), alignof(Type));
+#define MM_Arena_PushArray(Type, Arena, Count) \
+(Type*)MM_Arena_PushBlock((Arena), sizeof(Type)*(Count), alignof(Type));
 
-#define Arena_PushStruct(Type, Arena) \
-(Type*)Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
+#define MM_Arena_PushStruct(Type, Arena) \
+(Type*)MM_Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
 
 
 static inline arena
-Arena_SubArena(arena* SrcArena, u32 Capacity) {
-    Assert(Capacity);
-    arena Ret = {};
+MM_Arena_SubArena(arena* srcArena, u32 capacity) {
+    Assert(capacity);
+    arena ret = {};
     
     // We don't care about alignment, so it should be 1.
-    Ret.Memory = (u8*)Arena_PushBlock(SrcArena, Capacity, 1);
-    Assert(Ret.Memory);
-    Ret.Capacity = Capacity;
-    return Ret;
+    ret.memory = (u8*)MM_Arena_PushBlock(srcArena, capacity, 1);
+    Assert(ret.memory);
+    ret.capacity = capacity;
+    return ret;
 }
 
 static inline void*
-Arena_BootupBlock(u32 StructSize,
-                  u32 OffsetToArena,
-                  void* Memory,
-                  u32 MemorySize) 
+MM_Arena_BootupBlock(u32 structSize,
+                     u32 offsetToArena,
+                     void* memory,
+                     u32 memorySize) 
 {
-    Assert(StructSize < MemorySize);
-    void* ArenaMemory = (u8*)Memory + StructSize; 
-    u32 ArenaMemorySize = MemorySize - StructSize;
-    arena* ArenaPtr = (arena*)((u8*)Memory + OffsetToArena);
-    (*ArenaPtr) = Arena_Create(ArenaMemory, ArenaMemorySize);
+    Assert(structSize < memorySize);
+    void* arenaMemory = (u8*)memory + structSize; 
+    u32 arenaMemorySize = memorySize - structSize;
+    arena* arenaPtr = (arena*)((u8*)memory + offsetToArena);
     
-    return Memory;
+    MM_Arena_Init(arenaPtr, arenaMemory, arenaMemorySize);
+    
+    return memory;
 }
 
 
-#define Arena_BootupStruct(Type, Member, Memory, MemorySize) (Type*)Arena_BootupBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
+#define Arena_BootupStruct(Type, Member, memory, memorySize) (Type*)MM_Arena_BootupBlock(sizeof(Type), OffsetOf(Type, Member), (memory), (memorySize)) 
 
 
-// NOTE(Momo): "Temporary Memory" API
+// NOTE(Momo): "Temporary memory" API
 struct arena_mark {
     arena* Arena;
-    u32 OldUsed;
+    u32 Oldused;
     
     operator arena*() {
         return Arena;
@@ -98,16 +99,16 @@ struct arena_mark {
 };
 
 static inline arena_mark
-Arena_Mark(arena* Arena) {
+MM_Arena_Mark(arena* Arena) {
     arena_mark Ret = {};
     Ret.Arena = Arena;
-    Ret.OldUsed = Arena->Used;
+    Ret.Oldused = Arena->used;
     return Ret;
 }
 
 static inline void
-Arena_Revert(arena_mark* Mark) {
-    Mark->Arena->Used = Mark->OldUsed;
+MM_Arena_Revert(arena_mark* Mark) {
+    Mark->Arena->used = Mark->Oldused;
     Mark->Arena = 0;
 }
 #endif
