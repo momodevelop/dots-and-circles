@@ -159,14 +159,14 @@ RECT_Height(RECT Value) {
 
 
 static inline FILETIME 
-Win32GetLastWriteTime(const char* Filename) {
+Win32GetLastWriteTime(const char* filename) {
     WIN32_FILE_ATTRIBUTE_DATA data;
-    FILETIME LastWriteTime = {};
+    FILETIME last_write_time = {};
     
-    if(GetFileAttributesEx(Filename, GetFileExInfoStandard, &data)) {
-        LastWriteTime = data.ftLastWriteTime;
+    if(GetFileAttributesEx(filename, GetFileExInfoStandard, &data)) {
+        last_write_time = data.ftLastWriteTime;
     }
-    return LastWriteTime; 
+    return last_write_time; 
 }
 
 #if INTERNAL
@@ -245,9 +245,9 @@ Win32GetSecondsElapsed(win32_state* State,
 }
 
 static inline void
-Win32BuildExePathFilename(win32_state* State,
+Win32BuildExePathfilename(win32_state* State,
                           char* Dest, 
-                          const char* Filename) {
+                          const char* filename) {
     for(const char *Itr = State->exe_full_path; 
         Itr != State->OnePastExeDirectory; 
         ++Itr, ++Dest) 
@@ -255,7 +255,7 @@ Win32BuildExePathFilename(win32_state* State,
         (*Dest) = (*Itr);
     }
     
-    for (const char* Itr = Filename;
+    for (const char* Itr = filename;
          (*Itr) != 0;
          ++Itr, ++Dest) 
     {
@@ -286,7 +286,7 @@ Win32Init() {
     }
     
     // NOTE(Momo): Initialize paths
-    GetModuleFileNameA(0, State->exe_full_path, 
+    GetModulefilenameA(0, State->exe_full_path, 
                        sizeof(State->exe_full_path));
     State->OnePastExeDirectory = State->exe_full_path;
     for( char* Itr = State->exe_full_path; *Itr; ++Itr) {
@@ -421,25 +421,25 @@ Win32PlaybackInput(win32_state* State, platform_input* Input) {
 struct win32_game_code {
     HMODULE Dll;
     game_update* GameUpdate;
-    FILETIME LastWriteTime;
+    FILETIME last_write_time;
     b32 IsValid;
     
-    char SrcFileName[MAX_PATH];
-    char TempFileName[MAX_PATH];
-    char LockFileName[MAX_PATH];        
+    char Srcfilename[MAX_PATH];
+    char Tempfilename[MAX_PATH];
+    char Lockfilename[MAX_PATH];        
 };
 
 
 static inline win32_game_code 
 Win32InitGameCode(win32_state* State,
-                  const char* SrcFileName,
-                  const char* TempFileName,
-                  const char* LockFileName) 
+                  const char* Srcfilename,
+                  const char* Tempfilename,
+                  const char* Lockfilename) 
 {
     win32_game_code Ret = {};
-    Win32BuildExePathFilename(State, Ret.SrcFileName, SrcFileName);
-    Win32BuildExePathFilename(State, Ret.TempFileName, TempFileName);
-    Win32BuildExePathFilename(State, Ret.LockFileName, LockFileName);
+    Win32BuildExePathfilename(State, Ret.Srcfilename, Srcfilename);
+    Win32BuildExePathfilename(State, Ret.Tempfilename, Tempfilename);
+    Win32BuildExePathfilename(State, Ret.Lockfilename, Lockfilename);
     
     return Ret;
 }
@@ -448,16 +448,16 @@ static inline void
 Win32LoadGameCode(win32_game_code* Code) 
 {
     WIN32_FILE_ATTRIBUTE_DATA Ignored; 
-    if(!GetFileAttributesEx(Code->LockFileName, 
+    if(!GetFileAttributesEx(Code->Lockfilename, 
                             GetFileExInfoStandard, 
                             &Ignored)) 
     {
-        Code->LastWriteTime = Win32GetLastWriteTime(Code->SrcFileName);
+        Code->last_write_time = Win32GetLastWriteTime(Code->Srcfilename);
         BOOL Success = FALSE;
         do {
-            Success = CopyFile(Code->SrcFileName, Code->TempFileName, FALSE); 
+            Success = CopyFile(Code->Srcfilename, Code->Tempfilename, FALSE); 
         } while (!Success); 
-        Code->Dll = LoadLibraryA(Code->TempFileName);
+        Code->Dll = LoadLibraryA(Code->Tempfilename);
         if(Code->Dll) {
             Code->GameUpdate = 
                 (game_update*)GetProcAddress(Code->Dll, "GameUpdate");
@@ -479,9 +479,9 @@ Win32UnloadGameCode(win32_game_code* Code) {
 static inline b32
 Win32IsGameCodeOutdated(win32_game_code* Code) {    
     // Check last modified date
-    FILETIME LastWriteTime = Win32GetLastWriteTime(Code->SrcFileName);
-    LARGE_INTEGER CurrentLastWriteTime = Win32FiletimeToLargeInt(LastWriteTime); 
-    LARGE_INTEGER GameCodeLastWriteTime = Win32FiletimeToLargeInt(Code->LastWriteTime);
+    FILETIME last_write_time = Win32GetLastWriteTime(Code->Srcfilename);
+    LARGE_INTEGER CurrentLastWriteTime = Win32FiletimeToLargeInt(last_write_time); 
+    LARGE_INTEGER GameCodeLastWriteTime = Win32FiletimeToLargeInt(Code->last_write_time);
     
     return (CurrentLastWriteTime.QuadPart > GameCodeLastWriteTime.QuadPart); 
 }
@@ -1350,7 +1350,7 @@ enum platform_file_error {
 static inline 
 PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
     platform_file_handle Ret = {}; 
-    const char* Path = Game_AssetFileName;
+    const char* Path = Game_Assetfilename;
     
     // Check if there are free handlers to go around
     if (G_State->HandleFreeCount == 0) {
