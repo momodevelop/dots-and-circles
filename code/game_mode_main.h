@@ -18,8 +18,8 @@
 struct particle {
     f32 Timer;
     image_id ImageId;
-    v2f Position;
-    v2f Direction;
+    MM_V2f Position;
+    MM_V2f Direction;
     f32 Speed;
 };
 
@@ -80,31 +80,31 @@ struct player {
     f32 DotImageTransitionTimer;
     f32 DotImageTransitionDuration;
     
-    v2f Size;
+    MM_V2f Size;
     
 	// Collision
-    circle2f HitCircle;
+    MM_Circle2f HitCircle;
     
     // Physics
-    v2f Position;
-    v2f PrevPosition;
+    MM_V2f Position;
+    MM_V2f PrevPosition;
     
     // Gameplay
     mood_type MoodType;
 };
 
 struct bullet {
-    v2f Size;
+    MM_V2f Size;
     mood_type MoodType;
-    v2f Direction;
-	v2f Position;
+    MM_V2f Direction;
+	MM_V2f Position;
 	f32 Speed;
-	circle2f HitCircle; 
+	MM_Circle2f HitCircle; 
 };
 
 struct enemy {
-	v2f Size; 
-	v2f Position;
+	MM_V2f Size; 
+	MM_V2f Position;
     
     enemy_firing_pattern_type FiringPatternType;
     enemy_mood_pattern_type MoodPatternType;
@@ -125,13 +125,13 @@ struct game_mode_main {
     game_camera Camera;
     
     
-    list<bullet> CircleBullets;
-    list<bullet> DotBullets;
-    list<enemy> Enemies;
-    queue<particle> Particles;
+    MM_List<bullet> CircleBullets;
+    MM_List<bullet> DotBullets;
+    MM_List<enemy> Enemies;
+    MM_Queue<particle> Particles;
     
     wave Wave;
-    rng_series Rng;
+    MM_Rng Rng;
     
     // Audio handles
     game_audio_mixer_handle BgmHandle;
@@ -151,10 +151,10 @@ InitMainMode(permanent_state* PermState,
     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = V3f_Create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.Position = MM_V3f_Create(0.f, 0.f, 0.f);
+        Mode->Camera.Anchor = MM_V3f_Create(0.5f, 0.5f, 0.5f);
         Mode->Camera.Color = Color_Grey2;
-        Mode->Camera.Dimensions = V3f_Create(Game_DesignWidth,
+        Mode->Camera.Dimensions = MM_V3f_Create(Game_DesignWidth,
                                              Game_DesignHeight,
                                              Game_DesignDepth);
     }
@@ -162,34 +162,34 @@ InitMainMode(permanent_state* PermState,
     b32 Success = False;
     Mode->ArenaMark = MM_Arena_Mark(&PermState->ModeArena);
     
-    Success = List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
+    Success = MM_List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
     if (!Success) {
         MM_Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
-    Success = List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
+    Success = MM_List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
     if (!Success) {
         MM_Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
-    Success = List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
+    Success = MM_List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
     if (!Success) {
         MM_Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
     Mode->Wave.IsDone = True;
-    Mode->Rng = Rng_Seed(0); // TODO: Used system clock for seed.
+    Mode->Rng = MM_Rng_Seed(0); // TODO: Used system clock for seed.
     
     assets* Assets = &TranState->Assets;
     player* Player = &Mode->Player;
     {
         Player->Position = {};
         Player->PrevPosition = {};
-        Player->Size = V2f_Create( 32.f, 32.f );
-        Player->HitCircle = { v2f{}, 16.f};
+        Player->Size = MM_V2f_Create( 32.f, 32.f );
+        Player->HitCircle = { MM_V2f{}, 16.f};
         
         // NOTE(Momo): We start as Dot
         Player->MoodType = MoodType_Dot;
@@ -201,7 +201,7 @@ InitMainMode(permanent_state* PermState,
     }
     Mode->Wave.IsDone = True;
     
-    Success = Queue_InitFromArena(&Mode->Particles, Mode->ArenaMark, 128);
+    Success = MM_Queue_InitFromArena(&Mode->Particles, Mode->ArenaMark, 128);
     if (!Success) {
         MM_Arena_Revert(&Mode->ArenaMark);
         return False;
@@ -248,22 +248,22 @@ UpdateMainMode(permanent_state* PermState,
     U8CStr_InitFromSiStr(&Buffer, "Dots: ");
     DebugInspector_PushU32(&DebugState->Inspector,
                            Buffer,
-                           Mode->DotBullets.Count);
+                           Mode->DotBullets.count);
     U8CStr_InitFromSiStr(&Buffer, "Circles: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
-                           Mode->CircleBullets.Count);
+                           Mode->CircleBullets.count);
     
     U8CStr_InitFromSiStr(&Buffer, "Bullets: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
-                           Mode->DotBullets.Count + Mode->CircleBullets.Count);
+                           Mode->DotBullets.count + Mode->CircleBullets.count);
     
     
     U8CStr_InitFromSiStr(&Buffer, "Enemies: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
-                           Mode->Enemies.Count);
+                           Mode->Enemies.count);
 }
 
 #endif //GAME_MODE_H

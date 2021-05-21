@@ -5,260 +5,271 @@
 //~ NOTE(Momo): u8_cstr
 // TODO(Momo): Support for UTF8??
 struct u8_cstr {
-    u8* Data;
-    u32 Count;
+    u8* data;
+    u32 count;
+    
+    auto& operator[](u32 index) {
+        Assert(index < count);
+        return data[index];
+    }
 };
 
-static inline void
-U8CStr_Init(u8_cstr* S, u8* Data, u32 Count) {
-    S->Data = Data;
-    S->Count = Count;
-}
-
-static inline u8_cstr
-U8CStr_Create(u8* Data, u32 Count) {
-    u8_cstr S = {};
-    S.Data = Data;
-    S.Count = Count;
+static inline b8
+MM_U8CStr_Init(u8_cstr* s, u8* data, u32 count) {
+    if (!data || count == 0) {
+        return false;
+    }
+    s->data = data;
+    s->count = count;
     
-    return S;
+    return true;
 }
 
 // Assumes C-String
-static inline void
-U8CStr_InitFromSiStr(u8_cstr* S, const char* SiStr) {
-    U8CStr_Init(S, (u8*)SiStr, SiStrLen(SiStr));
+static inline b8
+U8CStr_InitFromSiStr(u8_cstr* s, const char* si_str) {
+    return MM_U8CStr_Init(s, (u8*)si_str, SiStrLen(si_str));
 }
 
-static inline b32
-U8CStr_Cmp(u8_cstr Lhs, u8_cstr Rhs) {
-    if(Lhs.Count != Rhs.Count) {
-        return False;
+static inline b8
+MM_U8CStr_Cmp(u8_cstr lhs, u8_cstr rhs) {
+    if(lhs.count != rhs.count) {
+        return false;
     }
-    for (u32 I = 0; I < Lhs.Count; ++I) {
-        if (Lhs.Data[I] != Rhs.Data[I]) {
-            return False;
+    for (u32 i = 0; i < lhs.count; ++i) {
+        if (lhs.data[i] != rhs.data[i]) {
+            return false;
         }
     }
-    return True;
+    return true;
 }
 
 
-static inline b32
-U8CStr_CmpSiStr(u8_cstr Lhs, const char* Rhs) {
-    for(u32 I = 0; I < Lhs.Count; ++I) {
-        if (Lhs.Data[I] != Rhs[I]) {
-            return False;
+static inline b8
+MM_U8CStr_CmpSiStr(u8_cstr lhs, const char* rhs) {
+    for(u32 i = 0; i < lhs.count; ++i) {
+        if (lhs.data[i] != rhs[i]) {
+            return false;
         }
     }
-    return True;
+    return true;
 }
 
 static inline void
-U8CStr_SubString(u8_cstr* Dest, u8_cstr Src, u32 Min, u32 Max) {
-    Assert(Min <= Max); 
-    U8CStr_Init(Dest, Src.Data + Min, Max - Min);
+MM_U8CStr_SubString(u8_cstr* dest, u8_cstr src, u32 min, u32 max) {
+    Assert(min <= max); 
+    MM_U8CStr_Init(dest, src.data + min, max - min);
 }
 
 struct u8_cstr_split_res {
-    u8_cstr* Items;
-    u32 ItemCount;
+    u8_cstr* items;
+    u32 item_count;
 };
 
 static inline u32
-U8CStr_Find(u8_cstr Str, u8 Item, u32 StartIndex) {
-    for(u32 I = StartIndex; I < Str.Count; ++I) {
-        if(Str.Data[I] == Item) {
-            return I;
+MM_U8CStr_Find(u8_cstr s, u8 item, u32 start_index) {
+    for(u32 i = start_index; i < s.count; ++i) {
+        if(s.data[i] == item) {
+            return i;
         }
     }
-    return Str.Count;
+    return s.count;
 }
 
 static inline u8_cstr_split_res
-U8CStr_SplitByDelimiter(u8_cstr Str, MM_Arena* Arena, u8 Delimiter) {
+MM_U8CStr_SplitByDelimiter(u8_cstr s, MM_Arena* arena, u8 delimiter) {
     // NOTE(Momo): We are having faith that the MM_Arena given is a bump arena.
     // i.e. strings that are push into the arena will be contiguous 
     // in memory, and thus convertible to an array<string> struct.
-    u8_cstr_split_res Ret = {};
-    u32 Min = 0;
-    u32 Max = 0;
+    u8_cstr_split_res ret = {};
+    u32 min = 0;
+    u32 max = 0;
     
-    for (;Max != Str.Count;) {
-        Max = U8CStr_Find(Str, Delimiter, Min);
+    for (;max != s.count;) {
+        max = MM_U8CStr_Find(s, delimiter, min);
         
-        u8_cstr* Link = MM_Arena_PushStruct(u8_cstr, Arena);
-        Assert(Link);
-        U8CStr_SubString(Link, Str, Min, Max);
+        u8_cstr* link = MM_Arena_PushStruct(u8_cstr, arena);
+        Assert(link);
+        MM_U8CStr_SubString(link, s, min, max);
         
-        if (Ret.Items == nullptr) {
-            Ret.Items = Link;            
+        if (ret.items == nullptr) {
+            ret.items = link;            
         }
         
-        Min = Max + 1;
-        ++Ret.ItemCount;
+        min = max + 1;
+        ++ret.item_count;
     }
-    return Ret;
+    return ret;
 }
 
 //~ NOTE(Momo): u8_str
 struct u8_str {
     union {
-        u8_cstr CStr;
+        u8_cstr cstr;
         struct {
-            u8* Data;
-            u32 Count;
+            u8* data;
+            u32 count;
         };
     };
-    u32 Cap;
+    u32 cap;
+    
+    auto& operator[](u32 index) {
+        Assert(index < count);
+        return data[index];
+    }
 };
 
-static inline void
-U8Str_Init(u8_str* S, u8* Buffer, u32 Capacity) {
-    S->Data = Buffer;
-    S->Count = 0;
-    S->Cap = Capacity;
-}
-
-
-static inline b32
-U8Str_InitFromArena(u8_str* S, MM_Arena* Arena, u32 Capacity) {
-    u8* Buffer = MM_Arena_PushArray(u8, Arena, Capacity);
-    if(!Buffer) {
-        return False;
+static inline b8
+MM_U8Str_Init(u8_str* s, u8* buffer, u32 capacity) {
+    if (!buffer || capacity == 0) {
+        return false;
     }
-    S->Data = Buffer;
-    S->Count = 0;
-    S->Cap = Capacity;
+    s->data = buffer;
+    s->count = 0;
+    s->cap = capacity;
     
-    return True;
+    return true;
 }
 
-static inline b32
-U8Str_Pop(u8_str* S) {
-    if (S->Count <= 0) {
-        return False;
+
+static inline b8
+MM_U8Str_InitFromArena(u8_str* s, MM_Arena* arena, u32 capacity) {
+    u8* buffer = MM_Arena_PushArray(u8, arena, capacity);
+    if(!buffer) {
+        return false;
     }
-    --S->Count;
-    return True;
+    s->data = buffer;
+    s->count = 0;
+    s->cap = capacity;
+    
+    return true;
+}
+
+static inline b8
+MM_U8Str_Pop(u8_str* s) {
+    if (s->count <= 0) {
+        return false;
+    }
+    --s->count;
+    return true;
 }
 
 static inline u32 
-U8Str_Remaining(u8_str* Buffer) {
-    return Buffer->Cap - Buffer->Count;
+MM_U8Str_Remaining(u8_str* buffer) {
+    return buffer->cap - buffer->count;
 }
 
-static inline b32
-U8Str_CopyCStr(u8_str* Dest, u8_cstr Src) {
-    if (Src.Count > Dest->Cap) {
-        return False;
+static inline b8
+MM_U8Str_CopyCStr(u8_str* dest, u8_cstr src) {
+    if (src.count > dest->cap) {
+        return false;
     }
-    for (u32 I = 0; I < Src.Count; ++I ) {
-        Dest->Data[I] = Src.Data[I];
+    for (u32 i = 0; i < src.count; ++i ) {
+        dest->data[i] = src.data[i];
     }
-    Dest->Count = Src.Count;
-    return True;
+    dest->count = src.count;
+    return true;
 }
 
-static inline b32
-U8Str_Copy(u8_str* Dest, u8_str* Src) {
-    return U8Str_CopyCStr(Dest, Src->CStr);
+static inline b8
+MM_U8Str_Copy(u8_str* dest, u8_str* src) {
+    return MM_U8Str_CopyCStr(dest, src->cstr);
 }
 
 
-static inline b32
-U8Str_NullTerm(u8_str* Dest) {
-    if (Dest->Count < Dest->Cap) {
-        Dest->Data[Dest->Count] = 0;
-        return True;
+static inline b8
+MM_U8Str_NullTerm(u8_str* dest) {
+    if (dest->count < dest->cap) {
+        dest->data[dest->count] = 0;
+        return true;
     }
-    return False;
+    return false;
 }
 
-static inline b32
-U8Str_Push(u8_str* Dest, u8 Item) {
-    if (Dest->Count < Dest->Cap) {
-        Dest->Data[Dest->Count++] = Item;
-        return True;
+static inline b8
+MM_U8Str_Push(u8_str* dest, u8 item) {
+    if (dest->count < dest->cap) {
+        dest->data[dest->count++] = item;
+        return true;
     }
-    return False;
+    return false;
 }
 
-static inline b32
-U8Str_PushCStr(u8_str* Dest, u8_cstr Src) {
-    if (Dest->Count + Src.Count <= Dest->Cap) {
-        for ( u32 I = 0; I < Src.Count; ++I ) {
-            Dest->Data[Dest->Count++] = Src.Data[I];
+static inline b8
+MM_U8Str_PushCStr(u8_str* dest, u8_cstr src) {
+    if (dest->count + src.count <= dest->cap) {
+        for ( u32 i = 0; i < src.count; ++i ) {
+            dest->data[dest->count++] = src.data[i];
         }
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
-static inline b32
-U8Str_PushStr(u8_str* Dest, u8_str* Src) {
-    return U8Str_PushCStr(Dest, Src->CStr);
+static inline b8
+MM_U8Str_PushStr(u8_str* dest, u8_str* src) {
+    return MM_U8Str_PushCStr(dest, src->cstr);
 }
 
 static inline void 
-U8Str_Clear(u8_str* Dest) {
-    Dest->Count = 0;
+MM_U8Str_Clear(u8_str* dest) {
+    dest->count = 0;
 }
 
-static inline b32
-U8Str_PushU32(u8_str* Dest, u32 Num) {
-    if (Num == 0) {
-        U8Str_Push(Dest, '0');
-        return True;
+static inline b8
+MM_U8Str_PushU32(u8_str* dest, u32 num) {
+    if (num == 0) {
+        MM_U8Str_Push(dest, '0');
+        return true;
     }
-    u32 StartPoint = Dest->Count; 
+    u32 start_pt = dest->count; 
     
-    for(; Num != 0; Num /= 10) {
-        s32 DigitToConvert = Num % 10;
-        b32 Success = U8Str_Push(Dest, (u8)(DigitToConvert + '0'));
-        if (!Success) {
-            return False;
+    for(; num != 0; num /= 10) {
+        s32 digit_to_convert = num % 10;
+        b8 success = MM_U8Str_Push(dest, (u8)(digit_to_convert + '0'));
+        if (!success) {
+            return false;
         }
     }
     
     // Reverse starting from start point to count
-    u32 SubStrLenHalved = (Dest->Count - StartPoint)/2;
-    for(u32 I = 0; I < SubStrLenHalved; ++I) {
+    u32 substr_len_halved = (dest->count - start_pt)/2;
+    for(u32 I = 0; I < substr_len_halved; ++I) {
         Swap(u8, 
-             Dest->Data[StartPoint + I], 
-             Dest->Data[Dest->Count - 1 - I]);
+             dest->data[start_pt + I], 
+             dest->data[dest->count - 1 - I]);
     }
-    return True;
+    return true;
 }
 
-static inline b32
-U8Str_PushS32(u8_str* Dest, s32 Num) {
-    if (Num == 0) {
-        if(!U8Str_Push(Dest, '0')) {
-            return False;
+static inline b8
+MM_U8Str_PushS32(u8_str* dest, s32 num) {
+    if (num == 0) {
+        if(!MM_U8Str_Push(dest, '0')) {
+            return false;
         }
-        return True;
+        return true;
     }
     
-    u32 StartPoint = Dest->Count; 
+    u32 start_pt = dest->count; 
     
-    b32 Negative = Num < 0;
-    Num = AbsOf(Num);
+    b8 negative = num < 0;
+    num = AbsOf(num);
     
-    for(; Num != 0; Num /= 10) {
-        s32 DigitToConvert = Num % 10;
-        U8Str_Push(Dest, (char)(DigitToConvert + '0'));
+    for(; num != 0; num /= 10) {
+        s32 digit_to_convert = num % 10;
+        MM_U8Str_Push(dest, (char)(digit_to_convert + '0'));
     }
     
-    if (Negative) {
-        U8Str_Push(Dest, '-');
+    if (negative) {
+        MM_U8Str_Push(dest, '-');
     }
     
     // Reverse starting from start point to count
-    u32 SubStrLenHalved = (Dest->Count - StartPoint)/2;
-    for(u32 I = 0; I < SubStrLenHalved; ++I) {
-        Swap(u8, Dest->Data[StartPoint + I], 
-             Dest->Data[Dest->Count-1-I]);
+    u32 substr_len_halved = (dest->count - start_pt)/2;
+    for(u32 i = 0; i < substr_len_halved; ++i) {
+        Swap(u8, dest->data[start_pt + i], 
+             dest->data[dest->count-1-i]);
         
     }
 }

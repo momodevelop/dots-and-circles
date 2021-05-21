@@ -415,7 +415,7 @@ int main(int argc, char* argv[]) {
     PlatformApi.GetFileSize = SdlGetFileSize;
     
     
-    // NOTE(Momo): Render commands/queue
+    // NOTE(Momo): Render commands/MM_Queue
     void* RenderCommandsMemory = PushBlock(&PlatformArena, RenderCommandsMemorySize);
     mailbox RenderCommands = Mailbox(RenderCommandsMemory, RenderCommandsMemorySize);
     

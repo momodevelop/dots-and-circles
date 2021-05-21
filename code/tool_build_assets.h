@@ -94,7 +94,7 @@ static inline void
 Tba_WriteImage(tba_context* Context, 
                image_id Id, 
                texture_id TargetTextureId, 
-               aabb2u Aabb) 
+               MM_Aabb2u Aabb) 
 {
     Tba_WriteEntry(Context,  AssetType_Image);
     
@@ -130,8 +130,8 @@ Tba_WriteFontGlyph(tba_context* Context,
                    u32 Codepoint, 
                    f32 Advance, 
                    f32 LeftBearing, 
-                   aabb2u ImageAabb, 
-                   aabb2f Box) 
+                   MM_Aabb2u ImageAabb, 
+                   MM_Aabb2f Box) 
 {
     Tba_WriteImage(Context, ImageId, TextureId, ImageAabb);
     

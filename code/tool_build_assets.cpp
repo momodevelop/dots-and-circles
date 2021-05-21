@@ -70,17 +70,17 @@ int main() {
     atlas_context_font AtlasFontContexts[FontGlyph_Count];
     
     const u32 AabbCount = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
-    aabb2u Aabbs[AabbCount] = {};
+    MM_Aabb2u Aabbs[AabbCount] = {};
     void* UserDatas[AabbCount] = {};
     u32 AabbCounter = 0;
     for (u32 I = 0; I < ArrayCount(AtlasImageContexts); ++I ) {
         atlas_context_image* Context = AtlasImageContexts + I;
-        aabb2u* Aabb = Aabbs + AabbCounter;
+        MM_Aabb2u* Aabb = Aabbs + AabbCounter;
         
         s32 W, H, C;
         stbi_info(Context->Filename, &W, &H, &C);
         
-        (*Aabb) = Aabb2u_CreateWH((u32)W, (u32)H);
+        (*Aabb) = MM_Aabb2u_CreateWH((u32)W, (u32)H);
         
         
         UserDatas[AabbCounter] = Context;
@@ -98,7 +98,7 @@ int main() {
         Font->ImageId = image_id(Image_FontStart + I);
         Font->TextureId = Texture_AtlasDefault;
         
-        aabb2u* Aabb = Aabbs + AabbCounter;
+        MM_Aabb2u* Aabb = Aabbs + AabbCounter;
         s32 ix0, iy0, ix1, iy1;
         stbtt_GetCodepointTextureBox(&Font->LoadedFont->Info, 
                                      Font->Codepoint, 
@@ -106,7 +106,7 @@ int main() {
                                      Font->RasterScale, 
                                      &ix0, &iy0, &ix1, &iy1);
         
-        (*Aabb) = Aabb2u_CreateWH((u32)(ix1 - ix0), (u32)(iy1 - iy0));
+        (*Aabb) = MM_Aabb2u_CreateWH((u32)(ix1 - ix0), (u32)(iy1 - iy0));
         UserDatas[AabbCounter] = Font;
         
         ++AabbCounter;
@@ -164,7 +164,7 @@ int main() {
         
         // NOTE(Momo): Write atlas aabb for images in font
         for(u32 i = 0; i <  AabbCount; ++i) {
-            aabb2u Aabb = Aabbs[i];
+            MM_Aabb2u Aabb = Aabbs[i];
             auto Type = *(atlas_context_type*)UserDatas[i];
             switch(Type) {
                 case AtlasContextType_Image: {
@@ -184,15 +184,15 @@ int main() {
                                                &Advance, 
                                                &LeftSideBearing);
                     
-                    aabb2i Box;
+                    MM_Aabb2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Info, 
                                           Font->Codepoint, 
-                                          &Box.Min.X, 
-                                          &Box.Min.Y, 
-                                          &Box.Max.X, 
-                                          &Box.Max.Y);
+                                          &Box.min.x, 
+                                          &Box.min.y, 
+                                          &Box.max.x, 
+                                          &Box.max.y);
                     
-                    aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
+                    MM_Aabb2f ScaledBox = MM_Aabb2f_Mul(MM_Aabb2i_ToAabb2f(Box), FontPixelScale);
                     Tba_WriteFontGlyph(AssetBuilder, 
                                        Font->FontId, 
                                        Font->ImageId,
@@ -213,12 +213,12 @@ int main() {
         s32 Ascent, Descent, LineGap;
         stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
         
-        aabb2i BoundingBox = {}; 
+        MM_Aabb2i BoundingBox = {}; 
         stbtt_GetFontBoundingBox(&LoadedFont.Info, 
-                                 &BoundingBox.Min.X,
-                                 &BoundingBox.Min.Y,
-                                 &BoundingBox.Max.X,
-                                 &BoundingBox.Max.Y
+                                 &BoundingBox.min.x,
+                                 &BoundingBox.min.y,
+                                 &BoundingBox.max.x,
+                                 &BoundingBox.max.y
                                  );
         printf("[Build Assets] Writing font information...\n");
         Tba_WriteFont(AssetBuilder, Font_Default, 

@@ -11,30 +11,30 @@ RenderPlayer(game_mode_main* Mode,
              mailbox* RenderCommands) 
 {
     player* Player = &Mode->Player;
-    m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
+    MM_M44f S = MM_M44f_Scale(Player->Size.x, Player->Size.y, 1.f);
     
     {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
+        MM_M44f T = MM_M44f_Translation(Player->Position.x,
+                                  Player->Position.y,
                                   ZLayPlayer);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
         Draw_TexturedQuadFromImage(RenderCommands,
                                    Assets,
                                    Image_PlayerCircle,
-                                   M44f_Concat(T,S), 
+                                   MM_M44f_Concat(T,S), 
                                    Color);
     }
     
     {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
+        MM_M44f T = MM_M44f_Translation(Player->Position.x,
+                                  Player->Position.y,
                                   ZLayPlayer + 0.01f);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
         Draw_TexturedQuadFromImage(RenderCommands,
                                    Assets,
                                    Image_PlayerDot,
-                                   M44f_Concat(T,S), 
+                                   MM_M44f_Concat(T,S), 
                                    Color);
     }
 }
@@ -53,20 +53,20 @@ RenderBullets(game_mode_main* Mode,
         f32 LayerOffset = 0.f;
         image* Image = Assets->Images + Image_BulletDot;
         texture* Texture = Assets->Textures + Image->TextureId;
-        for (u32 I = 0; I < Mode->DotBullets.Count; ++I) {
-            bullet* DotBullet = Mode->DotBullets.Data + I;
-            m44f S = M44f_Scale(DotBullet->Size.X, 
-                                DotBullet->Size.Y, 
+        for (u32 I = 0; I < Mode->DotBullets.count; ++I) {
+            bullet* DotBullet = MM_List_Get(&Mode->DotBullets, I);
+            MM_M44f S = MM_M44f_Scale(DotBullet->Size.x, 
+                                DotBullet->Size.y, 
                                 1.f);
             
-            m44f T = M44f_Translation(DotBullet->Position.X,
-                                      DotBullet->Position.Y,
+            MM_M44f T = MM_M44f_Translation(DotBullet->Position.x,
+                                      DotBullet->Position.y,
                                       ZLayDotBullet + LayerOffset);
             
             Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
                                        Image_BulletDot,
-                                       M44f_Concat(T,S), 
+                                       MM_M44f_Concat(T,S), 
                                        Color_White);
             LayerOffset += 0.01f;
             
@@ -77,20 +77,20 @@ RenderBullets(game_mode_main* Mode,
     // Render Circles
     {
         f32 LayerOffset = 0.f;
-        for (u32 I = 0; I < Mode->CircleBullets.Count; ++I) {
-            bullet* CircleBullet = Mode->CircleBullets.Data + I;
-            m44f S = M44f_Scale(CircleBullet->Size.X, 
-                                CircleBullet->Size.Y, 
+        for (u32 I = 0; I < Mode->CircleBullets.count; ++I) {
+            bullet* CircleBullet = MM_List_Get(&Mode->CircleBullets, I);
+            MM_M44f S = MM_M44f_Scale(CircleBullet->Size.x, 
+                                CircleBullet->Size.y, 
                                 1.f);
             
-            m44f T = M44f_Translation(CircleBullet->Position.X,
-                                      CircleBullet->Position.Y,
+            MM_M44f T = MM_M44f_Translation(CircleBullet->Position.x,
+                                      CircleBullet->Position.y,
                                       ZLayCircleBullet + LayerOffset);
             
             Draw_TexturedQuadFromImage(RenderCommands,
                                        Assets,
                                        Image_BulletCircle,
-                                       M44f_Concat(T,S), 
+                                       MM_M44f_Concat(T,S), 
                                        Color_White);
             LayerOffset += 0.01f;
             
@@ -107,50 +107,50 @@ RenderEnemies(game_mode_main* Mode,
               assets* Assets,
               mailbox* RenderCommands) 
 {
-    for(u32 I = 0; I < Mode->Enemies.Count; ++I )
+    for(u32 I = 0; I < Mode->Enemies.count; ++I )
     {
         enemy* Enemy = Mode->Enemies + I;
-        m44f S = M44f_Scale(Enemy->Size.X, Enemy->Size.Y, 1.f);
-        m44f T = M44f_Translation(Enemy->Position.X,
-                                  Enemy->Position.Y,
+        MM_M44f S = MM_M44f_Scale(Enemy->Size.x, Enemy->Size.y, 1.f);
+        MM_M44f T = MM_M44f_Translation(Enemy->Position.x,
+                                  Enemy->Position.y,
                                   ZLayEnemy);
         
         Draw_TexturedQuadFromImage(RenderCommands,
                                    Assets,
                                    Image_Enemy,
-                                   M44f_Concat(T,S), 
+                                   MM_M44f_Concat(T,S), 
                                    Color_White);
     }
 }
 
 static inline void 
 RenderDebugLines(game_mode_main* Mode, mailbox* RenderCommands){
-    circle2f Circle = {};
-    Circle.Origin = Mode->Player.Position;
-    Circle.Radius = Mode->Player.HitCircle.Radius;
+    MM_Circle2f Circle = {};
+    Circle.origin = Mode->Player.Position;
+    Circle.radius = Mode->Player.HitCircle.radius;
     Renderer_DrawCircle2f(RenderCommands, Circle, 1.f, 8, Color_Green, ZLayDebug);
 }
 
 static inline void
-RenderParticlesSub(queue<particle>* Q, 
+RenderParticlesSub(MM_Queue<particle>* Q, 
                    assets* Assets,
                    mailbox* RenderCommands,
                    u32 Begin, u32 End) 
 {
     
     for (u32 I = 0; I <= End; ++I ) {
-        particle* P = Queue_Get(Q, I);
+        particle* P = MM_Queue_Get(Q, I);
         Assert(P);
         
-        m44f S = M44f_Scale(1.f, 1.f, 1.f);
-        m44f T = M44f_Translation(P->Position.X,
-                                  P->Position.Y,
+        MM_M44f S = MM_M44f_Scale(1.f, 1.f, 1.f);
+        MM_M44f T = MM_M44f_Translation(P->Position.x,
+                                  P->Position.y,
                                   ZLayParticles);
         
         Draw_TexturedQuadFromImage(RenderCommands,
                                    Assets,
                                    Image_BulletDot,
-                                   M44f_Concat(T,S));
+                                   MM_M44f_Concat(T,S));
         
     }
 }
@@ -161,18 +161,18 @@ RenderParticles(game_mode_main* Mode,
                 mailbox* RenderCommands)
 
 {
-    queue<particle>* Q = &Mode->Particles;
-    if (Queue_IsEmpty(Q)) {
+    MM_Queue<particle>* Q = &Mode->Particles;
+    if (MM_Queue_IsEmpty(Q)) {
         return;
     }
     
     // Then update the living ones
-    if (Q->Begin <= Q->End) {
-        RenderParticlesSub(Q, Assets, RenderCommands, Q->Begin, Q->End);
+    if (Q->begin <= Q->end) {
+        RenderParticlesSub(Q, Assets, RenderCommands, Q->begin, Q->end);
     }
     else {
-        RenderParticlesSub(Q, Assets, RenderCommands, Q->Begin, Q->Count - 1);
-        RenderParticlesSub(Q, Assets, RenderCommands, 0, Q->End);
+        RenderParticlesSub(Q, Assets, RenderCommands, Q->begin, Q->count - 1);
+        RenderParticlesSub(Q, Assets, RenderCommands, 0, Q->end);
     }
     
 }

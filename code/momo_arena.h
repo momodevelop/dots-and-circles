@@ -69,17 +69,17 @@ MM_Arena_SubArena(MM_Arena* srcArena, u32 capacity) {
 }
 
 static inline void*
-MM_Arena_BootupBlock(u32 structSize,
-                     u32 offsetToArena,
+MM_Arena_BootupBlock(u32 struct_size,
+                     u32 arena_offset,
                      void* memory,
-                     u32 memorySize) 
+                     u32 memory_size) 
 {
-    Assert(structSize < memorySize);
-    void* arenaMemory = (u8*)memory + structSize; 
-    u32 arenaMemorySize = memorySize - structSize;
-    MM_Arena* arenaPtr = (MM_Arena*)((u8*)memory + offsetToArena);
+    Assert(struct_size < memory_size);
+    void* arena_memory = (u8*)memory + struct_size; 
+    u32 arena_memory_size = memory_size - struct_size;
+    MM_Arena* arena_ptr = (MM_Arena*)((u8*)memory + arena_offset);
     
-    MM_Arena_Init(arenaPtr, arenaMemory, arenaMemorySize);
+    MM_Arena_Init(arena_ptr, arena_memory, arena_memory_size);
     
     return memory;
 }
@@ -91,7 +91,7 @@ MM_Arena_BootupBlock(u32 structSize,
 // NOTE(Momo): "Temporary memory" API
 struct MM_ArenaMark {
     MM_Arena* arena;
-    u32 oldUsed;
+    u32 old_used;
     
     operator MM_Arena*() {
         return arena;
@@ -99,16 +99,16 @@ struct MM_ArenaMark {
 };
 
 static inline MM_ArenaMark
-MM_Arena_Mark(MM_Arena* Arena) {
-    MM_ArenaMark Ret = {};
-    Ret.arena = Arena;
-    Ret.oldUsed = Arena->used;
-    return Ret;
+MM_Arena_Mark(MM_Arena* a) {
+    MM_ArenaMark ret = {};
+    ret.arena = a;
+    ret.old_used = a->used;
+    return ret;
 }
 
 static inline void
-MM_Arena_Revert(MM_ArenaMark* Mark) {
-    Mark->arena->used = Mark->oldUsed;
-    Mark->arena = 0;
+MM_Arena_Revert(MM_ArenaMark* mark) {
+    mark->arena->used = mark->old_used;
+    mark->arena = 0;
 }
 #endif

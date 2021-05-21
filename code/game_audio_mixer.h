@@ -20,8 +20,8 @@ struct game_audio_mixer_handle {
 };
 
 struct game_audio_mixer {
-    array<game_audio_mixer_instance> Instances;
-    list<u32> FreeList;
+    MM_Array<game_audio_mixer_instance> Instances;
+    MM_List<u32> FreeList;
     
     f32 Volume;
 };
@@ -33,22 +33,22 @@ AudioMixer_Init(game_audio_mixer* Mixer,
                 MM_Arena* Arena) 
 {
     MM_ArenaMark Mark = MM_Arena_Mark(Arena);
-    b32 Success = Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
+    b32 Success = MM_Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
     if (!Success) {
         MM_Arena_Revert(&Mark);
         return False;
     }
     
-    Success = List_InitFromArena(&Mixer->FreeList, Arena, MaxInstances);
+    Success = MM_List_InitFromArena(&Mixer->FreeList, Arena, MaxInstances);
     if (!Success) {
         MM_Arena_Revert(&Mark);
         return False;
     }
     Mixer->Volume = MasterVolume;
     
-    for (u32 I = 0; I < Mixer->Instances.Count; ++I ){
+    for (u32 I = 0; I < Mixer->Instances.count; ++I ){
         Mixer->Instances[I] = {};
-        u32* Item = List_Push(&Mixer->FreeList);
+        u32* Item = MM_List_Push(&Mixer->FreeList);
         Assert(Item);
         (*Item) = I;
     }
@@ -62,7 +62,7 @@ AudioMixer_Play(game_audio_mixer* Mixer,
                 b32 Loop,
                 game_audio_mixer_handle* OutHandle)
 {
-    u32* Index = List_Last(&Mixer->FreeList);
+    u32* Index = MM_List_Last(&Mixer->FreeList);
     if (Index == Null) {
         return False;
     }
@@ -73,7 +73,7 @@ AudioMixer_Play(game_audio_mixer* Mixer,
     Instance->SoundId = SoundId;
     Instance->IsPlaying = True;
     
-    List_Pop(&Mixer->FreeList);
+    MM_List_Pop(&Mixer->FreeList);
     
     
     OutHandle->Id = (*Index);
@@ -86,10 +86,10 @@ static inline b32
 AudioMixer_Stop(game_audio_mixer* Mixer,
                 game_audio_mixer_handle Handle) 
 {
-    if (Handle.Id < Mixer->Instances.Count) {
+    if (Handle.Id < Mixer->Instances.count) {
         game_audio_mixer_instance* Instance = Mixer->Instances + Handle.Id;
         Instance->IsPlaying = False;
-        u32* Item = List_Push(&Mixer->FreeList);
+        u32* Item = MM_List_Push(&Mixer->FreeList);
         if (Item == Null) {
             return False;
         }
@@ -112,7 +112,7 @@ AudioMixer_Update(game_audio_mixer* Mixer,
             SampleOut[J] = 0;
         }
         
-        for (u32 J = 0; J < Mixer->Instances.Count; ++J) {
+        for (u32 J = 0; J < Mixer->Instances.count; ++J) {
             game_audio_mixer_instance* Instance = Mixer->Instances + J;
             if (Instance->IsPlaying == False) {
                 continue;

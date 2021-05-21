@@ -31,22 +31,22 @@ struct platform_input {
     };
     
     
-    v2f DesignMousePos;
-    v2f WindowMousePos;
-    v2f RenderMousePos;
+    MM_V2f DesignMousePos;
+    MM_V2f WindowMousePos;
+    MM_V2f RenderMousePos;
 };
 
 
 static inline b32
 Input_Init(platform_input* Input, MM_Arena* Arena) {
-    return U8Str_InitFromArena(&Input->Characters, Arena, 10);
+    return MM_U8Str_InitFromArena(&Input->Characters, Arena, 10);
 }
 
 
 static inline b32
 Input_TryPushCharacterInput(platform_input* Input, char C) {
     if (C >= 32 && C <= 126) {
-        U8Str_Push(&Input->Characters, C);
+        MM_U8Str_Push(&Input->Characters, C);
         return True;
     }
     return False;
@@ -54,7 +54,7 @@ Input_TryPushCharacterInput(platform_input* Input, char C) {
 
 static inline void
 Input_Update(platform_input* Input) {
-    U8Str_Clear(&Input->Characters);
+    MM_U8Str_Clear(&Input->Characters);
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
     }

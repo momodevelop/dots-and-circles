@@ -483,7 +483,7 @@ STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultipl
 // or just pass them through "as-is"
 STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert);
 
-// flip the image vertically, so the first pixel in the output array is the bottom left
+// flip the image vertically, so the first pixel in the output MM_Array is the bottom left
 STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
 
 // as above, but only applies to images loaded on the thread that calls the function

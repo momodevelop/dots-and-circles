@@ -13,13 +13,13 @@ struct anime {
 };
 
 struct image {
-    aabb2u Aabb;
+    MM_Aabb2u Aabb;
     texture_id TextureId;
 };
 
 struct font_glyph {
     image_id ImageId;
-    aabb2f Box;
+    MM_Aabb2f Box;
     f32 Advance;
     f32 LeftBearing;
 };
@@ -151,21 +151,21 @@ Assets_GetSound(assets* Assets, sound_id SoundId) {
 
 // TODO: Maybe we should just pass in ID instead of pointer.
 // Should be waaaay cleaner
-static inline quad2f
+static inline MM_Quad2f
 Assets_GetAtlasUV(assets* Assets, 
                   image* Image) 
 {
     auto Texture = Assets->Textures[Image->TextureId];
-    aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
-    aabb2f NormalizedAabb = Aabb2u_Ratio(Image->Aabb, TextureAabb);
-    return Aabb2f_To_Quad2f(NormalizedAabb);
+    MM_Aabb2u TextureAabb = MM_Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
+    MM_Aabb2f NormalizedAabb = MM_Aabb2u_Ratio(Image->Aabb, TextureAabb);
+    return MM_Aabb2f_ToQuad2f(NormalizedAabb);
 }
 
 static inline b32
 Assets_CheckSignature(void* Memory, u8_cstr Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    for (u32 I = 0; I < Signature.Count; ++I) {
-        if (MemoryU8[I] != Signature.Data[I]) {
+    for (u32 I = 0; I < Signature.count; ++I) {
+        if (MemoryU8[I] != Signature.data[I]) {
             return False;
         }
     }
@@ -245,7 +245,7 @@ Assets_Init(assets* Assets,
                                                Platform,
                                                Scratch,
                                                &CurFileOffset,
-                                               (u32)Signature.Count,
+                                               (u32)Signature.count,
                                                1);
         if (ReadSignature == Null) {
             Platform->LogFp("[Assets] Cannot read signature\n");
@@ -464,19 +464,19 @@ Assets_Init(assets* Assets,
                 
                 
                 msg* Msg = Assets_GetMsg(Assets, File->Id);
-                Msg->Count = File->Count;
+                Msg->count = File->Count;
                 
                 
                 // NOTE(Momo): we have to revert here so that our arena's 
                 // memory does not screw up. A bit janky but hey.
                 MM_Arena_Revert(&Scratch); 
                 
-                Msg->Data = (u8*)
+                Msg->data = (u8*)
                     Assets_ReadBlock(&AssetFile,
                                      Platform, 
                                      Arena, 
                                      &CurFileOffset,
-                                     sizeof(u8) * Msg->Count,
+                                     sizeof(u8) * Msg->count,
                                      1);
                 
                 

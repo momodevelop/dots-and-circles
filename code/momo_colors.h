@@ -15,7 +15,7 @@ struct c4f {
         f32 E[4];
         struct {
             union {
-                v3f RGB;
+                MM_V3f RGB;
                 struct {
                     f32 R, G, B;
                 };

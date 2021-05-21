@@ -7,38 +7,38 @@
 // Saves the current camera state.
 // No direction because we are assuming 2D
 struct game_camera {
-    v3f Position;
-    v3f Anchor; 
-    v3f Dimensions; // In 2D, this represents the near and far clip planes
+    MM_V3f Position;
+    MM_V3f Anchor; 
+    MM_V3f Dimensions; // In 2D, this represents the near and far clip planes
     c4f Color;
     
 };
 
 static inline void
 Camera_Set(game_camera* C, mailbox* RenderCommands) {
-    aabb3f CenterBox = Aabb3f_CreateCentered(C->Dimensions, C->Anchor);
+    MM_Aabb3f CenterBox = MM_Aabb3f_CreateCentered(C->Dimensions, C->Anchor);
     Renderer_ClearColor(RenderCommands, C->Color);
     Renderer_SetOrthoCamera(RenderCommands, 
                             C->Position, 
                             CenterBox);
 }
 
-static inline v2f
-Camera_ScreenToView(game_camera* C, v2f ScreenPos) {
-    v2f Ret = {};
-    Ret.X = ScreenPos.X - C->Dimensions.W * 0.5f;
-    Ret.Y = -(ScreenPos.Y - C->Dimensions.H * 0.5f);
+static inline MM_V2f
+Camera_ScreenToView(game_camera* C, MM_V2f ScreenPos) {
+    MM_V2f Ret = {};
+    Ret.x = ScreenPos.x - C->Dimensions.W * 0.5f;
+    Ret.y = -(ScreenPos.y - C->Dimensions.H * 0.5f);
     
     return Ret;
 }
 
 // TODO(Momo): Largely untested!!
-static inline v2f
-Camera_ScreenToWorld(game_camera* C, v2f ScreenPos) {
+static inline MM_V2f
+Camera_ScreenToWorld(game_camera* C, MM_V2f ScreenPos) {
     
-    v2f Ret = Camera_ScreenToView(C, ScreenPos);
-    Ret.X -= C->Position.X;
-    Ret.Y -= C->Position.Y;
+    MM_V2f Ret = Camera_ScreenToView(C, ScreenPos);
+    Ret.x -= C->Position.x;
+    Ret.y -= C->Position.y;
     
     
     return Ret;
