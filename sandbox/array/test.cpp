@@ -9,7 +9,7 @@ struct particle {
 
 
 static inline void
-Print(MM_Queue<particle>* Q) {
+Print(queue<particle>* Q) {
     auto Itr = Queue_Itr_Create(Q);
     while(Queue_Itr_IsValid(Q, Itr)) {
         particle* P = Queue_Itr_Get(Q, Itr);
@@ -19,9 +19,9 @@ Print(MM_Queue<particle>* Q) {
 }
 
 int main() {
-    MM_Queue<particle> Q;
+    queue<particle> Q;
     particle Particles[8];
-    MM_Queue_Init(&Q, Particles, ArrayCount(Particles));
+    Queue_Init(&Q, Particles, ArrayCount(Particles));
     printf("Testing empty\n");
     
     u32 I = 0;
@@ -36,13 +36,13 @@ int main() {
     //01234
     
     printf("Testing dequeue\n");
-    MM_Queue_Pop(&Q);
-    MM_Queue_Pop(&Q);
+    Queue_Pop(&Q);
+    Queue_Pop(&Q);
     Print(&Q);
     printf("\n");
     // 23
     
-    printf("Testing MM_Queue until overshot\n");
+    printf("Testing queue until overshot\n");
     Queue_PushItem(&Q, {I++});
     Queue_PushItem(&Q, {I++});
     Queue_PushItem(&Q, {I++});
@@ -61,7 +61,7 @@ int main() {
     
     printf("Test removing all but one items\n");
     for(int i = 0; i < 7; ++i) {
-        MM_Queue_Pop(&Q);
+        Queue_Pop(&Q);
     }
     
 }

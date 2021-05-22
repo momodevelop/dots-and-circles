@@ -10,8 +10,8 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     Defer{ MM_Arena_Revert(&Scratch); };
     u8_cstr Buffer = {};
     
-    u8_cstr_split_res ArgList = MM_U8CStr_SplitByDelimiter(Arguments, Scratch, ' ');
-    if ( ArgList.item_count != 2 ) {
+    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch, ' ');
+    if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
         U8CStr_InitFromSiStr(&Buffer, "Expected only 2 arguments");
         DebugConsole_PushInfo(Console, 
@@ -20,29 +20,29 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
         return;
     }
     
-    u8_cstr StateToChangeTo = ArgList.items[1];
-    if (MM_U8CStr_CmpSiStr(StateToChangeTo, "main")) {
+    u8_cstr StateToChangeTo = ArgList.Items[1];
+    if (U8CStr_CmpSiStr(StateToChangeTo, "main")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Main");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (MM_U8CStr_CmpSiStr(StateToChangeTo, "splash")) {
+    else if (U8CStr_CmpSiStr(StateToChangeTo, "splash")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Splash");
         DebugConsole_PushInfo(Console, 
                               Buffer,  
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (MM_U8CStr_CmpSiStr(StateToChangeTo, "sandbox")) {
+    else if (U8CStr_CmpSiStr(StateToChangeTo, "sandbox")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Sandbox");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               Color_Yellow);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
-    else if (MM_U8CStr_CmpSiStr(StateToChangeTo, "anime")) {
+    else if (U8CStr_CmpSiStr(StateToChangeTo, "anime")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Anime");
         DebugConsole_PushInfo(Console, 
                               Buffer, 

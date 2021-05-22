@@ -33,14 +33,14 @@ struct atlas_context_font {
 
 static inline void 
 Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                           u8* TextureMemory, MM_Aabb2u TextureAabb) 
+                           u8* TextureMemory, aabb2u TextureAabb) 
 {
     s32 j = 0;
-    u32 TextureAabbW = MM_Aabb2u_Width(TextureAabb);
-    u32 TextureAabbH = MM_Aabb2u_Height(TextureAabb);
+    u32 TextureAabbW = Aabb2u_Width(TextureAabb);
+    u32 TextureAabbH = Aabb2u_Height(TextureAabb);
     
-    for (u32 y = TextureAabb.min.y; y < TextureAabb.min.y + TextureAabbH; ++y) {
-        for (u32 x = TextureAabb.min.x; x < TextureAabb.min.x + TextureAabbW; ++x) {
+    for (u32 y = TextureAabb.Min.Y; y < TextureAabb.Min.Y + TextureAabbH; ++y) {
+        for (u32 x = TextureAabb.Min.X; x < TextureAabb.Min.X + TextureAabbW; ++x) {
             u32 Index = (x + y * AtlasWidth) * 4;
             Assert(Index < (AtlasWidth * AtlasHeight * 4));
             for (u32 c = 0; c < 4; ++c) {
@@ -53,7 +53,7 @@ Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 static inline u8*
 Tba_GenerateAtlas(MM_Arena* Arena, 
-                  MM_Aabb2u* Aabbs, 
+                  aabb2u* Aabbs, 
                   void* UserDatas[],
                   u32 AabbCount, 
                   u32 Width, 
@@ -66,7 +66,7 @@ Tba_GenerateAtlas(MM_Arena* Arena,
     }
     
     for (u32 I = 0; I < AabbCount; ++I) {
-        MM_Aabb2u Aabb = Aabbs[I];
+        aabb2u Aabb = Aabbs[I];
         
         auto Type = *(atlas_context_type*)UserDatas[I];
         switch(Type) {

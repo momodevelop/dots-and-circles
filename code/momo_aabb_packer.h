@@ -13,7 +13,7 @@ enum aabb_packer_sort_type {
 };
 
 static inline void
-__AabbPacker_Sort(MM_Aabb2u* Aabbs,
+__AabbPacker_Sort(aabb2u* Aabbs,
                   sort_entry* SortEntries,
                   u32 SortEntryCount,
                   aabb_packer_sort_type SortType)
@@ -21,7 +21,7 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
     switch (SortType) {
         case AabbPackerSortType_Width: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
-                u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
+                u32 AabbW = Aabb2u_Width(Aabbs[I]);
                 f32 Key = -(f32)AabbW;
                 SortEntries[I].Key = Key;
                 SortEntries[I].Index = I;
@@ -29,7 +29,7 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
         } break;
         case AabbPackerSortType_Height: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
-                u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
+                u32 AabbH = Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)AabbH;
                 SortEntries[I].Key = Key;
                 SortEntries[I].Index = I;
@@ -37,8 +37,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
         } break;
         case AabbPackerSortType_Area: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
-                u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
-                u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
+                u32 AabbW = Aabb2u_Width(Aabbs[I]);
+                u32 AabbH = Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)(AabbW * AabbH);
                 SortEntries[I].Key = Key;
                 SortEntries[I].Index = I;
@@ -46,8 +46,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
         } break;
         case AabbPackerSortType_Perimeter: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
-                u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
-                u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
+                u32 AabbW = Aabb2u_Width(Aabbs[I]);
+                u32 AabbH = Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)(AabbW + AabbH);
                 SortEntries[I].Key = Key;
                 SortEntries[I].Index = I;
@@ -55,8 +55,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
         } break;
         case AabbPackerSortType_BiggerSide: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
-                u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
-                u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
+                u32 AabbW = Aabb2u_Width(Aabbs[I]);
+                u32 AabbH = Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)(MaxOf(AabbW, AabbH));
                 SortEntries[I].Key = Key;
                 SortEntries[I].Index = I;
@@ -64,8 +64,8 @@ __AabbPacker_Sort(MM_Aabb2u* Aabbs,
         } break;
         case AabbPackerSortType_Pathological: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
-                u32 AabbW = MM_Aabb2u_Width(Aabbs[I]);
-                u32 AabbH = MM_Aabb2u_Height(Aabbs[I]);
+                u32 AabbW = Aabb2u_Width(Aabbs[I]);
+                u32 AabbH = Aabb2u_Height(Aabbs[I]);
                 
                 u32 MaxOfWH = MaxOf(AabbW, AabbH);
                 u32 MinOfWH = MinOf(AabbW, AabbH);
@@ -86,7 +86,7 @@ static inline b32
 AabbPacker_Pack(MM_Arena* Arena,
                 u32 TotalWidth,
                 u32 TotalHeight,
-                MM_Aabb2u* Aabbs, 
+                aabb2u* Aabbs, 
                 u32 AabbCount, 
                 aabb_packer_sort_type SortType) 
 {
@@ -99,21 +99,21 @@ AabbPacker_Pack(MM_Arena* Arena,
     
     u32 CurrentNodeCount = 0;
     
-    auto* Nodes = MM_Arena_PushArray(MM_Aabb2u, Arena, AabbCount+1);
-    Nodes[CurrentNodeCount++] = MM_Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
+    auto* Nodes = MM_Arena_PushArray(aabb2u, Arena, AabbCount+1);
+    Nodes[CurrentNodeCount++] = Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
     
     for (u32 i = 0; i < AabbCount; ++i) {
-        MM_Aabb2u* Aabb = Aabbs + SortEntries[i].Index;
-        u32 AabbW = MM_Aabb2u_Width(*Aabb);
-        u32 AabbH = MM_Aabb2u_Height(*Aabb);
+        aabb2u* Aabb = Aabbs + SortEntries[i].Index;
+        u32 AabbW = Aabb2u_Width(*Aabb);
+        u32 AabbH = Aabb2u_Height(*Aabb);
         
         // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
         u32 ChosenSpaceIndex = CurrentNodeCount;
         for (u32  j = 0; j < ChosenSpaceIndex ; ++j ) {
             u32 Index = ChosenSpaceIndex - j - 1;
-            MM_Aabb2u Space = Nodes[Index];
-            u32 SpaceW = MM_Aabb2u_Width(Space);
-            u32 SpaceH = MM_Aabb2u_Height(Space);
+            aabb2u Space = Nodes[Index];
+            u32 SpaceW = Aabb2u_Width(Space);
+            u32 SpaceH = Aabb2u_Height(Space);
             
             // NOTE(Momo): Check if the image fits
             if (AabbW <= SpaceW && AabbH <= SpaceH) {
@@ -130,9 +130,9 @@ AabbPacker_Pack(MM_Arena* Arena,
         }
         
         // NOTE(Momo): Swap and pop the chosen space
-        MM_Aabb2u ChosenSpace = Nodes[ChosenSpaceIndex];
-        u32 ChosenSpaceW = MM_Aabb2u_Width(ChosenSpace);
-        u32 ChosenSpaceH = MM_Aabb2u_Height(ChosenSpace);
+        aabb2u ChosenSpace = Nodes[ChosenSpaceIndex];
+        u32 ChosenSpaceW = Aabb2u_Width(ChosenSpace);
+        u32 ChosenSpaceH = Aabb2u_Height(ChosenSpace);
         
         if (CurrentNodeCount > 0) {
             Nodes[ChosenSpaceIndex] = Nodes[CurrentNodeCount-1];
@@ -142,42 +142,42 @@ AabbPacker_Pack(MM_Arena* Arena,
         // NOTE(Momo): Split if not perfect fit
         if (ChosenSpaceW != AabbW && ChosenSpaceH == AabbH) {
             // Split right
-            MM_Aabb2u SplitSpaceRight = 
-                MM_Aabb2u_CreateXYWH(ChosenSpace.min.x + AabbW,
-                                  ChosenSpace.min.y,
+            aabb2u SplitSpaceRight = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X + AabbW,
+                                  ChosenSpace.Min.Y,
                                   ChosenSpaceW - AabbW,
                                   ChosenSpaceH);
             Nodes[CurrentNodeCount++] = SplitSpaceRight;
         }
         else if (ChosenSpaceW == AabbW && ChosenSpaceH != AabbH) {
             // Split down
-            MM_Aabb2u SplitSpaceDown = 
-                MM_Aabb2u_CreateXYWH(ChosenSpace.min.x,
-                                  ChosenSpace.min.y + AabbH,
+            aabb2u SplitSpaceDown = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X,
+                                  ChosenSpace.Min.Y + AabbH,
                                   ChosenSpaceW,
                                   ChosenSpaceH - AabbH);
             Nodes[CurrentNodeCount++] = SplitSpaceDown;
         }
         else if (ChosenSpaceW != AabbW && ChosenSpaceH != AabbH) {
             // Split right
-            MM_Aabb2u SplitSpaceRight = 
-                MM_Aabb2u_CreateXYWH(ChosenSpace.min.x + AabbW,
-                                  ChosenSpace.min.y,
+            aabb2u SplitSpaceRight = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X + AabbW,
+                                  ChosenSpace.Min.Y,
                                   ChosenSpaceW - AabbW,
                                   AabbH);
             
             // Split down
-            MM_Aabb2u SplitSpaceDown = 
-                MM_Aabb2u_CreateXYWH(ChosenSpace.min.x,
-                                  ChosenSpace.min.y + AabbH,
+            aabb2u SplitSpaceDown = 
+                Aabb2u_CreateXYWH(ChosenSpace.Min.X,
+                                  ChosenSpace.Min.Y + AabbH,
                                   ChosenSpaceW,
                                   ChosenSpaceH - AabbH);
             
             // Choose to insert the bigger one first before the smaller one
-            u32 SplitSpaceRightW = MM_Aabb2u_Width(SplitSpaceRight);
-            u32 SplitSpaceRightH = MM_Aabb2u_Height(SplitSpaceRight);
-            u32 SplitSpaceDownW = MM_Aabb2u_Width(SplitSpaceDown);
-            u32 SplitSpaceDownH = MM_Aabb2u_Height(SplitSpaceDown);
+            u32 SplitSpaceRightW = Aabb2u_Width(SplitSpaceRight);
+            u32 SplitSpaceRightH = Aabb2u_Height(SplitSpaceRight);
+            u32 SplitSpaceDownW = Aabb2u_Width(SplitSpaceDown);
+            u32 SplitSpaceDownH = Aabb2u_Height(SplitSpaceDown);
             
             u32 RightArea = SplitSpaceRightW * SplitSpaceRightH;
             u32 DownArea = SplitSpaceDownW * SplitSpaceDownH;
@@ -194,9 +194,9 @@ AabbPacker_Pack(MM_Arena* Arena,
         }
         
         // NOTE(Momo): Translate the Aabb
-        (*Aabb) = MM_Aabb2u_Translate((*Aabb),
-                                   ChosenSpace.min.x,
-                                   ChosenSpace.min.y);
+        (*Aabb) = Aabb2u_Translate((*Aabb),
+                                   ChosenSpace.Min.X,
+                                   ChosenSpace.Min.Y);
     }
     
     return true;

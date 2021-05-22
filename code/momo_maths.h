@@ -3,7 +3,7 @@
 
 
 
-// NOTE(Momo): to future self: We wrap the math functions IN CASE we 
+// NOTE(Momo): To future self: We wrap the math functions IN CASE we 
 // want to have specialized versions for different systems (using SSE etc)
 //
 // I guess a good rule of thumb is that the GAME CODE should never directly
@@ -11,83 +11,83 @@
 //
 
 // NOTE(Momo): Constants
-#define MM_Math_Pi32 3.14159265358979323846264338327950288f
-#define MM_Math_Epsilon32 1.19209290E-07f
-#define MM_Math_Tau32 MM_Math_Pi32 * 2.f
+#define Pi32 3.14159265358979323846264338327950288f
+#define Epsilon32 1.19209290E-07f
+#define Tau32 Pi32 * 2.f
 
-#define GenerateSubscriptOp(Amt) inline auto& operator[](u32 I) { Assert(I < Amt); return elements[I]; }
+#define GenerateSubscriptOp(Amt) inline auto& operator[](u32 I) { Assert(I < Amt); return Elements[I]; }
 
 
 
 // NOTE(Momo): Common Functions
 static inline b32
-MM_Math_F32IsEqual(f32 lhs, f32 rhs) {
-    f32 Test = AbsOf(lhs - rhs);
-    return AbsOf(lhs - rhs) <= MM_Math_Epsilon32;
+F32_IsEqual(f32 L, f32 R) {
+    f32 Test = AbsOf(L - R);
+    return AbsOf(L - R) <= Epsilon32;
 }
 
 static inline f32 
-MM_Math_DegToRad(f32 degrees) {
-    return degrees * MM_Math_Pi32 / 180.f;
+DegToRad(f32 degrees) {
+    return degrees * Pi32 / 180.f;
 }
 
 static inline f32 
-MM_Math_RadToDeg(f32 radians) {
-    return radians * 180.f / MM_Math_Pi32;
+RadToDeg(f32 radians) {
+    return radians * 180.f / Pi32;
 }
 
 static inline f32 
-MM_Math_Sin(f32 x) {
+Sin(f32 x) {
     return sinf(x);
 }
 
 static inline f32 
-MM_Math_Cos(f32 x) {
+Cos(f32 x) {
     return cosf(x);
 }
 
 static inline f32 
-MM_Math_Tan(f32 x) {
+Tan(f32 x) {
     return tanf(x);
 }
 
 
 static inline f32 
-MM_Math_Sqrt(f32 x) {
+Sqrt(f32 x) {
     return sqrtf(x);
 }
 
 static inline f32 
-MM_Math_ASin(f32 x) {
+ASin(f32 x) {
     return asinf(x);
 }
 
 static inline f32 
-MM_Math_ACos(f32 x) {
+ACos(f32 x) {
     return acosf(x);
 }
 
 static inline f32 
-MM_Math_ATan(f32 x) {
+ATan(f32 x) {
     return atanf(x);
 }
 
 static inline f32
-MM_Math_Pow(f32 b, f32 e) {
+Pow(f32 b, f32 e) {
     return powf(b,e);
 }
 
 //~ NOTE(Momo): Vectors
-struct MM_V2f {
+struct v2f {
     union {
-        f32 elements[2];
+        f32 Elements[2];
         struct {
-            f32 x;
-            f32 y;
+            f32 X;
+            f32 Y;
         };
         struct {
             f32 U;
-            f32 v;
+            f32 V;
         };
         struct {
             f32 W;
@@ -97,16 +97,16 @@ struct MM_V2f {
     GenerateSubscriptOp(2)
 };
 
-struct MM_V2u {
+struct v2u {
     union {
-        u32 elements[2];
+        u32 Elements[2];
         struct {
-            u32 x;
-            u32 y;
+            u32 X;
+            u32 Y;
         };
         struct {
             u32 U;
-            u32 v;
+            u32 V;
         };
         struct {
             u32 W;
@@ -116,16 +116,16 @@ struct MM_V2u {
     GenerateSubscriptOp(2)
 };
 
-struct MM_V2i {
+struct v2i {
     union {
-        s32 elements[2];
+        s32 Elements[2];
         struct {
-            s32 x;
-            s32 y;
+            s32 X;
+            s32 Y;
         };
         struct {
             s32 U;
-            s32 v;
+            s32 V;
         };
         struct {
             s32 W;
@@ -135,22 +135,22 @@ struct MM_V2i {
     GenerateSubscriptOp(2)
 };
 
-struct MM_V3f {
+struct v3f {
     union {
-        f32 elements[3];
+        f32 Elements[3];
         struct {
             union {
-                MM_V2f XY;
+                v2f XY;
                 struct {
-                    f32 x, y;
+                    f32 X, Y;
                 };
             };
-            f32 z;
+            f32 Z;
         };
         
         struct {
             union {
-                MM_V2f WH;
+                v2f WH;
                 struct {
                     f32 W, H;
                 };
@@ -161,14 +161,14 @@ struct MM_V3f {
     GenerateSubscriptOp(3)
 };
 
-struct MM_V4f {
+struct v4f {
     union {
-        f32 elements[4];
+        f32 Elements[4];
         struct {
             union {
-                MM_V3f XYZ;
+                v3f XYZ;
                 struct {
-                    f32 x, y, z;
+                    f32 X, Y, Z;
                 };
             }; 
             f32 W;
@@ -177,871 +177,867 @@ struct MM_V4f {
     GenerateSubscriptOp(4);
 };
 
-//~ NOTE(Momo): MM_V2f functions
-static inline MM_V2f
-MM_V2f_Create(f32 x, f32 y) {
-    MM_V2f ret = {};
-    ret.x = x;
-    ret.y = y;
+//~ NOTE(Momo): v2f functions
+static inline v2f
+V2f_Create(f32 X, f32 Y) {
+    v2f Ret = {};
+    Ret.X = X;
+    Ret.Y = Y;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_V2f
-MM_V2f_CreateFromV2u(MM_V2u v) {
-    return MM_V2f_Create((f32)v.x, (f32)v.y);
+static inline v2f
+V2f_CreateFromV2u(v2u V) {
+    return V2f_Create((f32)V.X, (f32)V.Y);
 }
 
-static inline MM_V2f 
-MM_V2f_Add(MM_V2f lhs, MM_V2f rhs) {
-    lhs.x += rhs.x;
-    lhs.y += rhs.y;
-    return lhs;
+static inline v2f 
+V2f_Add(v2f L, v2f R) {
+    L.X += R.X;
+    L.Y += R.Y;
+    return L;
 }
 
-static inline MM_V2f
-MM_V2f_Sub(MM_V2f lhs, MM_V2f rhs) {
-    lhs.x -= rhs.x;
-    lhs.y -= rhs.y;
-    return lhs;
-}
-
-
-static inline MM_V2f
-MM_V2f_Mul(MM_V2f lhs, f32 rhs) {
-    lhs.x *= rhs;
-    lhs.y *= rhs;
-    return lhs;
+static inline v2f
+V2f_Sub(v2f L, v2f R) {
+    L.X -= R.X;
+    L.Y -= R.Y;
+    return L;
 }
 
 
-static inline MM_V2f
-MM_V2f_Div(MM_V2f lhs, f32 rhs) {
-    Assert(!MM_Math_F32IsEqual(rhs, 0));
-    lhs.x /= rhs;
-    lhs.y /= rhs;
+static inline v2f
+V2f_Mul(v2f L, f32 R) {
+    L.X *= R;
+    L.Y *= R;
+    return L;
+}
+
+
+static inline v2f
+V2f_Div(v2f L, f32 R) {
+    Assert(!F32_IsEqual(R, 0));
+    L.X /= R;
+    L.Y /= R;
     
-    return lhs;
+    return L;
 }
 
-static inline MM_V2f
-MM_V2f_Ratio(MM_V2f lhs, MM_V2f rhs) {
-    Assert(!MM_Math_F32IsEqual(rhs.x, 0));
-    Assert(!MM_Math_F32IsEqual(rhs.y, 0));
+static inline v2f
+V2f_Ratio(v2f L, v2f R) {
+    Assert(!F32_IsEqual(R.X, 0));
+    Assert(!F32_IsEqual(R.Y, 0));
     
-    lhs.x /= rhs.x;
-    lhs.y /= rhs.y;
+    L.X /= R.X;
+    L.Y /= R.Y;
     
-    return lhs;
+    return L;
 }
 
-static inline MM_V2f
-MM_V2f_Neg(MM_V2f v){
-    v.x = -v.x;
-    v.y = -v.y;
-    return v;
+static inline v2f
+V2f_Neg(v2f V){
+    V.X = -V.X;
+    V.Y = -V.Y;
+    return V;
 }
 
 static inline b8 
-MM_V2f_IsEqual(MM_V2f lhs, MM_V2f rhs) {
+V2f_IsEqual(v2f L, v2f R) {
     return 
-        MM_Math_F32IsEqual(lhs.x, rhs.x) && 
-        MM_Math_F32IsEqual(lhs.y, rhs.y);
+        F32_IsEqual(L.X, R.X) && 
+        F32_IsEqual(L.Y, R.Y);
 }
 
 static inline f32 
-MM_V2f_Dot(MM_V2f lhs, MM_V2f rhs) {
-    f32 ret = {};
-    ret = lhs.x * rhs.x + lhs.y * rhs.y;
-    return ret;
+V2f_Dot(v2f L, v2f R) {
+    f32 Ret = {};
+    Ret = L.X * R.X + L.Y * R.Y;
+    return Ret;
 }
 
-static inline MM_V2f 
-MM_V2f_Midpoint(MM_V2f lhs, MM_V2f rhs)  { 
-    MM_V2f LR = MM_V2f_Add(lhs, rhs);
-    MM_V2f ret = MM_V2f_Div(LR, 2.f);
-    return ret; 
+static inline v2f 
+V2f_Midpoint(v2f L, v2f R)  { 
+    v2f LR = V2f_Add(L, R);
+    v2f Ret = V2f_Div(LR, 2.f);
+    return Ret; 
 }
 
 static inline f32
-MM_V2f_LengthSq(MM_V2f v) { 
+V2f_LengthSq(v2f V) { 
     // NOTE(Momo): Dot Product trick!
-    return MM_V2f_Dot(v, v);
+    return V2f_Dot(V, V);
 }
 
 static inline f32
-MM_V2f_DistanceSq(MM_V2f lhs, MM_V2f rhs) {
-    MM_V2f v = MM_V2f_Sub(rhs, lhs);
-    f32 ret = MM_V2f_LengthSq(v); 
-    return ret;
+V2f_DistanceSq(v2f L, v2f R) {
+    v2f V = V2f_Sub(R, L);
+    f32 Ret = V2f_LengthSq(V); 
+    return Ret;
 }
 
 static inline f32
-MM_V2f_Distance(MM_V2f lhs, MM_V2f rhs)  { 
-    return MM_Math_Sqrt(MM_V2f_DistanceSq(lhs, rhs)); 
+V2f_Distance(v2f L, v2f R)  { 
+    return Sqrt(V2f_DistanceSq(L, R)); 
 }
 
 static inline f32 
-MM_V2f_Length(MM_V2f lhs)  { 
-    return MM_Math_Sqrt(MM_V2f_LengthSq(lhs));
+V2f_Length(v2f L)  { 
+    return Sqrt(V2f_LengthSq(L));
 }
 
-static inline MM_V2f 
-MM_V2f_Normalize(MM_V2f v)  {
-    f32 len = MM_V2f_Length(v);
-    MM_V2f ret = MM_V2f_Div(v, len);
-    return ret;
+static inline v2f 
+V2f_Normalize(v2f V)  {
+    f32 Len = V2f_Length(V);
+    v2f Ret = V2f_Div(V, Len);
+    return Ret;
 }
 
 static inline f32
-MM_V2f_AngleBetween(MM_V2f lhs, MM_V2f rhs) {
-    f32 LLen = MM_V2f_Length(lhs);
-    f32 RLen = MM_V2f_Length(rhs);
-    f32 lhs_dot_rhs = MM_V2f_Dot(lhs,rhs);
-    f32 ret = MM_Math_ACos(lhs_dot_rhs/(LLen * RLen));
+V2f_AngleBetween(v2f L, v2f R) {
+    f32 LLen = V2f_Length(L);
+    f32 RLen = V2f_Length(R);
+    f32 LRDot = V2f_Dot(L,R);
+    f32 Ret = ACos(LRDot/(LLen * RLen));
     
-    return ret;
+    return Ret;
 }
 
 static inline b32
-MM_V2f_IsPerp(MM_V2f lhs, MM_V2f rhs) { 
-    f32 lhs_dot_rhs = MM_V2f_Dot(lhs,rhs);
-    return MM_Math_F32IsEqual(lhs_dot_rhs, 0); 
+V2f_IsPerp(v2f L, v2f R) { 
+    f32 LRDot = V2f_Dot(L,R);
+    return F32_IsEqual(LRDot, 0); 
 }
 
 
 static inline b32 
-MM_V2f_IsSameDir(MM_V2f lhs, MM_V2f rhs) { 
-    f32 lhs_dot_rhs = MM_V2f_Dot(lhs,rhs);
-    return lhs_dot_rhs > 0; 
+V2f_IsSameDir(v2f L, v2f R) { 
+    f32 LRDot = V2f_Dot(L,R);
+    return LRDot > 0; 
 }
 
 
 static inline b32 
-MM_V2f_IsOppDir(MM_V2f lhs, MM_V2f rhs) { 
-    f32 lhs_dot_rhs = MM_V2f_Dot(lhs,rhs);
-    return lhs_dot_rhs < 0;
+V2f_IsOppDir(v2f L, v2f R) { 
+    f32 LRDot = V2f_Dot(L,R);
+    return LRDot < 0;
 }
 
-static inline MM_V2f 
-MM_V2f_Project(MM_V2f from, MM_V2f to) { 
-    // (to . from)/LenSq(to) * to
-    f32 to_lensq = MM_V2f_LengthSq(to);
-    Assert(!MM_Math_F32IsEqual(to_lensq, 0)); 
+static inline v2f 
+V2f_Project(v2f From, v2f To) { 
+    // (To . From)/LenSq(To) * To
+    f32 ToLenSq = V2f_LengthSq(To);
+    Assert(!F32_IsEqual(ToLenSq, 0)); 
     
-    f32 to_dot_from = MM_V2f_Dot(to, from);
-    f32 unit_projection_scalar = to_dot_from / to_lensq;
-    MM_V2f ret = MM_V2f_Mul(to, unit_projection_scalar);
-    return ret;
+    f32 ToDotFrom = V2f_Dot(To, From);
+    f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
+    v2f Ret = V2f_Mul(To, UnitProjectionScalar);
+    return Ret;
 }
 
-static inline MM_V2f
-MM_V2f_Rotate(MM_V2f v, f32 rad) {
+static inline v2f
+V2f_Rotate(v2f V, f32 Rad) {
     // Technically, we can use matrices but
     // meh, it's easy to code this out without it.
     // Removes dependencies too
-    f32 C = MM_Math_Cos(rad);
-    f32 S = MM_Math_Sin(rad);
+    f32 C = Cos(Rad);
+    f32 S = Sin(Rad);
     
-    MM_V2f ret = {};
-    ret.x = (C * v.x) - (S * v.y);
-    ret.y = (S * v.x) + (C * v.y);
-    return ret;
+    v2f Ret = {};
+    Ret.X = (C * V.X) - (S * V.Y);
+    Ret.Y = (S * V.X) + (C * V.Y);
+    return Ret;
 }
 
 
-//~ NOTE(Momo): MM_V2u Functions
-static inline MM_V2u 
-MM_V2u_Create(u32 x, u32 y) {
-    MM_V2u ret = {};
-    ret.x = x;
-    ret.y = y;
+//~ NOTE(Momo): v2u Functions
+static inline v2u 
+V2u_Create(u32 X, u32 Y) {
+    v2u Ret = {};
+    Ret.X = X;
+    Ret.Y = Y;
     
-    return ret;
+    return Ret;
 }
 
-//~ NOTE(Momo): MM_V3f Functions
-static inline MM_V3f
-MM_V3f_Create(f32 x, f32 y, f32 z) {
-    MM_V3f ret = {};
-    ret.x = x;
-    ret.y = y;
-    ret.z = z;
-    return ret;
+//~ NOTE(Momo): v3f Functions
+static inline v3f
+V3f_Create(f32 X, f32 Y, f32 Z) {
+    v3f Ret = {};
+    Ret.X = X;
+    Ret.Y = Y;
+    Ret.Z = Z;
+    return Ret;
 }
 
-static inline MM_V3f 
-MM_V3f_Add(MM_V3f lhs, MM_V3f rhs) {
-    lhs.x += rhs.x;
-    lhs.y += rhs.y;
-    lhs.z += rhs.z;
-    return lhs;
+static inline v3f 
+V3f_Add(v3f L, v3f R) {
+    L.X += R.X;
+    L.Y += R.Y;
+    L.Z += R.Z;
+    return L;
 }
 
-static inline MM_V3f
-MM_V3f_Sub(MM_V3f lhs, MM_V3f rhs) {
-    lhs.x -= rhs.x;
-    lhs.y -= rhs.y;
-    lhs.z -= rhs.z;
-    return lhs;
-}
-
-
-static inline MM_V3f
-MM_V3f_Mul(MM_V3f lhs, f32 rhs) {
-    lhs.x *= rhs;
-    lhs.y *= rhs;
-    lhs.z *= rhs;
-    return lhs;
+static inline v3f
+V3f_Sub(v3f L, v3f R) {
+    L.X -= R.X;
+    L.Y -= R.Y;
+    L.Z -= R.Z;
+    return L;
 }
 
 
-static inline MM_V3f
-MM_V3f_Div(MM_V3f lhs, f32 rhs) {
-    Assert(!MM_Math_F32IsEqual(rhs, 0));
-    lhs.x /= rhs;
-    lhs.y /= rhs;
-    lhs.z /= rhs;
-    return lhs;
+static inline v3f
+V3f_Mul(v3f L, f32 R) {
+    L.X *= R;
+    L.Y *= R;
+    L.Z *= R;
+    return L;
 }
 
-static inline MM_V3f
-MM_V3f_Neg(MM_V3f v){
-    v.x = -v.x;
-    v.y = -v.y;
-    v.z = -v.z;
-    return v;
+
+static inline v3f
+V3f_Div(v3f L, f32 R) {
+    Assert(!F32_IsEqual(R, 0));
+    L.X /= R;
+    L.Y /= R;
+    L.Z /= R;
+    return L;
+}
+
+static inline v3f
+V3f_Neg(v3f V){
+    V.X = -V.X;
+    V.Y = -V.Y;
+    V.Z = -V.Z;
+    return V;
 }
 
 static inline b8 
-MM_V3f_IsEqual(MM_V3f lhs, MM_V3f rhs) {
+V3f_IsEqual(v3f L, v3f R) {
     return 
-        MM_Math_F32IsEqual(lhs.x, rhs.x) && 
-        MM_Math_F32IsEqual(lhs.y, rhs.y) &&
-        MM_Math_F32IsEqual(lhs.z, rhs.z);
+        F32_IsEqual(L.X, R.X) && 
+        F32_IsEqual(L.Y, R.Y) &&
+        F32_IsEqual(L.Z, R.Z);
 }
 
 static inline f32 
-MM_V3f_Dot(MM_V3f lhs, MM_V3f rhs) {
-    f32 ret = {};
-    ret = lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
-    return ret;
+V3f_Dot(v3f L, v3f R) {
+    f32 Ret = {};
+    Ret = L.X * R.X + L.Y * R.Y + L.Z * R.Z;
+    return Ret;
 }
 
-static inline MM_V3f 
-MM_V3f_Midpoint(MM_V3f lhs, MM_V3f rhs)  { 
-    MM_V3f LR = MM_V3f_Add(lhs, rhs);
-    MM_V3f ret = MM_V3f_Div(LR, 2.f);
-    return ret; 
+static inline v3f 
+V3f_Midpoint(v3f L, v3f R)  { 
+    v3f LR = V3f_Add(L, R);
+    v3f Ret = V3f_Div(LR, 2.f);
+    return Ret; 
 }
 
 static inline f32
-MM_V3f_LengthSq(MM_V3f v) { 
+V3f_LengthSq(v3f V) { 
     // NOTE(Momo): Dot Product trick!
-    return MM_V3f_Dot(v, v);
+    return V3f_Dot(V, V);
 }
 
 static inline f32
-MM_V3f_DistanceSq(MM_V3f lhs, MM_V3f rhs) {
-    MM_V3f v = MM_V3f_Sub(rhs, lhs);
-    f32 ret = MM_V3f_LengthSq(v); 
-    return ret;
+V3f_DistanceSq(v3f L, v3f R) {
+    v3f V = V3f_Sub(R, L);
+    f32 Ret = V3f_LengthSq(V); 
+    return Ret;
 }
 
 static inline f32
-MM_V3f_Distance(MM_V3f lhs, MM_V3f rhs)  { 
-    return MM_Math_Sqrt(MM_V3f_DistanceSq(lhs, rhs)); 
+V3f_Distance(v3f L, v3f R)  { 
+    return Sqrt(V3f_DistanceSq(L, R)); 
 }
 
 static inline f32 
-MM_V3f_Length(MM_V3f lhs)  { 
-    return MM_Math_Sqrt(MM_V3f_LengthSq(lhs));
+V3f_Length(v3f L)  { 
+    return Sqrt(V3f_LengthSq(L));
 }
 
-static inline MM_V3f 
-MM_V3f_Normalize(MM_V3f v)  {
-    f32 len = MM_V3f_Length(v);
-    MM_V3f ret = MM_V3f_Div(v, len);
-    return ret;
+static inline v3f 
+V3f_Normalize(v3f V)  {
+    f32 Len = V3f_Length(V);
+    v3f Ret = V3f_Div(V, Len);
+    return Ret;
 }
 
 static inline f32
-MM_V3f_AngleBetween(MM_V3f lhs, MM_V3f rhs) {
-    f32 LLen = MM_V3f_Length(lhs);
-    f32 RLen = MM_V3f_Length(rhs);
-    f32 lhs_dot_rhs = MM_V3f_Dot(lhs,rhs);
-    f32 ret = MM_Math_ACos(lhs_dot_rhs/(LLen * RLen));
+V3f_AngleBetween(v3f L, v3f R) {
+    f32 LLen = V3f_Length(L);
+    f32 RLen = V3f_Length(R);
+    f32 LRDot = V3f_Dot(L,R);
+    f32 Ret = ACos(LRDot/(LLen * RLen));
     
-    return ret;
+    return Ret;
 }
 
 
 static inline b32
-MM_V3f_IsPerpendicular(MM_V3f lhs, MM_V3f rhs) { 
-    f32 lhs_dot_rhs = MM_V3f_Dot(lhs,rhs);
-    return MM_Math_F32IsEqual(lhs_dot_rhs, 0); 
+V3f_IsPerpendicular(v3f L, v3f R) { 
+    f32 LRDot = V3f_Dot(L,R);
+    return F32_IsEqual(LRDot, 0); 
 }
 
 
 static inline b32 
-MM_V3f_IsSameDir(MM_V3f lhs, MM_V3f rhs) { 
-    f32 lhs_dot_rhs = MM_V3f_Dot(lhs,rhs);
-    return lhs_dot_rhs > 0; 
+V3f_IsSameDir(v3f L, v3f R) { 
+    f32 LRDot = V3f_Dot(L,R);
+    return LRDot > 0; 
 }
 
 
 static inline b32 
-MM_V3f_IsOppDir(MM_V3f lhs, MM_V3f rhs) { 
-    f32 lhs_dot_rhs = MM_V3f_Dot(lhs,rhs);
-    return lhs_dot_rhs < 0;
+V3f_IsOppDir(v3f L, v3f R) { 
+    f32 LRDot = V3f_Dot(L,R);
+    return LRDot < 0;
 }
 
-static inline MM_V3f 
-MM_V3f_Project(MM_V3f from, MM_V3f to) { 
-    // (to . from)/LenSq(to) * to
-    f32 to_lensq = MM_V3f_LengthSq(to);
-    Assert(!MM_Math_F32IsEqual(to_lensq, 0)); 
+static inline v3f 
+V3f_Project(v3f From, v3f To) { 
+    // (To . From)/LenSq(To) * To
+    f32 ToLenSq = V3f_LengthSq(To);
+    Assert(!F32_IsEqual(ToLenSq, 0)); 
     
-    f32 to_dot_from = MM_V3f_Dot(to, from);
-    f32 unit_projection_scalar = to_dot_from / to_lensq;
-    MM_V3f ret = MM_V3f_Mul(to, unit_projection_scalar);
-    return ret;
+    f32 ToDotFrom = V3f_Dot(To, From);
+    f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
+    v3f Ret = V3f_Mul(To, UnitProjectionScalar);
+    return Ret;
 }
 
-static inline MM_V3f 
-MM_V2f_ToV3f(MM_V2f v) {
-    MM_V3f ret = {};
-    ret.x = v.x;
-    ret.y = v.y;
-    ret.z = 0.f;
+static inline v3f 
+V2f_To_V3f(v2f V) {
+    v3f Ret = {};
+    Ret.X = V.X;
+    Ret.Y = V.Y;
+    Ret.Z = 0.f;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_V2f
-MM_V2u_ToV2f(MM_V2u v) {
-    MM_V2f ret = {};
-    ret.x = (f32)v.x;
-    ret.y = (f32)v.y;
+static inline v2f
+V2u_To_V2f(v2u V) {
+    v2f Ret = {};
+    Ret.X = (f32)V.X;
+    Ret.Y = (f32)V.Y;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_V2f 
-MM_V2i_ToV2f(MM_V2i v) {
-    MM_V2f ret = {};
-    ret.x = (f32)v.x;
-    ret.y = (f32)v.y;
+static inline v2f 
+V2i_To_V2f(v2i V) {
+    v2f Ret = {};
+    Ret.X = (f32)V.X;
+    Ret.Y = (f32)V.Y;
     
-    return ret;
+    return Ret;
 }
 
 //~ NOTE(Momo): AABB 
-struct MM_Aabb2i {
-    MM_V2i min;
-    MM_V2i max;
+struct aabb2i {
+    v2i Min;
+    v2i Max;
 };
 
-struct MM_Aabb2f {
-    MM_V2f min;
-    MM_V2f max;
+struct aabb2f {
+    v2f Min;
+    v2f Max;
 };
 
-struct MM_Aabb2u {
-    MM_V2u min;
-    MM_V2u max;
+struct aabb2u {
+    v2u Min;
+    v2u Max;
 };
 
-struct MM_Aabb3f {
-    MM_V3f min;
-    MM_V3f max;
+struct aabb3f {
+    v3f Min;
+    v3f Max;
 };
 
 
-static inline MM_Aabb2u
-MM_Aabb2u_CreateFromV2u(MM_V2u min, MM_V2u max) {
-    MM_Aabb2u ret = {};
-    ret.min = min;
-    ret.max = max;
+static inline aabb2u
+Aabb2u_CreateFromV2u(v2u Min, v2u Max) {
+    aabb2u Ret = {};
+    Ret.Min = Min;
+    Ret.Max = Max;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_Aabb2u
-MM_Aabb2u_Create(u32 min_x, u32 min_y, u32 max_x, u32 max_y) {
-    MM_V2u min = MM_V2u_Create(min_x, min_y);
-    MM_V2u max = MM_V2u_Create(max_x, max_y);
+static inline aabb2u
+Aabb2u_Create(u32 MinX, u32 MinY, u32 MaxX, u32 MaxY) {
+    v2u Min = V2u_Create(MinX, MinY);
+    v2u Max = V2u_Create(MaxX, MaxY);
     
-    return MM_Aabb2u_CreateFromV2u(min, max);
+    return Aabb2u_CreateFromV2u(Min, Max);
     
 }
 
 
 static inline u32
-MM_Aabb2u_Width(MM_Aabb2u a) {
-    return a.max.x - a.min.x;
+Aabb2u_Width(aabb2u A) {
+    return A.Max.X - A.Min.X;
 }
 
 static inline u32
-MM_Aabb2u_Height(MM_Aabb2u a) {
-    return a.max.y - a.min.y; 
+Aabb2u_Height(aabb2u A) {
+    return A.Max.Y - A.Min.Y; 
 }
 
-static inline MM_V2u
-MM_Aabb2u_Dimensions(MM_Aabb2u a) {
-    MM_V2u ret = {};
-    ret.W = MM_Aabb2u_Width(a);
-    ret.H = MM_Aabb2u_Height(a);
+static inline v2u
+Aabb2u_Dimensions(aabb2u A) {
+    v2u Ret = {};
+    Ret.W = Aabb2u_Width(A);
+    Ret.H = Aabb2u_Height(A);
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_Aabb2f
-MM_Aabb2f_Mul(MM_Aabb2f lhs, f32 rhs) {
-    lhs.min = MM_V2f_Mul(lhs.min, rhs);
-    lhs.max = MM_V2f_Mul(lhs.max, rhs);
-    return lhs;
+static inline aabb2f
+Aabb2f_Mul(aabb2f Lhs, f32 Rhs) {
+    Lhs.Min = V2f_Mul(Lhs.Min, Rhs);
+    Lhs.Max = V2f_Mul(Lhs.Max, Rhs);
+    return Lhs;
 }
 
 static inline f32
-MM_Aabb2f_Width(MM_Aabb2f a) {
-    return a.max.x - a.min.x;
+Aabb2f_Width(aabb2f A) {
+    return A.Max.X - A.Min.X;
 }
 
 static inline f32
-MM_Aabb2f_Height(MM_Aabb2f a) {
-    return a.max.y - a.min.y; 
+Aabb2f_Height(aabb2f A) {
+    return A.Max.Y - A.Min.Y; 
 }
 
 
-static inline MM_V2f
-MM_Aabb2f_Dimensions(MM_Aabb2f a) {
-    MM_V2f ret = {};
-    ret.W = MM_Aabb2f_Width(a);
-    ret.H = MM_Aabb2f_Height(a);
+static inline v2f
+Aabb2f_Dimensions(aabb2f A) {
+    v2f Ret = {};
+    Ret.W = Aabb2f_Width(A);
+    Ret.H = Aabb2f_Height(A);
     
-    return ret;
+    return Ret;
 }
 
 
-static inline MM_Aabb2u
-MM_Aabb2u_CreateXYWH(u32 x, u32 y, u32 W, u32 H) {
-    MM_Aabb2u ret = {};
-    ret.min.x = x;
-    ret.min.y = y;
-    ret.max.x = x + W;
-    ret.max.y = y + H;
-    return ret;
+static inline aabb2u
+Aabb2u_CreateXYWH(u32 X, u32 Y, u32 W, u32 H) {
+    aabb2u Ret = {};
+    Ret.Min.X = X;
+    Ret.Min.Y = Y;
+    Ret.Max.X = X + W;
+    Ret.Max.Y = Y + H;
+    return Ret;
 }
 
-static inline MM_Aabb2u
-MM_Aabb2u_CreateWH(u32 W, u32 H) {
-    MM_Aabb2u ret = {};
-    ret.max.x = W;
-    ret.max.y = H;
+static inline aabb2u
+Aabb2u_CreateWH(u32 W, u32 H) {
+    aabb2u Ret = {};
+    Ret.Max.X = W;
+    Ret.Max.Y = H;
     
-    return ret;
+    return Ret;
 }
 
 
-static inline MM_Aabb3f
-MM_Aabb3f_CreateCentered(MM_V3f Dimensions, MM_V3f Anchor) {
-    MM_Aabb3f ret = {};
-    ret.min.x = Lerp(0.f, -Dimensions.W, Anchor.x);
-    ret.max.x = Lerp(Dimensions.W, 0.f, Anchor.x);
+static inline aabb3f
+Aabb3f_CreateCentered(v3f Dimensions, v3f Anchor) {
+    aabb3f Ret = {};
+    Ret.Min.X = Lerp(0.f, -Dimensions.W, Anchor.X);
+    Ret.Max.X = Lerp(Dimensions.W, 0.f, Anchor.X);
     
-    ret.min.y = Lerp(0.f, -Dimensions.H, Anchor.y);
-    ret.max.y = Lerp(Dimensions.H, 0.f, Anchor.y);
+    Ret.Min.Y = Lerp(0.f, -Dimensions.H, Anchor.Y);
+    Ret.Max.Y = Lerp(Dimensions.H, 0.f, Anchor.Y);
     
-    ret.min.z = Lerp(0.f, -Dimensions.D, Anchor.z);
-    ret.max.z = Lerp(Dimensions.D, 0.f, Anchor.z);
+    Ret.Min.Z = Lerp(0.f, -Dimensions.D, Anchor.Z);
+    Ret.Max.Z = Lerp(Dimensions.D, 0.f, Anchor.Z);
     
-    return ret; 
+    return Ret; 
 }
 
 static inline f32
-MM_Aabb2f_AspectRatio(MM_Aabb2f v) {
-    return (f32)MM_Aabb2f_Width(v)/MM_Aabb2f_Height(v);
+Aabb2f_AspectRatio(aabb2f V) {
+    return (f32)Aabb2f_Width(V)/Aabb2f_Height(V);
 }
 
-static inline MM_Aabb2f
-MM_Aabb2i_ToAabb2f(MM_Aabb2i v) {
-    MM_Aabb2f ret = {};
-    ret.min = MM_V2i_ToV2f(v.min);
-    ret.max = MM_V2i_ToV2f(v.max);
-    return ret;
+static inline aabb2f
+Aabb2i_To_Aabb2f(aabb2i V) {
+    aabb2f Ret = {};
+    Ret.Min = V2i_To_V2f(V.Min);
+    Ret.Max = V2i_To_V2f(V.Max);
+    return Ret;
 }
 
-static inline MM_Aabb2f
-MM_Aabb2u_ToAabb2f(MM_Aabb2u v) {
-    MM_Aabb2f ret = {};
-    ret.min = MM_V2u_ToV2f(v.min);
-    ret.max = MM_V2u_ToV2f(v.max);
-    return ret;
+static inline aabb2f
+Aabb2u_To_Aabb2f(aabb2u V) {
+    aabb2f Ret = {};
+    Ret.Min = V2u_To_V2f(V.Min);
+    Ret.Max = V2u_To_V2f(V.Max);
+    return Ret;
 }
 
-// NOTE(Momo): Gets the Normalized values of Aabb a based on another Aabb b
-static inline MM_Aabb2f 
-MM_Aabb2f_Ratio(MM_Aabb2f a, MM_Aabb2f b) {
-    MM_Aabb2f ret = {};
-    ret.min.x = Ratio(a.min.x, b.min.x, b.max.x);
-    ret.min.y = Ratio(a.min.y, b.min.y, b.max.y);
-    ret.max.x = Ratio(a.max.x, b.min.x, b.max.x);
-    ret.max.y = Ratio(a.max.y, b.min.x, b.max.y);
+// NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
+static inline aabb2f 
+Aabb2f_Ratio(aabb2f A, aabb2f B) {
+    aabb2f Ret = {};
+    Ret.Min.X = Ratio(A.Min.X, B.Min.X, B.Max.X);
+    Ret.Min.Y = Ratio(A.Min.Y, B.Min.Y, B.Max.Y);
+    Ret.Max.X = Ratio(A.Max.X, B.Min.X, B.Max.X);
+    Ret.Max.Y = Ratio(A.Max.Y, B.Min.X, B.Max.Y);
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_Aabb2f 
-MM_Aabb2u_Ratio(MM_Aabb2u a, MM_Aabb2u b) {
-    MM_Aabb2f af = MM_Aabb2u_ToAabb2f(a);
-    MM_Aabb2f bf = MM_Aabb2u_ToAabb2f(b);
-    return MM_Aabb2f_Ratio(af, bf);
+static inline aabb2f 
+Aabb2u_Ratio(aabb2u A, aabb2u B) {
+    aabb2f Af = Aabb2u_To_Aabb2f(A);
+    aabb2f Bf = Aabb2u_To_Aabb2f(B);
+    return Aabb2f_Ratio(Af, Bf);
 }
 
-static inline MM_Aabb2u
-MM_Aabb2u_Translate(MM_Aabb2u v, u32 x, u32 y) {
-    MM_Aabb2u ret = v;
-    ret.min.x += x;
-    ret.min.y += y;
-    ret.max.x += x;
-    ret.max.y += y;
+static inline aabb2u
+Aabb2u_Translate(aabb2u V, u32 X, u32 Y) {
+    aabb2u Ret = V;
+    Ret.Min.X += X;
+    Ret.Min.Y += Y;
+    Ret.Max.X += X;
+    Ret.Max.Y += Y;
     
-    return ret;
+    return Ret;
 }
 
 //~ NOTE(Momo): Circles
-struct MM_Circle2f {
-    MM_V2f origin;
-    f32 radius;
+struct circle2f {
+    v2f Origin;
+    f32 Radius;
 };
 
-static inline MM_Circle2f
-MM_Circle2f_Create(MM_V2f origin, f32 radius) {
-    MM_Circle2f ret = {};
-    ret.origin = origin;
-    ret.radius = radius;
+static inline circle2f
+Circle2f_Create(v2f Origin, f32 Radius) {
+    circle2f Ret = {};
+    Ret.Origin = Origin;
+    Ret.Radius = Radius;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_Circle2f
-MM_Circle2f_Offset(MM_Circle2f lhs, MM_V2f offset) {
-    lhs.origin = MM_V2f_Add(lhs.origin, offset);
-    return lhs;
+static inline circle2f
+Circle2f_Offset(circle2f Lhs, v2f Offset) {
+    Lhs.Origin = V2f_Add(Lhs.Origin, Offset);
+    return Lhs;
 }
 
 //~ NOTE(Momo): 2x2 Matrices
-union MM_M22f {
-    MM_V2f elements[4];
+union m22f {
+    v2f Elements[4];
     GenerateSubscriptOp(2);
 };
 
-static inline MM_M22f 
-MM_M22f_Concat(MM_M22f lhs, MM_M22f rhs) {
-    MM_M22f ret = {};
+static inline m22f 
+M22f_Concat(m22f L, m22f R) {
+    m22f Ret = {};
     for (u8 r = 0; r < 2; r++) { 
         for (u8 c = 0; c < 2; c++) { 
             for (u8 i = 0; i < 2; i++) 
-                ret[r][c] += lhs[r][i] *  rhs[i][c]; 
+                Ret[r][c] += L[r][i] *  R[i][c]; 
         } 
     } 
-    return ret;
+    return Ret;
 }
 
-static inline MM_V2f
-MM_M22f_ConcatV2f(MM_M22f lhs, MM_V2f rhs) {
-    MM_V2f ret = {};
-    ret[0] = lhs[0][0] * rhs[0] + lhs[0][1] * rhs[1];
-    ret[1] = lhs[1][0] * rhs[0] + lhs[1][1] * rhs[1];
+static inline v2f
+M22f_ConcatV2f(m22f L, v2f R) {
+    v2f Ret = {};
+    Ret[0] = L[0][0] * R[0] + L[0][1] * R[1];
+    Ret[1] = L[1][0] * R[0] + L[1][1] * R[1];
     
-    return ret;
+    return Ret;
 }
 
 
-static inline MM_M22f 
-MM_M22f_Identity() {
-    MM_M22f ret = {};
-    ret[0][0] = 1.f;
-    ret[1][1] = 1.f;
+static inline m22f 
+M22f_Identity() {
+    m22f Ret = {};
+    Ret[0][0] = 1.f;
+    Ret[1][1] = 1.f;
     
-    return ret;
+    return Ret;
 }
 
 
-static inline MM_M22f 
-MM_M22f_Rotation(f32 rad) {
+static inline m22f 
+M22f_Rotation(f32 Rad) {
     // NOTE(Momo): 
     // c -s
     // s  c
     
-    f32 c = MM_Math_Cos(rad);
-    f32 s = MM_Math_Sin(rad);
-    MM_M22f ret = {};
-    ret[0][0] = c;
-    ret[0][1] = -s;
-    ret[1][0] = s;
-    ret[1][1] = c;
+    f32 c = Cos(Rad);
+    f32 s = Sin(Rad);
+    m22f Ret = {};
+    Ret[0][0] = c;
+    Ret[0][1] = -s;
+    Ret[1][0] = s;
+    Ret[1][1] = c;
     
-    return ret;
+    return Ret;
 }
 
 //~ NOTE(Momo): 4x4 Matrices
-union MM_M44f {
-    MM_V4f elements[4];
+union m44f {
+    v4f Elements[4];
     GenerateSubscriptOp(4);
 };
 
-static inline MM_M44f 
-MM_M44f_Concat(MM_M44f lhs, MM_M44f rhs) {
-    MM_M44f ret = {};
+static inline m44f 
+M44f_Concat(m44f L, m44f R) {
+    m44f Ret = {};
     for (u8 r = 0; r < 4; r++) { 
         for (u8 c = 0; c < 4; c++) { 
             for (u8 i = 0; i < 4; i++) 
-                ret[r][c] += lhs[r][i] *  rhs[i][c]; 
+                Ret[r][c] += L[r][i] *  R[i][c]; 
         } 
     } 
-    return ret;
+    return Ret;
 }
 
-static inline MM_M44f 
-MM_M44f_Identity() {
-    MM_M44f ret = {};
-    ret[0][0] = 1.f;
-    ret[1][1] = 1.f;
-    ret[2][2] = 1.f;
-    ret[3][3] = 1.f;
+static inline m44f 
+M44f_Identity() {
+    m44f Ret = {};
+    Ret[0][0] = 1.f;
+    Ret[1][1] = 1.f;
+    Ret[2][2] = 1.f;
+    Ret[3][3] = 1.f;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_M44f 
-MM_M44f_Transpose(MM_M44f m) {
-    MM_M44f ret = {};
+static inline m44f 
+M44f_Transpose(m44f M) {
+    m44f Ret = {};
     for (int i = 0; i < 4; ++i ) {
         for (int j = 0; j < 4; ++j) {
-            ret[i][j] = m[j][i];
+            Ret[i][j] = M[j][i];
         }
     }
     
-    return ret;
+    return Ret;
 }
 
 
-static inline MM_M44f 
-MM_M44f_Translation(f32 x, f32 y, f32 z) {
+static inline m44f 
+M44f_Translation(f32 X, f32 Y, f32 Z) {
     // NOTE(Momo): 
     // 1 0 0 x
     // 0 1 0 y
     // 0 0 1 z
     // 0 0 0 1
     //
-    MM_M44f ret = MM_M44f_Identity();
-    ret[0][3] = x;
-    ret[1][3] = y;
-    ret[2][3] = z;
+    m44f Ret = M44f_Identity();
+    Ret[0][3] = X;
+    Ret[1][3] = Y;
+    Ret[2][3] = Z;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_M44f 
-MM_M44f_RotationX(f32 rad) {
+static inline m44f 
+M44f_RotationX(f32 Rad) {
     // NOTE(Momo): 
     // 1  0  0  0
     // 0  c -s  0
     // 0  s  c  0
     // 0  0  0  1
     
-    f32 c = MM_Math_Cos(rad);
-    f32 s = MM_Math_Sin(rad);
-    MM_M44f ret = {};
-    ret[0][0] = 1.f;
-    ret[3][3] = 1.f;
-    ret[1][1] = c;
-    ret[1][2] = -s;
-    ret[2][1] = s;
-    ret[2][2] = c;
+    f32 c = Cos(Rad);
+    f32 s = Sin(Rad);
+    m44f Ret = {};
+    Ret[0][0] = 1.f;
+    Ret[3][3] = 1.f;
+    Ret[1][1] = c;
+    Ret[1][2] = -s;
+    Ret[2][1] = s;
+    Ret[2][2] = c;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_M44f 
-MM_M44f_RotationY(f32 rad) {
+static inline m44f 
+M44f_RotationY(f32 rad) {
     // NOTE(Momo): 
     //  c  0  s  0
     //  0  1  0  0
     // -s  0  c  0
     //  0  0  0  1
     
-    f32 c = MM_Math_Cos(rad);
-    f32 s = MM_Math_Sin(rad);
-    MM_M44f ret = {};
-    ret[0][0] = c;
-    ret[0][2] = s;
-    ret[1][1] = 1.f;
-    ret[2][0] = -s;
-    ret[2][2] = c;
-    ret[3][3] = 1.f;
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
+    m44f Ret = {};
+    Ret[0][0] = c;
+    Ret[0][2] = s;
+    Ret[1][1] = 1.f;
+    Ret[2][0] = -s;
+    Ret[2][2] = c;
+    Ret[3][3] = 1.f;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_M44f 
-MM_M44f_RotationZ(f32 rad) {
+static inline m44f 
+M44f_RotationZ(f32 rad) {
     // NOTE(Momo): 
     //  c -s  0  0
     //  s  c  0  0
     //  0  0  1  0
     //  0  0  0  1
     
-    f32 c = MM_Math_Cos(rad);
-    f32 s = MM_Math_Sin(rad);
-    MM_M44f ret = {};
-    ret[0][0] = c;
-    ret[0][1] = -s;
-    ret[1][0] = s;
-    ret[1][1] = c;
-    ret[2][2] = 1.f;
-    ret[3][3] = 1.f;
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
+    m44f Ret = {};
+    Ret[0][0] = c;
+    Ret[0][1] = -s;
+    Ret[1][0] = s;
+    Ret[1][1] = c;
+    Ret[2][2] = 1.f;
+    Ret[3][3] = 1.f;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_M44f
-MM_M44f_Scale(f32 x, f32 y, f32 z) {
+static inline m44f
+M44f_Scale(f32 x, f32 y, f32 z) {
     // NOTE(Momo): 
     //  x  0  0  0
     //  0  y  0  0
     //  0  0  z  0
     //  0  0  0  1
-    MM_M44f ret = {};
-    ret[0][0] = x;
-    ret[1][1] = y;
-    ret[2][2] = z;
-    ret[3][3] = 1.f;
+    m44f Ret = {};
+    Ret[0][0] = x;
+    Ret[1][1] = y;
+    Ret[2][2] = z;
+    Ret[3][3] = 1.f;
     
-    return ret; 
+    return Ret; 
 }
 
-static inline MM_M44f 
-MM_M44f_Orthographic(f32 ndc_left, f32 ndc_right,
-                     f32 ndc_bot, f32 ndc_top,
-                     f32 ndc_near, f32 ndc_far,
-                     f32 left, f32 right, 
-                     f32 bottom, f32 top,
-                     f32 near_clip, f32 far_clip,
-                     b8 flip_z) 
+static inline m44f 
+M44f_Orthographic(f32 NdcLeft, f32 NdcRight,
+                  f32 NdcBottom, f32 NdcTop,
+                  f32 NdcNear, f32 NdcFar,
+                  f32 Left, f32 Right, 
+                  f32 Bottom, f32 Top,
+                  f32 Near, f32 Far,
+                  b8 FlipZ) 
 {
-    MM_M44f ret = {};
-    ret[0][0] = (ndc_right-ndc_left)/(right-left);
-    ret[1][1] = (ndc_top-ndc_bot)/(top-bottom);
-    ret[2][2] = (flip_z ? -1.f : 1.f) * (ndc_far - ndc_near)/(far_clip - near_clip);
-    ret[3][3] = 1.f;
-    ret[0][3] = -(right+left)/(right-left);
-    ret[1][3] = -(top+bottom)/(top-bottom);
-    ret[2][3] = -(far_clip+near_clip)/(far_clip-near_clip);
+    m44f Ret = {};
+    Ret[0][0] = (NdcRight-NdcLeft)/(Right-Left);
+    Ret[1][1] = (NdcTop-NdcBottom)/(Top-Bottom);
+    Ret[2][2] = (FlipZ ? -1.f : 1.f) * (NdcFar-NdcNear)/(Far-Near);
+    Ret[3][3] = 1.f;
+    Ret[0][3] = -(Right+Left)/(Right-Left);
+    Ret[1][3] = -(Top+Bottom)/(Top-Bottom);
+    Ret[2][3] = -(Far+Near)/(Far-Near);
     
-    return ret;
+    return Ret;
 }
 
 
-//~ NOTE(Momo): ray and lines
-struct MM_Line2f {
-    MM_V2f min;
-    MM_V2f max;
+//~ NOTE(Momo): Ray and lines
+struct line2f {
+    v2f Min;
+    v2f Max;
 };
 
 
-struct MM_Ray2f {
-    MM_V2f origin;
-    MM_V2f dir;
+struct ray2f {
+    v2f Origin;
+    v2f Dir;
 };
 
-static inline MM_Line2f
-Line2f_CreateFromV2f(MM_V2f min, MM_V2f max) {
-    MM_Line2f ret = {};
-    ret.min = min;
-    ret.max = max;
+static inline line2f
+Line2f_CreateFromV2f(v2f Min, v2f Max) {
+    line2f Ret = {};
+    Ret.Min = Min;
+    Ret.Max = Max;
     
-    return ret;
+    return Ret;
 }
 
-static inline MM_Line2f
-Line2f_Create(f32 min_x, f32 min_y, f32 max_x, f32 max_y) {
-    MM_V2f min = MM_V2f_Create(min_x, min_y);
-    MM_V2f max = MM_V2f_Create(max_x, max_y);
+static inline line2f
+Line2f_Create(f32 MinX, f32 MinY, f32 MaxX, f32 MaxY) {
+    v2f Min = V2f_Create(MinX, MinY);
+    v2f Max = V2f_Create(MaxX, MaxY);
     
-    return Line2f_CreateFromV2f(min, max);
+    return Line2f_CreateFromV2f(Min, Max);
     
 }
 
-static inline MM_Ray2f
-Ray2f_CreateFromLine2f(MM_Line2f lhs) {
-    MM_Ray2f ret = {};
-    ret.origin = lhs.min;
-    ret.dir = MM_V2f_Sub(lhs.max, lhs.min);
-    return ret;
+static inline ray2f
+Ray2f_CreateFromLine2f(line2f L) {
+    ray2f Ret = {};
+    Ret.Origin = L.Min;
+    Ret.Dir = V2f_Sub(L.Max, L.Min);
+    return Ret;
 }
 
-// TODO: Change this to just return multiple variables
 static inline void 
-Ray2f_IntersectionTime(MM_Ray2f lhs, 
-                       MM_Ray2f rhs, 
-                       f32* out_lhs_time, 
-                       f32* out_rhs_time) {
+Ray2f_IntersectionTime(ray2f Lhs, ray2f Rhs, f32* LhsTimeResult, f32* RhsTimeResult) {
     f32 t1;
     f32 t2;
     
-    MM_V2f p1 = lhs.origin;
-    MM_V2f p2 = rhs.origin;
-    MM_V2f v1 = lhs.dir;
-    MM_V2f v2 = rhs.dir;
+    v2f p1 = Lhs.Origin;
+    v2f p2 = Rhs.Origin;
+    v2f v1 = Lhs.Dir;
+    v2f v2 = Rhs.Dir;
     
     
-    t2 = (v1.x*p2.y - v1.x*p1.y - v1.y*p2.x + v1.y*p1.x)/(v1.y*v2.x - v1.x*v2.y);
-    t1 = (p2.x + t2*v2.x - p1.x)/v1.x;
+    t2 = (v1.X*p2.Y - v1.X*p1.Y - v1.Y*p2.X + v1.Y*p1.X)/(v1.Y*v2.X - v1.X*v2.Y);
+    t1 = (p2.X + t2*v2.X - p1.X)/v1.X;
     
-    *out_lhs_time = t1;
-    *out_rhs_time = t2;
+    *LhsTimeResult = t1;
+    *RhsTimeResult = t2;
 }
 
-static inline MM_V2f
-Ray2f_Point(MM_Ray2f ray, f32 time) {
+static inline v2f
+Ray2f_Point(ray2f Ray, f32 Time) {
     // O + D * T
-    MM_V2f DirTime = MM_V2f_Mul(ray.dir, time);
-    MM_V2f ret = MM_V2f_Add(ray.origin, DirTime);
-    return ret;
+    v2f DirTime = V2f_Mul(Ray.Dir, Time);
+    v2f Ret = V2f_Add(Ray.Origin, DirTime);
+    return Ret;
 }
 
 //~ NOTE(Momo): Quad
 // TODO(Momo): I don't think this belongs here?
-// a bit to 'freeform' to actually use
-struct MM_Quad2f {
-    MM_V2f points[4];
+// A bit to 'freeform' to actually use
+struct quad2f {
+    v2f Points[4];
 };
 
 // TODO(Momo): This definitely doesn't belong here
-static inline MM_Quad2f
-MM_Quad2f_CreateDefaultUV() {
-    MM_Quad2f ret = {};
-    ret.points[0] = MM_V2f_Create(0.f, 1.f);
-    ret.points[1] = MM_V2f_Create(1.f, 1.f);
-    ret.points[2] = MM_V2f_Create(1.f, 0.f);
-    ret.points[3] = MM_V2f_Create(0.f, 0.f);
+static inline quad2f
+Quad2f_CreateDefaultUV() {
+    quad2f Ret = {};
+    Ret.Points[0] = V2f_Create(0.f, 1.f);
+    Ret.Points[1] = V2f_Create(1.f, 1.f);
+    Ret.Points[2] = V2f_Create(1.f, 0.f);
+    Ret.Points[3] = V2f_Create(0.f, 0.f);
     
-    return ret;
+    return Ret;
 }
 
 
-static inline MM_Quad2f
-MM_Aabb2f_ToQuad2f(MM_Aabb2f Aabb) {
-    MM_Quad2f ret = {};
-    ret.points[0] = MM_V2f_Create(Aabb.min.x, Aabb.max.y);
-    ret.points[1] = MM_V2f_Create(Aabb.max.x, Aabb.max.y);
-    ret.points[2] = MM_V2f_Create(Aabb.max.x, Aabb.min.y);
-    ret.points[3] = MM_V2f_Create(Aabb.min.x, Aabb.min.y);
+static inline quad2f
+Aabb2f_To_Quad2f(aabb2f Aabb) {
+    quad2f Ret = {};
+    Ret.Points[0] = V2f_Create(Aabb.Min.X, Aabb.Max.Y);
+    Ret.Points[1] = V2f_Create(Aabb.Max.X, Aabb.Max.Y);
+    Ret.Points[2] = V2f_Create(Aabb.Max.X, Aabb.Min.Y);
+    Ret.Points[3] = V2f_Create(Aabb.Min.X, Aabb.Min.Y);
     
-    return ret;
+    return Ret;
 }
 
 #endif 

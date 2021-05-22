@@ -109,7 +109,7 @@ struct asset_file_image {
     image_id Id;
     
     texture_id TextureId;
-    MM_Aabb2u Aabb;
+    aabb2u Aabb;
     
 };
 
@@ -126,7 +126,7 @@ struct asset_file_font_glyph {
     u32 Codepoint;
     f32 Advance;
     f32 LeftBearing;
-    MM_Aabb2f Box; 
+    aabb2f Box; 
 };
 
 struct asset_file_font_kerning {

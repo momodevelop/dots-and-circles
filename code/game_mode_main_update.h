@@ -22,58 +22,58 @@ UpdatePlayer(game_mode_main* Mode,
 }
 
 static inline void
-UpdateParticlesSub(MM_Queue<particle>* Q, f32 DeltaTime, u32 Begin, u32 End) {
+UpdateParticlesSub(queue<particle>* Q, f32 DeltaTime, u32 Begin, u32 End) {
     for (u32 I = Begin; I <= End; ++I ) {
-        particle* P = MM_Queue_Get(Q, I);
+        particle* P = Q->Data + I;
         P->Timer += DeltaTime;
         
-        MM_V2f Velocity = MM_V2f_Mul(P->Direction, P->Speed * DeltaTime);
+        v2f Velocity = V2f_Mul(P->Direction, P->Speed * DeltaTime);
         
-        P->Position = MM_V2f_Add(P->Position, Velocity);
+        P->Position = V2f_Add(P->Position, Velocity);
     }
 }
 
 static inline void 
 UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
-    MM_Queue<particle>* Q = &Mode->Particles;
-    if (MM_Queue_IsEmpty(Q)) {
+    queue<particle>* Q = &Mode->Particles;
+    if (Queue_IsEmpty(Q)) {
         return;
     }
     // Clean up old particles
-    particle * P = MM_Queue_Next(Q);
+    particle * P = Queue_Next(Q);
     while(P != Null && P->Timer >= Particle_Duration) {
-        MM_Queue_Pop(Q);
-        P = MM_Queue_Next(Q);
+        Queue_Pop(Q);
+        P = Queue_Next(Q);
     }
     
     // Then update the living ones
-    if (Q->begin <= Q->end) {
-        UpdateParticlesSub(Q, DeltaTime, Q->begin, Q->end);
+    if (Q->Begin <= Q->End) {
+        UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->End);
     }
     else {
-        UpdateParticlesSub(Q, DeltaTime, Q->begin, Q->count - 1);
-        UpdateParticlesSub(Q, DeltaTime, 0, Q->end);
+        UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->Count - 1);
+        UpdateParticlesSub(Q, DeltaTime, 0, Q->End);
     }
     
 }
 
 
 static inline void
-UpdateBulletsSub(MM_List<bullet>* L,
+UpdateBulletsSub(list<bullet>* L,
                  f32 DeltaTime) 
 {
-    for(u32 I = 0; I < L->count;) {
-        bullet* B = MM_List_Get(L, I);
+    for(u32 I = 0; I < L->Count;) {
+        bullet* B = List_Get(L, I);
         
         f32 SpeedDt = B->Speed * DeltaTime;
-        MM_V2f Velocity = MM_V2f_Mul(B->Direction, SpeedDt);
-        B->Position = MM_V2f_Add(B->Position, Velocity);
+        v2f Velocity = V2f_Mul(B->Direction, SpeedDt);
+        B->Position = V2f_Add(B->Position, Velocity);
         
-        if (B->Position.x <= -Game_DesignWidth * 0.5f - B->HitCircle.radius || 
-            B->Position.x >= Game_DesignWidth * 0.5f + B->HitCircle.radius ||
-            B->Position.y <= -Game_DesignHeight * 0.5f - B->HitCircle.radius ||
-            B->Position.y >= Game_DesignHeight * 0.5f + B->HitCircle.radius) {
-            MM_List_Slear(L, I);
+        if (B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
+            B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
+            B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
+            B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius) {
+            List_Slear(L, I);
             continue;
         }
         ++I;
@@ -95,7 +95,7 @@ UpdateEnemies(game_mode_main* Mode,
               f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
-    for (u32 I = 0; I < Mode->Enemies.count; ++I) 
+    for (u32 I = 0; I < Mode->Enemies.Count; ++I) 
     {
         enemy* Enemy = Mode->Enemies + I;
         
@@ -123,10 +123,10 @@ UpdateEnemies(game_mode_main* Mode,
                 Assert(false);
             }
             
-            MM_V2f Dir = {};
+            v2f Dir = {};
             switch (Enemy->FiringPatternType) {
                 case EnemyFiringPatternType_Homing: 
-                Dir = MM_V2f_Sub(Player->Position, Enemy->Position);
+                Dir = V2f_Sub(Player->Position, Enemy->Position);
                 break;
                 default:
                 Assert(false);
@@ -139,7 +139,7 @@ UpdateEnemies(game_mode_main* Mode,
         Enemy->LifeTimer += DeltaTime;
         if (Enemy->LifeTimer > Enemy->LifeDuration) {
             // Quick removal
-            MM_List_Slear(&Mode->Enemies, I);
+            List_Slear(&Mode->Enemies, I);
             continue;
         }
         ++Enemy;
@@ -150,21 +150,21 @@ UpdateEnemies(game_mode_main* Mode,
 static inline void
 UpdateCollisionSub(game_mode_main* Mode,
                    player* Player,
-                   MM_List<bullet>* Bullets,
+                   list<bullet>* Bullets,
                    assets* Assets,
                    f32 DeltaTime) 
 {
-    MM_Circle2f PlayerCircle = Player->HitCircle;
-    MM_V2f PlayerVel = MM_V2f_Sub(Player->Position, Player->PrevPosition);
-    PlayerCircle.origin = MM_V2f_Add(PlayerCircle.origin, Player->Position);
+    circle2f PlayerCircle = Player->HitCircle;
+    v2f PlayerVel = V2f_Sub(Player->Position, Player->PrevPosition);
+    PlayerCircle.Origin = V2f_Add(PlayerCircle.Origin, Player->Position);
     
     // Player vs every bullet
-    for (u32 I = 0; I < Bullets->count;) 
+    for (u32 I = 0; I < Bullets->Count;) 
     {
-        bullet* B = MM_List_Get(Bullets, I);
-        MM_Circle2f BCircle = B->HitCircle;
-        MM_V2f BVel = MM_V2f_Mul(B->Direction, B->Speed * DeltaTime);
-        BCircle.origin = MM_V2f_Add(BCircle.origin, B->Position);
+        bullet* B = List_Get(Bullets, I);
+        circle2f BCircle = B->HitCircle;
+        v2f BVel = V2f_Mul(B->Direction, B->Speed * DeltaTime);
+        BCircle.Origin = V2f_Add(BCircle.Origin, B->Position);
         
         if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
                                           PlayerVel,
@@ -179,7 +179,7 @@ UpdateCollisionSub(game_mode_main* Mode,
                                                      {});
 #endif
                 
-                MM_List_Slear(Bullets, I);
+                List_Slear(Bullets, I);
                 continue;
             }
         }
@@ -230,10 +230,10 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->SpawnTimer += DeltaTime;
                 Pattern->Timer += DeltaTime;
                 if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
-                    MM_V2f Pos = 
-                        MM_V2f_Create(MM_Rng_Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
-                                   MM_Rng_Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
-                    auto MoodType = (enemy_mood_pattern_type)MM_Rng_Choice(&Mode->Rng, MoodType_Count);
+                    v2f Pos = 
+                        V2f_Create(Rng_Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
+                                   Rng_Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
+                    auto MoodType = (enemy_mood_pattern_type)Rng_Choice(&Mode->Rng, MoodType_Count);
                     
                     SpawnEnemy(Mode, 
                                Assets,
@@ -265,7 +265,7 @@ static inline void
 UpdateInput(game_mode_main* Mode,
             platform_input* Input)
 {
-    MM_V2f Direction = {};
+    v2f Direction = {};
     player* Player = &Mode->Player; 
     
     Player->PrevPosition = Player->Position;

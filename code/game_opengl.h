@@ -314,11 +314,11 @@ struct opengl {
     // 'game texture handler' <-> 'opengl texture handler'  
     // Index 0 will always be an invalid 'dummy texture
     // Index 1 will always be a blank texture for items with no texture (but has colors)
-    MM_List<GLuint> Textures;
+    list<GLuint> Textures;
     
-    MM_V2u WindowDimensions;
-    MM_V2u DesignDimensions;
-    MM_Aabb2u RenderRegion;
+    v2u WindowDimensions;
+    v2u DesignDimensions;
+    aabb2u RenderRegion;
 };
 
 static inline void 
@@ -334,16 +334,16 @@ Opengl_AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
 static inline void 
 Opengl_AlignViewport(opengl* Opengl) 
 {
-    MM_Aabb2u Region = Renderer_CalcRenderRegion(Opengl->WindowDimensions.W, 
-                                                 Opengl->WindowDimensions.H, 
-                                                 Opengl->DesignDimensions.W, 
-                                                 Opengl->DesignDimensions.H);
+    aabb2u Region = Renderer_CalcRenderRegion(Opengl->WindowDimensions.W, 
+                                              Opengl->WindowDimensions.H, 
+                                              Opengl->DesignDimensions.W, 
+                                              Opengl->DesignDimensions.H);
     
     u32 x, y, w, h;
-    x = Region.min.x;
-    y = Region.min.y;
-    w = MM_Aabb2u_Width(Region);
-    h = MM_Aabb2u_Height(Region);
+    x = Region.Min.X;
+    y = Region.Min.Y;
+    w = Aabb2u_Width(Region);
+    h = Aabb2u_Height(Region);
     
     Opengl->glViewport(x, y, w, h);
     Opengl->glScissor(x, y, w, h);
@@ -389,7 +389,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
-        MM_List_Push(&Opengl->Textures, DummyTexture);
+        List_Push(&Opengl->Textures, DummyTexture);
     }
     
     // NOTE(Momo): Blank texture setup
@@ -403,7 +403,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     1, 1, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     &Pixel);
-        MM_List_Push(&Opengl->Textures, BlankTexture);
+        List_Push(&Opengl->Textures, BlankTexture);
     }
     
     
@@ -412,9 +412,9 @@ Opengl_AddPredefTextures(opengl* Opengl) {
 static inline b32
 Opengl_Init(opengl* Opengl,
             MM_Arena* Arena,
-            MM_V2u WindowDimensions) 
+            v2u WindowDimensions) 
 {
-    MM_List_InitFromArena(&Opengl->Textures, Arena, Opengl_Max_Textures);
+    List_InitFromArena(&Opengl->Textures, Arena, Opengl_Max_Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     
@@ -440,17 +440,17 @@ Opengl_Init(opengl* Opengl,
                                  0);
     
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Texture], 
-                                 sizeof(MM_V2f) * 4 * Opengl_Max_Entities, 
+                                 sizeof(v2f) * 4 * Opengl_Max_Entities, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
     
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Colors], 
-                                 sizeof(MM_V4f) * Opengl_Max_Entities, 
+                                 sizeof(v4f) * Opengl_Max_Entities, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
     
     Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Transform], 
-                                 sizeof(MM_M44f) * Opengl_Max_Entities, 
+                                 sizeof(m44f) * Opengl_Max_Entities, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
     
@@ -473,13 +473,13 @@ Opengl_Init(opengl* Opengl,
                                       OpenglVaoBind_Colors, 
                                       Opengl->Buffers[OpenglVbo_Colors],  
                                       0, 
-                                      sizeof(MM_V4f));
+                                      sizeof(v4f));
     
     Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
                                       OpenglVaoBind_Transform, 
                                       Opengl->Buffers[OpenglVbo_Transform], 
                                       0, 
-                                      sizeof(MM_M44f));
+                                      sizeof(m44f));
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
@@ -514,7 +514,7 @@ Opengl_Init(opengl* Opengl,
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
-                                      sizeof(MM_V2f) * 0);
+                                      sizeof(v2f) * 0);
     
     Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture2); 
     Opengl->glVertexArrayAttribFormat(Opengl->Model, 
@@ -522,7 +522,7 @@ Opengl_Init(opengl* Opengl,
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
-                                      sizeof(MM_V2f) * 1);
+                                      sizeof(v2f) * 1);
     
     Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture3); 
     Opengl->glVertexArrayAttribFormat(Opengl->Model, 
@@ -530,7 +530,7 @@ Opengl_Init(opengl* Opengl,
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
-                                      sizeof(MM_V2f) * 2);
+                                      sizeof(v2f) * 2);
     
     Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture4); 
     Opengl->glVertexArrayAttribFormat(Opengl->Model, 
@@ -538,7 +538,7 @@ Opengl_Init(opengl* Opengl,
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
-                                      sizeof(MM_V2f) * 3);
+                                      sizeof(v2f) * 3);
     
     Opengl->glVertexArrayAttribBinding(Opengl->Model, 
                                        OpenglAtb_Texture1, 
@@ -683,7 +683,7 @@ Opengl_AddTexture(opengl* Opengl,
 {
     renderer_texture_handle Ret = {};
     
-    u32 RemainingTextures = MM_List_Remaining(&Opengl->Textures);
+    u32 RemainingTextures = List_Remaining(&Opengl->Textures);
     if (RemainingTextures == 0) {
         Ret.Success = False;
         Ret.Id = 0;
@@ -713,17 +713,17 @@ Opengl_AddTexture(opengl* Opengl,
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
     
-    Ret.Id = Opengl->Textures.count;
+    Ret.Id = Opengl->Textures.Count;
     Ret.Success = True;
-    MM_List_Push(&Opengl->Textures, Entry);
+    List_Push(&Opengl->Textures, Entry);
     return Ret;
 }
 
 static inline void
 Opengl_ClearTextures(opengl* Opengl) {
-    Opengl->glDeleteTextures(Opengl->Textures.count, 
-                             Opengl->Textures.data);
-    MM_List_Clear(&Opengl->Textures);
+    Opengl->glDeleteTextures(Opengl->Textures.Count, 
+                             Opengl->Textures.Data);
+    List_Clear(&Opengl->Textures);
     Opengl_AddPredefTextures(Opengl);
 }
 
@@ -762,7 +762,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 LastDrawnInstanceIndex += InstancesToDrawCount;
                 InstancesToDrawCount = 0;
                 
-                auto Result = MM_M44f_Transpose(Data->Basis);
+                auto Result = M44f_Transpose(Data->Basis);
                 GLint uProjectionLoc = Opengl->glGetUniformLocation(Opengl->Shader,
                                                                     "uProjection");
                 
@@ -801,20 +801,20 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Colors], 
-                                             CurrentInstanceIndex * sizeof(MM_V4f),
-                                             sizeof(MM_V4f), 
+                                             CurrentInstanceIndex * sizeof(v4f),
+                                             sizeof(v4f), 
                                              &Data->Colors);
                 
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Texture],
-                                             CurrentInstanceIndex * sizeof(MM_Quad2f),
+                                             CurrentInstanceIndex * sizeof(quad2f),
                                              sizeof(QuadUV),
                                              &QuadUV);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                MM_M44f Transform = MM_M44f_Transpose(Data->Transform);
+                m44f Transform = M44f_Transpose(Data->Transform);
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
-                                             CurrentInstanceIndex* sizeof(MM_M44f), 
-                                             sizeof(MM_M44f), 
+                                             CurrentInstanceIndex* sizeof(m44f), 
+                                             sizeof(m44f), 
                                              &Transform);
                 
                 // NOTE(Momo): Update Bookkeeping
@@ -841,20 +841,20 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
                 
                 // NOTE(Momo): Update the current instance values
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Colors], 
-                                             CurrentInstanceIndex * sizeof(MM_V4f),
-                                             sizeof(MM_V4f), 
+                                             CurrentInstanceIndex * sizeof(v4f),
+                                             sizeof(v4f), 
                                              &Data->Colors);
                 
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Texture],
-                                             CurrentInstanceIndex * sizeof(MM_Quad2f),
-                                             sizeof(MM_Quad2f),
+                                             CurrentInstanceIndex * sizeof(quad2f),
+                                             sizeof(quad2f),
                                              &Data->TextureCoords);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                MM_M44f Transform = MM_M44f_Transpose(Data->Transform);
+                m44f Transform = M44f_Transpose(Data->Transform);
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
-                                             CurrentInstanceIndex* sizeof(MM_M44f), 
-                                             sizeof(MM_M44f), 
+                                             CurrentInstanceIndex* sizeof(m44f), 
+                                             sizeof(m44f), 
                                              &Transform);
                 
                 // NOTE(Momo): Update Bookkeeping

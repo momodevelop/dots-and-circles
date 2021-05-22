@@ -4,278 +4,294 @@
 #define MM_ARRAY_H
 
 //~ NOTE(Momo): array
-template<typename T>
-struct MM_Array {
-    T* data;
-    u32 count;
+template<typename type>
+struct array {
+    type* Data;
+    u32 Count;
     
-    auto& operator[](u32 index) {
-        Assert(index < count); 
-        return data[index];
+    auto& operator[](u32 Index) {
+        Assert(Index < Count); 
+        return Data[Index];
     }
 };
 
-template<typename T>
-static inline b8
-MM_Array_InitFromArena(MM_Array<T>* a, MM_Arena* arena, u32 count) {
-    T* buffer = MM_Arena_PushArray(T, arena, count);
-    if (!buffer) {
-        return false;
+template<typename type>
+static inline b32
+Array_InitFromArena(array<type>* L, MM_Arena* Arena, u32 Count) {
+    type* Buffer = MM_Arena_PushArray(type, Arena, Count);
+    if (!Buffer) {
+        return False;
     }
-    a->data = buffer;
-    a->count = count;
-    return true;
+    L->Data = Buffer;
+    L->Count = Count;
+    return True;
 }
 
-template<typename T>
-static inline T*
-MM_Array_Get(MM_Array<T>* a, u32 index) {
-    if(index < a->count) {
-        return a->data + index;
+template<typename type>
+static inline type*
+Array_Get(array<type>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
     }
     else {
-        return nullptr;
+        return Null;
     }
 }
 
-template<typename T>
-static inline T* 
-operator+(MM_Array<T> a, u32 index) {
-    return MM_Array_Get(&a, index);
+template<typename type>
+static inline type* 
+operator+(array<type> L, u32 Index) {
+    return Array_Get(&L, Index);
 }
 
-//~ NOTE(Momo): MM_List
-template<typename T>
-struct MM_List {
-    T* data;
-    u32 count;
-    u32 cap;
+//~ NOTE(Momo): list
+template<typename type>
+struct list {
+    type* Data;
+    u32 Count;
+    u32 Cap;
     
-    auto& operator[](u32 index) {
-        Assert(index < count); 
-        return data[index];
+    auto& operator[](u32 Index) {
+        Assert(Index < Count); 
+        return Data[Index];
     }
 };
 
-template<typename T>
-static inline b8
-MM_List_InitFromArena(MM_List<T>* l, MM_Arena* arena, u32 cap) {
-    T* buffer = MM_Arena_PushArray(T, arena, cap);
-    if (!buffer) {
-        return false;
+struct list_iterator {
+    u32 Index;
+};
+
+
+template<typename type>
+static inline void
+List_Init(list<type>* L, type* Data, u32 Cap) {
+    L->Data = Data;
+    L->Cap = Cap;
+    L->Count = 0;
+}
+
+template<typename type>
+static inline b32
+List_InitFromArena(list<type>* L, MM_Arena* Arena, u32 Cap) {
+    type* Buffer = MM_Arena_PushArray(type, Arena, Cap);
+    if (!Buffer) {
+        return False;
     }
-    l->data = buffer;
-    l->cap = cap;
-    l->count = 0;
-    return true;
+    L->Data = Buffer;
+    L->Cap = Cap;
+    L->Count = 0;
+    return True;
 }
 
 
 
-template<typename T>
+template<typename type>
 static inline void 
-MM_List_Clear(MM_List<T>* l) {
-    l->count = 0;
+List_Clear(list<type>* L) {
+    L->Count = 0;
 }
 
 // NOTE(Momo): Push, but does not override whatever's in
 // the container because user might have already initialized
 // something important before that remained inside
-template<typename T>
-static inline T*
-MM_List_Push(MM_List<T>* l, T init_item = {}) {
-    if(l->count < l->cap) {
-        T* ret = l->data + l->count++;
-        (*ret) = init_item;
-        return ret;
+template<typename type>
+static inline type*
+List_Push(list<type>* L, type InitItem = {}) {
+    if(L->Count < L->Cap) {
+        type* Ret = L->Data + L->Count++;
+        // ZII: Zero is initialization
+        (*Ret) = InitItem;
+        return Ret;
     }
-    return nullptr;
+    return Null;
 }
 
 // NOTE(Momo): "Swap last element and remove"
-template<typename T>
-static inline b8
-MM_List_Slear(MM_List<T>* l, u32 index) {
-    if (index < l->count) {
-        l->data[index] = l->data[l->count-1];
-        --l->count;
-        return true;
+template<typename type>
+static inline b32
+List_Slear(list<type>* L, u32 Index) {
+    if (Index < L->Count) {
+        L->Data[Index] = L->Data[L->Count-1];
+        --L->Count;
+        return True;
     }
     else {
-        return false;
+        return False;
     }
 }
 
-template<typename T>
-static inline b8
-MM_List_Pop(MM_List<T>* l) {
-    if (l->count != 0) {
-        --l->count;
-        return true;
+template<typename type>
+static inline b32
+List_Pop(list<type>* L) {
+    if (L->Count != 0) {
+        --L->Count;
+        return True;
     }
-    return false;
+    return False;
 }
 
-template<typename T>
-static inline T*
-MM_List_Last(MM_List<T>* l) {
-    if (l->count == 0){
+template<typename type>
+static inline type*
+List_Last(list<type>* L) {
+    if (L->Count == 0){
         return Null;
     }
     else {
-        return MM_List_Get(l, l->count - 1);
+        return List_Get(L, L->Count - 1);
     }
     
 }
 
-template<typename T>
+template<typename type>
 static inline u32
-MM_List_Remaining(MM_List<T>* l) {
-    return l->cap - l->count;
+List_Remaining(list<type>* L) {
+    return L->Cap - L->Count;
 }
 
-template<typename T>
-static inline T*
-MM_List_Get(MM_List<T>* l, u32 index) {
-    if(index < l->count) {
-        return l->data + index;
+template<typename type>
+static inline type*
+List_Get(list<type>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
     }
     else {
-        return nullptr;
+        return Null;
     }
 }
 
-template<typename T>
-static inline T* 
-operator+(MM_List<T> l, u32 index) {
-    return MM_List_Get(&l, index);
+template<typename type>
+static inline type* 
+operator+(list<type> L, u32 Index) {
+    return List_Get(&L, Index);
 }
 
 //~ NOTE(Momo): Queue
-template<typename T>
-struct MM_Queue {
-    T* data;
-    u32 count;
-    u32 begin;
-    u32 end;
+
+template<typename type>
+struct queue {
+    type* Data;
+    u32 Count;
+    u32 Begin;
+    u32 End;
 };
 
-template<typename T>
-static inline b8
-MM_Queue_Init(MM_Queue<T>* q, T* buffer, u32 buffer_count) {
-    if (!buffer || buffer_count < 0) {
-        return false;
-    }
-    q->begin = q->end = buffer_count;
-    q->count = buffer_count;
-    q->data = buffer;
+struct queue_iterator {
+    u32 Index;
+};
+
+template<typename type>
+static inline void
+Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
+    Q->Begin = Q->End = BufferCount;
+    Q->Count = BufferCount;
+    Q->Data = Buffer;
     
-    return true;
 }
 
-template<typename T>
-static inline b8
-MM_Queue_InitFromArena(MM_Queue<T>* q, MM_Arena* arena, u32 count) {
-    T* buffer = MM_Arena_PushArray(T, arena, count);
-    if (!buffer) {
-        return false;
+template<typename type>
+static inline b32
+Queue_InitFromArena(queue<type>* Q, MM_Arena* Arena, u32 Count) {
+    type* Buffer = MM_Arena_PushArray(type, Arena, Count);
+    if (!Buffer) {
+        return False;
     }
-    q->begin = q->end = count;
-    q->count = count;
+    Q->Begin = Q->End = Count;
+    Q->Count = Count;
     
-    return true;
+    return True;
 }
 
-template<typename T>
-static inline b8 
-MM_Queue_IsEmpty(MM_Queue<T>* q) {
-    return q->begin == q->count || 
-        q->end == q->count;
+template<typename type>
+static inline b32 
+Queue_IsEmpty(queue<type>* Q) {
+    return Q->Begin == Q->Count || 
+        Q->End == Q->Count;
 }
 
-template<typename T>
-static inline b8
-MM_Queue_IsFull(MM_Queue<T>* q) {
-    b8 normal_case = (q->begin == 0 && q->end == q->count-1);
-    b8 backward_case = q->end == (q->begin-1);
+template<typename type>
+static inline b32
+Queue_IsFull(queue<type>* Q) {
+    b32 NormalCase = (Q->Begin == 0 && Q->End == Q->Count-1);
+    b32 BackwardCase = Q->End == (Q->Begin-1);
     
-    return !MM_Queue_IsEmpty(q) && (normal_case || backward_case);
+    return !Queue_IsEmpty(Q) && (NormalCase || BackwardCase);
 }
 
-template<typename T>
-static inline T* 
-MM_Queue_Push(MM_Queue<T>* q, T init_item = {}) {
-    if (MM_Queue_IsFull(q)) {
-        return nullptr;
+template<typename type>
+static inline type* 
+Queue_Push(queue<type>* Q, type InitItem = {}) {
+    if (Queue_IsFull(Q)) {
+        return Null;
     }
-    else if (MM_Queue_IsEmpty(q)) {
-        q->begin = q->end = 0;
+    else if (Queue_IsEmpty(Q)) {
+        Q->Begin = Q->End = 0;
     }
-    else if (q->end == q->count - 1) {
-        // end is already at the back of the array
-        q->end = 0;
+    else if (Q->End == Q->Count - 1) {
+        // End is already at the back of the array
+        Q->End = 0;
     }
     else {
-        // Normal case: just advance end
-        ++q->end;
+        // Normal case: just advance End
+        ++Q->End;
     }
-    return q->data + q->end;
+    return Q->Data + Q->End;
 }
 
-template<typename T>
-static inline T*
-MM_Queue_Next(MM_Queue<T>* q) {
-    if (MM_Queue_IsEmpty(q)) {
-        return nullptr;
+template<typename type>
+static inline type*
+Queue_Next(queue<type>* Q) {
+    if (Queue_IsEmpty(Q)) {
+        return Null;
     }
-    return q->data + q->begin;
+    return Q->Data + Q->Begin;
 }
 
-template<typename T>
-static inline b8
-MM_Queue_Pop(MM_Queue<T>* q) {
-    if (MM_Queue_IsEmpty(q)) {
-        return false;
+template<typename type>
+static inline b32
+Queue_Pop(queue<type>* Q) {
+    if (Queue_IsEmpty(Q)) {
+        return False;
     }
-    if (q->begin == q->end) {
+    if (Q->Begin == Q->End) {
         // One item case
-        q->begin = q->end = q->count;
+        Q->Begin = Q->End = Q->Count;
     }
-    else if (q->begin == q->count - 1) {
-        // begin is at the end of the array,
+    else if (Q->Begin == Q->Count - 1) {
+        // Begin is at the end of the array,
         // so we reset to the front of the array
-        q->begin = 0;
+        Q->Begin = 0;
     }
     else {
-        // Normal case: just advance begin
-        ++q->begin;
+        // Normal case: just advance Begin
+        ++Q->Begin;
     }
     
-    return true;
+    return True;
 }
 
-// NOTE(Momo): Not part of standard 'queue' API, but in case you want to get
+// NOTE(Momo): Not part of standard 'Queue' API, but in case you want to get
 // someone from the queue
-template<typename T>
-static inline T*
-MM_Queue_Get(MM_Queue<T>* q, u32 index) {
-    if (MM_Queue_IsEmpty(q)) {
-        return nullptr;
+
+template<typename type>
+static inline type*
+Queue_Get(queue<type>* Q, u32 Index) {
+    if (Queue_IsEmpty(Q)) {
+        return Null;
     }
-    if (q->begin <= q->end) {
-        if (index < q->begin || index > q->end) {
-            return nullptr;
+    if (Q->Begin <= Q->End) {
+        if (Index < Q->Begin || Index > Q->End) {
+            return Null;
         }
         else {
-            return q->data + index;
+            return Q->Data + Index;
         }
     }
     else {
-        if (index <= q->end || (index >= q->begin && index < q->count)) {
-            return q->data + index;
+        if (Index <= Q->End || (Index >= Q->Begin && Index < Q->Count)) {
+            return Q->Data + Index;
         }
         else {
-            return nullptr;
+            return Null;
         }
     }
 }

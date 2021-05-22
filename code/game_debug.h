@@ -60,8 +60,8 @@ Debug_Render(debug_state* State,
         Defer{ MM_Arena_Revert(&Scratch); };
         
         u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
-        MM_U8Str_PushCStr(&Buffer, State->Variables[I].Name);
-        MM_U8Str_PushCStr(&Buffer, U8CStr_FromSiStr(": "));
+        U8Str_PushCStr(&Buffer, State->Variables[I].Name);
+        U8Str_PushCStr(&Buffer, U8CStr_FromSiStr(": "));
         
         Assert(State->Variables[I].Data);
         switch(State->Variables[I].Type) {
@@ -74,7 +74,7 @@ Debug_Render(debug_state* State,
                 Assert(false); 
             } break;
             case DebugVariableType_U32: {
-                MM_U8Str_PushU32(&Buffer, *State->Variables[I].U32);
+                U8Str_PushU32(&Buffer, *State->Variables[I].U32);
             } break;
             default: {
                 // Unsupported type
@@ -85,11 +85,11 @@ Debug_Render(debug_state* State,
         DrawText(RenderCommands, 
                  Assets, 
                  Font_Default, 
-                 MM_V3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
+                 v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
                  Buffer.Str,
                  32.f, 
                  Color_White);
-        MM_U8Str_Clear(&Buffer);
+        U8Str_Clear(&Buffer);
     }
 }
 
