@@ -22,7 +22,7 @@
 
 #define Tba_GenerateTestPng 1
 #define Tba_MemorySize Megabytes(8)
-#define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.used)
+#define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.Used)
 
 
 int main() {
@@ -35,8 +35,7 @@ int main() {
     }
     Defer { free(Memory); };
     
-    MM_Arena Arena = {};
-    MM_Arena_Init(&Arena, Memory, Tba_MemorySize);
+    MM_Arena Arena = Arena_Create(Memory, Tba_MemorySize);
     
     //~ NOTE(Momo): Load font
     
