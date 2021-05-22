@@ -63,7 +63,7 @@ UpdateBulletsSub(list<bullet>* L,
                  f32 DeltaTime) 
 {
     for(u32 I = 0; I < L->Count;) {
-        bullet* B = List_Get(L, I);
+        bullet* B = Array_Get(L, I);
         
         f32 SpeedDt = B->Speed * DeltaTime;
         v2f Velocity = V2f_Mul(B->Direction, SpeedDt);
@@ -161,7 +161,7 @@ UpdateCollisionSub(game_mode_main* Mode,
     // Player vs every bullet
     for (u32 I = 0; I < Bullets->Count;) 
     {
-        bullet* B = List_Get(Bullets, I);
+        bullet* B = Array_Get(Bullets, I);
         circle2f BCircle = B->HitCircle;
         v2f BVel = V2f_Mul(B->Direction, B->Speed * DeltaTime);
         BCircle.Origin = V2f_Add(BCircle.Origin, B->Position);
