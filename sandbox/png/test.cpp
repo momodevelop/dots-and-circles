@@ -21,7 +21,7 @@ ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     s32 Filesize = ftell(File);
     fseek(File, 0, SEEK_SET);
     
-    void* FileMemory = MM_Arena_PushBlock(Arena, Filesize);
+    void* FileMemory = Arena_PushBlock(Arena, Filesize);
     fread(FileMemory, 1, Filesize, File); 
     
     Result->Memory = FileMemory;

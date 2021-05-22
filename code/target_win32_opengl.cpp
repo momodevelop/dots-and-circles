@@ -725,7 +725,7 @@ Win32InitOpengl(win32_state* State,
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
-    opengl* Opengl = MM_Arena_PushStruct(opengl, &State->Arena);
+    opengl* Opengl = Arena_PushStruct(opengl, &State->Arena);
     
     if (!Opengl) {
         Win32Log("[Win32::Opengl] Failed to allocate opengl\n"); 

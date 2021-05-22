@@ -180,7 +180,7 @@ Assets_ReadBlock(platform_file_handle* File,
                  u32 BlockSize,
                  u8 BlockAlignment)
 {
-    void* Ret = MM_Arena_PushBlock(Arena, BlockSize, BlockAlignment);
+    void* Ret = Arena_PushBlock(Arena, BlockSize, BlockAlignment);
     if(!Ret) {
         return Null; 
     }
@@ -206,22 +206,22 @@ Assets_Init(assets* Assets,
     Platform->ClearTexturesFp();
     
     Assets->TextureCount = Texture_Count;
-    Assets->Textures = MM_Arena_PushArray(texture, Arena, Texture_Count);
+    Assets->Textures = Arena_PushArray(texture, Arena, Texture_Count);
     
     Assets->ImageCount = Image_Count;
-    Assets->Images = MM_Arena_PushArray(image, Arena, Image_Count);
+    Assets->Images = Arena_PushArray(image, Arena, Image_Count);
     
     Assets->FontCount = Font_Count;
-    Assets->Fonts = MM_Arena_PushArray(font, Arena, Font_Count);
+    Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
     
     Assets->AnimeCount = Anime_Count;
-    Assets->Animes = MM_Arena_PushArray(anime, Arena, Anime_Count);
+    Assets->Animes = Arena_PushArray(anime, Arena, Anime_Count);
     
     Assets->MsgCount = Msg_Count;
-    Assets->Msgs = MM_Arena_PushArray(msg, Arena, Msg_Count);
+    Assets->Msgs = Arena_PushArray(msg, Arena, Msg_Count);
     
     Assets->SoundCount = Sound_Count;
-    Assets->Sounds = MM_Arena_PushArray(sound, Arena, Sound_Count);
+    Assets->Sounds = Arena_PushArray(sound, Arena, Sound_Count);
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     if (AssetFile.Error) {
@@ -235,8 +235,8 @@ Assets_Init(assets* Assets,
     
     // Check file signaure
     {        
-        arena_mark Scratch = MM_Arena_Mark(Arena);
-        Defer{ MM_Arena_Revert(&Scratch); };
+        arena_mark Scratch = Arena_Mark(Arena);
+        Defer{ Arena_Revert(&Scratch); };
         
         u8_cstr Signature = {};
         U8CStr_InitFromSiStr(&Signature, Game_AssetFileSignature);
@@ -277,8 +277,8 @@ Assets_Init(assets* Assets,
         // NOTE(Momo): Read header
         asset_file_entry FileEntry = {};
         {
-            arena_mark Scratch = MM_Arena_Mark(Arena);
-            Defer{ MM_Arena_Revert(&Scratch); };
+            arena_mark Scratch = Arena_Mark(Arena);
+            Defer{ Arena_Revert(&Scratch); };
             
             auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
                                                    &AssetFile,
@@ -294,8 +294,8 @@ Assets_Init(assets* Assets,
         
         switch(FileEntry.Type) {
             case AssetType_Texture: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
-                Defer{ MM_Arena_Revert(&Scratch); };
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
                 
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile, 
@@ -333,8 +333,8 @@ Assets_Init(assets* Assets,
                 }
             } break;
             case AssetType_Image: { 
-                arena_mark Scratch = MM_Arena_Mark(Arena);
-                Defer{ MM_Arena_Revert(&Scratch); };
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
                 
                 auto* FileImage = 
                     Assets_ReadStruct(asset_file_image,
@@ -353,8 +353,8 @@ Assets_Init(assets* Assets,
                 Image->TextureId = FileImage->TextureId;
             } break;
             case AssetType_Font: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
-                Defer{ MM_Arena_Revert(&Scratch); };
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
                 
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
@@ -373,8 +373,8 @@ Assets_Init(assets* Assets,
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
-                Defer{ MM_Arena_Revert(&Scratch); };
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
                 
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
@@ -397,8 +397,8 @@ Assets_Init(assets* Assets,
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
-                Defer{ MM_Arena_Revert(&Scratch); };
+                arena_mark Scratch = Arena_Mark(Arena);
+                Defer{ Arena_Revert(&Scratch); };
                 
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
@@ -418,7 +418,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Sound: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = Arena_Mark(Arena);
                 
                 auto* File = Assets_ReadStruct(asset_file_sound,
                                                &AssetFile,
@@ -428,7 +428,7 @@ Assets_Init(assets* Assets,
                 
                 if (File == Null) { 
                     Platform->LogFp("[Assets] Error getitng sound\n"); 
-                    MM_Arena_Revert(&Scratch); 
+                    Arena_Revert(&Scratch); 
                     return False; 
                 }
                 
@@ -437,7 +437,7 @@ Assets_Init(assets* Assets,
                 
                 // NOTE(Momo): we have to revert here so that our arena's 
                 // memory does not screw up. A bit janky but hey.
-                MM_Arena_Revert(&Scratch); 
+                Arena_Revert(&Scratch); 
                 
                 Sound->Data = (s16*)
                     Assets_ReadBlock(&AssetFile,
@@ -449,7 +449,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Message: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = Arena_Mark(Arena);
                 
                 auto* File = Assets_ReadStruct(asset_file_msg,
                                                &AssetFile,
@@ -458,7 +458,7 @@ Assets_Init(assets* Assets,
                                                &CurFileOffset);
                 if (File == Null) { 
                     Platform->LogFp("[Assets] Msg is null"); 
-                    MM_Arena_Revert(&Scratch); 
+                    Arena_Revert(&Scratch); 
                     return False; 
                 }
                 
@@ -469,7 +469,7 @@ Assets_Init(assets* Assets,
                 
                 // NOTE(Momo): we have to revert here so that our arena's 
                 // memory does not screw up. A bit janky but hey.
-                MM_Arena_Revert(&Scratch); 
+                Arena_Revert(&Scratch); 
                 
                 Msg->Data = (u8*)
                     Assets_ReadBlock(&AssetFile,
@@ -483,7 +483,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Anime: {
-                arena_mark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = Arena_Mark(Arena);
                 
                 auto* File = Assets_ReadStruct(asset_file_anime,
                                                &AssetFile,
@@ -493,7 +493,7 @@ Assets_Init(assets* Assets,
                 
                 if (File == Null) { 
                     Platform->LogFp("[Assets] Anime is null"); 
-                    MM_Arena_Revert(&Scratch); 
+                    Arena_Revert(&Scratch); 
                     return False; 
                 }
                 
@@ -502,7 +502,7 @@ Assets_Init(assets* Assets,
                 
                 // NOTE(Momo): we have to revert here so that our arena's 
                 // memory does not screw up. A bit janky but hey.
-                MM_Arena_Revert(&Scratch); 
+                Arena_Revert(&Scratch); 
                 
                 Anime->Frames = (image_id*)
                     Assets_ReadBlock(&AssetFile,

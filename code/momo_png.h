@@ -146,10 +146,10 @@ Png_Huffman(arena* Arena,
     png_huffman Ret = {};
     
     Ret.CodeSymTableSize = CodeSymTableCap;
-    Ret.CodeSymTable = MM_Arena_PushArray(u16, Arena, CodeSymTableCap);
+    Ret.CodeSymTable = Arena_PushArray(u16, Arena, CodeSymTableCap);
     
     Ret.LenCountTableSize = LenCountTableCap;
-    Ret.LenCountTable = MM_Arena_PushArray(u16, Arena, LenCountTableCap);
+    Ret.LenCountTable = Arena_PushArray(u16, Arena, LenCountTableCap);
     
     // 1. Count the number of codes for each code length
     for (u32 Sym = 0; Sym < SymLenTableSize; ++Sym) 
@@ -202,8 +202,8 @@ Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena)
     
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        arena_mark Scratch = MM_Arena_Mark(Arena);
-        Defer { MM_Arena_Revert(&Scratch); };
+        arena_mark Scratch = Arena_Mark(Arena);
+        Defer { Arena_Revert(&Scratch); };
         
         BFINAL = (u8)Bitstream_ConsumeBits(SrcStream, 1);
         u16 BTYPE = (u8)Bitstream_ConsumeBits(SrcStream, 2);
@@ -386,7 +386,7 @@ Png_Parse(png_image* Png,
     
     // NOTE(Momo): For reserving memory for unfiltered data that is generated 
     // as we decode the file
-    arena_mark ActualImageStreamMark = MM_Arena_Mark(Arena);
+    arena_mark ActualImageStreamMark = Arena_Mark(Arena);
     stream ActualImageStream = {};
     Stream_CreateFromArena(&ActualImageStream, Arena, ImageSize);
     
@@ -417,14 +417,14 @@ Png_Parse(png_image* Png,
                 
                 // NOTE(Momo): Allow space for unfiltered image
                 u32 UnfilteredImageSize = IHDR->Width * (ImageChannels + 1);
-                arena_mark UnfilteredImageStreamMark = MM_Arena_Mark(Arena);
+                arena_mark UnfilteredImageStreamMark = Arena_Mark(Arena);
                 
                 stream UnfilteredImageStream = {};
                 Stream_CreateFromArena(&UnfilteredImageStream, Arena, UnfilteredImageSize);
                 
                 png_error DeflateError = Png_Deflate(&IDATStream, &UnfilteredImageStream, Arena);
                 if (DeflateError != PngError_None) {
-                    MM_Arena_Revert(&ActualImageStreamMark);
+                    Arena_Revert(&ActualImageStreamMark);
                     return DeflateError;
                 }
                 
@@ -435,7 +435,7 @@ Png_Parse(png_image* Png,
                 while(!Stream_IsEos(&UnfilteredImageStream)) {
                     u8* FilterType = Stream_Consume<u8>(&UnfilteredImageStream);
                     if (FilterType == Null) {
-                        MM_Arena_Revert(&ActualImageStreamMark);
+                        Arena_Revert(&ActualImageStreamMark);
                         return PngError_CannotReadFilterType;
                     }
                     Png_Log("%02X: ", (u32)(*FilterType));
@@ -445,7 +445,7 @@ Png_Parse(png_image* Png,
                                 for (u32 J = 0; J < ImageChannels; ++J) {
                                     u8* PixelByte = Stream_Consume<u8>(&UnfilteredImageStream);
                                     if (PixelByte == Null) {
-                                        MM_Arena_Revert(&ActualImageStreamMark);
+                                        Arena_Revert(&ActualImageStreamMark);
                                         return PngError_NotEnoughPixels;
                                     }
                                     Png_Log("%02X ", (u32)(*PixelByte));
@@ -470,7 +470,7 @@ Png_Parse(png_image* Png,
                         };
                     };
                     Png_Log("\n");
-                    MM_Arena_Revert(&UnfilteredImageStreamMark);
+                    Arena_Revert(&UnfilteredImageStreamMark);
                 }
                 
                 Bitstream_ConsumeBlock(&Stream, ChunkHeader->Length);

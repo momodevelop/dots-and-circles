@@ -273,8 +273,8 @@ int main() {
         for(u32 I = 0; I < ArrayCount(Tba_SoundContexts); ++I) {
             tba_sound_context* Ctx = Tba_SoundContexts + I;
             
-            arena_mark Mark = MM_Arena_Mark(&Arena);
-            Defer { MM_Arena_Revert(&Mark); };
+            arena_mark Mark = Arena_Mark(&Arena);
+            Defer { Arena_Revert(&Mark); };
             
             read_file_result FileResult = {};
             if(!Tba_ReadFileIntoMemory(&FileResult, Mark, Ctx->Filename)) {

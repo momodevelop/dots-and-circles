@@ -6,8 +6,8 @@ static inline void
 CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
-    arena_mark Scratch = MM_Arena_Mark(&DebugState->Arena);
-    Defer{ MM_Arena_Revert(&Scratch); };
+    arena_mark Scratch = Arena_Mark(&DebugState->Arena);
+    Defer{ Arena_Revert(&Scratch); };
     u8_cstr Buffer = {};
     
     u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
@@ -75,8 +75,8 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->PermanentMemory, 
                                        GameMemory->PermanentMemorySize);
         
-        PermState->ModeArena = MM_Arena_SubArena(&PermState->MainArena, 
-                                              MM_Arena_Remaining(PermState->MainArena));
+        PermState->ModeArena = Arena_SubArena(&PermState->MainArena, 
+                                              Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Main;
         PermState->IsInitialized = True;
@@ -163,30 +163,30 @@ GameUpdateFunc(GameUpdate)
     
     // NOTE(Momo): Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
-        MM_Arena_Clear(&PermState->ModeArena);
+        Arena_Clear(&PermState->ModeArena);
         arena* ModeArena = &PermState->ModeArena;
         
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
                 PermState->SplashMode = 
-                    MM_Arena_PushStruct(game_mode_splash, ModeArena); 
+                    Arena_PushStruct(game_mode_splash, ModeArena); 
                 InitSplashMode(PermState);
             } break;
             case GameModeType_Main: {
                 PermState->MainMode = 
-                    MM_Arena_PushStruct(game_mode_main, ModeArena); 
+                    Arena_PushStruct(game_mode_main, ModeArena); 
                 if (!InitMainMode(PermState, TranState, DebugState)){
                     return False;
                 }
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
-                    MM_Arena_PushStruct(game_mode_sandbox, ModeArena); 
+                    Arena_PushStruct(game_mode_sandbox, ModeArena); 
                 InitSandboxMode(PermState);
             } break;
             case GameModeType_AnimeTest: {
                 PermState->AnimeTestMode = 
-                    MM_Arena_PushStruct(game_mode_anime_test, ModeArena); 
+                    Arena_PushStruct(game_mode_anime_test, ModeArena); 
                 InitAnimeTestMode(PermState);
             } break;
             default: {
@@ -202,15 +202,15 @@ GameUpdateFunc(GameUpdate)
     U8CStr_InitFromSiStr(&Buffer, "Debug Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
-                           MM_Arena_Remaining(DebugState->Arena));
+                           Arena_Remaining(DebugState->Arena));
     U8CStr_InitFromSiStr(&Buffer, "Mode Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
-                           MM_Arena_Remaining(PermState->ModeArena));
+                           Arena_Remaining(PermState->ModeArena));
     U8CStr_InitFromSiStr(&Buffer, "TranState Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
-                           MM_Arena_Remaining(TranState->Arena));
+                           Arena_Remaining(TranState->Arena));
     
     
     // State update

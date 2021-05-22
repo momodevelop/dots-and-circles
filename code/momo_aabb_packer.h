@@ -90,16 +90,16 @@ AabbPacker_Pack(arena* Arena,
                 u32 AabbCount, 
                 aabb_packer_sort_type SortType) 
 {
-    arena_mark Scratch = MM_Arena_Mark(Arena);
-    Defer { MM_Arena_Revert(&Scratch); };
-    auto* SortEntries = MM_Arena_PushArray(sort_entry, Arena, AabbCount);
+    arena_mark Scratch = Arena_Mark(Arena);
+    Defer { Arena_Revert(&Scratch); };
+    auto* SortEntries = Arena_PushArray(sort_entry, Arena, AabbCount);
     
     __AabbPacker_Sort(Aabbs, SortEntries, AabbCount, SortType);
     
     
     u32 CurrentNodeCount = 0;
     
-    auto* Nodes = MM_Arena_PushArray(aabb2u, Arena, AabbCount+1);
+    auto* Nodes = Arena_PushArray(aabb2u, Arena, AabbCount+1);
     Nodes[CurrentNodeCount++] = Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
     
     for (u32 i = 0; i < AabbCount; ++i) {

@@ -56,8 +56,8 @@ Debug_Render(debug_state* State,
     // For each variable, render:
     // Name: Data
     for (u32 I = 0; I < State->VariableCount; ++I) {
-        arena_mark Scratch = MM_Arena_Mark(&State->Arena);
-        Defer{ MM_Arena_Revert(&Scratch); };
+        arena_mark Scratch = Arena_Mark(&State->Arena);
+        Defer{ Arena_Revert(&Scratch); };
         
         u8_str Buffer = U8Str_CreateFromArena(Scratch.Arena, 256);
         U8Str_PushCStr(&Buffer, State->Variables[I].Name);

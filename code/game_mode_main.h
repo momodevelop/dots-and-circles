@@ -160,23 +160,23 @@ InitMainMode(permanent_state* PermState,
     }
     
     b32 Success = False;
-    Mode->ArenaMark = MM_Arena_Mark(&PermState->ModeArena);
+    Mode->ArenaMark = Arena_Mark(&PermState->ModeArena);
     
     Success = List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
     if (!Success) {
-        MM_Arena_Revert(&Mode->ArenaMark);
+        Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
     Success = List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
     if (!Success) {
-        MM_Arena_Revert(&Mode->ArenaMark);
+        Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
     Success = List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
     if (!Success) {
-        MM_Arena_Revert(&Mode->ArenaMark);
+        Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
@@ -203,13 +203,13 @@ InitMainMode(permanent_state* PermState,
     
     Success = Queue_InitFromArena(&Mode->Particles, Mode->ArenaMark, 128);
     if (!Success) {
-        MM_Arena_Revert(&Mode->ArenaMark);
+        Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
     Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, False, &Mode->BgmHandle);
     if (!Success) {
-        MM_Arena_Revert(&Mode->ArenaMark);
+        Arena_Revert(&Mode->ArenaMark);
         return False;
     }
     
