@@ -18,10 +18,10 @@ static inline void
 DebugInspector_Init(debug_inspector* Inspector, MM_Arena* Arena) {
     Inspector->IsActive = False;
     MM_List<u8_str>* Entries = &Inspector->Entries;
-    MM_List_New(Entries, Arena, DebugInspector_EntryCount);
+    MM_List_InitFromArena(Entries, Arena, DebugInspector_EntryCount);
     for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
         u8_str* Item = MM_List_Push(Entries);
-        MM_U8Str_New(Item, Arena, DebugInspector_EntryCount);
+        MM_U8Str_InitFromArena(Item, Arena, DebugInspector_EntryCount);
     }
 }
 

@@ -133,7 +133,7 @@ MM_U8Str_Init(u8_str* s, u8* buffer, u32 capacity) {
 
 
 static inline b8
-MM_U8Str_New(u8_str* s, MM_Arena* arena, u32 capacity) {
+MM_U8Str_InitFromArena(u8_str* s, MM_Arena* arena, u32 capacity) {
     u8* buffer = MM_Arena_PushArray(u8, arena, capacity);
     if(!buffer) {
         return false;

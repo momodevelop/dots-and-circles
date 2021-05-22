@@ -414,7 +414,7 @@ Opengl_Init(opengl* Opengl,
             MM_Arena* Arena,
             MM_V2u WindowDimensions) 
 {
-    MM_List_New(&Opengl->Textures, Arena, Opengl_Max_Textures);
+    MM_List_InitFromArena(&Opengl->Textures, Arena, Opengl_Max_Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     

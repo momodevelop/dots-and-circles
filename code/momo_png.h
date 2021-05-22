@@ -20,12 +20,12 @@
 #endif
 
 struct png_context {
-    MM_Stream Stream;
+    stream Stream;
     MM_Arena* Arena; 
     
     b32 IsImageInitialized;
-    MM_Stream ImageStream;
-    MM_Stream DepressedImageStream;
+    stream ImageStream;
+    stream DepressedImageStream;
     
     u32 ImageWidth;
     u32 ImageHeight;
@@ -117,13 +117,13 @@ enum png_error {
 };
 
 static inline s32
-Png_HuffmanDecode(MM_Bitstream* SrcStream, png_huffman* Huffman) {
+Png_HuffmanDecode(bitstream* SrcStream, png_huffman* Huffman) {
     s32 Code = 0;
     s32 First = 0;
     s32 Index = 0;
     
     for (s32 Len = 1; Len <= Png_MaxBits; ++Len) {
-        Code |= MM_Bitstream_ConsumeBits(SrcStream, 1);
+        Code |= Bitstream_ConsumeBits(SrcStream, 1);
         s32 Count = Huffman->LenCountTable[Len];
         if(Code - Count < First)
             return Huffman->CodeSymTable[Index + (Code - First)];
@@ -182,7 +182,7 @@ Png_Huffman(MM_Arena* Arena,
 
 
 static inline png_error
-Png_Deflate(MM_Bitstream* SrcStream, MM_Stream* DestStream, MM_Arena* Arena) 
+Png_Deflate(bitstream* SrcStream, stream* DestStream, MM_Arena* Arena) 
 {
     
     static const short Lens[29] = { /* Size base for length codes 257..285 */
@@ -205,16 +205,16 @@ Png_Deflate(MM_Bitstream* SrcStream, MM_Stream* DestStream, MM_Arena* Arena)
         MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
         Defer { MM_Arena_Revert(&Scratch); };
         
-        BFINAL = (u8)MM_Bitstream_ConsumeBits(SrcStream, 1);
-        u16 BTYPE = (u8)MM_Bitstream_ConsumeBits(SrcStream, 2);
+        BFINAL = (u8)Bitstream_ConsumeBits(SrcStream, 1);
+        u16 BTYPE = (u8)Bitstream_ConsumeBits(SrcStream, 2);
         Png_Log(">>> BFINAL: %d\n", BFINAL);
         Png_Log(">>> BTYPE: %d\n", BTYPE);
         switch(BTYPE) {
             case 0b00: {
                 Png_Log(">>>> No compression\n");
-                MM_Bitstream_ConsumeBits(SrcStream, 5);
-                u16 LEN = (u16)MM_Bitstream_ConsumeBits(SrcStream, 16);
-                u16 NLEN = (u16)MM_Bitstream_ConsumeBits(SrcStream, 16);
+                Bitstream_ConsumeBits(SrcStream, 5);
+                u16 LEN = (u16)Bitstream_ConsumeBits(SrcStream, 16);
+                u16 NLEN = (u16)Bitstream_ConsumeBits(SrcStream, 16);
                 Png_Log(">>>>> LEN: %d\n", LEN);
                 Png_Log(">>>>> NLEN: %d\n", NLEN);
                 if ((u16)LEN != ~((u16)(NLEN))) {
@@ -273,7 +273,7 @@ Png_Deflate(MM_Bitstream* SrcStream, MM_Stream* DestStream, MM_Arena* Arena)
                     // NOTE(Momo): Normal case
                     if (Sym <= 255) { 
                         u8 ByteToWrite = (u8)(Sym & 0xFF); 
-                        MM_Stream_Write<u8>(DestStream, ByteToWrite);
+                        Stream_Write<u8>(DestStream, ByteToWrite);
                     }
                     // NOTE(Momo): Extra code case
                     else if (Sym >= 257) {
@@ -281,16 +281,16 @@ Png_Deflate(MM_Bitstream* SrcStream, MM_Stream* DestStream, MM_Arena* Arena)
                         if (Sym >= 29) {
                             return PngError_BadExtraCode;
                         }
-                        u32 Len = Lens[Sym] + MM_Bitstream_ConsumeBits(SrcStream, LenExBits[Sym]);
+                        u32 Len = Lens[Sym] + Bitstream_ConsumeBits(SrcStream, LenExBits[Sym]);
                         Sym = Png_HuffmanDecode(SrcStream, &DistHuffman);
                         if (Sym < 0) {
                             return PngError_BadSymbol;
                         }
-                        u32 Dist = Dists[Sym] + MM_Bitstream_ConsumeBits(SrcStream, DistExBits[Sym]);
+                        u32 Dist = Dists[Sym] + Bitstream_ConsumeBits(SrcStream, DistExBits[Sym]);
                         while(Len--) {
-                            u32 TargetIndex = DestStream->current - Dist;
-                            u8 ByteToWrite = DestStream->contents[TargetIndex];
-                            MM_Stream_Write<u8>(DestStream, ByteToWrite);
+                            u32 TargetIndex = DestStream->Current - Dist;
+                            u8 ByteToWrite = DestStream->Contents[TargetIndex];
+                            Stream_Write<u8>(DestStream, ByteToWrite);
                         }
                     }
                     else { 
@@ -316,10 +316,10 @@ Png_Parse(png_image* Png,
           void* PngMemory,
           u32 PngMemorySize) 
 {
-    MM_Bitstream Stream = {};
-    MM_Bitstream_Create(&Stream, PngMemory, PngMemorySize); 
+    bitstream Stream = {};
+    Bitstream_Create(&Stream, PngMemory, PngMemorySize); 
     
-    auto* PngHeader = MM_Bitstream_Consume<png_header>(&Stream);  
+    auto* PngHeader = Bitstream_Consume<png_header>(&Stream);  
     if (!PngHeader) { 
         return PngError_CannotReadHeader; 
     }
@@ -333,7 +333,7 @@ Png_Parse(png_image* Png,
         }
     }
     
-    auto* ChunkHeader = MM_Bitstream_Consume<png_chunk_header>(&Stream);
+    auto* ChunkHeader = Bitstream_Consume<png_chunk_header>(&Stream);
     if (!ChunkHeader) { 
         return PngError_CannotReadChunkHeader; 
     }
@@ -342,7 +342,7 @@ Png_Parse(png_image* Png,
     if (ChunkHeader->TypeU32 != FourCC("IHDR")) { 
         return PngError_FirstHeaderIsNotIHDR; 
     }
-    auto* IHDR = MM_Bitstream_Consume<png_chunk_data_IHDR>(&Stream);
+    auto* IHDR = Bitstream_Consume<png_chunk_data_IHDR>(&Stream);
     if (!IHDR) { 
         return PngError_CannotReadIHDR; 
     }
@@ -380,30 +380,30 @@ Png_Parse(png_image* Png,
     
     // Just consume the footer. 
     // TODO: CRC check with footer
-    MM_Bitstream_Consume<png_chunk_footer>(&Stream);
+    Bitstream_Consume<png_chunk_footer>(&Stream);
     
     u32 ImageSize = IHDR->Width * IHDR->Height * ImageChannels;
     
     // NOTE(Momo): For reserving memory for unfiltered data that is generated 
     // as we decode the file
     MM_ArenaMark ActualImageStreamMark = MM_Arena_Mark(Arena);
-    MM_Stream ActualImageStream = {};
-    MM_Stream_New(&ActualImageStream, Arena, ImageSize);
+    stream ActualImageStream = {};
+    Stream_CreateFromArena(&ActualImageStream, Arena, ImageSize);
     
     // Search for IDAT header
-    while(!MM_Bitstream_IsEos(&Stream)) {
-        ChunkHeader = MM_Bitstream_Consume<png_chunk_header>(&Stream);
+    while(!Bitstream_IsEos(&Stream)) {
+        ChunkHeader = Bitstream_Consume<png_chunk_header>(&Stream);
         EndianSwapU32(&ChunkHeader->Length);
         switch(ChunkHeader->TypeU32) {
             case FourCC("IDAT"): {
-                // temporary MM_Stream just to process IDAT
-                MM_Bitstream IDATStream = Stream; 
+                // temporary stream just to process IDAT
+                bitstream IDATStream = Stream; 
                 
-                u32 CM = MM_Bitstream_ConsumeBits(&IDATStream, 4);
-                u32 CINFO = MM_Bitstream_ConsumeBits(&IDATStream, 4);
-                u32 FCHECK = MM_Bitstream_ConsumeBits(&IDATStream, 5); //not needed?
-                u32 FDICT = MM_Bitstream_ConsumeBits(&IDATStream, 1);
-                u32 FLEVEL = MM_Bitstream_ConsumeBits(&IDATStream, 2); //useless?
+                u32 CM = Bitstream_ConsumeBits(&IDATStream, 4);
+                u32 CINFO = Bitstream_ConsumeBits(&IDATStream, 4);
+                u32 FCHECK = Bitstream_ConsumeBits(&IDATStream, 5); //not needed?
+                u32 FDICT = Bitstream_ConsumeBits(&IDATStream, 1);
+                u32 FLEVEL = Bitstream_ConsumeBits(&IDATStream, 2); //useless?
                 
                 Png_Log(">> CM: %d\n>> CINFO: %d\n>> FCHECK: %d\n>> FDICT: %d\n>>FLEVEL: %d\n",
                         CM, 
@@ -419,8 +419,8 @@ Png_Parse(png_image* Png,
                 u32 UnfilteredImageSize = IHDR->Width * (ImageChannels + 1);
                 MM_ArenaMark UnfilteredImageStreamMark = MM_Arena_Mark(Arena);
                 
-                MM_Stream UnfilteredImageStream = {};
-                MM_Stream_New(&UnfilteredImageStream, Arena, UnfilteredImageSize);
+                stream UnfilteredImageStream = {};
+                Stream_CreateFromArena(&UnfilteredImageStream, Arena, UnfilteredImageSize);
                 
                 png_error DeflateError = Png_Deflate(&IDATStream, &UnfilteredImageStream, Arena);
                 if (DeflateError != PngError_None) {
@@ -431,9 +431,9 @@ Png_Parse(png_image* Png,
                 // NOTE(Momo): Filter
                 // Data always starts with 1 byte indicating the type of filter
                 // followed by the rest of the chunk.
-                MM_Stream_Reset(&UnfilteredImageStream);
-                while(!MM_Stream_IsEos(&UnfilteredImageStream)) {
-                    u8* FilterType = MM_Stream_Consume<u8>(&UnfilteredImageStream);
+                Stream_Reset(&UnfilteredImageStream);
+                while(!Stream_IsEos(&UnfilteredImageStream)) {
+                    u8* FilterType = Stream_Consume<u8>(&UnfilteredImageStream);
                     if (FilterType == Null) {
                         MM_Arena_Revert(&ActualImageStreamMark);
                         return PngError_CannotReadFilterType;
@@ -443,13 +443,13 @@ Png_Parse(png_image* Png,
                         case 0: { // None
                             for (u32 I = 0; I < IHDR->Width; ++I ){
                                 for (u32 J = 0; J < ImageChannels; ++J) {
-                                    u8* PixelByte = MM_Stream_Consume<u8>(&UnfilteredImageStream);
+                                    u8* PixelByte = Stream_Consume<u8>(&UnfilteredImageStream);
                                     if (PixelByte == Null) {
                                         MM_Arena_Revert(&ActualImageStreamMark);
                                         return PngError_NotEnoughPixels;
                                     }
                                     Png_Log("%02X ", (u32)(*PixelByte));
-                                    MM_Stream_Write<u8>(&ActualImageStream, *PixelByte);
+                                    Stream_Write<u8>(&ActualImageStream, *PixelByte);
                                     
                                 }
                             }
@@ -473,23 +473,23 @@ Png_Parse(png_image* Png,
                     MM_Arena_Revert(&UnfilteredImageStreamMark);
                 }
                 
-                MM_Bitstream_ConsumeBlock(&Stream, ChunkHeader->Length);
+                Bitstream_ConsumeBlock(&Stream, ChunkHeader->Length);
                 
             } break;
             case FourCC("IEND"): {
                 Png->Width = IHDR->Width;
                 Png->Height = IHDR->Height;
                 Png->Channels = ImageChannels;
-                Png->Data = ActualImageStream.contents;
+                Png->Data = ActualImageStream.Contents;
                 return PngError_None;
             } break;
             default: {
                 // NOTE(Momo): For now, we don't care about the rest of the chunks
-                MM_Bitstream_ConsumeBlock(&Stream, ChunkHeader->Length);
+                Bitstream_ConsumeBlock(&Stream, ChunkHeader->Length);
                 
             };
         }
-        MM_Bitstream_Consume<png_chunk_footer>(&Stream);
+        Bitstream_Consume<png_chunk_footer>(&Stream);
     }
     
     return PngError_BadFormat;

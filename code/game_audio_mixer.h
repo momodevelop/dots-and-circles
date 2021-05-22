@@ -33,13 +33,13 @@ AudioMixer_Init(game_audio_mixer* Mixer,
                 MM_Arena* Arena) 
 {
     MM_ArenaMark Mark = MM_Arena_Mark(Arena);
-    b32 Success = MM_Array_New(&Mixer->Instances, Arena, MaxInstances);
+    b32 Success = MM_Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
     if (!Success) {
         MM_Arena_Revert(&Mark);
         return False;
     }
     
-    Success = MM_List_New(&Mixer->FreeList, Arena, MaxInstances);
+    Success = MM_List_InitFromArena(&Mixer->FreeList, Arena, MaxInstances);
     if (!Success) {
         MM_Arena_Revert(&Mark);
         return False;
