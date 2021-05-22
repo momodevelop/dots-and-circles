@@ -13,7 +13,7 @@ ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     FILE* File = {};
     if (fopen_s(&File, Filename, "rb") != 0) { 
         printf("Cannot find file\n");
-        return False;
+        return false;
     }
     Defer{ fclose(File); };
     
@@ -27,12 +27,12 @@ ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     Result->Memory = FileMemory;
     Result->MemorySize = Filesize;
     
-    return True;
+    return true;
 }
 
 
 int main() {    
-    u32 MemorySize = Megabytes(1);
+    u32 MemorySize = Megibytes(1);
     void * Memory = malloc(MemorySize);
     if (!Memory) { return 1; }
     Defer { free(Memory); };  

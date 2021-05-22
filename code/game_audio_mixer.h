@@ -36,13 +36,13 @@ AudioMixer_Init(game_audio_mixer* Mixer,
     b32 Success = Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
     if (!Success) {
         Arena_Revert(&Mark);
-        return False;
+        return false;
     }
     
     Success = List_InitFromArena(&Mixer->FreeList, Arena, MaxInstances);
     if (!Success) {
         Arena_Revert(&Mark);
-        return False;
+        return false;
     }
     Mixer->Volume = MasterVolume;
     
@@ -53,7 +53,7 @@ AudioMixer_Init(game_audio_mixer* Mixer,
         (*Item) = I;
     }
     
-    return True;
+    return true;
 }
 
 static inline b32
@@ -63,22 +63,22 @@ AudioMixer_Play(game_audio_mixer* Mixer,
                 game_audio_mixer_handle* OutHandle)
 {
     u32* Index = List_Last(&Mixer->FreeList);
-    if (Index == Null) {
-        return False;
+    if (Index == nullptr) {
+        return false;
     }
     
     game_audio_mixer_instance* Instance = Mixer->Instances + (*Index);
     Instance->IsLoop = Loop;
     Instance->CurrentOffset = 0;
     Instance->SoundId = SoundId;
-    Instance->IsPlaying = True;
+    Instance->IsPlaying = true;
     
     List_Pop(&Mixer->FreeList);
     
     
     OutHandle->Id = (*Index);
     
-    return True;
+    return true;
 }
 
 
@@ -88,15 +88,15 @@ AudioMixer_Stop(game_audio_mixer* Mixer,
 {
     if (Handle.Id < Mixer->Instances.Count) {
         game_audio_mixer_instance* Instance = Mixer->Instances + Handle.Id;
-        Instance->IsPlaying = False;
+        Instance->IsPlaying = false;
         u32* Item = List_Push(&Mixer->FreeList);
-        if (Item == Null) {
-            return False;
+        if (Item == nullptr) {
+            return false;
         }
         (*Item) = Handle.Id;
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 
@@ -114,7 +114,7 @@ AudioMixer_Update(game_audio_mixer* Mixer,
         
         for (u32 J = 0; J < Mixer->Instances.Count; ++J) {
             game_audio_mixer_instance* Instance = Mixer->Instances + J;
-            if (Instance->IsPlaying == False) {
+            if (Instance->IsPlaying == false) {
                 continue;
             }
             sound* Sound = Assets_GetSound(Assets, Instance->SoundId);

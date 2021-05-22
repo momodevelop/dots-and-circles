@@ -159,28 +159,28 @@ InitMainMode(permanent_state* PermState,
                                              Game_DesignDepth);
     }
     
-    b32 Success = False;
+    b32 Success = false;
     Mode->ArenaMark = Arena_Mark(&PermState->ModeArena);
     
     Success = List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
     if (!Success) {
         Arena_Revert(&Mode->ArenaMark);
-        return False;
+        return false;
     }
     
     Success = List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
     if (!Success) {
         Arena_Revert(&Mode->ArenaMark);
-        return False;
+        return false;
     }
     
     Success = List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
     if (!Success) {
         Arena_Revert(&Mode->ArenaMark);
-        return False;
+        return false;
     }
     
-    Mode->Wave.IsDone = True;
+    Mode->Wave.IsDone = true;
     Mode->Rng = Rng_Seed(0); // TODO: Used system clock for seed.
     
     assets* Assets = &TranState->Assets;
@@ -199,21 +199,21 @@ InitMainMode(permanent_state* PermState,
         Player->DotImageTransitionDuration = 0.1f;
         Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
     }
-    Mode->Wave.IsDone = True;
+    Mode->Wave.IsDone = true;
     
     Success = Queue_InitFromArena(&Mode->Particles, Mode->ArenaMark, 128);
     if (!Success) {
         Arena_Revert(&Mode->ArenaMark);
-        return False;
+        return false;
     }
     
-    Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, False, &Mode->BgmHandle);
+    Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, false, &Mode->BgmHandle);
     if (!Success) {
         Arena_Revert(&Mode->ArenaMark);
-        return False;
+        return false;
     }
     
-    return True; 
+    return true; 
     
 }
 

@@ -19,11 +19,11 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
                        arena* Arena, 
                        const char* Filename) {
     
-    FILE* File = Null;
+    FILE* File = nullptr;
     fopen_s(&File, Filename, "rb");
     
-    if (File == Null) {
-        return False;
+    if (File == nullptr) {
+        return false;
     }
     Defer { fclose(File); };
     
@@ -38,7 +38,7 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
     Result->Data = Buffer;
     Result->Size = Size;
     
-    return True;
+    return true;
 }
 
 static inline b32
@@ -48,7 +48,7 @@ Tba_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
                                 Arena, 
                                 Filename)) 
     {
-        return False;
+        return false;
     }
     stbtt_fontinfo Font;
     stbtt_InitFont(&Font, (u8*)ReadFileResult.Data, 0);
@@ -56,7 +56,7 @@ Tba_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
     Ret->Info = Font;
     Ret->Data = ReadFileResult.Data;
     
-    return True;
+    return true;
 }
 
 #endif //TOOL_BUILD_ASSETS_UTIL_H

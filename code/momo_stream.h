@@ -12,7 +12,7 @@ struct stream {
 
 static inline b8
 Stream_Create(stream* Stream, void* Memory, u32 MemorySize) {
-    if ( Memory == Null || MemorySize == 0) {
+    if ( Memory == nullptr || MemorySize == 0) {
         return false;
     }
     Stream->Contents = (u8*)Memory;
@@ -87,7 +87,7 @@ struct bitstream {
 
 static inline b8
 Bitstream_Create(bitstream* Stream, void* Memory, u32 MemorySize) {
-    if ( Memory == Null || MemorySize == 0) {
+    if ( Memory == nullptr || MemorySize == 0) {
         return false;
     }
     Stream->Contents = (u8*)Memory;

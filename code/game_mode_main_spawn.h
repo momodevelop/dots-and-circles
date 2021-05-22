@@ -54,7 +54,7 @@ SpawnBullet(game_mode_main* Mode,
             f32 Speed, 
             mood_type Mood) 
 {
-    bullet* B = Null;
+    bullet* B = nullptr;
     switch (Mood) {
         case MoodType_Dot: {
             B = List_Push(&Mode->DotBullets);
@@ -63,7 +63,7 @@ SpawnBullet(game_mode_main* Mode,
             B = List_Push(&Mode->CircleBullets);
         } break;
         default: {
-            Assert(False);
+            Assert(false);
         }
     }
     B->Position = Position;

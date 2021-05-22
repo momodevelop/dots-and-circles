@@ -33,11 +33,11 @@ Bonk2_IsCircleXLine(circle2f C, line2f L) {
         Time = (ClosestPtOnLine.Y - R.Origin.Y)/R.Dir.Y;
     }
     else {
-        return False;
+        return false;
     }
     
     if (Time < 0.f || Time > 1.f) {
-        return False;
+        return false;
     }
     
     // NOTE(Momo): At this point, we are within range of the line segment, so we just have to check if the circle's radius is greater than its distance from the line.

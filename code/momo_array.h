@@ -20,11 +20,11 @@ static inline b32
 Array_InitFromArena(array<type>* L, arena* Arena, u32 Count) {
     type* Buffer = Arena_PushArray(type, Arena, Count);
     if (!Buffer) {
-        return False;
+        return false;
     }
     L->Data = Buffer;
     L->Count = Count;
-    return True;
+    return true;
 }
 
 template<typename type>
@@ -34,7 +34,7 @@ Array_Get(array<type>* L, u32 Index) {
         return L->Data + Index;
     }
     else {
-        return Null;
+        return nullptr;
     }
 }
 
@@ -68,12 +68,12 @@ static inline b32
 List_InitFromArena(list<type>* L, arena* Arena, u32 Cap) {
     type* Buffer = Arena_PushArray(type, Arena, Cap);
     if (!Buffer) {
-        return False;
+        return false;
     }
     L->Data = Buffer;
     L->Cap = Cap;
     L->Count = 0;
-    return True;
+    return true;
 }
 
 
@@ -96,7 +96,7 @@ List_Push(list<type>* L, type InitItem = {}) {
         (*Ret) = InitItem;
         return Ret;
     }
-    return Null;
+    return nullptr;
 }
 
 // NOTE(Momo): "Swap last element and remove"
@@ -106,10 +106,10 @@ List_Slear(list<type>* L, u32 Index) {
     if (Index < L->Count) {
         L->Data[Index] = L->Data[L->Count-1];
         --L->Count;
-        return True;
+        return true;
     }
     else {
-        return False;
+        return false;
     }
 }
 
@@ -118,16 +118,16 @@ static inline b32
 List_Pop(list<type>* L) {
     if (L->Count != 0) {
         --L->Count;
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 template<typename type>
 static inline type*
 List_Last(list<type>* L) {
     if (L->Count == 0){
-        return Null;
+        return nullptr;
     }
     else {
         return Array_Get(L, L->Count - 1);
@@ -169,12 +169,12 @@ static inline b32
 Queue_InitFromArena(queue<type>* Q, arena* Arena, u32 Count) {
     type* Buffer = Arena_PushArray(type, Arena, Count);
     if (!Buffer) {
-        return False;
+        return false;
     }
     Q->Begin = Q->End = Count;
     Q->Count = Count;
     
-    return True;
+    return true;
 }
 
 template<typename type>
@@ -197,7 +197,7 @@ template<typename type>
 static inline type* 
 Queue_Push(queue<type>* Q, type InitItem = {}) {
     if (Queue_IsFull(Q)) {
-        return Null;
+        return nullptr;
     }
     else if (Queue_IsEmpty(Q)) {
         Q->Begin = Q->End = 0;
@@ -217,7 +217,7 @@ template<typename type>
 static inline type*
 Queue_Next(queue<type>* Q) {
     if (Queue_IsEmpty(Q)) {
-        return Null;
+        return nullptr;
     }
     return Q->Data + Q->Begin;
 }
@@ -226,7 +226,7 @@ template<typename type>
 static inline b32
 Queue_Pop(queue<type>* Q) {
     if (Queue_IsEmpty(Q)) {
-        return False;
+        return false;
     }
     if (Q->Begin == Q->End) {
         // One item case
@@ -242,7 +242,7 @@ Queue_Pop(queue<type>* Q) {
         ++Q->Begin;
     }
     
-    return True;
+    return true;
 }
 
 // NOTE(Momo): Not part of standard 'Queue' API, but in case you want to get
@@ -252,11 +252,11 @@ template<typename type>
 static inline type*
 Queue_Get(queue<type>* Q, u32 Index) {
     if (Queue_IsEmpty(Q)) {
-        return Null;
+        return nullptr;
     }
     if (Q->Begin <= Q->End) {
         if (Index < Q->Begin || Index > Q->End) {
-            return Null;
+            return nullptr;
         }
         else {
             return Q->Data + Index;
@@ -267,7 +267,7 @@ Queue_Get(queue<type>* Q, u32 Index) {
             return Q->Data + Index;
         }
         else {
-            return Null;
+            return nullptr;
         }
     }
 }

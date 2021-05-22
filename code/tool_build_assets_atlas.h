@@ -81,7 +81,7 @@ Tba_GenerateAtlas(arena* Arena,
                 if(!Tba_ReadFileIntoMemory(&FileMem,
                                            Arena, 
                                            Context->Filename)){
-                    return Null;
+                    return nullptr;
                 }
                 
                 // TODO: At the moment, there is no clean way for stbi load to 
@@ -117,7 +117,7 @@ Tba_GenerateAtlas(arena* Arena,
                 arena_mark Scratch = Arena_Mark(Arena);
                 u8* FontTexture = (u8*)Arena_PushBlock(Arena,TextureDimensions*Channels); 
                 if (!FontTexture) {
-                    return Null;
+                    return nullptr;
                 }
                 Defer { Arena_Revert(&Scratch); };
                 

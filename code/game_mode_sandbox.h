@@ -108,7 +108,7 @@ UpdateSandboxMode(permanent_state* PermState,
                 v2f TimedVelocity = V2f_Mul(B->Velocity, DeltaTime);
                 
                 if (Bonk2_IsDynaCircleXDynaCircle(PC, PCVel, C, TimedVelocity)) {
-                    B->IsHit = True;
+                    B->IsHit = true;
                 }
                 
             }

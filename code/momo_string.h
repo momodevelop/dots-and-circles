@@ -33,14 +33,14 @@ U8CStr_InitFromSiStr(u8_cstr* S, const char* SiStr) {
 static inline b32
 U8CStr_Cmp(u8_cstr Lhs, u8_cstr Rhs) {
     if(Lhs.Count != Rhs.Count) {
-        return False;
+        return false;
     }
     for (u32 I = 0; I < Lhs.Count; ++I) {
         if (Lhs.Data[I] != Rhs.Data[I]) {
-            return False;
+            return false;
         }
     }
-    return True;
+    return true;
 }
 
 
@@ -48,10 +48,10 @@ static inline b32
 U8CStr_CmpSiStr(u8_cstr Lhs, const char* Rhs) {
     for(u32 I = 0; I < Lhs.Count; ++I) {
         if (Lhs.Data[I] != Rhs[I]) {
-            return False;
+            return false;
         }
     }
-    return True;
+    return true;
 }
 
 static inline void
@@ -125,22 +125,22 @@ static inline b32
 U8Str_InitFromArena(u8_str* S, arena* Arena, u32 Capacity) {
     u8* Buffer = Arena_PushArray(u8, Arena, Capacity);
     if(!Buffer) {
-        return False;
+        return false;
     }
     S->Data = Buffer;
     S->Count = 0;
     S->Cap = Capacity;
     
-    return True;
+    return true;
 }
 
 static inline b32
 U8Str_Pop(u8_str* S) {
     if (S->Count <= 0) {
-        return False;
+        return false;
     }
     --S->Count;
-    return True;
+    return true;
 }
 
 static inline u32 
@@ -151,13 +151,13 @@ U8Str_Remaining(u8_str* Buffer) {
 static inline b32
 U8Str_CopyCStr(u8_str* Dest, u8_cstr Src) {
     if (Src.Count > Dest->Cap) {
-        return False;
+        return false;
     }
     for (u32 I = 0; I < Src.Count; ++I ) {
         Dest->Data[I] = Src.Data[I];
     }
     Dest->Count = Src.Count;
-    return True;
+    return true;
 }
 
 static inline b32
@@ -170,18 +170,18 @@ static inline b32
 U8Str_NullTerm(u8_str* Dest) {
     if (Dest->Count < Dest->Cap) {
         Dest->Data[Dest->Count] = 0;
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 static inline b32
 U8Str_Push(u8_str* Dest, u8 Item) {
     if (Dest->Count < Dest->Cap) {
         Dest->Data[Dest->Count++] = Item;
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 static inline b32
@@ -190,9 +190,9 @@ U8Str_PushCStr(u8_str* Dest, u8_cstr Src) {
         for ( u32 I = 0; I < Src.Count; ++I ) {
             Dest->Data[Dest->Count++] = Src.Data[I];
         }
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 static inline b32
@@ -209,7 +209,7 @@ static inline b32
 U8Str_PushU32(u8_str* Dest, u32 Num) {
     if (Num == 0) {
         U8Str_Push(Dest, '0');
-        return True;
+        return true;
     }
     u32 StartPoint = Dest->Count; 
     
@@ -217,7 +217,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
         s32 DigitToConvert = Num % 10;
         b32 Success = U8Str_Push(Dest, (u8)(DigitToConvert + '0'));
         if (!Success) {
-            return False;
+            return false;
         }
     }
     
@@ -228,16 +228,16 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
              Dest->Data[StartPoint + I], 
              Dest->Data[Dest->Count - 1 - I]);
     }
-    return True;
+    return true;
 }
 
 static inline b32
 U8Str_PushS32(u8_str* Dest, s32 Num) {
     if (Num == 0) {
         if(!U8Str_Push(Dest, '0')) {
-            return False;
+            return false;
         }
-        return True;
+        return true;
     }
     
     u32 StartPoint = Dest->Count; 

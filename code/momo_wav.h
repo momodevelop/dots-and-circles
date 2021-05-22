@@ -54,55 +54,55 @@ Wav_LoadFromMemory(wav_load_result* Result,
     // NOTE(Momo): Load Riff Chunk
     auto* RiffChunk = Stream_Consume<wav_riff_chunk>(&Stream);
     if (!RiffChunk) {
-        return False;
+        return false;
     }
     EndianSwapU32(&RiffChunk->ID);
     EndianSwapU32(&RiffChunk->Format);
     if (RiffChunk->ID != Wav_RiffIDSignature) {
-        return False;
+        return false;
     }
     if (RiffChunk->Format != Wav_RiffFormatSignature) {
-        return False;
+        return false;
     }
     
     // NOTE(Momo): Load fmt Chunk
     auto* FmtChunk = Stream_Consume<wav_fmt_chunk>(&Stream);
     if (!FmtChunk) {
-        return False;
+        return false;
     }
     EndianSwapU32(&FmtChunk->ID);
     if (FmtChunk->ID != Wav_FmtIDSignature) {
-        return False;
+        return false;
     }
     if (FmtChunk->Size != 16) {
-        return False;
+        return false;
     }
     if (FmtChunk->AudioFormat != 1) {
-        return False;
+        return false;
     }
     
     u32 BytesPerSample = FmtChunk->BitsPerSample/8;
     if (FmtChunk->ByteRate != 
         FmtChunk->SampleRate * FmtChunk->NumChannels * BytesPerSample) {
-        return False;
+        return false;
     }
     if (FmtChunk->BlockAlign != FmtChunk->NumChannels * BytesPerSample) {
-        return False;
+        return false;
     }
     
     // NOTE(Momo): Load data Chunk
     auto* DataChunk = Stream_Consume<wav_data_chunk>(&Stream);
     if (!DataChunk) {
-        return False;
+        return false;
     }
     EndianSwapU32(&DataChunk->ID);
     if (DataChunk->ID != Wav_DataIDSignature) {
-        return False;
+        return false;
     }
     
     void* Data = Stream_ConsumeBlock(&Stream, DataChunk->Size);
-    if (Data == Null) {
-        return False;
+    if (Data == nullptr) {
+        return false;
     }
     
     Result->RiffChunk = (*RiffChunk);
@@ -110,7 +110,7 @@ Wav_LoadFromMemory(wav_load_result* Result,
     Result->DataChunk = (*DataChunk);
     Result->Data = Data;
     
-    return True;
+    return true;
 }
 
 #endif //MM_WAV_H

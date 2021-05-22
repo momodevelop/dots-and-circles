@@ -4,12 +4,15 @@
 #include <math.h>
 #include <cstdint>
 
-#include "momo_basic_types.h"
+// Basic types - Don't really need their own namespaces
+#include "momo_base.h"
 #include "momo_maths.h"
-#include "momo_bonk.h"
 #include "momo_colors.h"
-#include "momo_easing.h"
 #include "momo_bitwise.h"
+
+// The ones below need their own namespace prefixes
+#include "momo_bonk.h"
+#include "momo_easing.h"
 #include "momo_arena.h"
 #include "momo_timer.h"
 #include "momo_sort.h"

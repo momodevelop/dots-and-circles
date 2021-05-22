@@ -260,7 +260,7 @@ enum {
 };
 
 struct opengl {
-    b32 IsInitialized = True;
+    b32 IsInitialized = true;
     
     
     // Bindings that needs to be filled by platform
@@ -634,13 +634,13 @@ Opengl_Init(opengl* Opengl,
     GLint Result;
     Opengl->glGetProgramiv(Opengl->Shader, GL_LINK_STATUS, &Result);
     if (Result != GL_TRUE) {
-        char msg[Kilobyte];
-        Opengl->glGetProgramInfoLog(Opengl->Shader, Kilobyte, nullptr, msg);
+        char msg[Kibibyte];
+        Opengl->glGetProgramInfoLog(Opengl->Shader, Kibibyte, nullptr, msg);
         // TODO(Momo): Log?
-        return False;
+        return false;
     }
     Opengl_AddPredefTextures(Opengl);
-    Opengl->IsInitialized = True;
+    Opengl->IsInitialized = true;
     return true;
 }
 
@@ -668,7 +668,7 @@ Opengl_DrawInstances(opengl* Opengl,
         Opengl->glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
                                                     6, 
                                                     GL_UNSIGNED_BYTE, 
-                                                    Null, 
+                                                    nullptr, 
                                                     InstancesToDraw,
                                                     IndexToDrawFrom);
     }
@@ -685,7 +685,7 @@ Opengl_AddTexture(opengl* Opengl,
     
     u32 RemainingTextures = List_Remaining(&Opengl->Textures);
     if (RemainingTextures == 0) {
-        Ret.Success = False;
+        Ret.Success = false;
         Ret.Id = 0;
         return Ret;
     }
@@ -714,7 +714,7 @@ Opengl_AddTexture(opengl* Opengl,
                                 Pixels);
     
     Ret.Id = Opengl->Textures.Count;
-    Ret.Success = True;
+    Ret.Success = true;
     List_Push(&Opengl->Textures, Entry);
     return Ret;
 }

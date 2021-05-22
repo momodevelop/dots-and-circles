@@ -270,7 +270,7 @@ Win32Init() {
     // This is kinda what we wanna do if we ever want Renderer 
     // to be its own DLL...
     // NOTE(Momo): Arena 
-    u32 PlatformMemorySize = Kilobytes(256);
+    u32 PlatformMemorySize = Kibibytes(256);
     void* PlatformMemory = Win32AllocateMemory(PlatformMemorySize);
     if(!PlatformMemory) {
         Win32Log("[Win32::State] Failed to allocate memory\n"); 
@@ -314,7 +314,7 @@ Win32Init() {
     
 #endif
     
-    State->IsRunning = True;
+    State->IsRunning = true;
     return State;
 }
 
@@ -341,7 +341,7 @@ Win32BeginRecordingInput(win32_state* State, const char* Path) {
         return;
     }
     State->RecordingInputHandle = RecordFileHandle;
-    State->IsRecordingInput = True;
+    State->IsRecordingInput = true;
     Win32Log("[Win32::BeginRecordingInput] Recording has begun: %s\n", Path);
 }
 
@@ -349,7 +349,7 @@ static inline void
 Win32EndRecordingInput(win32_state* State) {
     Assert(State->IsRecordingInput);
     CloseHandle(State->RecordingInputHandle);
-    State->IsRecordingInput = False;
+    State->IsRecordingInput = false;
     Win32Log("[Win32::EndRecordingInput] Recording has ended\n");
 }
 
@@ -378,7 +378,7 @@ static inline void
 Win32EndPlaybackInput(win32_state* State) {
     Assert(State->IsPlaybackInput);
     CloseHandle(State->PlaybackInputHandle);
-    State->IsPlaybackInput = False;
+    State->IsPlaybackInput = false;
     Win32Log("[Win32::EndPlaybackInput] Playback has ended\n");
 }
 
@@ -398,7 +398,7 @@ Win32BeginPlaybackInput(win32_state* State, const char* Path) {
         return;
     }
     State->PlaybackInputHandle = RecordFileHandle;
-    State->IsPlaybackInput = True;
+    State->IsPlaybackInput = true;
     Win32Log("[Win32::BeginPlaybackInput] Playback has begun: %s\n", Path);
 }
 
@@ -412,9 +412,9 @@ Win32PlaybackInput(win32_state* State, platform_input* Input) {
                             &BytesRead,
                             0);
     if(!Success || BytesRead != sizeof(platform_input)) {
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 //~ NOTE(Momo): game code related
@@ -729,11 +729,11 @@ Win32InitOpengl(win32_state* State,
     
     if (!Opengl) {
         Win32Log("[Win32::Opengl] Failed to allocate opengl\n"); 
-        return False;
+        return false;
     }
     
     if (!Win32OpenglLoadWglExtensions()) {
-        return False;
+        return false;
     }
     
     Win32OpenglSetPixelFormat(DeviceContext);
@@ -756,7 +756,7 @@ Win32InitOpengl(win32_state* State,
     if (!OpenglContext) {
         //OpenglContext = wglCreateContext(DeviceContext);
         Win32Log("[Win32::Opengl] Cannot create opengl context");
-        return False;
+        return false;
     }
     
     if(wglMakeCurrent(DeviceContext, OpenglContext)) {
@@ -766,7 +766,7 @@ Win32InitOpengl(win32_state* State,
 Opengl->Name = (OpenglFunction(Name)*)Win32TryGetOpenglFunction(#Name, Module); \
 if (!Opengl->Name) { \
 Win32Log("[Win32::Opengl] Cannot load opengl function '" #Name "' \n"); \
-return False; \
+return false; \
 }
         
         Win32SetOpenglFunction(glEnable);
@@ -817,7 +817,7 @@ return False; \
 #endif
     
     State->Opengl = Opengl;
-    return True;
+    return true;
 }
 
 
@@ -929,19 +929,19 @@ Win32AudioInit(win32_audio* Audio,
     HRESULT Hr = CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY);
     if (FAILED(Hr)) {
         Win32Log("[Win32::Audio] Failed CoInitializeEx\n");
-        return False;
+        return false;
     }
     
     IMMDeviceEnumerator* DeviceEnumerator;
     Hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), 
-                          Null,
+                          nullptr,
                           CLSCTX_ALL, 
                           __uuidof(IMMDeviceEnumerator),
                           (LPVOID*)(&DeviceEnumerator));
     
     if (FAILED(Hr)) {
         Win32Log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
-        return False;
+        return false;
     }
     Defer { DeviceEnumerator->Release(); };
     
@@ -952,17 +952,17 @@ Win32AudioInit(win32_audio* Audio,
                                                    &Device);
     if (FAILED(Hr)) {
         Win32Log("[Win32::Audio] Failed to get audio endpoint\n");
-        return False;
+        return false;
     }
     Defer { Device->Release(); };
     
     Hr = Device->Activate(__uuidof(IAudioClient2), 
                           CLSCTX_ALL, 
-                          Null, 
+                          nullptr, 
                           (LPVOID*)&Audio->Client);
     if(FAILED(Hr)) {
         Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return False;
+        return false;
     }
     
     WAVEFORMATEX WaveFormat = {};
@@ -983,7 +983,7 @@ Win32AudioInit(win32_audio* Audio,
     REFERENCE_TIME BufferDuration = REFTIMES_PER_SEC * 2;
 #endif
     REFERENCE_TIME BufferDuration = 0;
-    Hr = Audio->Client->GetDevicePeriod(Null, &BufferDuration);
+    Hr = Audio->Client->GetDevicePeriod(nullptr, &BufferDuration);
     
 #endif
     
@@ -996,18 +996,18 @@ Win32AudioInit(win32_audio* Audio,
                                    BufferDuration,
                                    0, 
                                    &WaveFormat, 
-                                   Null);
+                                   nullptr);
     if (FAILED(Hr))
     {
         Win32Log("[Win32::Audio] Failed to initialize audio client\n");
-        return False;
+        return false;
     }
     
     if (FAILED(Audio->Client->GetService(__uuidof(IAudioRenderClient),
                                          (LPVOID*)(&Audio->RenderClient))))
     {
         Win32Log("[Win32::Audio] Failed to create IAudioClient\n");
-        return False;
+        return false;
     }
     
     UINT32 SoundFrameCount;
@@ -1015,14 +1015,14 @@ Win32AudioInit(win32_audio* Audio,
     if (FAILED(Hr))
     {
         Win32Log("[Win32::Audio] Failed to get buffer size\n");
-        return False;
+        return false;
     }
     
     Audio->BufferSize = SoundFrameCount;
     Audio->Buffer = (s16*)Win32AllocateMemory(Audio->BufferSize);
     if (!Audio->Buffer) {
         Win32Log("[Win32::Audio] Failed to allocate secondary buffer\n");
-        return False;
+        return false;
     }
     
     
@@ -1030,7 +1030,7 @@ Win32AudioInit(win32_audio* Audio,
     
     Audio->Client->Start();
     
-    return True;
+    return true;
 }
 
 static inline platform_audio
@@ -1514,7 +1514,7 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
 #endif
     if (!GameMemory->Data) {
         Win32Log("[Win32::GameMemory] Failed to allocate\n");
-        return False;
+        return false;
     }
     
     GameMemory->Head.PermanentMemorySize = PermanentMemorySize;
@@ -1529,7 +1529,7 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
     Win32Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", TransientMemorySize);
     Win32Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", DebugMemorySize);
     
-    return True;
+    return true;
 }
 
 static inline void
@@ -1546,13 +1546,13 @@ Win32InitRenderCommands(mailbox* RenderCommands,
         Win32AllocateMemory(RenderCommandsMemorySize); 
     if (!RenderCommandsMemory) {
         Win32Log("[Win32::RenderCommands] Failed to allocate\n"); 
-        return False;
+        return false;
     }
     (*RenderCommands) = Mailbox_Create(RenderCommandsMemory,
                                        RenderCommandsMemorySize);
     Win32Log("[Win32::RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
-    return True;
+    return true;
     
 }
 
@@ -1613,9 +1613,9 @@ WinMain(HINSTANCE Instance,
     // Initialize game memory
     win32_game_memory GameMemory = {};
     if (!Win32InitGameMemory(&GameMemory,
-                             Megabytes(1),
-                             Megabytes(16),
-                             Megabytes(1))) 
+                             Megibytes(1),
+                             Megibytes(16),
+                             Megibytes(1))) 
     {
         return 1;
     }
@@ -1624,7 +1624,7 @@ WinMain(HINSTANCE Instance,
     
     // Initialize RenderCommands
     mailbox RenderCommands = {};
-    if(!Win32InitRenderCommands(&RenderCommands, Megabytes(64))) {
+    if(!Win32InitRenderCommands(&RenderCommands, Megibytes(64))) {
         return 1;
     }
     Defer { Win32FreeRenderCommands(&RenderCommands); };

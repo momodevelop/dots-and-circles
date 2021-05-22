@@ -20,16 +20,13 @@ typedef uintptr_t uptr;
 typedef ptrdiff_t iptr;
 
 // TODO(Momo): change to retarded name
-#define Kilobyte (1 << 10)
-#define Megabyte (1 << 20)
-#define Gigabyte (1 << 30)
-#define Kilobytes(num) (Kilobyte * num)
-#define Megabytes(num) (Megabyte * num)
-#define Gigabytes(num) (Gigabyte * num)
+#define Kibibyte (1 << 10)
+#define Mebibyte (1 << 20)
+#define Gibibyte (1 << 30)
+#define Kibibytes(num) (Kibibyte * num)
+#define Megibytes(num) (Mebibyte * num)
+#define Gibibytes(num) (Gibibyte * num)
 #define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
-#define Null 0
-#define False 0
-#define True 1
 
 #define Glue_(A,B) A##B
 #define Glue(A,B) Glue_(A,B)

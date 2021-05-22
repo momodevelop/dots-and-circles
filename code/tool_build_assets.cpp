@@ -21,7 +21,7 @@
 
 
 #define Tba_GenerateTestPng 1
-#define Tba_MemorySize Megabytes(8)
+#define Tba_MemorySize Megibytes(8)
 #define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.Used)
 
 

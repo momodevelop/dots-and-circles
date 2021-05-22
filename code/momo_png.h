@@ -434,7 +434,7 @@ Png_Parse(png_image* Png,
                 Stream_Reset(&UnfilteredImageStream);
                 while(!Stream_IsEos(&UnfilteredImageStream)) {
                     u8* FilterType = Stream_Consume<u8>(&UnfilteredImageStream);
-                    if (FilterType == Null) {
+                    if (FilterType == nullptr) {
                         Arena_Revert(&ActualImageStreamMark);
                         return PngError_CannotReadFilterType;
                     }
@@ -444,7 +444,7 @@ Png_Parse(png_image* Png,
                             for (u32 I = 0; I < IHDR->Width; ++I ){
                                 for (u32 J = 0; J < ImageChannels; ++J) {
                                     u8* PixelByte = Stream_Consume<u8>(&UnfilteredImageStream);
-                                    if (PixelByte == Null) {
+                                    if (PixelByte == nullptr) {
                                         Arena_Revert(&ActualImageStreamMark);
                                         return PngError_NotEnoughPixels;
                                     }

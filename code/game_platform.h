@@ -47,9 +47,9 @@ static inline b32
 Input_TryPushCharacterInput(platform_input* Input, char C) {
     if (C >= 32 && C <= 126) {
         U8Str_Push(&Input->Characters, C);
-        return True;
+        return true;
     }
-    return False;
+    return false;
 }
 
 static inline void

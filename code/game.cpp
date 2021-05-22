@@ -79,8 +79,8 @@ GameUpdateFunc(GameUpdate)
                                               Arena_Remaining(PermState->MainArena));
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Main;
-        PermState->IsInitialized = True;
-        PermState->IsPaused = False;
+        PermState->IsInitialized = true;
+        PermState->IsPaused = false;
         
         Renderer_SetDesignResolution(RenderCommands, 
                                      Game_DesignWidth, 
@@ -105,7 +105,7 @@ GameUpdateFunc(GameUpdate)
         Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->Arena);
         Assert(Success);
         
-        TranState->IsInitialized = True;
+        TranState->IsInitialized = true;
     }
     
     if (!DebugState->IsInitialized) {
@@ -131,7 +131,7 @@ GameUpdateFunc(GameUpdate)
         
         DebugState->PermanentState = PermState;
         DebugState->TransientState = TranState;
-        DebugState->IsInitialized = True;
+        DebugState->IsInitialized = true;
     }
     
     // NOTE(Momo): Input
@@ -176,7 +176,7 @@ GameUpdateFunc(GameUpdate)
                 PermState->MainMode = 
                     Arena_PushStruct(game_mode_main, ModeArena); 
                 if (!InitMainMode(PermState, TranState, DebugState)){
-                    return False;
+                    return false;
                 }
             } break;
             case GameModeType_Sandbox: {
@@ -190,7 +190,7 @@ GameUpdateFunc(GameUpdate)
                 InitAnimeTestMode(PermState);
             } break;
             default: {
-                return False;
+                return false;
             }
         }
         
@@ -245,7 +245,7 @@ GameUpdateFunc(GameUpdate)
                                 DeltaTime);
         } break;
         default: {
-            return False;
+            return false;
         }
     }
     
@@ -256,7 +256,7 @@ GameUpdateFunc(GameUpdate)
     
     
     
-    return True;
+    return true;
 }
 
 

@@ -41,7 +41,7 @@ UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
     }
     // Clean up old particles
     particle * P = Queue_Next(Q);
-    while(P != Null && P->Timer >= Particle_Duration) {
+    while(P != nullptr && P->Timer >= Particle_Duration) {
         Queue_Pop(Q);
         P = Queue_Next(Q);
     }
