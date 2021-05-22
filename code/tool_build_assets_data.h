@@ -32,6 +32,7 @@ Tba_ImageContexts[] = {
     {  "assets/bullet_dot.png", Image_BulletDot, Texture_AtlasDefault },
     {  "assets/bullet_circle.png", Image_BulletCircle, Texture_AtlasDefault },
     {  "assets/enemy.png", Image_Enemy, Texture_AtlasDefault },
+    {  "assets/particle.png", Image_Particle, Texture_AtlasDefault },
 };
 
 //~ NOTE(Momo): Msg

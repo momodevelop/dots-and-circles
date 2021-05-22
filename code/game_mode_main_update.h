@@ -28,7 +28,6 @@ UpdateParticlesSub(queue<particle>* Q, f32 DeltaTime, u32 Begin, u32 End) {
         P->Timer += DeltaTime;
         
         v2f Velocity = V2f_Mul(P->Direction, P->Speed * DeltaTime);
-        
         P->Position = V2f_Add(P->Position, Velocity);
     }
 }
@@ -41,7 +40,7 @@ UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
     }
     // Clean up old particles
     particle * P = Queue_Next(Q);
-    while(P != nullptr && P->Timer >= Particle_Duration) {
+    while(P != nullptr && P->Timer >= P->Duration) {
         Queue_Pop(Q);
         P = Queue_Next(Q);
     }
@@ -51,7 +50,7 @@ UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
         UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->End);
     }
     else {
-        UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->Count - 1);
+        UpdateParticlesSub(Q, DeltaTime, Q->Begin, Q->Cap - 1);
         UpdateParticlesSub(Q, DeltaTime, 0, Q->End);
     }
     
@@ -173,11 +172,11 @@ UpdateCollisionSub(game_mode_main* Mode,
             
         {
             if (Player->MoodType == B->MoodType) {
-#if 0
+                v2f SpawnPos = B->Position;
                 SpawnParticleRandomDirectionAndSpeed(Mode,
                                                      Assets,
-                                                     {});
-#endif
+                                                     SpawnPos,
+                                                     5);
                 
                 List_Slear(Bullets, I);
                 continue;
@@ -240,9 +239,7 @@ UpdateWaves(game_mode_main* Mode,
                                Pos,
                                MoodType,
                                EnemyFiringPatternType_Homing,
-                               EnemyMovementType_Static,
-                               0.1f, 
-                               10.f);
+                               EnemyMovementType_Static);
                     
                     Pattern->SpawnTimer = 0.f;
                 }

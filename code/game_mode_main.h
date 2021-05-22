@@ -4,6 +4,7 @@
 #define CircleCap 128
 #define DotCap 128
 #define EnemyCap 128
+#define ParticleCap 256
 
 #define ZLayPlayer 0.f
 #define ZLayDotBullet 10.f
@@ -13,11 +14,14 @@
 
 #define ZLayDebug 40.f
 
-
-#define Particle_Duration 3.0f
 struct particle {
+    constexpr static f32 Duration = 0.25f;
+    constexpr static f32 Alpha = 0.8f;
+    constexpr static f32 Size = 10.f;
+    constexpr static f32 SpeedMin = 10.f;
+    constexpr static f32 SpeedMax = 20.f;
+    
     f32 Timer;
-    image_id ImageId;
     v2f Position;
     v2f Direction;
     f32 Speed;
@@ -31,6 +35,12 @@ enum mood_type {
     MoodType_Count,
 };
 
+enum enemy_state {
+    EnemyState_Spawning,
+    EnemyState_Active,
+    EnemyState_Dying
+        
+};
 enum enemy_mood_pattern_type {
     EnemyMoodPatternType_Dot,
     EnemyMoodPatternType_Circle,
@@ -109,12 +119,13 @@ struct enemy {
     enemy_firing_pattern_type FiringPatternType;
     enemy_mood_pattern_type MoodPatternType;
     enemy_movement_type MovementType;
+    enemy_state State;
     
     f32 FireTimer;
-	f32 FireDuration;
+	constexpr static f32 FireDuration = 0.1f;
     
     f32 LifeTimer;
-    f32 LifeDuration;
+    constexpr static f32 LifeDuration = 10.f;
 };
 
 
@@ -175,6 +186,11 @@ InitMainMode(permanent_state* PermState,
         return false;
     }
     
+    Success = Queue_New(&Mode->Particles, ModeArena, ParticleCap);
+    if (!Success) {
+        return false;
+    }
+    
     Mode->Wave.IsDone = true;
     Mode->Rng = Rng_Seed(0); // TODO: Used system clock for seed.
     
@@ -196,15 +212,12 @@ InitMainMode(permanent_state* PermState,
     }
     Mode->Wave.IsDone = true;
     
-    Success = Queue_New(&Mode->Particles, ModeArena, 128);
-    if (!Success) {
-        return false;
-    }
-    
+#if 0    
     Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, false, &Mode->BgmHandle);
     if (!Success) {
         return false;
     }
+#endif
     
     return true; 
     

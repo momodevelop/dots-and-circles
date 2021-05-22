@@ -55,6 +55,7 @@ enum image_id {
     Image_BulletDot,
     Image_BulletCircle,
     Image_Enemy,
+    Image_Particle,
     
     Image_FontStart,
     Image_FontEnd = Image_FontStart + FontGlyph_Count,

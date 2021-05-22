@@ -354,6 +354,40 @@ V2f_Rotate(v2f V, f32 Rad) {
     return Ret;
 }
 
+static inline v2f 
+operator+(v2f Lhs, v2f Rhs) {
+    return V2f_Add(Lhs, Rhs);
+}
+
+static inline v2f&
+operator+=(v2f& Lhs, v2f Rhs) {
+    return Lhs = Lhs + Rhs;
+}
+
+static inline v2f 
+operator-(v2f Lhs, v2f Rhs) {
+    return V2f_Sub(Lhs, Rhs);
+}
+
+static inline v2f&
+operator-=(v2f& Lhs, v2f Rhs) {
+    return Lhs = Lhs - Rhs;
+}
+
+static inline v2f 
+operator*(v2f Lhs, f32 Rhs) {
+    return V2f_Mul(Lhs, Rhs);
+}
+
+static inline v2f 
+operator*=(v2f Lhs, f32 Rhs) {
+    return Lhs = Lhs * Rhs;
+}
+
+static inline v2f 
+operator*(f32 Lhs, v2f Rhs) {
+    return V2f_Mul(Rhs, Lhs);
+}
 
 //~ NOTE(Momo): v2u Functions
 static inline v2u 
@@ -807,6 +841,11 @@ M44f_Concat(m44f L, m44f R) {
         } 
     } 
     return Ret;
+}
+
+static inline m44f 
+operator*(m44f L, m44f R) {
+    return M44f_Concat(L,R);
 }
 
 static inline m44f 

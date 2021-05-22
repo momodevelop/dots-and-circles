@@ -22,6 +22,8 @@
 #include "momo_stream.h"
 #include "momo_mailbox.h"
 #include "momo_array.h"
+#include "momo_list.h"
+#include "momo_queue.h"
 
 // File formats
 #include "momo_wav.h"

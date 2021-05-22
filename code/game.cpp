@@ -97,12 +97,14 @@ GameUpdateFunc(GameUpdate)
         b8 Success = Assets_Init(&TranState->Assets,
                                  &TranState->Arena,
                                  Platform);
-        
-        Assert(Success);
-        
+        if(!Success) {
+            return false;
+        }
         
         Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->Arena);
-        Assert(Success);
+        if (!Success) {
+            return false;
+        }
         
         TranState->IsInitialized = true;
     }
