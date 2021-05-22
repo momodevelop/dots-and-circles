@@ -30,23 +30,23 @@ UpdateSplashImageEntity(splash_image_entity* Entity,
         return;
     
     // NOTE(Momo): Update
-    f32 Ease = MM_Ease_OutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    f32 Ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     
     Entity->Position.x = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
     MM_M44f T = MM_M44f_Translation(Entity->Position.x,
-                                    Entity->Position.y,
-                                    Entity->Position.z);
+                              Entity->Position.y,
+                              Entity->Position.z);
     MM_M44f S = MM_M44f_Scale(Entity->Scale.x,
-                              Entity->Scale.y,
-                              1.f);
+                        Entity->Scale.y,
+                        1.f);
     Draw_TexturedQuadFromImage(RenderCommands,
-                               Assets,
-                               Entity->TextureAabb,
-                               MM_M44f_Concat(T,S),
-                               Entity->Colors);
+                                   Assets,
+                                   Entity->TextureAabb,
+                                   MM_M44f_Concat(T,S),
+                                   Entity->Colors);
     
     
 }
@@ -73,13 +73,13 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
-    Entity->Colors.A = MM_Ease_InSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    Entity->Colors.A = EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
     MM_M44f T = MM_M44f_Translation(Entity->Position.x,
-                                    Entity->Position.y,
-                                    Entity->Position.z);
+                              Entity->Position.y,
+                              Entity->Position.z);
     MM_M44f S = MM_M44f_Scale(Entity->Scale.x, Entity->Scale.y, 1.f);
     MM_M44f TS = MM_M44f_Concat(T,S);
     Renderer_DrawQuad(RenderCommands, Entity->Colors, TS);
@@ -101,8 +101,8 @@ InitSplashMode(permanent_state* PermState) {
     Mode->Camera.Anchor = MM_V3f_Create(0.5f, 0.5f, 0.5f);
     Mode->Camera.Color = C4f_Create(0.f, 0.3f, 0.3f, 1.f);
     Mode->Camera.Dimensions = MM_V3f_Create(Game_DesignWidth,
-                                            Game_DesignHeight,
-                                            Game_DesignDepth);
+                                         Game_DesignHeight,
+                                         Game_DesignDepth);
     
     
     // NOTE(Momo): Create entities
