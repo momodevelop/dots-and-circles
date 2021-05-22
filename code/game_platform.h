@@ -37,13 +37,13 @@ struct platform_input {
 };
 
 
-static inline b32
+static inline b8
 Input_Init(platform_input* Input, arena* Arena) {
-    return U8Str_InitFromArena(&Input->Characters, Arena, 10);
+    return U8Str_New(&Input->Characters, Arena, 10);
 }
 
 
-static inline b32
+static inline b8
 Input_TryPushCharacterInput(platform_input* Input, char C) {
     if (C >= 32 && C <= 126) {
         U8Str_Push(&Input->Characters, C);
@@ -61,26 +61,26 @@ Input_Update(platform_input* Input) {
 }
 
 // before: 0, now: 1
-static inline b32 
+static inline b8 
 Button_IsPoked(platform_input_button Button) {
     return !Button.Before && Button.Now;
 }
 
 // before: 1, now: 0
-static inline b32
+static inline b8
 Button_IsReleased(platform_input_button Button) {
     return Button.Before && !Button.Now;
 }
 
 
 // before: X, now: 1
-static inline b32
+static inline b8
 Button_IsDown(platform_input_button Button) {
     return Button.Now;
 }
 
 // before: 1, now: 1
-static inline b32
+static inline b8
 Button_IsHeld(platform_input_button Button) {
     return Button.Before && Button.Now;
 }
@@ -150,7 +150,7 @@ struct platform_audio {
 
 // Game function typedefs
 // Returns true if still running, false if need to quit.
-#define GameUpdateFunc(Name) b32 Name(game_memory* GameMemory, \
+#define GameUpdateFunc(Name) b8 Name(game_memory* GameMemory, \
 platform_api* Platform, \
 mailbox* RenderCommands, \
 platform_input* Input, \

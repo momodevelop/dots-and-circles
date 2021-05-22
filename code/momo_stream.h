@@ -33,7 +33,7 @@ Stream_Reset(stream* S) {
     S->Current = 0;
 }
 
-static inline b32
+static inline b8
 Stream_IsEos(stream* S) {
     return S->Current >= S->ContentSize;
 }
@@ -108,7 +108,7 @@ Bitstream_Reset(bitstream* S) {
     S->Current = 0;
 }
 
-static inline b32
+static inline b8
 Bitstream_IsEos(bitstream* S) {
     return S->Current >= S->ContentSize;
 }

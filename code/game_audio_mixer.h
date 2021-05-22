@@ -11,8 +11,8 @@
 struct game_audio_mixer_instance {
     sound_id SoundId; // From Assets
     u32 CurrentOffset; // Current offset of the sound data
-    b32 IsLoop;
-    b32 IsPlaying;
+    b8 IsLoop;
+    b8 IsPlaying;
 };
 
 struct game_audio_mixer_handle {
@@ -26,20 +26,20 @@ struct game_audio_mixer {
     f32 Volume;
 };
 
-static inline b32
+static inline b8
 AudioMixer_Init(game_audio_mixer* Mixer,
                 f32 MasterVolume,
                 u32 MaxInstances,
                 arena* Arena) 
 {
     arena_mark Mark = Arena_Mark(Arena);
-    b32 Success = Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
+    b8 Success = Array_New(&Mixer->Instances, Arena, MaxInstances);
     if (!Success) {
         Arena_Revert(&Mark);
         return false;
     }
     
-    Success = List_InitFromArena(&Mixer->FreeList, Arena, MaxInstances);
+    Success = List_New(&Mixer->FreeList, Arena, MaxInstances);
     if (!Success) {
         Arena_Revert(&Mark);
         return false;
@@ -56,10 +56,10 @@ AudioMixer_Init(game_audio_mixer* Mixer,
     return true;
 }
 
-static inline b32
+static inline b8
 AudioMixer_Play(game_audio_mixer* Mixer, 
                 sound_id SoundId, 
-                b32 Loop,
+                b8 Loop,
                 game_audio_mixer_handle* OutHandle)
 {
     u32* Index = List_Last(&Mixer->FreeList);
@@ -82,7 +82,7 @@ AudioMixer_Play(game_audio_mixer* Mixer,
 }
 
 
-static inline b32
+static inline b8
 AudioMixer_Stop(game_audio_mixer* Mixer,
                 game_audio_mixer_handle Handle) 
 {

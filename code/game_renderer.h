@@ -19,7 +19,7 @@ Ground rules about this renderer.
 
 
 struct renderer_texture_handle {
-    b32 Success;
+    b8 Success;
     u32 Id;
 };
 

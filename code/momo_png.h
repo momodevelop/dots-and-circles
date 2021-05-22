@@ -23,7 +23,7 @@ struct png_context {
     stream Stream;
     arena* Arena; 
     
-    b32 IsImageInitialized;
+    b8 IsImageInitialized;
     stream ImageStream;
     stream DepressedImageStream;
     
@@ -146,10 +146,10 @@ Png_Huffman(arena* Arena,
     png_huffman Ret = {};
     
     Ret.CodeSymTableSize = CodeSymTableCap;
-    Ret.CodeSymTable = Arena_PushArray(u16, Arena, CodeSymTableCap);
+    Ret.CodeSymTable = Arena_PushArray<u16>(Arena, CodeSymTableCap);
     
     Ret.LenCountTableSize = LenCountTableCap;
-    Ret.LenCountTable = Arena_PushArray(u16, Arena, LenCountTableCap);
+    Ret.LenCountTable = Arena_PushArray<u16>(Arena, LenCountTableCap);
     
     // 1. Count the number of codes for each code length
     for (u32 Sym = 0; Sym < SymLenTableSize; ++Sym) 

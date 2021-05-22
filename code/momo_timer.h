@@ -34,12 +34,12 @@ Timer_Reset(timer* Timer) {
     Timer->Current = 0.f;
 }
 
-static inline b32
+static inline b8
 Timer_IsEnd(timer Timer) {
     return Timer.Current >= Timer.End;
 }
 
-static inline b32
+static inline b8
 Timer_IsBegin(timer Timer) {
     return Timer.Current <= 0.f;
 }

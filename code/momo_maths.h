@@ -17,10 +17,15 @@
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](u32 I) { Assert(I < Amt); return Elements[I]; }
 
-
+// Get the ratio of Value within the range [Min,Max] 
+// Return value Will be [0, 1]
+static inline f32
+Ratio(f32 Value, f32 Min, f32 Max) {
+    return (Value - Min)/(Max - Min); 
+}
 
 // NOTE(Momo): Common Functions
-static inline b32
+static inline b8
 F32_IsEqual(f32 L, f32 R) {
     f32 Test = AbsOf(L - R);
     return AbsOf(L - R) <= Epsilon32;
@@ -303,21 +308,21 @@ V2f_AngleBetween(v2f L, v2f R) {
     return Ret;
 }
 
-static inline b32
+static inline b8
 V2f_IsPerp(v2f L, v2f R) { 
     f32 LRDot = V2f_Dot(L,R);
     return F32_IsEqual(LRDot, 0); 
 }
 
 
-static inline b32 
+static inline b8 
 V2f_IsSameDir(v2f L, v2f R) { 
     f32 LRDot = V2f_Dot(L,R);
     return LRDot > 0; 
 }
 
 
-static inline b32 
+static inline b8 
 V2f_IsOppDir(v2f L, v2f R) { 
     f32 LRDot = V2f_Dot(L,R);
     return LRDot < 0;
@@ -476,21 +481,21 @@ V3f_AngleBetween(v3f L, v3f R) {
 }
 
 
-static inline b32
+static inline b8
 V3f_IsPerpendicular(v3f L, v3f R) { 
     f32 LRDot = V3f_Dot(L,R);
     return F32_IsEqual(LRDot, 0); 
 }
 
 
-static inline b32 
+static inline b8 
 V3f_IsSameDir(v3f L, v3f R) { 
     f32 LRDot = V3f_Dot(L,R);
     return LRDot > 0; 
 }
 
 
-static inline b32 
+static inline b8 
 V3f_IsOppDir(v3f L, v3f R) { 
     f32 LRDot = V3f_Dot(L,R);
     return LRDot < 0;
@@ -1040,4 +1045,6 @@ Aabb2f_To_Quad2f(aabb2f Aabb) {
     return Ret;
 }
 
+
+#undef GenerateSubscriptOp
 #endif 

@@ -15,7 +15,7 @@ enum game_mode_type {
 // Stuff in this state can be zero initialized with no problems
 // I.e. This state contains stuff that does not need to exist past a frame
 struct transient_state {
-    b32 IsInitialized;
+    b8 IsInitialized;
     
     arena Arena;
     assets Assets; 
@@ -24,8 +24,8 @@ struct transient_state {
 };
 
 struct permanent_state {
-    b32 IsInitialized;
-    b32 IsPaused;
+    b8 IsInitialized;
+    b8 IsPaused;
     f32 GameSpeed;
     
     game_mode_type CurrentGameMode;
@@ -37,13 +37,13 @@ struct permanent_state {
         struct game_mode_anime_test* AnimeTestMode;
     };
     
-    arena MainArena;
-    arena ModeArena;
+    arena Arena;
+    arena_mark ModeArena;
     
 };
 
 struct debug_state {
-    b32 IsInitialized;
+    b8 IsInitialized;
     arena Arena;
     
     debug_inspector Inspector;

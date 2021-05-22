@@ -1,6 +1,6 @@
 #include "../../code/momo.h"
 
-static inline b32
+static inline b8
 U8Str_Format(u8_str* Dest, u8_cstr Format, ...) {
     
 }

@@ -82,11 +82,11 @@ struct win32_game_memory {
 
 struct win32_state {
     arena Arena;
-    b32 IsRunning;
+    b8 IsRunning;
     
-    b32 IsRecordingInput;
+    b8 IsRecordingInput;
     HANDLE RecordingInputHandle;
-    b32 IsPlaybackInput;
+    b8 IsPlaybackInput;
     HANDLE PlaybackInputHandle;
     
     void* PlatformMemoryBlock;
@@ -403,7 +403,7 @@ Win32BeginPlaybackInput(win32_state* State, const char* Path) {
 }
 
 // NOTE(Momo): returns true if 'done' reading all input, false otherwise
-static inline b32 
+static inline b8 
 Win32PlaybackInput(win32_state* State, platform_input* Input) {
     DWORD BytesRead;
     BOOL Success = ReadFile(State->PlaybackInputHandle, 
@@ -422,7 +422,7 @@ struct win32_game_code {
     HMODULE Dll;
     game_update* GameUpdate;
     FILETIME LastWriteTime;
-    b32 IsValid;
+    b8 IsValid;
     
     char SrcFileName[MAX_PATH];
     char TempFileName[MAX_PATH];
@@ -476,7 +476,7 @@ Win32UnloadGameCode(win32_game_code* Code) {
     Code->GameUpdate = 0;
 }
 
-static inline b32
+static inline b8
 Win32IsGameCodeOutdated(win32_game_code* Code) {    
     // Check last modified date
     FILETIME LastWriteTime = Win32GetLastWriteTime(Code->SrcFileName);
@@ -537,7 +537,7 @@ Win32OpenglSetPixelFormat(HDC DeviceContext) {
 }
 
 
-static inline b32
+static inline b8
 Win32OpenglLoadWglExtensions() {
     WNDCLASSA WindowClass = {};
     // Er yeah...we have to create a 'fake' Opengl context 
@@ -717,7 +717,7 @@ OpenglDebugCallbackFunc(Win32OpenglDebugCallback) {
 };
 #endif
 
-static inline b32
+static inline b8
 Win32InitOpengl(win32_state* State,
                 HWND Window, 
                 v2u WindowDimensions) 
@@ -725,7 +725,7 @@ Win32InitOpengl(win32_state* State,
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
-    opengl* Opengl = Arena_PushStruct(opengl, &State->Arena);
+    opengl* Opengl = Arena_PushStruct<opengl>(&State->Arena);
     
     if (!Opengl) {
         Win32Log("[Win32::Opengl] Failed to allocate opengl\n"); 
@@ -1150,7 +1150,7 @@ Win32ProcessMessages(HWND Window,
             case WM_LBUTTONUP:
             case WM_LBUTTONDOWN: {
                 u32 Code = (u32)Msg.wParam;
-                b32 IsDown = Msg.message == WM_LBUTTONDOWN;
+                b8 IsDown = Msg.message == WM_LBUTTONDOWN;
                 Input->ButtonSwitch.Now = IsDown;
             } break;
             case WM_SYSKEYDOWN:
@@ -1158,7 +1158,7 @@ Win32ProcessMessages(HWND Window,
             case WM_KEYDOWN:
             case WM_KEYUP: {
                 u32 KeyCode = (u32)Msg.wParam;
-                b32 IsDown = Msg.message == WM_KEYDOWN;
+                b8 IsDown = Msg.message == WM_KEYDOWN;
                 switch(KeyCode) {
                     case VK_RETURN:{
                         Input->ButtonConfirm.Now = IsDown;
@@ -1494,7 +1494,7 @@ Win32FreeGameMemory(win32_game_memory* GameMemory) {
     Win32FreeMemory(GameMemory->Data);
 }
 
-static inline b32
+static inline b8
 Win32InitGameMemory(win32_game_memory* GameMemory,
                     u32 PermanentMemorySize,
                     u32 TransientMemorySize,
@@ -1539,7 +1539,7 @@ Win32FreeRenderCommands(mailbox* RenderCommands) {
 }
 
 
-static inline b32
+static inline b8
 Win32InitRenderCommands(mailbox* RenderCommands,
                         u32 RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
@@ -1639,7 +1639,7 @@ WinMain(HINSTANCE Instance,
     
     
     // Set sleep granularity to 1ms
-    b32 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
+    b8 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
     
     
     // Game Loop
@@ -1679,12 +1679,12 @@ WinMain(HINSTANCE Instance,
         if (GameCode.GameUpdate) 
         {
             f32 GameDeltaTime = TargetSecsPerFrame;
-            b32 IsGameRunning = GameCode.GameUpdate(&GameMemory.Head,
-                                                    &PlatformApi,
-                                                    &RenderCommands,
-                                                    &GameInput,
-                                                    &GameAudioOutput,
-                                                    GameDeltaTime);
+            b8 IsGameRunning = GameCode.GameUpdate(&GameMemory.Head,
+                                                   &PlatformApi,
+                                                   &RenderCommands,
+                                                   &GameInput,
+                                                   &GameAudioOutput,
+                                                   GameDeltaTime);
             State->IsRunning = IsGameRunning && State->IsRunning;
         }
         

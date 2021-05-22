@@ -16,9 +16,9 @@ struct array {
 };
 
 template<typename type>
-static inline b32
-Array_InitFromArena(array<type>* L, arena* Arena, u32 Count) {
-    type* Buffer = Arena_PushArray(type, Arena, Count);
+static inline b8
+Array_New(array<type>* L, arena* Arena, u32 Count) {
+    type* Buffer = Arena_PushArray<type>(Arena, Count);
     if (!Buffer) {
         return false;
     }
@@ -46,8 +46,15 @@ operator+(array<type> L, u32 Index) {
 
 //~ NOTE(Momo): list
 template<typename type>
-struct list : array<type> {
+struct list {
+    type* Data;
+    u32 Count;
     u32 Cap;
+    
+    auto& operator[](u32 Index) {
+        Assert(Index < Count); 
+        return Data[Index];
+    }
 };
 
 struct list_iterator {
@@ -64,9 +71,9 @@ List_Init(list<type>* L, type* Data, u32 Cap) {
 }
 
 template<typename type>
-static inline b32
-List_InitFromArena(list<type>* L, arena* Arena, u32 Cap) {
-    type* Buffer = Arena_PushArray(type, Arena, Cap);
+static inline b8
+List_New(list<type>* L, arena* Arena, u32 Cap) {
+    type* Buffer = Arena_PushArray<type>(Arena, Cap);
     if (!Buffer) {
         return false;
     }
@@ -89,11 +96,20 @@ List_Clear(list<type>* L) {
 // something important before that remained inside
 template<typename type>
 static inline type*
-List_Push(list<type>* L, type InitItem = {}) {
+List_Push(list<type>* L) {
     if(L->Count < L->Cap) {
         type* Ret = L->Data + L->Count++;
-        // ZII: Zero is initialization
-        (*Ret) = InitItem;
+        return Ret;
+    }
+    return nullptr;
+}
+
+template<typename type>
+static inline type*
+List_PushItem(list<type>* L, type Item) {
+    if(L->Count < L->Cap) {
+        type* Ret = L->Data + L->Count++;
+        (*Ret) = Item;
         return Ret;
     }
     return nullptr;
@@ -101,7 +117,7 @@ List_Push(list<type>* L, type InitItem = {}) {
 
 // NOTE(Momo): "Swap last element and remove"
 template<typename type>
-static inline b32
+static inline b8
 List_Slear(list<type>* L, u32 Index) {
     if (Index < L->Count) {
         L->Data[Index] = L->Data[L->Count-1];
@@ -114,7 +130,7 @@ List_Slear(list<type>* L, u32 Index) {
 }
 
 template<typename type>
-static inline b32
+static inline b8
 List_Pop(list<type>* L) {
     if (L->Count != 0) {
         --L->Count;
@@ -130,7 +146,7 @@ List_Last(list<type>* L) {
         return nullptr;
     }
     else {
-        return Array_Get(L, L->Count - 1);
+        return List_Get(L, L->Count - 1);
     }
     
 }
@@ -139,6 +155,25 @@ template<typename type>
 static inline u32
 List_Remaining(list<type>* L) {
     return L->Cap - L->Count;
+}
+
+
+
+template<typename type>
+static inline type*
+List_Get(list<type>* L, u32 Index) {
+    if(Index < L->Count) {
+        return L->Data + Index;
+    }
+    else {
+        return nullptr;
+    }
+}
+
+template<typename type>
+static inline type* 
+operator+(list<type> L, u32 Index) {
+    return List_Get(&L, Index);
 }
 
 //~ NOTE(Momo): Queue
@@ -165,9 +200,9 @@ Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
 }
 
 template<typename type>
-static inline b32
-Queue_InitFromArena(queue<type>* Q, arena* Arena, u32 Count) {
-    type* Buffer = Arena_PushArray(type, Arena, Count);
+static inline b8
+Queue_New(queue<type>* Q, arena* Arena, u32 Count) {
+    type* Buffer = Arena_PushArray<type>(Arena, Count);
     if (!Buffer) {
         return false;
     }
@@ -178,17 +213,17 @@ Queue_InitFromArena(queue<type>* Q, arena* Arena, u32 Count) {
 }
 
 template<typename type>
-static inline b32 
+static inline b8 
 Queue_IsEmpty(queue<type>* Q) {
     return Q->Begin == Q->Count || 
         Q->End == Q->Count;
 }
 
 template<typename type>
-static inline b32
+static inline b8
 Queue_IsFull(queue<type>* Q) {
-    b32 NormalCase = (Q->Begin == 0 && Q->End == Q->Count-1);
-    b32 BackwardCase = Q->End == (Q->Begin-1);
+    b8 NormalCase = (Q->Begin == 0 && Q->End == Q->Count-1);
+    b8 BackwardCase = Q->End == (Q->Begin-1);
     
     return !Queue_IsEmpty(Q) && (NormalCase || BackwardCase);
 }
@@ -223,7 +258,7 @@ Queue_Next(queue<type>* Q) {
 }
 
 template<typename type>
-static inline b32
+static inline b8
 Queue_Pop(queue<type>* Q) {
     if (Queue_IsEmpty(Q)) {
         return false;

@@ -90,7 +90,7 @@ operator+(array<type> L, usize I) {
 }
 
 template<typename type>
-static inline b32
+static inline b8
 operator==(array<type> Lhs, array<type> Rhs) { 
     if(Lhs.Count != Rhs.Count) {
         return false;

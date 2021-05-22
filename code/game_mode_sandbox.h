@@ -6,7 +6,7 @@
 struct game_mode_sandbox_bullet {
     v2f Position;
     circle2f HitCircle;
-    b32 IsHit;
+    b8 IsHit;
     v2f Velocity;
 };
 struct game_mode_sandbox {

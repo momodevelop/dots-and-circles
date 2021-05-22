@@ -7,16 +7,16 @@ struct arena {
     u32 Capacity;
 };
 
-static inline void
+static inline b8
 Arena_Init(arena* A, void* Memory, u32 Capacity) {
+    if (!Memory || Capacity == 0) {
+        return false;
+    }
     A->Memory = (u8*)Memory;
     A->Used = 0; 
     A->Capacity = Capacity;
-}
-
-static inline arena 
-Arena_Create(void* Memory, u32 Capacity) {
-    return { (u8*)Memory, 0, Capacity};
+    
+    return true;
 }
 
 static inline void 
@@ -25,8 +25,8 @@ Arena_Clear(arena* Arena) {
 }
 
 static inline u32
-Arena_Remaining(arena Arena) {
-    return Arena.Capacity - Arena.Used;
+Arena_Remaining(arena* Arena) {
+    return Arena->Capacity - Arena->Used;
 }
 
 
@@ -49,13 +49,20 @@ Arena_PushBlock(arena* Arena, u32 Size, u8 Alignment = alignof(void*)) {
     return ret;
 }
 
-#define Arena_PushArray(Type, Arena, Count) \
-(Type*)Arena_PushBlock((Arena), sizeof(Type)*(Count), alignof(Type));
+template<typename type>
+static inline type*
+Arena_PushArray(arena* A, u32 Count) {
+    return (type*)Arena_PushBlock(A, sizeof(type)*Count, alignof(type));
+}
 
-#define Arena_PushStruct(Type, Arena) \
-(Type*)Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
+template<typename type>
+static inline type*
+Arena_PushStruct(arena* A) {
+    return (type*)Arena_PushBlock(A, sizeof(type), alignof(type));
+}
 
 
+#if 0
 static inline arena
 Arena_SubArena(arena* SrcArena, u32 Capacity) {
     Assert(Capacity);
@@ -67,6 +74,7 @@ Arena_SubArena(arena* SrcArena, u32 Capacity) {
     Ret.Capacity = Capacity;
     return Ret;
 }
+#endif
 
 static inline void*
 Arena_BootupBlock(u32 StructSize,
@@ -74,15 +82,17 @@ Arena_BootupBlock(u32 StructSize,
                   void* Memory,
                   u32 MemorySize) 
 {
-    Assert(StructSize < MemorySize);
+    if (StructSize > MemorySize) {
+        return nullptr;
+    }
     void* ArenaMemory = (u8*)Memory + StructSize; 
     u32 ArenaMemorySize = MemorySize - StructSize;
     arena* ArenaPtr = (arena*)((u8*)Memory + OffsetToArena);
-    (*ArenaPtr) = Arena_Create(ArenaMemory, ArenaMemorySize);
-    
+    if (!Arena_Init(ArenaPtr, ArenaMemory, ArenaMemorySize)) {
+        return nullptr;
+    }
     return Memory;
 }
-
 
 #define Arena_BootupStruct(Type, Member, Memory, MemorySize) (Type*)Arena_BootupBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
 
@@ -108,6 +118,5 @@ Arena_Mark(arena* Arena) {
 static inline void
 Arena_Revert(arena_mark* Mark) {
     Mark->Arena->Used = Mark->OldUsed;
-    Mark->Arena = 0;
 }
 #endif

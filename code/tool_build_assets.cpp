@@ -35,7 +35,8 @@ int main() {
     }
     Defer { free(Memory); };
     
-    arena Arena = Arena_Create(Memory, Tba_MemorySize);
+    arena Arena = {};
+    Arena_Init(&Arena, Memory, Tba_MemorySize);
     
     //~ NOTE(Momo): Load font
     

@@ -70,7 +70,7 @@ struct wave {
     union {
         wave_pattern_spawn_n_for_duration PatternSpawnNForDuration;    
     };
-    b32 IsDone;
+    b8 IsDone;
 };
 
 struct player {
@@ -119,8 +119,6 @@ struct enemy {
 
 
 struct game_mode_main {
-    arena_mark ArenaMark;
-    
     player Player;
     game_camera Camera;
     
@@ -142,12 +140,13 @@ struct game_mode_main {
 #include "game_mode_main_update.h"
 #include "game_mode_main_render.h"
 
-static inline b32 
+static inline b8 
 InitMainMode(permanent_state* PermState,
              transient_state* TranState,
              debug_state* DebugState) 
 {
     game_mode_main* Mode = PermState->MainMode;
+    arena* ModeArena = PermState->ModeArena;
     
     // NOTE(Momo): Init camera
     {
@@ -159,24 +158,20 @@ InitMainMode(permanent_state* PermState,
                                              Game_DesignDepth);
     }
     
-    b32 Success = false;
-    Mode->ArenaMark = Arena_Mark(&PermState->ModeArena);
+    b8 Success = false;
     
-    Success = List_InitFromArena(&Mode->DotBullets, Mode->ArenaMark, DotCap);
+    Success = List_New(&Mode->DotBullets, ModeArena, DotCap);
     if (!Success) {
-        Arena_Revert(&Mode->ArenaMark);
         return false;
     }
     
-    Success = List_InitFromArena(&Mode->CircleBullets, Mode->ArenaMark, CircleCap);
+    Success = List_New(&Mode->CircleBullets, ModeArena, CircleCap);
     if (!Success) {
-        Arena_Revert(&Mode->ArenaMark);
         return false;
     }
     
-    Success = List_InitFromArena(&Mode->Enemies, Mode->ArenaMark, EnemyCap);
+    Success = List_New(&Mode->Enemies, ModeArena, EnemyCap);
     if (!Success) {
-        Arena_Revert(&Mode->ArenaMark);
         return false;
     }
     
@@ -201,15 +196,13 @@ InitMainMode(permanent_state* PermState,
     }
     Mode->Wave.IsDone = true;
     
-    Success = Queue_InitFromArena(&Mode->Particles, Mode->ArenaMark, 128);
+    Success = Queue_New(&Mode->Particles, ModeArena, 128);
     if (!Success) {
-        Arena_Revert(&Mode->ArenaMark);
         return false;
     }
     
     Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, false, &Mode->BgmHandle);
     if (!Success) {
-        Arena_Revert(&Mode->ArenaMark);
         return false;
     }
     

@@ -8,7 +8,7 @@ struct read_file_result
     u32 MemorySize;
 };
 
-static inline b32
+static inline b8
 ReadFileToMemory(arena* Arena, read_file_result* Result, const char* Filename) {
     FILE* File = {};
     if (fopen_s(&File, Filename, "rb") != 0) { 

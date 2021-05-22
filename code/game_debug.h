@@ -6,7 +6,7 @@
 
 
 struct debug_state {
-    b32 IsInitialized;
+    b8 IsInitialized;
     arena Arena;
     
     sdw

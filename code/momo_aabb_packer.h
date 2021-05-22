@@ -82,7 +82,7 @@ __AabbPacker_Sort(aabb2u* Aabbs,
 }
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
-static inline b32
+static inline b8
 AabbPacker_Pack(arena* Arena,
                 u32 TotalWidth,
                 u32 TotalHeight,
@@ -92,14 +92,14 @@ AabbPacker_Pack(arena* Arena,
 {
     arena_mark Scratch = Arena_Mark(Arena);
     Defer { Arena_Revert(&Scratch); };
-    auto* SortEntries = Arena_PushArray(sort_entry, Arena, AabbCount);
+    auto* SortEntries = Arena_PushArray<sort_entry>(Arena, AabbCount);
     
     __AabbPacker_Sort(Aabbs, SortEntries, AabbCount, SortType);
     
     
     u32 CurrentNodeCount = 0;
     
-    auto* Nodes = Arena_PushArray(aabb2u, Arena, AabbCount+1);
+    auto* Nodes = Arena_PushArray<aabb2u>(Arena, AabbCount+1);
     Nodes[CurrentNodeCount++] = Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
     
     for (u32 i = 0; i < AabbCount; ++i) {

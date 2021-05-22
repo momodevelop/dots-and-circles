@@ -9,10 +9,10 @@
 #include "momo_maths.h"
 #include "momo_colors.h"
 #include "momo_bitwise.h"
+#include "momo_easing.h"
 
 // The ones below need their own namespace prefixes
 #include "momo_bonk.h"
-#include "momo_easing.h"
 #include "momo_arena.h"
 #include "momo_timer.h"
 #include "momo_sort.h"

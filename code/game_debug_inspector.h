@@ -10,7 +10,7 @@
 #define DebugInspector_EntryLength 256
 
 struct debug_inspector {
-    b32 IsActive;
+    b8 IsActive;
     list<u8_str> Entries;
 };
 
@@ -18,10 +18,10 @@ static inline void
 DebugInspector_Init(debug_inspector* Inspector, arena* Arena) {
     Inspector->IsActive = false;
     list<u8_str>* Entries = &Inspector->Entries;
-    List_InitFromArena(Entries, Arena, DebugInspector_EntryCount);
+    List_New(Entries, Arena, DebugInspector_EntryCount);
     for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
         u8_str* Item = List_Push(Entries);
-        U8Str_InitFromArena(Item, Arena, DebugInspector_EntryCount);
+        U8Str_New(Item, Arena, DebugInspector_EntryCount);
     }
 }
 

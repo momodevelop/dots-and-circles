@@ -32,7 +32,7 @@ struct debug_console_line {
 };
 
 struct debug_console {
-    b32 IsActive;
+    b8 IsActive;
     
     v2f Position;
     
@@ -43,7 +43,7 @@ struct debug_console {
     // Maybe make an easing system?
     timer StartPopRepeatTimer;
     timer PopRepeatTimer;
-    b32 IsStartPop;
+    b8 IsStartPop;
     
     // Enter and Exit transitions for swag!
     timer TransitTimer;
@@ -63,12 +63,12 @@ DebugConsole_Init(debug_console* C,
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
-    List_InitFromArena(&C->Commands, Arena, DebugConsole_MaxCommands);
-    U8Str_InitFromArena(&C->InputLine.Text, Arena, DebugConsole_LineLength);
+    List_New(&C->Commands, Arena, DebugConsole_MaxCommands);
+    U8Str_New(&C->InputLine.Text, Arena, DebugConsole_LineLength);
     
-    Array_InitFromArena(&C->InfoLines, Arena, DebugConsole_InfoLineCount);
+    Array_New(&C->InfoLines, Arena, DebugConsole_InfoLineCount);
     for (u32 I = 0; I < C->InfoLines.Count; ++I) {
-        U8Str_InitFromArena(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
+        U8Str_New(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
     }
     
 }

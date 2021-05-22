@@ -52,13 +52,6 @@ typedef ptrdiff_t iptr;
 #define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
 #define Lerp(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
 
-// Get the ratio of Value within the range [Min,Max] 
-// Return value Will be [0, 1]
-static inline f32
-Ratio(f32 Value, f32 Min, f32 Max) {
-    return (Value - Min)/(Max - Min); 
-}
-
 
 
 // C-string
@@ -136,7 +129,7 @@ SiStrItoa(char* Dest, s32 Num) {
         return;
     }
     
-    b32 Negative = Num < 0;
+    b8 Negative = Num < 0;
     Num = AbsOf(Num);
     
     char* It = Dest;
@@ -165,7 +158,7 @@ SiStrItoa(char* Dest, s32 Num) {
 
 
 // Run-time system endianness check
-static inline b32 
+static inline b8 
 IsSystemBigEndian() {
     int n = 1;
     return (*(char*)&n != 1);

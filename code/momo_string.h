@@ -30,7 +30,7 @@ U8CStr_InitFromSiStr(u8_cstr* S, const char* SiStr) {
     U8CStr_Init(S, (u8*)SiStr, SiStrLen(SiStr));
 }
 
-static inline b32
+static inline b8
 U8CStr_Cmp(u8_cstr Lhs, u8_cstr Rhs) {
     if(Lhs.Count != Rhs.Count) {
         return false;
@@ -44,7 +44,7 @@ U8CStr_Cmp(u8_cstr Lhs, u8_cstr Rhs) {
 }
 
 
-static inline b32
+static inline b8
 U8CStr_CmpSiStr(u8_cstr Lhs, const char* Rhs) {
     for(u32 I = 0; I < Lhs.Count; ++I) {
         if (Lhs.Data[I] != Rhs[I]) {
@@ -87,7 +87,7 @@ U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
     for (;Max != Str.Count;) {
         Max = U8CStr_Find(Str, Delimiter, Min);
         
-        u8_cstr* Link = Arena_PushStruct(u8_cstr, Arena);
+        u8_cstr* Link = Arena_PushStruct<u8_cstr>(Arena);
         Assert(Link);
         U8CStr_SubString(Link, Str, Min, Max);
         
@@ -121,9 +121,9 @@ U8Str_Init(u8_str* S, u8* Buffer, u32 Capacity) {
 }
 
 
-static inline b32
-U8Str_InitFromArena(u8_str* S, arena* Arena, u32 Capacity) {
-    u8* Buffer = Arena_PushArray(u8, Arena, Capacity);
+static inline b8
+U8Str_New(u8_str* S, arena* Arena, u32 Capacity) {
+    u8* Buffer = Arena_PushArray<u8>(Arena, Capacity);
     if(!Buffer) {
         return false;
     }
@@ -134,7 +134,7 @@ U8Str_InitFromArena(u8_str* S, arena* Arena, u32 Capacity) {
     return true;
 }
 
-static inline b32
+static inline b8
 U8Str_Pop(u8_str* S) {
     if (S->Count <= 0) {
         return false;
@@ -148,7 +148,7 @@ U8Str_Remaining(u8_str* Buffer) {
     return Buffer->Cap - Buffer->Count;
 }
 
-static inline b32
+static inline b8
 U8Str_CopyCStr(u8_str* Dest, u8_cstr Src) {
     if (Src.Count > Dest->Cap) {
         return false;
@@ -160,13 +160,13 @@ U8Str_CopyCStr(u8_str* Dest, u8_cstr Src) {
     return true;
 }
 
-static inline b32
+static inline b8
 U8Str_Copy(u8_str* Dest, u8_str* Src) {
     return U8Str_CopyCStr(Dest, Src->CStr);
 }
 
 
-static inline b32
+static inline b8
 U8Str_NullTerm(u8_str* Dest) {
     if (Dest->Count < Dest->Cap) {
         Dest->Data[Dest->Count] = 0;
@@ -175,7 +175,7 @@ U8Str_NullTerm(u8_str* Dest) {
     return false;
 }
 
-static inline b32
+static inline b8
 U8Str_Push(u8_str* Dest, u8 Item) {
     if (Dest->Count < Dest->Cap) {
         Dest->Data[Dest->Count++] = Item;
@@ -184,7 +184,7 @@ U8Str_Push(u8_str* Dest, u8 Item) {
     return false;
 }
 
-static inline b32
+static inline b8
 U8Str_PushCStr(u8_str* Dest, u8_cstr Src) {
     if (Dest->Count + Src.Count <= Dest->Cap) {
         for ( u32 I = 0; I < Src.Count; ++I ) {
@@ -195,7 +195,7 @@ U8Str_PushCStr(u8_str* Dest, u8_cstr Src) {
     return false;
 }
 
-static inline b32
+static inline b8
 U8Str_PushStr(u8_str* Dest, u8_str* Src) {
     return U8Str_PushCStr(Dest, Src->CStr);
 }
@@ -205,7 +205,7 @@ U8Str_Clear(u8_str* Dest) {
     Dest->Count = 0;
 }
 
-static inline b32
+static inline b8
 U8Str_PushU32(u8_str* Dest, u32 Num) {
     if (Num == 0) {
         U8Str_Push(Dest, '0');
@@ -215,7 +215,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
     
     for(; Num != 0; Num /= 10) {
         s32 DigitToConvert = Num % 10;
-        b32 Success = U8Str_Push(Dest, (u8)(DigitToConvert + '0'));
+        b8 Success = U8Str_Push(Dest, (u8)(DigitToConvert + '0'));
         if (!Success) {
             return false;
         }
@@ -231,7 +231,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
     return true;
 }
 
-static inline b32
+static inline b8
 U8Str_PushS32(u8_str* Dest, s32 Num) {
     if (Num == 0) {
         if(!U8Str_Push(Dest, '0')) {
@@ -242,7 +242,7 @@ U8Str_PushS32(u8_str* Dest, s32 Num) {
     
     u32 StartPoint = Dest->Count; 
     
-    b32 Negative = Num < 0;
+    b8 Negative = Num < 0;
     Num = AbsOf(Num);
     
     for(; Num != 0; Num /= 10) {

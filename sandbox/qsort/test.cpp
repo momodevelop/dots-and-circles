@@ -3,14 +3,14 @@
 
 #include <stdio.h>
 
-static inline b32 
+static inline b8 
 foo(int Lhs, int Rhs) {
     return Lhs > Rhs;
 };
 
 
 template<typename type, typename comparer>
-static inline b32 
+static inline b8 
 boo(comparer Comparer) {	
     return Comparer(1,2);
 }

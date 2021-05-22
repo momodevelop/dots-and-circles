@@ -132,7 +132,7 @@ SdlGlDebugCallback(GLenum source,
 
 
 
-static inline b32 
+static inline b8 
 SdlCopyFile(const char* DestFilename, const char* SrcFilename) {
     SDL_RWops* DestFile = SDL_RWFromFile(DestFilename, "wb");
     SDL_RWops* SrcFile = SDL_RWFromFile(SrcFilename, "rb");
@@ -172,7 +172,7 @@ SdlUnloadGameCode(sdl_game_code* GameCode) {
     GameCode->Update = nullptr;
 }
 
-static inline b32
+static inline b8
 SdlLoadGameCode(sdl_game_code* GameCode, 
         const char* SrcDllFilename, 
         const char* TempDllFilename)
@@ -218,7 +218,7 @@ SdlGetFileSize(const char* Path) {
     return Ret;
 }
 
-static inline b32
+static inline b8
 SdlReadFile(void* Dest, u32 DestSize, const char* Path) {
     SDL_RWops * File = SDL_RWFromFile(Path, "rb");
     if (File == nullptr) {
@@ -430,7 +430,7 @@ int main(int argc, char* argv[]) {
     // TODO(Momo): What if we can't hit 60fps?
 
     // NOTE(Momo): Game Loop
-    b32 IsRunning = true;
+    b8 IsRunning = true;
     u64 LastCounter = SDL_GetPerformanceCounter();
     f32 TimeStepMultiplier = 1.f;
     while(IsRunning) {
@@ -464,7 +464,7 @@ int main(int argc, char* argv[]) {
                 case SDL_KEYUP: 
                 {
                     SDL_Keycode KeyCode = Event.key.keysym.sym;
-                    b32 IsDown = (Event.key.state == SDL_PRESSED);
+                    b8 IsDown = (Event.key.state == SDL_PRESSED);
                     switch(KeyCode) {
                         case SDLK_w: {
                             Input.ButtonUp.Now = IsDown; 

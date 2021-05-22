@@ -161,7 +161,7 @@ Assets_GetAtlasUV(assets* Assets,
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
 
-static inline b32
+static inline b8
 Assets_CheckSignature(void* Memory, u8_cstr Signature) {
     u8* MemoryU8 = (u8*)Memory;
     for (u32 I = 0; I < Signature.Count; ++I) {
@@ -198,7 +198,7 @@ Assets_ReadBlock(platform_file_handle* File,
 #define Assets_ReadStruct(Type, File, Platform, Arena, FileOffset) \
 (Type*)Assets_ReadBlock(File, Platform, Arena, FileOffset, sizeof(Type), alignof(Type))
 
-static inline b32
+static inline b8
 Assets_Init(assets* Assets,
             arena* Arena,
             platform_api* Platform) 
@@ -206,22 +206,22 @@ Assets_Init(assets* Assets,
     Platform->ClearTexturesFp();
     
     Assets->TextureCount = Texture_Count;
-    Assets->Textures = Arena_PushArray(texture, Arena, Texture_Count);
+    Assets->Textures = Arena_PushArray<texture>(Arena, Texture_Count);
     
     Assets->ImageCount = Image_Count;
-    Assets->Images = Arena_PushArray(image, Arena, Image_Count);
+    Assets->Images = Arena_PushArray<image>(Arena, Image_Count);
     
     Assets->FontCount = Font_Count;
-    Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
+    Assets->Fonts = Arena_PushArray<font>(Arena, Font_Count);
     
     Assets->AnimeCount = Anime_Count;
-    Assets->Animes = Arena_PushArray(anime, Arena, Anime_Count);
+    Assets->Animes = Arena_PushArray<anime>(Arena, Anime_Count);
     
     Assets->MsgCount = Msg_Count;
-    Assets->Msgs = Arena_PushArray(msg, Arena, Msg_Count);
+    Assets->Msgs = Arena_PushArray<msg>(Arena, Msg_Count);
     
     Assets->SoundCount = Sound_Count;
-    Assets->Sounds = Arena_PushArray(sound, Arena, Sound_Count);
+    Assets->Sounds = Arena_PushArray<sound>(Arena, Sound_Count);
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     if (AssetFile.Error) {

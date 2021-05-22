@@ -14,7 +14,7 @@ struct read_file_result {
 };
 
 
-static inline b32
+static inline b8
 Tba_ReadFileIntoMemory(read_file_result* Result,
                        arena* Arena, 
                        const char* Filename) {
@@ -41,7 +41,7 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
     return true;
 }
 
-static inline b32
+static inline b8
 Tba_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
     read_file_result ReadFileResult = {};
     if (!Tba_ReadFileIntoMemory(&ReadFileResult,

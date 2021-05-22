@@ -43,7 +43,7 @@ struct wav_load_result {
 };
 
 // NOTE(Momo): Will actually leave data into arena
-static inline b32 
+static inline b8 
 Wav_LoadFromMemory(wav_load_result* Result,
                    void* Memory, 
                    u32 MemorySize) 

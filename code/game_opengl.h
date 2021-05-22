@@ -6,7 +6,7 @@
 // Configuration
 #define Opengl_Max_Textures 8
 #define Opengl_Max_Entities 4096
-#define Opengl_RequiredMemory 
+
 // Opengl typedefs
 #define GL_TRUE                 1
 #define GL_FALSE                0
@@ -260,9 +260,6 @@ enum {
 };
 
 struct opengl {
-    b32 IsInitialized = true;
-    
-    
     // Bindings that needs to be filled by platform
     OpenglFunctionPtr(glEnable);
     OpenglFunctionPtr(glDisable); 
@@ -303,6 +300,7 @@ struct opengl {
     OpenglFunctionPtr(glDeleteTextures);
     OpenglFunctionPtr(glDebugMessageCallbackARB);
     
+    b8 IsInitialized;
     
     GLuint Buffers[OpenglVbo_Max]; 
     GLuint Shader;
@@ -389,7 +387,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
-        List_Push(&Opengl->Textures, DummyTexture);
+        List_PushItem(&Opengl->Textures, DummyTexture);
     }
     
     // NOTE(Momo): Blank texture setup
@@ -403,18 +401,18 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     1, 1, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     &Pixel);
-        List_Push(&Opengl->Textures, BlankTexture);
+        List_PushItem(&Opengl->Textures, BlankTexture);
     }
     
     
 }
 
-static inline b32
+static inline b8
 Opengl_Init(opengl* Opengl,
             arena* Arena,
             v2u WindowDimensions) 
 {
-    List_InitFromArena(&Opengl->Textures, Arena, Opengl_Max_Textures);
+    List_New(&Opengl->Textures, Arena, Opengl_Max_Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     
@@ -715,7 +713,7 @@ Opengl_AddTexture(opengl* Opengl,
     
     Ret.Id = Opengl->Textures.Count;
     Ret.Success = true;
-    List_Push(&Opengl->Textures, Entry);
+    List_PushItem(&Opengl->Textures, Entry);
     return Ret;
 }
 
