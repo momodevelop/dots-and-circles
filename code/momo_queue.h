@@ -17,12 +17,12 @@ struct queue {
 
 template<typename type>
 static inline b8
-Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCap) {
-    if (!Buffer || BufferCap < 0) {
+Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
+    if (!Buffer || BufferCount < 0) {
         return false;
     }
-    Q->Begin = Q->End = BufferCap;
-    Q->Cap = BufferCap;
+    Q->Begin = Q->End = BufferCount;
+    Q->Count = BufferCount;
     Q->Data = Buffer;
     
     return true;
@@ -30,13 +30,13 @@ Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCap) {
 
 template<typename type>
 static inline b8
-Queue_New(queue<type>* Q, arena* Arena, u32 Cap) {
-    type* Buffer = Arena_PushArray<type>(Arena, Cap);
+Queue_New(queue<type>* Q, arena* Arena, u32 Count) {
+    type* Buffer = Arena_PushArray<type>(Arena, Count);
     if (!Buffer) {
         return false;
     }
     
-    return Queue_Init(Q, Buffer, Cap);
+    return Queue_Init(Q, Buffer, Count);
 }
 
 template<typename type>
@@ -130,6 +130,43 @@ Queue_Get(queue<type>* Q, u32 Index) {
         else {
             return nullptr;
         }
+    }
+}
+
+template<typename type, typename callback, typename... args>
+static inline void
+Queue_ForEachSub(queue<type>* Q, u32 Begin, u32 End, callback Callback, args... Args) {
+    for (u32 I = Begin; I <= End; ++I) {
+        type* Item = Q->Data + I;
+        Callback(I, Item, Args...);
+    }
+}
+
+template<typename type, typename callback, typename... args>
+static inline void
+Queue_ForEach(queue<type>* Q, callback Callback, args... Args) {
+    if (Queue_IsEmpty(Q)) {
+        return;
+    }
+    
+    // Then update the living ones
+    if (Q->Begin <= Q->End) {
+        Queue_ForEachSub(Q, Q->Begin, Q->End Callback, Args...);
+    }
+    else {
+        Queue_ForEachSub(Q, Q->Begin, Q->Cap - 1, Callback, Args...);
+        Queue_ForEachSub(Q, 0, Q->End, Callback, Args...);
+    }
+    
+}
+
+template<typename type, typename callback, typename... args>
+static inline void
+Queue_PopUntil(queue<type>* Q, callback Callback, args... Args) {
+    particle * P = Queue_Next(Q);
+    while(P != nullptr && Callback(P, Args...)) {
+        Queue_Pop(Q);
+        P = Queue_Next(Q);
     }
 }
 

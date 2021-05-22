@@ -113,7 +113,18 @@ struct bullet {
 };
 
 struct enemy {
-	v2f Size; 
+    constexpr static f32 Size = 32.f; 
+    constexpr static f32 SpawnStateRotationSpeed = 100.f;
+    constexpr static f32 ActiveStateRotationSpeed = 2.f;
+    constexpr static f32 DieStateRotationSpeed = 1.f;
+    constexpr static f32 FireDuration = 0.1f;
+    constexpr static f32 LifeDuration = 10.f;
+    constexpr static f32 SpawnDuration = 0.5f;
+    constexpr static f32 DieDuration = 0.5f;
+    
+    f32 Rotation;
+    f32 RotationSpeed;
+    
 	v2f Position;
     
     enemy_firing_pattern_type FiringPatternType;
@@ -122,10 +133,10 @@ struct enemy {
     enemy_state State;
     
     f32 FireTimer;
-	constexpr static f32 FireDuration = 0.1f;
-    
     f32 LifeTimer;
-    constexpr static f32 LifeDuration = 10.f;
+    f32 SpawnTimer;
+    f32 DieTimer;
+    
 };
 
 
@@ -147,9 +158,14 @@ struct game_mode_main {
 };
 
 
-#include "game_mode_main_spawn.h"
-#include "game_mode_main_update.h"
-#include "game_mode_main_render.h"
+#include "game_mode_main_input.h"
+#include "game_mode_main_player.h"
+#include "game_mode_main_bullet.h"
+#include "game_mode_main_enemy.h"
+#include "game_mode_main_wave.h"
+#include "game_mode_main_particle.h"
+#include "game_mode_main_collision.h"
+#include "game_mode_main_debug.h"
 
 static inline b8 
 InitMainMode(permanent_state* PermState,
