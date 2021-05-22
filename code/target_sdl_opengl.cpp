@@ -1,4 +1,4 @@
-#include "thirdparty/sdl2/include/SDL_MM_Timer.h"
+#include "thirdparty/sdl2/include/SDL_timer.h"
 #if _WIN32
 #pragma comment(lib, "User32.lib")
 #include <windows.h>

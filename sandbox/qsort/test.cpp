@@ -17,16 +17,16 @@ boo(comparer Comparer) {
 
 int main() {
     int Arr[] = { 9,7,5,3,1,2,4,6,8,0 };
-    MM_Sort_Entry SortEntries[ArrayCount(Arr)];
+    sort_entry SortEntries[ArrayCount(Arr)];
     for (u32 I = 0; I < ArrayCount(Arr); ++I) {
-        SortEntries[I].key = f32(Arr[I]);
-        SortEntries[I].index = I;
+        SortEntries[I].Key = f32(Arr[I]);
+        SortEntries[I].Index = I;
     }
     
     Sort_QuickSort(SortEntries, ArrayCount(Arr));
     
     for (int I = 0; I < ArrayCount(Arr); ++I) {
-        printf("%d ", Arr[SortEntries[I].index]);
+        printf("%d ", Arr[SortEntries[I].Index]);
     }
     
     printf("\nHello World\n");

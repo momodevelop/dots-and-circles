@@ -41,12 +41,12 @@ struct debug_console {
     
     // Backspace (to delete character) related
     // Maybe make an easing system?
-    MM_Timer StartPopRepeatTimer;
-    MM_Timer PopRepeatTimer;
+    timer StartPopRepeatTimer;
+    timer PopRepeatTimer;
     b32 IsStartPop;
     
     // Enter and Exit transitions for swag!
-    MM_Timer TransitTimer;
+    timer TransitTimer;
     
     // List of commands
     MM_List<debug_console_command> Commands;
@@ -57,11 +57,11 @@ static inline void
 DebugConsole_Init(debug_console* C,
                   MM_Arena* Arena)
 {
-    C->TransitTimer = MM_Timer_Create(DebugConsole_TransitionDuration);
+    C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
     C->Position = MM_V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
-    C->StartPopRepeatTimer = MM_Timer_Create(DebugConsole_StartPopDuration);
-    C->PopRepeatTimer = MM_Timer_Create(DebugConsole_PopRepeatDuration); 
+    C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
+    C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
     MM_List_New(&C->Commands, Arena, DebugConsole_MaxCommands);
     MM_U8Str_New(&C->InputLine.Text, Arena, DebugConsole_LineLength);
@@ -134,7 +134,7 @@ DebugConsole_Update(debug_console* Console,
         MM_V2f StartPos = MM_V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
         MM_V2f EndPos = MM_V2f_Create(DebugConsole_EndPosX, DebugConsole_EndPosY);
         
-        f32 P = MM_Ease_InQuad(MM_Timer_Percent(Console->TransitTimer));
+        f32 P = MM_Ease_InQuad(Timer_Percent(Console->TransitTimer));
         MM_V2f Delta = MM_V2f_Sub(EndPos, StartPos); 
         
         MM_V2f DeltaP = MM_V2f_Mul(Delta, P);
@@ -142,7 +142,7 @@ DebugConsole_Update(debug_console* Console,
     }
     
     if (Console->IsActive) {
-        MM_Timer_Tick(&Console->TransitTimer, DeltaTime);
+        Timer_Tick(&Console->TransitTimer, DeltaTime);
         if (Input->Characters.count > 0 && 
             Input->Characters.count <= MM_U8Str_Remaining(&Console->InputLine.Text)) 
         {  
@@ -154,18 +154,18 @@ DebugConsole_Update(debug_console* Console,
             if(!Console->IsStartPop) {
                 DebugConsole_Pop(Console);
                 Console->IsStartPop = true;
-                MM_Timer_Reset(&Console->StartPopRepeatTimer);
-                MM_Timer_Reset(&Console->PopRepeatTimer);
+                Timer_Reset(&Console->StartPopRepeatTimer);
+                Timer_Reset(&Console->PopRepeatTimer);
             }
             else {
-                if (MM_Timer_IsEnd(Console->StartPopRepeatTimer)) {
-                    if(MM_Timer_IsEnd(Console->PopRepeatTimer)) {
+                if (Timer_IsEnd(Console->StartPopRepeatTimer)) {
+                    if(Timer_IsEnd(Console->PopRepeatTimer)) {
                         DebugConsole_Pop(Console);
-                        MM_Timer_Reset(&Console->PopRepeatTimer);
+                        Timer_Reset(&Console->PopRepeatTimer);
                     }
-                    MM_Timer_Tick(&Console->PopRepeatTimer, DeltaTime);
+                    Timer_Tick(&Console->PopRepeatTimer, DeltaTime);
                 }
-                MM_Timer_Tick(&Console->StartPopRepeatTimer, DeltaTime);
+                Timer_Tick(&Console->StartPopRepeatTimer, DeltaTime);
             }
         }
         else {
@@ -206,7 +206,7 @@ DebugConsole_Update(debug_console* Console,
         }
     }
     else if (!Console->IsActive) {
-        MM_Timer_Untick(&Console->TransitTimer, DeltaTime);
+        Timer_Untick(&Console->TransitTimer, DeltaTime);
     }
     
     
@@ -218,7 +218,7 @@ DebugConsole_Render(debug_console* Console,
                     mailbox* RenderCommands,
                     assets* Assets) 
 {
-    if (MM_Timer_IsBegin(Console->TransitTimer)) {
+    if (Timer_IsBegin(Console->TransitTimer)) {
         return;
     }
     font* Font = Assets->Fonts + Font_Default;
@@ -234,12 +234,12 @@ DebugConsole_Render(debug_console* Console,
     f32 PaddingWidth = Dimensions.W * 0.005f;
     {
         MM_M44f ScaleMatrix = MM_M44f_Scale(Dimensions.x, 
-                                            Dimensions.y, 
-                                            1.f);
+                                      Dimensions.y, 
+                                      1.f);
         
         MM_M44f PositionMatrix = MM_M44f_Translation(Console->Position.x,
-                                                     Console->Position.y,
-                                                     DebugConsole_PosZ);
+                                               Console->Position.y,
+                                               DebugConsole_PosZ);
         MM_M44f InfoBgTransform = MM_M44f_Concat(PositionMatrix, ScaleMatrix);
         Renderer_DrawQuad(RenderCommands, 
                           DebugConsole_InfoBgColor, 
@@ -249,8 +249,8 @@ DebugConsole_Render(debug_console* Console,
     {
         MM_M44f ScaleMatrix = MM_M44f_Scale(Dimensions.W, LineHeight, 0.f);
         MM_M44f PositionMatrix = MM_M44f_Translation(Console->Position.x, 
-                                                     Bottom + LineHeight * 0.5f,
-                                                     DebugConsole_PosZ+ 0.01f);
+                                               Bottom + LineHeight * 0.5f,
+                                               DebugConsole_PosZ+ 0.01f);
         
         MM_M44f InputBgTransform = MM_M44f_Concat(PositionMatrix, ScaleMatrix);
         Renderer_DrawQuad(RenderCommands, 

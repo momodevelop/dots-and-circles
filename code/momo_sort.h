@@ -17,67 +17,67 @@
 // If they need to go from biggest to smallest, they can just iterate backwards.
 
 // NOTE(Momo): 64-bits!
-struct MM_Sort_Entry {
-    f32 key;
-    u32 index;
+struct sort_entry {
+    f32 Key;
+    u32 Index;
 };
 
 static inline u32
-MM_Sort_Quick__Partition(MM_Sort_Entry* entries,
-                   u32 left_index, 
-                   u32 one_past_right_index) 
+QuickSortPartition(sort_entry* Arr,
+                   u32 LeftIndex, 
+                   u32 OnePastRightIndex) 
 {
     // Save the rightmost index as pivot
     // This frees up the right most index as a slot
-    MM_Sort_Entry pivot_value = entries[one_past_right_index - 1]; 
-    u32 smol_index = left_index;
-    u32 large_index = one_past_right_index - 1;
+    sort_entry PivotValue = Arr[OnePastRightIndex - 1]; 
+    u32 SmallIndex = LeftIndex;
+    u32 LargeIndex = OnePastRightIndex - 1;
     
-    while(large_index > smol_index) {
+    while(LargeIndex > SmallIndex) {
         // Check the value left of LargerIndex
-        // If it is bigger than pivot_value, shift it right
-        if (entries[large_index-1].key > pivot_value.key) {
-            entries[large_index] = entries[large_index - 1];
-            --large_index;
+        // If it is bigger than PivotValue, shift it right
+        if (Arr[LargeIndex-1].Key > PivotValue.Key) {
+            Arr[LargeIndex] = Arr[LargeIndex - 1];
+            --LargeIndex;
         }
         
-        // If the value left of large_index is smaller than pivot,
-        // swap positions with the value in smol_index
+        // If the value left of LargeIndex is smaller than pivot,
+        // swap positions with the value in SmallIndex
         else {
-            Swap(MM_Sort_Entry, entries[large_index-1], entries[smol_index]);
-            ++smol_index;
+            Swap(sort_entry, Arr[LargeIndex-1], Arr[SmallIndex]);
+            ++SmallIndex;
         }
     }
     
-    entries[large_index] = pivot_value;
-    return large_index;
+    Arr[LargeIndex] = PivotValue;
+    return LargeIndex;
     
 }
 
 // NOTE(Momo): This is done inplace
 static inline void 
-MM_Sort_QuickSortRange(MM_Sort_Entry* entries, 
-               u32 left_index, 
-               u32 one_past_right_index) 
+QuickSortRange(sort_entry* Arr, 
+               u32 LeftIndex, 
+               u32 OnePastRightIndex) 
 {
-    if (one_past_right_index - left_index <= 1) {
+    if (OnePastRightIndex - LeftIndex <= 1) {
         return;
     }
-    u32 pivot_index = MM_Sort_Quick__Partition(entries, 
-                                        left_index, 
-                                        one_past_right_index);
+    u32 PivotIndex = QuickSortPartition(Arr, 
+                                        LeftIndex, 
+                                        OnePastRightIndex);
     
-    MM_Sort_QuickSortRange(entries, left_index, pivot_index);
-    MM_Sort_QuickSortRange(entries, pivot_index + 1, one_past_right_index);
+    QuickSortRange(Arr, LeftIndex, PivotIndex);
+    QuickSortRange(Arr, PivotIndex + 1, OnePastRightIndex);
     
     // Don't need to concatenate! O_o
 }
 
 static inline void
-MM_Sort_QuickSort(MM_Sort_Entry* entries, 
-          u32 entry_count) 
+QuickSort(sort_entry* Arr, 
+          u32 ArrCount) 
 {
-    MM_Sort_QuickSortRange(entries, 0, entry_count);
+    QuickSortRange(Arr, 0, ArrCount);
 }
 
 #endif //MM_SORT_H
