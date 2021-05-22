@@ -34,7 +34,7 @@ CreateArray(u32* Elements, usize Count) {
 
 template<typename type>
 static inline array<type> 
-CreateArray(MM_Arena* Arena, usize Count) {
+CreateArray(arena* Arena, usize Count) {
     type* Buffer = PushSiArray<type>(Arena, Count);
     return CreateArray(Buffer, Count);
     

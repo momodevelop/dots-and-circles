@@ -30,9 +30,9 @@ static inline b32
 AudioMixer_Init(game_audio_mixer* Mixer,
                 f32 MasterVolume,
                 u32 MaxInstances,
-                MM_Arena* Arena) 
+                arena* Arena) 
 {
-    MM_ArenaMark Mark = MM_Arena_Mark(Arena);
+    arena_mark Mark = MM_Arena_Mark(Arena);
     b32 Success = Array_InitFromArena(&Mixer->Instances, Arena, MaxInstances);
     if (!Success) {
         MM_Arena_Revert(&Mark);

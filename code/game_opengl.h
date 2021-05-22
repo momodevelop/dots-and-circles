@@ -411,7 +411,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
 
 static inline b32
 Opengl_Init(opengl* Opengl,
-            MM_Arena* Arena,
+            arena* Arena,
             v2u WindowDimensions) 
 {
     List_InitFromArena(&Opengl->Textures, Arena, Opengl_Max_Textures);

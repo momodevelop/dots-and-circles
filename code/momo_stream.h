@@ -23,7 +23,7 @@ Stream_Create(stream* Stream, void* Memory, u32 MemorySize) {
 
 
 static inline b8
-Stream_CreateFromArena(stream* Stream, MM_Arena* Arena, u32 Capacity) {
+Stream_CreateFromArena(stream* Stream, arena* Arena, u32 Capacity) {
     void* Memory = MM_Arena_PushBlock(Arena, Capacity);
     return Stream_Create(Stream, Memory, Capacity); 
 } 
@@ -98,7 +98,7 @@ Bitstream_Create(bitstream* Stream, void* Memory, u32 MemorySize) {
 
 
 static inline b8
-Bitstream_CreateFromArena(bitstream* Stream, MM_Arena* Arena, u32 Capacity) {
+Bitstream_CreateFromArena(bitstream* Stream, arena* Arena, u32 Capacity) {
     void* Memory = MM_Arena_PushBlock(Arena, Capacity);
     return Bitstream_Create(Stream, Memory, Capacity); 
 } 

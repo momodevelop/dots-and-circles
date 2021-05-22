@@ -119,7 +119,7 @@ struct enemy {
 
 
 struct game_mode_main {
-    MM_ArenaMark ArenaMark;
+    arena_mark ArenaMark;
     
     player Player;
     game_camera Camera;

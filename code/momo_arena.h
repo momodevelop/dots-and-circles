@@ -1,14 +1,14 @@
 #ifndef __MOMO_ARENA__
 #define __MOMO_ARENA__
 
-struct MM_Arena {
+struct arena {
     u8* memory;
     u32 used;
     u32 capacity;
 };
 
 static inline b8
-MM_Arena_Init(MM_Arena* A, void* memory, u32 capacity) {
+MM_Arena_Init(arena* A, void* memory, u32 capacity) {
     if (!memory || !capacity) {
         return false;
     }
@@ -20,18 +20,18 @@ MM_Arena_Init(MM_Arena* A, void* memory, u32 capacity) {
 
 
 static inline void 
-MM_Arena_Clear(MM_Arena* a) {
+MM_Arena_Clear(arena* a) {
     a->used = 0;
 }
 
 static inline u32
-MM_Arena_Remaining(MM_Arena a) {
+MM_Arena_Remaining(arena a) {
     return a.capacity - a.used;
 }
 
 
 static inline void* 
-MM_Arena_PushBlock(MM_Arena* a, u32 size, u8 alignment = alignof(void*)) {
+MM_Arena_PushBlock(arena* a, u32 size, u8 alignment = alignof(void*)) {
     if (size == 0 || alignment == 0) {
         return Null;
     }
@@ -56,10 +56,10 @@ MM_Arena_PushBlock(MM_Arena* a, u32 size, u8 alignment = alignof(void*)) {
 (Type*)MM_Arena_PushBlock((Arena), sizeof(Type), alignof(Type));
 
 
-static inline MM_Arena
-MM_Arena_SubArena(MM_Arena* srcArena, u32 capacity) {
+static inline arena
+MM_Arena_SubArena(arena* srcArena, u32 capacity) {
     Assert(capacity);
-    MM_Arena ret = {};
+    arena ret = {};
     
     // We don't care about alignment, so it should be 1.
     ret.memory = (u8*)MM_Arena_PushBlock(srcArena, capacity, 1);
@@ -77,7 +77,7 @@ MM_Arena_BootupBlock(u32 structSize,
     Assert(structSize < memorySize);
     void* arenaMemory = (u8*)memory + structSize; 
     u32 arenaMemorySize = memorySize - structSize;
-    MM_Arena* arenaPtr = (MM_Arena*)((u8*)memory + offsetToArena);
+    arena* arenaPtr = (arena*)((u8*)memory + offsetToArena);
     
     MM_Arena_Init(arenaPtr, arenaMemory, arenaMemorySize);
     
@@ -89,26 +89,26 @@ MM_Arena_BootupBlock(u32 structSize,
 
 
 // NOTE(Momo): "Temporary memory" API
-struct MM_ArenaMark {
-    MM_Arena* arena;
-    u32 oldUsed;
+struct arena_mark {
+    arena* Arena;
+    u32 Oldused;
     
-    operator MM_Arena*() {
-        return arena;
+    operator arena*() {
+        return Arena;
     }
 };
 
-static inline MM_ArenaMark
-MM_Arena_Mark(MM_Arena* Arena) {
-    MM_ArenaMark Ret = {};
-    Ret.arena = Arena;
-    Ret.oldUsed = Arena->used;
+static inline arena_mark
+MM_Arena_Mark(arena* Arena) {
+    arena_mark Ret = {};
+    Ret.Arena = Arena;
+    Ret.Oldused = Arena->used;
     return Ret;
 }
 
 static inline void
-MM_Arena_Revert(MM_ArenaMark* Mark) {
-    Mark->arena->used = Mark->oldUsed;
-    Mark->arena = 0;
+MM_Arena_Revert(arena_mark* Mark) {
+    Mark->Arena->used = Mark->Oldused;
+    Mark->Arena = 0;
 }
 #endif

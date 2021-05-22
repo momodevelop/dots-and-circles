@@ -81,7 +81,7 @@ struct win32_game_memory {
 };
 
 struct win32_state {
-    MM_Arena Arena;
+    arena Arena;
     b32 IsRunning;
     
     b32 IsRecordingInput;

@@ -55,7 +55,7 @@ struct debug_console {
 
 static inline void
 DebugConsole_Init(debug_console* C,
-                  MM_Arena* Arena)
+                  arena* Arena)
 {
     C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     

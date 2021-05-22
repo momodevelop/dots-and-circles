@@ -17,7 +17,7 @@ struct array {
 
 template<typename type>
 static inline b32
-Array_InitFromArena(array<type>* L, MM_Arena* Arena, u32 Count) {
+Array_InitFromArena(array<type>* L, arena* Arena, u32 Count) {
     type* Buffer = MM_Arena_PushArray(type, Arena, Count);
     if (!Buffer) {
         return False;
@@ -72,7 +72,7 @@ List_Init(list<type>* L, type* Data, u32 Cap) {
 
 template<typename type>
 static inline b32
-List_InitFromArena(list<type>* L, MM_Arena* Arena, u32 Cap) {
+List_InitFromArena(list<type>* L, arena* Arena, u32 Cap) {
     type* Buffer = MM_Arena_PushArray(type, Arena, Cap);
     if (!Buffer) {
         return False;
@@ -190,7 +190,7 @@ Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
 
 template<typename type>
 static inline b32
-Queue_InitFromArena(queue<type>* Q, MM_Arena* Arena, u32 Count) {
+Queue_InitFromArena(queue<type>* Q, arena* Arena, u32 Count) {
     type* Buffer = MM_Arena_PushArray(type, Arena, Count);
     if (!Buffer) {
         return False;

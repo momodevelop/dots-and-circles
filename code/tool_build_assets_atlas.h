@@ -52,7 +52,7 @@ Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-Tba_GenerateAtlas(MM_Arena* Arena, 
+Tba_GenerateAtlas(arena* Arena, 
                   aabb2u* Aabbs, 
                   void* UserDatas[],
                   u32 AabbCount, 
@@ -71,7 +71,7 @@ Tba_GenerateAtlas(MM_Arena* Arena,
         auto Type = *(atlas_context_type*)UserDatas[I];
         switch(Type) {
             case AtlasContextType_Image: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 Defer { MM_Arena_Revert(&Scratch); };
                 
                 auto* Context = (atlas_context_image*)UserDatas[I];
@@ -114,7 +114,7 @@ Tba_GenerateAtlas(MM_Arena* Arena,
                 if (TextureDimensions == 0) 
                     continue;
                 
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 u8* FontTexture = (u8*)MM_Arena_PushBlock(Arena,TextureDimensions*Channels); 
                 if (!FontTexture) {
                     return Null;

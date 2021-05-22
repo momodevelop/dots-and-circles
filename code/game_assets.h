@@ -175,7 +175,7 @@ Assets_CheckSignature(void* Memory, u8_cstr Signature) {
 static inline void*
 Assets_ReadBlock(platform_file_handle* File,
                  platform_api* Platform,
-                 MM_Arena* Arena,
+                 arena* Arena,
                  u32* FileOffset,
                  u32 BlockSize,
                  u8 BlockAlignment)
@@ -200,7 +200,7 @@ Assets_ReadBlock(platform_file_handle* File,
 
 static inline b32
 Assets_Init(assets* Assets,
-            MM_Arena* Arena,
+            arena* Arena,
             platform_api* Platform) 
 {
     Platform->ClearTexturesFp();
@@ -235,7 +235,7 @@ Assets_Init(assets* Assets,
     
     // Check file signaure
     {        
-        MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+        arena_mark Scratch = MM_Arena_Mark(Arena);
         Defer{ MM_Arena_Revert(&Scratch); };
         
         u8_cstr Signature = {};
@@ -243,7 +243,7 @@ Assets_Init(assets* Assets,
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
                                                Platform,
-                                               Scratch,
+                                               Scratch.Arena,
                                                &CurFileOffset,
                                                (u32)Signature.Count,
                                                1);
@@ -261,7 +261,7 @@ Assets_Init(assets* Assets,
         u32* FileEntryCountPtr = Assets_ReadStruct(u32,
                                                    &AssetFile,
                                                    Platform,
-                                                   Scratch,
+                                                   Scratch.Arena,
                                                    &CurFileOffset);
         if (FileEntryCountPtr == Null) {
             Platform->LogFp("[Assets] Cannot get file entry count\n");
@@ -277,13 +277,13 @@ Assets_Init(assets* Assets,
         // NOTE(Momo): Read header
         asset_file_entry FileEntry = {};
         {
-            MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+            arena_mark Scratch = MM_Arena_Mark(Arena);
             Defer{ MM_Arena_Revert(&Scratch); };
             
             auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
                                                    &AssetFile,
                                                    Platform,
-                                                   Scratch,
+                                                   Scratch.Arena,
                                                    &CurFileOffset);
             if (FileEntryPtr == Null) {
                 Platform->LogFp("[Assets] Cannot get file entry\n");
@@ -294,13 +294,13 @@ Assets_Init(assets* Assets,
         
         switch(FileEntry.Type) {
             case AssetType_Texture: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 Defer{ MM_Arena_Revert(&Scratch); };
                 
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile, 
                                                       Platform, 
-                                                      Scratch,
+                                                      Scratch.Arena,
                                                       &CurFileOffset);              
                 if (FileTexture == Null) {
                     Platform->LogFp("[Assets] Error getting texture\n");
@@ -316,7 +316,7 @@ Assets_Init(assets* Assets,
                 
                 void* Pixels = Assets_ReadBlock(&AssetFile, 
                                                 Platform,
-                                                Scratch, 
+                                                Scratch.Arena, 
                                                 &CurFileOffset,
                                                 TextureSize,
                                                 1);
@@ -333,14 +333,14 @@ Assets_Init(assets* Assets,
                 }
             } break;
             case AssetType_Image: { 
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 Defer{ MM_Arena_Revert(&Scratch); };
                 
                 auto* FileImage = 
                     Assets_ReadStruct(asset_file_image,
                                       &AssetFile, 
                                       Platform, 
-                                      Scratch,
+                                      Scratch.Arena,
                                       &CurFileOffset);              
                 
                 if (FileImage == Null) {
@@ -353,13 +353,13 @@ Assets_Init(assets* Assets,
                 Image->TextureId = FileImage->TextureId;
             } break;
             case AssetType_Font: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 Defer{ MM_Arena_Revert(&Scratch); };
                 
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
                                                    Platform,
-                                                   Scratch,
+                                                   Scratch.Arena,
                                                    &CurFileOffset);
                 
                 if (FileFont == Null) {
@@ -373,13 +373,13 @@ Assets_Init(assets* Assets,
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 Defer{ MM_Arena_Revert(&Scratch); };
                 
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
                                                         Platform,
-                                                        Scratch,
+                                                        Scratch.Arena,
                                                         &CurFileOffset);
                 
                 
@@ -397,13 +397,13 @@ Assets_Init(assets* Assets,
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 Defer{ MM_Arena_Revert(&Scratch); };
                 
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
                                                           Platform,
-                                                          Scratch,
+                                                          Scratch.Arena,
                                                           &CurFileOffset);
                 if (FileFontKerning == Null) {
                     Platform->LogFp("[Assets] Error getting font kerning\n");
@@ -418,12 +418,12 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Sound: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 
                 auto* File = Assets_ReadStruct(asset_file_sound,
                                                &AssetFile,
                                                Platform,
-                                               Scratch,
+                                               Scratch.Arena,
                                                &CurFileOffset);
                 
                 if (File == Null) { 
@@ -449,12 +449,12 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Message: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 
                 auto* File = Assets_ReadStruct(asset_file_msg,
                                                &AssetFile,
                                                Platform,
-                                               Scratch,
+                                               Scratch.Arena,
                                                &CurFileOffset);
                 if (File == Null) { 
                     Platform->LogFp("[Assets] Msg is null"); 
@@ -483,12 +483,12 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Anime: {
-                MM_ArenaMark Scratch = MM_Arena_Mark(Arena);
+                arena_mark Scratch = MM_Arena_Mark(Arena);
                 
                 auto* File = Assets_ReadStruct(asset_file_anime,
                                                &AssetFile,
                                                Platform,
-                                               Scratch,
+                                               Scratch.Arena,
                                                &CurFileOffset);
                 
                 if (File == Null) { 
