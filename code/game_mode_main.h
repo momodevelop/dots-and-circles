@@ -1,9 +1,8 @@
 #ifndef GAME_MODE_MAIN_H
 #define GAME_MODE_MAIN_H
 
-#define CircleCap 128
-#define DotCap 128
-#define EnemyCap 128
+#define CircleCap 1024
+#define DotCap 1024
 #define ParticleCap 256
 
 #define ZLayPlayer 0.f
@@ -34,32 +33,7 @@ enum mood_type {
     MoodType_Count,
 };
 
-enum enemy_state {
-    EnemyState_Spawning,
-    EnemyState_Active,
-    EnemyState_Dying
-        
-};
-enum enemy_mood_pattern_type {
-    EnemyMoodPatternType_Dot,
-    EnemyMoodPatternType_Circle,
-    EnemyMoodPatternType_Both,
-    
-    EnemyMoodPatternType_Count,
-};
-
-enum enemy_firing_pattern_type  {
-    EnemyFiringPatternType_Homing,
-    
-    EnemyFiringPatternType_Count,
-};
-
-enum enemy_movement_type {
-    EnemyMovementType_Static,
-    
-    EnemyMovementType_Count,
-};
-
+#include "game_mode_main_enemy.h"
 
 // Wave
 enum wave_pattern_type {
@@ -111,32 +85,6 @@ struct bullet {
 	circle2f HitCircle; 
 };
 
-struct enemy {
-    constexpr static f32 Size = 32.f; 
-    constexpr static f32 SpawnStateRotationSpeed = 100.f;
-    constexpr static f32 ActiveStateRotationSpeed = 2.f;
-    constexpr static f32 DieStateRotationSpeed = 1.f;
-    constexpr static f32 FireDuration = 0.1f;
-    constexpr static f32 LifeDuration = 10.f;
-    constexpr static f32 SpawnDuration = 0.5f;
-    constexpr static f32 DieDuration = 0.5f;
-    
-    f32 Rotation;
-    f32 RotationSpeed;
-    
-	v2f Position;
-    
-    enemy_firing_pattern_type FiringPatternType;
-    enemy_mood_pattern_type MoodPatternType;
-    enemy_movement_type MovementType;
-    enemy_state State;
-    
-    f32 FireTimer;
-    f32 LifeTimer;
-    f32 SpawnTimer;
-    f32 DieTimer;
-    
-};
 
 
 struct game_mode_main {
@@ -160,7 +108,7 @@ struct game_mode_main {
 #include "game_mode_main_input.h"
 #include "game_mode_main_player.h"
 #include "game_mode_main_bullet.h"
-#include "game_mode_main_enemy.h"
+#include "game_mode_main_enemy.cpp"
 #include "game_mode_main_wave.h"
 #include "game_mode_main_particle.h"
 #include "game_mode_main_collision.h"

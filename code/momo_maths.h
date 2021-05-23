@@ -797,6 +797,15 @@ M22f_ConcatV2f(m22f L, v2f R) {
     return Ret;
 }
 
+static inline m22f 
+operator*(m22f L, m22f R) {
+    return M22f_Concat(L,R);
+}
+
+static inline v2f 
+operator*(m22f L, v2f R) {
+    return M22f_ConcatV2f(L,R);
+}
 
 static inline m22f 
 M22f_Identity() {

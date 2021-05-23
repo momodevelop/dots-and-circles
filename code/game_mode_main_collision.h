@@ -26,11 +26,9 @@ UpdateCollision(game_mode_main* Mode,
                                                                                     BVel);
         
         if (Slear) {
-            v2f SpawnPos = B->Position;
-            SpawnParticle(Mode,
-                          Assets,
-                          SpawnPos,
-                          5);
+            v2f VectorToBullet = V2f_Normalize(B->Position - Player->Position);
+            v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
+            SpawnParticle(Mode, Assets, SpawnPos, 5);
         }
         
         return Slear;

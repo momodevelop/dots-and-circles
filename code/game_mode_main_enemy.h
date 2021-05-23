@@ -3,145 +3,90 @@
 #ifndef GAME_MODE_MAIN_ENEMY_H
 #define GAME_MODE_MAIN_ENEMY_H
 
-static inline void
-SpawnEnemy(game_mode_main* Mode, 
-           assets* Assets, 
-           v2f Position,
-           enemy_mood_pattern_type MoodPatternType,
-           enemy_firing_pattern_type FiringPatternType, 
-           enemy_movement_type MovementType) 
-{
-    enemy* Enemy = List_Push(&Mode->Enemies);
-    Enemy->Position = Position;
-    
-    Enemy->FireTimer = 0.f;
-    Enemy->LifeTimer = 0.f;
-    
-    Enemy->FiringPatternType = FiringPatternType;
-    Enemy->MoodPatternType = MoodPatternType;
-    Enemy->MovementType = MovementType;
-    Enemy->SpawnTimer = 0.f;
-    Enemy->DieTimer = 0.f;
-    Enemy->State = EnemyState_Spawning;
-    
-}
+#define EnemyCap 128
 
 
-static inline void
-UpdateEnemyActiveBehaviour(enemy* Enemy, player* Player, game_mode_main* Mode, assets* Assets, f32 DeltaTime) {
-    // Movement
-    switch( Enemy->MovementType ) {
-        case EnemyMovementType_Static:
-        // Do nothing
-        break;
-        default: {
-            Assert(false);
-        }
-    }
-    
-    // Rotation
-    Enemy->Rotation += Enemy->RotationSpeed * DeltaTime;
-    Enemy->RotationSpeed += (Enemy->ActiveStateRotationSpeed - Enemy->RotationSpeed) * 0.9f;
-    
-    // Fire
-    Enemy->FireTimer += DeltaTime;
-    if (Enemy->FireTimer > Enemy->FireDuration) {       
-        mood_type MoodType = {};
-        switch (Enemy->MoodPatternType) {
-            case EnemyMoodPatternType_Dot: {
-                MoodType = MoodType_Dot;
-            } break;
-            case EnemyMoodPatternType_Circle: {
-                MoodType = MoodType_Circle;
-            } break;
-            default: {
-                Assert(false);
-            }
-        }
+
+//~ NOTE(Momo): Enemy States
+enum enemy_state {
+    EnemyState_Spawning,
+    EnemyState_Active,
+    EnemyState_Dying
         
-        v2f Dir = {};
-        switch (Enemy->FiringPatternType) {
-            case EnemyFiringPatternType_Homing: {
-                Dir = Player->Position - Enemy->Position;
-            } break;
-            default: {
-                Assert(false);
-            }
-        }
-        SpawnBullet(Mode, Assets, Enemy->Position, Dir, 200.f, MoodType);
-        Enemy->FireTimer = 0.f;
-    }
+};
+struct enemy_state_spawn {
+    f32 Timer;
+    constexpr static f32 Duration = 0.5f;
+};
+
+struct enemy_state_dying {
+    f32 Timer;
+    constexpr static f32 Duration = 0.5f;
+};
+
+struct enemy_state_active {
+    f32 Timer;
+    constexpr static f32 Duration = 10.f;
+};
+
+//~ NOTE(Momo): Enemy movement patterns
+enum enemy_movement_type {
+    EnemyMovementType_Static,
     
-    // Life time
-    Enemy->LifeTimer += DeltaTime;
-    if (Enemy->LifeTimer > Enemy->LifeDuration) {
-        Enemy->State = EnemyState_Dying;
-    }
-}
+    EnemyMovementType_Count,
+};
 
-static inline void 
-UpdateEnemies(game_mode_main* Mode,
-              assets* Assets,
-              f32 DeltaTime) 
-{
-    player* Player = &Mode->Player;
-    auto SlearIfLamb = [&](enemy* Enemy) {
-        switch(Enemy->State) {
-            case EnemyState_Spawning: {
-                Enemy->SpawnTimer += DeltaTime;
-                Enemy->Rotation += DeltaTime * Enemy->SpawnStateRotationSpeed;
-                if (Enemy->SpawnTimer >= Enemy->SpawnDuration) {
-                    Enemy->State = EnemyState_Active;
-                    Enemy->SpawnTimer = Enemy->SpawnDuration;
-                }
-            } break;
-            case EnemyState_Active: {
-                UpdateEnemyActiveBehaviour(Enemy, Player, Mode, Assets, DeltaTime);
-                
-            } break;
-            case EnemyState_Dying: {
-                Enemy->DieTimer += DeltaTime;
-                Enemy->Rotation += DeltaTime * Enemy->DieStateRotationSpeed;
-            } break;
-        }
-        return Enemy->DieTimer >= Enemy->DieDuration;
-    };
-    List_ForEachSlearIf(&Mode->Enemies, SlearIfLamb);
+struct enemy_movement_none{};
+
+//~ NOTE(Momo): Enemy shoot patterns
+
+enum enemy_shoot_type  {
+    EnemyShootType_Homing,
+    EnemyShootType_8Directions,
     
-}
+    EnemyFiringPatternType_Count,
+};
 
-static inline void
-RenderEnemies(game_mode_main* Mode, 
-              assets* Assets,
-              mailbox* RenderCommands) 
-{
-    u32 CurrentCount = 0;
-    auto ForEachLamb = [&](enemy* Enemy){
-        f32 Offset = 0.001f * CurrentCount++;
-        f32 Size = Enemy->Size;
-        switch(Enemy->State) {
-            case EnemyState_Spawning: {
-                f32 Ease = EaseOutQuad(Enemy->SpawnTimer/Enemy->SpawnDuration);
-                Size = Enemy->Size * Ease;
-            } break;
-            case EnemyState_Dying: {
-                f32 Ease = 1.f - Enemy->DieTimer/Enemy->DieDuration;
-                Size = Enemy->Size * Ease;
-            }
-        }
-        m44f S = M44f_Scale(Size, Size, 1.f);
-        m44f R = M44f_RotationZ(Enemy->Rotation);
-        m44f T = M44f_Translation(Enemy->Position.X,
-                                  Enemy->Position.Y,
-                                  ZLayEnemy + Offset);
-        
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Image_Enemy,
-                                   T*R*S, 
-                                   Color_White);
+struct enemy_shoot_homing {
+    f32 Timer;
+    f32 Duration;
+    mood_type Mood;
+};
+
+struct enemy_shoot_8dir {
+    f32 Timer;
+    f32 Duration;
+    mood_type Mood;
+};
+
+//~ 
+struct enemy {
+    constexpr static f32 Size = 32.f; 
+    constexpr static f32 SpawnStateRotationSpeed = 100.f;
+    constexpr static f32 ActiveStateRotationSpeed = 2.f;
+    constexpr static f32 DieStateRotationSpeed = 1.f;
+    
+    f32 Rotation;
+    f32 RotationSpeed;
+    
+	v2f Position;
+    
+    enemy_state State;
+    union {
+        enemy_state_spawn StateSpawn;
+        enemy_state_active StateActive;
+        enemy_state_dying StateDying;
     };
-    List_ForEach(&Mode->Enemies, ForEachLamb);
-}
+    
+    enemy_movement_type MovementType;
+    union {
+        enemy_movement_none MovementNone;
+    };
+    enemy_shoot_type ShootType;
+    union {
+        enemy_shoot_homing ShootHoming;
+        enemy_shoot_8dir Shoot8Dir;
+    };
+};
 
-#endif //GAME_MODE_MAIN_ENEMY_H
+#endif 

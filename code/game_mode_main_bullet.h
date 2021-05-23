@@ -4,12 +4,12 @@
 #define GAME_MODE_MAIN_BULLET_H
 
 static inline void
-SpawnBullet(game_mode_main* Mode, 
-            assets* Assets, 
-            v2f Position, 
-            v2f Direction, 
-            f32 Speed, 
-            mood_type Mood) 
+Bullet_Spawn(game_mode_main* Mode, 
+             assets* Assets, 
+             v2f Position, 
+             v2f Direction, 
+             f32 Speed, 
+             mood_type Mood) 
 {
     bullet* B = nullptr;
     switch (Mood) {

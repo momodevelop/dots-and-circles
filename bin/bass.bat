@@ -15,7 +15,7 @@ SET CommonCompilerFlags=-MT -WX -W4 -wd4189 -wd4702 -wd4201 -wd4505 -wd4996 -wd4
 SET CommonCompilerFlags=-DSLOW -DINTERNAL  %CommonCompilerFlags%
 
 pushd %BuildDir%
-cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cpp
+cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cxx
 
 :End
 

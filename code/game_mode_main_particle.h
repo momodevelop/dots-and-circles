@@ -20,7 +20,6 @@ SpawnParticle(game_mode_main* Mode,
         P->Direction = V2f_Normalize(P->Direction);
         P->Timer = 0.f;
         P->Speed = Rng_Between(&Mode->Rng, P->SpeedMin, P->SpeedMax);
-        
     }
 }
 

@@ -3,8 +3,6 @@
 #ifndef GAME_MODE_MAIN_WAVE_H
 #define GAME_MODE_MAIN_WAVE_H
 
-
-
 static inline void
 UpdateWaves(game_mode_main* Mode, 
             assets* Assets,
@@ -23,8 +21,9 @@ UpdateWaves(game_mode_main* Mode,
                 Pattern->Timer = 0.f;
                 Pattern->Duration = 30.f;
             } break;
-            default: 
-            Assert(false);
+            default: {
+                Assert(false);
+            }
         }
         Mode->Wave.IsDone = false;
     }
@@ -39,14 +38,13 @@ UpdateWaves(game_mode_main* Mode,
                     v2f Pos = 
                         V2f_Create(Rng_Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
                                    Rng_Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
-                    auto MoodType = (enemy_mood_pattern_type)Rng_Choice(&Mode->Rng, MoodType_Count);
                     
-                    SpawnEnemy(Mode, 
-                               Assets,
-                               Pos,
-                               MoodType,
-                               EnemyFiringPatternType_Homing,
-                               EnemyMovementType_Static);
+                    
+                    Enemy_Spawn(Mode, 
+                                Assets,
+                                Pos,
+                                EnemyShootType_8Directions,
+                                EnemyMovementType_Static);
                     
                     Pattern->SpawnTimer = 0.f;
                 }
