@@ -3,13 +3,11 @@
 - Log to text file
 - Quaternions?
 - Introspection?
-- queue -> circular array
-- ForEachSlearIf for list
 
 # Game
-- platform_audio to control sounds
-	-
-
+- Player death
+- Restructure waves
+- Score system?
 - Enemy (...32x32?)
 
 # Game assets tool
