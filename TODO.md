@@ -4,6 +4,7 @@
 - Quaternions?
 - Introspection?
 - queue -> circular array
+- ForEachSlearIf for list
 
 # Game
 - platform_audio to control sounds

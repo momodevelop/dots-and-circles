@@ -37,34 +37,21 @@ SpawnBullet(game_mode_main* Mode,
 }
 
 static inline void
-UpdateBulletsSub(list<bullet>* L,
-                 f32 DeltaTime) 
-{
-    for(u32 I = 0; I < L->Count;) {
-        bullet* B = List_Get(L, I);
-        
-        f32 SpeedDt = B->Speed * DeltaTime;
-        v2f Velocity = V2f_Mul(B->Direction, SpeedDt);
-        B->Position = V2f_Add(B->Position, Velocity);
-        
-        if (B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
-            B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
-            B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
-            B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius) {
-            List_Slear(L, I);
-            continue;
-        }
-        ++I;
-    }
-    
-}
-
-static inline void
 UpdateBullets(game_mode_main* Mode,
               f32 DeltaTime) 
 {
-    UpdateBulletsSub(&Mode->DotBullets, DeltaTime);
-    UpdateBulletsSub(&Mode->CircleBullets, DeltaTime);
+    auto SlearIfLamb = [&](bullet* B) {
+        B->Position += B->Direction * B->Speed * DeltaTime;
+        
+        return B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
+            B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
+            B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
+            B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius;
+    };
+    
+    List_ForEachSlearIf(&Mode->DotBullets, SlearIfLamb);
+    List_ForEachSlearIf(&Mode->CircleBullets, SlearIfLamb);
+    
 }
 
 static inline void
@@ -75,56 +62,27 @@ RenderBullets(game_mode_main* Mode,
     // Bullet Rendering.
     // NOTE(Momo): Circles are in front of Dots and are therefore 'nearer'.
     // Thus we have to render Dots first before Circles.
-    
-    // Render Dots
-    {
-        f32 LayerOffset = 0.f;
-        image* Image = Assets->Images + Image_BulletDot;
-        texture* Texture = Assets->Textures + Image->TextureId;
-        for (u32 I = 0; I < Mode->DotBullets.Count; ++I) {
-            bullet* DotBullet = Mode->DotBullets.Data + I;
-            m44f S = M44f_Scale(DotBullet->Size.X, 
-                                DotBullet->Size.Y, 
-                                1.f);
-            
-            m44f T = M44f_Translation(DotBullet->Position.X,
-                                      DotBullet->Position.Y,
-                                      ZLayDotBullet + LayerOffset);
-            
-            Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_BulletDot,
-                                       M44f_Concat(T,S), 
-                                       Color_White);
-            LayerOffset += 0.01f;
-            
-        }
+    f32 LayerOffset = 0.f;
+    auto ForEachLamb = [&](bullet* B, image_id Image) {
+        m44f S = M44f_Scale(B->Size.X, 
+                            B->Size.Y, 
+                            1.f);
         
-    }
-    
-    // Render Circles
-    {
-        f32 LayerOffset = 0.f;
-        for (u32 I = 0; I < Mode->CircleBullets.Count; ++I) {
-            bullet* CircleBullet = Mode->CircleBullets.Data + I;
-            m44f S = M44f_Scale(CircleBullet->Size.X, 
-                                CircleBullet->Size.Y, 
-                                1.f);
-            
-            m44f T = M44f_Translation(CircleBullet->Position.X,
-                                      CircleBullet->Position.Y,
-                                      ZLayCircleBullet + LayerOffset);
-            
-            Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_BulletCircle,
-                                       M44f_Concat(T,S), 
-                                       Color_White);
-            LayerOffset += 0.01f;
-            
-        }
+        m44f T = M44f_Translation(B->Position.X,
+                                  B->Position.Y,
+                                  ZLayBullet + LayerOffset);
         
-    }
+        Draw_TexturedQuadFromImage(RenderCommands,
+                                   Assets,
+                                   Image,
+                                   M44f_Concat(T,S), 
+                                   Color_White);
+        LayerOffset += 0.01f;
+    };
+    
+    
+    List_ForEach(&Mode->DotBullets, ForEachLamb, Image_BulletDot);
+    List_ForEach(&Mode->CircleBullets, ForEachLamb, Image_BulletCircle);
     
     
     

@@ -7,8 +7,7 @@
 #define ParticleCap 256
 
 #define ZLayPlayer 0.f
-#define ZLayDotBullet 10.f
-#define ZLayCircleBullet 15.f
+#define ZLayBullet 10.f
 #define ZLayEnemy 20.f
 #define ZLayParticles 25.f
 

@@ -138,10 +138,10 @@ operator+(list<type> L, u32 Index) {
 
 template<typename type, typename callback, typename... args>
 static inline void
-List_SlearIf(list<type>* L, callback Callback, args... Args) {
+List_ForEachSlearIf(list<type>* L, callback Callback, args... Args) {
     for (u32 I = 0; I < L->Count;) {
         type* Item = List_Get(L, I);
-        if (Callback(L, I, Item, Args...)) {
+        if (Callback(Item, Args...)) {
             List_Slear(L, I);
             continue;
         }
@@ -154,8 +154,9 @@ static inline void
 List_ForEach(list<type>* L, callback Callback, args... Args) {
     for (u32 I = 0; I < L->Count; ++I) {
         type* Item = List_Get(L, I);
-        Callback(L, I, Item, Args...);
+        Callback(Item, Args...);
     }
 }
+
 
 #endif //MOMO_LIST_H

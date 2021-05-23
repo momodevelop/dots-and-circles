@@ -17,12 +17,12 @@ struct queue {
 
 template<typename type>
 static inline b8
-Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
-    if (!Buffer || BufferCount < 0) {
+Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCap) {
+    if (!Buffer || BufferCap < 0) {
         return false;
     }
-    Q->Begin = Q->End = BufferCount;
-    Q->Count = BufferCount;
+    Q->Begin = Q->End = BufferCap;
+    Q->Cap = BufferCap;
     Q->Data = Buffer;
     
     return true;
@@ -30,13 +30,13 @@ Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCount) {
 
 template<typename type>
 static inline b8
-Queue_New(queue<type>* Q, arena* Arena, u32 Count) {
-    type* Buffer = Arena_PushArray<type>(Arena, Count);
+Queue_New(queue<type>* Q, arena* Arena, u32 Cap) {
+    type* Buffer = Arena_PushArray<type>(Arena, Cap);
     if (!Buffer) {
         return false;
     }
     
-    return Queue_Init(Q, Buffer, Count);
+    return Queue_Init(Q, Buffer, Cap);
 }
 
 template<typename type>
@@ -138,7 +138,7 @@ static inline void
 Queue_ForEachSub(queue<type>* Q, u32 Begin, u32 End, callback Callback, args... Args) {
     for (u32 I = Begin; I <= End; ++I) {
         type* Item = Q->Data + I;
-        Callback(I, Item, Args...);
+        Callback(Item, Args...);
     }
 }
 
@@ -151,7 +151,7 @@ Queue_ForEach(queue<type>* Q, callback Callback, args... Args) {
     
     // Then update the living ones
     if (Q->Begin <= Q->End) {
-        Queue_ForEachSub(Q, Q->Begin, Q->End Callback, Args...);
+        Queue_ForEachSub(Q, Q->Begin, Q->End, Callback, Args...);
     }
     else {
         Queue_ForEachSub(Q, Q->Begin, Q->Cap - 1, Callback, Args...);

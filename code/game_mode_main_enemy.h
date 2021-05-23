@@ -85,10 +85,7 @@ UpdateEnemies(game_mode_main* Mode,
               f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
-    for (u32 I = 0; I < Mode->Enemies.Count;) 
-    {
-        enemy* Enemy = Mode->Enemies + I;
-        
+    auto SlearIfLamb = [&](enemy* Enemy) {
         switch(Enemy->State) {
             case EnemyState_Spawning: {
                 Enemy->SpawnTimer += DeltaTime;
@@ -97,25 +94,19 @@ UpdateEnemies(game_mode_main* Mode,
                     Enemy->State = EnemyState_Active;
                     Enemy->SpawnTimer = Enemy->SpawnDuration;
                 }
-                ++I;
             } break;
             case EnemyState_Active: {
                 UpdateEnemyActiveBehaviour(Enemy, Player, Mode, Assets, DeltaTime);
-                ++I;
+                
             } break;
             case EnemyState_Dying: {
                 Enemy->DieTimer += DeltaTime;
                 Enemy->Rotation += DeltaTime * Enemy->DieStateRotationSpeed;
-                if (Enemy->DieTimer >= Enemy->DieDuration) {
-                    Enemy->DieTimer = Enemy->DieDuration;
-                    List_Slear(&Mode->Enemies, I);
-                    continue;
-                }
-                ++I;
             } break;
         }
-    }
-    
+        return Enemy->DieTimer >= Enemy->DieDuration;
+    };
+    List_ForEachSlearIf(&Mode->Enemies, SlearIfLamb);
     
 }
 
@@ -124,11 +115,9 @@ RenderEnemies(game_mode_main* Mode,
               assets* Assets,
               mailbox* RenderCommands) 
 {
-    for(u32 I = 0; I < Mode->Enemies.Count; ++I )
-    {
-        enemy* Enemy = Mode->Enemies + I;
-        f32 Offset = 0.001f * I;
-        
+    u32 CurrentCount = 0;
+    auto ForEachLamb = [&](enemy* Enemy){
+        f32 Offset = 0.001f * CurrentCount++;
         f32 Size = Enemy->Size;
         switch(Enemy->State) {
             case EnemyState_Spawning: {
@@ -151,7 +140,8 @@ RenderEnemies(game_mode_main* Mode,
                                    Image_Enemy,
                                    T*R*S, 
                                    Color_White);
-    }
+    };
+    List_ForEach(&Mode->Enemies, ForEachLamb);
 }
 
 #endif //GAME_MODE_MAIN_ENEMY_H
