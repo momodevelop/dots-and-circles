@@ -4,7 +4,7 @@
 #define GAME_MODE_MAIN_DEBUG_H
 
 static inline void 
-RenderDebugLines(game_mode_main* Mode, mailbox* RenderCommands){
+Main_RenderDebugLines(game_mode_main* Mode, mailbox* RenderCommands){
     circle2f Circle = {};
     Circle.Origin = Mode->Player.Position;
     Circle.Radius = Mode->Player.HitCircle.Radius;

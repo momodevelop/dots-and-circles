@@ -104,9 +104,9 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
 }
 
 static inline void 
-UpdateEnemies(game_mode_main* Mode,
-              assets* Assets,
-              f32 DeltaTime) 
+Main_UpdateEnemies(game_mode_main* Mode,
+                   assets* Assets,
+                   f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
     auto SlearIfLamb = [&](enemy* Enemy) {
@@ -138,9 +138,9 @@ UpdateEnemies(game_mode_main* Mode,
 }
 
 static inline void
-RenderEnemies(game_mode_main* Mode, 
-              assets* Assets,
-              mailbox* RenderCommands) 
+Main_RenderEnemies(game_mode_main* Mode, 
+                   assets* Assets,
+                   mailbox* RenderCommands) 
 {
     u32 CurrentCount = 0;
     auto ForEachLamb = [&](enemy* Enemy){

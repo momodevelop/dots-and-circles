@@ -4,6 +4,7 @@ project_name = "4coder custom";
 patterns = {
 "*.c",
 "*.cpp",
+"*.cxx",
 "*.h",
 "*.m",
 "*.mm",

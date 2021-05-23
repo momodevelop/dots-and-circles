@@ -5,8 +5,6 @@
 
 #define EnemyCap 128
 
-
-
 //~ NOTE(Momo): Enemy States
 enum enemy_state {
     EnemyState_Spawning,

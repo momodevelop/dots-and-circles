@@ -12,19 +12,6 @@
 
 #define ZLayDebug 40.f
 
-struct particle {
-    constexpr static f32 Duration = 0.25f;
-    constexpr static f32 Alpha = 0.8f;
-    constexpr static f32 Size = 10.f;
-    constexpr static f32 SpeedMin = 10.f;
-    constexpr static f32 SpeedMax = 20.f;
-    
-    f32 Timer;
-    v2f Position;
-    v2f Direction;
-    f32 Speed;
-};
-
 
 enum mood_type {
     MoodType_Dot,
@@ -34,58 +21,10 @@ enum mood_type {
 };
 
 #include "game_mode_main_enemy.h"
-
-// Wave
-enum wave_pattern_type {
-    WavePatternType_SpawnNForDuration,   // Spawns N enemies at a time
-};
-
-struct wave_pattern_spawn_n_for_duration {
-    u32 EnemiesPerSpawn;
-    f32 SpawnTimer;
-    f32 SpawnDuration;
-    f32 Timer;
-    f32 Duration;
-};
-
-struct wave {
-    wave_pattern_type Type;
-    union {
-        wave_pattern_spawn_n_for_duration PatternSpawnNForDuration;    
-    };
-    b8 IsDone;
-};
-
-struct player {
-    // NOTE(Momo): Rendering
-    f32 DotImageAlpha;
-    f32 DotImageAlphaTarget;
-    f32 DotImageTransitionTimer;
-    f32 DotImageTransitionDuration;
-    
-    v2f Size;
-    
-	// Collision
-    circle2f HitCircle;
-    
-    // Physics
-    v2f Position;
-    v2f PrevPosition;
-    
-    // Gameplay
-    mood_type MoodType;
-};
-
-struct bullet {
-    v2f Size;
-    mood_type MoodType;
-    v2f Direction;
-	v2f Position;
-	f32 Speed;
-	circle2f HitCircle; 
-};
-
-
+#include "game_mode_main_player.h"
+#include "game_mode_main_bullet.h"
+#include "game_mode_main_wave.h"
+#include "game_mode_main_particle.h"
 
 struct game_mode_main {
     player Player;
@@ -105,19 +44,18 @@ struct game_mode_main {
 };
 
 
-#include "game_mode_main_input.h"
-#include "game_mode_main_player.h"
-#include "game_mode_main_bullet.h"
+#include "game_mode_main_player.cpp"
+#include "game_mode_main_bullet.cpp"
 #include "game_mode_main_enemy.cpp"
-#include "game_mode_main_wave.h"
-#include "game_mode_main_particle.h"
-#include "game_mode_main_collision.h"
-#include "game_mode_main_debug.h"
+#include "game_mode_main_wave.cpp"
+#include "game_mode_main_particle.cpp"
+#include "game_mode_main_collision.cpp"
+#include "game_mode_main_debug.cpp"
 
 static inline b8 
-InitMainMode(permanent_state* PermState,
-             transient_state* TranState,
-             debug_state* DebugState) 
+Main_Init(permanent_state* PermState,
+          transient_state* TranState,
+          debug_state* DebugState) 
 {
     game_mode_main* Mode = PermState->MainMode;
     arena* ModeArena = PermState->ModeArena;
@@ -188,30 +126,34 @@ InitMainMode(permanent_state* PermState,
 
 
 static inline void
-UpdateMainMode(permanent_state* PermState, 
-               transient_state* TranState,
-               debug_state* DebugState,
-               mailbox* RenderCommands, 
-               platform_input* Input,
-               f32 DeltaTime) 
-{// NOTE(Momo): jj
+Main_Update(permanent_state* PermState, 
+            transient_state* TranState,
+            debug_state* DebugState,
+            mailbox* RenderCommands, 
+            platform_input* Input,
+            f32 DeltaTime) 
+{
     game_mode_main* Mode = PermState->MainMode;
     Camera_Set(&Mode->Camera, RenderCommands);
     
     assets* Assets = &TranState->Assets;
-    UpdateInput(Mode, Input);
-    UpdatePlayer(Mode, DeltaTime);    
-    UpdateBullets(Mode, DeltaTime);
-    UpdateWaves(Mode, Assets, DeltaTime);
-    UpdateEnemies(Mode, Assets, DeltaTime); 
-    UpdateCollision(Mode, Assets, DeltaTime);
-    UpdateParticles(Mode, DeltaTime);
     
-    RenderPlayer(Mode, Assets, RenderCommands);
-    RenderBullets(Mode, Assets, RenderCommands);
-    RenderEnemies(Mode, Assets, RenderCommands);
-    RenderParticles(Mode, Assets, RenderCommands);
-    //RenderDebugLines(Mode, RenderCommands);
+    // NOTE(Momo): Update
+    Main_UpdateInput(Mode, Input);
+    Main_UpdatePlayer(Mode, DeltaTime);    
+    Main_UpdateBullets(Mode, DeltaTime);
+    Main_UpdateWaves(Mode, Assets, DeltaTime);
+    Main_UpdateEnemies(Mode, Assets, DeltaTime); 
+    Main_UpdateCollision(Mode, Assets, DeltaTime);
+    Main_UpdateParticles(Mode, DeltaTime);
+    
+    
+    // NOTE(Momo): Render
+    Main_RenderPlayer(Mode, Assets, RenderCommands);
+    Main_RenderBullets(Mode, Assets, RenderCommands);
+    Main_RenderEnemies(Mode, Assets, RenderCommands);
+    Main_RenderParticles(Mode, Assets, RenderCommands);
+    //Main_RenderDebugLines(Mode, RenderCommands);
     
     u8_cstr Buffer = {};
     U8CStr_InitFromSiStr(&Buffer, "Dots: ");

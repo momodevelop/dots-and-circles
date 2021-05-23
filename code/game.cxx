@@ -176,7 +176,7 @@ GameUpdateFunc(GameUpdate)
             case GameModeType_Main: {
                 PermState->MainMode = 
                     Arena_PushStruct<game_mode_main>(ModeArena); 
-                if (!InitMainMode(PermState, TranState, DebugState)){
+                if (!Main_Init(PermState, TranState, DebugState)){
                     return false;
                 }
             } break;
@@ -224,12 +224,12 @@ GameUpdateFunc(GameUpdate)
                              DeltaTime);
         } break;
         case GameModeType_Main: {
-            UpdateMainMode(PermState, 
-                           TranState,
-                           DebugState,
-                           RenderCommands, 
-                           Input, 
-                           DeltaTime);
+            Main_Update(PermState, 
+                        TranState,
+                        DebugState,
+                        RenderCommands, 
+                        Input, 
+                        DeltaTime);
         } break; 
         case GameModeType_Sandbox: {
             UpdateSandboxMode(PermState, 

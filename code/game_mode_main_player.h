@@ -3,55 +3,24 @@
 #ifndef GAME_MODE_MAIN_PLAYER_H
 #define GAME_MODE_MAIN_PLAYER_H
 
-static inline void 
-UpdatePlayer(game_mode_main* Mode, 
-             f32 DeltaTime) 
-{
-    player* Player = &Mode->Player; 
-    Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
-                                 Player->DotImageAlphaTarget, 
-                                 Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
+struct player {
+    // NOTE(Momo): Rendering
+    f32 DotImageAlpha;
+    f32 DotImageAlphaTarget;
+    f32 DotImageTransitionTimer;
+    f32 DotImageTransitionDuration;
     
-    Player->DotImageTransitionTimer += DeltaTime;
-    Player->DotImageTransitionTimer = 
-        Clamp(Player->DotImageTransitionTimer, 
-              0.f, 
-              Player->DotImageTransitionDuration);
+    v2f Size;
     
-}
-
-static inline void 
-RenderPlayer(game_mode_main* Mode,
-             assets* Assets,
-             mailbox* RenderCommands) 
-{
-    player* Player = &Mode->Player;
-    m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
+	// Collision
+    circle2f HitCircle;
     
-    {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
-                                  ZLayPlayer);
-        c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
-        
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Image_PlayerCircle,
-                                   M44f_Concat(T,S), 
-                                   Color);
-    }
+    // Physics
+    v2f Position;
+    v2f PrevPosition;
     
-    {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
-                                  ZLayPlayer + 0.01f);
-        c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Image_PlayerDot,
-                                   M44f_Concat(T,S), 
-                                   Color);
-    }
-}
+    // Gameplay
+    mood_type MoodType;
+};
 
 #endif //GAME_MODE_MAIN_PLAYER_H

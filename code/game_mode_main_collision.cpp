@@ -4,9 +4,9 @@
 #define GAME_MODE_MAIN_COLLISION_H
 
 static inline void
-UpdateCollision(game_mode_main* Mode,
-                assets* Assets,
-                f32 DeltaTime)
+Main_UpdateCollision(game_mode_main* Mode,
+                     assets* Assets,
+                     f32 DeltaTime)
 {
     
     
@@ -28,7 +28,7 @@ UpdateCollision(game_mode_main* Mode,
         if (Slear) {
             v2f VectorToBullet = V2f_Normalize(B->Position - Player->Position);
             v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
-            SpawnParticle(Mode, Assets, SpawnPos, 5);
+            Main_SpawnParticle(Mode, Assets, SpawnPos, 5);
         }
         
         return Slear;
