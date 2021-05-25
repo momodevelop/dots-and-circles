@@ -9,7 +9,7 @@
 #define ZLayBullet 10.f
 #define ZLayEnemy 20.f
 #define ZLayParticles 25.f
-
+#define ZLayDeathBomb 26.f
 #define ZLayDebug 40.f
 
 
@@ -35,7 +35,7 @@ enum game_mode_main_state {
 
 
 struct death_bomb {
-    static constexpr f32 GrowthSpeed = 100.f;
+    static constexpr f32 GrowthSpeed = 1000.f;
     f32 Radius;
     v2f Position;
 };
@@ -66,6 +66,8 @@ static inline void
 Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
     death_bomb* DeathBomb = &Mode->DeathBomb;
     DeathBomb->Radius += DeathBomb->GrowthSpeed * DeltaTime;
+    
+    // NOTE(Momo)
 }
 
 static inline void
@@ -75,7 +77,7 @@ Main_RenderDeathBomb(game_mode_main* Mode, mailbox* RenderCommands)
     // Circle?
     Renderer_DrawCircle2f(RenderCommands,
                           Circle2f_Create(DeathBomb->Position, DeathBomb->Radius),
-                          5.f, 8, Color_White, 50.f);
+                          5.f, 32, Color_White, ZLayDeathBomb);
 }
 
 
@@ -187,13 +189,14 @@ Main_UpdateNormal(permanent_state* PermState,
     // NOTE(Momo): if player's dead, do dead stuff
     if(Mode->Player.IsDead) 
     {
-        Mode->State = MainState_PlayerDied;
-        Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
-        
         // NOTE(Momo): Drop the death bomb
         Mode->DeathBomb.Radius = 0.f;
         Mode->DeathBomb.Position = Mode->Player.Position;
+        
+        Mode->State = MainState_PlayerDied;
+        Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
     }
+    
     
     Main_RenderPlayer(Mode, Assets, RenderCommands);
     Main_RenderBullets(Mode, Assets, RenderCommands);
@@ -216,7 +219,6 @@ Main_UpdatePlayerDied(permanent_state* PermState,
     
     Main_UpdateDeathBomb(Mode, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
-    
     
     Main_RenderPlayer(Mode, Assets, RenderCommands);
     Main_RenderBullets(Mode, Assets, RenderCommands);
