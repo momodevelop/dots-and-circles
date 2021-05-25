@@ -27,7 +27,6 @@ Ratio(f32 Value, f32 Min, f32 Max) {
 // NOTE(Momo): Common Functions
 static inline b8
 F32_IsEqual(f32 L, f32 R) {
-    f32 Test = AbsOf(L - R);
     return AbsOf(L - R) <= Epsilon32;
 }
 

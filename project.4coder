@@ -27,12 +27,14 @@ load_paths = {
 
 build_assets = "bin\\bass.bat";
 build_game = "bin\\bg.bat";
-build_win32 = "bin\\bw32.bat";
+build_win32 = "powershell bw32.ps1";
 build_meta = "bin\\bgen.bat && bin\\rgen.bat";
 run_assets = "bin\\rass.bat";
 run_win32 = "bin\\rw32.bat";
 debug_win32 = "bin\\dw32.bat";
 debug_assets = "bin\\dass.bat";
+test_ps = "powershell bin\\test.ps1";
+
 
 command_list = {
  { .name = "build assets",
@@ -62,6 +64,10 @@ command_list = {
  { .name = "debug win32",
    .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
    .cmd = { { debug_win32, .os="win" }, }, },
+
+{ .name = "test ps",
+   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
+   .cmd = { { test_ps, .os="win" }, }, },
  
 };
 
@@ -72,3 +78,4 @@ fkey_command[4] = "run assets";
 fkey_command[5] = "run win32";
 fkey_command[11] = "debug assets";
 fkey_command[12] = "debug win32";
+fkey_command[6] = "test ps";

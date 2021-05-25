@@ -4,9 +4,9 @@
 #define GAME_MODE_MAIN_COLLISION_H
 
 static inline void
-Main_UpdateCollision(game_mode_main* Mode,
-                     assets* Assets,
-                     f32 DeltaTime)
+Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
+                                 assets* Assets,
+                                 f32 DeltaTime)
 {
     
     
@@ -20,18 +20,23 @@ Main_UpdateCollision(game_mode_main* Mode,
         v2f BVel = B->Direction * B->Speed * DeltaTime;
         BCircle.Origin += B->Position;
         
-        b8 Slear = Player->MoodType == B->MoodType && Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
-                                                                                    PlayerVel,
-                                                                                    BCircle,
-                                                                                    BVel);
-        
-        if (Slear) {
-            v2f VectorToBullet = V2f_Normalize(B->Position - Player->Position);
-            v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
-            Main_SpawnParticle(Mode, Assets, SpawnPos, 5);
+        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
+                                          PlayerVel,
+                                          BCircle,
+                                          BVel)) 
+        {
+            if (Player->MoodType == B->MoodType) {
+                v2f VectorToBullet = V2f_Normalize(B->Position - Player->Position);
+                v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
+                Main_SpawnParticle(Mode, Assets, SpawnPos, 5);
+            }
+            else {
+                Player->IsDead = true;
+            }
+            return true;
         }
         
-        return Slear;
+        return false;
     };
     List_ForEachSlearIf(&Mode->DotBullets, Lamb);
     List_ForEachSlearIf(&Mode->CircleBullets, Lamb);

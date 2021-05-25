@@ -21,6 +21,8 @@ struct player {
     
     // Gameplay
     mood_type MoodType;
+    
+    b8 IsDead;
 };
 
 #endif //GAME_MODE_MAIN_PLAYER_H

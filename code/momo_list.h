@@ -158,5 +158,43 @@ List_ForEach(list<type>* L, callback Callback, args... Args) {
     }
 }
 
+//~ NOTE(Momo): C++11 complient Iterator implementation
+template<typename type>
+struct list_itr {
+    list<type>* L;
+    u32 Index;
+};
+
+template<typename type>
+static inline list_itr<type>
+begin(list<type>* L) {
+    return { *L, 0 };
+}
+
+template<typename type>
+static inline list_itr<type>
+end(list<type>* L) {
+    return { *L, L->Count - 1 };
+}
+
+template<typename type>
+static inline b8
+operator!=(list_itr<type> Lhs, list_itr<type> Rhs) {
+    return Lhs.Index != Rhs.Index;
+}
+
+template<typename type>
+static inline list_itr<type>&
+operator++(list_itr<type>& Itr) {
+    ++Itr.Index;
+    return Itr;
+}
+
+template<typename type>
+static inline type&
+operator*(list_itr<type>& Itr) {
+    return Itr.List->Data[Itr.Index];
+}
+
 
 #endif //MOMO_LIST_H
