@@ -3,13 +3,13 @@
 #ifndef GAME_MODE_MAIN_COLLISION_H
 #define GAME_MODE_MAIN_COLLISION_H
 
+
+// TODO: We could put this into Bullet update
 static inline void
 Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
                                  assets* Assets,
                                  f32 DeltaTime)
 {
-    
-    
     player* Player = &Mode->Player;
     circle2f PlayerCircle = Player->HitCircle;
     v2f PlayerVel = Player->Position - Player->PrevPosition;
@@ -28,7 +28,7 @@ Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
             if (Player->MoodType == B->MoodType) {
                 v2f VectorToBullet = V2f_Normalize(B->Position - Player->Position);
                 v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
-                Main_SpawnParticle(Mode, Assets, SpawnPos, 5);
+                Main_SpawnParticle(Mode, SpawnPos, 5);
             }
             else {
                 Player->IsDead = true;

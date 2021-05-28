@@ -55,7 +55,7 @@ Main_RenderPlayer(game_mode_main* Mode,
                   mailbox* RenderCommands) 
 {
     player* Player = &Mode->Player;
-    m44f S = M44f_Scale(Player->Size.X, Player->Size.Y, 1.f);
+    m44f S = M44f_Scale(Player->Size, Player->Size, 1.f);
     
     {
         m44f T = M44f_Translation(Player->Position.X,

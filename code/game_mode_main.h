@@ -26,25 +26,38 @@ enum mood_type {
 #include "game_mode_main_wave.h"
 #include "game_mode_main_particle.h"
 
-enum game_mode_main_state {
-    MainState_Spawning,
-    MainState_Normal,
-    MainState_PlayerDied,
-    MainState_Cleanup,
+enum game_mode_main_state_type {
+    Main_StateType_Spawning,
+    Main_StateType_Normal,
+    Main_StateType_PlayerDied,
+    Main_StateType_Cleanup,
 };
 
 
 struct death_bomb {
-    static constexpr f32 GrowthSpeed = 1000.f;
+    static constexpr f32 GrowthSpeed = 750.f;
     f32 Radius;
     v2f Position;
 };
 
 
-
+struct game_mode_main_state_spawning {
+    f32 Timer;
+    static constexpr f32 Duration = 1.f;
+};
+struct game_mode_main_state_normal {
+};
+struct game_mode_main_state_player_died {
+};
 
 struct game_mode_main {
-    game_mode_main_state State;
+    // TODO: We could use pointers to save memory but ahhhhh...lazy
+    game_mode_main_state_type State;
+    union {
+        game_mode_main_state_spawning SpawningState;
+        game_mode_main_state_normal NormalState;
+        game_mode_main_state_player_died PlayerDiedState;
+    };
     player Player;
     
     game_camera Camera;
@@ -60,25 +73,9 @@ struct game_mode_main {
     
     // Audio handles
     game_audio_mixer_handle BgmHandle;
-};
-
-static inline void
-Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
-    death_bomb* DeathBomb = &Mode->DeathBomb;
-    DeathBomb->Radius += DeathBomb->GrowthSpeed * DeltaTime;
     
-    // NOTE(Momo)
-}
-
-static inline void
-Main_RenderDeathBomb(game_mode_main* Mode, mailbox* RenderCommands)
-{
-    death_bomb* DeathBomb = &Mode->DeathBomb;
-    // Circle?
-    Renderer_DrawCircle2f(RenderCommands,
-                          Circle2f_Create(DeathBomb->Position, DeathBomb->Radius),
-                          5.f, 32, Color_White, ZLayDeathBomb);
-}
+    
+};
 
 
 #include "game_mode_main_player.cpp"
@@ -88,7 +85,7 @@ Main_RenderDeathBomb(game_mode_main* Mode, mailbox* RenderCommands)
 #include "game_mode_main_particle.cpp"
 #include "game_mode_main_collision.cpp"
 #include "game_mode_main_debug.cpp"
-
+#include "game_mode_main_death_bomb.cpp"
 
 // TODO: split state logic into files?
 static inline b8 
@@ -139,7 +136,7 @@ Main_Init(permanent_state* PermState,
     {
         Player->Position = {};
         Player->PrevPosition = {};
-        Player->Size = V2f_Create( 32.f, 32.f );
+        Player->Size = Player->MaxSize;
         Player->HitCircle = { v2f{}, 16.f};
         
         // NOTE(Momo): We start as Dot
@@ -161,22 +158,24 @@ Main_Init(permanent_state* PermState,
     }
 #endif
     
-    
-    Mode->State = MainState_Normal;
+    Mode->State = Main_StateType_Spawning;
     return true; 
     
 }
 
 static inline void
-Main_UpdateNormal(permanent_state* PermState, 
-                  transient_state* TranState,
-                  debug_state* DebugState,
-                  mailbox* RenderCommands, 
-                  platform_input* Input,
-                  f32 DeltaTime) 
+Main_StateNormal_Update(permanent_state* PermState, 
+                        transient_state* TranState,
+                        debug_state* DebugState,
+                        mailbox* RenderCommands, 
+                        platform_input* Input,
+                        f32 DeltaTime) 
 {
     assets* Assets = &TranState->Assets;
     game_mode_main* Mode = PermState->MainMode;
+    
+    Camera_Set(&Mode->Camera, RenderCommands);
+    
     Main_UpdateInput(Mode, Input);
     Main_UpdatePlayer(Mode, DeltaTime);    
     Main_UpdateBullets(Mode, DeltaTime);
@@ -185,6 +184,10 @@ Main_UpdateNormal(permanent_state* PermState,
     Main_UpdatePlayerBulletCollision(Mode, Assets, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
+    Main_RenderPlayer(Mode, Assets, RenderCommands);
+    Main_RenderBullets(Mode, Assets, RenderCommands);
+    Main_RenderEnemies(Mode, Assets, RenderCommands);
+    Main_RenderParticles(Mode, Assets, RenderCommands);
     
     // NOTE(Momo): if player's dead, do dead stuff
     if(Mode->Player.IsDead) 
@@ -193,25 +196,20 @@ Main_UpdateNormal(permanent_state* PermState,
         Mode->DeathBomb.Radius = 0.f;
         Mode->DeathBomb.Position = Mode->Player.Position;
         
-        Mode->State = MainState_PlayerDied;
+        Mode->State = Main_StateType_PlayerDied;
         Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
     }
-    
-    
-    Main_RenderPlayer(Mode, Assets, RenderCommands);
-    Main_RenderBullets(Mode, Assets, RenderCommands);
-    Main_RenderEnemies(Mode, Assets, RenderCommands);
-    Main_RenderParticles(Mode, Assets, RenderCommands);
-    
 }
 
+
+
 static inline void
-Main_UpdatePlayerDied(permanent_state* PermState, 
-                      transient_state* TranState,
-                      debug_state* DebugState,
-                      mailbox* RenderCommands, 
-                      platform_input* Input,
-                      f32 DeltaTime) 
+Main_StatePlayerDied_Update(permanent_state* PermState, 
+                            transient_state* TranState,
+                            debug_state* DebugState,
+                            mailbox* RenderCommands, 
+                            platform_input* Input,
+                            f32 DeltaTime) 
 {
     // Everything stops
     game_mode_main* Mode = PermState->MainMode;
@@ -220,20 +218,51 @@ Main_UpdatePlayerDied(permanent_state* PermState,
     Main_UpdateDeathBomb(Mode, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
+    Camera_Set(&Mode->Camera, RenderCommands);
     Main_RenderPlayer(Mode, Assets, RenderCommands);
     Main_RenderBullets(Mode, Assets, RenderCommands);
     Main_RenderEnemies(Mode, Assets, RenderCommands);
     Main_RenderParticles(Mode, Assets, RenderCommands);
     Main_RenderDeathBomb(Mode, RenderCommands);
     
+    // NOTE: Change state if enemy and bullet count is 0
+    if (Mode->DeathBomb.Radius >= Game_DesignWidth) 
+    {
+        Mode->State = Main_StateType_Spawning;
+        Mode->SpawningState.Timer = 0.f;
+        Mode->Player.IsDead = false;
+    }
 }
 
 static inline void
-Main_UpdateSpawning() {
-}
-
-static inline void
-Main_UpdateCleaning() {
+Main_StateSpawning_Update(permanent_state* PermState, 
+                          transient_state* TranState,
+                          debug_state* DebugState,
+                          mailbox* RenderCommands, 
+                          platform_input* Input,
+                          f32 DeltaTime) 
+{
+    game_mode_main* Mode = PermState->MainMode;
+    assets* Assets = &TranState->Assets;
+    
+    f32 Ease = EaseOutBounce(Clamp(Mode->SpawningState.Timer/Mode->SpawningState.Duration, 0.f, 1.f));
+    Mode->Player.Size = Mode->Player.MaxSize * Ease;
+    
+    
+    Main_UpdateInput(Mode, Input);
+    Main_UpdatePlayer(Mode, DeltaTime);    
+    
+    Camera_Set(&Mode->Camera, RenderCommands);
+    
+    Main_RenderPlayer(Mode, Assets, RenderCommands);
+    
+    if (Mode->SpawningState.Timer >= Mode->SpawningState.Duration) {
+        Mode->State = Main_StateType_Normal;
+        Mode->Player.Size = Mode->Player.MaxSize;
+    }
+    Mode->SpawningState.Timer += DeltaTime;
+    
+    
 }
 
 static inline void
@@ -245,18 +274,18 @@ Main_Update(permanent_state* PermState,
             f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;
-    Camera_Set(&Mode->Camera, RenderCommands);
     
     switch(Mode->State) {
-        case MainState_Spawning: {
+        case Main_StateType_Spawning: {
+            Main_StateSpawning_Update(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
         } break;
-        case MainState_Normal: {
-            Main_UpdateNormal(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
+        case Main_StateType_Normal: {
+            Main_StateNormal_Update(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
         }break;
-        case MainState_PlayerDied: {
-            Main_UpdatePlayerDied(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
+        case Main_StateType_PlayerDied: {
+            Main_StatePlayerDied_Update(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
         } break;
-        case MainState_Cleanup: {
+        case Main_StateType_Cleanup: {
         } break;
         
     }

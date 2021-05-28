@@ -1,6 +1,5 @@
 static inline void
 Main_SpawnParticle(game_mode_main* Mode, 
-                   assets* Assets, 
                    v2f Position,
                    u32 Amount) 
 {

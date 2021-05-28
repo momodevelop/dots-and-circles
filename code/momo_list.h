@@ -158,13 +158,21 @@ List_ForEach(list<type>* L, callback Callback, args... Args) {
     }
 }
 
-//~ NOTE(Momo): C++11 complient Iterator implementation
+//~ NOTE(Momo) Iterators
 template<typename type>
 struct list_itr {
     list<type>* L;
     u32 Index;
+    
+    type& operator->() {
+        return Itr.List->Data[Itr.Index];
+    }
+    
+    
 };
 
+
+//~ NOTE(Momo): C++11 complient Iterator implementation
 template<typename type>
 static inline list_itr<type>
 begin(list<type>* L) {
@@ -174,6 +182,17 @@ begin(list<type>* L) {
 template<typename type>
 static inline list_itr<type>
 end(list<type>* L) {
+    return { *L, L->Count - 1 };
+}
+template<typename type>
+static inline list_itr<type>
+List_Begin(list<type>* L) {
+    return { *L, 0 };
+}
+
+template<typename type>
+static inline list_itr<type>
+List_End(list<type>* L) {
     return { *L, L->Count - 1 };
 }
 

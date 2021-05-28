@@ -10,7 +10,8 @@ struct player {
     f32 DotImageTransitionTimer;
     f32 DotImageTransitionDuration;
     
-    v2f Size;
+    static constexpr f32 MaxSize = 32.f;
+    f32 Size;
     
 	// Collision
     circle2f HitCircle;
