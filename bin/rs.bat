@@ -1,7 +1,8 @@
-@echo off
+@echo off 
+IF "%1"=="" (SET Folder=test) ELSE (SET Folder=%1)
 
 SET RootDir=%me%..
-SET SandboxDir=%RootDir%\sandbox\%1
+SET SandboxDir=%RootDir%\sandbox\%Folder%
 
 pushd %SandboxDir%
 

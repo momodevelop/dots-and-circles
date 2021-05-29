@@ -158,61 +158,94 @@ List_ForEach(list<type>* L, callback Callback, args... Args) {
     }
 }
 
-//~ NOTE(Momo) Iterators
+//~ NOTE(Momo): Forward Iterator
 template<typename type>
-struct list_itr {
+struct list_forward_itr {
     list<type>* L;
     u32 Index;
     
     type& operator->() {
-        return Itr.List->Data[Itr.Index];
+        return L->Data[Index];
     }
     
     
 };
 
 
-//~ NOTE(Momo): C++11 complient Iterator implementation
 template<typename type>
-static inline list_itr<type>
-begin(list<type>* L) {
+static inline list_forward_itr<type>
+List_ForwardItr_Begin(list<type>* L) {
     return { *L, 0 };
 }
 
 template<typename type>
-static inline list_itr<type>
-end(list<type>* L) {
-    return { *L, L->Count - 1 };
-}
-template<typename type>
-static inline list_itr<type>
-List_Begin(list<type>* L) {
-    return { *L, 0 };
-}
-
-template<typename type>
-static inline list_itr<type>
-List_End(list<type>* L) {
+static inline list_forward_itr<type>
+List_ForwardItr_End(list<type>* L) {
     return { *L, L->Count - 1 };
 }
 
 template<typename type>
 static inline b8
-operator!=(list_itr<type> Lhs, list_itr<type> Rhs) {
+operator!=(list_forward_itr<type> Lhs, list_forward_itr<type> Rhs) {
     return Lhs.Index != Rhs.Index;
 }
 
 template<typename type>
-static inline list_itr<type>&
-operator++(list_itr<type>& Itr) {
+static inline list_forward_itr<type>&
+operator++(list_forward_itr<type>& Itr) {
     ++Itr.Index;
     return Itr;
 }
 
 template<typename type>
 static inline type&
-operator*(list_itr<type>& Itr) {
+operator*(list_forward_itr<type>& Itr) {
     return Itr.List->Data[Itr.Index];
+}
+//~ NOTE(Momo): Reverse Iterator
+template<typename type>
+struct list_reverse_itr {
+    list<type>* L;
+    u32 Index;
+    
+    type& operator->() {
+        return L->Data[Index];
+    }
+    
+    
+};
+
+
+template<typename type>
+static inline list_reverse_itr<type>
+List_ReverseItr_Begin(list<type>* L) {
+    return { *L, 0 };
+}
+
+template<typename type>
+static inline list_reverse_itr<type>
+List_ReverseItr_End(list<type>* L) {
+    return { *L, L->Count - 1 };
+}
+
+template<typename type>
+static inline b8
+operator!=(list_reverse_itr<type> Lhs, list_reverse_itr<type> Rhs) {
+    return Lhs.Index != Rhs.Index;
+}
+
+template<typename type>
+static inline list_reverse_itr<type>&
+operator++(list_reverse_itr<type>& Itr) {
+    ++Itr.Index;
+    return Itr;
+}
+
+template<typename type>
+static inline type&
+operator*(list_reverse_itr<type>& Itr) {
+    u32 ActualIndex = Itr.List->Count - Itr.Index - 1;
+    return Itr.List->Data[ActualIndex];
 }
 
 

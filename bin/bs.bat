@@ -1,9 +1,11 @@
 @echo off
 
+IF "%1"=="" (SET Folder=test) ELSE (SET Folder=%1)
+
 SET me=%~dp0
 
 SET RootDir=%me%..
-SET SandboxDir=%RootDir%\sandbox\%1
+SET SandboxDir=%RootDir%\sandbox\%Folder%
 
 call %me%..\bin\setup_cl_x64.bat
 IF NOT "%Platform%" == "X64" IF NOT "%Platform%" == "x64" (EXIT /b)

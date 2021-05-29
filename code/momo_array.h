@@ -17,14 +17,20 @@ struct array {
 
 template<typename type>
 static inline b8
-Array_New(array<type>* L, arena* Arena, u32 Count) {
-    type* Buffer = Arena_PushArray<type>(Arena, Count);
-    if (!Buffer) {
+Array_Init(array<type>* A, type* Buffer, u32 Count) {
+    if (!Buffer || Count == 0) {
         return false;
     }
-    L->Data = Buffer;
-    L->Count = Count;
+    A->Data = Buffer;
+    A->Count = Count;
     return true;
+}
+
+template<typename type>
+static inline b8
+Array_New(array<type>* A, arena* Arena, u32 Count) {
+    type* Buffer = Arena_PushArray<type>(Arena, Count);
+    return Array_Init(A, Buffer, Count);
 }
 
 template<typename type>
