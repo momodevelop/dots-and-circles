@@ -52,7 +52,7 @@ DebugInspector_End(debug_inspector* Inspector,
                   Position, 
                   Entry->CStr,
                   32.f, 
-                  Color_White);
+                  C4f_White);
         U8Str_Clear(Entry);
         OffsetY -= 32.f;
     }

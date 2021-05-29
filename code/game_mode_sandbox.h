@@ -27,7 +27,7 @@ InitSandboxMode(permanent_state* PermState) {
     {
         Mode->Camera.Position = V3f_Create(0.f, 0.f, 0.f);
         Mode->Camera.Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.Color = Color_Grey2;
+        Mode->Camera.Color = C4f_Grey2;
         Mode->Camera.Dimensions = V3f_Create(Game_DesignWidth,
                                              Game_DesignHeight,
                                              Game_DesignDepth);
@@ -143,7 +143,7 @@ UpdateSandboxMode(permanent_state* PermState,
         Renderer_DrawLine2f(RenderCommands, 
                             BonkLine,
                             Mode->PlayerCircleRadius * 2,
-                            Color_Green,
+                            C4f_Green,
                             ZOrder);
         
         circle2f StartCircle = Circle2f_Create(BonkLine.Min, 
@@ -152,7 +152,7 @@ UpdateSandboxMode(permanent_state* PermState,
                               StartCircle,
                               1.f, 
                               8, 
-                              Color_Green, 
+                              C4f_Green, 
                               ZOrder);
         
         
@@ -162,7 +162,7 @@ UpdateSandboxMode(permanent_state* PermState,
                               EndCircle,
                               1.f, 
                               8, 
-                              Color_Green, 
+                              C4f_Green, 
                               ZOrder);
     }
     

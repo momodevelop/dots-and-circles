@@ -168,7 +168,7 @@ Main_RenderEnemies(game_mode_main* Mode,
                                    Assets,
                                    Image_Enemy,
                                    T*R*S, 
-                                   Color_White);
+                                   C4f_White);
     };
     List_ForEach(&Mode->Enemies, ForEachLamb);
 }

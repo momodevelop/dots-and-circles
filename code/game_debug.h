@@ -88,7 +88,7 @@ Debug_Render(debug_state* State,
                  v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
                  Buffer.Str,
                  32.f, 
-                 Color_White);
+                 C4f_White);
         U8Str_Clear(&Buffer);
     }
 }

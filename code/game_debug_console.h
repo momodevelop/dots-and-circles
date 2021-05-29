@@ -5,9 +5,9 @@
 #define DebugConsole_InfoLineCount 5
 #define DebugConsole_MaxCommands 16
 #define DebugConsole_PosZ 90.f
-#define DebugConsole_InfoBgColor Color_Grey3
-#define DebugConsole_InputBgColor Color_Grey2
-#define DebugConsole_InputTextColor Color_White
+#define DebugConsole_InfoBgColor C4f_Grey3
+#define DebugConsole_InputBgColor C4f_Grey2
+#define DebugConsole_InputTextColor C4f_White
 #define DebugConsole_Width Game_DesignWidth 
 #define DebugConsole_Height 240.f
 #define DebugConsole_StartPosX 0.f
@@ -176,7 +176,7 @@ DebugConsole_Update(debug_console* Console,
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
         if (Button_IsPoked(Input->ButtonConfirm)) {
-            DebugConsole_PushInfo(Console, InputLineCStr, Color_White);
+            DebugConsole_PushInfo(Console, InputLineCStr, C4f_White);
             
             u32 Min = 0;
             u32 Max = 0;

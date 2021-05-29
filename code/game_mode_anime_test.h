@@ -78,7 +78,7 @@ UpdateAnimeTestMode(permanent_state* PermState,
     m44f T = M44f_Translation(Entity->Pos.X, Entity->Pos.Y, Entity->Pos.Z);
     m44f S = M44f_Scale(Entity->Size.X, Entity->Size.Y, Entity->Size.Z);
     m44f Transform = M44f_Concat(T,S);
-    c4f Color = Color_White;
+    c4f Color = C4f_White;
     anime_component* AnimeCom = &Entity->Anime;
     {
         anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);

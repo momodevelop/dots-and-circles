@@ -10,7 +10,7 @@ Draw_TexturedQuadFromImage(mailbox* RenderCommands,
                            assets* Assets,
                            image_id ImageId,
                            m44f Transform,
-                           c4f Color = Color_White) 
+                           c4f Color = C4f_White) 
 {
     image* Image = Assets_GetImage(Assets, ImageId);
     texture* Texture = Assets_GetTexture(Assets, Image->TextureId);
@@ -32,7 +32,7 @@ Draw_Text(mailbox* RenderCommands,
           v3f Position,
           u8_cstr String,
           f32 Size, 
-          c4f Color = Color_White) 
+          c4f Color = C4f_White) 
 {
     v3f CurPosition = Position;
     font* Font = Assets_GetFont(Assets, FontId);

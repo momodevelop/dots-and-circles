@@ -1927,7 +1927,7 @@ typedef struct
    int            succ_low;
    int            eob_run;
    int            jfif;
-   int            app14_color_transform; // Adobe APP14 tag
+   int            app14_C4f_transform; // Adobe APP14 tag
    int            rgb;
 
    int scan_n, order[4];
@@ -3112,7 +3112,7 @@ static int stbi__process_marker(stbi__jpeg *z, int m)
             stbi__get8(z->s); // version
             stbi__get16be(z->s); // flags0
             stbi__get16be(z->s); // flags1
-            z->app14_color_transform = stbi__get8(z->s); // color transform
+            z->app14_C4f_transform = stbi__get8(z->s); // color transform
             L -= 6;
          }
       }
@@ -3284,7 +3284,7 @@ static int stbi__decode_jpeg_header(stbi__jpeg *z, int scan)
 {
    int m;
    z->jfif = 0;
-   z->app14_color_transform = -1; // valid values are 0,1,2
+   z->app14_C4f_transform = -1; // valid values are 0,1,2
    z->marker = STBI__MARKER_none; // initialize cached marker to empty
    m = stbi__get_marker(z);
    if (!stbi__SOI(m)) return stbi__err("no SOI","Corrupt JPEG");
@@ -3775,7 +3775,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
    // determine actual number of components to generate
    n = req_comp ? req_comp : z->s->img_n >= 3 ? 3 : 1;
 
-   is_rgb = z->s->img_n == 3 && (z->rgb == 3 || (z->app14_color_transform == 0 && !z->jfif));
+   is_rgb = z->s->img_n == 3 && (z->rgb == 3 || (z->app14_C4f_transform == 0 && !z->jfif));
 
    if (z->s->img_n == 3 && n < 3 && !is_rgb)
       decode_n = 1;
@@ -3849,7 +3849,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
                   z->YCbCr_to_RGB_kernel(out, y, coutput[1], coutput[2], z->s->img_x, n);
                }
             } else if (z->s->img_n == 4) {
-               if (z->app14_color_transform == 0) { // CMYK
+               if (z->app14_C4f_transform == 0) { // CMYK
                   for (i=0; i < z->s->img_x; ++i) {
                      stbi_uc m = coutput[3][i];
                      out[0] = stbi__blinn_8x8(coutput[0][i], m);
@@ -3858,7 +3858,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
                      out[3] = 255;
                      out += n;
                   }
-               } else if (z->app14_color_transform == 2) { // YCCK
+               } else if (z->app14_C4f_transform == 2) { // YCCK
                   z->YCbCr_to_RGB_kernel(out, y, coutput[1], coutput[2], z->s->img_x, n);
                   for (i=0; i < z->s->img_x; ++i) {
                      stbi_uc m = coutput[3][i];
@@ -3887,7 +3887,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
                      out[1] = 255;
                   }
                }
-            } else if (z->s->img_n == 4 && z->app14_color_transform == 0) {
+            } else if (z->s->img_n == 4 && z->app14_C4f_transform == 0) {
                for (i=0; i < z->s->img_x; ++i) {
                   stbi_uc m = coutput[3][i];
                   stbi_uc r = stbi__blinn_8x8(coutput[0][i], m);
@@ -3897,7 +3897,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
                   out[1] = 255;
                   out += n;
                }
-            } else if (z->s->img_n == 4 && z->app14_color_transform == 2) {
+            } else if (z->s->img_n == 4 && z->app14_C4f_transform == 2) {
                for (i=0; i < z->s->img_x; ++i) {
                   out[0] = stbi__blinn_8x8(255 - coutput[0][i], coutput[3][i]);
                   out[1] = 255;
@@ -5639,12 +5639,12 @@ static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
 static int stbi__tga_test(stbi__context *s)
 {
    int res = 0;
-   int sz, tga_color_type;
+   int sz, tga_C4f_type;
    stbi__get8(s);      //   discard Offset
-   tga_color_type = stbi__get8(s);   //   color type
-   if ( tga_color_type > 1 ) goto errorEnd;   //   only RGB or indexed allowed
+   tga_C4f_type = stbi__get8(s);   //   color type
+   if ( tga_C4f_type > 1 ) goto errorEnd;   //   only RGB or indexed allowed
    sz = stbi__get8(s);   //   image type
-   if ( tga_color_type == 1 ) { // colormapped (paletted) image
+   if ( tga_C4f_type == 1 ) { // colormapped (paletted) image
       if (sz != 1 && sz != 9) goto errorEnd; // colortype 1 demands image type 1 or 9
       stbi__skip(s,4);       // skip index of first colormap entry and number of entries
       sz = stbi__get8(s);    //   check bits per palette color entry
@@ -5657,7 +5657,7 @@ static int stbi__tga_test(stbi__context *s)
    if ( stbi__get16le(s) < 1 ) goto errorEnd;      //   test width
    if ( stbi__get16le(s) < 1 ) goto errorEnd;      //   test height
    sz = stbi__get8(s);   //   bits per pixel
-   if ( (tga_color_type == 1) && (sz != 8) && (sz != 16) ) goto errorEnd; // for colormapped images, bpp is size of an index
+   if ( (tga_C4f_type == 1) && (sz != 8) && (sz != 16) ) goto errorEnd; // for colormapped images, bpp is size of an index
    if ( (sz != 8) && (sz != 15) && (sz != 16) && (sz != 24) && (sz != 32) ) goto errorEnd;
 
    res = 1; // if we got this far, everything's good and we can return 1 instead of 0
@@ -6385,7 +6385,7 @@ typedef struct
    stbi_uc  pal[256][4];
    stbi_uc lpal[256][4];
    stbi__gif_lzw codes[8192];
-   stbi_uc *color_table;
+   stbi_uc *C4f_table;
    int parse, step;
    int lflags;
    int start_x, start_y;
@@ -6484,7 +6484,7 @@ static void stbi__out_gif_code(stbi__gif *g, stbi__uint16 code)
    p = &g->out[idx];
    g->history[idx / 4] = 1;
 
-   c = &g->color_table[g->codes[code].suffix * 4];
+   c = &g->C4f_table[g->codes[code].suffix * 4];
    if (c[3] > 128) { // don't render transparent pixels;
       p[0] = c[2];
       p[1] = c[1];
@@ -6698,9 +6698,9 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
 
             if (g->lflags & 0x80) {
                stbi__gif_parse_colortable(s,g->lpal, 2 << (g->lflags & 7), g->eflags & 0x01 ? g->transparent : -1);
-               g->color_table = (stbi_uc *) g->lpal;
+               g->C4f_table = (stbi_uc *) g->lpal;
             } else if (g->flags & 0x80) {
-               g->color_table = (stbi_uc *) g->pal;
+               g->C4f_table = (stbi_uc *) g->pal;
             } else
                return stbi__errpuc("missing color table", "Corrupt GIF");
 

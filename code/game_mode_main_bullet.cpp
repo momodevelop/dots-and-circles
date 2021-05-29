@@ -72,7 +72,7 @@ Main_RenderBullets(game_mode_main* Mode,
                                    Assets,
                                    Image,
                                    M44f_Concat(T,S), 
-                                   Color_White);
+                                   C4f_White);
         LayerOffset += 0.01f;
     };
     

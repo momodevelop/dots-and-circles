@@ -14,7 +14,7 @@
 #define GL_DEPTH_TEST                   0x0B71
 #define GL_SCISSOR_TEST                 0x0C11
 #define GL_DEPTH_BUFFER_BIT             0x00000100
-#define GL_COLOR_BUFFER_BIT             0x00004000
+#define GL_C4f_BUFFER_BIT             0x00004000
 #define GL_DEBUG_OUTPUT                 0x92E0
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS     0x8242
 #define GL_FLOAT                        0x1406
@@ -419,7 +419,7 @@ Opengl_Init(opengl* Opengl,
     Opengl->glEnable(GL_DEPTH_TEST);
     Opengl->glEnable(GL_SCISSOR_TEST);
     
-    Opengl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
     
     Opengl_AlignViewport(Opengl);
@@ -735,7 +735,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
     u32 LastDrawnInstanceIndex = 0;
     u32 CurrentInstanceIndex = 0;
     
-    Opengl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     for (u32 i = 0; i < Commands->EntryCount; ++i) {
         mailbox_entry_header* Entry = Mailbox_GetEntry(Commands, i);

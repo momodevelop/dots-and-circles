@@ -48,6 +48,6 @@ Main_RenderDeathBomb(game_mode_main* Mode, mailbox* RenderCommands)
     // Circle?
     Renderer_DrawCircle2f(RenderCommands,
                           Circle2f_Create(DeathBomb->Position, DeathBomb->Radius),
-                          5.f, 32, Color_White, ZLayDeathBomb);
+                          5.f, 32, C4f_White, ZLayDeathBomb);
 }
 
