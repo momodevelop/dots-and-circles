@@ -23,6 +23,7 @@ static struct platform_api* G_Platform = {};
 
 #include "game_mode.h"
 #include "game_mode_main.h"
+#include "game_mode_main.cpp"
 #include "game_mode_splash.h"
 #include "game_mode_sandbox.h"
 #include "game_mode_anime_test.h"
