@@ -24,6 +24,7 @@
 #include "momo_array.h"
 #include "momo_list.h"
 #include "momo_queue.h"
+#include "momo_bigint.h"
 
 // File formats
 #include "momo_wav.h"

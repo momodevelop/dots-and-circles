@@ -25,15 +25,14 @@ load_paths = {
  { load_paths_custom, .os = "mac"  },
 };
 
-build_assets = "bin\\bass.bat";
-build_game = "bin\\bg.bat";
-build_win32 = "bin\\bw32.bat";
-build_test = "bin\\bs.bat";
-run_assets = "bin\\rass.bat";
-run_win32 = "bin\\rw32.bat";
-run_test = "bin\\rs.bat";
-debug_win32 = "bin\\dw32.bat";
-debug_assets = "bin\\dass.bat";
+build_assets = "bass";
+build_game = "bg";
+build_win32 = "bw32";
+build_test = "test";
+run_assets = "rass";
+run_win32 = "rw32";
+debug_win32 = "dw32";
+debug_assets = "dass";
 
 
 command_list = {
@@ -61,9 +60,6 @@ command_list = {
    .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
    .cmd = { { run_win32, .os="win" }, }, },
  
-{ .name = "run test",
-   .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
-   .cmd = { { run_test, .os="win" }, }, },
  
  { .name = "debug assets",
    .out = "*compilation*", .footer_panel = true, .save_dirty_files = true,
@@ -82,6 +78,5 @@ fkey_command[3] = "build win32";
 fkey_command[4] = "build test";
 fkey_command[5] = "run win32";
 fkey_command[6] = "run assets";
-fkey_command[7] = "run test";
 fkey_command[11] = "debug assets";
 fkey_command[12] = "debug win32";

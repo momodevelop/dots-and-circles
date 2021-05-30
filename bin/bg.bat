@@ -24,6 +24,4 @@ rem We do this because for some reason, compiling will result in the DLL being m
 copy game.dll compiled_game.dll
 del game.dll
 
-:End
-
 popd

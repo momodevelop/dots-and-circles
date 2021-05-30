@@ -17,6 +17,5 @@ SET CommonCompilerFlags=-DSLOW -DINTERNAL  %CommonCompilerFlags%
 pushd %BuildDir%
 cl %CommonCompilerFlags% %CodeDir%\tool_build_assets.cxx
 
-:End
 
 popd
