@@ -52,6 +52,11 @@ Main_Init(permanent_state* PermState,
         return false;
     }
     
+    
+    Success = BigInt_New(&Mode->Score, ModeArena, 128);
+    if (!Success) {
+        return false;
+    }
     Mode->Wave.IsDone = true;
     Mode->Rng = Rng_Seed(0); // TODO: Used system clock for seed.
     
@@ -81,6 +86,7 @@ Main_Init(permanent_state* PermState,
         
     }
 #endif
+    
     
     Mode->State = Main_StateType_Spawning;
     return true; 

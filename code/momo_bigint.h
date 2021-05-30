@@ -81,12 +81,14 @@ operator*(big_int_reverse_itr& Itr) {
 
 //~ NOTE(Momo): Functions
 static inline void
-BigInt_Reset(big_int * B) {
+BigInt_SetZero(big_int * B) {
     for (u32 I = 0; I < B->Count; ++I) {
         B->Data[I] = 0;
     }
     B->Places = 1;
 }
+
+
 
 static inline b8
 BigInt_Init(big_int* B, u8* Buffer, u32 Count) {
@@ -96,8 +98,15 @@ BigInt_Init(big_int* B, u8* Buffer, u32 Count) {
     B->Data = Buffer;
     B->Count = Count;
     
-    BigInt_Reset(B);
+    BigInt_SetZero(B);
     return true;
+}
+
+static inline void
+BigInt_SetMax(big_int* B) {
+    for(u32 I = 0; I < B->Count; ++I) {
+        B->Data[I] = 9;
+    }
 }
 
 static inline b8
@@ -106,13 +115,17 @@ BigInt_New(big_int* B, arena* Arena, u32 Count) {
     return BigInt_Init(B, Buffer, Count);
 }
 
+// TODO: Instead of asserting, set value to 99999 if maxed out
 static inline void
 BigInt_Add(big_int* B, u32 Value) {
     // NOTE(Momo): For each place, add
     u32 Index = 0;
     u8 Carry = 0;
     while (Value > 0) {
-        Assert(Index < B->Count);
+        if (Index >= B->Count) {
+            BigInt_SetMax(B);
+            return;
+        }
         u8 ExtractedValue = (u8)(Value % 10);
         u8 Result = ExtractedValue + Carry + B->Data[Index];
         if (Result >= 10) {
@@ -129,7 +142,10 @@ BigInt_Add(big_int* B, u32 Value) {
     }
     
     while(Carry > 0) {
-        Assert(Index < B->Count);
+        if (Index >= B->Count) {
+            BigInt_SetMax(B);
+            return;
+        }
         u8 Result = B->Data[Index] + Carry;
         if (Result >= 10) {
             Carry = 1;
