@@ -111,6 +111,7 @@ BigInt_Add(big_int* B, u32 Value) {
     u32 Index = 0;
     u8 Carry = 0;
     while (Value > 0) {
+        Assert(Index < B->Count);
         u8 ExtractedValue = (u8)(Value % 10);
         u8 Result = ExtractedValue + Carry + B->Data[Index];
         if (Result >= 10) {
@@ -127,6 +128,7 @@ BigInt_Add(big_int* B, u32 Value) {
     }
     
     while(Carry > 0) {
+        Assert(Index < B->Count);
         u8 Result = B->Data[Index] + Carry;
         if (Result >= 10) {
             Carry = 1;
@@ -144,6 +146,12 @@ BigInt_Add(big_int* B, u32 Value) {
     }
 }
 
+static inline big_int&
+operator+=(big_int& Lhs, u32 Rhs) {
+    BigInt_Add(&Lhs, Rhs);
+    return Lhs;
+}
+
 int main() {
     u8 A[10];
     big_int _L = {};
@@ -151,7 +159,7 @@ int main() {
     
     BigInt_Init(L, A, 100);
     BigInt_Add(L, 12345);
-    //BigInt_Add(L, 1);
+    _L += 12345;
     
     for(auto Beg = BigInt_ForwardItrBegin(L); Beg != BigInt_ForwardItrEnd(L); ++Beg) {
         printf("%d", (*Beg));
