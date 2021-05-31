@@ -173,13 +173,8 @@ Main_StateNormal_Update(permanent_state* PermState,
         
         u32 StringIndex = 0;
         for (u32 RowIndex = 0; RowIndex < SquareLen; ++RowIndex ) {
-            u32 GlyphsToRender = 0;
-            if (SquareLen == 1) {
-                GlyphsToRender = Str.Count;
-            }
-            else {
-                GlyphsToRender = SquareLen + (Overflow-- ? 1 : 0);
-            }
+            u32 GrabFromOverflow = Overflow???/
+                u32 GlyphsToRender = SquareLen + (Overflow-- ? 1 : 0);
             //G_Platform->LogFp("%d\n", GlyphsToRender);
             f32 StartPosX = FontGlyphW * GlyphsToRender * -0.5f + FontGlyphW * 0.5f;
             for (u32 I = 0; I < GlyphsToRender; ++I) {
