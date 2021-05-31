@@ -158,5 +158,4 @@ platform_audio* Audio,\
 f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
 
-
 #endif //PLATFORM_H

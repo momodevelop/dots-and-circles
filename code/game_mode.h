@@ -20,7 +20,6 @@ struct transient_state {
     arena Arena;
     assets Assets; 
     game_audio_mixer Mixer;
-    
 };
 
 struct permanent_state {

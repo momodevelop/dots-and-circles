@@ -231,6 +231,7 @@ U8Str_PushU32(u8_str* Dest, u32 Num) {
     return true;
 }
 
+
 static inline b8
 U8Str_PushS32(u8_str* Dest, s32 Num) {
     if (Num == 0) {

@@ -114,6 +114,97 @@ Main_StateNormal_Update(permanent_state* PermState,
     Main_UpdatePlayerBulletCollision(Mode, Assets, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
+    
+    // NOTE(Momo): Render Score
+    {
+        arena_mark Scratch = Arena_Mark(&TranState->Arena);
+        Defer { Arena_Revert(&Scratch); };
+        
+        
+        u8_str Str = {};
+        U8Str_New(&Str, Scratch, Mode->Score.Places);
+        
+        auto Itr = BigInt_ReverseItrBegin(&Mode->Score);
+        auto End = BigInt_ReverseItrEnd(&Mode->Score);
+        for (; Itr != End; ++Itr) {
+            U8Str_Push(&Str, DigitToAscii((*Itr)));
+        }
+        
+        // TODO: If we expose this part below, remember to check for Str.Count > 0
+        
+        // NOTE(Momo): We are just going to assume that:
+        // - The text box boundary that is the game space is a square
+        // - And that our numbers in font are monospaced
+        const v2f Boundary = V2f_Create(Game_DesignWidth * 0.9f, 
+                                        Game_DesignHeight * 0.9f);
+        
+        // NOTE(Momo): Get the font glyph's aabb
+        font* Font = Assets_GetFont(Assets, Font_Default);
+        font_glyph* BaseFontGlyph = Font_GetGlyph(Font, Str.Data[0]);
+        v2f GlyphBox = V2f_Create(Aabb2f_Width(BaseFontGlyph->Box), 
+                                  Aabb2f_Height(BaseFontGlyph->Box));
+        
+        // NOTE(Momo): This holds the value of BOTH the amount of glyphs
+        // in each row and column
+        u32 SquareLen = (u32)Sqrt((f32)Str.Count); // Truncation expected
+        u32 Overflow = Str.Count % (SquareLen*SquareLen);
+        
+        // NOTE(Momo): At this point, 
+        // Str.Count == SquareLen * SquareLen + Overflow
+        
+        f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/SquareLen;
+        f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/SquareLen;
+        f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
+        
+        f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
+        f32 FontGlyphH = GlyphBox.H * FontScaleToFitBoundaryBest;
+        
+        c4f Color = C4f_Create(1,1,1, 0.05f);
+        
+#if 1
+        for(auto Beg = BigInt_ReverseItrBegin(&Mode->Score); Beg != BigInt_ReverseItrEnd(&Mode->Score); ++Beg) {
+            G_Platform->LogFp("%d", (*Beg));
+        }
+        G_Platform->LogFp("\n");
+        G_Platform->LogFp("Count: %d\n", Str.Count);
+        G_Platform->LogFp("SquareLen: %d\n", SquareLen);
+        G_Platform->LogFp("Overflow: %d\n", Overflow);
+#endif
+        
+        u32 StringIndex = 0;
+        for (u32 RowIndex = 0; RowIndex < SquareLen; ++RowIndex ) {
+            u32 GlyphsToRender = 0;
+            if (SquareLen == 1) {
+                GlyphsToRender = Str.Count;
+            }
+            else {
+                GlyphsToRender = SquareLen + (Overflow-- ? 1 : 0);
+            }
+            //G_Platform->LogFp("%d\n", GlyphsToRender);
+            f32 StartPosX = FontGlyphW * GlyphsToRender * -0.5f + FontGlyphW * 0.5f;
+            for (u32 I = 0; I < GlyphsToRender; ++I) {
+                font_glyph* FontGlyph = Font_GetGlyph(Font, Str.Data[StringIndex]);
+                m44f S = M44f_Scale(FontGlyphW, FontGlyphH, 1.f);
+                
+                f32 PosX = StartPosX + I * FontGlyphW;
+                f32 PosY = 0.f;
+                m44f T = M44f_Translation(PosX, PosY, ZLayScore);
+                
+                
+                Draw_TexturedQuadFromImage(RenderCommands,
+                                           Assets,
+                                           FontGlyph->ImageId,
+                                           T*S,
+                                           Color);
+                ++StringIndex;
+            }
+        }
+        
+        
+        
+        
+    }
+    
     Main_RenderPlayer(Mode, Assets, RenderCommands);
     Main_RenderBullets(Mode, Assets, RenderCommands);
     Main_RenderEnemies(Mode, Assets, RenderCommands);
@@ -156,7 +247,7 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     Main_RenderDeathBomb(Mode, RenderCommands);
     
     // NOTE: Change state if enemy and bullet count is 0
-    if (Mode->DeathBomb.Radius >= Game_DesignWidth) 
+    if (Mode->DeathBomb.Radius >= Game_DesignWidth * 2.f) 
     {
         Mode->State = Main_StateType_Spawning;
         Mode->SpawningState.Timer = 0.f;
@@ -219,7 +310,6 @@ Main_Update(permanent_state* PermState,
         } break;
         
     }
-    // NOTE(Momo): Render
     
     //Main_RenderDebugLines(Mode, RenderCommands);
     

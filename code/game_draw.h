@@ -23,8 +23,6 @@ Draw_TexturedQuadFromImage(mailbox* RenderCommands,
                               AtlasUV);
 }
 
-
-
 static inline void
 Draw_Text(mailbox* RenderCommands, 
           assets* Assets,
@@ -56,13 +54,11 @@ Draw_Text(mailbox* RenderCommands,
                                   CurPosition.Y + Box.Min.Y * Size,  
                                   CurPosition.Z + ZLayerOffset);
         
-        m44f SA = M44f_Concat(S,A);
-        m44f TSA = M44f_Concat(T, SA);
         
         Draw_TexturedQuadFromImage(RenderCommands,
                                    Assets,
                                    Glyph->ImageId,
-                                   TSA,
+                                   T*S*A,
                                    Color);
         
         CurPosition.X += Glyph->Advance * Size;

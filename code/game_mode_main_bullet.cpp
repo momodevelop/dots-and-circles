@@ -73,7 +73,7 @@ Main_RenderBullets(game_mode_main* Mode,
                                    Image,
                                    M44f_Concat(T,S), 
                                    C4f_White);
-        LayerOffset += 0.01f;
+        LayerOffset += 0.00001f;
     };
     
     

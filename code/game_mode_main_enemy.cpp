@@ -144,7 +144,7 @@ Main_RenderEnemies(game_mode_main* Mode,
 {
     u32 CurrentCount = 0;
     auto ForEachLamb = [&](enemy* Enemy){
-        f32 Offset = 0.001f * CurrentCount++;
+        f32 Offset = 0.00001f * CurrentCount++;
         f32 Size = Enemy->Size;
         switch(Enemy->State) {
             case EnemyState_Spawning: {

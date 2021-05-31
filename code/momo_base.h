@@ -35,6 +35,7 @@ typedef ptrdiff_t iptr;
 #define MaxOf(X,Y) ((X) > (Y) ? (X) : (Y))
 #define MinOf(X,Y) ((X) < (Y) ? (X) : (Y))
 
+
 // NOTE(Momo): We need to do/while to cater for if/else statements
 // that looks like this:
 // >> if (...) 
@@ -197,6 +198,7 @@ namespace zawarudo {
 #define U64_Max               (18446744073709551615)
 
 
+
 static inline u32
 U64_ToU32(u64 Value) {
     Assert(Value <= U32_Max);
@@ -219,6 +221,18 @@ static inline u32
 S64_ToU32(s64 Value) {
     Assert(Value <= U32_Max && Value >= 0);
     return (u32)Value;
+}
+
+//~ NOTE(Momo): Converts single digits 
+static inline u8
+DigitToAscii(u8 Digit){
+    Assert(Digit >= 0 && Digit <= 9);
+    return Digit + '0';
+}
+static inline u8
+AsciiToDigit(u8 Digit){
+    Assert(Digit >= '0' && Digit <= '9');
+    return Digit - '0';
 }
 
 #endif //MM_BASIC_TYPES_H

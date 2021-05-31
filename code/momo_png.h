@@ -7,7 +7,7 @@
 // Dynamic Huffman
 // Different filter methods
 
-#define Png_Debug 1
+#define Png_Debug 0
 #define Png_MaxBits 15
 #define Png_MaxDistCodes 32
 #define Png_MaxFixedLitCodes 288
