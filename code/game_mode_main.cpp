@@ -146,14 +146,14 @@ Main_StateNormal_Update(permanent_state* PermState,
         
         // NOTE(Momo): This holds the value of BOTH the amount of glyphs
         // in each row and column
-        u32 SquareLen = (u32)Sqrt((f32)Str.Count); // Truncation expected
-        u32 Overflow = Str.Count % (SquareLen*SquareLen);
+        u32 Rows = (u32)Sqrt((f32)Str.Count); // Truncation expected
+        u32 ExtraCharCount = Str.Count - (Rows*Rows);
         
         // NOTE(Momo): At this point, 
         // Str.Count == SquareLen * SquareLen + Overflow
         
-        f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/SquareLen;
-        f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/SquareLen;
+        f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/Rows;
+        f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/Rows;
         f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
         
         f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
@@ -166,11 +166,16 @@ Main_StateNormal_Update(permanent_state* PermState,
             G_Platform->LogFp("%d", (*Beg));
         }
         G_Platform->LogFp("\n");
-        G_Platform->LogFp("Count: %d\n", Str.Count);
-        G_Platform->LogFp("SquareLen: %d\n", SquareLen);
-        G_Platform->LogFp("Overflow: %d\n", Overflow);
+        G_Platform->LogFp("c: %d\n", Str.Count);
+        G_Platform->LogFp("r: %d\n", Rows);
+        G_Platform->LogFp("o: %d\n", ExtraCharCount);
+        for (u32 RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
+            G_Platform->LogFp("r%d: %d + %d\n", RowIndex,
+                              Rows + ExtraCharCount/Rows, (ExtraCharCount%Rows-1) >= RowIndex );
+        }
 #endif
         
+#if 0
         u32 StringIndex = 0;
         for (u32 RowIndex = 0; RowIndex < SquareLen; ++RowIndex ) {
             u32 GrabFromOverflow = Overflow???/
@@ -194,7 +199,7 @@ Main_StateNormal_Update(permanent_state* PermState,
                 ++StringIndex;
             }
         }
-        
+#endif
         
         
         

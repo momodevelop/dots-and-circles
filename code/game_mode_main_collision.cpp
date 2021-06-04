@@ -29,7 +29,7 @@ Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
                 v2f VectorToBullet = V2f_Normalize(B->Position - Player->Position);
                 v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
                 Main_SpawnParticle(Mode, SpawnPos, 5);
-                Mode->Score += 5;
+                Mode->Score += 50;
             }
             else {
                 Player->IsDead = true;

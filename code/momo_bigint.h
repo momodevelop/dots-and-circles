@@ -9,6 +9,8 @@ struct big_int {
     u8* Data;
     u32 Count;
     u32 Places;
+    
+    big_int& operator=(u32 Rhs);
 };
 
 
@@ -102,11 +104,13 @@ BigInt_Init(big_int* B, u8* Buffer, u32 Count) {
     return true;
 }
 
+
 static inline void
 BigInt_SetMax(big_int* B) {
     for(u32 I = 0; I < B->Count; ++I) {
         B->Data[I] = 9;
     }
+    B->Places = B->Count;
 }
 
 static inline b8
@@ -115,7 +119,6 @@ BigInt_New(big_int* B, arena* Arena, u32 Count) {
     return BigInt_Init(B, Buffer, Count);
 }
 
-// TODO: Instead of asserting, set value to 99999 if maxed out
 static inline void
 BigInt_Add(big_int* B, u32 Value) {
     // NOTE(Momo): For each place, add
@@ -163,10 +166,38 @@ BigInt_Add(big_int* B, u32 Value) {
     }
 }
 
+// TODO: We can probably optimize with by not calling BigInt_SetZero
+static inline void
+BigInt_Set(big_int* B, u32 Value) {
+    // NOTE(Momo): For each place, add
+    u32 Index = 0;
+    u8 Carry = 0;
+    while (Value > 0) {
+        if (Index >= B->Count) {
+            BigInt_SetMax(B);
+            return;
+        }
+        
+        B->Data[Index] = (u8)(Value % 10); 
+        Value /= 10;
+        ++Index;
+    }
+    
+    if (Index > B->Places) {
+        B->Places = Index;
+    }
+}
+
 static inline big_int&
 operator+=(big_int& Lhs, u32 Rhs) {
     BigInt_Add(&Lhs, Rhs);
     return Lhs;
+}
+
+inline big_int&
+big_int::operator=(u32 Rhs) {
+    BigInt_Set(this, Rhs);
+    return (*this);
 }
 
 #endif //MOMO_BIGINT_H
