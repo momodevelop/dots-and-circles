@@ -6,7 +6,7 @@ int main() {
     big_int _L = {};
     big_int* L = &_L;
     BigInt_Init(L, A, 100);
-    _L = 1234567;
+    _L = 1;
     
     u32 Rows = (u32)Sqrt((f32)L->Places); // Truncation expected
     u32 ExtraCharCount = L->Places - (Rows*Rows);

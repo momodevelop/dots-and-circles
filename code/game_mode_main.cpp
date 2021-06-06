@@ -135,8 +135,8 @@ Main_StateNormal_Update(permanent_state* PermState,
         // NOTE(Momo): We are just going to assume that:
         // - The text box boundary that is the game space is a square
         // - And that our numbers in font are monospaced
-        const v2f Boundary = V2f_Create(Game_DesignWidth * 0.9f, 
-                                        Game_DesignHeight * 0.9f);
+        const v2f Boundary = V2f_Create(Game_DesignWidth * 0.8f, 
+                                        Game_DesignHeight * 0.8f);
         
         // NOTE(Momo): Get the font glyph's aabb
         font* Font = Assets_GetFont(Assets, Font_Default);
@@ -149,16 +149,6 @@ Main_StateNormal_Update(permanent_state* PermState,
         u32 Rows = (u32)Sqrt((f32)Str.Count); // Truncation expected
         u32 ExtraCharCount = Str.Count - (Rows*Rows);
         
-        // NOTE(Momo): At this point, 
-        // Str.Count == SquareLen * SquareLen + Overflow
-        
-        f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/Rows;
-        f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/Rows;
-        f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
-        
-        f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
-        f32 FontGlyphH = GlyphBox.H * FontScaleToFitBoundaryBest;
-        
         c4f Color = C4f_Create(1,1,1, 0.05f);
         
 #if 1
@@ -170,24 +160,44 @@ Main_StateNormal_Update(permanent_state* PermState,
         G_Platform->LogFp("r: %d\n", Rows);
         G_Platform->LogFp("o: %d\n", ExtraCharCount);
         for (u32 RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
-            G_Platform->LogFp("r%d: %d + %d\n", RowIndex,
-                              Rows + ExtraCharCount/Rows, (ExtraCharCount%Rows-1) >= RowIndex );
+            u32 DistributedEvenly = ExtraCharCount/Rows;
+            u32 Extra = ((ExtraCharCount%Rows) >= RowIndex + 1);
+            G_Platform->LogFp("r%d: %d + %d + %d = %d\n", RowIndex, Rows, DistributedEvenly, Extra,
+                              Rows + DistributedEvenly + Extra );
         }
 #endif
         
-#if 0
-        u32 StringIndex = 0;
-        for (u32 RowIndex = 0; RowIndex < SquareLen; ++RowIndex ) {
-            u32 GrabFromOverflow = Overflow???/
-                u32 GlyphsToRender = SquareLen + (Overflow-- ? 1 : 0);
-            //G_Platform->LogFp("%d\n", GlyphsToRender);
+#if 1
+        
+        
+        
+        u32 BaseExtraCharsPerRow = ExtraCharCount / Rows;
+        u32 RemainingChars = ExtraCharCount % Rows;
+        
+        // Longest column amongst all rows
+        u32 LongestRowCols = Rows + BaseExtraCharsPerRow + (RemainingChars > 0);
+        
+        f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/Rows;
+        f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/LongestRowCols;
+        f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
+        
+        f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
+        f32 FontGlyphH = GlyphBox.H * FontScaleToFitBoundaryBest;
+        
+        //G_Platform->LogFp("best size: %f\n", FontScaleToFitBoundaryBest);
+        f32 StartPosY = FontGlyphH * Rows * 0.5f - FontGlyphH * 0.5f;
+        for (u32 StringIndex = 0,  RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
+            u32 ExtraCharForThisRow = (RemainingChars >= (RowIndex + 1));
+            u32 GlyphsToRender = Rows + BaseExtraCharsPerRow + ExtraCharForThisRow;
+            
+            //G_Platform->LogFp("r%d: %d\n", RowIndex, GlyphsToRender);
             f32 StartPosX = FontGlyphW * GlyphsToRender * -0.5f + FontGlyphW * 0.5f;
             for (u32 I = 0; I < GlyphsToRender; ++I) {
                 font_glyph* FontGlyph = Font_GetGlyph(Font, Str.Data[StringIndex]);
                 m44f S = M44f_Scale(FontGlyphW, FontGlyphH, 1.f);
                 
                 f32 PosX = StartPosX + I * FontGlyphW;
-                f32 PosY = 0.f;
+                f32 PosY = StartPosY - RowIndex * FontGlyphH;
                 m44f T = M44f_Translation(PosX, PosY, ZLayScore);
                 
                 
