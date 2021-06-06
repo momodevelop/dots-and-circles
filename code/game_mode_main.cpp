@@ -11,6 +11,108 @@
 #include "game_mode_main_debug.cpp"
 #include "game_mode_main_death_bomb.cpp"
 
+static inline void
+Main_RenderScore(game_mode_main* Mode,
+                 arena* TempArena,
+                 assets* Assets, 
+                 mailbox* RenderCommands) 
+{
+    arena_mark Scratch = Arena_Mark(TempArena);
+    Defer { Arena_Revert(&Scratch); };
+    
+    
+    u8_str Str = {};
+    U8Str_New(&Str, Scratch, Mode->Score.Places);
+    
+    auto Itr = BigInt_ReverseItrBegin(&Mode->Score);
+    auto End = BigInt_ReverseItrEnd(&Mode->Score);
+    for (; Itr != End; ++Itr) {
+        U8Str_Push(&Str, DigitToAscii((*Itr)));
+    }
+    
+    // TODO: If we expose this part below, remember to check for Str.Count > 0
+    
+    // NOTE(Momo): We are just going to assume that:
+    // - The text box boundary that is the game space is a square
+    // - And that our numbers in font are monospaced
+    const v2f Boundary = V2f_Create(Game_DesignWidth * 0.8f, 
+                                    Game_DesignHeight * 0.8f);
+    
+    // NOTE(Momo): Get the font glyph's aabb
+    font* Font = Assets_GetFont(Assets, Font_Default);
+    font_glyph* BaseFontGlyph = Font_GetGlyph(Font, Str.Data[0]);
+    v2f GlyphBox = V2f_Create(Aabb2f_Width(BaseFontGlyph->Box), 
+                              Aabb2f_Height(BaseFontGlyph->Box));
+    
+    // NOTE(Momo): This holds the value of BOTH the amount of glyphs
+    // in each row and column
+    u32 Rows = (u32)Sqrt((f32)Str.Count); // Truncation expected
+    u32 ExtraCharCount = Str.Count - (Rows*Rows);
+    
+    c4f Color = C4f_Create(1,1,1, 0.05f);
+    
+#if 1
+    for(auto Beg = BigInt_ReverseItrBegin(&Mode->Score); Beg != BigInt_ReverseItrEnd(&Mode->Score); ++Beg) {
+        G_Platform->LogFp("%d", (*Beg));
+    }
+    G_Platform->LogFp("\n");
+    G_Platform->LogFp("c: %d\n", Str.Count);
+    G_Platform->LogFp("r: %d\n", Rows);
+    G_Platform->LogFp("o: %d\n", ExtraCharCount);
+    for (u32 RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
+        u32 DistributedEvenly = ExtraCharCount/Rows;
+        u32 Extra = ((ExtraCharCount%Rows) >= RowIndex + 1);
+        G_Platform->LogFp("r%d: %d + %d + %d = %d\n", RowIndex, Rows, DistributedEvenly, Extra,
+                          Rows + DistributedEvenly + Extra );
+    }
+#endif
+    
+#if 1
+    
+    
+    
+    u32 BaseExtraCharsPerRow = ExtraCharCount / Rows;
+    u32 RemainingChars = ExtraCharCount % Rows;
+    
+    // Longest column amongst all rows
+    u32 LongestRowCols = Rows + BaseExtraCharsPerRow + (RemainingChars > 0);
+    
+    f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/Rows;
+    f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/LongestRowCols;
+    f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
+    
+    f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
+    f32 FontGlyphH = GlyphBox.H * FontScaleToFitBoundaryBest;
+    
+    //G_Platform->LogFp("best size: %f\n", FontScaleToFitBoundaryBest);
+    f32 StartPosY = FontGlyphH * Rows * 0.5f - FontGlyphH * 0.5f;
+    for (u32 StringIndex = 0,  RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
+        u32 ExtraCharForThisRow = (RemainingChars >= (RowIndex + 1));
+        u32 GlyphsToRender = Rows + BaseExtraCharsPerRow + ExtraCharForThisRow;
+        
+        //G_Platform->LogFp("r%d: %d\n", RowIndex, GlyphsToRender);
+        f32 StartPosX = FontGlyphW * GlyphsToRender * -0.5f + FontGlyphW * 0.5f;
+        for (u32 I = 0; I < GlyphsToRender; ++I) {
+            font_glyph* FontGlyph = Font_GetGlyph(Font, Str.Data[StringIndex]);
+            m44f S = M44f_Scale(FontGlyphW, FontGlyphH, 1.f);
+            
+            f32 PosX = StartPosX + I * FontGlyphW;
+            f32 PosY = StartPosY - RowIndex * FontGlyphH;
+            m44f T = M44f_Translation(PosX, PosY, ZLayScore);
+            
+            
+            Draw_TexturedQuadFromImage(RenderCommands,
+                                       Assets,
+                                       FontGlyph->ImageId,
+                                       T*S,
+                                       Color);
+            ++StringIndex;
+        }
+    }
+#endif
+    
+}
+
 // TODO: split state logic into files?
 static inline b8 
 Main_Init(permanent_state* PermState,
@@ -114,112 +216,6 @@ Main_StateNormal_Update(permanent_state* PermState,
     Main_UpdatePlayerBulletCollision(Mode, Assets, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
-    
-    // NOTE(Momo): Render Score
-    {
-        arena_mark Scratch = Arena_Mark(&TranState->Arena);
-        Defer { Arena_Revert(&Scratch); };
-        
-        
-        u8_str Str = {};
-        U8Str_New(&Str, Scratch, Mode->Score.Places);
-        
-        auto Itr = BigInt_ReverseItrBegin(&Mode->Score);
-        auto End = BigInt_ReverseItrEnd(&Mode->Score);
-        for (; Itr != End; ++Itr) {
-            U8Str_Push(&Str, DigitToAscii((*Itr)));
-        }
-        
-        // TODO: If we expose this part below, remember to check for Str.Count > 0
-        
-        // NOTE(Momo): We are just going to assume that:
-        // - The text box boundary that is the game space is a square
-        // - And that our numbers in font are monospaced
-        const v2f Boundary = V2f_Create(Game_DesignWidth * 0.8f, 
-                                        Game_DesignHeight * 0.8f);
-        
-        // NOTE(Momo): Get the font glyph's aabb
-        font* Font = Assets_GetFont(Assets, Font_Default);
-        font_glyph* BaseFontGlyph = Font_GetGlyph(Font, Str.Data[0]);
-        v2f GlyphBox = V2f_Create(Aabb2f_Width(BaseFontGlyph->Box), 
-                                  Aabb2f_Height(BaseFontGlyph->Box));
-        
-        // NOTE(Momo): This holds the value of BOTH the amount of glyphs
-        // in each row and column
-        u32 Rows = (u32)Sqrt((f32)Str.Count); // Truncation expected
-        u32 ExtraCharCount = Str.Count - (Rows*Rows);
-        
-        c4f Color = C4f_Create(1,1,1, 0.05f);
-        
-#if 1
-        for(auto Beg = BigInt_ReverseItrBegin(&Mode->Score); Beg != BigInt_ReverseItrEnd(&Mode->Score); ++Beg) {
-            G_Platform->LogFp("%d", (*Beg));
-        }
-        G_Platform->LogFp("\n");
-        G_Platform->LogFp("c: %d\n", Str.Count);
-        G_Platform->LogFp("r: %d\n", Rows);
-        G_Platform->LogFp("o: %d\n", ExtraCharCount);
-        for (u32 RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
-            u32 DistributedEvenly = ExtraCharCount/Rows;
-            u32 Extra = ((ExtraCharCount%Rows) >= RowIndex + 1);
-            G_Platform->LogFp("r%d: %d + %d + %d = %d\n", RowIndex, Rows, DistributedEvenly, Extra,
-                              Rows + DistributedEvenly + Extra );
-        }
-#endif
-        
-#if 1
-        
-        
-        
-        u32 BaseExtraCharsPerRow = ExtraCharCount / Rows;
-        u32 RemainingChars = ExtraCharCount % Rows;
-        
-        // Longest column amongst all rows
-        u32 LongestRowCols = Rows + BaseExtraCharsPerRow + (RemainingChars > 0);
-        
-        f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/Rows;
-        f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/LongestRowCols;
-        f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
-        
-        f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
-        f32 FontGlyphH = GlyphBox.H * FontScaleToFitBoundaryBest;
-        
-        //G_Platform->LogFp("best size: %f\n", FontScaleToFitBoundaryBest);
-        f32 StartPosY = FontGlyphH * Rows * 0.5f - FontGlyphH * 0.5f;
-        for (u32 StringIndex = 0,  RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
-            u32 ExtraCharForThisRow = (RemainingChars >= (RowIndex + 1));
-            u32 GlyphsToRender = Rows + BaseExtraCharsPerRow + ExtraCharForThisRow;
-            
-            //G_Platform->LogFp("r%d: %d\n", RowIndex, GlyphsToRender);
-            f32 StartPosX = FontGlyphW * GlyphsToRender * -0.5f + FontGlyphW * 0.5f;
-            for (u32 I = 0; I < GlyphsToRender; ++I) {
-                font_glyph* FontGlyph = Font_GetGlyph(Font, Str.Data[StringIndex]);
-                m44f S = M44f_Scale(FontGlyphW, FontGlyphH, 1.f);
-                
-                f32 PosX = StartPosX + I * FontGlyphW;
-                f32 PosY = StartPosY - RowIndex * FontGlyphH;
-                m44f T = M44f_Translation(PosX, PosY, ZLayScore);
-                
-                
-                Draw_TexturedQuadFromImage(RenderCommands,
-                                           Assets,
-                                           FontGlyph->ImageId,
-                                           T*S,
-                                           Color);
-                ++StringIndex;
-            }
-        }
-#endif
-        
-        
-        
-    }
-    
-    Main_RenderPlayer(Mode, Assets, RenderCommands);
-    Main_RenderBullets(Mode, Assets, RenderCommands);
-    Main_RenderEnemies(Mode, Assets, RenderCommands);
-    Main_RenderParticles(Mode, Assets, RenderCommands);
-    
     // NOTE(Momo): if player's dead, do dead stuff
     if(Mode->Player.IsDead) 
     {
@@ -230,6 +226,13 @@ Main_StateNormal_Update(permanent_state* PermState,
         Mode->State = Main_StateType_PlayerDied;
         Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
     }
+    
+    Main_RenderScore(Mode, &TranState->Arena, Assets, RenderCommands);
+    Main_RenderPlayer(Mode, Assets, RenderCommands);
+    Main_RenderBullets(Mode, Assets, RenderCommands);
+    Main_RenderEnemies(Mode, Assets, RenderCommands);
+    Main_RenderParticles(Mode, Assets, RenderCommands);
+    
 }
 
 
@@ -250,11 +253,15 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     Main_UpdateParticles(Mode, DeltaTime);
     
     Camera_Set(&Mode->Camera, RenderCommands);
+    
+    Main_RenderScore(Mode, &TranState->Arena, Assets, RenderCommands);
     Main_RenderPlayer(Mode, Assets, RenderCommands);
     Main_RenderBullets(Mode, Assets, RenderCommands);
     Main_RenderEnemies(Mode, Assets, RenderCommands);
     Main_RenderParticles(Mode, Assets, RenderCommands);
     Main_RenderDeathBomb(Mode, RenderCommands);
+    
+    
     
     // NOTE: Change state if enemy and bullet count is 0
     if (Mode->DeathBomb.Radius >= Game_DesignWidth * 2.f) 
@@ -285,7 +292,9 @@ Main_StateSpawning_Update(permanent_state* PermState,
     
     Camera_Set(&Mode->Camera, RenderCommands);
     
+    Main_RenderScore(Mode, &TranState->Arena, Assets, RenderCommands);
     Main_RenderPlayer(Mode, Assets, RenderCommands);
+    
     
     if (Mode->SpawningState.Timer >= Mode->SpawningState.Duration) {
         Mode->State = Main_StateType_Normal;

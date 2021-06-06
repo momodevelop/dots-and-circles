@@ -5,9 +5,8 @@
 - Introspection?
 
 # Game
-- Player death
 - Restructure waves
-- Score system?
-- Enemy (...32x32?)
+- Enemy art (...32x32?)
 
 # Game assets tool
+- font glyph aabb are wrong?
