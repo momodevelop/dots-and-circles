@@ -88,23 +88,17 @@ struct death_bomb {
 };
 
 
-struct game_mode_main_state_spawning {
-    f32 Timer;
-    static constexpr f32 Duration = 1.f;
-};
-struct game_mode_main_state_normal {
-};
-struct game_mode_main_state_player_died {
-};
-
 struct game_mode_main {
-    // TODO: We could use pointers to save memory but ahhhhh...lazy
     game_mode_main_state_type State;
-    union {
-        game_mode_main_state_spawning SpawningState;
-        game_mode_main_state_normal NormalState;
-        game_mode_main_state_player_died PlayerDiedState;
-    };
+    
+    // TODO: we might do like a tagged union state thing but
+    // I don't really know the problem space for that yet
+    // because not all states have variables atm
+    f32 SpawnTimer;
+    static constexpr f32 SpawnDuration = 1.f;
+    
+    
+    
     player Player;
     
     game_camera Camera;

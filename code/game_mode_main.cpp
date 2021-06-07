@@ -21,6 +21,7 @@ Main_RenderScore(game_mode_main* Mode,
     Defer { Arena_Revert(&Scratch); };
     
     
+    
     u8_str Str = {};
     U8Str_New(&Str, Scratch, Mode->Score.Places);
     
@@ -35,14 +36,11 @@ Main_RenderScore(game_mode_main* Mode,
     // NOTE(Momo): We are just going to assume that:
     // - The text box boundary that is the game space is a square
     // - And that our numbers in font are monospaced
-    const v2f Boundary = V2f_Create(Game_DesignWidth * 0.8f, 
-                                    Game_DesignHeight * 0.8f);
+    const v2f Boundary = V2f_Create(Game_DesignWidth * 0.9f, 
+                                    Game_DesignHeight * 0.9f);
     
-    // NOTE(Momo): Get the font glyph's aabb
     font* Font = Assets_GetFont(Assets, Font_Default);
     font_glyph* BaseFontGlyph = Font_GetGlyph(Font, Str.Data[0]);
-    v2f GlyphBox = V2f_Create(Aabb2f_Width(BaseFontGlyph->Box), 
-                              Aabb2f_Height(BaseFontGlyph->Box));
     
     // NOTE(Momo): This holds the value of BOTH the amount of glyphs
     // in each row and column
@@ -77,27 +75,29 @@ Main_RenderScore(game_mode_main* Mode,
     // Longest column amongst all rows
     u32 LongestRowCols = Rows + BaseExtraCharsPerRow + (RemainingChars > 0);
     
-    f32 FontScaleToFitBoundaryH = Boundary.H/GlyphBox.H/Rows;
-    f32 FontScaleToFitBoundaryW = Boundary.W/GlyphBox.W/LongestRowCols;
+    f32 FontScaleToFitBoundaryH = Boundary.H/Rows;
+    f32 FontScaleToFitBoundaryW = Boundary.W/LongestRowCols;
     f32 FontScaleToFitBoundaryBest = MinOf(FontScaleToFitBoundaryW, FontScaleToFitBoundaryH);
     
-    f32 FontGlyphW = GlyphBox.W * FontScaleToFitBoundaryBest;
-    f32 FontGlyphH = GlyphBox.H * FontScaleToFitBoundaryBest;
-    
     //G_Platform->LogFp("best size: %f\n", FontScaleToFitBoundaryBest);
-    f32 StartPosY = FontGlyphH * Rows * 0.5f - FontGlyphH * 0.5f;
+    f32 StartPosY = 0.5f * FontScaleToFitBoundaryBest * (Rows - 1);
     for (u32 StringIndex = 0,  RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
         u32 ExtraCharForThisRow = (RemainingChars >= (RowIndex + 1));
         u32 GlyphsToRender = Rows + BaseExtraCharsPerRow + ExtraCharForThisRow;
         
         //G_Platform->LogFp("r%d: %d\n", RowIndex, GlyphsToRender);
-        f32 StartPosX = FontGlyphW * GlyphsToRender * -0.5f + FontGlyphW * 0.5f;
+        f32 StartPosX = -0.5f *  FontScaleToFitBoundaryBest * (GlyphsToRender - 1); 
         for (u32 I = 0; I < GlyphsToRender; ++I) {
             font_glyph* FontGlyph = Font_GetGlyph(Font, Str.Data[StringIndex]);
-            m44f S = M44f_Scale(FontGlyphW, FontGlyphH, 1.f);
+            v2f FontGlyphBox = V2f_Create(Aabb2f_Width(BaseFontGlyph->Box), 
+                                          Aabb2f_Height(BaseFontGlyph->Box));
             
-            f32 PosX = StartPosX + I * FontGlyphW;
-            f32 PosY = StartPosY - RowIndex * FontGlyphH;
+            m44f S = M44f_Scale(FontScaleToFitBoundaryBest, 
+                                FontScaleToFitBoundaryBest, 
+                                1.f);
+            
+            f32 PosX = StartPosX + I * FontScaleToFitBoundaryBest;
+            f32 PosY = StartPosY - RowIndex * FontScaleToFitBoundaryBest;
             m44f T = M44f_Translation(PosX, PosY, ZLayScore);
             
             
@@ -262,12 +262,13 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     Main_RenderDeathBomb(Mode, RenderCommands);
     
     
-    
+    // NOTE: PlayerDied -> Spawning state
     // NOTE: Change state if enemy and bullet count is 0
     if (Mode->DeathBomb.Radius >= Game_DesignWidth * 2.f) 
     {
+        
         Mode->State = Main_StateType_Spawning;
-        Mode->SpawningState.Timer = 0.f;
+        Mode->SpawnTimer = 0.f;
         Mode->Player.IsDead = false;
     }
 }
@@ -283,7 +284,7 @@ Main_StateSpawning_Update(permanent_state* PermState,
     game_mode_main* Mode = PermState->MainMode;
     assets* Assets = &TranState->Assets;
     
-    f32 Ease = EaseOutBounce(Clamp(Mode->SpawningState.Timer/Mode->SpawningState.Duration, 0.f, 1.f));
+    f32 Ease = EaseOutBounce(Clamp(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
     Mode->Player.Size = Mode->Player.MaxSize * Ease;
     
     
@@ -296,11 +297,12 @@ Main_StateSpawning_Update(permanent_state* PermState,
     Main_RenderPlayer(Mode, Assets, RenderCommands);
     
     
-    if (Mode->SpawningState.Timer >= Mode->SpawningState.Duration) {
+    // NOTE(Momo): Spawning -> Normal state
+    if (Mode->SpawnTimer >= Mode->SpawnDuration) {
         Mode->State = Main_StateType_Normal;
         Mode->Player.Size = Mode->Player.MaxSize;
     }
-    Mode->SpawningState.Timer += DeltaTime;
+    Mode->SpawnTimer += DeltaTime;
     
     
 }

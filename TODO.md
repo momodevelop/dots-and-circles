@@ -1,12 +1,14 @@
 # Engine
+- Create scratch memory area
 - Chaging display refresh rate?
 - Log to text file
 - Quaternions?
 - Introspection?
 
 # Game
+- show/hide cursor
+- pause state
 - Restructure waves
 - Enemy art (...32x32?)
 
 # Game assets tool
-- font glyph aabb are wrong?
