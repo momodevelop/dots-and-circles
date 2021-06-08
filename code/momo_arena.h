@@ -49,32 +49,13 @@ Arena_PushBlock(arena* Arena, u32 Size, u8 Alignment = alignof(void*)) {
     return ret;
 }
 
-template<typename type>
-static inline type*
-Arena_PushArray(arena* A, u32 Count) {
-    return (type*)Arena_PushBlock(A, sizeof(type)*Count, alignof(type));
-}
-
-template<typename type>
-static inline type*
-Arena_PushStruct(arena* A) {
-    return (type*)Arena_PushBlock(A, sizeof(type), alignof(type));
-}
+#define Arena_PushStruct(Type, Arena) \
+(Type*)Arena_PushBlock(Arena, sizeof(Type), alignof(Type));
 
 
-#if 0
-static inline arena
-Arena_SubArena(arena* SrcArena, u32 Capacity) {
-    Assert(Capacity);
-    arena Ret = {};
-    
-    // We don't care about alignment, so it should be 1.
-    Ret.Memory = (u8*)Arena_PushBlock(SrcArena, Capacity, 1);
-    Assert(Ret.Memory);
-    Ret.Capacity = Capacity;
-    return Ret;
-}
-#endif
+#define Arena_PushArray(Type, Arena, Count) \
+(Type*)Arena_PushBlock(Arena, sizeof(Type) * (Count), alignof(Type));
+
 
 static inline void*
 Arena_BootupBlock(u32 StructSize,

@@ -206,22 +206,22 @@ Assets_Init(assets* Assets,
     Platform->ClearTexturesFp();
     
     Assets->TextureCount = Texture_Count;
-    Assets->Textures = Arena_PushArray<texture>(Arena, Texture_Count);
+    Assets->Textures = Arena_PushArray(texture, Arena, Texture_Count);
     
     Assets->ImageCount = Image_Count;
-    Assets->Images = Arena_PushArray<image>(Arena, Image_Count);
+    Assets->Images = Arena_PushArray(image, Arena, Image_Count);
     
     Assets->FontCount = Font_Count;
-    Assets->Fonts = Arena_PushArray<font>(Arena, Font_Count);
+    Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
     
     Assets->AnimeCount = Anime_Count;
-    Assets->Animes = Arena_PushArray<anime>(Arena, Anime_Count);
+    Assets->Animes = Arena_PushArray(anime, Arena, Anime_Count);
     
     Assets->MsgCount = Msg_Count;
-    Assets->Msgs = Arena_PushArray<msg>(Arena, Msg_Count);
+    Assets->Msgs = Arena_PushArray(msg, Arena, Msg_Count);
     
     Assets->SoundCount = Sound_Count;
-    Assets->Sounds = Arena_PushArray<sound>(Arena, Sound_Count);
+    Assets->Sounds = Arena_PushArray(sound, Arena, Sound_Count);
     
     platform_file_handle AssetFile = Platform->OpenAssetFileFp();
     if (AssetFile.Error) {

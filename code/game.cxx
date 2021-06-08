@@ -170,24 +170,24 @@ GameUpdateFunc(GameUpdate)
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
                 PermState->SplashMode = 
-                    Arena_PushStruct<game_mode_splash>(ModeArena); 
+                    Arena_PushStruct(game_mode_splash, ModeArena); 
                 InitSplashMode(PermState);
             } break;
             case GameModeType_Main: {
                 PermState->MainMode = 
-                    Arena_PushStruct<game_mode_main>(ModeArena); 
+                    Arena_PushStruct(game_mode_main, ModeArena); 
                 if (!Main_Init(PermState, TranState, DebugState)){
                     return false;
                 }
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
-                    Arena_PushStruct<game_mode_sandbox>(ModeArena); 
+                    Arena_PushStruct(game_mode_sandbox, ModeArena); 
                 InitSandboxMode(PermState);
             } break;
             case GameModeType_AnimeTest: {
                 PermState->AnimeTestMode = 
-                    Arena_PushStruct<game_mode_anime_test>(ModeArena); 
+                    Arena_PushStruct(game_mode_anime_test, ModeArena); 
                 InitAnimeTestMode(PermState);
             } break;
             default: {

@@ -115,7 +115,7 @@ BigInt_SetMax(big_int* B) {
 
 static inline b8
 BigInt_New(big_int* B, arena* Arena, u32 Count) {
-    u8* Buffer = Arena_PushArray<u8>(Arena, Count);
+    u8* Buffer = Arena_PushArray(u8, Arena, Count);
     return BigInt_Init(B, Buffer, Count);
 }
 

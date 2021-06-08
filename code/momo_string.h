@@ -87,7 +87,7 @@ U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
     for (;Max != Str.Count;) {
         Max = U8CStr_Find(Str, Delimiter, Min);
         
-        u8_cstr* Link = Arena_PushStruct<u8_cstr>(Arena);
+        u8_cstr* Link = Arena_PushStruct(u8_cstr, Arena);
         Assert(Link);
         U8CStr_SubString(Link, Str, Min, Max);
         
@@ -123,7 +123,7 @@ U8Str_Init(u8_str* S, u8* Buffer, u32 Capacity) {
 
 static inline b8
 U8Str_New(u8_str* S, arena* Arena, u32 Capacity) {
-    u8* Buffer = Arena_PushArray<u8>(Arena, Capacity);
+    u8* Buffer = Arena_PushArray(u8, Arena, Capacity);
     if(!Buffer) {
         return false;
     }

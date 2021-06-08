@@ -108,7 +108,7 @@ struct win32_state {
 #endif
     
     opengl* Opengl;
-    win32_game_memory* GameMemory = {};
+    win32_game_memory GameMemory;
     
 };
 
@@ -725,7 +725,7 @@ Win32InitOpengl(win32_state* State,
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
-    opengl* Opengl = Arena_PushStruct<opengl>(&State->Arena);
+    opengl* Opengl = Arena_PushStruct(opengl, &State->Arena);
     
     if (!Opengl) {
         Win32Log("[Win32::Opengl] Failed to allocate opengl\n"); 
@@ -1171,12 +1171,12 @@ Win32ProcessMessages(HWND Window,
                     } break;
                     case VK_F3:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32GameMemory_Save(G_State->GameMemory, Win32_SaveStateFile);
+                            Win32GameMemory_Save(&G_State->GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F4:{
                         if (Msg.message == WM_KEYDOWN) {
-                            Win32GameMemory_Load(G_State->GameMemory, Win32_SaveStateFile);
+                            Win32GameMemory_Load(&G_State->GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F5:{
@@ -1188,7 +1188,7 @@ Win32ProcessMessages(HWND Window,
                                 Win32EndRecordingInput(G_State);
                             }
                             else {
-                                Win32GameMemory_Save(G_State->GameMemory, Win32_RecordStateFile);
+                                Win32GameMemory_Save(&G_State->GameMemory, Win32_RecordStateFile);
                                 Win32BeginRecordingInput(G_State, Win32_RecordInputFile);
                             }
                         }
@@ -1200,7 +1200,7 @@ Win32ProcessMessages(HWND Window,
                                 Win32EndPlaybackInput(G_State);
                             }
                             else {
-                                Win32GameMemory_Load(G_State->GameMemory, Win32_RecordStateFile);
+                                Win32GameMemory_Load(&G_State->GameMemory, Win32_RecordStateFile);
                                 Win32BeginPlaybackInput(G_State, 
                                                         Win32_RecordInputFile);
                             }
@@ -1611,16 +1611,14 @@ WinMain(HINSTANCE Instance,
     Defer { Win32AudioFree(&Audio); }; 
     
     // Initialize game memory
-    win32_game_memory GameMemory = {};
-    if (!Win32InitGameMemory(&GameMemory,
+    if (!Win32InitGameMemory(&State->GameMemory,
                              Megibytes(1),
                              Megibytes(16),
                              Megibytes(1))) 
     {
         return 1;
     }
-    Defer { Win32FreeGameMemory(&GameMemory); };
-    G_State->GameMemory = &GameMemory;
+    Defer { Win32FreeGameMemory(&State->GameMemory); };
     
     // Initialize RenderCommands
     mailbox RenderCommands = {};
@@ -1649,8 +1647,8 @@ WinMain(HINSTANCE Instance,
             Win32Log("[Win32] Reloading game code!\n");
             Win32UnloadGameCode(&GameCode);
             Win32LoadGameCode(&GameCode);
-            ZeroBlock(State->GameMemory->Head.TransientMemory, 
-                      State->GameMemory->Head.TransientMemorySize);
+            ZeroBlock(State->GameMemory.Head.TransientMemory, 
+                      State->GameMemory.Head.TransientMemorySize);
         }
         
         
@@ -1666,7 +1664,7 @@ WinMain(HINSTANCE Instance,
             // NOTE(Momo): This will actually modify GameInput
             if (Win32PlaybackInput(State, &GameInput)) {
                 Win32EndPlaybackInput(State);
-                Win32GameMemory_Load(&GameMemory, Win32_RecordStateFile);
+                Win32GameMemory_Load(&State->GameMemory, Win32_RecordStateFile);
                 Win32BeginPlaybackInput(State, Win32_RecordInputFile);
             }
         }
@@ -1679,7 +1677,7 @@ WinMain(HINSTANCE Instance,
         if (GameCode.GameUpdate) 
         {
             f32 GameDeltaTime = TargetSecsPerFrame;
-            b8 IsGameRunning = GameCode.GameUpdate(&GameMemory.Head,
+            b8 IsGameRunning = GameCode.GameUpdate(&State->GameMemory.Head,
                                                    &PlatformApi,
                                                    &RenderCommands,
                                                    &GameInput,

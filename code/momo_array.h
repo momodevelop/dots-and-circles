@@ -29,7 +29,7 @@ Array_Init(array<type>* A, type* Buffer, u32 Count) {
 template<typename type>
 static inline b8
 Array_New(array<type>* A, arena* Arena, u32 Count) {
-    type* Buffer = Arena_PushArray<type>(Arena, Count);
+    type* Buffer = Arena_PushArray(type, Arena, Count);
     return Array_Init(A, Buffer, Count);
 }
 

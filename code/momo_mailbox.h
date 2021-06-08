@@ -86,6 +86,5 @@ Mailbox_PushBlock(mailbox* Mailbox,
     return Data;
 }
 
-
 #define Mailbox_PushStruct(Type, Mailbox, Id) (Type*)Mailbox_PushBlock(Mailbox, sizeof(Type), alignof(Type), Id)
 #endif
