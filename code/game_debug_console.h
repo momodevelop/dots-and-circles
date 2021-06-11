@@ -122,7 +122,6 @@ DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
 // Returns true if there is a new command
 static inline void 
 DebugConsole_Update(debug_console* Console, 
-                    platform_input* Input,
                     f32 DeltaTime) 
 {
     if (Button_IsPoked(Input->ButtonConsole)) {

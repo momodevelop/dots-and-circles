@@ -197,7 +197,6 @@ static inline void
 Main_StateNormal_Update(permanent_state* PermState, 
                         transient_state* TranState,
                         debug_state* DebugState,
-                        platform_input* Input,
                         f32 DeltaTime) 
 {
     assets* Assets = &TranState->Assets;
@@ -205,7 +204,7 @@ Main_StateNormal_Update(permanent_state* PermState,
     
     Camera_Set(&Mode->Camera);
     
-    Main_UpdateInput(Mode, Input);
+    Main_UpdateInput(Mode);
     Main_UpdatePlayer(Mode, DeltaTime);    
     Main_UpdateBullets(Mode, DeltaTime);
     Main_UpdateWaves(Mode, Assets, DeltaTime);
@@ -238,7 +237,6 @@ static inline void
 Main_StatePlayerDied_Update(permanent_state* PermState, 
                             transient_state* TranState,
                             debug_state* DebugState,
-                            platform_input* Input,
                             f32 DeltaTime) 
 {
     // Everything stops
@@ -273,7 +271,6 @@ static inline void
 Main_StateSpawning_Update(permanent_state* PermState, 
                           transient_state* TranState,
                           debug_state* DebugState,
-                          platform_input* Input,
                           f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;
@@ -283,7 +280,7 @@ Main_StateSpawning_Update(permanent_state* PermState,
     Mode->Player.Size = Mode->Player.MaxSize * Ease;
     
     
-    Main_UpdateInput(Mode, Input);
+    Main_UpdateInput(Mode);
     Main_UpdatePlayer(Mode, DeltaTime);    
     
     Camera_Set(&Mode->Camera);
@@ -306,20 +303,19 @@ static inline void
 Main_Update(permanent_state* PermState, 
             transient_state* TranState,
             debug_state* DebugState,
-            platform_input* Input,
             f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;
     
     switch(Mode->State) {
         case Main_StateType_Spawning: {
-            Main_StateSpawning_Update(PermState, TranState, DebugState, Input, DeltaTime);
+            Main_StateSpawning_Update(PermState, TranState, DebugState, DeltaTime);
         } break;
         case Main_StateType_Normal: {
-            Main_StateNormal_Update(PermState, TranState, DebugState, Input, DeltaTime);
+            Main_StateNormal_Update(PermState, TranState, DebugState, DeltaTime);
         }break;
         case Main_StateType_PlayerDied: {
-            Main_StatePlayerDied_Update(PermState, TranState, DebugState, Input, DeltaTime);
+            Main_StatePlayerDied_Update(PermState, TranState, DebugState, DeltaTime);
         } break;
         case Main_StateType_Cleanup: {
         } break;

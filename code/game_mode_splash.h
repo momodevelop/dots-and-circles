@@ -140,7 +140,6 @@ InitSplashMode(permanent_state* PermState) {
 static inline void
 UpdateSplashMode(permanent_state* PermState,
                  transient_state* TranState,
-                 platform_input* Input,
                  f32 DeltaTime)
 {
     game_mode_splash* Mode = PermState->SplashMode;

@@ -64,7 +64,8 @@ GameUpdateFunc(GameUpdate)
     {
         Platform = PlatformApi;
         Log = PlatformApi->LogFp;
-        Renderer = RenderCommand;
+        Renderer = RenderCommands;
+        Input = PlatformInput;
     }
     
     
@@ -145,7 +146,7 @@ GameUpdateFunc(GameUpdate)
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
     DebugInspector_Begin(&DebugState->Inspector);
-    DebugConsole_Update(&DebugState->Console, Input, DeltaTime);
+    DebugConsole_Update(&DebugState->Console, DeltaTime);
     
     // NOTE(Momo): Pause
     if (Button_IsPoked(Input->ButtonPause)) {
@@ -222,26 +223,22 @@ GameUpdateFunc(GameUpdate)
         case GameModeType_Splash: {
             UpdateSplashMode(PermState, 
                              TranState,
-                             Input, 
                              DeltaTime);
         } break;
         case GameModeType_Main: {
             Main_Update(PermState, 
                         TranState,
                         DebugState,
-                        Input, 
                         DeltaTime);
         } break; 
         case GameModeType_Sandbox: {
             UpdateSandboxMode(PermState, 
-                              TranState, 
-                              Input, 
+                              TranState,
                               DeltaTime);
         } break;
         case GameModeType_AnimeTest: {
             UpdateAnimeTestMode(PermState, 
                                 TranState,
-                                Input, 
                                 DeltaTime);
         } break;
         default: {

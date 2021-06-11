@@ -1,7 +1,6 @@
 
 static inline void
-Main_UpdateInput(game_mode_main* Mode,
-                 platform_input* Input)
+Main_UpdateInput(game_mode_main* Mode)
 {
     v2f Direction = {};
     player* Player = &Mode->Player; 

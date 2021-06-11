@@ -133,6 +133,8 @@ struct platform_api {
 
 // Memory required by the game to get it running
 // Note that Transient Memory, once set, should not be moved!
+// TODO(Momo): should change name to "platform_memory" because it is
+// memory FROM the platform
 struct game_memory {
     void* PermanentMemory;
     u32 PermanentMemorySize;
@@ -154,8 +156,8 @@ struct platform_audio {
 // Returns true if still running, false if need to quit.
 #define GameUpdateFunc(Name) b8 Name(game_memory* GameMemory, \
 platform_api* PlatformApi, \
-mailbox* RenderCommand, \
-platform_input* Input, \
+mailbox* RenderCommands, \
+platform_input* PlatformInput, \
 platform_audio* Audio,\
 f32 DeltaTime)
 typedef GameUpdateFunc(game_update);
