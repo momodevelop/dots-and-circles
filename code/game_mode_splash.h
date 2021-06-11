@@ -22,7 +22,6 @@ struct splash_image_entity {
 static inline void
 UpdateSplashImageEntity(splash_image_entity* Entity, 
                         assets* Assets,
-                        mailbox* RenderCommands, 
                         f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
@@ -42,11 +41,10 @@ UpdateSplashImageEntity(splash_image_entity* Entity,
     m44f S = M44f_Scale(Entity->Scale.X,
                         Entity->Scale.Y,
                         1.f);
-    Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
-                                   Entity->TextureAabb,
-                                   M44f_Concat(T,S),
-                                   Entity->Colors);
+    Draw_TexturedQuadFromImage(Assets,
+                               Entity->TextureAabb,
+                               M44f_Concat(T,S),
+                               Entity->Colors);
     
     
 }
@@ -66,7 +64,6 @@ struct splash_blackout_entity {
 static inline void
 UpdateSplashBlackout(splash_blackout_entity* Entity, 
                      assets* Assets, 
-                     mailbox* RenderCommands,
                      f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
@@ -82,7 +79,7 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
                               Entity->Position.Z);
     m44f S = M44f_Scale(Entity->Scale.X, Entity->Scale.Y, 1.f);
     m44f TS = M44f_Concat(T,S);
-    Renderer_DrawQuad(RenderCommands, Entity->Colors, TS);
+    Renderer_DrawQuad(Renderer, Entity->Colors, TS);
     
 }
 
@@ -143,12 +140,11 @@ InitSplashMode(permanent_state* PermState) {
 static inline void
 UpdateSplashMode(permanent_state* PermState,
                  transient_state* TranState,
-                 mailbox* RenderCommands,
                  platform_input* Input,
                  f32 DeltaTime)
 {
     game_mode_splash* Mode = PermState->SplashMode;
-    Camera_Set(&Mode->Camera, RenderCommands);
+    Camera_Set(&Mode->Camera);
     
     assets* Assets = &TranState->Assets;
     
@@ -156,13 +152,11 @@ UpdateSplashMode(permanent_state* PermState,
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
         UpdateSplashImageEntity(Mode->SplashImg + I, 
                                 Assets, 
-                                RenderCommands, 
                                 DeltaTime);
     }
     
     UpdateSplashBlackout(&Mode->SplashBlackout,
                          Assets,
-                         RenderCommands,
                          DeltaTime);
     
     // NOTE(Momo): Exit 

@@ -3,14 +3,14 @@
 
 #include "momo.h"
 
-#if INTERNAL
-static struct platform_api* G_Platform = {};
-#endif 
-
+// NOTE(Momo): To be included and used by platform/renderer layer
 #include "game_config.h"
 #include "game_renderer.h"
 #include "game_platform.h"
 
+
+// NOTE(Momo): To be used only by game layer
+#include "game_globals.h"
 #include "game_assets_file.h"
 #include "game_assets.h"
 

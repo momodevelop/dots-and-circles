@@ -14,8 +14,7 @@
 static inline void
 Main_RenderScore(game_mode_main* Mode,
                  arena* TempArena,
-                 assets* Assets, 
-                 mailbox* RenderCommands) 
+                 assets* Assets) 
 {
     arena_mark Scratch = Arena_Mark(TempArena);
     Defer { Arena_Revert(&Scratch); };
@@ -51,17 +50,17 @@ Main_RenderScore(game_mode_main* Mode,
     
 #if 1
     for(auto Beg = BigInt_ReverseItrBegin(&Mode->Score); Beg != BigInt_ReverseItrEnd(&Mode->Score); ++Beg) {
-        G_Platform->LogFp("%d", (*Beg));
+        Log("%d", (*Beg));
     }
-    G_Platform->LogFp("\n");
-    G_Platform->LogFp("c: %d\n", Str.Count);
-    G_Platform->LogFp("r: %d\n", Rows);
-    G_Platform->LogFp("o: %d\n", ExtraCharCount);
+    Log("\n");
+    Log("c: %d\n", Str.Count);
+    Log("r: %d\n", Rows);
+    Log("o: %d\n", ExtraCharCount);
     for (u32 RowIndex = 0; RowIndex < Rows; ++RowIndex ) {
         u32 DistributedEvenly = ExtraCharCount/Rows;
         u32 Extra = ((ExtraCharCount%Rows) >= RowIndex + 1);
-        G_Platform->LogFp("r%d: %d + %d + %d = %d\n", RowIndex, Rows, DistributedEvenly, Extra,
-                          Rows + DistributedEvenly + Extra );
+        Log("r%d: %d + %d + %d = %d\n", RowIndex, Rows, DistributedEvenly, Extra,
+            Rows + DistributedEvenly + Extra );
     }
 #endif
     
@@ -101,8 +100,7 @@ Main_RenderScore(game_mode_main* Mode,
             m44f T = M44f_Translation(PosX, PosY, ZLayScore);
             
             
-            Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
+            Draw_TexturedQuadFromImage(Assets,
                                        FontGlyph->ImageId,
                                        T*S,
                                        Color);
@@ -199,14 +197,13 @@ static inline void
 Main_StateNormal_Update(permanent_state* PermState, 
                         transient_state* TranState,
                         debug_state* DebugState,
-                        mailbox* RenderCommands, 
                         platform_input* Input,
                         f32 DeltaTime) 
 {
     assets* Assets = &TranState->Assets;
     game_mode_main* Mode = PermState->MainMode;
     
-    Camera_Set(&Mode->Camera, RenderCommands);
+    Camera_Set(&Mode->Camera);
     
     Main_UpdateInput(Mode, Input);
     Main_UpdatePlayer(Mode, DeltaTime);    
@@ -227,11 +224,11 @@ Main_StateNormal_Update(permanent_state* PermState,
         Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
     }
     
-    Main_RenderScore(Mode, &TranState->Arena, Assets, RenderCommands);
-    Main_RenderPlayer(Mode, Assets, RenderCommands);
-    Main_RenderBullets(Mode, Assets, RenderCommands);
-    Main_RenderEnemies(Mode, Assets, RenderCommands);
-    Main_RenderParticles(Mode, Assets, RenderCommands);
+    Main_RenderScore(Mode, &TranState->Arena, Assets);
+    Main_RenderPlayer(Mode, Assets);
+    Main_RenderBullets(Mode, Assets);
+    Main_RenderEnemies(Mode, Assets);
+    Main_RenderParticles(Mode, Assets);
     
 }
 
@@ -241,7 +238,6 @@ static inline void
 Main_StatePlayerDied_Update(permanent_state* PermState, 
                             transient_state* TranState,
                             debug_state* DebugState,
-                            mailbox* RenderCommands, 
                             platform_input* Input,
                             f32 DeltaTime) 
 {
@@ -252,14 +248,14 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     Main_UpdateDeathBomb(Mode, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
-    Camera_Set(&Mode->Camera, RenderCommands);
+    Camera_Set(&Mode->Camera);
     
-    Main_RenderScore(Mode, &TranState->Arena, Assets, RenderCommands);
-    Main_RenderPlayer(Mode, Assets, RenderCommands);
-    Main_RenderBullets(Mode, Assets, RenderCommands);
-    Main_RenderEnemies(Mode, Assets, RenderCommands);
-    Main_RenderParticles(Mode, Assets, RenderCommands);
-    Main_RenderDeathBomb(Mode, RenderCommands);
+    Main_RenderScore(Mode, &TranState->Arena, Assets);
+    Main_RenderPlayer(Mode, Assets);
+    Main_RenderBullets(Mode, Assets);
+    Main_RenderEnemies(Mode, Assets);
+    Main_RenderParticles(Mode, Assets);
+    Main_RenderDeathBomb(Mode);
     
     
     // NOTE: PlayerDied -> Spawning state
@@ -277,7 +273,6 @@ static inline void
 Main_StateSpawning_Update(permanent_state* PermState, 
                           transient_state* TranState,
                           debug_state* DebugState,
-                          mailbox* RenderCommands, 
                           platform_input* Input,
                           f32 DeltaTime) 
 {
@@ -291,10 +286,10 @@ Main_StateSpawning_Update(permanent_state* PermState,
     Main_UpdateInput(Mode, Input);
     Main_UpdatePlayer(Mode, DeltaTime);    
     
-    Camera_Set(&Mode->Camera, RenderCommands);
+    Camera_Set(&Mode->Camera);
     
-    Main_RenderScore(Mode, &TranState->Arena, Assets, RenderCommands);
-    Main_RenderPlayer(Mode, Assets, RenderCommands);
+    Main_RenderScore(Mode, &TranState->Arena, Assets);
+    Main_RenderPlayer(Mode, Assets);
     
     
     // NOTE(Momo): Spawning -> Normal state
@@ -311,7 +306,6 @@ static inline void
 Main_Update(permanent_state* PermState, 
             transient_state* TranState,
             debug_state* DebugState,
-            mailbox* RenderCommands, 
             platform_input* Input,
             f32 DeltaTime) 
 {
@@ -319,13 +313,13 @@ Main_Update(permanent_state* PermState,
     
     switch(Mode->State) {
         case Main_StateType_Spawning: {
-            Main_StateSpawning_Update(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
+            Main_StateSpawning_Update(PermState, TranState, DebugState, Input, DeltaTime);
         } break;
         case Main_StateType_Normal: {
-            Main_StateNormal_Update(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
+            Main_StateNormal_Update(PermState, TranState, DebugState, Input, DeltaTime);
         }break;
         case Main_StateType_PlayerDied: {
-            Main_StatePlayerDied_Update(PermState, TranState, DebugState, RenderCommands, Input, DeltaTime);
+            Main_StatePlayerDied_Update(PermState, TranState, DebugState, Input, DeltaTime);
         } break;
         case Main_StateType_Cleanup: {
         } break;

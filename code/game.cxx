@@ -60,9 +60,13 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
-#if INTERNAL
-    G_Platform = Platform;
-#endif 
+    // NOTE(Momo): Initialize globals
+    {
+        Platform = PlatformApi;
+        Log = PlatformApi->LogFp;
+        Renderer = RenderCommand;
+    }
+    
     
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TranState = (transient_state*)GameMemory->TransientMemory;
@@ -81,7 +85,7 @@ GameUpdateFunc(GameUpdate)
         PermState->IsInitialized = true;
         PermState->IsPaused = false;
         
-        Renderer_SetDesignResolution(RenderCommands, 
+        Renderer_SetDesignResolution(Renderer,
                                      Game_DesignWidth, 
                                      Game_DesignHeight);
         PermState->GameSpeed = 1.f;
@@ -95,8 +99,7 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->TransientMemorySize);
         
         b8 Success = Assets_Init(&TranState->Assets,
-                                 &TranState->Arena,
-                                 Platform);
+                                 &TranState->Arena);
         if(!Success) {
             return false;
         }
@@ -219,7 +222,6 @@ GameUpdateFunc(GameUpdate)
         case GameModeType_Splash: {
             UpdateSplashMode(PermState, 
                              TranState,
-                             RenderCommands, 
                              Input, 
                              DeltaTime);
         } break;
@@ -227,21 +229,18 @@ GameUpdateFunc(GameUpdate)
             Main_Update(PermState, 
                         TranState,
                         DebugState,
-                        RenderCommands, 
                         Input, 
                         DeltaTime);
         } break; 
         case GameModeType_Sandbox: {
             UpdateSandboxMode(PermState, 
-                              TranState,
-                              RenderCommands, 
+                              TranState, 
                               Input, 
                               DeltaTime);
         } break;
         case GameModeType_AnimeTest: {
             UpdateAnimeTestMode(PermState, 
                                 TranState,
-                                RenderCommands, 
                                 Input, 
                                 DeltaTime);
         } break;
@@ -250,8 +249,8 @@ GameUpdateFunc(GameUpdate)
         }
     }
     
-    DebugConsole_Render(&DebugState->Console, RenderCommands, &TranState->Assets);
-    DebugInspector_End(&DebugState->Inspector, RenderCommands, &TranState->Assets);
+    DebugConsole_Render(&DebugState->Console, &TranState->Assets);
+    DebugInspector_End(&DebugState->Inspector, &TranState->Assets);
     
     AudioMixer_Update(&TranState->Mixer, Audio, &TranState->Assets);
     

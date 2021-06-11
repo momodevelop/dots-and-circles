@@ -6,8 +6,7 @@
 
 
 static inline void
-Draw_TexturedQuadFromImage(mailbox* RenderCommands,
-                           assets* Assets,
+Draw_TexturedQuadFromImage(assets* Assets,
                            image_id ImageId,
                            m44f Transform,
                            c4f Color = C4f_White) 
@@ -16,7 +15,7 @@ Draw_TexturedQuadFromImage(mailbox* RenderCommands,
     texture* Texture = Assets_GetTexture(Assets, Image->TextureId);
     quad2f AtlasUV = Assets_GetAtlasUV(Assets, Image);
     
-    Renderer_DrawTexturedQuad(RenderCommands,
+    Renderer_DrawTexturedQuad(Renderer,
                               Color,
                               Transform,
                               Texture->Handle,
@@ -24,8 +23,7 @@ Draw_TexturedQuadFromImage(mailbox* RenderCommands,
 }
 
 static inline void
-Draw_Text(mailbox* RenderCommands, 
-          assets* Assets,
+Draw_Text(assets* Assets,
           font_id FontId,
           v3f Position,
           u8_cstr String,
@@ -55,8 +53,7 @@ Draw_Text(mailbox* RenderCommands,
                                   CurPosition.Z + ZLayerOffset);
         
         
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
+        Draw_TexturedQuadFromImage(Assets,
                                    Glyph->ImageId,
                                    T*S*A,
                                    Color);

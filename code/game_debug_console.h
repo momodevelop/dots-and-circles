@@ -215,7 +215,6 @@ DebugConsole_Update(debug_console* Console,
 
 static inline void
 DebugConsole_Render(debug_console* Console, 
-                    mailbox* RenderCommands,
                     assets* Assets) 
 {
     if (Timer_IsBegin(Console->TransitTimer)) {
@@ -241,7 +240,7 @@ DebugConsole_Render(debug_console* Console,
                                                Console->Position.Y,
                                                DebugConsole_PosZ);
         m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
-        Renderer_DrawQuad(RenderCommands, 
+        Renderer_DrawQuad(Renderer, 
                           DebugConsole_InfoBgColor, 
                           InfoBgTransform);
     }
@@ -253,7 +252,7 @@ DebugConsole_Render(debug_console* Console,
                                                DebugConsole_PosZ+ 0.01f);
         
         m44f InputBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
-        Renderer_DrawQuad(RenderCommands, 
+        Renderer_DrawQuad(Renderer, 
                           DebugConsole_InputBgColor, 
                           InputBgTransform);
     }
@@ -267,8 +266,7 @@ DebugConsole_Render(debug_console* Console,
             Position.Z = DebugConsole_PosZ + 0.01f;
             
             u8_cstr InfoLineCStr = Console->InfoLines[I].Text.CStr;
-            Draw_Text(RenderCommands,
-                      Assets,
+            Draw_Text(Assets,
                       Font_Default, 
                       Position,
                       InfoLineCStr,
@@ -282,8 +280,7 @@ DebugConsole_Render(debug_console* Console,
         Position.Z = DebugConsole_PosZ + 0.02f;
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
-        Draw_Text(RenderCommands, 
-                  Assets, 
+        Draw_Text(Assets, 
                   Font_Default, 
                   Position,
                   InputLineCStr,

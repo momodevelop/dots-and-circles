@@ -35,8 +35,8 @@ DebugInspector_Begin(debug_inspector* Inspector) {
 
 static inline void 
 DebugInspector_End(debug_inspector* Inspector, 
-                   mailbox* RenderCommands,
-                   assets* Assets) {
+                   assets* Assets) 
+{
     if(!Inspector->IsActive)
         return;
     
@@ -46,8 +46,7 @@ DebugInspector_End(debug_inspector* Inspector,
         v3f Position = V3f_Create(DebugInspector_PosX, 
                                   DebugInspector_PosY + OffsetY,
                                   DebugInspector_PosZ); 
-        Draw_Text(RenderCommands, 
-                  Assets, 
+        Draw_Text(Assets, 
                   Font_Default, 
                   Position, 
                   Entry->CStr,

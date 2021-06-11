@@ -153,8 +153,8 @@ struct platform_audio {
 // Game function typedefs
 // Returns true if still running, false if need to quit.
 #define GameUpdateFunc(Name) b8 Name(game_memory* GameMemory, \
-platform_api* Platform, \
-mailbox* RenderCommands, \
+platform_api* PlatformApi, \
+mailbox* RenderCommand, \
 platform_input* Input, \
 platform_audio* Audio,\
 f32 DeltaTime)

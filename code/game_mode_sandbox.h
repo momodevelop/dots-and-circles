@@ -61,7 +61,6 @@ InitSandboxMode(permanent_state* PermState) {
 static inline void
 UpdateSandboxMode(permanent_state* PermState, 
                   transient_state* TranState,
-                  mailbox* RenderCommands, 
                   platform_input* Input,
                   f32 DeltaTime) 
 {
@@ -116,7 +115,7 @@ UpdateSandboxMode(permanent_state* PermState,
     }
     
     // NOTE(Momo): Render
-    Camera_Set(&Mode->Camera, RenderCommands);
+    Camera_Set(&Mode->Camera);
     
     // NOTE(Momo): Render Bullets
     f32 ZOrder = 0.f;
@@ -130,17 +129,16 @@ UpdateSandboxMode(permanent_state* PermState,
                                   B->Position.Y,
                                   ZOrder += 0.001f);
         
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       Image_BulletDot,
-                                       M44f_Concat(T,S), 
-                                       c4f{1.f, 1.f, 1.f, 0.5f});
+        Draw_TexturedQuadFromImage(Assets,
+                                   Image_BulletDot,
+                                   M44f_Concat(T,S), 
+                                   c4f{1.f, 1.f, 1.f, 0.5f});
     }
     
     // NOTE(Momo) Render Lines
     if (Mode->ClickCount >= 2) {
         ZOrder = 10.f;
-        Renderer_DrawLine2f(RenderCommands, 
+        Renderer_DrawLine2f(Renderer, 
                             BonkLine,
                             Mode->PlayerCircleRadius * 2,
                             C4f_Green,
@@ -148,7 +146,7 @@ UpdateSandboxMode(permanent_state* PermState,
         
         circle2f StartCircle = Circle2f_Create(BonkLine.Min, 
                                                Mode->PlayerCircleRadius);
-        Renderer_DrawCircle2f(RenderCommands,
+        Renderer_DrawCircle2f(Renderer,
                               StartCircle,
                               1.f, 
                               8, 
@@ -158,7 +156,7 @@ UpdateSandboxMode(permanent_state* PermState,
         
         circle2f EndCircle = Circle2f_Create(BonkLine.Max, 
                                              Mode->PlayerCircleRadius);
-        Renderer_DrawCircle2f(RenderCommands,
+        Renderer_DrawCircle2f(Renderer,
                               EndCircle,
                               1.f, 
                               8, 

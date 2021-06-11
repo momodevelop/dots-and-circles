@@ -174,7 +174,6 @@ Assets_CheckSignature(void* Memory, u8_cstr Signature) {
 
 static inline void*
 Assets_ReadBlock(platform_file_handle* File,
-                 platform_api* Platform,
                  arena* Arena,
                  u32* FileOffset,
                  u32 BlockSize,
@@ -195,13 +194,12 @@ Assets_ReadBlock(platform_file_handle* File,
     }
     return Ret;
 }
-#define Assets_ReadStruct(Type, File, Platform, Arena, FileOffset) \
-(Type*)Assets_ReadBlock(File, Platform, Arena, FileOffset, sizeof(Type), alignof(Type))
+#define Assets_ReadStruct(Type, File, Arena, FileOffset) \
+(Type*)Assets_ReadBlock(File, Arena, FileOffset, sizeof(Type), alignof(Type))
 
 static inline b8
 Assets_Init(assets* Assets,
-            arena* Arena,
-            platform_api* Platform) 
+            arena* Arena) 
 {
     Platform->ClearTexturesFp();
     
@@ -242,7 +240,6 @@ Assets_Init(assets* Assets,
         U8CStr_InitFromSiStr(&Signature, Game_AssetFileSignature);
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
-                                               Platform,
                                                Scratch.Arena,
                                                &CurFileOffset,
                                                (u32)Signature.Count,
@@ -260,7 +257,6 @@ Assets_Init(assets* Assets,
         // Get File Entry
         u32* FileEntryCountPtr = Assets_ReadStruct(u32,
                                                    &AssetFile,
-                                                   Platform,
                                                    Scratch.Arena,
                                                    &CurFileOffset);
         if (FileEntryCountPtr == nullptr) {
@@ -282,7 +278,6 @@ Assets_Init(assets* Assets,
             
             auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
                                                    &AssetFile,
-                                                   Platform,
                                                    Scratch.Arena,
                                                    &CurFileOffset);
             if (FileEntryPtr == nullptr) {
@@ -298,8 +293,7 @@ Assets_Init(assets* Assets,
                 Defer{ Arena_Revert(&Scratch); };
                 
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
-                                                      &AssetFile, 
-                                                      Platform, 
+                                                      &AssetFile,
                                                       Scratch.Arena,
                                                       &CurFileOffset);              
                 if (FileTexture == nullptr) {
@@ -315,7 +309,6 @@ Assets_Init(assets* Assets,
                     Texture->Channels;
                 
                 void* Pixels = Assets_ReadBlock(&AssetFile, 
-                                                Platform,
                                                 Scratch.Arena, 
                                                 &CurFileOffset,
                                                 TextureSize,
@@ -339,7 +332,6 @@ Assets_Init(assets* Assets,
                 auto* FileImage = 
                     Assets_ReadStruct(asset_file_image,
                                       &AssetFile, 
-                                      Platform, 
                                       Scratch.Arena,
                                       &CurFileOffset);              
                 
@@ -358,7 +350,6 @@ Assets_Init(assets* Assets,
                 
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
-                                                   Platform,
                                                    Scratch.Arena,
                                                    &CurFileOffset);
                 
@@ -378,7 +369,6 @@ Assets_Init(assets* Assets,
                 
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
-                                                        Platform,
                                                         Scratch.Arena,
                                                         &CurFileOffset);
                 
@@ -402,7 +392,6 @@ Assets_Init(assets* Assets,
                 
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
-                                                          Platform,
                                                           Scratch.Arena,
                                                           &CurFileOffset);
                 if (FileFontKerning == nullptr) {
@@ -422,7 +411,6 @@ Assets_Init(assets* Assets,
                 
                 auto* File = Assets_ReadStruct(asset_file_sound,
                                                &AssetFile,
-                                               Platform,
                                                Scratch.Arena,
                                                &CurFileOffset);
                 
@@ -441,7 +429,6 @@ Assets_Init(assets* Assets,
                 
                 Sound->Data = (s16*)
                     Assets_ReadBlock(&AssetFile,
-                                     Platform, 
                                      Arena, 
                                      &CurFileOffset,
                                      sizeof(s16) * Sound->DataCount,
@@ -453,7 +440,6 @@ Assets_Init(assets* Assets,
                 
                 auto* File = Assets_ReadStruct(asset_file_msg,
                                                &AssetFile,
-                                               Platform,
                                                Scratch.Arena,
                                                &CurFileOffset);
                 if (File == nullptr) { 
@@ -473,7 +459,6 @@ Assets_Init(assets* Assets,
                 
                 Msg->Data = (u8*)
                     Assets_ReadBlock(&AssetFile,
-                                     Platform, 
                                      Arena, 
                                      &CurFileOffset,
                                      sizeof(u8) * Msg->Count,
@@ -487,7 +472,6 @@ Assets_Init(assets* Assets,
                 
                 auto* File = Assets_ReadStruct(asset_file_anime,
                                                &AssetFile,
-                                               Platform,
                                                Scratch.Arena,
                                                &CurFileOffset);
                 
@@ -506,7 +490,6 @@ Assets_Init(assets* Assets,
                 
                 Anime->Frames = (image_id*)
                     Assets_ReadBlock(&AssetFile,
-                                     Platform, 
                                      Arena, 
                                      &CurFileOffset,
                                      sizeof(image_id) * Anime->FrameCount,

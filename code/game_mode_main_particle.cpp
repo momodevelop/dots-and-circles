@@ -37,8 +37,7 @@ Main_UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
 
 static inline void
 Main_RenderParticles(game_mode_main* Mode, 
-                     assets* Assets, 
-                     mailbox* RenderCommands)
+                     assets* Assets)
 
 {
     queue<particle>* Q = &Mode->Particles;
@@ -55,8 +54,7 @@ Main_RenderParticles(game_mode_main* Mode,
                                   P->Position.Y,
                                   ZLayParticles + Offset);
         
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
+        Draw_TexturedQuadFromImage(Assets,
                                    Image_Particle,
                                    M44f_Concat(T,S),
                                    C4f_Create(1.f, 1.f, 1.f, Alpha));

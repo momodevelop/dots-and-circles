@@ -51,8 +51,7 @@ Main_UpdatePlayer(game_mode_main* Mode,
 
 static inline void 
 Main_RenderPlayer(game_mode_main* Mode,
-                  assets* Assets,
-                  mailbox* RenderCommands) 
+                  assets* Assets) 
 {
     player* Player = &Mode->Player;
     m44f S = M44f_Scale(Player->Size, Player->Size, 1.f);
@@ -63,8 +62,7 @@ Main_RenderPlayer(game_mode_main* Mode,
                                   ZLayPlayer);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
+        Draw_TexturedQuadFromImage(Assets,
                                    Image_PlayerCircle,
                                    M44f_Concat(T,S), 
                                    Color);
@@ -75,8 +73,7 @@ Main_RenderPlayer(game_mode_main* Mode,
                                   Player->Position.Y,
                                   ZLayPlayer + 0.01f);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
+        Draw_TexturedQuadFromImage(Assets,
                                    Image_PlayerDot,
                                    M44f_Concat(T,S), 
                                    Color);

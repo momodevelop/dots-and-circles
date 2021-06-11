@@ -42,11 +42,11 @@ Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
 }
 
 static inline void
-Main_RenderDeathBomb(game_mode_main* Mode, mailbox* RenderCommands)
+Main_RenderDeathBomb(game_mode_main* Mode)
 {
     death_bomb* DeathBomb = &Mode->DeathBomb;
     // Circle?
-    Renderer_DrawCircle2f(RenderCommands,
+    Renderer_DrawCircle2f(Renderer,
                           Circle2f_Create(DeathBomb->Position, DeathBomb->Radius),
                           5.f, 32, C4f_White, ZLayDeathBomb);
 }

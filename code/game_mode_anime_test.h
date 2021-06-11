@@ -64,7 +64,6 @@ InitAnimeTestMode(permanent_state* PermState) {
 static inline void
 UpdateAnimeTestMode(permanent_state* PermState, 
                     transient_state* TranState,
-                    mailbox* RenderCommands, 
                     platform_input* Input,
                     f32 DeltaTime) 
 {
@@ -83,11 +82,10 @@ UpdateAnimeTestMode(permanent_state* PermState,
     {
         anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
         image_id ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                       Assets,
-                                       ImageId,
-                                       Transform,
-                                       Color);
+        Draw_TexturedQuadFromImage(Assets,
+                                   ImageId,
+                                   Transform,
+                                   Color);
         
     }
     

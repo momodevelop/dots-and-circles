@@ -52,8 +52,7 @@ Main_UpdateBullets(game_mode_main* Mode,
 
 static inline void
 Main_RenderBullets(game_mode_main* Mode,
-                   assets* Assets,
-                   mailbox* RenderCommands) 
+                   assets* Assets) 
 {
     // Bullet Rendering.
     // NOTE(Momo): Circles are in front of Dots and are therefore 'nearer'.
@@ -68,8 +67,7 @@ Main_RenderBullets(game_mode_main* Mode,
                                   B->Position.Y,
                                   ZLayBullet + LayerOffset);
         
-        Draw_TexturedQuadFromImage(RenderCommands,
-                                   Assets,
+        Draw_TexturedQuadFromImage(Assets,
                                    Image,
                                    M44f_Concat(T,S), 
                                    C4f_White);
