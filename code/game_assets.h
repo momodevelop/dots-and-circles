@@ -4,6 +4,7 @@
 // NOTE(Momo): Asset types
 struct texture {
     u32 Width, Height, Channels;
+    void* Data;
     renderer_texture_handle Handle;
 };
 
@@ -305,18 +306,18 @@ Assets_Init(assets* Assets,
                     Texture->Height * 
                     Texture->Channels;
                 
-                void* Pixels = Assets_ReadBlock(&AssetFile, 
-                                                G_Scratch, 
-                                                &CurFileOffset,
-                                                TextureSize,
-                                                1);
-                if (Pixels == nullptr) {
+                Texture->Data = Assets_ReadBlock(&AssetFile, 
+                                                 Arena, 
+                                                 &CurFileOffset,
+                                                 TextureSize,
+                                                 1);
+                if (Texture->Data == nullptr) {
                     G_Log("[Assets] Error getting texture pixels\n");
                     return false;
                 }
                 Texture->Handle = G_Platform->AddTextureFp(FileTexture->Width, 
                                                            FileTexture->Height,
-                                                           Pixels);
+                                                           Texture->Data);
                 if (!Texture->Handle.Success) {
                     G_Log("[Assets] Cannot add assets!");
                     return false;
@@ -325,13 +326,10 @@ Assets_Init(assets* Assets,
             case AssetType_Image: { 
                 Defer { Arena_Clear(G_Scratch); };
                 
-                arena_mark Scratch = Arena_Mark(Arena);
-                Defer{ Arena_Revert(&Scratch); };
-                
                 auto* FileImage = 
                     Assets_ReadStruct(asset_file_image,
                                       &AssetFile, 
-                                      Scratch.Arena,
+                                      G_Scratch,
                                       &CurFileOffset);              
                 
                 if (FileImage == nullptr) {
