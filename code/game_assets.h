@@ -4,7 +4,7 @@
 // NOTE(Momo): Asset types
 struct texture {
     u32 Width, Height, Channels;
-    void* Data;
+    u8* Data; // RGBA format
     renderer_texture_handle Handle;
 };
 
@@ -306,11 +306,11 @@ Assets_Init(assets* Assets,
                     Texture->Height * 
                     Texture->Channels;
                 
-                Texture->Data = Assets_ReadBlock(&AssetFile, 
-                                                 Arena, 
-                                                 &CurFileOffset,
-                                                 TextureSize,
-                                                 1);
+                Texture->Data = (u8*)Assets_ReadBlock(&AssetFile, 
+                                                      Arena, 
+                                                      &CurFileOffset,
+                                                      TextureSize,
+                                                      1);
                 if (Texture->Data == nullptr) {
                     G_Log("[Assets] Error getting texture pixels\n");
                     return false;
