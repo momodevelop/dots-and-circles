@@ -4,7 +4,7 @@
 #define GAME_GLOBALS_INTERNAL_H
 
 // NOTE(Momo): Globals related to things from game layer
-//assets* Assets
+assets* G_Assets;
 
 // Does scratch space go here?
 //arena* Scratch

@@ -36,10 +36,7 @@ Main_UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
 
 
 static inline void
-Main_RenderParticles(game_mode_main* Mode, 
-                     assets* Assets)
-
-{
+Main_RenderParticles(game_mode_main* Mode) {
     queue<particle>* Q = &Mode->Particles;
     u32 CurrentCount = 0;
     auto ForEachLamb = [&](particle* P) {
@@ -54,8 +51,7 @@ Main_RenderParticles(game_mode_main* Mode,
                                   P->Position.Y,
                                   ZLayParticles + Offset);
         
-        Draw_TexturedQuadFromImage(Assets,
-                                   Image_Particle,
+        Draw_TexturedQuadFromImage(Image_Particle,
                                    M44f_Concat(T,S),
                                    C4f_Create(1.f, 1.f, 1.f, Alpha));
         ++CurrentCount;

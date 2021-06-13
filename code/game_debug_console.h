@@ -124,7 +124,7 @@ static inline void
 DebugConsole_Update(debug_console* Console, 
                     f32 DeltaTime) 
 {
-    if (Button_IsPoked(Input->ButtonConsole)) {
+    if (Button_IsPoked(G_Input->ButtonConsole)) {
         Console->IsActive = !Console->IsActive; 
     }
     
@@ -142,14 +142,14 @@ DebugConsole_Update(debug_console* Console,
     
     if (Console->IsActive) {
         Timer_Tick(&Console->TransitTimer, DeltaTime);
-        if (Input->Characters.Count > 0 && 
-            Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
+        if (G_Input->Characters.Count > 0 && 
+            G_Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
         {  
-            U8Str_PushCStr(&Console->InputLine.Text, Input->Characters.CStr);
+            U8Str_PushCStr(&Console->InputLine.Text, G_Input->Characters.CStr);
         }
         
         // Remove character backspace logic
-        if (Button_IsDown(Input->ButtonBack)) {
+        if (Button_IsDown(G_Input->ButtonBack)) {
             if(!Console->IsStartPop) {
                 DebugConsole_Pop(Console);
                 Console->IsStartPop = true;
@@ -174,7 +174,7 @@ DebugConsole_Update(debug_console* Console,
         // Execute command
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
-        if (Button_IsPoked(Input->ButtonConfirm)) {
+        if (Button_IsPoked(G_Input->ButtonConfirm)) {
             DebugConsole_PushInfo(Console, InputLineCStr, C4f_White);
             
             u32 Min = 0;
@@ -213,13 +213,12 @@ DebugConsole_Update(debug_console* Console,
 
 
 static inline void
-DebugConsole_Render(debug_console* Console, 
-                    assets* Assets) 
+DebugConsole_Render(debug_console* Console) 
 {
     if (Timer_IsBegin(Console->TransitTimer)) {
         return;
     }
-    font* Font = Assets->Fonts + Font_Default;
+    font* Font = G_Assets->Fonts + Font_Default;
     v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
@@ -239,7 +238,7 @@ DebugConsole_Render(debug_console* Console,
                                                Console->Position.Y,
                                                DebugConsole_PosZ);
         m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
-        Renderer_DrawQuad(Renderer, 
+        Renderer_DrawQuad(G_Renderer, 
                           DebugConsole_InfoBgColor, 
                           InfoBgTransform);
     }
@@ -251,7 +250,7 @@ DebugConsole_Render(debug_console* Console,
                                                DebugConsole_PosZ+ 0.01f);
         
         m44f InputBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
-        Renderer_DrawQuad(Renderer, 
+        Renderer_DrawQuad(G_Renderer, 
                           DebugConsole_InputBgColor, 
                           InputBgTransform);
     }
@@ -265,8 +264,7 @@ DebugConsole_Render(debug_console* Console,
             Position.Z = DebugConsole_PosZ + 0.01f;
             
             u8_cstr InfoLineCStr = Console->InfoLines[I].Text.CStr;
-            Draw_Text(Assets,
-                      Font_Default, 
+            Draw_Text(Font_Default, 
                       Position,
                       InfoLineCStr,
                       FontSize,
@@ -279,8 +277,7 @@ DebugConsole_Render(debug_console* Console,
         Position.Z = DebugConsole_PosZ + 0.02f;
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
-        Draw_Text(Assets, 
-                  Font_Default, 
+        Draw_Text(Font_Default, 
                   Position,
                   InputLineCStr,
                   FontSize,

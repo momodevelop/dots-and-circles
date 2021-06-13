@@ -138,8 +138,7 @@ Main_UpdateEnemies(game_mode_main* Mode,
 }
 
 static inline void
-Main_RenderEnemies(game_mode_main* Mode, 
-                   assets* Assets) 
+Main_RenderEnemies(game_mode_main* Mode) 
 {
     u32 CurrentCount = 0;
     auto ForEachLamb = [&](enemy* Enemy){
@@ -163,8 +162,7 @@ Main_RenderEnemies(game_mode_main* Mode,
                                   Enemy->Position.Y,
                                   ZLayEnemy + Offset);
         
-        Draw_TexturedQuadFromImage(Assets,
-                                   Image_Enemy,
+        Draw_TexturedQuadFromImage(Image_Enemy,
                                    T*R*S, 
                                    C4f_White);
     };

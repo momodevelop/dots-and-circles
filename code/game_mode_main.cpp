@@ -13,8 +13,7 @@
 
 static inline void
 Main_RenderScore(game_mode_main* Mode,
-                 arena* TempArena,
-                 assets* Assets) 
+                 arena* TempArena) 
 {
     arena_mark Scratch = Arena_Mark(TempArena);
     Defer { Arena_Revert(&Scratch); };
@@ -38,7 +37,7 @@ Main_RenderScore(game_mode_main* Mode,
     const v2f Boundary = V2f_Create(Game_DesignWidth * 0.9f, 
                                     Game_DesignHeight * 0.9f);
     
-    font* Font = Assets_GetFont(Assets, Font_Default);
+    font* Font = Assets_GetFont(G_Assets, Font_Default);
     font_glyph* BaseFontGlyph = Font_GetGlyph(Font, Str.Data[0]);
     
     // NOTE(Momo): This holds the value of BOTH the amount of glyphs
@@ -48,7 +47,7 @@ Main_RenderScore(game_mode_main* Mode,
     
     c4f Color = C4f_Create(1,1,1, 0.05f);
     
-#if 1
+#if 0
     for(auto Beg = BigInt_ReverseItrBegin(&Mode->Score); Beg != BigInt_ReverseItrEnd(&Mode->Score); ++Beg) {
         Log("%d", (*Beg));
     }
@@ -100,8 +99,7 @@ Main_RenderScore(game_mode_main* Mode,
             m44f T = M44f_Translation(PosX, PosY, ZLayScore);
             
             
-            Draw_TexturedQuadFromImage(Assets,
-                                       FontGlyph->ImageId,
+            Draw_TexturedQuadFromImage(FontGlyph->ImageId,
                                        T*S,
                                        Color);
             ++StringIndex;
@@ -223,11 +221,11 @@ Main_StateNormal_Update(permanent_state* PermState,
         Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
     }
     
-    Main_RenderScore(Mode, &TranState->Arena, Assets);
-    Main_RenderPlayer(Mode, Assets);
-    Main_RenderBullets(Mode, Assets);
-    Main_RenderEnemies(Mode, Assets);
-    Main_RenderParticles(Mode, Assets);
+    //Main_RenderScore(Mode, &TranState->Arena, Assets);
+    Main_RenderPlayer(Mode);
+    Main_RenderBullets(Mode);
+    Main_RenderEnemies(Mode);
+    Main_RenderParticles(Mode);
     
 }
 
@@ -248,11 +246,11 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     
     Camera_Set(&Mode->Camera);
     
-    Main_RenderScore(Mode, &TranState->Arena, Assets);
-    Main_RenderPlayer(Mode, Assets);
-    Main_RenderBullets(Mode, Assets);
-    Main_RenderEnemies(Mode, Assets);
-    Main_RenderParticles(Mode, Assets);
+    //Main_RenderScore(Mode, &TranState->Arena);
+    Main_RenderPlayer(Mode);
+    Main_RenderBullets(Mode);
+    Main_RenderEnemies(Mode);
+    Main_RenderParticles(Mode);
     Main_RenderDeathBomb(Mode);
     
     
@@ -285,8 +283,8 @@ Main_StateSpawning_Update(permanent_state* PermState,
     
     Camera_Set(&Mode->Camera);
     
-    Main_RenderScore(Mode, &TranState->Arena, Assets);
-    Main_RenderPlayer(Mode, Assets);
+    //Main_RenderScore(Mode, &TranState->Arena, Assets);
+    Main_RenderPlayer(Mode);
     
     
     // NOTE(Momo): Spawning -> Normal state

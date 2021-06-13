@@ -1,4 +1,3 @@
-
 #include "game.h"
 
 // cmd: jump main/menu/atlas_test/etc...
@@ -9,7 +8,6 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     arena_mark Scratch = Arena_Mark(&DebugState->Arena);
     Defer{ Arena_Revert(&Scratch); };
     u8_cstr Buffer = {};
-    
     u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
     if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
@@ -55,23 +53,23 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
                               Buffer, 
                               C4f_Red);
     }
-    
 }
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
     // NOTE(Momo): Initialize globals
     {
-        Platform = PlatformApi;
-        Log = PlatformApi->LogFp;
-        Renderer = RenderCommands;
-        Input = PlatformInput;
+        G_Platform = PlatformApi;
+        G_Log = PlatformApi->LogFp;
+        G_Renderer = RenderCommands;
+        G_Input = PlatformInput;
     }
     
     
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
     auto* TranState = (transient_state*)GameMemory->TransientMemory;
     auto* DebugState = (debug_state*)GameMemory->DebugMemory; 
+    
     //  Initialization of the game
     if(!PermState->IsInitialized) {
         // NOTE(Momo): Arenas
@@ -86,14 +84,14 @@ GameUpdateFunc(GameUpdate)
         PermState->IsInitialized = true;
         PermState->IsPaused = false;
         
-        Renderer_SetDesignResolution(Renderer,
+        Renderer_SetDesignResolution(G_Renderer,
                                      Game_DesignWidth, 
                                      Game_DesignHeight);
         PermState->GameSpeed = 1.f;
     }
     
     if (!TranState->IsInitialized) {
-        Platform->LogFp("Initializing Transient State\n");
+        G_Log("Initializing Transient State\n");
         TranState = Arena_BootupStruct(transient_state,
                                        Arena,
                                        GameMemory->TransientMemory, 
@@ -104,6 +102,7 @@ GameUpdateFunc(GameUpdate)
         if(!Success) {
             return false;
         }
+        G_Assets = &TranState->Assets;
         
         Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->Arena);
         if (!Success) {
@@ -142,14 +141,14 @@ GameUpdateFunc(GameUpdate)
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
-    if (Button_IsPoked(Input->ButtonInspector)) {
+    if (Button_IsPoked(G_Input->ButtonInspector)) {
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
     DebugInspector_Begin(&DebugState->Inspector);
     DebugConsole_Update(&DebugState->Console, DeltaTime);
     
     // NOTE(Momo): Pause
-    if (Button_IsPoked(Input->ButtonPause)) {
+    if (Button_IsPoked(G_Input->ButtonPause)) {
         PermState->IsPaused = !PermState->IsPaused;
     }
     if (PermState->IsPaused) {
@@ -157,10 +156,10 @@ GameUpdateFunc(GameUpdate)
     }
     
     // NOTE(Momo): Speed up/down
-    if (Button_IsPoked(Input->ButtonSpeedDown)) {
+    if (Button_IsPoked(G_Input->ButtonSpeedDown)) {
         PermState->GameSpeed -= 0.1f;
     }
-    if (Button_IsPoked(Input->ButtonSpeedUp)) {
+    if (Button_IsPoked(G_Input->ButtonSpeedUp)) {
         PermState->GameSpeed += 0.1f;
     }
     DeltaTime *= PermState->GameSpeed;
@@ -246,10 +245,10 @@ GameUpdateFunc(GameUpdate)
         }
     }
     
-    DebugConsole_Render(&DebugState->Console, &TranState->Assets);
-    DebugInspector_End(&DebugState->Inspector, &TranState->Assets);
+    DebugConsole_Render(&DebugState->Console);
+    DebugInspector_End(&DebugState->Inspector);
     
-    AudioMixer_Update(&TranState->Mixer, Audio, &TranState->Assets);
+    AudioMixer_Update(&TranState->Mixer, Audio);
     
     
     

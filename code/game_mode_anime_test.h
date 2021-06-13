@@ -81,8 +81,7 @@ UpdateAnimeTestMode(permanent_state* PermState,
     {
         anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
         image_id ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
-        Draw_TexturedQuadFromImage(Assets,
-                                   ImageId,
+        Draw_TexturedQuadFromImage(ImageId,
                                    Transform,
                                    Color);
         

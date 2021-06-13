@@ -67,10 +67,10 @@ UpdateSandboxMode(permanent_state* PermState,
     assets* Assets = &TranState->Assets;
     
     // NOTE(Momo): Update
-    if (Button_IsPoked(Input->ButtonSwitch)) {
+    if (Button_IsPoked(G_Input->ButtonSwitch)) {
         Mode->PrevMousePos = Mode->CurMousePos;
         Mode->CurMousePos = Camera_ScreenToWorld(&Mode->Camera, 
-                                                 Input->DesignMousePos);
+                                                 G_Input->DesignMousePos);
         ++Mode->ClickCount;
     }
     
@@ -128,8 +128,7 @@ UpdateSandboxMode(permanent_state* PermState,
                                   B->Position.Y,
                                   ZOrder += 0.001f);
         
-        Draw_TexturedQuadFromImage(Assets,
-                                   Image_BulletDot,
+        Draw_TexturedQuadFromImage(Image_BulletDot,
                                    M44f_Concat(T,S), 
                                    c4f{1.f, 1.f, 1.f, 0.5f});
     }
@@ -137,7 +136,7 @@ UpdateSandboxMode(permanent_state* PermState,
     // NOTE(Momo) Render Lines
     if (Mode->ClickCount >= 2) {
         ZOrder = 10.f;
-        Renderer_DrawLine2f(Renderer, 
+        Renderer_DrawLine2f(G_Renderer, 
                             BonkLine,
                             Mode->PlayerCircleRadius * 2,
                             C4f_Green,
@@ -145,7 +144,7 @@ UpdateSandboxMode(permanent_state* PermState,
         
         circle2f StartCircle = Circle2f_Create(BonkLine.Min, 
                                                Mode->PlayerCircleRadius);
-        Renderer_DrawCircle2f(Renderer,
+        Renderer_DrawCircle2f(G_Renderer,
                               StartCircle,
                               1.f, 
                               8, 
@@ -155,7 +154,7 @@ UpdateSandboxMode(permanent_state* PermState,
         
         circle2f EndCircle = Circle2f_Create(BonkLine.Max, 
                                              Mode->PlayerCircleRadius);
-        Renderer_DrawCircle2f(Renderer,
+        Renderer_DrawCircle2f(G_Renderer,
                               EndCircle,
                               1.f, 
                               8, 

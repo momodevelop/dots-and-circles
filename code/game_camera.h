@@ -17,8 +17,8 @@ struct game_camera {
 static inline void
 Camera_Set(game_camera* C) {
     aabb3f CenterBox = Aabb3f_CreateCentered(C->Dimensions, C->Anchor);
-    Renderer_ClearColor(Renderer, C->Color);
-    Renderer_SetOrthoCamera(Renderer, 
+    Renderer_ClearColor(G_Renderer, C->Color);
+    Renderer_SetOrthoCamera(G_Renderer, 
                             C->Position, 
                             CenterBox);
 }

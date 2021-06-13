@@ -41,8 +41,7 @@ UpdateSplashImageEntity(splash_image_entity* Entity,
     m44f S = M44f_Scale(Entity->Scale.X,
                         Entity->Scale.Y,
                         1.f);
-    Draw_TexturedQuadFromImage(Assets,
-                               Entity->TextureAabb,
+    Draw_TexturedQuadFromImage(Entity->TextureAabb,
                                M44f_Concat(T,S),
                                Entity->Colors);
     
@@ -79,7 +78,7 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
                               Entity->Position.Z);
     m44f S = M44f_Scale(Entity->Scale.X, Entity->Scale.Y, 1.f);
     m44f TS = M44f_Concat(T,S);
-    Renderer_DrawQuad(Renderer, Entity->Colors, TS);
+    Renderer_DrawQuad(G_Renderer, Entity->Colors, TS);
     
 }
 

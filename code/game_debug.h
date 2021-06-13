@@ -82,13 +82,11 @@ Debug_Render(debug_state* State,
             }
         }
         
-        DrawText(RenderCommands, 
-                 Assets, 
-                 Font_Default, 
-                 v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
-                 Buffer.Str,
-                 32.f, 
-                 C4f_White);
+        Draw_Text(Font_Default, 
+                  v3f{ -800.f + 10.f, 450.f - 32.f, 0.f }, 
+                  Buffer.Str,
+                  32.f, 
+                  C4f_White);
         U8Str_Clear(&Buffer);
     }
 }

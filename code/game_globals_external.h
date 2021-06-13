@@ -6,9 +6,9 @@
 
 // NOTE(Momo): Globals related to things from platform layer
 
-platform_api* Platform;
-platform_log* Log;
-mailbox* Renderer;
-platform_input* Input;
+platform_api* G_Platform;
+platform_log* G_Log;
+mailbox* G_Renderer;
+platform_input* G_Input;
 
 #endif //GAME_GLOBALS_H

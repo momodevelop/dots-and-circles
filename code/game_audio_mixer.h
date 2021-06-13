@@ -102,8 +102,7 @@ AudioMixer_Stop(game_audio_mixer* Mixer,
 
 static inline void
 AudioMixer_Update(game_audio_mixer* Mixer, 
-                  platform_audio* Audio,
-                  assets* Assets) 
+                  platform_audio* Audio) 
 {
     s16* SampleOut = Audio->SampleBuffer;
     for(u32 I = 0; I < Audio->SampleCount; ++I) {
@@ -117,7 +116,7 @@ AudioMixer_Update(game_audio_mixer* Mixer,
             if (Instance->IsPlaying == false) {
                 continue;
             }
-            sound* Sound = Assets_GetSound(Assets, Instance->SoundId);
+            sound* Sound = Assets_GetSound(G_Assets, Instance->SoundId);
             
             for (u32 K = 0; K < Audio->Channels; ++K) {
                 SampleOut[K] += s16(Sound->Data[Instance->CurrentOffset++] * 
