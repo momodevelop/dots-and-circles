@@ -142,6 +142,9 @@ struct game_memory {
     void* TransientMemory;
     u32 TransientMemorySize;
     
+    void* ScratchMemory;
+    u32 ScratchMemorySize;
+    
     void* DebugMemory;
     u32 DebugMemorySize;
 };

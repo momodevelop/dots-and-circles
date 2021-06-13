@@ -11,4 +11,7 @@ platform_log* G_Log;
 mailbox* G_Renderer;
 platform_input* G_Input;
 
+arena* G_Scratch;
+
+
 #endif //GAME_GLOBALS_H

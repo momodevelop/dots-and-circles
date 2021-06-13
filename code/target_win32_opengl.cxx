@@ -1485,6 +1485,7 @@ Win32InitPlatformApi() {
     PlatformApi.AddTextureFp = Win32AddTexture;
     PlatformApi.OpenAssetFileFp = Win32OpenAssetFile;
     PlatformApi.CloseFileFp = Win32CloseFile;
+    PlatformApi.LogFileErrorFp = Win32LogFileError;
     return PlatformApi;
 }
 
@@ -1498,9 +1499,10 @@ static inline b8
 Win32InitGameMemory(win32_game_memory* GameMemory,
                     u32 PermanentMemorySize,
                     u32 TransientMemorySize,
+                    u32 ScratchMemorySize,
                     u32 DebugMemorySize) 
 {
-    GameMemory->DataSize = PermanentMemorySize + TransientMemorySize + DebugMemorySize;
+    GameMemory->DataSize = PermanentMemorySize + TransientMemorySize + ScratchMemorySize + DebugMemorySize;
     
 #if INTERNAL
     SYSTEM_INFO SystemInfo;
@@ -1517,16 +1519,27 @@ Win32InitGameMemory(win32_game_memory* GameMemory,
         return false;
     }
     
+    u8* MemoryPtr = (u8*)GameMemory->Data;
+    
     GameMemory->Head.PermanentMemorySize = PermanentMemorySize;
     GameMemory->Head.PermanentMemory = GameMemory->Data;
+    MemoryPtr += PermanentMemorySize;
+    
     GameMemory->Head.TransientMemorySize = TransientMemorySize;
-    GameMemory->Head.TransientMemory = (u8*)GameMemory->Data + PermanentMemorySize;
+    GameMemory->Head.TransientMemory = MemoryPtr;;
+    MemoryPtr += TransientMemorySize;
+    
+    GameMemory->Head.ScratchMemorySize = ScratchMemorySize;
+    GameMemory->Head.ScratchMemory = MemoryPtr;
+    MemoryPtr += ScratchMemorySize;
+    
     GameMemory->Head.DebugMemorySize = DebugMemorySize;
-    GameMemory->Head.DebugMemory = (u8*)GameMemory->Head.TransientMemory + TransientMemorySize;
+    GameMemory->Head.DebugMemory = MemoryPtr;
     
     Win32Log("[Win32::GameMemory] Allocated\n");
     Win32Log("[Win32::GameMemory] Permanent Memory Size: %d bytes\n", PermanentMemorySize);
     Win32Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", TransientMemorySize);
+    Win32Log("[Win32::GameMemory] Scratch Memory Size: %d bytes\n", ScratchMemorySize);
     Win32Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", DebugMemorySize);
     
     return true;
@@ -1614,6 +1627,7 @@ WinMain(HINSTANCE Instance,
     if (!Win32InitGameMemory(&State->GameMemory,
                              Megibytes(1),
                              Megibytes(16),
+                             Megibytes(8),
                              Megibytes(1))) 
     {
         return 1;

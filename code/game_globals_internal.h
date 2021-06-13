@@ -6,8 +6,5 @@
 // NOTE(Momo): Globals related to things from game layer
 assets* G_Assets;
 
-// Does scratch space go here?
-//arena* Scratch
-
 
 #endif //GAME_GLOBALS_INTERNAL_H

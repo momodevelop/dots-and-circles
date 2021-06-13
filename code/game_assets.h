@@ -233,34 +233,33 @@ Assets_Init(assets* Assets,
     
     // Check file signaure
     {        
-        arena_mark Scratch = Arena_Mark(Arena);
-        Defer{ Arena_Revert(&Scratch); };
+        Defer { Arena_Clear(G_Scratch); };
         
         u8_cstr Signature = {};
         U8CStr_InitFromSiStr(&Signature, Game_AssetFileSignature);
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
-                                               Scratch.Arena,
+                                               G_Scratch,
                                                &CurFileOffset,
                                                (u32)Signature.Count,
                                                1);
         if (ReadSignature == nullptr) {
-            G_Platform->LogFp("[Assets] Cannot read signature\n");
+            G_Log("[Assets] Cannot read signature\n");
             return false;
         }
         
         if (!Assets_CheckSignature(ReadSignature, Signature)) {
-            G_Platform->LogFp("[Assets] Wrong asset signature\n");
+            G_Log("[Assets] Wrong asset signature\n");
             return false;
         }
         
         // Get File Entry
         u32* FileEntryCountPtr = Assets_ReadStruct(u32,
                                                    &AssetFile,
-                                                   Scratch.Arena,
+                                                   G_Scratch,
                                                    &CurFileOffset);
         if (FileEntryCountPtr == nullptr) {
-            G_Platform->LogFp("[Assets] Cannot get file entry count\n");
+            G_Log("[Assets] Cannot get file entry count\n");
             return false;
         }
         FileEntryCount = *FileEntryCountPtr;
@@ -273,15 +272,14 @@ Assets_Init(assets* Assets,
         // NOTE(Momo): Read header
         asset_file_entry FileEntry = {};
         {
-            arena_mark Scratch = Arena_Mark(Arena);
-            Defer{ Arena_Revert(&Scratch); };
+            Defer { Arena_Clear(G_Scratch); };
             
             auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
                                                    &AssetFile,
-                                                   Scratch.Arena,
+                                                   G_Scratch,
                                                    &CurFileOffset);
             if (FileEntryPtr == nullptr) {
-                G_Platform->LogFp("[Assets] Cannot get file entry\n");
+                G_Log("[Assets] Cannot get file entry\n");
                 return false;
             }
             FileEntry = *FileEntryPtr;
@@ -289,15 +287,14 @@ Assets_Init(assets* Assets,
         
         switch(FileEntry.Type) {
             case AssetType_Texture: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                Defer{ Arena_Revert(&Scratch); };
+                Defer { Arena_Clear(G_Scratch); };
                 
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile,
-                                                      Scratch.Arena,
+                                                      G_Scratch,
                                                       &CurFileOffset);              
                 if (FileTexture == nullptr) {
-                    G_Platform->LogFp("[Assets] Error getting texture\n");
+                    G_Log("[Assets] Error getting texture\n");
                     return false;
                 }
                 texture* Texture = Assets->Textures + FileTexture->Id;
@@ -309,23 +306,25 @@ Assets_Init(assets* Assets,
                     Texture->Channels;
                 
                 void* Pixels = Assets_ReadBlock(&AssetFile, 
-                                                Scratch.Arena, 
+                                                G_Scratch, 
                                                 &CurFileOffset,
                                                 TextureSize,
                                                 1);
                 if (Pixels == nullptr) {
-                    G_Platform->LogFp("[Assets] Error getting texture pixels\n");
+                    G_Log("[Assets] Error getting texture pixels\n");
                     return false;
                 }
                 Texture->Handle = G_Platform->AddTextureFp(FileTexture->Width, 
                                                            FileTexture->Height,
                                                            Pixels);
                 if (!Texture->Handle.Success) {
-                    G_Platform->LogFp("[Assets] Cannot add assets!");
+                    G_Log("[Assets] Cannot add assets!");
                     return false;
                 }
             } break;
             case AssetType_Image: { 
+                Defer { Arena_Clear(G_Scratch); };
+                
                 arena_mark Scratch = Arena_Mark(Arena);
                 Defer{ Arena_Revert(&Scratch); };
                 
@@ -336,7 +335,7 @@ Assets_Init(assets* Assets,
                                       &CurFileOffset);              
                 
                 if (FileImage == nullptr) {
-                    G_Platform->LogFp("[Assets] Error getting image\n");
+                    G_Log("[Assets] Error getting image\n");
                     return false;
                 }
                 
@@ -345,16 +344,15 @@ Assets_Init(assets* Assets,
                 Image->TextureId = FileImage->TextureId;
             } break;
             case AssetType_Font: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                Defer{ Arena_Revert(&Scratch); };
+                Defer { Arena_Clear(G_Scratch); };
                 
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
-                                                   Scratch.Arena,
+                                                   G_Scratch,
                                                    &CurFileOffset);
                 
                 if (FileFont == nullptr) {
-                    G_Platform->LogFp("[Assets] Error getting font\n");
+                    G_Log("[Assets] Error getting font\n");
                     return false;
                 }
                 
@@ -364,17 +362,16 @@ Assets_Init(assets* Assets,
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                Defer{ Arena_Revert(&Scratch); };
+                Defer { Arena_Clear(G_Scratch); };
                 
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
-                                                        Scratch.Arena,
+                                                        G_Scratch,
                                                         &CurFileOffset);
                 
                 
                 if (FileFontGlyph == nullptr) {
-                    G_Platform->LogFp("[Assets] Error getting font glyph\n");
+                    G_Log("[Assets] Error getting font glyph\n");
                     return false;
                 }
                 
@@ -387,15 +384,14 @@ Assets_Init(assets* Assets,
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                Defer{ Arena_Revert(&Scratch); };
+                Defer { Arena_Clear(G_Scratch); };
                 
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
-                                                          Scratch.Arena,
+                                                          G_Scratch,
                                                           &CurFileOffset);
                 if (FileFontKerning == nullptr) {
-                    G_Platform->LogFp("[Assets] Error getting font kerning\n");
+                    G_Log("[Assets] Error getting font kerning\n");
                     return false;
                 }
                 
@@ -407,25 +403,20 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Sound: {
-                arena_mark Scratch = Arena_Mark(Arena);
+                Defer { Arena_Clear(G_Scratch); };
                 
                 auto* File = Assets_ReadStruct(asset_file_sound,
                                                &AssetFile,
-                                               Scratch.Arena,
+                                               G_Scratch,
                                                &CurFileOffset);
                 
                 if (File == nullptr) { 
-                    G_Platform->LogFp("[Assets] Error getitng sound\n"); 
-                    Arena_Revert(&Scratch); 
+                    G_Log("[Assets] Error getitng sound\n"); 
                     return false; 
                 }
                 
                 sound* Sound = Assets_GetSound(Assets, File->Id);
                 Sound->DataCount = File->DataCount;
-                
-                // NOTE(Momo): we have to revert here so that our arena's 
-                // memory does not screw up. A bit janky but hey.
-                Arena_Revert(&Scratch); 
                 
                 Sound->Data = (s16*)
                     Assets_ReadBlock(&AssetFile,
@@ -436,26 +427,19 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Message: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                
+                Defer { Arena_Clear(G_Scratch); };
                 auto* File = Assets_ReadStruct(asset_file_msg,
                                                &AssetFile,
-                                               Scratch.Arena,
+                                               G_Scratch,
                                                &CurFileOffset);
                 if (File == nullptr) { 
-                    G_Platform->LogFp("[Assets] Msg is null"); 
-                    Arena_Revert(&Scratch); 
+                    G_Log("[Assets] Msg is null"); 
                     return false; 
                 }
                 
                 
                 msg* Msg = Assets_GetMsg(Assets, File->Id);
                 Msg->Count = File->Count;
-                
-                
-                // NOTE(Momo): we have to revert here so that our arena's 
-                // memory does not screw up. A bit janky but hey.
-                Arena_Revert(&Scratch); 
                 
                 Msg->Data = (u8*)
                     Assets_ReadBlock(&AssetFile,
@@ -468,25 +452,19 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Anime: {
-                arena_mark Scratch = Arena_Mark(Arena);
-                
+                Defer { Arena_Clear(G_Scratch); };
                 auto* File = Assets_ReadStruct(asset_file_anime,
                                                &AssetFile,
-                                               Scratch.Arena,
+                                               G_Scratch,
                                                &CurFileOffset);
                 
                 if (File == nullptr) { 
-                    G_Platform->LogFp("[Assets] Anime is null"); 
-                    Arena_Revert(&Scratch); 
+                    G_Log("[Assets] Anime is null"); 
                     return false; 
                 }
                 
                 anime* Anime = Assets_GetAnime(Assets, File->Id);
                 Anime->FrameCount = File->FrameCount;
-                
-                // NOTE(Momo): we have to revert here so that our arena's 
-                // memory does not screw up. A bit janky but hey.
-                Arena_Revert(&Scratch); 
                 
                 Anime->Frames = (image_id*)
                     Assets_ReadBlock(&AssetFile,

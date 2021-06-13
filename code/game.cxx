@@ -58,11 +58,18 @@ extern "C"
 GameUpdateFunc(GameUpdate) 
 {
     // NOTE(Momo): Initialize globals
+    arena Scratch = {};
+    
     {
         G_Platform = PlatformApi;
         G_Log = PlatformApi->LogFp;
         G_Renderer = RenderCommands;
         G_Input = PlatformInput;
+        if (!Arena_Init(&Scratch, GameMemory->ScratchMemory, GameMemory->ScratchMemorySize)) {
+            G_Log("Cannot initialize Scratch Memory");
+            return false;
+        }
+        G_Scratch = &Scratch;
     }
     
     
