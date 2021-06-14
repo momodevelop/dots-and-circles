@@ -5,10 +5,10 @@ static inline void
 CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
-    arena_mark Scratch = Arena_Mark(&DebugState->Arena);
-    Defer{ Arena_Revert(&Scratch); };
+    
+    Defer{ Arena_Clear(G_Scratch); };
     u8_cstr Buffer = {};
-    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, Scratch.Arena, ' ');
+    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, G_Scratch, ' ');
     if ( ArgList.ItemCount != 2 ) {
         // Expect two arguments
         U8CStr_InitFromSiStr(&Buffer, "Expected only 2 arguments");

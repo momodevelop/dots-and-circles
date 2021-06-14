@@ -1,5 +1,4 @@
 # Engine
-- Create scratch memory area
 - Chaging display refresh rate?
 - Log to text file
 - Quaternions?

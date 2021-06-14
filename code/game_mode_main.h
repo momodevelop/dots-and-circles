@@ -5,14 +5,14 @@
 #define DotCap 1024
 #define ParticleCap 256
 
-#define ZLayScore 9.f
+//#define ZLayScore 9.f
 #define ZLayPlayer 10.f
 #define ZLayBullet 11.f
 #define ZLayEnemy 12.f
 #define ZLayParticles 13.f
 #define ZLayDeathBomb 14.f
-#define ZLayDebug 15.f
-
+#define ZLayScore 15.f
+#define ZLayDebug 16.f
 
 enum mood_type {
     MoodType_Dot,

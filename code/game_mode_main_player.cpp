@@ -48,6 +48,17 @@ Main_UpdatePlayer(game_mode_main* Mode,
     
 }
 
+static inline void
+Main_RenderScore(game_mode_main* Mode) {
+    Draw_Text(Font_Default, 
+              V3f_Create(-Game_DesignWidth * 0.5f + 10.f, 
+                         Game_DesignHeight * 0.5f - 24.f,  
+                         ZLayScore),
+              U8CStr_CreateFromSiStr("Current Score"),
+              24.f);
+}
+
+
 static inline void 
 Main_RenderPlayer(game_mode_main* Mode) 
 {

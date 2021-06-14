@@ -40,6 +40,7 @@ DebugInspector_End(debug_inspector* Inspector)
         return;
     
     f32 OffsetY = 0.f;
+    
     for (u32 I = 0; I < Inspector->Entries.Count; ++I) {
         u8_str* Entry = Inspector->Entries + I;
         v3f Position = V3f_Create(DebugInspector_PosX, 

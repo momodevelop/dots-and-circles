@@ -221,11 +221,11 @@ Main_StateNormal_Update(permanent_state* PermState,
         Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
     }
     
-    //Main_RenderScore(Mode, &TranState->Arena, Assets);
     Main_RenderPlayer(Mode);
     Main_RenderBullets(Mode);
     Main_RenderEnemies(Mode);
     Main_RenderParticles(Mode);
+    Main_RenderScore(Mode);
     
 }
 

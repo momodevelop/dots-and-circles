@@ -13,7 +13,6 @@
 #include "game_globals_external.h"
 #include "game_assets_file.h"
 #include "game_assets.h"
-#include "game_globals_internal.h"
 
 #include "game_draw.h"
 #include "game_camera.h"

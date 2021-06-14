@@ -9,10 +9,15 @@ struct u8_cstr {
     u32 Count;
 };
 
-static inline void
+static inline b8
 U8CStr_Init(u8_cstr* S, u8* Data, u32 Count) {
+    if (!Data || Count == 0) {
+        return false;
+    }
     S->Data = Data;
     S->Count = Count;
+    
+    return true;
 }
 
 static inline u8_cstr
@@ -25,9 +30,15 @@ U8CStr_Create(u8* Data, u32 Count) {
 }
 
 // Assumes C-String
-static inline void
+static inline u8_cstr
+U8CStr_CreateFromSiStr(const char* SiStr) {
+    return U8CStr_Create((u8*)SiStr, SiStrLen(SiStr));
+    
+}
+
+static inline b8
 U8CStr_InitFromSiStr(u8_cstr* S, const char* SiStr) {
-    U8CStr_Init(S, (u8*)SiStr, SiStrLen(SiStr));
+    return U8CStr_Init(S, (u8*)SiStr, SiStrLen(SiStr));
 }
 
 static inline b8

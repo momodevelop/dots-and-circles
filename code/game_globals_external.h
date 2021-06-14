@@ -5,13 +5,19 @@
 
 
 // NOTE(Momo): Globals related to things from platform layer
-
 platform_api* G_Platform;
 platform_log* G_Log;
 mailbox* G_Renderer;
 platform_input* G_Input;
-
 arena* G_Scratch;
 
+
+// NOTE(Momo): Game related globals
+// Need to forward declare these
+struct game_camera;
+game_camera* G_Camera;
+
+struct assets;
+assets* G_Assets;
 
 #endif //GAME_GLOBALS_H

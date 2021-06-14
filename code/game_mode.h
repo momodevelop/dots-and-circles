@@ -26,6 +26,7 @@ struct permanent_state {
     b8 IsInitialized;
     b8 IsPaused;
     f32 GameSpeed;
+    game_camera Camera;
     
     game_mode_type CurrentGameMode;
     game_mode_type NextGameMode;
