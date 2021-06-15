@@ -6,7 +6,7 @@ Main_UpdateInput(game_mode_main* Mode)
     player* Player = &Mode->Player; 
     
     Player->PrevPosition = Player->Position;
-    Player->Position = Camera_ScreenToWorld(&Mode->Camera,
+    Player->Position = Camera_ScreenToWorld(G_Camera,
                                             G_Input->DesignMousePos);
     
     

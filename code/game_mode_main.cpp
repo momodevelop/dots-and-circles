@@ -120,12 +120,12 @@ Main_Init(permanent_state* PermState,
     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = V3f_Create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.Color = C4f_Grey2;
-        Mode->Camera.Dimensions = V3f_Create(Game_DesignWidth,
-                                             Game_DesignHeight,
-                                             Game_DesignDepth);
+        G_Camera->Position = V3f_Create(0.f, 0.f, 0.f);
+        G_Camera->Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+        G_Camera->Color = C4f_Grey2;
+        G_Camera->Dimensions = V3f_Create(Game_DesignWidth,
+                                          Game_DesignHeight,
+                                          Game_DesignDepth);
     }
     
     b8 Success = false;
@@ -186,6 +186,8 @@ Main_Init(permanent_state* PermState,
 #endif
     
     
+    Camera_Set(G_Camera);
+    
     Mode->State = Main_StateType_Spawning;
     return true; 
     
@@ -199,8 +201,6 @@ Main_StateNormal_Update(permanent_state* PermState,
 {
     assets* Assets = &TranState->Assets;
     game_mode_main* Mode = PermState->MainMode;
-    
-    Camera_Set(&Mode->Camera);
     
     Main_UpdateInput(Mode);
     Main_UpdatePlayer(Mode, DeltaTime);    
@@ -244,8 +244,6 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     Main_UpdateDeathBomb(Mode, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
-    Camera_Set(&Mode->Camera);
-    
     //Main_RenderScore(Mode, &TranState->Arena);
     Main_RenderPlayer(Mode);
     Main_RenderBullets(Mode);
@@ -277,11 +275,8 @@ Main_StateSpawning_Update(permanent_state* PermState,
     f32 Ease = EaseOutBounce(Clamp(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
     Mode->Player.Size = Mode->Player.MaxSize * Ease;
     
-    
     Main_UpdateInput(Mode);
     Main_UpdatePlayer(Mode, DeltaTime);    
-    
-    Camera_Set(&Mode->Camera);
     
     //Main_RenderScore(Mode, &TranState->Arena, Assets);
     Main_RenderPlayer(Mode);

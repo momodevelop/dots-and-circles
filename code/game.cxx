@@ -95,6 +95,7 @@ GameUpdateFunc(GameUpdate)
                                      Game_DesignWidth, 
                                      Game_DesignHeight);
         PermState->GameSpeed = 1.f;
+        G_Camera = &PermState->Camera;
     }
     
     if (!TranState->IsInitialized) {
