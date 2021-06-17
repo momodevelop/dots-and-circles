@@ -18,8 +18,6 @@ Main_RenderScore(game_mode_main* Mode,
     arena_mark Scratch = Arena_Mark(TempArena);
     Defer { Arena_Revert(&Scratch); };
     
-    
-    
     u8_str Str = {};
     U8Str_New(&Str, Scratch, Mode->Score.Places);
     

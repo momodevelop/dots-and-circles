@@ -116,8 +116,6 @@ typedef PlatformAddTextureFunc(platform_add_texture);
 #define PlatformClearTexturesFunc(Name) void Name()
 typedef PlatformClearTexturesFunc(platform_clear_textures);
 
-
-
 struct platform_api {
     platform_log* LogFp;
     platform_get_file_size* GetFileSizeFp;
@@ -129,7 +127,6 @@ struct platform_api {
     platform_read_file* ReadFileFp;
     
 };
-
 
 // Memory required by the game to get it running
 // Note that Transient Memory, once set, should not be moved!

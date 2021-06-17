@@ -92,14 +92,6 @@ static inline void
 InitSplashMode(permanent_state* PermState) {
     game_mode_splash* Mode = PermState->SplashMode;
     
-    G_Camera->Position = V3f_Create(0.f, 0.f, 0.f);
-    G_Camera->Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
-    G_Camera->Color = C4f_Create(0.f, 0.3f, 0.3f, 1.f);
-    G_Camera->Dimensions = V3f_Create(Game_DesignWidth,
-                                      Game_DesignHeight,
-                                      Game_DesignDepth);
-    Camera_Set(G_Camera);
-    
     // NOTE(Momo): Create entities
     {
         Mode->SplashImg[0].Position = V3f_Create( 0.f, 0.f, 0.f );
@@ -144,6 +136,22 @@ UpdateSplashMode(permanent_state* PermState,
     
     assets* Assets = &TranState->Assets;
     
+    // NOTE: Camera
+    {
+        v3f Position = V3f_Create(0.f, 0.f, 0.f);
+        v3f Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+        c4f Color = C4f_Create(0.f, 0.3f, 0.3f, 1.f);
+        v3f Dimensions = V3f_Create(800.f,
+                                    800.f,
+                                    800.f);
+        
+        Renderer_ClearColor(G_Renderer, Color);
+        
+        aabb3f Frustum = Aabb3f_CreateCentered(Dimensions, Anchor);
+        Renderer_SetOrthoCamera(G_Renderer, 
+                                Position, 
+                                Frustum);
+    }
     
     for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
         UpdateSplashImageEntity(Mode->SplashImg + I, 

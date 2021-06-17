@@ -3,6 +3,7 @@
 #include <ShellScalingAPI.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
+#include <imm.h>
 
 #include "momo.h"
 
@@ -1117,18 +1118,17 @@ Win32ProcessMessages(HWND Window,
     MSG Msg = {};
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
         switch(Msg.message) {
+            case WM_QUIT:
             case WM_CLOSE: {
                 G_State->IsRunning = false;
             } break;
             case WM_CHAR: {
-                char C = (char)Msg.wParam;
-                Input_TryPushCharacterInput(Input, C);
+                Input_TryPushCharacterInput(Input, (char)Msg.wParam);
             } break;
             case WM_MOUSEMOVE: {
                 // NOTE(Momo): This is the actual conversion from screen space to 
                 // design space. I'm not 100% if this should be here but I guess
                 // only time will tell.
-                
                 Input->WindowMousePos.X = (f32)GET_X_LPARAM(Msg.lParam);
                 Input->WindowMousePos.Y = (f32)GET_Y_LPARAM(Msg.lParam);
                 
@@ -1221,6 +1221,7 @@ Win32ProcessMessages(HWND Window,
             } break;
             default: 
             {
+                //Win32Log("[Win32::ProcessMessages] %d\n", Msg.message);
                 TranslateMessage(&Msg);
                 DispatchMessage(&Msg);
             } break;
@@ -1261,9 +1262,10 @@ Win32WindowCallback(HWND Window,
                 Opengl_Resize(Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
             }
         } break;
-        
         default: {
             // Log message?
+            Win32Log("[Win32::CallbackMessages] %d\n", Message);
+            //SetFocus(Window);
             Result = DefWindowProcA(Window, Message, WParam, LParam);
         };   
     }
@@ -1569,7 +1571,6 @@ Win32InitRenderCommands(mailbox* RenderCommands,
     
 }
 
-
 int CALLBACK
 WinMain(HINSTANCE Instance,
         HINSTANCE PrevInstance,
@@ -1584,6 +1585,7 @@ WinMain(HINSTANCE Instance,
     G_State = State;
     
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    ImmDisableIME((DWORD)-1);
     HWND Window = Win32CreateWindow(Instance, 
                                     Game_DesignWidth,
                                     Game_DesignHeight,
