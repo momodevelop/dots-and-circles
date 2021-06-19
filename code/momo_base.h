@@ -166,20 +166,18 @@ IsSystemBigEndian() {
 }
 
 // Defer 
-namespace zawarudo {
-    template<class F> struct ScopeGuard {
-        F f;
-        ~ScopeGuard() { f(); }
-    };
-    struct defer_dummy {};
-    template<class F> ScopeGuard<F> operator+(defer_dummy, F f) {
-        return { f };
-    }
+template<class F> struct zawarudo_ScopeGuard {
+    F f;
+    ~zawarudo_ScopeGuard() { f(); }
+};
+struct zawarudo_defer_dummy {};
+template<class F> zawarudo_ScopeGuard<F> operator+(zawarudo_defer_dummy, F f) {
+    return { f };
 }
 
-#define AnonVarSub(x) zawarudo_ryojianon##x
-#define AnonVar(x) AnonVarSub(x)
-#define Defer auto AnonVar(__COUNTER__) = zawarudo::defer_dummy{} + [&]()
+#define zawarudo_AnonVarSub(x) zawarudo_defer##x
+#define zawarudo_AnonVar(x) zawarudo_AnonVarSub(x)
+#define Defer auto zawarudo_AnonVar(__LINE__) = zawarudo_defer_dummy{} + [&]()
 
 // Safe Truncation
 #define I8_Min                (-128)

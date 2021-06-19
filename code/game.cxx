@@ -54,6 +54,53 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
                               C4f_Red);
     }
 }
+
+// TODO: Thread this?
+struct profiler_entry {
+    const char* CustomName;
+    const char* FunctionName;
+    const char* FileName;
+    u32 LineNumber;
+    u32 StartCycleCount;
+    u32 EndCycleCount;
+    u32 HitCount;
+};
+
+
+profiler_entry G_ProfilerEntries[128];
+
+// NOTE(Momo): Profiler only go up in count;
+static inline profiler_entry*
+zawarudo_StartProfiling(u32 Index,
+                        const char* CustomName,
+                        const char* FunctionName,
+                        const char* FileName,
+                        u32 LineNumber)
+{
+    
+    Assert(Index < ArrayCount(G_ProfilerEntries));
+    profiler_entry* E = G_ProfilerEntries + Index;
+    E->CustomName = CustomName;
+    E->FunctionName = FunctionName;
+    E->LineNumber = LineNumber;
+    E->FileName = FileName;
+    E->StartCycleCount = 100; // TODO: Replace with platform call to get perf counter
+    
+    return E;
+}
+
+
+static inline void
+zawarudo_EndProfiling(profiler_entry* E) {
+    // TODO: Replace this
+    E->EndCycleCount = 200; 
+}
+
+#define StartProfiling(Name) profiler_entry* Name = zawarudo_StartProfiling(__COUNTER__, #Name, __FUNCTION__, __FILE__, __LINE__);
+#define EndProfiling(Name) zawarudo_EndProfiling(Name);
+
+
+
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
@@ -61,6 +108,10 @@ GameUpdateFunc(GameUpdate)
     arena Scratch = {};
     
     {
+        // Let's say we want to time this block
+        StartProfiling(Test);
+        Defer { EndProfiling(Test); };
+        
         G_Platform = PlatformApi;
         G_Log = PlatformApi->LogFp;
         G_Renderer = RenderCommands;
@@ -70,7 +121,16 @@ GameUpdateFunc(GameUpdate)
             return false;
         }
         G_Scratch = &Scratch;
+        
+        
     }
+    
+    G_Log("%s %s %s %d\n", 
+          G_ProfilerEntries[0].CustomName,
+          G_ProfilerEntries[0].FunctionName,
+          G_ProfilerEntries[0].FileName,
+          G_ProfilerEntries[0].LineNumber);
+    
     
     
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
