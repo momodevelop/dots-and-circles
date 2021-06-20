@@ -182,7 +182,7 @@ Win32WriteConsole(const char* Message) {
 #endif
 
 static inline
-PlatformLogFunc(Win32Log) {
+PlatformLogDecl(Win32Log) {
     char Buffer[256];
     
     va_list VaList;
@@ -230,7 +230,7 @@ Win32FreeMemory(void* Memory) {
 }
 
 static inline LARGE_INTEGER
-Win32GetCurrentCounter(void) {
+Win32GetPerformanceCounter(void) {
     LARGE_INTEGER Result;
     QueryPerformanceCounter(&Result);
     return Result;
@@ -1263,9 +1263,7 @@ Win32WindowCallback(HWND Window,
             }
         } break;
         default: {
-            // Log message?
-            Win32Log("[Win32::CallbackMessages] %d\n", Message);
-            //SetFocus(Window);
+            //TODO: Log message?
             Result = DefWindowProcA(Window, Message, WParam, LParam);
         };   
     }
@@ -1349,8 +1347,13 @@ enum platform_file_error {
     PlatformFileError_ReadFileFailed,
 };
 
+static inline
+PlatformGetPerformanceCounterDecl(Win32GetPerformanceCounterU64) {
+    return (u64)Win32GetPerformanceCounter().QuadPart;
+}
+
 static inline 
-PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
+PlatformOpenAssetFileDecl(Win32OpenAssetFile) {
     platform_file_handle Ret = {}; 
     const char* Path = Game_AssetFileName;
     
@@ -1384,7 +1387,7 @@ PlatformOpenAssetFileFunc(Win32OpenAssetFile) {
 }
 
 static inline 
-PlatformLogFileErrorFunc(Win32LogFileError) {
+PlatformLogFileErrorDecl(Win32LogFileError) {
     switch(Handle->Error) {
         case PlatformFileError_None: {
             Win32Log("[Win32::File] There is no file error\n");
@@ -1408,7 +1411,7 @@ PlatformLogFileErrorFunc(Win32LogFileError) {
 }
 
 static inline
-PlatformCloseFileFunc(Win32CloseFile) {
+PlatformCloseFileDecl(Win32CloseFile) {
     Assert(Handle->Id < ArrayCount(G_State->Handles));
     HANDLE Win32Handle = G_State->Handles[Handle->Id];
     if (Win32Handle != INVALID_HANDLE_VALUE) {
@@ -1418,17 +1421,17 @@ PlatformCloseFileFunc(Win32CloseFile) {
     Assert(G_State->HandleFreeCount <= ArrayCount(G_State->Handles));
 }
 static inline
-PlatformAddTextureFunc(Win32AddTexture) {
+PlatformAddTextureDecl(Win32AddTexture) {
     return Opengl_AddTexture(G_State->Opengl, Width, Height, Pixels);
 }
 
 static inline 
-PlatformClearTexturesFunc(Win32ClearTextures) {
+PlatformClearTexturesDecl(Win32ClearTextures) {
     return Opengl_ClearTextures(G_State->Opengl);
 }
 
 static inline 
-PlatformReadFileFunc(Win32ReadFile) {
+PlatformReadFileDecl(Win32ReadFile) {
     if (Handle->Error) {
         return;
     }
@@ -1451,8 +1454,18 @@ PlatformReadFileFunc(Win32ReadFile) {
     }
 }
 
+static inline 
+PlatformHideCursorDecl(Win32HideCursor) {
+    ShowCursor(FALSE);
+}
+
 static inline
-PlatformGetFileSizeFunc(Win32GetFileSize) 
+PlatformShowCursorDecl(Win32ShowCursor) {
+    ShowCursor(TRUE);
+}
+
+static inline
+PlatformGetFileSizeDecl(Win32GetFileSize) 
 {
     HANDLE FileHandle = CreateFileA(Path, 
                                     GENERIC_READ, 
@@ -1488,6 +1501,9 @@ Win32InitPlatformApi() {
     PlatformApi.OpenAssetFileFp = Win32OpenAssetFile;
     PlatformApi.CloseFileFp = Win32CloseFile;
     PlatformApi.LogFileErrorFp = Win32LogFileError;
+    PlatformApi.ShowCursorFp = Win32ShowCursor;
+    PlatformApi.HideCursorFp = Win32HideCursor;
+    
     return PlatformApi;
 }
 
@@ -1657,7 +1673,7 @@ WinMain(HINSTANCE Instance,
     
     
     // Game Loop
-    LARGE_INTEGER LastCount = Win32GetCurrentCounter(); 
+    LARGE_INTEGER LastCount = Win32GetPerformanceCounter(); 
     while (State->IsRunning) {
         if (Win32IsGameCodeOutdated(&GameCode)) {
             Win32Log("[Win32] Reloading game code!\n");
@@ -1709,7 +1725,7 @@ WinMain(HINSTANCE Instance,
         Win32AudioFlush(&Audio, GameAudioOutput);
         
         f32 SecsElapsed = 
-            Win32GetSecondsElapsed(State, LastCount, Win32GetCurrentCounter());
+            Win32GetSecondsElapsed(State, LastCount, Win32GetPerformanceCounter());
         
         // NOTE(Momo): Sleep time
         if (TargetSecsPerFrame > SecsElapsed) {
@@ -1723,11 +1739,11 @@ WinMain(HINSTANCE Instance,
                 }
             }
             while(TargetSecsPerFrame > 
-                  Win32GetSecondsElapsed(State, LastCount, Win32GetCurrentCounter()));
+                  Win32GetSecondsElapsed(State, LastCount, Win32GetPerformanceCounter()));
             
         }
         
-        LastCount = Win32GetCurrentCounter();
+        LastCount = Win32GetPerformanceCounter();
         
         Win32SwapBuffers(Window);
     }

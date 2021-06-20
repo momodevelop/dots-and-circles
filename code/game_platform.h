@@ -92,29 +92,40 @@ struct platform_file_handle {
 };
 
 
-#define PlatformLogFunc(Name) void Name(const char* Format, ...)
-typedef PlatformLogFunc(platform_log);
+#define PlatformLogDecl(Name) void Name(const char* Format, ...)
+typedef PlatformLogDecl(platform_log);
 
-#define PlatformOpenAssetFileFunc(Name) platform_file_handle Name(void)
-typedef PlatformOpenAssetFileFunc(platform_open_asset_file);
+#define PlatformOpenAssetFileDecl(Name) platform_file_handle Name(void)
+typedef PlatformOpenAssetFileDecl(platform_open_asset_file);
 
-#define PlatformCloseFileFunc(Name) void Name(platform_file_handle* Handle)
-typedef PlatformCloseFileFunc(platform_close_file);
+#define PlatformCloseFileDecl(Name) void Name(platform_file_handle* Handle)
+typedef PlatformCloseFileDecl(platform_close_file);
 
-#define PlatformReadFileFunc(Name) void Name(platform_file_handle* Handle, usize Offset, usize Size, void* Dest)
-typedef PlatformReadFileFunc(platform_read_file);
+#define PlatformReadFileDecl(Name) void Name(platform_file_handle* Handle, usize Offset, usize Size, void* Dest)
+typedef PlatformReadFileDecl(platform_read_file);
 
-#define PlatformGetFileSizeFunc(Name) u32 Name(const char* Path)
-typedef PlatformGetFileSizeFunc(platform_get_file_size);
+#define PlatformGetFileSizeDecl(Name) u32 Name(const char* Path)
+typedef PlatformGetFileSizeDecl(platform_get_file_size);
 
-#define PlatformLogFileErrorFunc(Name) void Name(platform_file_handle* Handle)
-typedef PlatformLogFileErrorFunc(platform_log_file_error);
+#define PlatformLogFileErrorDecl(Name) void Name(platform_file_handle* Handle)
+typedef PlatformLogFileErrorDecl(platform_log_file_error);
 
-#define PlatformAddTextureFunc(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
-typedef PlatformAddTextureFunc(platform_add_texture);
+#define PlatformAddTextureDecl(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
+typedef PlatformAddTextureDecl(platform_add_texture);
 
-#define PlatformClearTexturesFunc(Name) void Name()
-typedef PlatformClearTexturesFunc(platform_clear_textures);
+#define PlatformClearTexturesDecl(Name) void Name()
+typedef PlatformClearTexturesDecl(platform_clear_textures);
+
+#define PlatformHideCursorDecl(Name) void Name()
+typedef PlatformHideCursorDecl(platform_hide_cursor);
+
+#define PlatformShowCursorDecl(Name) void Name()
+typedef PlatformShowCursorDecl(platform_show_cursor);
+
+#define PlatformGetPerformanceCounterDecl(Name) u64 Name()
+typedef PlatformGetPerformanceCounterDecl(platform_get_performance_counter);
+
+
 
 struct platform_api {
     platform_log* LogFp;
@@ -125,7 +136,10 @@ struct platform_api {
     platform_close_file* CloseFileFp;
     platform_log_file_error* LogFileErrorFp;
     platform_read_file* ReadFileFp;
+    platform_show_cursor* ShowCursorFp;
+    platform_hide_cursor* HideCursorFp;
     
+    platform_get_performance_counter* GetPerformanceCounterFp;
 };
 
 // Memory required by the game to get it running

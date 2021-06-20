@@ -50,7 +50,7 @@ struct game_mode_anime_test {
 };
 
 static inline void 
-InitAnimeTestMode(permanent_state* PermState) {
+AnimeTestMode_Init(permanent_state* PermState) {
     game_mode_anime_test* Mode = PermState->AnimeTestMode;     
     Mode->Entity.Pos = V3f_Create(0.f, 0.f, 0.f);
     Mode->Entity.Size = V3f_Create(48.f*2, 48.f*2, 1.f);
@@ -62,9 +62,9 @@ InitAnimeTestMode(permanent_state* PermState) {
 
 
 static inline void
-UpdateAnimeTestMode(permanent_state* PermState, 
-                    transient_state* TranState,
-                    f32 DeltaTime) 
+AnimeTestMode_Update(permanent_state* PermState, 
+                     transient_state* TranState,
+                     f32 DeltaTime) 
 {
     game_mode_anime_test* Mode = PermState->AnimeTestMode;     
     assets* Assets = &TranState->Assets;

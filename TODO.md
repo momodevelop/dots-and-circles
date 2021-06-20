@@ -1,5 +1,4 @@
 # Engine
-- Remove game camera
 - Profiling
 - Chaging display refresh rate?
 - Log to text file

@@ -21,7 +21,9 @@ struct game_mode_sandbox {
 };
 
 static inline void 
-InitSandboxMode(permanent_state* PermState) {
+SandboxMode_Init(permanent_state* PermState) {
+    G_Platform->HideCursorFp();
+    
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     // NOTE(Momo): Init camera
     {
@@ -59,9 +61,9 @@ InitSandboxMode(permanent_state* PermState) {
 
 
 static inline void
-UpdateSandboxMode(permanent_state* PermState, 
-                  transient_state* TranState,
-                  f32 DeltaTime) 
+SandboxMode_Update(permanent_state* PermState, 
+                   transient_state* TranState,
+                   f32 DeltaTime) 
 {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     assets* Assets = &TranState->Assets;

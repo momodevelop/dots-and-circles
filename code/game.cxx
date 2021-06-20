@@ -125,11 +125,13 @@ GameUpdateFunc(GameUpdate)
         
     }
     
+#if 0    
     G_Log("%s %s %s %d\n", 
           G_ProfilerEntries[0].CustomName,
           G_ProfilerEntries[0].FunctionName,
           G_ProfilerEntries[0].FileName,
           G_ProfilerEntries[0].LineNumber);
+#endif
     
     
     
@@ -242,24 +244,24 @@ GameUpdateFunc(GameUpdate)
             case GameModeType_Splash: {
                 PermState->SplashMode = 
                     Arena_PushStruct(game_mode_splash, ModeArena); 
-                InitSplashMode(PermState);
+                SplashMode_Init(PermState);
             } break;
             case GameModeType_Main: {
                 PermState->MainMode = 
                     Arena_PushStruct(game_mode_main, ModeArena); 
-                if (!Main_Init(PermState, TranState, DebugState)){
+                if (!MainMode_Init(PermState, TranState, DebugState)){
                     return false;
                 }
             } break;
             case GameModeType_Sandbox: {
                 PermState->SandboxMode = 
                     Arena_PushStruct(game_mode_sandbox, ModeArena); 
-                InitSandboxMode(PermState);
+                SandboxMode_Init(PermState);
             } break;
             case GameModeType_AnimeTest: {
                 PermState->AnimeTestMode = 
                     Arena_PushStruct(game_mode_anime_test, ModeArena); 
-                InitAnimeTestMode(PermState);
+                AnimeTestMode_Init(PermState);
             } break;
             default: {
                 return false;
@@ -288,25 +290,25 @@ GameUpdateFunc(GameUpdate)
     // State update
     switch(PermState->CurrentGameMode) {
         case GameModeType_Splash: {
-            UpdateSplashMode(PermState, 
-                             TranState,
-                             DeltaTime);
-        } break;
-        case GameModeType_Main: {
-            Main_Update(PermState, 
-                        TranState,
-                        DebugState,
-                        DeltaTime);
-        } break; 
-        case GameModeType_Sandbox: {
-            UpdateSandboxMode(PermState, 
+            SplashMode_Update(PermState, 
                               TranState,
                               DeltaTime);
         } break;
+        case GameModeType_Main: {
+            MainMode_Update(PermState, 
+                            TranState,
+                            DebugState,
+                            DeltaTime);
+        } break; 
+        case GameModeType_Sandbox: {
+            SandboxMode_Update(PermState, 
+                               TranState,
+                               DeltaTime);
+        } break;
         case GameModeType_AnimeTest: {
-            UpdateAnimeTestMode(PermState, 
-                                TranState,
-                                DeltaTime);
+            AnimeTestMode_Update(PermState, 
+                                 TranState,
+                                 DeltaTime);
         } break;
         default: {
             return false;

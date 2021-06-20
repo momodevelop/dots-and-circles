@@ -89,8 +89,9 @@ struct game_mode_splash {
 
 
 static inline void
-InitSplashMode(permanent_state* PermState) {
+SplashMode_Init(permanent_state* PermState) {
     game_mode_splash* Mode = PermState->SplashMode;
+    G_Platform->ShowCursorFp();
     
     // NOTE(Momo): Create entities
     {
@@ -128,9 +129,9 @@ InitSplashMode(permanent_state* PermState) {
 }
 
 static inline void
-UpdateSplashMode(permanent_state* PermState,
-                 transient_state* TranState,
-                 f32 DeltaTime)
+SplashMode_Update(permanent_state* PermState,
+                  transient_state* TranState,
+                  f32 DeltaTime)
 {
     game_mode_splash* Mode = PermState->SplashMode;
     
