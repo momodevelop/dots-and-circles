@@ -1,6 +1,5 @@
 // This layer is basically a bunch of settings required by both 
 // the game and platform.
-
 #ifndef __PLATFORM__
 #define __PLATFORM__
 

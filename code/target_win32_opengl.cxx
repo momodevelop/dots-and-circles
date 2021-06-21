@@ -1,3 +1,4 @@
+
 #include <windows.h>
 #include <windowsx.h>
 #include <ShellScalingAPI.h>
@@ -1503,7 +1504,7 @@ Win32InitPlatformApi() {
     PlatformApi.LogFileErrorFp = Win32LogFileError;
     PlatformApi.ShowCursorFp = Win32ShowCursor;
     PlatformApi.HideCursorFp = Win32HideCursor;
-    
+    PlatformApi.GetPerformanceCounterFp = Win32GetPerformanceCounterU64;
     return PlatformApi;
 }
 

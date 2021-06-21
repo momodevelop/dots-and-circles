@@ -159,7 +159,6 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     // NOTE: Change state if enemy and bullet count is 0
     if (Mode->DeathBomb.Radius >= Game_DesignWidth * 2.f) 
     {
-        
         Mode->State = Main_StateType_Spawning;
         Mode->SpawnTimer = 0.f;
         Mode->Player.IsDead = false;

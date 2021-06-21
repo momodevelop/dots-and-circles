@@ -10,7 +10,8 @@
 
 
 // NOTE(Momo): To be used only by game layer
-#include "game_globals_external.h"
+#include "game_globals.h"
+#include "game_profiler.h"
 #include "game_assets_file.h"
 #include "game_assets.h"
 

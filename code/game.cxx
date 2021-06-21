@@ -55,52 +55,6 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     }
 }
 
-// TODO: Thread this?
-struct profiler_entry {
-    const char* CustomName;
-    const char* FunctionName;
-    const char* FileName;
-    u32 LineNumber;
-    u32 StartCycleCount;
-    u32 EndCycleCount;
-    u32 HitCount;
-};
-
-
-profiler_entry G_ProfilerEntries[128];
-
-// NOTE(Momo): Profiler only go up in count;
-static inline profiler_entry*
-zawarudo_StartProfiling(u32 Index,
-                        const char* CustomName,
-                        const char* FunctionName,
-                        const char* FileName,
-                        u32 LineNumber)
-{
-    
-    Assert(Index < ArrayCount(G_ProfilerEntries));
-    profiler_entry* E = G_ProfilerEntries + Index;
-    E->CustomName = CustomName;
-    E->FunctionName = FunctionName;
-    E->LineNumber = LineNumber;
-    E->FileName = FileName;
-    E->StartCycleCount = 100; // TODO: Replace with platform call to get perf counter
-    
-    return E;
-}
-
-
-static inline void
-zawarudo_EndProfiling(profiler_entry* E) {
-    // TODO: Replace this
-    E->EndCycleCount = 200; 
-}
-
-#define StartProfiling(Name) profiler_entry* Name = zawarudo_StartProfiling(__COUNTER__, #Name, __FUNCTION__, __FILE__, __LINE__);
-#define EndProfiling(Name) zawarudo_EndProfiling(Name);
-
-
-
 extern "C" 
 GameUpdateFunc(GameUpdate) 
 {
@@ -109,8 +63,6 @@ GameUpdateFunc(GameUpdate)
     
     {
         // Let's say we want to time this block
-        StartProfiling(Test);
-        Defer { EndProfiling(Test); };
         
         G_Platform = PlatformApi;
         G_Log = PlatformApi->LogFp;
@@ -125,14 +77,6 @@ GameUpdateFunc(GameUpdate)
         
     }
     
-#if 0    
-    G_Log("%s %s %s %d\n", 
-          G_ProfilerEntries[0].CustomName,
-          G_ProfilerEntries[0].FunctionName,
-          G_ProfilerEntries[0].FileName,
-          G_ProfilerEntries[0].LineNumber);
-#endif
-    
     
     
     auto* PermState = (permanent_state*)GameMemory->PermanentMemory;
@@ -141,6 +85,7 @@ GameUpdateFunc(GameUpdate)
     
     //  Initialization of the game
     if(!PermState->IsInitialized) {
+        
         // NOTE(Momo): Arenas
         PermState = Arena_BootupStruct(permanent_state,
                                        Arena,
@@ -158,7 +103,10 @@ GameUpdateFunc(GameUpdate)
                                      Game_DesignHeight);
         PermState->GameSpeed = 1.f;
         G_Camera = &PermState->Camera;
+        
     }
+    
+    
     
     if (!TranState->IsInitialized) {
         G_Log("Initializing Transient State\n");
@@ -214,8 +162,20 @@ GameUpdateFunc(GameUpdate)
     if (Button_IsPoked(G_Input->ButtonInspector)) {
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
+    StartProfiling(Test);
     DebugInspector_Begin(&DebugState->Inspector);
     DebugConsole_Update(&DebugState->Console, DeltaTime);
+    EndProfiling(Test);
+    
+#if 1
+    G_Log("%s %s %d: %d\n", 
+          G_ProfilerEntries[0].CustomName,
+          G_ProfilerEntries[0].FunctionName,
+          G_ProfilerEntries[0].LineNumber,
+          G_ProfilerEntries[0].HitCount,
+          G_ProfilerEntries[0].Cycles);
+#endif
+    
     
     // NOTE(Momo): Pause
     if (Button_IsPoked(G_Input->ButtonPause)) {
