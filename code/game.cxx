@@ -60,10 +60,8 @@ GameUpdateFunc(GameUpdate)
 {
     // NOTE(Momo): Initialize globals
     arena Scratch = {};
-    
     {
         // Let's say we want to time this block
-        
         G_Platform = PlatformApi;
         G_Log = PlatformApi->LogFp;
         G_Renderer = RenderCommands;
@@ -73,8 +71,6 @@ GameUpdateFunc(GameUpdate)
             return false;
         }
         G_Scratch = &Scratch;
-        
-        
     }
     
     
@@ -85,7 +81,7 @@ GameUpdateFunc(GameUpdate)
     
     //  Initialization of the game
     if(!PermState->IsInitialized) {
-        
+        G_Log("[Permanent] Init Begin\n");
         // NOTE(Momo): Arenas
         PermState = Arena_BootupStruct(permanent_state,
                                        Arena,
@@ -102,35 +98,39 @@ GameUpdateFunc(GameUpdate)
                                      Game_DesignWidth, 
                                      Game_DesignHeight);
         PermState->GameSpeed = 1.f;
-        G_Camera = &PermState->Camera;
+        G_Log("[Permanent] Init End\n");
         
     }
     
     
     
     if (!TranState->IsInitialized) {
-        G_Log("Initializing Transient State\n");
+        G_Log("[Transient] Init Begin\n");
         TranState = Arena_BootupStruct(transient_state,
                                        Arena,
                                        GameMemory->TransientMemory, 
                                        GameMemory->TransientMemorySize);
-        
         b8 Success = Assets_Init(&TranState->Assets,
                                  &TranState->Arena);
+        
         if(!Success) {
+            G_Log("[Transient] Failed to initialize assets\n");
             return false;
         }
         G_Assets = &TranState->Assets;
         
         Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->Arena);
         if (!Success) {
+            G_Log("[Transient] Failed to initialize audio\n");
             return false;
         }
         
         TranState->IsInitialized = true;
+        G_Log("[Transient] Init End\n");
     }
     
     if (!DebugState->IsInitialized) {
+        G_Log("[Debug] Init Begin\n");
         DebugState = Arena_BootupStruct(debug_state,
                                         Arena,
                                         GameMemory->DebugMemory,
@@ -143,17 +143,24 @@ GameUpdateFunc(GameUpdate)
         {
             u8_cstr Buffer = {};
             U8CStr_InitFromSiStr(&Buffer, "jump");
-            DebugConsole_Init(&DebugState->Console,
-                              &DebugState->Arena);
-            DebugConsole_AddCmd(&DebugState->Console, 
-                                Buffer, 
-                                CmdJump, 
-                                DebugState);
+            
+            if (!DebugConsole_Init(&DebugState->Console,
+                                   &DebugState->Arena)) {
+                return false;
+            }
+            
+            if (!DebugConsole_AddCmd(&DebugState->Console, 
+                                     Buffer, 
+                                     CmdJump, 
+                                     DebugState)) {
+                return false;
+            }
         }
         
         DebugState->PermanentState = PermState;
         DebugState->TransientState = TranState;
         DebugState->IsInitialized = true;
+        G_Log("[Debug] Init End\n");
     }
     
     // NOTE(Momo): Input
@@ -162,12 +169,12 @@ GameUpdateFunc(GameUpdate)
     if (Button_IsPoked(G_Input->ButtonInspector)) {
         DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
     }
-    StartProfiling(Test);
+    //StartProfiling(Test);
     DebugInspector_Begin(&DebugState->Inspector);
     DebugConsole_Update(&DebugState->Console, DeltaTime);
-    EndProfiling(Test);
+    //EndProfiling(Test);
     
-#if 1
+#if 0
     G_Log("%s %s %d: %d\n", 
           G_ProfilerEntries[0].CustomName,
           G_ProfilerEntries[0].FunctionName,

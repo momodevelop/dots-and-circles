@@ -53,7 +53,7 @@ struct debug_console {
 };
 
 
-static inline void
+static inline b8
 DebugConsole_Init(debug_console* C,
                   arena* Arena)
 {
@@ -63,27 +63,41 @@ DebugConsole_Init(debug_console* C,
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
-    List_New(&C->Commands, Arena, DebugConsole_MaxCommands);
-    U8Str_New(&C->InputLine.Text, Arena, DebugConsole_LineLength);
-    
-    Array_New(&C->InfoLines, Arena, DebugConsole_InfoLineCount);
-    for (u32 I = 0; I < C->InfoLines.Count; ++I) {
-        U8Str_New(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength);
+    if (!List_New(&C->Commands, Arena, DebugConsole_MaxCommands)) {
+        return false;
     }
     
+    if (!U8Str_New(&C->InputLine.Text, Arena, DebugConsole_LineLength)) {
+        return false;
+    }
+    
+    if (!Array_New(&C->InfoLines, Arena, DebugConsole_InfoLineCount)) {
+        return false;
+    }
+    for (u32 I = 0; I < C->InfoLines.Count; ++I) {
+        if (!U8Str_New(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength)){
+            return false;
+        }
+    }
+    
+    return true;
 }
 
-static inline void 
+static inline b8 
 DebugConsole_AddCmd(debug_console* C, 
                     u8_cstr Key, 
                     debug_console_callback Callback, 
                     void* Context)
 {
     debug_console_command* Command = List_Push(&C->Commands);
+    if (Command == nullptr) {
+        return false;
+    }
     Command->Key = Key;
     Command->Callback = Callback;
     Command->Context = Context;
     
+    return true;
 }
 
 

@@ -6,7 +6,6 @@
 - Introspection?
 
 # Game
-- show/hide cursor
 - pause state
 - Restructure waves
 - Enemy art (...32x32?)

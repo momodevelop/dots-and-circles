@@ -14,9 +14,6 @@ arena* G_Scratch;
 
 // NOTE(Momo): Game related globals
 // Need to forward declare these
-struct game_camera;
-game_camera* G_Camera;
-
 struct assets;
 assets* G_Assets;
 

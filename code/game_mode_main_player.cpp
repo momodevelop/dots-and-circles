@@ -6,7 +6,7 @@ Main_UpdateInput(game_mode_main* Mode)
     player* Player = &Mode->Player; 
     
     Player->PrevPosition = Player->Position;
-    Player->Position = Camera_ScreenToWorld(G_Camera,
+    Player->Position = Camera_ScreenToWorld(&Mode->Camera,
                                             G_Input->DesignMousePos);
     
     
@@ -50,12 +50,29 @@ Main_UpdatePlayer(game_mode_main* Mode,
 
 static inline void
 Main_RenderScore(game_mode_main* Mode) {
-    Draw_Text(Font_Default, 
-              V3f_Create(-Game_DesignWidth * 0.5f + 10.f, 
-                         Game_DesignHeight * 0.5f - 24.f,  
-                         ZLayScore),
-              U8CStr_CreateFromSiStr("Current Score"),
-              24.f);
+    static constexpr f32 FontSize = 24.f;
+    
+    // NOTE(Momo): Current Score
+    {
+        Draw_Text(Font_Default, 
+                  V3f_Create(-Game_DesignWidth * 0.5f + 10.f, 
+                             Game_DesignHeight * 0.5f - 24.f,  
+                             ZLayScore),
+                  U8CStr_CreateFromSiStr("Current Score"),
+                  FontSize);
+    }
+    
+    // NOTE(Momo): High Score
+    {
+        u8_cstr Str = U8CStr_CreateFromSiStr("High Score");
+        Draw_Text(Font_Default,
+                  V3f_Create((Game_DesignWidth * 0.5f) - 120.f,
+                             Game_DesignHeight * 0.5f - 24.f,
+                             ZLayScore),
+                  Str,
+                  FontSize);
+    }
+    
 }
 
 
