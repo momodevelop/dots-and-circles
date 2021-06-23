@@ -16,11 +16,11 @@ SET CommonCompilerFlags=-MT -WX -W4 -wd4189 -wd4702 -wd4201 -wd4505 -wd4996 -wd4
 SET CommonCompilerFlags=-DSLOW -DINTERNAL  %CommonCompilerFlags%
 
 SET CommonLinkerFlags=-incremental:no -opt:ref
-SET CommonLinkerFlags=user32.lib opengl32.lib gdi32.lib winmm.lib ole32.lib imm32.lib %CommonLinkerFlags%
+SET CommonLinkerFlags=user32.lib gdi32.lib winmm.lib ole32.lib imm32.lib %CommonLinkerFlags%
 
 pushd %BuildDir%
 
-cl %CommonCompilerFlags% %CodeDir%\target_win32_opengl.cxx -link %CommonLinkerFlags%
+cl %CommonCompilerFlags% %CodeDir%\target_win32.cxx -link %CommonLinkerFlags%
 
 
 popd
