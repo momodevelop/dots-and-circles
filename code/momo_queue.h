@@ -30,8 +30,8 @@ Queue_Init(queue<type>* Q, type* Buffer, u32 BufferCap) {
 
 template<typename type>
 static inline b8
-Queue_New(queue<type>* Q, arena* Arena, u32 Cap) {
-    type* Buffer = Arena_PushArray(type, Arena, Cap);
+Queue_New(queue<type>* Q, Arena* arena, u32 Cap) {
+    type* Buffer = arena->push_array<type>(Cap);
     if (!Buffer) {
         return false;
     }

@@ -13,15 +13,14 @@ struct Arena_Mark {
         return this->arena;
     }
     
+    void revert();
 };
 
 struct Arena {
-    //- Member functions
     u8* memory;
     u32 used;
     u32 capacity;
     
-    //- Public functions
     b8 init(void* memory, u32 capacity);
     void clear();
     u32 remaining();
@@ -36,7 +35,6 @@ struct Arena {
                             u32 memory_size);
     
     Arena_Mark mark();
-    b8 revert(Arena_Mark mark);
 };
 
 #include "momo_arena.cpp"

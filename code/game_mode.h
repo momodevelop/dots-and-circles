@@ -17,7 +17,7 @@ enum game_mode_type {
 struct transient_state {
     b8 IsInitialized;
     
-    arena Arena;
+    Arena arena;
     assets Assets; 
     game_audio_mixer Mixer;
 };
@@ -37,14 +37,14 @@ struct permanent_state {
         struct game_mode_anime_test* AnimeTestMode;
     };
     
-    arena Arena;
-    arena_mark ModeArena;
+    Arena arena;
+    Arena_Mark ModeArena;
     
 };
 
 struct debug_state {
     b8 IsInitialized;
-    arena Arena;
+    Arena arena;
     
     debug_inspector Inspector;
     debug_console Console;

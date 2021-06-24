@@ -55,7 +55,7 @@ struct debug_console {
 
 static inline b8
 DebugConsole_Init(debug_console* C,
-                  arena* Arena)
+                  Arena* arena)
 {
     C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
@@ -63,19 +63,19 @@ DebugConsole_Init(debug_console* C,
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
-    if (!List_New(&C->Commands, Arena, DebugConsole_MaxCommands)) {
+    if (!List_New(&C->Commands, arena, DebugConsole_MaxCommands)) {
         return false;
     }
     
-    if (!U8Str_New(&C->InputLine.Text, Arena, DebugConsole_LineLength)) {
+    if (!U8Str_New(&C->InputLine.Text, arena, DebugConsole_LineLength)) {
         return false;
     }
     
-    if (!Array_New(&C->InfoLines, Arena, DebugConsole_InfoLineCount)) {
+    if (!Array_New(&C->InfoLines, arena, DebugConsole_InfoLineCount)) {
         return false;
     }
     for (u32 I = 0; I < C->InfoLines.Count; ++I) {
-        if (!U8Str_New(&C->InfoLines[I].Text, Arena, DebugConsole_LineLength)){
+        if (!U8Str_New(&C->InfoLines[I].Text, arena, DebugConsole_LineLength)){
             return false;
         }
     }

@@ -1,3 +1,4 @@
+
 #include "game.h"
 
 // cmd: jump main/menu/atlas_test/etc...
@@ -6,7 +7,8 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
     
-    Defer{ Arena_Clear(G_Scratch); };
+    Defer{ G_Scratch->clear(); };
+    
     u8_cstr Buffer = {};
     u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, G_Scratch, ' ');
     if ( ArgList.ItemCount != 2 ) {
@@ -59,14 +61,14 @@ extern "C"
 GameUpdateFunc(GameUpdate) 
 {
     // NOTE(Momo): Initialize globals
-    arena Scratch = {};
+    Arena Scratch = {};
     {
         // Let's say we want to time this block
         G_Platform = PlatformApi;
         G_Log = PlatformApi->LogFp;
         G_Renderer = RenderCommands;
         G_Input = PlatformInput;
-        if (!Arena_Init(&Scratch, GameMemory->ScratchMemory, GameMemory->ScratchMemorySize)) {
+        if (!Scratch.init(GameMemory->ScratchMemory, GameMemory->ScratchMemorySize)) {
             G_Log("Cannot initialize Scratch Memory");
             return false;
         }
@@ -83,12 +85,12 @@ GameUpdateFunc(GameUpdate)
     if(!PermState->IsInitialized) {
         G_Log("[Permanent] Init Begin\n");
         // NOTE(Momo): Arenas
-        PermState = Arena_BootupStruct(permanent_state,
-                                       Arena,
-                                       GameMemory->PermanentMemory, 
-                                       GameMemory->PermanentMemorySize);
+        PermState = ARENA_BOOT_STRUCT(permanent_state,
+                                      arena,
+                                      GameMemory->PermanentMemory, 
+                                      GameMemory->PermanentMemorySize);
         
-        PermState->ModeArena = Arena_Mark(&PermState->Arena);
+        PermState->ModeArena = PermState->arena.mark();
         PermState->CurrentGameMode = GameModeType_None;
         PermState->NextGameMode = GameModeType_Main;
         PermState->IsInitialized = true;
@@ -106,12 +108,12 @@ GameUpdateFunc(GameUpdate)
     
     if (!TranState->IsInitialized) {
         G_Log("[Transient] Init Begin\n");
-        TranState = Arena_BootupStruct(transient_state,
-                                       Arena,
-                                       GameMemory->TransientMemory, 
-                                       GameMemory->TransientMemorySize);
+        TranState = ARENA_BOOT_STRUCT(transient_state,
+                                      arena,
+                                      GameMemory->TransientMemory, 
+                                      GameMemory->TransientMemorySize);
         b8 Success = Assets_Init(&TranState->Assets,
-                                 &TranState->Arena);
+                                 &TranState->arena);
         
         if(!Success) {
             G_Log("[Transient] Failed to initialize assets\n");
@@ -119,7 +121,7 @@ GameUpdateFunc(GameUpdate)
         }
         G_Assets = &TranState->Assets;
         
-        Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->Arena);
+        Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->arena);
         if (!Success) {
             G_Log("[Transient] Failed to initialize audio\n");
             return false;
@@ -131,12 +133,12 @@ GameUpdateFunc(GameUpdate)
     
     if (!DebugState->IsInitialized) {
         G_Log("[Debug] Init Begin\n");
-        DebugState = Arena_BootupStruct(debug_state,
-                                        Arena,
-                                        GameMemory->DebugMemory,
-                                        GameMemory->DebugMemorySize);
+        DebugState = ARENA_BOOT_STRUCT(debug_state,
+                                       arena,
+                                       GameMemory->DebugMemory,
+                                       GameMemory->DebugMemorySize);
         // Init inspector
-        DebugInspector_Init(&DebugState->Inspector, &DebugState->Arena);
+        DebugInspector_Init(&DebugState->Inspector, &DebugState->arena);
         
         
         // Init console
@@ -145,7 +147,7 @@ GameUpdateFunc(GameUpdate)
             U8CStr_InitFromSiStr(&Buffer, "jump");
             
             if (!DebugConsole_Init(&DebugState->Console,
-                                   &DebugState->Arena)) {
+                                   &DebugState->arena)) {
                 return false;
             }
             
@@ -204,30 +206,26 @@ GameUpdateFunc(GameUpdate)
     
     // NOTE(Momo): Clean state/Switch states
     if (PermState->NextGameMode != GameModeType_None) {
-        Arena_Revert(&PermState->ModeArena);
-        arena* ModeArena = PermState->ModeArena;
+        PermState->ModeArena.revert();
+        Arena* ModeArena = PermState->ModeArena;
         
         switch(PermState->NextGameMode) {
             case GameModeType_Splash: {
-                PermState->SplashMode = 
-                    Arena_PushStruct(game_mode_splash, ModeArena); 
+                PermState->SplashMode = ModeArena->push_struct<game_mode_splash>(); 
                 SplashMode_Init(PermState);
             } break;
             case GameModeType_Main: {
-                PermState->MainMode = 
-                    Arena_PushStruct(game_mode_main, ModeArena); 
+                PermState->MainMode = ModeArena->push_struct<game_mode_main>(); 
                 if (!MainMode_Init(PermState, TranState, DebugState)){
                     return false;
                 }
             } break;
             case GameModeType_Sandbox: {
-                PermState->SandboxMode = 
-                    Arena_PushStruct(game_mode_sandbox, ModeArena); 
+                PermState->SandboxMode = ModeArena->push_struct<game_mode_sandbox>(); 
                 SandboxMode_Init(PermState);
             } break;
             case GameModeType_AnimeTest: {
-                PermState->AnimeTestMode = 
-                    Arena_PushStruct(game_mode_anime_test, ModeArena); 
+                PermState->AnimeTestMode = ModeArena->push_struct<game_mode_anime_test>(); 
                 AnimeTestMode_Init(PermState);
             } break;
             default: {
@@ -243,15 +241,15 @@ GameUpdateFunc(GameUpdate)
     U8CStr_InitFromSiStr(&Buffer, "Debug Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
-                           Arena_Remaining(&DebugState->Arena));
+                           DebugState->arena.remaining());
     U8CStr_InitFromSiStr(&Buffer, "Mode Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
-                           Arena_Remaining(PermState->ModeArena));
+                           PermState->ModeArena.arena->remaining());
     U8CStr_InitFromSiStr(&Buffer, "TranState Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
-                           Arena_Remaining(&TranState->Arena));
+                           TranState->arena.remaining());
     
     
     // State update

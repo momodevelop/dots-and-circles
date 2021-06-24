@@ -9,7 +9,7 @@ platform_api* G_Platform;
 platform_log* G_Log;
 mailbox* G_Renderer;
 platform_input* G_Input;
-arena* G_Scratch;
+Arena* G_Scratch;
 
 
 // NOTE(Momo): Game related globals

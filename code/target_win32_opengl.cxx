@@ -83,7 +83,7 @@ struct win32_game_memory {
 };
 
 struct win32_state {
-    arena Arena;
+    Arena arena;
     b8 IsRunning;
     
     b8 IsRecordingInput;
@@ -240,16 +240,16 @@ Win32_GetPerformanceCounter(void) {
 //~ NOTE(Momo): Win32_ State related
 static inline f32
 Win32_GetSecondsElapsed(win32_state* State,
-                       LARGE_INTEGER Start, 
-                       LARGE_INTEGER End) 
+                        LARGE_INTEGER Start, 
+                        LARGE_INTEGER End) 
 {
     return (f32(End.QuadPart - Start.QuadPart)) / State->PerformanceFrequency; 
 }
 
 static inline void
 Win32_BuildExePathFilename(win32_state* State,
-                          char* Dest, 
-                          const char* Filename) {
+                           char* Dest, 
+                           const char* Filename) {
     for(const char *Itr = State->ExeFullPath; 
         Itr != State->OnePastExeDirectory; 
         ++Itr, ++Dest) 
@@ -277,11 +277,11 @@ Win32_Init() {
     if(!PlatformMemory) {
         Win32_Log("[Win32::State] Failed to allocate memory\n"); 
         return 0;
-    }
-    win32_state* State = Arena_BootupStruct(win32_state,
-                                            Arena,
-                                            PlatformMemory, 
-                                            PlatformMemorySize);
+    } 
+    win32_state* State = ARENA_BOOT_STRUCT(win32_state,
+                                           arena,
+                                           PlatformMemory, 
+                                           PlatformMemorySize);
     if (!State) {
         Win32_Log("[Win32::State] Failed to allocate state\n"); 
         return 0;
@@ -434,9 +434,9 @@ struct win32_game_code {
 
 static inline win32_game_code 
 Win32_InitGameCode(win32_state* State,
-                  const char* SrcFileName,
-                  const char* TempFileName,
-                  const char* LockFileName) 
+                   const char* SrcFileName,
+                   const char* TempFileName,
+                   const char* LockFileName) 
 {
     win32_game_code Ret = {};
     Win32_BuildExePathFilename(State, Ret.SrcFileName, SrcFileName);
@@ -714,20 +714,20 @@ OpenglDebugCallbackFunc(Win32_OpenglDebugCallback) {
     }
     
     Win32_Log("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
-             id, _type, _severity, _source, msg);
+              id, _type, _severity, _source, msg);
     
 };
 #endif
 
 static inline b8
 Win32_InitOpengl(win32_state* State,
-                HWND Window, 
-                v2u WindowDimensions) 
+                 HWND Window, 
+                 v2u WindowDimensions) 
 {
     HDC DeviceContext = GetDC(Window); 
     Defer { ReleaseDC(Window, DeviceContext); };
     
-    opengl* Opengl = Arena_PushStruct(opengl, &State->Arena);
+    opengl* Opengl = State->arena.push_struct<opengl>();
     
     if (!Opengl) {
         Win32_Log("[Win32::Opengl] Failed to allocate opengl\n"); 
@@ -810,7 +810,7 @@ return false; \
         Win32_SetOpenglFunction(glDeleteTextures);
         Win32_SetOpenglFunction(glDebugMessageCallbackARB);
     }
-    Opengl_Init(Opengl, &State->Arena, WindowDimensions);
+    Opengl_Init(Opengl, &State->arena, WindowDimensions);
     
 #if INTERNAL
     Opengl->glEnable(GL_DEBUG_OUTPUT);
@@ -827,12 +827,12 @@ static inline void
 Win32_GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
     // We just dump the whole game memory into a file
     HANDLE Win32_Handle = CreateFileA(Path,
-                                     GENERIC_WRITE,
-                                     FILE_SHARE_WRITE,
-                                     0,
-                                     CREATE_ALWAYS,
-                                     0,
-                                     0);
+                                      GENERIC_WRITE,
+                                      FILE_SHARE_WRITE,
+                                      0,
+                                      CREATE_ALWAYS,
+                                      0,
+                                      0);
     if (Win32_Handle == INVALID_HANDLE_VALUE) {
         Win32_Log("[Win32::SaveState] Cannot open file: %s\n", Path);
         return;
@@ -861,12 +861,12 @@ Win32_GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
 static inline void
 Win32_GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
     HANDLE Win32_Handle = CreateFileA(Path,
-                                     GENERIC_READ,
-                                     FILE_SHARE_READ,
-                                     0,
-                                     OPEN_EXISTING,
-                                     0,
-                                     0);
+                                      GENERIC_READ,
+                                      FILE_SHARE_READ,
+                                      0,
+                                      OPEN_EXISTING,
+                                      0,
+                                      0);
     if (Win32_Handle == INVALID_HANDLE_VALUE) {
         Win32_Log("[Win32::LoadState] Cannot open file: %s\n", Path);
         return;
@@ -917,11 +917,11 @@ Win32_AudioFree(win32_audio* Audio) {
 
 static inline b8
 Win32_AudioInit(win32_audio* Audio,
-               u32 SamplesPerSecond, 
-               u16 BitsPerSample,
-               u16 Channels,
-               u32 LatencyFrames,
-               u32 RefreshRate)
+                u32 SamplesPerSecond, 
+                u16 BitsPerSample,
+                u16 Channels,
+                u32 LatencyFrames,
+                u32 RefreshRate)
 {
     Audio->Channels = Channels;
     Audio->BitsPerSample = BitsPerSample;
@@ -1063,7 +1063,7 @@ Win32_AudioPrepare(win32_audio* Audio) {
 
 static inline void
 Win32_AudioFlush(win32_audio* Audio, 
-                platform_audio Output) 
+                 platform_audio Output) 
 {
     // NOTE(Momo): Kinda assumes 16-bit Sound
     BYTE* SoundBufferData;
@@ -1114,8 +1114,8 @@ Win32_GetClientDimensions(HWND Window) {
 
 static inline void
 Win32_ProcessMessages(HWND Window, 
-                     win32_state* State,
-                     platform_input* Input)
+                      win32_state* State,
+                      platform_input* Input)
 {
     MSG Msg = {};
     while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
@@ -1233,9 +1233,9 @@ Win32_ProcessMessages(HWND Window,
 
 LRESULT CALLBACK
 Win32_WindowCallback(HWND Window, 
-                    UINT Message, 
-                    WPARAM WParam,
-                    LPARAM LParam) 
+                     UINT Message, 
+                     WPARAM WParam,
+                     LPARAM LParam) 
 {
     LRESULT Result = 0;
     switch(Message) {
@@ -1275,9 +1275,9 @@ Win32_WindowCallback(HWND Window,
 
 static inline HWND 
 Win32_CreateWindow(HINSTANCE Instance,
-                  u32 WindowWidth,
-                  u32 WindowHeight,
-                  const char* Title) 
+                   u32 WindowWidth,
+                   u32 WindowHeight,
+                   const char* Title) 
 {
     WNDCLASSA WindowClass = {};
     WindowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -1366,12 +1366,12 @@ PlatformOpenAssetFileDecl(Win32_OpenAssetFile) {
     }    
     
     HANDLE Win32_Handle = CreateFileA(Path, 
-                                     GENERIC_READ, 
-                                     FILE_SHARE_READ,
-                                     0,
-                                     OPEN_EXISTING,
-                                     0,
-                                     0);
+                                      GENERIC_READ, 
+                                      FILE_SHARE_READ,
+                                      0,
+                                      OPEN_EXISTING,
+                                      0,
+                                      0);
     
     
     if(Win32_Handle == INVALID_HANDLE_VALUE) {
@@ -1517,10 +1517,10 @@ Win32_FreeGameMemory(win32_game_memory* GameMemory) {
 
 static inline b8
 Win32_InitGameMemory(win32_game_memory* GameMemory,
-                    u32 PermanentMemorySize,
-                    u32 TransientMemorySize,
-                    u32 ScratchMemorySize,
-                    u32 DebugMemorySize) 
+                     u32 PermanentMemorySize,
+                     u32 TransientMemorySize,
+                     u32 ScratchMemorySize,
+                     u32 DebugMemorySize) 
 {
     GameMemory->DataSize = PermanentMemorySize + TransientMemorySize + ScratchMemorySize + DebugMemorySize;
     
@@ -1530,7 +1530,7 @@ Win32_InitGameMemory(win32_game_memory* GameMemory,
     
     GameMemory->Data = 
         Win32_AllocateMemoryAtAddress(GameMemory->DataSize, 
-                                     SystemInfo.lpMinimumApplicationAddress);
+                                      SystemInfo.lpMinimumApplicationAddress);
 #else
     GameMemory->Data = Win32_AllocateMemory(GameMemory->DataSize);
 #endif
@@ -1574,7 +1574,7 @@ Win32_FreeRenderCommands(mailbox* RenderCommands) {
 
 static inline b8
 Win32_InitRenderCommands(mailbox* RenderCommands,
-                        u32 RenderCommandsMemorySize) {
+                         u32 RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
         Win32_AllocateMemory(RenderCommandsMemorySize); 
     if (!RenderCommandsMemory) {
@@ -1606,9 +1606,9 @@ WinMain(HINSTANCE Instance,
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     ImmDisableIME((DWORD)-1);
     HWND Window = Win32_CreateWindow(Instance, 
-                                    Game_DesignWidth,
-                                    Game_DesignHeight,
-                                    "Dots and Circles");
+                                     Game_DesignWidth,
+                                     Game_DesignHeight,
+                                     "Dots and Circles");
     if (!Window) { 
         Win32_Log("[Win32::Main] Cannot create window");
         return 1; 
@@ -1621,13 +1621,13 @@ WinMain(HINSTANCE Instance,
     
     // Load the game code DLL
     win32_game_code GameCode = Win32_InitGameCode(State,
-                                                 "compiled_game.dll", 
-                                                 "active_game.dll", 
-                                                 "lock");
+                                                  "compiled_game.dll", 
+                                                  "active_game.dll", 
+                                                  "lock");
     
     // Initialize game input
     platform_input GameInput = {};
-    if(!Input_Init(&GameInput, &State->Arena)) {
+    if(!Input_Init(&GameInput, &State->arena)) {
         Win32_Log("[Win32::Main] Cannot initialize input");
         return 1;
     }
@@ -1639,11 +1639,11 @@ WinMain(HINSTANCE Instance,
     
     win32_audio Audio = {};
     if(!Win32_AudioInit(&Audio,
-                       Game_AudioSamplesPerSecond,
-                       Game_AudioBitsPerSample,
-                       Game_AudioChannels,
-                       Game_AudioLatencyFrames,
-                       RefreshRate)) 
+                        Game_AudioSamplesPerSecond,
+                        Game_AudioBitsPerSample,
+                        Game_AudioChannels,
+                        Game_AudioLatencyFrames,
+                        RefreshRate)) 
     {
         Win32_Log("[Win32::Main] Cannot initialize audio");
         return 1;
@@ -1652,10 +1652,10 @@ WinMain(HINSTANCE Instance,
     
     // Initialize game memory
     if (!Win32_InitGameMemory(&State->GameMemory,
-                             Megibytes(1),
-                             Megibytes(16),
-                             Megibytes(8),
-                             Megibytes(1))) 
+                              Megibytes(1),
+                              Megibytes(16),
+                              Megibytes(8),
+                              Megibytes(1))) 
     {
         Win32_Log("[Win32::Main] Cannot initialize game memory");
         return 1;
@@ -1672,8 +1672,8 @@ WinMain(HINSTANCE Instance,
     
     // Initialize OpenGL
     if(!Win32_InitOpengl(State,
-                        Window, 
-                        Win32_GetClientDimensions(Window)))
+                         Window, 
+                         Win32_GetClientDimensions(Window)))
     {
         return 1;
     }

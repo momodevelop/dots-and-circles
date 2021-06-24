@@ -21,7 +21,7 @@
 
 struct png_context {
     stream Stream;
-    arena* Arena; 
+    Arena* arena; 
     
     b8 IsImageInitialized;
     stream ImageStream;
@@ -31,8 +31,8 @@ struct png_context {
     u32 ImageHeight;
     u32 ImageChannels;
     
-    arena_mark ImageStreamMark;
-    arena_mark DepressedImageStreamMark;
+    Arena_Mark ImageStreamMark;
+    Arena_Mark DepressedImageStreamMark;
 };
 
 
@@ -137,7 +137,7 @@ Png_HuffmanDecode(bitstream* SrcStream, png_huffman* Huffman) {
 }
 
 static inline png_huffman
-Png_Huffman(arena* Arena, 
+Png_Huffman(Arena* arena, 
             u16* SymLenTable,
             u32 SymLenTableSize, 
             u32 LenCountTableCap,
@@ -146,10 +146,10 @@ Png_Huffman(arena* Arena,
     png_huffman Ret = {};
     
     Ret.CodeSymTableSize = CodeSymTableCap;
-    Ret.CodeSymTable = Arena_PushArray(u16, Arena, CodeSymTableCap);
+    Ret.CodeSymTable = arena->push_array<u16>(CodeSymTableCap);
     
     Ret.LenCountTableSize = LenCountTableCap;
-    Ret.LenCountTable = Arena_PushArray(u16, Arena, LenCountTableCap);
+    Ret.LenCountTable = arena->push_array<u16>(LenCountTableCap);
     
     // 1. Count the number of codes for each code length
     for (u32 Sym = 0; Sym < SymLenTableSize; ++Sym) 
@@ -182,7 +182,7 @@ Png_Huffman(arena* Arena,
 
 
 static inline png_error
-Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena) 
+Png_Deflate(bitstream* SrcStream, stream* DestStream, Arena* arena) 
 {
     
     static const short Lens[29] = { /* Size base for length codes 257..285 */
@@ -202,8 +202,8 @@ Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena)
     
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        arena_mark Scratch = Arena_Mark(Arena);
-        Defer { Arena_Revert(&Scratch); };
+        Arena_Mark Scratch = arena->mark();
+        Defer { Scratch.revert(); };
         
         BFINAL = (u8)Bitstream_ConsumeBits(SrcStream, 1);
         u16 BTYPE = (u8)Bitstream_ConsumeBits(SrcStream, 2);
@@ -247,12 +247,12 @@ Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena)
                     for (Lit = 0; Lit < Png_MaxDistCodes; ++Lit) 
                         DistLenTable[Lit] = 5;
                     
-                    LitHuffman = Png_Huffman(Arena, 
+                    LitHuffman = Png_Huffman(arena, 
                                              LitLenTable, 
                                              Png_MaxFixedLitCodes,
                                              Png_MaxBits+1,
                                              Png_MaxFixedLitCodes);
-                    DistHuffman = Png_Huffman(Arena,
+                    DistHuffman = Png_Huffman(arena,
                                               DistLenTable,
                                               Png_MaxDistCodes,
                                               Png_MaxBits+1,
@@ -312,7 +312,7 @@ Png_Deflate(bitstream* SrcStream, stream* DestStream, arena* Arena)
 
 static inline png_error
 Png_Parse(png_image* Png,
-          arena* Arena,
+          Arena* arena,
           void* PngMemory,
           u32 PngMemorySize) 
 {
@@ -386,9 +386,9 @@ Png_Parse(png_image* Png,
     
     // NOTE(Momo): For reserving memory for unfiltered data that is generated 
     // as we decode the file
-    arena_mark ActualImageStreamMark = Arena_Mark(Arena);
+    Arena_Mark ActualImageStreamMark = arena->mark();
     stream ActualImageStream = {};
-    Stream_CreateFromArena(&ActualImageStream, Arena, ImageSize);
+    Stream_CreateFromArena(&ActualImageStream, arena, ImageSize);
     
     // Search for IDAT header
     while(!Bitstream_IsEos(&Stream)) {
@@ -417,14 +417,14 @@ Png_Parse(png_image* Png,
                 
                 // NOTE(Momo): Allow space for unfiltered image
                 u32 UnfilteredImageSize = IHDR->Width * (ImageChannels + 1);
-                arena_mark UnfilteredImageStreamMark = Arena_Mark(Arena);
+                Arena_Mark UnfilteredImageStreamMark = arena->mark();
                 
                 stream UnfilteredImageStream = {};
-                Stream_CreateFromArena(&UnfilteredImageStream, Arena, UnfilteredImageSize);
+                Stream_CreateFromArena(&UnfilteredImageStream, arena, UnfilteredImageSize);
                 
-                png_error DeflateError = Png_Deflate(&IDATStream, &UnfilteredImageStream, Arena);
+                png_error DeflateError = Png_Deflate(&IDATStream, &UnfilteredImageStream, arena);
                 if (DeflateError != PngError_None) {
-                    Arena_Revert(&ActualImageStreamMark);
+                    ActualImageStreamMark.revert();
                     return DeflateError;
                 }
                 
@@ -435,7 +435,7 @@ Png_Parse(png_image* Png,
                 while(!Stream_IsEos(&UnfilteredImageStream)) {
                     u8* FilterType = Stream_Consume<u8>(&UnfilteredImageStream);
                     if (FilterType == nullptr) {
-                        Arena_Revert(&ActualImageStreamMark);
+                        ActualImageStreamMark.revert();
                         return PngError_CannotReadFilterType;
                     }
                     Png_Log("%02X: ", (u32)(*FilterType));
@@ -445,7 +445,7 @@ Png_Parse(png_image* Png,
                                 for (u32 J = 0; J < ImageChannels; ++J) {
                                     u8* PixelByte = Stream_Consume<u8>(&UnfilteredImageStream);
                                     if (PixelByte == nullptr) {
-                                        Arena_Revert(&ActualImageStreamMark);
+                                        ActualImageStreamMark.revert();
                                         return PngError_NotEnoughPixels;
                                     }
                                     Png_Log("%02X ", (u32)(*PixelByte));
@@ -470,7 +470,7 @@ Png_Parse(png_image* Png,
                         };
                     };
                     Png_Log("\n");
-                    Arena_Revert(&UnfilteredImageStreamMark);
+                    UnfilteredImageStreamMark.revert();
                 }
                 
                 Bitstream_ConsumeBlock(&Stream, ChunkHeader->Length);

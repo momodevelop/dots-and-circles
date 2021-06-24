@@ -87,7 +87,7 @@ U8CStr_Find(u8_cstr Str, u8 Item, u32 StartIndex) {
 }
 
 static inline u8_cstr_split_res
-U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
+U8CStr_SplitByDelimiter(u8_cstr Str, Arena* arena, u8 Delimiter) {
     // NOTE(Momo): We are having faith that the arena given is a bump arena.
     // i.e. strings that are push into the arena will be contiguous 
     // in memory, and thus convertible to an array<string> struct.
@@ -98,7 +98,7 @@ U8CStr_SplitByDelimiter(u8_cstr Str, arena* Arena, u8 Delimiter) {
     for (;Max != Str.Count;) {
         Max = U8CStr_Find(Str, Delimiter, Min);
         
-        u8_cstr* Link = Arena_PushStruct(u8_cstr, Arena);
+        u8_cstr* Link = arena->push_struct<u8_cstr>();
         Assert(Link);
         U8CStr_SubString(Link, Str, Min, Max);
         
@@ -133,8 +133,8 @@ U8Str_Init(u8_str* S, u8* Buffer, u32 Capacity) {
 
 
 static inline b8
-U8Str_New(u8_str* S, arena* Arena, u32 Capacity) {
-    u8* Buffer = Arena_PushArray(u8, Arena, Capacity);
+U8Str_New(u8_str* S, Arena* arena, u32 Capacity) {
+    u8* Buffer = arena->push_array<u8>(Capacity);
     if(!Buffer) {
         return false;
     }

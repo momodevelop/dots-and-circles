@@ -409,10 +409,10 @@ Opengl_AddPredefTextures(opengl* Opengl) {
 
 static inline b8
 Opengl_Init(opengl* Opengl,
-            arena* Arena,
+            Arena* arena,
             v2u WindowDimensions) 
 {
-    List_New(&Opengl->Textures, Arena, Opengl_Max_Textures);
+    List_New(&Opengl->Textures, arena, Opengl_Max_Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     

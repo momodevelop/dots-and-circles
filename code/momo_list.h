@@ -35,8 +35,8 @@ List_Init(list<type>* L, type* Data, u32 Cap) {
 
 template<typename type>
 static inline b8
-List_New(list<type>* L, arena* Arena, u32 Cap) {
-    type* Buffer = Arena_PushArray(type, Arena, Cap);
+List_New(list<type>* L, Arena* arena, u32 Cap) {
+    type* Buffer = arena->push_array<type>(Cap);
     if (!Buffer) {
         return false;
     }

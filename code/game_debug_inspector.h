@@ -15,13 +15,13 @@ struct debug_inspector {
 };
 
 static inline void
-DebugInspector_Init(debug_inspector* Inspector, arena* Arena) {
+DebugInspector_Init(debug_inspector* Inspector, Arena* arena) {
     Inspector->IsActive = false;
     list<u8_str>* Entries = &Inspector->Entries;
-    List_New(Entries, Arena, DebugInspector_EntryCount);
+    List_New(Entries, arena, DebugInspector_EntryCount);
     for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
         u8_str* Item = List_Push(Entries);
-        U8Str_New(Item, Arena, DebugInspector_EntryCount);
+        U8Str_New(Item, arena, DebugInspector_EntryCount);
     }
 }
 

@@ -30,18 +30,18 @@ static inline b8
 AudioMixer_Init(game_audio_mixer* Mixer,
                 f32 MasterVolume,
                 u32 MaxInstances,
-                arena* Arena) 
+                Arena* arena) 
 {
-    arena_mark Mark = Arena_Mark(Arena);
-    b8 Success = Array_New(&Mixer->Instances, Arena, MaxInstances);
+    Arena_Mark Mark = arena->mark();
+    b8 Success = Array_New(&Mixer->Instances, arena, MaxInstances);
     if (!Success) {
-        Arena_Revert(&Mark);
+        Mark.revert();
         return false;
     }
     
-    Success = List_New(&Mixer->FreeList, Arena, MaxInstances);
+    Success = List_New(&Mixer->FreeList, arena, MaxInstances);
     if (!Success) {
-        Arena_Revert(&Mark);
+        Mark.revert();
         return false;
     }
     Mixer->Volume = MasterVolume;

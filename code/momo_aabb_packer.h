@@ -83,41 +83,41 @@ __AabbPacker_Sort(aabb2u* Aabbs,
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b8
-AabbPacker_Pack(arena* Arena,
-                u32 TotalWidth,
-                u32 TotalHeight,
+AabbPacker_Pack(Arena* arena,
+                u32 total_width,
+                u32 total_height,
                 aabb2u* Aabbs, 
-                u32 AabbCount, 
+                u32 aabb_count, 
                 aabb_packer_sort_type SortType) 
 {
-    arena_mark Scratch = Arena_Mark(Arena);
-    Defer { Arena_Revert(&Scratch); };
-    auto* SortEntries = Arena_PushArray(sort_entry, Arena, AabbCount);
+    Arena_Mark scratch = arena->mark();
+    Defer { scratch.revert(); };
+    auto* sort_entries = arena->push_array<sort_entry>(aabb_count);
     
-    __AabbPacker_Sort(Aabbs, SortEntries, AabbCount, SortType);
+    __AabbPacker_Sort(Aabbs, sort_entries, aabb_count, SortType);
     
     
-    u32 CurrentNodeCount = 0;
+    u32 current_node_count = 0;
     
-    auto* Nodes = Arena_PushArray(aabb2u, Arena, AabbCount+1);
-    Nodes[CurrentNodeCount++] = Aabb2u_Create(0, 0, TotalWidth, TotalHeight);
+    auto* nodes = arena->push_array<aabb2u>(aabb_count+1);
+    nodes[current_node_count++] = Aabb2u_Create(0, 0, total_width, total_height);
     
-    for (u32 i = 0; i < AabbCount; ++i) {
-        aabb2u* Aabb = Aabbs + SortEntries[i].Index;
-        u32 AabbW = Aabb2u_Width(*Aabb);
-        u32 AabbH = Aabb2u_Height(*Aabb);
+    for (u32 i = 0; i < aabb_count; ++i) {
+        aabb2u* Aabb = Aabbs + sort_entries[i].Index;
+        u32 aabb_width = Aabb2u_Width(*Aabb);
+        u32 aabb_height = Aabb2u_Height(*Aabb);
         
         // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
-        u32 ChosenSpaceIndex = CurrentNodeCount;
-        for (u32  j = 0; j < ChosenSpaceIndex ; ++j ) {
-            u32 Index = ChosenSpaceIndex - j - 1;
-            aabb2u Space = Nodes[Index];
+        u32 chosen_space_index = current_node_count;
+        for (u32  j = 0; j < chosen_space_index ; ++j ) {
+            u32 Index = chosen_space_index - j - 1;
+            aabb2u Space = nodes[Index];
             u32 SpaceW = Aabb2u_Width(Space);
             u32 SpaceH = Aabb2u_Height(Space);
             
             // NOTE(Momo): Check if the image fits
-            if (AabbW <= SpaceW && AabbH <= SpaceH) {
-                ChosenSpaceIndex = Index;
+            if (aabb_width <= SpaceW && aabb_height <= SpaceH) {
+                chosen_space_index = Index;
                 break;
             }
         }
@@ -125,78 +125,78 @@ AabbPacker_Pack(arena* Arena,
         
         // NOTE(Momo): If an empty space that can fit is found, 
         // we remove that space and split.
-        if (ChosenSpaceIndex == CurrentNodeCount) {
+        if (chosen_space_index == current_node_count) {
             return false;
         }
         
         // NOTE(Momo): Swap and pop the chosen space
-        aabb2u ChosenSpace = Nodes[ChosenSpaceIndex];
-        u32 ChosenSpaceW = Aabb2u_Width(ChosenSpace);
-        u32 ChosenSpaceH = Aabb2u_Height(ChosenSpace);
+        aabb2u chosen_space = nodes[chosen_space_index];
+        u32 chosen_space_w = Aabb2u_Width(chosen_space);
+        u32 chosen_space_h = Aabb2u_Height(chosen_space);
         
-        if (CurrentNodeCount > 0) {
-            Nodes[ChosenSpaceIndex] = Nodes[CurrentNodeCount-1];
-            --CurrentNodeCount;
+        if (current_node_count > 0) {
+            nodes[chosen_space_index] = nodes[current_node_count-1];
+            --current_node_count;
         }
         
         // NOTE(Momo): Split if not perfect fit
-        if (ChosenSpaceW != AabbW && ChosenSpaceH == AabbH) {
+        if (chosen_space_w != aabb_width && chosen_space_h == aabb_height) {
             // Split right
-            aabb2u SplitSpaceRight = 
-                Aabb2u_CreateXYWH(ChosenSpace.Min.X + AabbW,
-                                  ChosenSpace.Min.Y,
-                                  ChosenSpaceW - AabbW,
-                                  ChosenSpaceH);
-            Nodes[CurrentNodeCount++] = SplitSpaceRight;
+            aabb2u split_space_right = 
+                Aabb2u_CreateXYWH(chosen_space.Min.X + aabb_width,
+                                  chosen_space.Min.Y,
+                                  chosen_space_w - aabb_width,
+                                  chosen_space_h);
+            nodes[current_node_count++] = split_space_right;
         }
-        else if (ChosenSpaceW == AabbW && ChosenSpaceH != AabbH) {
+        else if (chosen_space_w == aabb_width && chosen_space_h != aabb_height) {
             // Split down
-            aabb2u SplitSpaceDown = 
-                Aabb2u_CreateXYWH(ChosenSpace.Min.X,
-                                  ChosenSpace.Min.Y + AabbH,
-                                  ChosenSpaceW,
-                                  ChosenSpaceH - AabbH);
-            Nodes[CurrentNodeCount++] = SplitSpaceDown;
+            aabb2u split_space_down = 
+                Aabb2u_CreateXYWH(chosen_space.Min.X,
+                                  chosen_space.Min.Y + aabb_height,
+                                  chosen_space_w,
+                                  chosen_space_h - aabb_height);
+            nodes[current_node_count++] = split_space_down;
         }
-        else if (ChosenSpaceW != AabbW && ChosenSpaceH != AabbH) {
+        else if (chosen_space_w != aabb_width && chosen_space_h != aabb_height) {
             // Split right
-            aabb2u SplitSpaceRight = 
-                Aabb2u_CreateXYWH(ChosenSpace.Min.X + AabbW,
-                                  ChosenSpace.Min.Y,
-                                  ChosenSpaceW - AabbW,
-                                  AabbH);
+            aabb2u split_space_right = 
+                Aabb2u_CreateXYWH(chosen_space.Min.X + aabb_width,
+                                  chosen_space.Min.Y,
+                                  chosen_space_w - aabb_width,
+                                  aabb_height);
             
             // Split down
-            aabb2u SplitSpaceDown = 
-                Aabb2u_CreateXYWH(ChosenSpace.Min.X,
-                                  ChosenSpace.Min.Y + AabbH,
-                                  ChosenSpaceW,
-                                  ChosenSpaceH - AabbH);
+            aabb2u split_space_down = 
+                Aabb2u_CreateXYWH(chosen_space.Min.X,
+                                  chosen_space.Min.Y + aabb_height,
+                                  chosen_space_w,
+                                  chosen_space_h - aabb_height);
             
             // Choose to insert the bigger one first before the smaller one
-            u32 SplitSpaceRightW = Aabb2u_Width(SplitSpaceRight);
-            u32 SplitSpaceRightH = Aabb2u_Height(SplitSpaceRight);
-            u32 SplitSpaceDownW = Aabb2u_Width(SplitSpaceDown);
-            u32 SplitSpaceDownH = Aabb2u_Height(SplitSpaceDown);
+            u32 split_space_right_w = Aabb2u_Width(split_space_right);
+            u32 split_splace_right_h = Aabb2u_Height(split_space_right);
+            u32 split_space_downW = Aabb2u_Width(split_space_down);
+            u32 split_space_downH = Aabb2u_Height(split_space_down);
             
-            u32 RightArea = SplitSpaceRightW * SplitSpaceRightH;
-            u32 DownArea = SplitSpaceDownW * SplitSpaceDownH;
+            u32 right_area = split_space_right_w * split_splace_right_h;
+            u32 down_area = split_space_downW * split_space_downH;
             
-            if (RightArea > DownArea) {
-                Nodes[CurrentNodeCount++] = SplitSpaceRight;
-                Nodes[CurrentNodeCount++] = SplitSpaceDown;
+            if (right_area > down_area) {
+                nodes[current_node_count++] = split_space_right;
+                nodes[current_node_count++] = split_space_down;
             }
             else {
-                Nodes[CurrentNodeCount++] = SplitSpaceDown;
-                Nodes[CurrentNodeCount++] = SplitSpaceRight;
+                nodes[current_node_count++] = split_space_down;
+                nodes[current_node_count++] = split_space_right;
             }
             
         }
         
         // NOTE(Momo): Translate the Aabb
         (*Aabb) = Aabb2u_Translate((*Aabb),
-                                   ChosenSpace.Min.X,
-                                   ChosenSpace.Min.Y);
+                                   chosen_space.Min.X,
+                                   chosen_space.Min.Y);
     }
     
     return true;

@@ -175,12 +175,12 @@ Assets_CheckSignature(void* Memory, u8_cstr Signature) {
 
 static inline void*
 Assets_ReadBlock(platform_file_handle* File,
-                 arena* Arena,
+                 Arena* arena,
                  u32* FileOffset,
                  u32 BlockSize,
                  u8 BlockAlignment)
 {
-    void* Ret = Arena_PushBlock(Arena, BlockSize, BlockAlignment);
+    void* Ret = arena->push_block(BlockSize, BlockAlignment);
     if(!Ret) {
         return nullptr; 
     }
@@ -200,27 +200,27 @@ Assets_ReadBlock(platform_file_handle* File,
 
 static inline b8
 Assets_Init(assets* Assets,
-            arena* Arena) 
+            Arena* arena) 
 {
     G_Platform->ClearTexturesFp();
     
     Assets->TextureCount = Texture_Count;
-    Assets->Textures = Arena_PushArray(texture, Arena, Texture_Count);
+    Assets->Textures = arena->push_array<texture>(Texture_Count);
     
     Assets->ImageCount = Image_Count;
-    Assets->Images = Arena_PushArray(image, Arena, Image_Count);
+    Assets->Images = arena->push_array<image>(Image_Count);
     
     Assets->FontCount = Font_Count;
-    Assets->Fonts = Arena_PushArray(font, Arena, Font_Count);
+    Assets->Fonts = arena->push_array<font>(Font_Count);
     
     Assets->AnimeCount = Anime_Count;
-    Assets->Animes = Arena_PushArray(anime, Arena, Anime_Count);
+    Assets->Animes = arena->push_array<anime>(Anime_Count);
     
     Assets->MsgCount = Msg_Count;
-    Assets->Msgs = Arena_PushArray(msg, Arena, Msg_Count);
+    Assets->Msgs = arena->push_array<msg>(Msg_Count);
     
     Assets->SoundCount = Sound_Count;
-    Assets->Sounds = Arena_PushArray(sound, Arena, Sound_Count);
+    Assets->Sounds = arena->push_array<sound>(Sound_Count);
     
     platform_file_handle AssetFile = G_Platform->OpenAssetFileFp();
     if (AssetFile.Error) {
@@ -234,7 +234,8 @@ Assets_Init(assets* Assets,
     
     // Check file signaure
     {        
-        Defer { Arena_Clear(G_Scratch); };
+        
+        Defer { G_Scratch->clear(); };
         
         u8_cstr Signature = {};
         U8CStr_InitFromSiStr(&Signature, Game_AssetFileSignature);
@@ -273,7 +274,7 @@ Assets_Init(assets* Assets,
         // NOTE(Momo): Read header
         asset_file_entry FileEntry = {};
         {
-            Defer { Arena_Clear(G_Scratch); };
+            Defer { G_Scratch->clear(); };
             
             auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
                                                    &AssetFile,
@@ -288,7 +289,7 @@ Assets_Init(assets* Assets,
         
         switch(FileEntry.Type) {
             case AssetType_Texture: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile,
@@ -307,7 +308,7 @@ Assets_Init(assets* Assets,
                     Texture->Channels;
                 
                 Texture->Data = (u8*)Assets_ReadBlock(&AssetFile, 
-                                                      Arena, 
+                                                      arena, 
                                                       &CurFileOffset,
                                                       TextureSize,
                                                       1);
@@ -324,7 +325,7 @@ Assets_Init(assets* Assets,
                 }
             } break;
             case AssetType_Image: { 
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 
                 auto* FileImage = 
                     Assets_ReadStruct(asset_file_image,
@@ -342,7 +343,7 @@ Assets_Init(assets* Assets,
                 Image->TextureId = FileImage->TextureId;
             } break;
             case AssetType_Font: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
@@ -360,7 +361,7 @@ Assets_Init(assets* Assets,
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
@@ -382,7 +383,7 @@ Assets_Init(assets* Assets,
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
@@ -401,7 +402,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Sound: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 
                 auto* File = Assets_ReadStruct(asset_file_sound,
                                                &AssetFile,
@@ -418,14 +419,14 @@ Assets_Init(assets* Assets,
                 
                 Sound->Data = (s16*)
                     Assets_ReadBlock(&AssetFile,
-                                     Arena, 
+                                     arena, 
                                      &CurFileOffset,
                                      sizeof(s16) * Sound->DataCount,
                                      1);
                 
             } break;
             case AssetType_Message: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 auto* File = Assets_ReadStruct(asset_file_msg,
                                                &AssetFile,
                                                G_Scratch,
@@ -441,7 +442,7 @@ Assets_Init(assets* Assets,
                 
                 Msg->Data = (u8*)
                     Assets_ReadBlock(&AssetFile,
-                                     Arena, 
+                                     arena, 
                                      &CurFileOffset,
                                      sizeof(u8) * Msg->Count,
                                      1);
@@ -450,7 +451,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Anime: {
-                Defer { Arena_Clear(G_Scratch); };
+                Defer { G_Scratch->clear(); };
                 auto* File = Assets_ReadStruct(asset_file_anime,
                                                &AssetFile,
                                                G_Scratch,
@@ -466,7 +467,7 @@ Assets_Init(assets* Assets,
                 
                 Anime->Frames = (image_id*)
                     Assets_ReadBlock(&AssetFile,
-                                     Arena, 
+                                     arena, 
                                      &CurFileOffset,
                                      sizeof(image_id) * Anime->FrameCount,
                                      1);

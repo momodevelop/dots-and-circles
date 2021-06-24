@@ -4,9 +4,9 @@ Arena::init(void* mem, u32 cap) {
     if (!mem || cap == 0) {
         return false;
     }
-    this->memory = (u8*)memory;
+    this->memory = (u8*)mem;
     this->used = 0; 
-    this->capacity = capacity;
+    this->capacity = cap;
     
     return true;
 }
@@ -43,7 +43,7 @@ Arena::push_block(u32 size, u8 alignment) {
 template<class T>
 T* 
 Arena::push_struct() {
-    return (T)push_block(sizeof(T), alignof(T));
+    return (T*)push_block(sizeof(T), alignof(T));
 }
 
 template<class T>
@@ -79,15 +79,10 @@ Arena::mark() {
     return ret;
 }
 
-b8
-Arena::revert(Arena_Mark mark) {
-    if (mark.arena != this) {
-        return false;
-    }
-    
-    this->used = mark.old_used;
-    return true;
+void
+Arena_Mark::revert() {
+    this->arena->used = this->old_used;
 }
 
 // NOTE(Momo): It's a little sad that we can't run away from macros sometimes...
-#define ARENA_BOOT_STRUCT(Type, Member, Memory, MemorySize) (Type*)Arena_BootupBlock(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
+#define ARENA_BOOT_STRUCT(Type, Member, Memory, MemorySize) (Type*)Arena::boot_block(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 

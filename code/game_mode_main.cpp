@@ -17,7 +17,7 @@ MainMode_Init(permanent_state* PermState,
               debug_state* DebugState) 
 {
     game_mode_main* Mode = PermState->MainMode;
-    arena* ModeArena = PermState->ModeArena;
+    Arena* ModeArena = PermState->ModeArena;
     
     G_Platform->HideCursorFp();
     

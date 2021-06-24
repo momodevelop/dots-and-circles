@@ -37,8 +37,8 @@ struct platform_input {
 
 
 static inline b8
-Input_Init(platform_input* Input, arena* Arena) {
-    return U8Str_New(&Input->Characters, Arena, 10);
+Input_Init(platform_input* Input, Arena* arena) {
+    return U8Str_New(&Input->Characters, arena, 10);
 }
 
 
