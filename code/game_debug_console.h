@@ -36,7 +36,7 @@ struct debug_console {
     
     v2f Position;
     
-    array<debug_console_line> InfoLines;
+    Array<debug_console_line> InfoLines;
     debug_console_line InputLine;
     
     // Backspace (to delete character) related
@@ -49,7 +49,7 @@ struct debug_console {
     timer TransitTimer;
     
     // List of commands
-    list<debug_console_command> Commands;
+    List<debug_console_command> Commands;
 };
 
 
@@ -63,7 +63,7 @@ DebugConsole_Init(debug_console* C,
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
-    if (!List_New(&C->Commands, arena, DebugConsole_MaxCommands)) {
+    if (!C->Commands.alloc(arena, DebugConsole_MaxCommands)) {
         return false;
     }
     
@@ -71,10 +71,10 @@ DebugConsole_Init(debug_console* C,
         return false;
     }
     
-    if (!Array_New(&C->InfoLines, arena, DebugConsole_InfoLineCount)) {
+    if (!C->InfoLines.alloc(arena, DebugConsole_InfoLineCount)) {
         return false;
     }
-    for (u32 I = 0; I < C->InfoLines.Count; ++I) {
+    for (u32 I = 0; I < C->InfoLines.count; ++I) {
         if (!U8Str_New(&C->InfoLines[I].Text, arena, DebugConsole_LineLength)){
             return false;
         }
@@ -89,7 +89,7 @@ DebugConsole_AddCmd(debug_console* C,
                     debug_console_callback Callback, 
                     void* Context)
 {
-    debug_console_command* Command = List_Push(&C->Commands);
+    debug_console_command* Command = C->Commands.push();
     if (Command == nullptr) {
         return false;
     }
@@ -104,8 +104,8 @@ DebugConsole_AddCmd(debug_console* C,
 
 static inline void
 DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
-    for (u32 I = 0; I < Console->InfoLines.Count - 1; ++I) {
-        u32 J = Console->InfoLines.Count - 1 - I;
+    for (u32 I = 0; I < Console->InfoLines.count - 1; ++I) {
+        u32 J = Console->InfoLines.count - 1 - I;
         debug_console_line* Dest = Console->InfoLines + J;
         debug_console_line* Src = Console->InfoLines + J - 1;
         U8Str_Copy(&Dest->Text, &Src->Text);
@@ -124,9 +124,9 @@ DebugConsole_Pop(debug_console* Console) {
 
 static inline void 
 DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
-    for (u32 I = 0; I < C->Commands.Count; ++I) {
-        if (U8CStr_Cmp(C->Commands.Data[I].Key, Key)) {
-            List_Slear(&C->Commands, I);
+    for (u32 I = 0; I < C->Commands.count; ++I) {
+        if (U8CStr_Cmp(C->Commands[I].Key, Key)) {
+            C->Commands.slear(I);
             return;
         }
     }
@@ -206,7 +206,7 @@ DebugConsole_Update(debug_console* Console,
                              Max); 
             
             // Send a command to a callback
-            for (u32 I = 0; I < Console->Commands.Count; ++I) {
+            for (u32 I = 0; I < Console->Commands.count; ++I) {
                 debug_console_command* Command = Console->Commands + I;
                 if (U8CStr_Cmp(Command->Key, CommandStr)) {
                     Command->Callback(Console, 
@@ -236,7 +236,7 @@ DebugConsole_Render(debug_console* Console)
     v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
     f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
     f32 Left = Console->Position.X - Dimensions.W * 0.5f;
-    f32 LineHeight = Dimensions.H / (Console->InfoLines.Count + 1);
+    f32 LineHeight = Dimensions.H / (Console->InfoLines.count + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Font_GetHeight(Font) * FontSize;
     
@@ -271,7 +271,7 @@ DebugConsole_Render(debug_console* Console)
     
     // Draw info text
     {
-        for (u32 I = 0; I < Console->InfoLines.Count ; ++I) {
+        for (u32 I = 0; I < Console->InfoLines.count ; ++I) {
             v3f Position = {};
             Position.X = Left + PaddingWidth;
             Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;

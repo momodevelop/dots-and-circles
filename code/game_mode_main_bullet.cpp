@@ -10,10 +10,10 @@ Bullet_Spawn(game_mode_main* Mode,
     bullet* B = nullptr;
     switch (Mood) {
         case MoodType_Dot: {
-            B = List_Push(&Mode->DotBullets);
+            B = Mode->DotBullets.push();
         } break;
         case MoodType_Circle: {
-            B = List_Push(&Mode->CircleBullets);
+            B = Mode->CircleBullets.push();
         } break;
         default: {
             Assert(false);
@@ -73,8 +73,8 @@ Main_RenderBullets(game_mode_main* Mode)
     };
     
     
-    List_ForEach(&Mode->DotBullets, ForEachLamb, Image_BulletDot);
-    List_ForEach(&Mode->CircleBullets, ForEachLamb, Image_BulletCircle);
+    Mode->DotBullets.foreach(ForEachLamb, Image_BulletDot);
+    Mode->CircleBullets.foreach(ForEachLamb, Image_BulletCircle);
     
     
     

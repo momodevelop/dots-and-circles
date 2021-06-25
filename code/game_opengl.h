@@ -312,7 +312,7 @@ struct opengl {
     // 'game texture handler' <-> 'opengl texture handler'  
     // Index 0 will always be an invalid 'dummy texture
     // Index 1 will always be a blank texture for items with no texture (but has colors)
-    list<GLuint> Textures;
+    List<GLuint> Textures;
     
     v2u WindowDimensions;
     v2u DesignDimensions;
@@ -387,7 +387,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
-        List_PushItem(&Opengl->Textures, DummyTexture);
+        Opengl->Textures.push_item(DummyTexture);
     }
     
     // NOTE(Momo): Blank texture setup
@@ -401,7 +401,7 @@ Opengl_AddPredefTextures(opengl* Opengl) {
                                     1, 1, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     &Pixel);
-        List_PushItem(&Opengl->Textures, BlankTexture);
+        Opengl->Textures.push_item(BlankTexture);
     }
     
     
@@ -412,7 +412,7 @@ Opengl_Init(opengl* Opengl,
             Arena* arena,
             v2u WindowDimensions) 
 {
-    List_New(&Opengl->Textures, arena, Opengl_Max_Textures);
+    Opengl->Textures.alloc(arena, Opengl_Max_Textures);
     Opengl->DesignDimensions = WindowDimensions;
     Opengl->WindowDimensions = WindowDimensions;
     
@@ -681,8 +681,7 @@ Opengl_AddTexture(opengl* Opengl,
 {
     renderer_texture_handle Ret = {};
     
-    u32 RemainingTextures = List_Remaining(&Opengl->Textures);
-    if (RemainingTextures == 0) {
+    if (Opengl->Textures.remaining() == 0) {
         Ret.Success = false;
         Ret.Id = 0;
         return Ret;
@@ -711,17 +710,17 @@ Opengl_AddTexture(opengl* Opengl,
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
     
-    Ret.Id = Opengl->Textures.Count;
+    Ret.Id = Opengl->Textures.count;
     Ret.Success = true;
-    List_PushItem(&Opengl->Textures, Entry);
+    Opengl->Textures.push_item(Entry);
     return Ret;
 }
 
 static inline void
 Opengl_ClearTextures(opengl* Opengl) {
-    Opengl->glDeleteTextures(Opengl->Textures.Count, 
-                             Opengl->Textures.Data);
-    List_Clear(&Opengl->Textures);
+    Opengl->glDeleteTextures(Opengl->Textures.count, 
+                             Opengl->Textures.data);
+    Opengl->Textures.clear();
     Opengl_AddPredefTextures(Opengl);
 }
 

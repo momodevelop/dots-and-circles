@@ -14,7 +14,7 @@ patterns = {
 "*.txt",
 };
 blacklist_patterns = {
-".*",
+"stb*",
 };
 load_paths_custom = {
  {"."},

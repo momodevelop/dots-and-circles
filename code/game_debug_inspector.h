@@ -11,16 +11,16 @@
 
 struct debug_inspector {
     b8 IsActive;
-    list<u8_str> Entries;
+    List<u8_str> Entries;
 };
 
 static inline void
 DebugInspector_Init(debug_inspector* Inspector, Arena* arena) {
     Inspector->IsActive = false;
-    list<u8_str>* Entries = &Inspector->Entries;
-    List_New(Entries, arena, DebugInspector_EntryCount);
+    List<u8_str>* Entries = &Inspector->Entries;
+    Entries->alloc(arena, DebugInspector_EntryCount);
     for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
-        u8_str* Item = List_Push(Entries);
+        u8_str* Item = Entries->push();
         U8Str_New(Item, arena, DebugInspector_EntryCount);
     }
 }
@@ -30,7 +30,7 @@ DebugInspector_Begin(debug_inspector* Inspector) {
     if(!Inspector->IsActive)
         return;
     
-    List_Clear(&Inspector->Entries);
+    Inspector->Entries.clear();
 }
 
 static inline void 
@@ -41,7 +41,7 @@ DebugInspector_End(debug_inspector* Inspector)
     
     f32 OffsetY = 0.f;
     
-    for (u32 I = 0; I < Inspector->Entries.Count; ++I) {
+    for (u32 I = 0; I < Inspector->Entries.count; ++I) {
         u8_str* Entry = Inspector->Entries + I;
         v3f Position = V3f_Create(DebugInspector_PosX, 
                                   DebugInspector_PosY + OffsetY,
@@ -58,7 +58,7 @@ DebugInspector_End(debug_inspector* Inspector)
 
 static inline u8_str*
 DebugInspector_PushEntry(debug_inspector* Inspector, u8_cstr Label) {
-    u8_str* Entry = List_Push(&Inspector->Entries);
+    u8_str* Entry = Inspector->Entries.push();
     U8Str_CopyCStr(Entry, Label);
     return Entry;
 }

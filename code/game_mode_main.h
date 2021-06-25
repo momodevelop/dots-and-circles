@@ -100,9 +100,9 @@ struct game_mode_main {
     player Player;
     game_camera Camera;
     
-    list<bullet> CircleBullets;
-    list<bullet> DotBullets;
-    list<enemy> Enemies;
+    List<bullet> CircleBullets;
+    List<bullet> DotBullets;
+    List<enemy> Enemies;
     queue<particle> Particles;
     death_bomb DeathBomb;
     

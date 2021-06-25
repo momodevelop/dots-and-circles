@@ -24,7 +24,7 @@ Enemy_Spawn(game_mode_main* Mode,
             enemy_shoot_type ShootType, 
             enemy_movement_type MovementType) 
 {
-    enemy* Enemy = List_Push(&Mode->Enemies);
+    enemy* Enemy = Mode->Enemies.push();
     Enemy->Position = Position;
     
     // NOTE(Momo): Shoot
@@ -166,5 +166,5 @@ Main_RenderEnemies(game_mode_main* Mode)
                                    T*R*S, 
                                    C4f_White);
     };
-    List_ForEach(&Mode->Enemies, ForEachLamb);
+    Mode->Enemies.foreach(ForEachLamb);
 }

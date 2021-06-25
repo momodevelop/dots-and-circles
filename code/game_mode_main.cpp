@@ -33,17 +33,17 @@ MainMode_Init(permanent_state* PermState,
     
     b8 Success = false;
     
-    Success = List_New(&Mode->DotBullets, ModeArena, DotCap);
+    Success = Mode->DotBullets.alloc(ModeArena, DotCap);
     if (!Success) {
         return false;
     }
     
-    Success = List_New(&Mode->CircleBullets, ModeArena, CircleCap);
+    Success = Mode->CircleBullets.alloc(ModeArena, CircleCap);
     if (!Success) {
         return false;
     }
     
-    Success = List_New(&Mode->Enemies, ModeArena, EnemyCap);
+    Success = Mode->Enemies.alloc(ModeArena, EnemyCap);
     if (!Success) {
         return false;
     }
@@ -223,22 +223,22 @@ MainMode_Update(permanent_state* PermState,
     U8CStr_InitFromSiStr(&Buffer, "Dots: ");
     DebugInspector_PushU32(&DebugState->Inspector,
                            Buffer,
-                           Mode->DotBullets.Count);
+                           Mode->DotBullets.count);
     U8CStr_InitFromSiStr(&Buffer, "Circles: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
-                           Mode->CircleBullets.Count);
+                           Mode->CircleBullets.count);
     
     U8CStr_InitFromSiStr(&Buffer, "Bullets: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
-                           Mode->DotBullets.Count + Mode->CircleBullets.Count);
+                           Mode->DotBullets.count + Mode->CircleBullets.count);
     
     
     U8CStr_InitFromSiStr(&Buffer, "Enemies: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
-                           Mode->Enemies.Count);
+                           Mode->Enemies.count);
 }
 
 #endif //GAME_MODE_H
