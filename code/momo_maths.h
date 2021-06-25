@@ -20,64 +20,64 @@
 // Get the ratio of Value within the range [Min,Max] 
 // Return value Will be [0, 1]
 static inline f32
-Ratio(f32 Value, f32 Min, f32 Max) {
-    return (Value - Min)/(Max - Min); 
+ratio(f32 value, f32 min, f32 max) {
+    return (value - min)/(max - min); 
 }
 
 // NOTE(Momo): Common Functions
 static inline b8
-F32_IsEqual(f32 L, f32 R) {
+is_equal(f32 L, f32 R) {
     return AbsOf(L - R) <= EPSILON;
 }
 
 static inline f32 
-DegToRad(f32 degrees) {
+deg_to_rad(f32 degrees) {
     return degrees * PI / 180.f;
 }
 
 static inline f32 
-RadToDeg(f32 radians) {
+rad_to_deg(f32 radians) {
     return radians * 180.f / PI;
 }
 
 static inline f32 
-Sin(f32 x) {
+sin(f32 x) {
     return sinf(x);
 }
 
 static inline f32 
-Cos(f32 x) {
+cos(f32 x) {
     return cosf(x);
 }
 
 static inline f32 
-Tan(f32 x) {
+tan(f32 x) {
     return tanf(x);
 }
 
 
 static inline f32 
-Sqrt(f32 x) {
+sqrt(f32 x) {
     return sqrtf(x);
 }
 
 static inline f32 
-ASin(f32 x) {
+asin(f32 x) {
     return asinf(x);
 }
 
 static inline f32 
-ACos(f32 x) {
+acos(f32 x) {
     return acosf(x);
 }
 
 static inline f32 
-ATan(f32 x) {
+atan(f32 x) {
     return atanf(x);
 }
 
 static inline f32
-Pow(f32 b, f32 e) {
+pow(f32 b, f32 e) {
     return powf(b,e);
 }
 
@@ -220,8 +220,9 @@ V2f_Mul(v2f L, f32 R) {
 
 
 static inline v2f
+
 V2f_Div(v2f L, f32 R) {
-    Assert(!F32_IsEqual(R, 0));
+    Assert(!is_equal(R, 0));
     L.X /= R;
     L.Y /= R;
     
@@ -230,8 +231,8 @@ V2f_Div(v2f L, f32 R) {
 
 static inline v2f
 V2f_Ratio(v2f L, v2f R) {
-    Assert(!F32_IsEqual(R.X, 0));
-    Assert(!F32_IsEqual(R.Y, 0));
+    Assert(!is_equal(R.X, 0));
+    Assert(!is_equal(R.Y, 0));
     
     L.X /= R.X;
     L.Y /= R.Y;
@@ -249,8 +250,8 @@ V2f_Neg(v2f V){
 static inline b8 
 V2f_IsEqual(v2f L, v2f R) {
     return 
-        F32_IsEqual(L.X, R.X) && 
-        F32_IsEqual(L.Y, R.Y);
+        is_equal(L.X, R.X) && 
+        is_equal(L.Y, R.Y);
 }
 
 static inline f32 
@@ -282,12 +283,12 @@ V2f_DistanceSq(v2f L, v2f R) {
 
 static inline f32
 V2f_Distance(v2f L, v2f R)  { 
-    return Sqrt(V2f_DistanceSq(L, R)); 
+    return sqrt(V2f_DistanceSq(L, R)); 
 }
 
 static inline f32 
 V2f_Length(v2f L)  { 
-    return Sqrt(V2f_LengthSq(L));
+    return sqrt(V2f_LengthSq(L));
 }
 
 static inline v2f 
@@ -302,7 +303,7 @@ V2f_AngleBetween(v2f L, v2f R) {
     f32 LLen = V2f_Length(L);
     f32 RLen = V2f_Length(R);
     f32 LRDot = V2f_Dot(L,R);
-    f32 Ret = ACos(LRDot/(LLen * RLen));
+    f32 Ret = acos(LRDot/(LLen * RLen));
     
     return Ret;
 }
@@ -310,7 +311,7 @@ V2f_AngleBetween(v2f L, v2f R) {
 static inline b8
 V2f_IsPerp(v2f L, v2f R) { 
     f32 LRDot = V2f_Dot(L,R);
-    return F32_IsEqual(LRDot, 0); 
+    return is_equal(LRDot, 0); 
 }
 
 
@@ -331,7 +332,7 @@ static inline v2f
 V2f_Project(v2f From, v2f To) { 
     // (To . From)/LenSq(To) * To
     f32 ToLenSq = V2f_LengthSq(To);
-    Assert(!F32_IsEqual(ToLenSq, 0)); 
+    Assert(!is_equal(ToLenSq, 0)); 
     
     f32 ToDotFrom = V2f_Dot(To, From);
     f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
@@ -344,8 +345,8 @@ V2f_Rotate(v2f V, f32 Rad) {
     // Technically, we can use matrices but
     // meh, it's easy to code this out without it.
     // Removes dependencies too
-    f32 C = Cos(Rad);
-    f32 S = Sin(Rad);
+    f32 C = cos(Rad);
+    f32 S = sin(Rad);
     
     v2f Ret = {};
     Ret.X = (C * V.X) - (S * V.Y);
@@ -436,7 +437,7 @@ V3f_Mul(v3f L, f32 R) {
 
 static inline v3f
 V3f_Div(v3f L, f32 R) {
-    Assert(!F32_IsEqual(R, 0));
+    Assert(!is_equal(R, 0));
     L.X /= R;
     L.Y /= R;
     L.Z /= R;
@@ -454,9 +455,9 @@ V3f_Neg(v3f V){
 static inline b8 
 V3f_IsEqual(v3f L, v3f R) {
     return 
-        F32_IsEqual(L.X, R.X) && 
-        F32_IsEqual(L.Y, R.Y) &&
-        F32_IsEqual(L.Z, R.Z);
+        is_equal(L.X, R.X) && 
+        is_equal(L.Y, R.Y) &&
+        is_equal(L.Z, R.Z);
 }
 
 static inline f32 
@@ -488,12 +489,12 @@ V3f_DistanceSq(v3f L, v3f R) {
 
 static inline f32
 V3f_Distance(v3f L, v3f R)  { 
-    return Sqrt(V3f_DistanceSq(L, R)); 
+    return sqrt(V3f_DistanceSq(L, R)); 
 }
 
 static inline f32 
 V3f_Length(v3f L)  { 
-    return Sqrt(V3f_LengthSq(L));
+    return sqrt(V3f_LengthSq(L));
 }
 
 static inline v3f 
@@ -508,7 +509,7 @@ V3f_AngleBetween(v3f L, v3f R) {
     f32 LLen = V3f_Length(L);
     f32 RLen = V3f_Length(R);
     f32 LRDot = V3f_Dot(L,R);
-    f32 Ret = ACos(LRDot/(LLen * RLen));
+    f32 Ret = acos(LRDot/(LLen * RLen));
     
     return Ret;
 }
@@ -517,7 +518,7 @@ V3f_AngleBetween(v3f L, v3f R) {
 static inline b8
 V3f_IsPerpendicular(v3f L, v3f R) { 
     f32 LRDot = V3f_Dot(L,R);
-    return F32_IsEqual(LRDot, 0); 
+    return is_equal(LRDot, 0); 
 }
 
 
@@ -538,7 +539,7 @@ static inline v3f
 V3f_Project(v3f From, v3f To) { 
     // (To . From)/LenSq(To) * To
     f32 ToLenSq = V3f_LengthSq(To);
-    Assert(!F32_IsEqual(ToLenSq, 0)); 
+    Assert(!is_equal(ToLenSq, 0)); 
     
     f32 ToDotFrom = V3f_Dot(To, From);
     f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
@@ -722,10 +723,10 @@ Aabb2u_To_Aabb2f(aabb2u V) {
 static inline aabb2f 
 Aabb2f_Ratio(aabb2f A, aabb2f B) {
     aabb2f Ret = {};
-    Ret.Min.X = Ratio(A.Min.X, B.Min.X, B.Max.X);
-    Ret.Min.Y = Ratio(A.Min.Y, B.Min.Y, B.Max.Y);
-    Ret.Max.X = Ratio(A.Max.X, B.Min.X, B.Max.X);
-    Ret.Max.Y = Ratio(A.Max.Y, B.Min.X, B.Max.Y);
+    Ret.Min.X = ratio(A.Min.X, B.Min.X, B.Max.X);
+    Ret.Min.Y = ratio(A.Min.Y, B.Min.Y, B.Max.Y);
+    Ret.Max.X = ratio(A.Max.X, B.Min.X, B.Max.X);
+    Ret.Max.Y = ratio(A.Max.Y, B.Min.X, B.Max.Y);
     
     return Ret;
 }
@@ -822,8 +823,8 @@ M22f_Rotation(f32 Rad) {
     // c -s
     // s  c
     
-    f32 c = Cos(Rad);
-    f32 s = Sin(Rad);
+    f32 c = cos(Rad);
+    f32 s = sin(Rad);
     m22f Ret = {};
     Ret[0][0] = c;
     Ret[0][1] = -s;
@@ -904,8 +905,8 @@ M44f_RotationX(f32 Rad) {
     // 0  s  c  0
     // 0  0  0  1
     
-    f32 c = Cos(Rad);
-    f32 s = Sin(Rad);
+    f32 c = cos(Rad);
+    f32 s = sin(Rad);
     m44f Ret = {};
     Ret[0][0] = 1.f;
     Ret[3][3] = 1.f;
@@ -925,8 +926,8 @@ M44f_RotationY(f32 rad) {
     // -s  0  c  0
     //  0  0  0  1
     
-    f32 c = Cos(rad);
-    f32 s = Sin(rad);
+    f32 c = cos(rad);
+    f32 s = sin(rad);
     m44f Ret = {};
     Ret[0][0] = c;
     Ret[0][2] = s;
@@ -946,8 +947,8 @@ M44f_RotationZ(f32 rad) {
     //  0  0  1  0
     //  0  0  0  1
     
-    f32 c = Cos(rad);
-    f32 s = Sin(rad);
+    f32 c = cos(rad);
+    f32 s = sin(rad);
     m44f Ret = {};
     Ret[0][0] = c;
     Ret[0][1] = -s;

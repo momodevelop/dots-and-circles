@@ -26,10 +26,10 @@ Bonk2_IsCircleXLine(circle2f C, line2f L) {
     
     // NOTE(Momo): Find the time of intersection of the ClosestPtOnLine
     f32 Time = {}; 
-    if (!F32_IsEqual(R.Dir.X, 0.f)) {
+    if (!is_equal(R.Dir.X, 0.f)) {
         Time = (ClosestPtOnLine.X - R.Origin.X)/R.Dir.X;
     }
-    else if (!F32_IsEqual(R.Dir.Y, 0.f)) {
+    else if (!is_equal(R.Dir.Y, 0.f)) {
         Time = (ClosestPtOnLine.Y - R.Origin.Y)/R.Dir.Y;
     }
     else {
@@ -68,8 +68,8 @@ Bonk2_IsDynaCircleXDynaCircle(circle2f CircleA,
     
     f32 VelAMag = V2f_LengthSq(VelocityA);
     f32 VelBMag = V2f_LengthSq(VelocityB);
-    b8 VelADead = F32_IsEqual(VelAMag, 0.f);
-    b8 VelBDead = F32_IsEqual(VelBMag, 0.f);
+    b8 VelADead = is_equal(VelAMag, 0.f);
+    b8 VelBDead = is_equal(VelBMag, 0.f);
     
     
     if (VelADead && VelBDead) {

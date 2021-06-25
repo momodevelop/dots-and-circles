@@ -4,18 +4,18 @@
 
 static inline
 f32 EaseInSine(f32 t)  {
-    return Sin(PI * 0.5f * t);
+    return sin(PI * 0.5f * t);
 }
 
 
 static inline
 f32 EaseOutSine(f32 t) {
-    return 1.0f + Sin(PI * 0.5f * (--t));
+    return 1.0f + sin(PI * 0.5f * (--t));
 }
 
 static inline
 f32 EaseInOutSine(f32 t)  {
-    return 0.5f * (1.f + Sin(PI * (t - 0.5f)));
+    return 0.5f * (1.f + sin(PI * (t - 0.5f)));
 }
 
 static inline 
@@ -93,19 +93,19 @@ static inline f32 EaseInOutQuint(f32 t)  {
 
 
 static inline f32 EaseInCirc(f32 t)  {
-    return 1.f -Sqrt(1.f -t);
+    return 1.f -sqrt(1.f -t);
 }
 
 static inline f32 EaseOutCirc(f32 t)  {
-    return Sqrt(t);
+    return sqrt(t);
 }
 
 static inline f32 EaseInOutCirc(f32 t)  {
     if (t < 0.5f) {
-        return (1.f -Sqrt(1.f -2.f * t)) * 0.5f;
+        return (1.f -sqrt(1.f -2.f * t)) * 0.5f;
     }
     else {
-        return (1.f +Sqrt(2.f * t - 1.f)) * 0.5f;
+        return (1.f +sqrt(2.f * t - 1.f)) * 0.5f;
     }
 }
 
@@ -133,13 +133,13 @@ f32 EaseInOutBack(f32 t)  {
 static inline 
 f32 EaseInElastic(f32 t)  {
     f32 t2 = t * t;
-    return t2 * t2 * Sin(t * PI * 4.5f);
+    return t2 * t2 * sin(t * PI * 4.5f);
 }
 
 static inline 
 f32 EaseOutElastic(f32 t)  {
     f32 t2 = (t - 1.f) * (t - 1.f);
-    return 1.f -t2 * t2 * Cos(t * PI * 4.5f);
+    return 1.f -t2 * t2 * cos(t * PI * 4.5f);
 }
 
 static inline
@@ -147,14 +147,14 @@ f32 EaseInOutElastic(f32 t)  {
     f32 t2;
     if (t < 0.45f) {
         t2 = t * t;
-        return 8.f * t2 * t2 * Sin(t * PI * 9.f);
+        return 8.f * t2 * t2 * sin(t * PI * 9.f);
     }
     else if (t < 0.55f) {
-        return 0.5f +0.75f * Sin(t * PI * 4.f);
+        return 0.5f +0.75f * sin(t * PI * 4.f);
     }
     else {
         t2 = (t - 1.f) * (t - 1.f);
-        return 1.f -8.f * t2 * t2 * Sin(t * PI * 9.f);
+        return 1.f -8.f * t2 * t2 * sin(t * PI * 9.f);
     }
 }
 
@@ -163,39 +163,39 @@ f32 EaseInOutElastic(f32 t)  {
 // NOTE(Momo): These require power function. 
 static inline f32 
 EaseInBounce(f32 t)  {
-    return Pow(2.f, 6.f * (t - 1.f)) * AbsOf(Sin(t * PI * 3.5f));
+    return pow(2.f, 6.f * (t - 1.f)) * AbsOf(sin(t * PI * 3.5f));
 }
 
 
 static inline 
 f32 EaseOutBounce(f32 t) {
-    return 1.f -Pow(2.f, -6.f * t) * AbsOf(Cos(t * PI * 3.5f));
+    return 1.f -pow(2.f, -6.f * t) * AbsOf(cos(t * PI * 3.5f));
 }
 
 static inline 
 f32 EaseInOutBounce(f32 t) {
     if (t < 0.5f) {
-        return 8.f * Pow(2.f, 8.f * (t - 1.f)) * AbsOf(Sin(t * PI * 7.f));
+        return 8.f * pow(2.f, 8.f * (t - 1.f)) * AbsOf(sin(t * PI * 7.f));
     }
     else {
-        return 1.f -8.f * Pow(2.f, -8.f * t) * AbsOf(Sin(t * PI * 7.f));
+        return 1.f -8.f * pow(2.f, -8.f * t) * AbsOf(sin(t * PI * 7.f));
     }
 }
 
 static inline f32 EaseInExpo(f32 t)  {
-    return (Pow(2.f, 8.f * t) - 1.f) / 255.f;
+    return (pow(2.f, 8.f * t) - 1.f) / 255.f;
 }
 
 static inline f32 EaseOutExpo(f32 t)  {
-    return t == 1.f ? 1.f : 1.f -Pow(2.f, -10.f * t);
+    return t == 1.f ? 1.f : 1.f -pow(2.f, -10.f * t);
 }
 
 static inline f32 EaseInOutExpo(f32 t)  {
     if (t < 0.5f) {
-        return (Pow(2.f, 16.f * t) - 1.f) / 510.f;
+        return (pow(2.f, 16.f * t) - 1.f) / 510.f;
     }
     else {
-        return 1.f -0.5f * Pow(2.f, -16.f * (t - 0.5f));
+        return 1.f -0.5f * pow(2.f, -16.f * (t - 0.5f));
     }
 }
 
