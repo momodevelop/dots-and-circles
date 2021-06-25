@@ -124,16 +124,16 @@ List<T>::operator+(u32 index) {
 }
 
 // TODO: refactor this into the class?
-template<typename T, typename callback, typename... args>
-static inline void
-List_ForEachSlearIf(List<T>* L, callback Callback, args... Args) {
-    for (u32 I = 0; I < L->count;) {
-        T* Item = L->get(I);
-        if (Callback(Item, Args...)) {
-            L->slear(I);
+template<typename T>
+template<typename Callback, typename... Args>
+void
+List<T>::foreach_slear_if(Callback callback, Args... args) {
+    for (u32 i = 0; i < count;) {
+        if (callback(data + i, args...)) {
+            slear(i);
             continue;
         }
-        ++I;
+        ++i;
     }
 }
 
@@ -142,8 +142,7 @@ template<typename Callback, typename... Args>
 void
 List<T>::foreach(Callback callback, Args... args) {
     for (u32 i = 0; i < count; ++i) {
-        T* item = get(i);
-        callback(item, args...);
+        callback(data + i, args...);
     }
 }
 
@@ -168,27 +167,27 @@ List<T>::end() {
 
 template<typename T>
 b8
-operator!=(List_Forward_Itr<T> lhs, List_Forward_Itr<T> rhs) {
-    return lhs.index != rhs.index;
+List_Forward_Itr<T>::operator!=(List_Forward_Itr<T> rhs) {
+    return index != rhs.index;
 }
 
 template<typename T>
-static inline List_Forward_Itr<T>&
-operator++(List_Forward_Itr<T>& itr) {
+List_Forward_Itr<T>&
+List_Forward_Itr<T>::operator++() {
     ++itr.index;
     return itr;
 }
 
 template<typename T>
-static inline T&
-operator*(List_Forward_Itr<T>& itr) {
+T&
+List_Forward_Itr<T>::operator*() {
     return itr.list[itr.index];
 }
 //~ NOTE(Momo): Reverse Iterator
 template<typename T>
 T& 
 List_Reverse_Itr<T>::operator->(){
-    return list->data[index];
+    return list[index];
 }
 
 template<typename T>
@@ -204,23 +203,23 @@ List<T>::rend() {
 }
 
 template<typename T>
-static inline b8
-operator!=(List_Reverse_Itr<T> Lhs, List_Reverse_Itr<T> Rhs) {
-    return Lhs.Index != Rhs.Index;
+b8
+List_Reverse_Itr<T>::operator!=(List_Reverse_Itr<T> rhs) {
+    return index != rhs.index;
 }
 
 template<typename T>
-static inline List_Reverse_Itr<T>&
-operator++(List_Reverse_Itr<T>& Itr) {
-    ++Itr.Index;
-    return Itr;
+List_Reverse_Itr<T>&
+List_Reverse_Itr<T>::operator++() {
+    ++this->index;
+    return (*this);
 }
 
 
 template<typename T>
 T&
-operator*(List_Reverse_Itr<T> itr) {
-    u32 actual_index = itr.list->count - itr.index - 1;
-    return itr.list[actual_index];
+List_Reverse_Itr<T>::operator*() {
+    u32 actual_index = this->list->count - this->index - 1;
+    return this->list[actual_index];
 }
 

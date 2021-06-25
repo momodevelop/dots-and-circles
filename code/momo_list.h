@@ -12,6 +12,10 @@ struct List_Forward_Itr {
     u32 index;
     
     T& operator->();
+    List_Forward_Itr<T>& operator++();
+    T& operator*();
+    b8 operator!=(List_Forward_Itr<T> rhs);
+    
 };
 
 template<typename T>
@@ -20,6 +24,9 @@ struct List_Reverse_Itr {
     u32 index;
     
     T& operator->();
+    List_Reverse_Itr<T>& operator++();
+    T& operator*();
+    b8 operator!=(List_Reverse_Itr<T> rhs);
     
 };
 
@@ -46,7 +53,8 @@ struct List {
     
     template<typename Callback, typename ...Args> 
         void foreach(Callback cb, Args...args);
-    
+    template<typename Callback, typename ...Args>
+        void foreach_slear_if(Callback cb, Args... arg);
     
     // iterators
     List_Forward_Itr<T> begin();

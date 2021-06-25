@@ -108,7 +108,7 @@ struct game_mode_main {
     
     wave Wave;
     rng_series Rng;
-    big_int Score;
+    Big_Int Score;
     
     // Audio handles
     game_audio_mixer_handle BgmHandle;

@@ -4,18 +4,18 @@
 
 static inline
 f32 EaseInSine(f32 t)  {
-    return Sin(Pi32 * 0.5f * t);
+    return Sin(PI * 0.5f * t);
 }
 
 
 static inline
 f32 EaseOutSine(f32 t) {
-    return 1.0f + Sin(Pi32 * 0.5f * (--t));
+    return 1.0f + Sin(PI * 0.5f * (--t));
 }
 
 static inline
 f32 EaseInOutSine(f32 t)  {
-    return 0.5f * (1.f + Sin(Pi32 * (t - 0.5f)));
+    return 0.5f * (1.f + Sin(PI * (t - 0.5f)));
 }
 
 static inline 
@@ -133,13 +133,13 @@ f32 EaseInOutBack(f32 t)  {
 static inline 
 f32 EaseInElastic(f32 t)  {
     f32 t2 = t * t;
-    return t2 * t2 * Sin(t * Pi32 * 4.5f);
+    return t2 * t2 * Sin(t * PI * 4.5f);
 }
 
 static inline 
 f32 EaseOutElastic(f32 t)  {
     f32 t2 = (t - 1.f) * (t - 1.f);
-    return 1.f -t2 * t2 * Cos(t * Pi32 * 4.5f);
+    return 1.f -t2 * t2 * Cos(t * PI * 4.5f);
 }
 
 static inline
@@ -147,14 +147,14 @@ f32 EaseInOutElastic(f32 t)  {
     f32 t2;
     if (t < 0.45f) {
         t2 = t * t;
-        return 8.f * t2 * t2 * Sin(t * Pi32 * 9.f);
+        return 8.f * t2 * t2 * Sin(t * PI * 9.f);
     }
     else if (t < 0.55f) {
-        return 0.5f +0.75f * Sin(t * Pi32 * 4.f);
+        return 0.5f +0.75f * Sin(t * PI * 4.f);
     }
     else {
         t2 = (t - 1.f) * (t - 1.f);
-        return 1.f -8.f * t2 * t2 * Sin(t * Pi32 * 9.f);
+        return 1.f -8.f * t2 * t2 * Sin(t * PI * 9.f);
     }
 }
 
@@ -163,22 +163,22 @@ f32 EaseInOutElastic(f32 t)  {
 // NOTE(Momo): These require power function. 
 static inline f32 
 EaseInBounce(f32 t)  {
-    return Pow(2.f, 6.f * (t - 1.f)) * AbsOf(Sin(t * Pi32 * 3.5f));
+    return Pow(2.f, 6.f * (t - 1.f)) * AbsOf(Sin(t * PI * 3.5f));
 }
 
 
 static inline 
 f32 EaseOutBounce(f32 t) {
-    return 1.f -Pow(2.f, -6.f * t) * AbsOf(Cos(t * Pi32 * 3.5f));
+    return 1.f -Pow(2.f, -6.f * t) * AbsOf(Cos(t * PI * 3.5f));
 }
 
 static inline 
 f32 EaseInOutBounce(f32 t) {
     if (t < 0.5f) {
-        return 8.f * Pow(2.f, 8.f * (t - 1.f)) * AbsOf(Sin(t * Pi32 * 7.f));
+        return 8.f * Pow(2.f, 8.f * (t - 1.f)) * AbsOf(Sin(t * PI * 7.f));
     }
     else {
-        return 1.f -8.f * Pow(2.f, -8.f * t) * AbsOf(Sin(t * Pi32 * 7.f));
+        return 1.f -8.f * Pow(2.f, -8.f * t) * AbsOf(Sin(t * PI * 7.f));
     }
 }
 

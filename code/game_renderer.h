@@ -212,7 +212,7 @@ Renderer_DrawCircle2f(mailbox* Commands,
     // NOTE(Momo): Essentially a bunch of lines
     // We can't really have a surface with less than 3 lines
     Assert(LineCount >= 3);
-    f32 AngleIncrement = Tau32 / LineCount;
+    f32 AngleIncrement = TAU / LineCount;
     v2f Pt1 = V2f_Create(0.f, Circle.Radius); 
     v2f Pt2 = V2f_Rotate(Pt1, AngleIncrement);
     

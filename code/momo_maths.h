@@ -11,9 +11,9 @@
 //
 
 // NOTE(Momo): Constants
-#define Pi32 3.14159265358979323846264338327950288f
-#define Epsilon32 1.19209290E-07f
-#define Tau32 Pi32 * 2.f
+#define PI 3.14159265358979323846264338327950288f
+#define EPSILON 1.19209290E-07f
+#define TAU PI * 2.f
 
 #define GenerateSubscriptOp(Amt) inline auto& operator[](u32 I) { Assert(I < Amt); return Elements[I]; }
 
@@ -27,17 +27,17 @@ Ratio(f32 Value, f32 Min, f32 Max) {
 // NOTE(Momo): Common Functions
 static inline b8
 F32_IsEqual(f32 L, f32 R) {
-    return AbsOf(L - R) <= Epsilon32;
+    return AbsOf(L - R) <= EPSILON;
 }
 
 static inline f32 
 DegToRad(f32 degrees) {
-    return degrees * Pi32 / 180.f;
+    return degrees * PI / 180.f;
 }
 
 static inline f32 
 RadToDeg(f32 radians) {
-    return radians * 180.f / Pi32;
+    return radians * 180.f / PI;
 }
 
 static inline f32 

@@ -54,7 +54,7 @@ MainMode_Init(permanent_state* PermState,
     }
     
     
-    Success = BigInt_New(&Mode->Score, ModeArena, 128);
+    Success = Mode->Score.alloc(ModeArena, 128);
     if (!Success) {
         return false;
     }

@@ -21,8 +21,8 @@ Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
         
         return false;
     };
-    List_ForEachSlearIf(&Mode->CircleBullets, BulletLamb);
-    List_ForEachSlearIf(&Mode->DotBullets, BulletLamb);
+    Mode->CircleBullets.foreach_slear_if(BulletLamb);
+    Mode->DotBullets.foreach_slear_if(BulletLamb);
     
     auto EnemyLamb = [&](enemy* E) {
         circle2f ECir = Circle2f_Create(E->Position, 0.1f);
@@ -38,7 +38,7 @@ Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
         
         return false;
     };
-    List_ForEachSlearIf(&Mode->Enemies, EnemyLamb);
+    Mode->Enemies.foreach_slear_if(EnemyLamb);
 }
 
 static inline void

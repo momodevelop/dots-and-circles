@@ -39,8 +39,8 @@ Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
         
         return false;
     };
-    List_ForEachSlearIf(&Mode->DotBullets, Lamb);
-    List_ForEachSlearIf(&Mode->CircleBullets, Lamb);
+    Mode->DotBullets.foreach_slear_if(Lamb);
+    Mode->CircleBullets.foreach_slear_if(Lamb);
 }
 
 #endif //GAME_MODE_MAIN_COLLISION_H

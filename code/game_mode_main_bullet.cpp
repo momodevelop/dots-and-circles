@@ -45,8 +45,8 @@ Main_UpdateBullets(game_mode_main* Mode,
             B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius;
     };
     
-    List_ForEachSlearIf(&Mode->DotBullets, SlearIfLamb);
-    List_ForEachSlearIf(&Mode->CircleBullets, SlearIfLamb);
+    Mode->DotBullets.foreach_slear_if(SlearIfLamb);
+    Mode->CircleBullets.foreach_slear_if(SlearIfLamb);
     
 }
 

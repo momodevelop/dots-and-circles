@@ -80,7 +80,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
         case EnemyShootType_8Directions: {
             enemy_shoot_8dir* Shoot = &Enemy->Shoot8Dir;
             Shoot->Timer += DeltaTime;
-            static m22f RotateMtx = M22f_Rotation(Tau32/8);
+            static m22f RotateMtx = M22f_Rotation(TAU/8);
             if (Shoot->Timer > Shoot->Duration) {
                 v2f Dir = V2f_Create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
@@ -133,7 +133,7 @@ Main_UpdateEnemies(game_mode_main* Mode,
         }
         return false;
     };
-    List_ForEachSlearIf(&Mode->Enemies, SlearIfLamb);
+    Mode->Enemies.foreach_slear_if(SlearIfLamb);
     
 }
 
