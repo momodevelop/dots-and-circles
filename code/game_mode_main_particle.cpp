@@ -4,7 +4,7 @@ Main_SpawnParticle(game_mode_main* Mode,
                    u32 Amount) 
 {
     for (u32 I = 0; I < Amount; ++I) {
-        particle* P = Queue_Push(&Mode->Particles);
+        particle* P = Mode->Particles.push();
         if (!P) {
             return;
         }
@@ -19,25 +19,25 @@ Main_SpawnParticle(game_mode_main* Mode,
 
 static inline void 
 Main_UpdateParticles(game_mode_main* Mode, f32 DeltaTime) {
-    queue<particle>* Q = &Mode->Particles;
+    Queue<particle>* Q = &Mode->Particles;
     
     auto PopUntilLamb = [](particle* P) {
         return P->Timer >= P->Duration;
     };
-    Queue_PopUntil(Q, PopUntilLamb);
+    Q->pop_until(PopUntilLamb);
     
     
     auto ForEachLamb = [](particle* P, f32 DeltaTime) {
         P->Timer += DeltaTime;
         P->Position += P->Direction * P->Speed * DeltaTime;
     };
-    Queue_ForEach(Q, ForEachLamb, DeltaTime);
+    Q->foreach(ForEachLamb, DeltaTime);
 }
 
 
 static inline void
 Main_RenderParticles(game_mode_main* Mode) {
-    queue<particle>* Q = &Mode->Particles;
+    Queue<particle>* Q = &Mode->Particles;
     u32 CurrentCount = 0;
     auto ForEachLamb = [&](particle* P) {
         f32 Ease = 1.f - (P->Timer/P->Duration);
@@ -56,5 +56,5 @@ Main_RenderParticles(game_mode_main* Mode) {
                                    C4f_Create(1.f, 1.f, 1.f, Alpha));
         ++CurrentCount;
     };
-    Queue_ForEach(Q, ForEachLamb);
+    Q->foreach(ForEachLamb);
 }

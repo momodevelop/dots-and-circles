@@ -48,7 +48,7 @@ MainMode_Init(permanent_state* PermState,
         return false;
     }
     
-    Success = Queue_New(&Mode->Particles, ModeArena, ParticleCap);
+    Success = Mode->Particles.alloc(ModeArena, ParticleCap);
     if (!Success) {
         return false;
     }

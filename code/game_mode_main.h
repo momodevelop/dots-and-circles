@@ -103,7 +103,7 @@ struct game_mode_main {
     List<bullet> CircleBullets;
     List<bullet> DotBullets;
     List<enemy> Enemies;
-    queue<particle> Particles;
+    Queue<particle> Particles;
     death_bomb DeathBomb;
     
     wave Wave;
