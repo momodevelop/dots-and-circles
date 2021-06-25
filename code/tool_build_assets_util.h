@@ -16,7 +16,7 @@ struct read_file_result {
 
 static inline b8
 Tba_ReadFileIntoMemory(read_file_result* Result,
-                       arena* Arena, 
+                       Arena* arena, 
                        const char* Filename) {
     
     FILE* File = nullptr;
@@ -32,7 +32,7 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
     u32 Size = ftell(File);
     fseek(File, 0, SEEK_SET);
     
-    void* Buffer = Arena_PushBlock(Arena, Size);
+    void* Buffer = arena->push_block(Size);
     fread(Buffer, Size, 1, File);
     
     Result->Data = Buffer;
@@ -42,10 +42,10 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
 }
 
 static inline b8
-Tba_LoadFont(loaded_font* Ret, arena* Arena, const char* Filename) {
+Tba_LoadFont(loaded_font* Ret, Arena* arena, const char* Filename) {
     read_file_result ReadFileResult = {};
     if (!Tba_ReadFileIntoMemory(&ReadFileResult,
-                                Arena, 
+                                arena, 
                                 Filename)) 
     {
         return false;

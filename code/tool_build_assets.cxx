@@ -22,7 +22,7 @@
 
 #define Tba_GenerateTestPng 1
 #define Tba_MemorySize Megibytes(8)
-#define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, Arena.Used)
+#define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, arena.used)
 
 
 int main() {
@@ -35,15 +35,15 @@ int main() {
     }
     Defer { free(Memory); };
     
-    arena Arena = {};
-    Arena_Init(&Arena, Memory, Tba_MemorySize);
+    Arena arena = {};
+    arena.init(Memory, Tba_MemorySize);
     
     //~ NOTE(Momo): Load font
     
     // TODO(Momo): Preload stuff related to font that we actually need and then free
     // loaded font's data to be more memory efficient.
     loaded_font LoadedFont = {};
-    if (!Tba_LoadFont(&LoadedFont, &Arena, "assets/DroidSansMono.ttf")) 
+    if (!Tba_LoadFont(&LoadedFont, &arena, "assets/DroidSansMono.ttf")) 
     {
         printf("[Atlas] Failed to load font\n");
         return 1; 
@@ -116,19 +116,19 @@ int main() {
     //~ NOTE(Momo): Pack rects
     u32 AtlasWidth = 1024;
     u32 AtlasHeight = 1024;
-    if (!AabbPacker_Pack(&Arena,
-                         AtlasWidth,
-                         AtlasHeight,
-                         Aabbs,
-                         AabbCount, 
-                         AabbPackerSortType_Height)) 
+    if (!pack_aabbs(&arena,
+                    AtlasWidth,
+                    AtlasHeight,
+                    Aabbs,
+                    AabbCount, 
+                    AABB_PACKER_SORT_HEIGHT)) 
     {
         printf("[Atlas] Failed to generate texture\n");
         return 1;
     }
     
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasTexture = Tba_GenerateAtlas(&Arena,
+    u8* AtlasTexture = Tba_GenerateAtlas(&arena,
                                          Aabbs, 
                                          UserDatas,
                                          AabbCount, 
@@ -274,8 +274,8 @@ int main() {
         for(u32 I = 0; I < ArrayCount(Tba_SoundContexts); ++I) {
             tba_sound_context* Ctx = Tba_SoundContexts + I;
             
-            arena_mark Mark = Arena_Mark(&Arena);
-            Defer { Arena_Revert(&Mark); };
+            Arena_Mark Mark = arena.mark();
+            Defer { Mark.revert(); };
             
             read_file_result FileResult = {};
             if(!Tba_ReadFileIntoMemory(&FileResult, Mark, Ctx->Filename)) {

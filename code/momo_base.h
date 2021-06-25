@@ -19,6 +19,10 @@ typedef size_t usize;
 typedef uintptr_t uptr;
 typedef ptrdiff_t iptr;
 
+#define BEGIN_NS(Name) namespace Name {
+#define END_NS() }
+
+
 // TODO(Momo): change to retarded name
 #define Kibibyte (1 << 10)
 #define Mebibyte (1 << 20)

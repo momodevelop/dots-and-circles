@@ -1,25 +1,24 @@
 #ifndef __MM_AABB_PACKER__
 #define __MM_AABB_PACKER__
 
-// NOTE(Momo): Requires "mm_maths.h"
-
-enum aabb_packer_sort_type {
-    AabbPackerSortType_Width,
-    AabbPackerSortType_Height,
-    AabbPackerSortType_Area,
-    AabbPackerSortType_Perimeter,
-    AabbPackerSortType_Pathological,
-    AabbPackerSortType_BiggerSide,
+// TODO: Do I want these stuff in an object?
+enum AABB_Packer_Sort_Type {
+    AABB_PACKER_SORT_WIDTH,
+    AABB_PACKER_SORT_HEIGHT,
+    AABB_PACKER_SORT_AREA,
+    AABB_PACKER_SORT_PERIMETER,
+    AABB_PACKER_SORT_BIGGER_SIZE,
+    AABB_PACKER_SORT_PATHOLOGICAL,
 };
 
 static inline void
-__AabbPacker_Sort(aabb2u* Aabbs,
-                  sort_entry* SortEntries,
-                  u32 SortEntryCount,
-                  aabb_packer_sort_type SortType)
+sort_aabbs_for_packer(aabb2u* Aabbs,
+                      sort_entry* SortEntries,
+                      u32 SortEntryCount,
+                      AABB_Packer_Sort_Type SortType)
 {
     switch (SortType) {
-        case AabbPackerSortType_Width: {
+        case AABB_PACKER_SORT_WIDTH: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbW = Aabb2u_Width(Aabbs[I]);
                 f32 Key = -(f32)AabbW;
@@ -27,7 +26,7 @@ __AabbPacker_Sort(aabb2u* Aabbs,
                 SortEntries[I].Index = I;
             }
         } break;
-        case AabbPackerSortType_Height: {
+        case AABB_PACKER_SORT_HEIGHT: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbH = Aabb2u_Height(Aabbs[I]);
                 f32 Key = -(f32)AabbH;
@@ -35,7 +34,7 @@ __AabbPacker_Sort(aabb2u* Aabbs,
                 SortEntries[I].Index = I;
             }
         } break;
-        case AabbPackerSortType_Area: {
+        case AABB_PACKER_SORT_AREA: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbW = Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = Aabb2u_Height(Aabbs[I]);
@@ -44,7 +43,7 @@ __AabbPacker_Sort(aabb2u* Aabbs,
                 SortEntries[I].Index = I;
             }
         } break;
-        case AabbPackerSortType_Perimeter: {
+        case AABB_PACKER_SORT_PERIMETER: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbW = Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = Aabb2u_Height(Aabbs[I]);
@@ -53,7 +52,7 @@ __AabbPacker_Sort(aabb2u* Aabbs,
                 SortEntries[I].Index = I;
             }
         } break;
-        case AabbPackerSortType_BiggerSide: {
+        case AABB_PACKER_SORT_BIGGER_SIZE: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbW = Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = Aabb2u_Height(Aabbs[I]);
@@ -62,7 +61,7 @@ __AabbPacker_Sort(aabb2u* Aabbs,
                 SortEntries[I].Index = I;
             }
         } break;
-        case AabbPackerSortType_Pathological: {
+        case AABB_PACKER_SORT_PATHOLOGICAL: {
             for (u32 I = 0; I < SortEntryCount; ++I) {
                 u32 AabbW = Aabb2u_Width(Aabbs[I]);
                 u32 AabbH = Aabb2u_Height(Aabbs[I]);
@@ -83,18 +82,18 @@ __AabbPacker_Sort(aabb2u* Aabbs,
 
 // NOTE(Momo): Aabbs WILL be sorted after this function
 static inline b8
-AabbPacker_Pack(Arena* arena,
-                u32 total_width,
-                u32 total_height,
-                aabb2u* Aabbs, 
-                u32 aabb_count, 
-                aabb_packer_sort_type SortType) 
+pack_aabbs(Arena* arena,
+           u32 total_width,
+           u32 total_height,
+           aabb2u* Aabbs, 
+           u32 aabb_count, 
+           AABB_Packer_Sort_Type SortType) 
 {
     Arena_Mark scratch = arena->mark();
     Defer { scratch.revert(); };
     auto* sort_entries = arena->push_array<sort_entry>(aabb_count);
     
-    __AabbPacker_Sort(Aabbs, sort_entries, aabb_count, SortType);
+    sort_aabbs_for_packer(Aabbs, sort_entries, aabb_count, SortType);
     
     
     u32 current_node_count = 0;
@@ -201,5 +200,6 @@ AabbPacker_Pack(Arena* arena,
     
     return true;
 }
+
 
 #endif
