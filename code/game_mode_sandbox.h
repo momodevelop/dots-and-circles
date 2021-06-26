@@ -27,10 +27,10 @@ SandboxMode_Init(permanent_state* PermState) {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = V3f_Create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.Position = v3f_create(0.f, 0.f, 0.f);
+        Mode->Camera.Anchor = v3f_create(0.5f, 0.5f, 0.5f);
         Mode->Camera.Color = C4f_Grey2;
-        Mode->Camera.Dimensions = V3f_Create(Game_DesignWidth,
+        Mode->Camera.Dimensions = v3f_create(Game_DesignWidth,
                                              Game_DesignHeight,
                                              Game_DesignDepth);
     }

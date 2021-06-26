@@ -55,7 +55,7 @@ Main_RenderScore(game_mode_main* Mode) {
     // NOTE(Momo): Current Score
     {
         Draw_Text(Font_Default, 
-                  V3f_Create(-Game_DesignWidth * 0.5f + 10.f, 
+                  v3f_create(-Game_DesignWidth * 0.5f + 10.f, 
                              Game_DesignHeight * 0.5f - 24.f,  
                              ZLayScore),
                   U8CStr_CreateFromSiStr("Current Score"),
@@ -66,7 +66,7 @@ Main_RenderScore(game_mode_main* Mode) {
     {
         u8_cstr Str = U8CStr_CreateFromSiStr("High Score");
         Draw_Text(Font_Default,
-                  V3f_Create((Game_DesignWidth * 0.5f) - 120.f,
+                  v3f_create((Game_DesignWidth * 0.5f) - 120.f,
                              Game_DesignHeight * 0.5f - 24.f,
                              ZLayScore),
                   Str,

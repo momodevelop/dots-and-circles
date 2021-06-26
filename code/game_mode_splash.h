@@ -95,8 +95,8 @@ SplashMode_Init(permanent_state* PermState) {
     
     // NOTE(Momo): Create entities
     {
-        Mode->SplashImg[0].Position = V3f_Create( 0.f, 0.f, 0.f );
-        Mode->SplashImg[0].Scale = V3f_Create(400.f, 400.f, 1.f);
+        Mode->SplashImg[0].Position = v3f_create( 0.f, 0.f, 0.f );
+        Mode->SplashImg[0].Scale = v3f_create(400.f, 400.f, 1.f);
         Mode->SplashImg[0].Colors = C4f_Create(1.f, 1.f, 1.f, 1.f);
         Mode->SplashImg[0].TextureAabb = Image_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
@@ -107,7 +107,7 @@ SplashMode_Init(permanent_state* PermState) {
         Mode->SplashImg[0].EndX = -200.f;
         
         Mode->SplashImg[1].Position = {};
-        Mode->SplashImg[1].Scale = V3f_Create(400.f, 400.f, 1.f);
+        Mode->SplashImg[1].Scale = v3f_create(400.f, 400.f, 1.f);
         Mode->SplashImg[1].Colors = C4f_Create(1.f, 1.f, 1.f, 1.f);
         Mode->SplashImg[1].TextureAabb = Image_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
@@ -117,8 +117,8 @@ SplashMode_Init(permanent_state* PermState) {
         Mode->SplashImg[1].StartX = 1000.f;
         Mode->SplashImg[1].EndX = 200.f;
         
-        Mode->SplashBlackout.Position = V3f_Create(0.f, 0.f, 1.0f);
-        Mode->SplashBlackout.Scale = V3f_Create(1600.f, 900.f, 1.f);
+        Mode->SplashBlackout.Position = v3f_create(0.f, 0.f, 1.0f);
+        Mode->SplashBlackout.Scale = v3f_create(1600.f, 900.f, 1.f);
         Mode->SplashBlackout.Colors = C4f_Create(0.f, 0.f, 0.f, 0.0f);
         Mode->SplashBlackout.CountdownTimer = 0.f;
         Mode->SplashBlackout.CountdownDuration = 3.f;
@@ -139,10 +139,10 @@ SplashMode_Update(permanent_state* PermState,
     
     // NOTE: Camera
     {
-        v3f Position = V3f_Create(0.f, 0.f, 0.f);
-        v3f Anchor = V3f_Create(0.5f, 0.5f, 0.5f);
+        v3f Position = v3f_create(0.f, 0.f, 0.f);
+        v3f Anchor = v3f_create(0.5f, 0.5f, 0.5f);
         c4f Color = C4f_Create(0.f, 0.3f, 0.3f, 1.f);
-        v3f Dimensions = V3f_Create(800.f,
+        v3f Dimensions = v3f_create(800.f,
                                     800.f,
                                     800.f);
         

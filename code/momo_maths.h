@@ -391,7 +391,7 @@ rotate(v2f v, f32 rad) {
 
 //~ NOTE(Momo): v2u Functions
 static inline v2u 
-V2u_Create(u32 x, u32 y) {
+v2u_create(u32 x, u32 y) {
     v2u ret = {};
     ret.x = x;
     ret.y = y;
@@ -401,7 +401,7 @@ V2u_Create(u32 x, u32 y) {
 
 //~ NOTE(Momo): v3f Functions
 static inline v3f
-V3f_Create(f32 x, f32 y, f32 z) {
+v3f_create(f32 x, f32 y, f32 z) {
     v3f ret = {};
     ret.x = x;
     ret.y = y;
@@ -410,7 +410,7 @@ V3f_Create(f32 x, f32 y, f32 z) {
 }
 
 static inline v3f 
-V3f_Add(v3f l, v3f r) {
+add(v3f l, v3f r) {
     l.x += r.x;
     l.y += r.y;
     l.z += r.z;
@@ -418,7 +418,18 @@ V3f_Add(v3f l, v3f r) {
 }
 
 static inline v3f
-V3f_Sub(v3f l, v3f r) {
+operator+(v3f l, v3f r) {
+    return add(l,r);
+}
+
+static inline v3f&
+operator+=(v3f& l, v3f r) {
+    return l = l + r;
+}
+
+
+static inline v3f
+sub(v3f l, v3f r) {
     l.x -= r.x;
     l.y -= r.y;
     l.z -= r.z;
@@ -427,7 +438,19 @@ V3f_Sub(v3f l, v3f r) {
 
 
 static inline v3f
-V3f_Mul(v3f l, f32 r) {
+operator-(v3f l, v3f r) {
+    return sub(l,r);
+}
+
+static inline v3f&
+operator-=(v3f& l, v3f r) {
+    return l = l - r;
+}
+
+
+
+static inline v3f
+mul(v3f l, f32 r) {
     l.x *= r;
     l.y *= r;
     l.z *= r;
@@ -435,8 +458,24 @@ V3f_Mul(v3f l, f32 r) {
 }
 
 
+static inline v3f 
+operator*(v3f lhs, f32 rhs) {
+    return mul(lhs, rhs);
+}
+
+static inline v3f 
+operator*=(v3f lhs, f32 rhs) {
+    return lhs = lhs * rhs;
+}
+
+static inline v3f 
+operator*(f32 lhs, v3f rhs) {
+    return mul(rhs, lhs);
+}
+
+
 static inline v3f
-V3f_Div(v3f l, f32 r) {
+div(v3f l, f32 r) {
     Assert(!is_equal(r, 0));
     l.x /= r;
     l.y /= r;
@@ -453,7 +492,7 @@ V3f_Neg(v3f v){
 }
 
 static inline b8 
-V3f_IsEqual(v3f l, v3f r) {
+is_equal(v3f l, v3f r) {
     return 
         is_equal(l.x, r.x) && 
         is_equal(l.y, r.y) &&
@@ -461,90 +500,86 @@ V3f_IsEqual(v3f l, v3f r) {
 }
 
 static inline f32 
-V3f_Dot(v3f l, v3f r) {
+dot(v3f l, v3f r) {
     f32 ret = {};
     ret = l.x * r.x + l.y * r.y + l.z * r.z;
     return ret;
 }
 
 static inline v3f 
-V3f_Midpoint(v3f L, v3f R)  { 
-    v3f LR = V3f_Add(L, R);
-    v3f Ret = V3f_Div(LR, 2.f);
-    return Ret; 
+midpoint(v3f l, v3f r)  { 
+    return (l + r) * 0.5f; 
 }
 
 static inline f32
-V3f_LengthSq(v3f V) { 
+length_sq(v3f V) { 
     // NOTE(Momo): Dot Product trick!
-    return V3f_Dot(V, V);
+    return dot(V, V);
 }
 
 static inline f32
-V3f_DistanceSq(v3f L, v3f R) {
-    v3f V = V3f_Sub(R, L);
-    f32 Ret = V3f_LengthSq(V); 
-    return Ret;
+distance_sq(v3f l, v3f r) {
+    f32 ret = length_sq(l - r); 
+    return ret;
 }
 
 static inline f32
-V3f_Distance(v3f L, v3f R)  { 
-    return sqrt(V3f_DistanceSq(L, R)); 
+distance(v3f l, v3f r)  { 
+    return sqrt(distance_sq(l, r)); 
 }
 
 static inline f32 
-V3f_Length(v3f L)  { 
-    return sqrt(V3f_LengthSq(L));
+length(v3f l)  { 
+    return sqrt(length_sq(l));
 }
 
 static inline v3f 
-V3f_Normalize(v3f V)  {
-    f32 Len = V3f_Length(V);
-    v3f Ret = V3f_Div(V, Len);
-    return Ret;
+normalize(v3f v)  {
+    f32 len = length(v);
+    v3f ret = div(v, len);
+    return ret;
 }
 
 static inline f32
-V3f_AngleBetween(v3f L, v3f R) {
-    f32 LLen = V3f_Length(L);
-    f32 RLen = V3f_Length(R);
-    f32 LRDot = V3f_Dot(L,R);
-    f32 Ret = acos(LRDot/(LLen * RLen));
+angle_between(v3f L, v3f R) {
+    f32 l_len = length(L);
+    f32 r_len = length(R);
+    f32 LRDot = dot(L,R);
+    f32 Ret = acos(LRDot/(l_len * r_len));
     
     return Ret;
 }
 
 
 static inline b8
-V3f_IsPerpendicular(v3f L, v3f R) { 
-    f32 LRDot = V3f_Dot(L,R);
-    return is_equal(LRDot, 0); 
+is_perpendicular(v3f l, v3f r) { 
+    f32 lr_dot = dot(l,r);
+    return is_equal(lr_dot, 0); 
 }
 
 
 static inline b8 
-V3f_IsSameDir(v3f L, v3f R) { 
-    f32 LRDot = V3f_Dot(L,R);
-    return LRDot > 0; 
+is_same_direction(v3f l, v3f r) { 
+    f32 lr_dot = dot(l,r);
+    return lr_dot > 0; 
 }
 
 
 static inline b8 
-V3f_IsOppDir(v3f L, v3f R) { 
-    f32 LRDot = V3f_Dot(L,R);
-    return LRDot < 0;
+is_opposite_dir(v3f l, v3f r) { 
+    f32 lr_dot = dot(l,r);
+    return lr_dot < 0;
 }
 
 static inline v3f 
-V3f_Project(v3f From, v3f To) { 
-    // (To . From)/LenSq(To) * To
-    f32 ToLenSq = V3f_LengthSq(To);
-    Assert(!is_equal(ToLenSq, 0)); 
+project(v3f from, v3f to) { 
+    // (to . from)/LenSq(to) * to
+    f32 to_len_sq = length_sq(to);
     
-    f32 ToDotFrom = V3f_Dot(To, From);
-    f32 UnitProjectionScalar = ToDotFrom / ToLenSq;
-    v3f Ret = V3f_Mul(To, UnitProjectionScalar);
-    return Ret;
+    f32 to_dot_from = dot(to, from);
+    f32 unit_projection_scalar = to_dot_from / to_len_sq;
+    v3f ret = mul(to, unit_projection_scalar);
+    return ret;
 }
 
 static inline v3f 
@@ -608,8 +643,8 @@ Aabb2u_CreateFromV2u(v2u Min, v2u Max) {
 
 static inline aabb2u
 Aabb2u_Create(u32 MinX, u32 MinY, u32 MaxX, u32 MaxY) {
-    v2u Min = V2u_Create(MinX, MinY);
-    v2u Max = V2u_Create(MaxX, MaxY);
+    v2u Min = v2u_create(MinX, MinY);
+    v2u Max = v2u_create(MaxX, MaxY);
     
     return Aabb2u_CreateFromV2u(Min, Max);
     
