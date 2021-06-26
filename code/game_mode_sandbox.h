@@ -43,7 +43,7 @@ SandboxMode_Init(permanent_state* PermState) {
     f32 OffsetY = 0.f;
     for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
-        B->Position = V2f_Create(StartX + OffsetX, StartY + OffsetY);
+        B->Position = v2f_create(StartX + OffsetX, StartY + OffsetY);
         B->HitCircle = Circle2f_Create({}, BulletRadius);
         
         OffsetX += BulletRadius * 2; // padding
@@ -51,7 +51,7 @@ SandboxMode_Init(permanent_state* PermState) {
             OffsetX = 0.f;
             OffsetY += BulletRadius * 2;
         }
-        B->Velocity = V2f_Create(0.f, 0.f);
+        B->Velocity = v2f_create(0.f, 0.f);
     }
     
     Mode->ClickCount = 0;
@@ -83,8 +83,7 @@ SandboxMode_Update(permanent_state* PermState,
             continue;
         }
         
-        v2f TimedVelocity = V2f_Mul(B->Velocity, DeltaTime);
-        B->Position =  V2f_Add(B->Position, TimedVelocity);
+        B->Position += B->Velocity * DeltaTime;
         
     }
     
@@ -92,7 +91,7 @@ SandboxMode_Update(permanent_state* PermState,
     // NOTE(Momo): Line to circle collision
     line2f BonkLine = Line2f_CreateFromV2f(Mode->PrevMousePos, Mode->CurMousePos);
     if (Mode->ClickCount >= 2) {
-        if (!V2f_IsEqual(Mode->PrevMousePos, Mode->CurMousePos)) {
+        if (!is_equal(Mode->PrevMousePos, Mode->CurMousePos)) {
             
             for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
                 game_mode_sandbox_bullet* B = Mode->Bullets + I;
@@ -104,8 +103,8 @@ SandboxMode_Update(permanent_state* PermState,
                 
                 circle2f PC = Circle2f_Create(Mode->PrevMousePos,
                                               Mode->PlayerCircleRadius);
-                v2f PCVel = V2f_Sub(Mode->CurMousePos, Mode->PrevMousePos);
-                v2f TimedVelocity = V2f_Mul(B->Velocity, DeltaTime);
+                v2f PCVel = Mode->CurMousePos - Mode->PrevMousePos;
+                v2f TimedVelocity = B->Velocity * DeltaTime;
                 
                 if (Bonk2_IsDynaCircleXDynaCircle(PC, PCVel, C, TimedVelocity)) {
                     B->IsHit = true;
@@ -126,8 +125,8 @@ SandboxMode_Update(permanent_state* PermState,
             continue;
         }
         m44f S = M44f_Scale(B->HitCircle.Radius*2, B->HitCircle.Radius*2, 1.f);
-        m44f T = M44f_Translation(B->Position.X,
-                                  B->Position.Y,
+        m44f T = M44f_Translation(B->Position.x,
+                                  B->Position.y,
                                   ZOrder += 0.001f);
         
         Draw_TexturedQuadFromImage(Image_BulletDot,

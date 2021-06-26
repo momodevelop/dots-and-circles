@@ -59,7 +59,7 @@ DebugConsole_Init(debug_console* C,
 {
     C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
-    C->Position = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
+    C->Position = v2f_create(DebugConsole_StartPosX, DebugConsole_StartPosY);
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
@@ -144,14 +144,14 @@ DebugConsole_Update(debug_console* Console,
     
     // Transition
     {
-        v2f StartPos = V2f_Create(DebugConsole_StartPosX, DebugConsole_StartPosY);
-        v2f EndPos = V2f_Create(DebugConsole_EndPosX, DebugConsole_EndPosY);
+        v2f StartPos = v2f_create(DebugConsole_StartPosX, DebugConsole_StartPosY);
+        v2f EndPos = v2f_create(DebugConsole_EndPosX, DebugConsole_EndPosY);
         
         f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
-        v2f Delta = V2f_Sub(EndPos, StartPos); 
+        v2f Delta = EndPos - StartPos; 
         
-        v2f DeltaP = V2f_Mul(Delta, P);
-        Console->Position = V2f_Add(StartPos, DeltaP); 
+        v2f DeltaP = Delta * P;
+        Console->Position = StartPos + DeltaP; 
     }
     
     if (Console->IsActive) {
@@ -233,23 +233,23 @@ DebugConsole_Render(debug_console* Console)
         return;
     }
     font* Font = G_Assets->Fonts + Font_Default;
-    v2f Dimensions = V2f_Create( DebugConsole_Width, DebugConsole_Height );
-    f32 Bottom = Console->Position.Y - Dimensions.H * 0.5f;
-    f32 Left = Console->Position.X - Dimensions.W * 0.5f;
-    f32 LineHeight = Dimensions.H / (Console->InfoLines.count + 1);
+    v2f Dimensions = v2f_create( DebugConsole_Width, DebugConsole_Height );
+    f32 Bottom = Console->Position.y - Dimensions.h * 0.5f;
+    f32 Left = Console->Position.x - Dimensions.w * 0.5f;
+    f32 LineHeight = Dimensions.h / (Console->InfoLines.count + 1);
     f32 FontSize = LineHeight * 0.9f;
     f32 FontHeight = Font_GetHeight(Font) * FontSize;
     
     f32 PaddingHeight =
         (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
-    f32 PaddingWidth = Dimensions.W * 0.005f;
+    f32 PaddingWidth = Dimensions.w * 0.005f;
     {
-        m44f ScaleMatrix = M44f_Scale(Dimensions.X, 
-                                      Dimensions.Y, 
+        m44f ScaleMatrix = M44f_Scale(Dimensions.x, 
+                                      Dimensions.y, 
                                       1.f);
         
-        m44f PositionMatrix = M44f_Translation(Console->Position.X,
-                                               Console->Position.Y,
+        m44f PositionMatrix = M44f_Translation(Console->Position.x,
+                                               Console->Position.y,
                                                DebugConsole_PosZ);
         m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
         Renderer_DrawQuad(G_Renderer, 
@@ -258,8 +258,8 @@ DebugConsole_Render(debug_console* Console)
     }
     
     {
-        m44f ScaleMatrix = M44f_Scale(Dimensions.W, LineHeight, 0.f);
-        m44f PositionMatrix = M44f_Translation(Console->Position.X, 
+        m44f ScaleMatrix = M44f_Scale(Dimensions.w, LineHeight, 0.f);
+        m44f PositionMatrix = M44f_Translation(Console->Position.x, 
                                                Bottom + LineHeight * 0.5f,
                                                DebugConsole_PosZ+ 0.01f);
         
@@ -273,9 +273,9 @@ DebugConsole_Render(debug_console* Console)
     {
         for (u32 I = 0; I < Console->InfoLines.count ; ++I) {
             v3f Position = {};
-            Position.X = Left + PaddingWidth;
-            Position.Y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
-            Position.Z = DebugConsole_PosZ + 0.01f;
+            Position.x = Left + PaddingWidth;
+            Position.y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
+            Position.z = DebugConsole_PosZ + 0.01f;
             
             u8_cstr InfoLineCStr = Console->InfoLines[I].Text.CStr;
             Draw_Text(Font_Default, 
@@ -286,9 +286,9 @@ DebugConsole_Render(debug_console* Console)
         }
         
         v3f Position = {};
-        Position.X = Left + PaddingWidth;
-        Position.Y = Bottom + PaddingHeight;
-        Position.Z = DebugConsole_PosZ + 0.02f;
+        Position.x = Left + PaddingWidth;
+        Position.y = Bottom + PaddingHeight;
+        Position.z = DebugConsole_PosZ + 0.02f;
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
         Draw_Text(Font_Default, 

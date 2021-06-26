@@ -83,8 +83,8 @@ Main_RenderPlayer(game_mode_main* Mode)
     m44f S = M44f_Scale(Player->Size, Player->Size, 1.f);
     
     {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
+        m44f T = M44f_Translation(Player->Position.x,
+                                  Player->Position.y,
                                   ZLayPlayer);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
@@ -94,8 +94,8 @@ Main_RenderPlayer(game_mode_main* Mode)
     }
     
     {
-        m44f T = M44f_Translation(Player->Position.X,
-                                  Player->Position.Y,
+        m44f T = M44f_Translation(Player->Position.x,
+                                  Player->Position.y,
                                   ZLayPlayer + 0.01f);
         c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
         Draw_TexturedQuadFromImage(Image_PlayerDot,

@@ -7,7 +7,7 @@
 // NOTE(Momo): Globals related to things from platform layer
 platform_api* G_Platform;
 platform_log* G_Log;
-mailbox* G_Renderer;
+Mailbox* G_Renderer;
 platform_input* G_Input;
 Arena* G_Scratch;
 

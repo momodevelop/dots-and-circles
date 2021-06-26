@@ -46,21 +46,21 @@ Draw_Text(font_id FontId,
                             BoxHeight* Size, 
                             1.f);
         
-        m44f T = M44f_Translation(CurPosition.X + Box.Min.X * Size, 
-                                  CurPosition.Y + Box.Min.Y * Size,  
-                                  CurPosition.Z + ZLayerOffset);
+        m44f T = M44f_Translation(CurPosition.x + Box.Min.x * Size, 
+                                  CurPosition.y + Box.Min.y * Size,  
+                                  CurPosition.z + ZLayerOffset);
         
         
         Draw_TexturedQuadFromImage(Glyph->ImageId,
                                    T*S*A,
                                    Color);
         
-        CurPosition.X += Glyph->Advance * Size;
+        CurPosition.x += Glyph->Advance * Size;
         if (I != String.Count - 1 ) {
             u32 Kerning = Font_GetKerning(Font, 
                                           String.Data[I], 
                                           String.Data[I+1]);
-            CurPosition.X += Kerning * Size;
+            CurPosition.x += Kerning * Size;
             
         }
         ZLayerOffset += 0.001f;

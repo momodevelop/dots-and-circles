@@ -121,7 +121,7 @@ Main_StateNormal_Update(permanent_state* PermState,
         Mode->DeathBomb.Position = Mode->Player.Position;
         
         Mode->State = Main_StateType_PlayerDied;
-        Mode->Player.Position = V2f_Create(-1000.f, -1000.f);
+        Mode->Player.Position = v2f_create(-1000.f, -1000.f);
     }
     
     Main_RenderPlayer(Mode);

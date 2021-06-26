@@ -41,7 +41,7 @@ AlignForward(void* ptr, u8 align) {
 }
 
 static inline u8 
-AlignBackwardDiff(void* ptr, u8 align)  {
+align_backward_diff(void* ptr, u8 align)  {
     return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
 }
 

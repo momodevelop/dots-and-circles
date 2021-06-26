@@ -32,7 +32,7 @@ Main_UpdateWaves(game_mode_main* Mode,
                 Pattern->Timer += DeltaTime;
                 if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
                     v2f Pos = 
-                        V2f_Create(Rng_Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
+                        v2f_create(Rng_Bilateral(&Mode->Rng) * Game_DesignWidth * 0.5f,
                                    Rng_Bilateral(&Mode->Rng) * Game_DesignHeight * 0.5f);
                     
                     

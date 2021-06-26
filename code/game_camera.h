@@ -26,8 +26,8 @@ Camera_Set(game_camera* C) {
 static inline v2f
 Camera_ScreenToView(game_camera* C, v2f ScreenPos) {
     v2f Ret = {};
-    Ret.X = ScreenPos.X - C->Dimensions.W * 0.5f;
-    Ret.Y = -(ScreenPos.Y - C->Dimensions.H * 0.5f);
+    Ret.x = ScreenPos.x - C->Dimensions.w * 0.5f;
+    Ret.y = -(ScreenPos.y - C->Dimensions.h * 0.5f);
     
     return Ret;
 }
@@ -37,8 +37,8 @@ static inline v2f
 Camera_ScreenToWorld(game_camera* C, v2f ScreenPos) {
     
     v2f Ret = Camera_ScreenToView(C, ScreenPos);
-    Ret.X -= C->Position.X;
-    Ret.Y -= C->Position.Y;
+    Ret.x -= C->Position.x;
+    Ret.y -= C->Position.y;
     
     
     return Ret;

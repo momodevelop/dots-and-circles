@@ -74,24 +74,24 @@ Renderer_CalcRenderRegion(u32 WindowWidth,
     
     if (OptimalWindowWidth > (f32)WindowWidth) {
         // NOTE(Momo): Width has priority - top and bottom bars
-        Ret.Min.X = 0;
-        Ret.Max.X = WindowWidth;
+        Ret.Min.x = 0;
+        Ret.Max.x = WindowWidth;
         
         f32 EmptyHeight = (f32)WindowHeight - OptimalWindowHeight;
         
-        Ret.Min.Y = (u32)(EmptyHeight * 0.5f);
-        Ret.Max.Y = Ret.Min.Y + (u32)OptimalWindowHeight;
+        Ret.Min.y = (u32)(EmptyHeight * 0.5f);
+        Ret.Max.y = Ret.Min.y + (u32)OptimalWindowHeight;
     }
     else {
         // NOTE(Momo): Height has priority - left and right bars
-        Ret.Min.Y = 0;
-        Ret.Max.Y = WindowHeight;
+        Ret.Min.y = 0;
+        Ret.Max.y = WindowHeight;
         
         
         f32 EmptyWidth = (f32)WindowWidth - OptimalWindowWidth;
         
-        Ret.Min.X = (u32)(EmptyWidth * 0.5f);
-        Ret.Max.X = Ret.Min.X + (u32)OptimalWindowWidth;
+        Ret.Min.x = (u32)(EmptyWidth * 0.5f);
+        Ret.Max.x = Ret.Min.x + (u32)OptimalWindowWidth;
     }
     
     return Ret;
@@ -100,109 +100,100 @@ Renderer_CalcRenderRegion(u32 WindowWidth,
 
 
 static inline void
-Renderer_SetBasis(mailbox* Commands, m44f Basis) {
-    auto* Data = Mailbox_PushStruct(renderer_command_set_basis,
-                                    Commands, 
-                                    RendererCommandType_SetBasis);
-    Data->Basis = Basis;
+Renderer_SetBasis(Mailbox* commands, m44f basis) {
+    auto* Data = 
+        commands->push_struct<renderer_command_set_basis>(RendererCommandType_SetBasis);
+    Data->Basis = basis;
 }
 
 static inline void
-Renderer_SetOrthoCamera(mailbox* Commands, 
-                        v3f Position,
-                        aabb3f Frustum)   
+Renderer_SetOrthoCamera(Mailbox* commands, 
+                        v3f position,
+                        aabb3f frustum)   
 {
-    auto* Data = Mailbox_PushStruct(renderer_command_set_basis,
-                                    Commands, 
-                                    RendererCommandType_SetBasis);
+    auto* Data = commands->push_struct<renderer_command_set_basis>(RendererCommandType_SetBasis);
     
     auto P  = M44f_Orthographic(-1.f, 1.f,
                                 -1.f, 1.f,
                                 -1.f, 1.f,
-                                Frustum.Min.X,  
-                                Frustum.Max.X, 
-                                Frustum.Min.Y, 
-                                Frustum.Max.Y,
-                                Frustum.Min.Z, 
-                                Frustum.Max.Z,
+                                frustum.Min.x,  
+                                frustum.Max.x, 
+                                frustum.Min.y, 
+                                frustum.Max.y,
+                                frustum.Min.z, 
+                                frustum.Max.z,
                                 true);
     
-    m44f V = M44f_Translation(-Position.X, -Position.Y, -Position.Z);
+    m44f V = M44f_Translation(-position.x, -position.y, -position.z);
     Data->Basis = M44f_Concat(P,V);
 }
 
 static inline void
-Renderer_ClearColor(mailbox* Commands, c4f Colors) {
-    auto* Data = Mailbox_PushStruct(renderer_command_clear_color,
-                                    Commands,
-                                    RendererCommandType_ClearColor);
-    Data->Colors = Colors;
+Renderer_ClearColor(Mailbox* commands, c4f colors) {
+    auto* Data = commands->push_struct<renderer_command_clear_color>(RendererCommandType_ClearColor);
+    Data->Colors = colors;
 }
 
 
 
 static inline void
-Renderer_DrawTexturedQuad(mailbox* Commands, 
-                          c4f Colors, 
-                          m44f Transform, 
-                          renderer_texture_handle TextureHandle,
-                          quad2f TextureCoords = Quad2f_CreateDefaultUV())  
+Renderer_DrawTexturedQuad(Mailbox* commands, 
+                          c4f colors, 
+                          m44f transform, 
+                          renderer_texture_handle texture_handle,
+                          quad2f texture_coords = Quad2f_CreateDefaultUV())  
+
 {
-    using data_t = renderer_command_draw_textured_quad;
-    auto* Data = Mailbox_PushStruct(renderer_command_draw_textured_quad,
-                                    Commands, 
-                                    RendererCommandType_DrawTexturedQuad);
+    auto* Data = commands->push_struct<renderer_command_draw_textured_quad>(RendererCommandType_DrawTexturedQuad);
     
-    Data->Colors = Colors;
-    Data->Transform = Transform;
-    Data->TextureHandle = TextureHandle;
-    Data->TextureCoords = TextureCoords;
+    Data->Colors = colors;
+    Data->Transform = transform;
+    Data->TextureHandle = texture_handle;
+    Data->TextureCoords = texture_coords;
 }
 
 static inline void
-Renderer_DrawQuad(mailbox* Commands, 
-                  c4f Colors, 
-                  m44f Transform) 
+Renderer_DrawQuad(Mailbox* commands, 
+                  c4f colors, 
+                  m44f transform) 
 {
-    auto* Data = Mailbox_PushStruct(renderer_command_draw_quad,
-                                    Commands, 
-                                    RendererCommandType_DrawQuad);
-    Data->Colors = Colors;
-    Data->Transform = Transform;
+    auto* Data = commands->push_struct<renderer_command_draw_quad>(RendererCommandType_DrawQuad);
+    Data->Colors = colors;
+    Data->Transform = transform;
 }
 
 static inline void 
-Renderer_DrawLine2f(mailbox* Payload, 
+Renderer_DrawLine2f(Mailbox* commands, 
                     line2f Line,
                     f32 Thickness,
                     c4f Colors,
                     f32 PosZ) 
 {
-    // NOTE(Momo): Min.Y needs to be lower than Max.Y
-    if (Line.Min.Y > Line.Max.Y) {
+    // NOTE(Momo): Min.Y needs to be lower than Max.y
+    if (Line.Min.y > Line.Max.y) {
         Swap(v2f, Line.Min, Line.Max);
     }
     
-    v2f LineVector = V2f_Sub(Line.Max, Line.Min);
-    f32 LineLength = V2f_Length(LineVector);
-    v2f LineMiddle = V2f_Midpoint(Line.Max, Line.Min);
+    v2f LineVector = sub(Line.Max, Line.Min);
+    f32 LineLength = length(LineVector);
+    v2f LineMiddle = midpoint(Line.Max, Line.Min);
     
-    v2f XAxis = V2f_Create(1.f, 0.f);
-    f32 Angle = V2f_AngleBetween(LineVector, XAxis);
+    v2f XAxis = v2f_create(1.f, 0.f);
+    f32 Angle = angle_between(LineVector, XAxis);
     
     //TODO: Change line3f
-    m44f T = M44f_Translation(LineMiddle.X, LineMiddle.Y, PosZ);
+    m44f T = M44f_Translation(LineMiddle.x, LineMiddle.y, PosZ);
     m44f R = M44f_RotationZ(Angle);
     m44f S = M44f_Scale(LineLength, Thickness, 1.f) ;
     
     m44f RS = M44f_Concat(R,S);
     m44f TRS = M44f_Concat(T, RS);
     
-    Renderer_DrawQuad(Payload, Colors, TRS);
+    Renderer_DrawQuad(commands, Colors, TRS);
 }
 
 static inline void
-Renderer_DrawCircle2f(mailbox* Commands,
+Renderer_DrawCircle2f(Mailbox* commands,
                       circle2f Circle,
                       f32 Thickness, 
                       u32 LineCount,
@@ -213,80 +204,78 @@ Renderer_DrawCircle2f(mailbox* Commands,
     // We can't really have a surface with less than 3 lines
     Assert(LineCount >= 3);
     f32 AngleIncrement = TAU / LineCount;
-    v2f Pt1 = V2f_Create(0.f, Circle.Radius); 
-    v2f Pt2 = V2f_Rotate(Pt1, AngleIncrement);
+    v2f Pt1 = v2f_create(0.f, Circle.Radius); 
+    v2f Pt2 = rotate(Pt1, AngleIncrement);
     
     for (u32 I = 0; I < LineCount; ++I) {
-        v2f LinePt1 = V2f_Add(Pt1, Circle.Origin);
-        v2f LinePt2 = V2f_Add(Pt2, Circle.Origin);
+        v2f LinePt1 = Pt1 + Circle.Origin;
+        v2f LinePt2 = Pt2 + Circle.Origin;
         line2f Line = Line2f_CreateFromV2f(LinePt1, LinePt2);
-        Renderer_DrawLine2f(Commands, 
+        Renderer_DrawLine2f(commands, 
                             Line,
                             Thickness,
                             Color,
                             PosZ);
         
         Pt1 = Pt2;
-        Pt2 = V2f_Rotate(Pt1, AngleIncrement);
+        Pt2 = rotate(Pt1, AngleIncrement);
         
     }
 }
 
 static inline void 
-Renderer_DrawAabb2f(mailbox* Commands, 
+Renderer_DrawAabb2f(Mailbox* commands, 
                     aabb2f Aabb,
                     f32 Thickness,
                     c4f Colors,
                     f32 PosZ ) 
 {
     //Bottom
-    Renderer_DrawLine2f(Commands, 
-                        Line2f_Create(Aabb.Min.X, 
-                                      Aabb.Min.Y,  
-                                      Aabb.Max.X, 
-                                      Aabb.Min.Y),
+    Renderer_DrawLine2f(commands, 
+                        Line2f_Create(Aabb.Min.x, 
+                                      Aabb.Min.y,  
+                                      Aabb.Max.x, 
+                                      Aabb.Min.y),
                         Thickness, 
                         Colors,
                         PosZ);
     // Left
-    Renderer_DrawLine2f(Commands, 
-                        Line2f_Create(Aabb.Min.X,
-                                      Aabb.Min.Y,
-                                      Aabb.Min.X,
-                                      Aabb.Max.Y),  
+    Renderer_DrawLine2f(commands, 
+                        Line2f_Create(Aabb.Min.x,
+                                      Aabb.Min.y,
+                                      Aabb.Min.x,
+                                      Aabb.Max.y),  
                         Thickness, 
                         Colors,
                         PosZ);
     
     //Top
-    Renderer_DrawLine2f(Commands, 
-                        Line2f_Create(Aabb.Min.X,
-                                      Aabb.Max.Y,
-                                      Aabb.Max.X,
-                                      Aabb.Max.Y), 
+    Renderer_DrawLine2f(commands, 
+                        Line2f_Create(Aabb.Min.x,
+                                      Aabb.Max.y,
+                                      Aabb.Max.x,
+                                      Aabb.Max.y), 
                         Thickness, 
                         Colors,
                         PosZ);
     
     //Right 
-    Renderer_DrawLine2f(Commands, 
-                        Line2f_Create(Aabb.Max.X,
-                                      Aabb.Min.Y,
-                                      Aabb.Max.X,
-                                      Aabb.Max.Y),  
+    Renderer_DrawLine2f(commands, 
+                        Line2f_Create(Aabb.Max.x,
+                                      Aabb.Min.y,
+                                      Aabb.Max.x,
+                                      Aabb.Max.y),  
                         Thickness, 
                         Colors,
                         PosZ);
 }
 
 static inline void 
-Renderer_SetDesignResolution(mailbox* Commands, 
+Renderer_SetDesignResolution(Mailbox* Commands, 
                              u32 Width, 
                              u32 Height)  
 {
-    auto* Data = Mailbox_PushStruct(renderer_command_set_design_resolution,
-                                    Commands, 
-                                    RendererCommandType_SetDesignResolution);
+    auto* Data = Commands->push_struct<renderer_command_set_design_resolution>(RendererCommandType_SetDesignResolution);
     Data->Width = Width;
     Data->Height = Height;
 }

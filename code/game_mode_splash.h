@@ -31,15 +31,15 @@ UpdateSplashImageEntity(splash_image_entity* Entity,
     // NOTE(Momo): Update
     f32 Ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     
-    Entity->Position.X = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
+    Entity->Position.x = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44f_Translation(Entity->Position.X,
-                              Entity->Position.Y,
-                              Entity->Position.Z);
-    m44f S = M44f_Scale(Entity->Scale.X,
-                        Entity->Scale.Y,
+    m44f T = M44f_Translation(Entity->Position.x,
+                              Entity->Position.y,
+                              Entity->Position.z);
+    m44f S = M44f_Scale(Entity->Scale.x,
+                        Entity->Scale.y,
                         1.f);
     Draw_TexturedQuadFromImage(Entity->TextureAabb,
                                M44f_Concat(T,S),
@@ -73,10 +73,10 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44f_Translation(Entity->Position.X,
-                              Entity->Position.Y,
-                              Entity->Position.Z);
-    m44f S = M44f_Scale(Entity->Scale.X, Entity->Scale.Y, 1.f);
+    m44f T = M44f_Translation(Entity->Position.x,
+                              Entity->Position.y,
+                              Entity->Position.z);
+    m44f S = M44f_Scale(Entity->Scale.x, Entity->Scale.y, 1.f);
     m44f TS = M44f_Concat(T,S);
     Renderer_DrawQuad(G_Renderer, Entity->Colors, TS);
     

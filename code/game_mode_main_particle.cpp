@@ -9,9 +9,9 @@ Main_SpawnParticle(game_mode_main* Mode,
             return;
         }
         P->Position = Position;
-        P->Direction.X = Rng_Bilateral(&Mode->Rng);
-        P->Direction.Y = Rng_Bilateral(&Mode->Rng);
-        P->Direction = V2f_Normalize(P->Direction);
+        P->Direction.x = Rng_Bilateral(&Mode->Rng);
+        P->Direction.y = Rng_Bilateral(&Mode->Rng);
+        P->Direction = normalize(P->Direction);
         P->Timer = 0.f;
         P->Speed = Rng_Between(&Mode->Rng, P->SpeedMin, P->SpeedMax);
     }
@@ -47,8 +47,8 @@ Main_RenderParticles(game_mode_main* Mode) {
         f32 Offset = CurrentCount*0.001f;
         
         m44f S = M44f_Scale(Size, Size, 1.f);
-        m44f T = M44f_Translation(P->Position.X,
-                                  P->Position.Y,
+        m44f T = M44f_Translation(P->Position.x,
+                                  P->Position.y,
                                   ZLayParticles + Offset);
         
         Draw_TexturedQuadFromImage(Image_Particle,

@@ -21,12 +21,12 @@ Bullet_Spawn(game_mode_main* Mode,
     }
     B->Position = Position;
 	B->Speed = Speed;
-    B->Size = V2f_Create(16.f, 16.f);
+    B->Size = v2f_create(16.f, 16.f);
     
-    B->HitCircle = Circle2f_Create(V2f_Create(0.f, 0.f), 4.f);
+    B->HitCircle = Circle2f_Create(v2f_create(0.f, 0.f), 4.f);
     
-    if (V2f_LengthSq(Direction) > 0.f) {
-	    B->Direction = V2f_Normalize(Direction);
+    if (length_sq(Direction) > 0.f) {
+	    B->Direction = normalize(Direction);
     }
     B->MoodType = Mood;
     
@@ -39,10 +39,10 @@ Main_UpdateBullets(game_mode_main* Mode,
     auto SlearIfLamb = [&](bullet* B) {
         B->Position += B->Direction * B->Speed * DeltaTime;
         
-        return B->Position.X <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
-            B->Position.X >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
-            B->Position.Y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
-            B->Position.Y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius;
+        return B->Position.x <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
+            B->Position.x >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
+            B->Position.y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
+            B->Position.y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius;
     };
     
     Mode->DotBullets.foreach_slear_if(SlearIfLamb);
@@ -58,12 +58,12 @@ Main_RenderBullets(game_mode_main* Mode)
     // Thus we have to render Dots first before Circles.
     f32 LayerOffset = 0.f;
     auto ForEachLamb = [&](bullet* B, image_id Image) {
-        m44f S = M44f_Scale(B->Size.X, 
-                            B->Size.Y, 
+        m44f S = M44f_Scale(B->Size.x, 
+                            B->Size.y, 
                             1.f);
         
-        m44f T = M44f_Translation(B->Position.X,
-                                  B->Position.Y,
+        m44f T = M44f_Translation(B->Position.x,
+                                  B->Position.y,
                                   ZLayBullet + LayerOffset);
         
         Draw_TexturedQuadFromImage(Image,

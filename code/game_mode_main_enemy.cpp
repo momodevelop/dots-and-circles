@@ -72,7 +72,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
             enemy_shoot_homing* Shoot = &Enemy->ShootHoming;
             Shoot->Timer += DeltaTime;
             if (Shoot->Timer > Shoot->Duration) {
-                v2f Direction = V2f_Normalize(Player->Position - Enemy->Position);
+                v2f Direction = normalize(Player->Position - Enemy->Position);
                 Bullet_Spawn(Mode, Assets, Enemy->Position, Direction, 200.f, Shoot->Mood);
                 Shoot->Timer = 0.f;
             }
@@ -82,7 +82,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
             Shoot->Timer += DeltaTime;
             static m22f RotateMtx = M22f_Rotation(TAU/8);
             if (Shoot->Timer > Shoot->Duration) {
-                v2f Dir = V2f_Create(1.f, 0.f);
+                v2f Dir = v2f_create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
                     Dir = RotateMtx * Dir;
                     Bullet_Spawn(Mode, Assets, Enemy->Position, Dir, 200.f, Shoot->Mood);
@@ -158,8 +158,8 @@ Main_RenderEnemies(game_mode_main* Mode)
         }
         m44f S = M44f_Scale(Size, Size, 1.f);
         m44f R = M44f_RotationZ(Enemy->Rotation);
-        m44f T = M44f_Translation(Enemy->Position.X,
-                                  Enemy->Position.Y,
+        m44f T = M44f_Translation(Enemy->Position.x,
+                                  Enemy->Position.y,
                                   ZLayEnemy + Offset);
         
         Draw_TexturedQuadFromImage(Image_Enemy,
