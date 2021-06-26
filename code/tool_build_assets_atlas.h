@@ -39,8 +39,8 @@ Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
     u32 TextureAabbW = Aabb2u_Width(TextureAabb);
     u32 TextureAabbH = Aabb2u_Height(TextureAabb);
     
-    for (u32 y = TextureAabb.Min.Y; y < TextureAabb.Min.Y + TextureAabbH; ++y) {
-        for (u32 x = TextureAabb.Min.X; x < TextureAabb.Min.X + TextureAabbW; ++x) {
+    for (u32 y = TextureAabb.Min.y; y < TextureAabb.Min.y + TextureAabbH; ++y) {
+        for (u32 x = TextureAabb.Min.x; x < TextureAabb.Min.x + TextureAabbW; ++x) {
             u32 Index = (x + y * AtlasWidth) * 4;
             Assert(Index < (AtlasWidth * AtlasHeight * 4));
             for (u32 c = 0; c < 4; ++c) {

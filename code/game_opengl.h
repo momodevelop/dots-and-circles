@@ -332,14 +332,14 @@ Opengl_AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
 static inline void 
 Opengl_AlignViewport(opengl* Opengl) 
 {
-    aabb2u Region = Renderer_CalcRenderRegion(Opengl->WindowDimensions.W, 
-                                              Opengl->WindowDimensions.H, 
-                                              Opengl->DesignDimensions.W, 
-                                              Opengl->DesignDimensions.H);
+    aabb2u Region = Renderer_CalcRenderRegion(Opengl->WindowDimensions.w, 
+                                              Opengl->WindowDimensions.h, 
+                                              Opengl->DesignDimensions.w, 
+                                              Opengl->DesignDimensions.h);
     
     u32 x, y, w, h;
-    x = Region.Min.X;
-    y = Region.Min.Y;
+    x = Region.Min.x;
+    y = Region.Min.y;
     w = Aabb2u_Width(Region);
     h = Aabb2u_Height(Region);
     
@@ -359,8 +359,8 @@ Opengl_Resize(opengl* Opengl,
               u16 WindowWidth, 
               u16 WindowHeight) 
 {
-    Opengl->WindowDimensions.W = WindowWidth;
-    Opengl->WindowDimensions.H = WindowHeight;
+    Opengl->WindowDimensions.w = WindowWidth;
+    Opengl->WindowDimensions.h = WindowHeight;
     Opengl_AlignViewport(Opengl);
 }
 
@@ -726,7 +726,7 @@ Opengl_ClearTextures(opengl* Opengl) {
 
 
 static inline void
-Opengl_Render(opengl* Opengl, mailbox* Commands) 
+Opengl_Render(opengl* Opengl, Mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -736,21 +736,21 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
     
     Opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    for (u32 i = 0; i < Commands->EntryCount; ++i) {
-        mailbox_entry_header* Entry = Mailbox_GetEntry(Commands, i);
+    for (u32 i = 0; i < Commands->entry_count; ++i) {
+        Mailbox_Entry_Header* Entry = Commands->get_entry(i);
         
-        switch(Entry->Type) {
+        switch(Entry->type) {
             case RendererCommandType_SetDesignResolution: {
                 auto* Data = (renderer_command_set_design_resolution*)
-                    Mailbox_GetEntryData(Commands, Entry);
+                    Commands->get_entry_data(Entry);
                 
-                Opengl->DesignDimensions.W = Data->Width;
-                Opengl->DesignDimensions.H = Data->Height;
+                Opengl->DesignDimensions.w = Data->Width;
+                Opengl->DesignDimensions.h = Data->Height;
                 Opengl_AlignViewport(Opengl);
             } break;
             case RendererCommandType_SetBasis: {
                 auto* Data = (renderer_command_set_basis*)
-                    Mailbox_GetEntryData(Commands, Entry);
+                    Commands->get_entry_data(Entry);
                 
                 Opengl_DrawInstances(Opengl, 
                                      CurrentTexture, 
@@ -771,7 +771,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
             } break;
             case RendererCommandType_ClearColor: {
                 auto* Data = (renderer_command_clear_color*)
-                    Mailbox_GetEntryData(Commands, Entry);
+                    Commands->get_entry_data(Entry);
                 Opengl->glClearColor(Data->Colors.R, 
                                      Data->Colors.G, 
                                      Data->Colors.B, 
@@ -779,7 +779,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
             } break;
             case RendererCommandType_DrawQuad: {
                 auto* Data = (renderer_command_draw_quad*)
-                    Mailbox_GetEntryData(Commands, Entry);
+                    Commands->get_entry_data(Entry);
                 
                 GLuint OpenglTextureHandle = *(Opengl->Textures + OpenglPredefTexture_Blank);
                 
@@ -820,7 +820,7 @@ Opengl_Render(opengl* Opengl, mailbox* Commands)
             } break;
             case RendererCommandType_DrawTexturedQuad: {
                 auto* Data = (renderer_command_draw_textured_quad*)
-                    Mailbox_GetEntryData(Commands, Entry);
+                    Commands->get_entry_data(Entry);
                 
                 GLuint OpenglTextureHandle = *(Opengl->Textures + Data->TextureHandle.Id); 
                 

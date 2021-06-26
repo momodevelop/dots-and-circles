@@ -178,7 +178,7 @@ Renderer_DrawLine2f(Mailbox* commands,
     f32 LineLength = length(LineVector);
     v2f LineMiddle = midpoint(Line.Max, Line.Min);
     
-    v2f XAxis = v2f_create(1.f, 0.f);
+    v2f XAxis = { 1.f, 0.f };
     f32 Angle = angle_between(LineVector, XAxis);
     
     //TODO: Change line3f
@@ -204,7 +204,7 @@ Renderer_DrawCircle2f(Mailbox* commands,
     // We can't really have a surface with less than 3 lines
     Assert(LineCount >= 3);
     f32 AngleIncrement = TAU / LineCount;
-    v2f Pt1 = v2f_create(0.f, Circle.Radius); 
+    v2f Pt1 = { 0.f, Circle.Radius }; 
     v2f Pt2 = rotate(Pt1, AngleIncrement);
     
     for (u32 I = 0; I < LineCount; ++I) {

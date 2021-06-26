@@ -187,10 +187,10 @@ int main() {
                     aabb2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Info, 
                                           Font->Codepoint, 
-                                          &Box.Min.X, 
-                                          &Box.Min.Y, 
-                                          &Box.Max.X, 
-                                          &Box.Max.Y);
+                                          &Box.Min.x, 
+                                          &Box.Min.y, 
+                                          &Box.Max.x, 
+                                          &Box.Max.y);
                     
                     aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
                     Tba_WriteFontGlyph(AssetBuilder, 
@@ -215,10 +215,10 @@ int main() {
         
         aabb2i BoundingBox = {}; 
         stbtt_GetFontBoundingBox(&LoadedFont.Info, 
-                                 &BoundingBox.Min.X,
-                                 &BoundingBox.Min.Y,
-                                 &BoundingBox.Max.X,
-                                 &BoundingBox.Max.Y
+                                 &BoundingBox.Min.x,
+                                 &BoundingBox.Min.y,
+                                 &BoundingBox.Max.x,
+                                 &BoundingBox.Max.y
                                  );
         printf("[Build Assets] Writing font information...\n");
         Tba_WriteFont(AssetBuilder, Font_Default, 

@@ -82,7 +82,7 @@ pow(f32 b, f32 e) {
 //~ NOTE(Momo): Vectors
 struct v2f {
     union {
-        f32 elements[2];
+        f32 elements[2] = {0};
         struct {
             f32 x;
             f32 y;
@@ -174,7 +174,7 @@ struct v3f {
 
 struct v4f {
     union {
-        f32 elements[4];
+        f32 elements[4] = {0};
         struct {
             union {
                 v3f xyz;
@@ -184,6 +184,8 @@ struct v4f {
             }; 
             f32 w;
         };
+        
+        
     };
     
     inline auto& operator[](u32 i) { 
@@ -191,14 +193,9 @@ struct v4f {
         return elements[i]; 
     }
     
-    
 };
 
 //~ NOTE(Momo): v2f functions
-static inline v2f
-v2f_create(f32 x, f32 y) {
-    return { x, y };
-}
 
 
 static inline v2f 
@@ -400,15 +397,6 @@ v2u_create(u32 x, u32 y) {
 }
 
 //~ NOTE(Momo): v3f Functions
-static inline v3f
-v3f_create(f32 x, f32 y, f32 z) {
-    v3f ret = {};
-    ret.x = x;
-    ret.y = y;
-    ret.z = z;
-    return ret;
-}
-
 static inline v3f 
 add(v3f l, v3f r) {
     l.x += r.x;
@@ -484,7 +472,7 @@ div(v3f l, f32 r) {
 }
 
 static inline v3f
-V3f_Neg(v3f v){
+neg(v3f v){
     v.x = -v.x;
     v.y = -v.y;
     v.z = -v.z;
@@ -605,9 +593,12 @@ static inline v2f
 v2i_to_v2f(v2i v) {
     v2f ret = {};
     ret.x = (f32)v.x;
-    ret.y = (f32)v.y;
-    
-    return ret;
+    ret.y = (f32)v.y;return ret;
+}
+
+static inline v2f
+to_v2f(v2u v) {
+    return { f32(v.x), f32(v.y) };
 }
 
 //~ NOTE(Momo): AABB 
@@ -1064,8 +1055,8 @@ Line2f_CreateFromV2f(v2f Min, v2f Max) {
 
 static inline line2f
 Line2f_Create(f32 MinX, f32 MinY, f32 MaxX, f32 MaxY) {
-    v2f Min = v2f_create(MinX, MinY);
-    v2f Max = v2f_create(MaxX, MaxY);
+    v2f Min = { MinX, MinY };
+    v2f Max = { MaxX, MaxY };
     
     return Line2f_CreateFromV2f(Min, Max);
     
@@ -1116,10 +1107,10 @@ struct quad2f {
 static inline quad2f
 Quad2f_CreateDefaultUV() {
     quad2f Ret = {};
-    Ret.Points[0] = v2f_create(0.f, 1.f);
-    Ret.Points[1] = v2f_create(1.f, 1.f);
-    Ret.Points[2] = v2f_create(1.f, 0.f);
-    Ret.Points[3] = v2f_create(0.f, 0.f);
+    Ret.Points[0] = { 0.f, 1.f };
+    Ret.Points[1] = { 1.f, 1.f };
+    Ret.Points[2] = { 1.f, 0.f };
+    Ret.Points[3] = { 0.f, 0.f };
     
     return Ret;
 }
@@ -1128,10 +1119,10 @@ Quad2f_CreateDefaultUV() {
 static inline quad2f
 Aabb2f_To_Quad2f(aabb2f Aabb) {
     quad2f Ret = {};
-    Ret.Points[0] = v2f_create(Aabb.Min.x, Aabb.Max.y);
-    Ret.Points[1] = v2f_create(Aabb.Max.x, Aabb.Max.y);
-    Ret.Points[2] = v2f_create(Aabb.Max.x, Aabb.Min.y);
-    Ret.Points[3] = v2f_create(Aabb.Min.x, Aabb.Min.y);
+    Ret.Points[0] = { Aabb.Min.x, Aabb.Max.y };
+    Ret.Points[1] = { Aabb.Max.x, Aabb.Max.y };
+    Ret.Points[2] = { Aabb.Max.x, Aabb.Min.y };
+    Ret.Points[3] = { Aabb.Min.x, Aabb.Min.y };
     
     return Ret;
 }

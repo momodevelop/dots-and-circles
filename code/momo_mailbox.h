@@ -8,7 +8,6 @@ struct Mailbox_Entry_Header {
 };
 
 struct Mailbox {
-    Mailbox(void* memory, u32 memory_size);
     
     u8* memory;
     u8* data_memory_at;
@@ -17,6 +16,7 @@ struct Mailbox {
     u32 memory_size;
     u32 entry_count;
     
+    b8 init(void * mem, u32 mem_size);
     void clear();
     Mailbox_Entry_Header* get_entry(u32 index);
     void* get_entry_data(Mailbox_Entry_Header* entry);
@@ -26,8 +26,20 @@ struct Mailbox {
         T* push_struct(u32);
 };
 
-Mailbox::Mailbox(void* mem, u32 mem_size) 
-: memory((u8*)mem), memory_size(mem_size) {}
+b8
+Mailbox::init(void* mem, u32 mem_size) {
+    if (!mem || mem_size == 0) {
+        return false;
+    }
+    
+    memory = (u8*)mem;
+    memory_size = mem_size;
+    clear();
+    
+    return true;
+}
+
+
 
 void
 Mailbox::clear() {

@@ -59,7 +59,7 @@ DebugConsole_Init(debug_console* C,
 {
     C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
     
-    C->Position = v2f_create(DebugConsole_StartPosX, DebugConsole_StartPosY);
+    C->Position = { DebugConsole_StartPosX, DebugConsole_StartPosY };
     C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
     C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
     
@@ -144,8 +144,8 @@ DebugConsole_Update(debug_console* Console,
     
     // Transition
     {
-        v2f StartPos = v2f_create(DebugConsole_StartPosX, DebugConsole_StartPosY);
-        v2f EndPos = v2f_create(DebugConsole_EndPosX, DebugConsole_EndPosY);
+        v2f StartPos = { DebugConsole_StartPosX, DebugConsole_StartPosY };
+        v2f EndPos =  { DebugConsole_EndPosX, DebugConsole_EndPosY };
         
         f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
         v2f Delta = EndPos - StartPos; 
@@ -233,7 +233,7 @@ DebugConsole_Render(debug_console* Console)
         return;
     }
     font* Font = G_Assets->Fonts + Font_Default;
-    v2f Dimensions = v2f_create( DebugConsole_Width, DebugConsole_Height );
+    v2f Dimensions = { DebugConsole_Width, DebugConsole_Height };
     f32 Bottom = Console->Position.y - Dimensions.h * 0.5f;
     f32 Left = Console->Position.x - Dimensions.w * 0.5f;
     f32 LineHeight = Dimensions.h / (Console->InfoLines.count + 1);

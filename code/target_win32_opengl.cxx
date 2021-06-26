@@ -1089,8 +1089,8 @@ Win32_AudioFlush(win32_audio* Audio,
 static inline v2u
 Win32_GetMonitorDimensions() {
     v2u Ret = {};
-    Ret.W = S32_ToU32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = S32_ToU32(GetSystemMetrics(SM_CYSCREEN));
+    Ret.w = S32_ToU32(GetSystemMetrics(SM_CXSCREEN));
+    Ret.h = S32_ToU32(GetSystemMetrics(SM_CYSCREEN));
     return Ret;
 }
 
@@ -1098,8 +1098,7 @@ static inline v2u
 Win32_GetWindowDimensions(HWND Window) {
     RECT Rect = {};
     GetWindowRect(Window, &Rect);
-    return V2u_Create(u16(Rect.right - Rect.left),
-                      u16(Rect.bottom - Rect.top));
+    return { u16(Rect.right - Rect.left), u16(Rect.bottom - Rect.top) };
     
 }
 
@@ -1107,8 +1106,7 @@ static inline v2u
 Win32_GetClientDimensions(HWND Window) {
     RECT Rect = {};
     GetClientRect(Window, &Rect);
-    return V2u_Create(u32(Rect.right - Rect.left),
-                      u32(Rect.bottom - Rect.top));
+    return { u32(Rect.right - Rect.left), u32(Rect.bottom - Rect.top) };
     
 }
 
@@ -1131,22 +1129,22 @@ Win32_ProcessMessages(HWND Window,
                 // NOTE(Momo): This is the actual conversion from screen space to 
                 // design space. I'm not 100% if this should be here but I guess
                 // only time will tell.
-                Input->WindowMousePos.X = (f32)GET_X_LPARAM(Msg.lParam);
-                Input->WindowMousePos.Y = (f32)GET_Y_LPARAM(Msg.lParam);
+                Input->WindowMousePos.x = (f32)GET_X_LPARAM(Msg.lParam);
+                Input->WindowMousePos.y = (f32)GET_Y_LPARAM(Msg.lParam);
                 
                 v2u WindowDims = State->Opengl->WindowDimensions;
                 aabb2u RenderRegion = State->Opengl->RenderRegion;
                 
-                Input->RenderMousePos.X = Input->WindowMousePos.X - RenderRegion.Min.X;
-                Input->RenderMousePos.Y = Input->WindowMousePos.Y - RenderRegion.Min.Y;
+                Input->RenderMousePos.x = Input->WindowMousePos.x - RenderRegion.Min.x;
+                Input->RenderMousePos.y = Input->WindowMousePos.y - RenderRegion.Min.y;
                 
-                v2f DesignDimsF = V2f_CreateFromV2u(State->Opengl->DesignDimensions);
+                v2f DesignDimsF = to_v2f(State->Opengl->DesignDimensions);
                 v2u RenderDimsU = Aabb2u_Dimensions(RenderRegion);
-                v2f RenderDimsF = V2f_CreateFromV2u(RenderDimsU);
-                v2f DesignToRenderRatio = V2f_Ratio(DesignDimsF, RenderDimsF);
+                v2f RenderDimsF = to_v2f(RenderDimsU);
+                v2f DesignToRenderRatio = ratio(DesignDimsF, RenderDimsF);
                 
-                Input->DesignMousePos.X = Input->RenderMousePos.X * DesignToRenderRatio.W;
-                Input->DesignMousePos.Y = Input->RenderMousePos.Y * DesignToRenderRatio.H;
+                Input->DesignMousePos.x = Input->RenderMousePos.x * DesignToRenderRatio.w;
+                Input->DesignMousePos.y = Input->RenderMousePos.y * DesignToRenderRatio.h;
                 
             } break;
             case WM_LBUTTONUP:
@@ -1252,16 +1250,16 @@ Win32_WindowCallback(HWND Window,
             {
 #if 0
                 v2u WindowWH = Win32_GetWindowDimensions(Window);
-                Win32_Log("[Win32::Resize] Window: %d x %d\n", WindowWH.W, WindowWH.H);
+                Win32_Log("[Win32::Resize] Window: %d x %d\n", WindowWH.w, WindowWH.h);
 #endif
                 
                 v2u ClientWH = Win32_GetClientDimensions(Window);
-                if (Opengl->WindowDimensions.W == ClientWH.W  &&
-                    Opengl->WindowDimensions.H == ClientWH.H ) {
+                if (Opengl->WindowDimensions.w == ClientWH.w  &&
+                    Opengl->WindowDimensions.h == ClientWH.h ) {
                     return Result;
                 }
-                Win32_Log("[Win32::Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
-                Opengl_Resize(Opengl, (u16)ClientWH.W, (u16)ClientWH.H);
+                Win32_Log("[Win32::Resize] Client: %d x %d\n", ClientWH.w, ClientWH.h);
+                Opengl_Resize(Opengl, (u16)ClientWH.w, (u16)ClientWH.h);
             }
         } break;
         default: {
@@ -1294,10 +1292,10 @@ Win32_CreateWindow(HINSTANCE Instance,
     HWND Window = {};
     RECT WindowRect = {};
     v2u MonitorDimensions = Win32_GetMonitorDimensions();
-    WindowRect.left = MonitorDimensions.W / 2 - WindowWidth / 2;
-    WindowRect.right = MonitorDimensions.W / 2 + WindowWidth / 2;
-    WindowRect.top = MonitorDimensions.H / 2 - WindowHeight / 2;
-    WindowRect.bottom = MonitorDimensions.H / 2 + WindowHeight / 2;
+    WindowRect.left = MonitorDimensions.w / 2 - WindowWidth / 2;
+    WindowRect.right = MonitorDimensions.w / 2 + WindowWidth / 2;
+    WindowRect.top = MonitorDimensions.h / 2 - WindowHeight / 2;
+    WindowRect.bottom = MonitorDimensions.h / 2 + WindowHeight / 2;
     
     DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
     AdjustWindowRectEx(&WindowRect,
@@ -1327,8 +1325,8 @@ Win32_CreateWindow(HINSTANCE Instance,
     Win32_Log("[Win32::Window] Window created successfully\n");
     v2u WindowWH = Win32_GetWindowDimensions(Window);
     v2u ClientWH = Win32_GetClientDimensions(Window);
-    Win32_Log("[Win32::Window] Client: %d x %d\n", ClientWH.W, ClientWH.H);
-    Win32_Log("[Win32::Window] Window: %d x %d\n", WindowWH.W, WindowWH.H);
+    Win32_Log("[Win32::Window] Client: %d x %d\n", ClientWH.w, ClientWH.h);
+    Win32_Log("[Win32::Window] Window: %d x %d\n", WindowWH.w, WindowWH.h);
     return Window;
     
 }
@@ -1566,14 +1564,14 @@ Win32_InitGameMemory(win32_game_memory* GameMemory,
 }
 
 static inline void
-Win32_FreeRenderCommands(mailbox* RenderCommands) {
+Win32_FreeRenderCommands(Mailbox* RenderCommands) {
     Win32_Log("[Win32::RenderCommands] Freed\n"); 
-    Win32_FreeMemory(RenderCommands->Memory);
+    Win32_FreeMemory(RenderCommands->memory);
 }
 
 
 static inline b8
-Win32_InitRenderCommands(mailbox* RenderCommands,
+Win32_InitRenderCommands(Mailbox* RenderCommands,
                          u32 RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
         Win32_AllocateMemory(RenderCommandsMemorySize); 
@@ -1581,8 +1579,8 @@ Win32_InitRenderCommands(mailbox* RenderCommands,
         Win32_Log("[Win32::RenderCommands] Failed to allocate\n"); 
         return false;
     }
-    (*RenderCommands) = Mailbox_Create(RenderCommandsMemory,
-                                       RenderCommandsMemorySize);
+    RenderCommands->init(RenderCommandsMemory,
+                         RenderCommandsMemorySize);
     Win32_Log("[Win32::RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
     return true;
@@ -1663,7 +1661,7 @@ WinMain(HINSTANCE Instance,
     Defer { Win32_FreeGameMemory(&State->GameMemory); };
     
     // Initialize RenderCommands
-    mailbox RenderCommands = {};
+    Mailbox RenderCommands = {};
     if(!Win32_InitRenderCommands(&RenderCommands, Megibytes(64))) {
         Win32_Log("[Win32::Main] Cannot initialize render commands");
         return 1;
@@ -1731,8 +1729,9 @@ WinMain(HINSTANCE Instance,
         }
         
         
+        
         Opengl_Render(State->Opengl, &RenderCommands);
-        Mailbox_Clear(&RenderCommands);
+        RenderCommands.clear();
         
         Win32_AudioFlush(&Audio, GameAudioOutput);
         
