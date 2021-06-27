@@ -1,54 +1,62 @@
 #ifndef __MOMO_TIMER__
 #define __MOMO_TIMER__
 
-struct timer {
-    f32 Current;
-    f32 End;
+struct Timer {
+    f32 current;
+    f32 end;
+    
+    static inline Timer create(f32 duration);
+    void tick(f32 dt);
+    void untick(f32 dt);
+    void reset();
+    b8 is_end();
+    b8 is_begin();
+    f32 percent();
 };
 
-static inline timer
-Timer_Create(f32 EndTime) {
-    timer Ret = {};
-    Ret.End = EndTime;
-    return Ret;
+inline Timer
+Timer::create(f32 duration) {
+    Assert(!is_equal(duration, 0.f));
+    Timer ret = {};
+    ret.end = duration;
+    return ret;
 }
 
-static inline void
-Timer_Tick(timer* Timer, f32 DeltaTime) {
-    Timer->Current += DeltaTime;
-    if (Timer->Current >= Timer->End) {
-        Timer->Current = Timer->End;
+void
+Timer::tick(f32 dt) {
+    current += dt;
+    if (current >= end) {
+        current = end;
     }
 }
 
-static inline void
-Timer_Untick(timer* Timer, f32 DeltaTime) {
-    Timer->Current -= DeltaTime;
-    if (Timer->Current < 0.f ) {
-        Timer->Current = 0.f;
+void
+Timer::untick(f32 dt) {
+    current -= dt;
+    if (current < 0.f ) {
+        current = 0.f;
     }
 }
 
-static inline void
-Timer_Reset(timer* Timer) {
-    Timer->Current = 0.f;
+void
+Timer::reset() {
+    current = 0.f;
 }
 
-static inline b8
-Timer_IsEnd(timer Timer) {
-    return Timer.Current >= Timer.End;
+b8
+Timer::is_end() {
+    return current >= end;
 }
 
-static inline b8
-Timer_IsBegin(timer Timer) {
-    return Timer.Current <= 0.f;
+b8
+Timer::is_begin() {
+    return current <= 0.f;
 }
 
 // Returns [0 - 1]
-static inline f32
-Timer_Percent(timer Timer) {
-    Assert(Timer.End != 0.f);
-    return Timer.Current / Timer.End;
+f32
+Timer::percent() {
+    return current / end;
 }
 
 #endif

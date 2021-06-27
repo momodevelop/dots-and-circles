@@ -41,12 +41,12 @@ struct debug_console {
     
     // Backspace (to delete character) related
     // Maybe make an easing system?
-    timer StartPopRepeatTimer;
-    timer PopRepeatTimer;
+    Timer StartPopRepeatTimer;
+    Timer PopRepeatTimer;
     b8 IsStartPop;
     
     // Enter and Exit transitions for swag!
-    timer TransitTimer;
+    Timer TransitTimer;
     
     // List of commands
     List<debug_console_command> Commands;
@@ -57,11 +57,11 @@ static inline b8
 DebugConsole_Init(debug_console* C,
                   Arena* arena)
 {
-    C->TransitTimer = Timer_Create(DebugConsole_TransitionDuration);
+    C->TransitTimer = Timer::create(DebugConsole_TransitionDuration);
     
     C->Position = { DebugConsole_StartPosX, DebugConsole_StartPosY };
-    C->StartPopRepeatTimer = Timer_Create(DebugConsole_StartPopDuration);
-    C->PopRepeatTimer = Timer_Create(DebugConsole_PopRepeatDuration); 
+    C->StartPopRepeatTimer = Timer::create(DebugConsole_StartPopDuration);
+    C->PopRepeatTimer = Timer::create(DebugConsole_PopRepeatDuration); 
     
     if (!C->Commands.alloc(arena, DebugConsole_MaxCommands)) {
         return false;
@@ -147,7 +147,7 @@ DebugConsole_Update(debug_console* Console,
         v2f StartPos = { DebugConsole_StartPosX, DebugConsole_StartPosY };
         v2f EndPos =  { DebugConsole_EndPosX, DebugConsole_EndPosY };
         
-        f32 P = ease_in_quad(Timer_Percent(Console->TransitTimer));
+        f32 P = ease_in_quad(Console->TransitTimer.percent());
         v2f Delta = EndPos - StartPos; 
         
         v2f DeltaP = Delta * P;
@@ -155,7 +155,7 @@ DebugConsole_Update(debug_console* Console,
     }
     
     if (Console->IsActive) {
-        Timer_Tick(&Console->TransitTimer, DeltaTime);
+        Console->TransitTimer.tick(DeltaTime);
         if (G_Input->Characters.Count > 0 && 
             G_Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
         {  
@@ -167,18 +167,18 @@ DebugConsole_Update(debug_console* Console,
             if(!Console->IsStartPop) {
                 DebugConsole_Pop(Console);
                 Console->IsStartPop = true;
-                Timer_Reset(&Console->StartPopRepeatTimer);
-                Timer_Reset(&Console->PopRepeatTimer);
+                Console->StartPopRepeatTimer.reset();
+                Console->PopRepeatTimer.reset();
             }
             else {
-                if (Timer_IsEnd(Console->StartPopRepeatTimer)) {
-                    if(Timer_IsEnd(Console->PopRepeatTimer)) {
+                if (Console->StartPopRepeatTimer.is_end()) {
+                    if(Console->PopRepeatTimer.is_end()) {
                         DebugConsole_Pop(Console);
-                        Timer_Reset(&Console->PopRepeatTimer);
+                        Console->PopRepeatTimer.reset();
                     }
-                    Timer_Tick(&Console->PopRepeatTimer, DeltaTime);
+                    Console->PopRepeatTimer.tick(DeltaTime);
                 }
-                Timer_Tick(&Console->StartPopRepeatTimer, DeltaTime);
+                Console->StartPopRepeatTimer.tick(DeltaTime);
             }
         }
         else {
@@ -219,7 +219,7 @@ DebugConsole_Update(debug_console* Console,
         }
     }
     else if (!Console->IsActive) {
-        Timer_Untick(&Console->TransitTimer, DeltaTime);
+        Console->TransitTimer.untick(DeltaTime);
     }
     
     
@@ -229,7 +229,7 @@ DebugConsole_Update(debug_console* Console,
 static inline void
 DebugConsole_Render(debug_console* Console) 
 {
-    if (Timer_IsBegin(Console->TransitTimer)) {
+    if (Console->TransitTimer.is_begin()) {
         return;
     }
     font* Font = G_Assets->Fonts + Font_Default;

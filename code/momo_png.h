@@ -124,11 +124,11 @@ png_huffman_decode(Bitstream* src_stream, Png_Huffman* huffman) {
     
     for (s32 Len = 1; Len <= PNG_MAX_BITS; ++Len) {
         code |= src_stream->consume_bits(1);
-        s32 Count = huffman->len_count_table[Len];
-        if(code - Count < first)
+        s32 count = huffman->len_count_table[Len];
+        if(code - count < first)
             return huffman->code_sym_table[index + (code - first)];
-        index += Count;
-        first += Count;
+        index += count;
+        first += count;
         first <<= 1;
         code <<= 1;
     }
