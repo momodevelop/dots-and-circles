@@ -4,10 +4,10 @@ Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
     death_bomb* DeathBomb = &Mode->DeathBomb;
     DeathBomb->Radius += DeathBomb->GrowthSpeed * DeltaTime;
     
-    circle2f DeathBombCir = Circle2f_Create(DeathBomb->Position, DeathBomb->Radius);
+    circle2f DeathBombCir = circle2f::create(DeathBomb->Position, DeathBomb->Radius);
     
     auto BulletLamb = [&](bullet* B) {
-        circle2f BCircle = Circle2f_Offset(B->HitCircle, B->Position);
+        circle2f BCircle = translate(B->HitCircle, B->Position);
         
         // NOTE(Momo): We can safely assume that the circles are not moving
         if (Bonk2_IsCircleXCircle(DeathBombCir,
@@ -25,7 +25,7 @@ Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
     Mode->DotBullets.foreach_slear_if(BulletLamb);
     
     auto EnemyLamb = [&](enemy* E) {
-        circle2f ECir = Circle2f_Create(E->Position, 0.1f);
+        circle2f ECir = circle2f::create(E->Position, 0.1f);
         
         // NOTE(Momo): We can safely assume that the circles are not moving
         if (Bonk2_IsCircleXCircle(DeathBombCir, ECir)) 
@@ -47,7 +47,7 @@ Main_RenderDeathBomb(game_mode_main* Mode)
     death_bomb* DeathBomb = &Mode->DeathBomb;
     // Circle?
     Renderer_DrawCircle2f(G_Renderer,
-                          Circle2f_Create(DeathBomb->Position, DeathBomb->Radius),
-                          5.f, 32, C4f_White, ZLayDeathBomb);
+                          circle2f::create(DeathBomb->Position, DeathBomb->Radius),
+                          5.f, 32, C4F_WHITE, ZLayDeathBomb);
 }
 

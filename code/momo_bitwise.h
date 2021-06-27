@@ -24,7 +24,7 @@
 // e.g.  8 bytes -> ~(1000 - 1) = ~0111 = 1000
 // And thus, the forumla for backward alignment is: A & ~(N-1)
 static inline void* 
-AlignBackward(void* ptr, u8 align) {
+align_memory_backward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(uptr(ptr) & ~(align - 1));
 }
@@ -35,23 +35,23 @@ AlignBackward(void* ptr, u8 align) {
 // Then the formula for the difference is the the original address minus the result: 
 // A - (A & ~(N-1))
 static inline void* 
-AlignForward(void* ptr, u8 align) {
+align_memory_forward(void* ptr, u8 align) {
     Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
 }
 
 static inline u8 
-align_backward_diff(void* ptr, u8 align)  {
-    return u8((uptr)ptr - uptr(AlignBackward(ptr, align)));
+align_memory_backward_diff(void* ptr, u8 align)  {
+    return u8((uptr)ptr - uptr(align_memory_backward(ptr, align)));
 }
 
 static inline u8 
-AlignForwardDiff(void* ptr, u8 align)  {
-    return u8(uptr(AlignForward(ptr, align)) - uptr(ptr));
+align_memory_forward_diff(void* ptr, u8 align)  {
+    return u8(uptr(align_memory_forward(ptr, align)) - uptr(ptr));
 }
 
 static inline void 
-CopyBlock(void* dest, void* src, u32 size) {
+copy_block(void* dest, void* src, u32 size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
          p < e; ++p, 
          ++q)
@@ -61,7 +61,7 @@ CopyBlock(void* dest, void* src, u32 size) {
 }
 
 static inline void 
-ZeroBlock(void *mem, u32 size) {
+zero_block(void *mem, u32 size) {
     for (u8 *p = (u8*)mem, *e = p + size; 
          p < e; 
          ++p)
@@ -70,13 +70,13 @@ ZeroBlock(void *mem, u32 size) {
     }
 }
 
-#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
-#define ZeroStaticArray(a) ZeroBlock((a), sizeof((a)))
-#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
+#define ZERO_STRUCT(p) zero_block((p), sizeof(*(p)))
+#define ZERO_ARRAY(a) zero_block((a), sizeof((a)))
+#define ZERO_DYNAMIC_ARRAY(a, c) zero_block((a), sizeof(*(a)) * c)
 
 
 static inline u32
-constexpr FourCC(const char String[5]) {
+constexpr four_cc(const char String[5]) {
     return 
         ((u32)(String[0]) << 0 ) |
         ((u32)(String[1]) << 8 ) |
@@ -85,13 +85,13 @@ constexpr FourCC(const char String[5]) {
 }
 
 static inline void
-EndianSwapU16(u16* Value) {
+endian_swap(u16* Value) {
     u16 Origin = (*Value);
     (*Value) = ((Origin << 8) | Origin >> 8);
 }
 
 static inline void
-EndianSwapU32(u32* Value) {
+endian_swap(u32* Value) {
     u32 Origin = (*Value);
     (*Value) =  ((Origin << 24) |
                  ((Origin & 0xFF00) << 8) |
@@ -100,7 +100,7 @@ EndianSwapU32(u32* Value) {
 }
 
 static inline void*
-ConsumeBlock(void** P, u32 Size) {
+consume_block(void** P, u32 Size) {
     void* Ret = (*P);
     (*P) = (u8*)(*P) + Size; 
     return Ret;
@@ -108,18 +108,18 @@ ConsumeBlock(void** P, u32 Size) {
 
 template<typename type>
 static inline void
-Consume(void** Memory) {
-    return (type*)ConsumeBlock(Memory, sizeof(type));
+consume_struct(void** Memory) {
+    return (type*)consume_block(Memory, sizeof(type));
 }
 
 static inline void
-WriteBlock(void** P, void* Item, u32 ItemSize) {
+write_block(void** P, void* Item, u32 ItemSize) {
     // TODO
 }
 
 template<typename T>
 static inline void
-Write(void** P, T Item) {
+write_struct(void** P, T Item) {
     T* LocationAsT = (T*)(*P);
     (*LocationAsT) = Item;
     (*P) = (u8*)(*P) + sizeof(T);

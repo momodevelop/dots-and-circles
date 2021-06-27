@@ -8,7 +8,7 @@
 static inline void
 Draw_TexturedQuadFromImage(image_id ImageId,
                            m44f Transform,
-                           c4f Color = C4f_White) 
+                           c4f Color = C4F_WHITE) 
 {
     image* Image = Assets_GetImage(G_Assets, ImageId);
     texture* Texture = Assets_GetTexture(G_Assets, Image->TextureId);
@@ -26,7 +26,7 @@ Draw_Text(font_id FontId,
           v3f Position,
           u8_cstr String,
           f32 Size, 
-          c4f Color = C4f_White) 
+          c4f Color = C4F_WHITE) 
 {
     v3f CurPosition = Position;
     font* Font = Assets_GetFont(G_Assets, FontId);
@@ -37,18 +37,18 @@ Draw_Text(font_id FontId,
         aabb2f Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
-        m44f A = M44f_Translation(0.5f, 0.5f, 0.f); 
+        m44f A = m44f::create_translation(0.5f, 0.5f, 0.f); 
         
-        f32 BoxWidth = Aabb2f_Width(Box);
-        f32 BoxHeight = Aabb2f_Height(Box);
+        f32 BoxWidth = width(Box);
+        f32 BoxHeight = height(Box);
         
-        m44f S = M44f_Scale(BoxWidth * Size, 
-                            BoxHeight* Size, 
-                            1.f);
+        m44f S = m44f::create_scale(BoxWidth * Size, 
+                                    BoxHeight* Size, 
+                                    1.f);
         
-        m44f T = M44f_Translation(CurPosition.x + Box.Min.x * Size, 
-                                  CurPosition.y + Box.Min.y * Size,  
-                                  CurPosition.z + ZLayerOffset);
+        m44f T = m44f::create_translation(CurPosition.x + Box.min.x * Size, 
+                                          CurPosition.y + Box.min.y * Size,  
+                                          CurPosition.z + ZLayerOffset);
         
         
         Draw_TexturedQuadFromImage(Glyph->ImageId,

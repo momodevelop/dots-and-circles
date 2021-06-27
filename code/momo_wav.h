@@ -1,114 +1,113 @@
 /* date = March 14th 2021 2:49 pm */
-
+// TODO: we might want to refactor some of the code here
 #ifndef MM_WAV_H
 #define MM_WAV_H
 
+#define WAV_RIFF_ID_SIGNATURE 0x52494646
+#define WAV_RIFF_FORMAT_SIGNATURE 0x57415645
+#define WAV_FMT_ID_SIGNATURE 0x666d7420
+#define WAV_DATA_ID_SIGNATURE 0x64617461
 
-#define Wav_RiffIDSignature 0x52494646
-#define Wav_RiffFormatSignature 0x57415645
-#define Wav_FmtIDSignature 0x666d7420
-#define Wav_DataIDSignature 0x64617461
-
-// NOTE(Momo): http://soundfile.sapp.org/doc/WaveFormat/
-struct wav_riff_chunk {
-    u32 ID; // big endian
-    u32 Size;
-    u32 Format; // big endian
+// NOTE(Momo): http://soundfile.sapp.org/doc/Waveformat/
+struct Wav_Riff_Chunk {
+    u32 id; // big endian
+    u32 size;
+    u32 format; // big endian
     
 };
 
 
 
-struct wav_fmt_chunk {
-    u32 ID;
-    u32 Size;
-    u16 AudioFormat;
-    u16 NumChannels;
-    u32 SampleRate;
-    u32 ByteRate;
-    u16 BlockAlign;
-    u16 BitsPerSample;
+struct Wav_Fmt_Chunk {
+    u32 id;
+    u32 size;
+    u16 audio_format;
+    u16 num_channels;
+    u32 sample_rate;
+    u32 byte_rate;
+    u16 block_align;
+    u16 bits_per_sample;
 };
 
-struct wav_data_chunk {
-    u32 ID;
-    u32 Size;
+struct Wav_Data_Chunk {
+    u32 id;
+    u32 size;
 };
 
-struct wav_load_result {
-    wav_riff_chunk RiffChunk;
-    wav_fmt_chunk FmtChunk;
-    wav_data_chunk DataChunk;
-    void* Data;
+struct Wav_Load_Result {
+    Wav_Riff_Chunk riff_chunk;
+    Wav_Fmt_Chunk fmt_chunk;
+    Wav_Data_Chunk data_chunk;
+    void* data;
 };
 
 // NOTE(Momo): Will actually leave data into arena
 static inline b8 
-Wav_LoadFromMemory(wav_load_result* Result,
-                   void* Memory, 
-                   u32 MemorySize) 
+load_wav_from_memory(Wav_Load_Result* result,
+                     void* memory, 
+                     u32 memory_size) 
 {
-    stream Stream = {};
-    Stream_Create(&Stream, Memory, MemorySize);
+    Stream stream = {};
+    stream.init(memory, memory_size);
     
     // NOTE(Momo): Load Riff Chunk
-    auto* RiffChunk = Stream_Consume<wav_riff_chunk>(&Stream);
-    if (!RiffChunk) {
+    auto* riff_chunk = stream.consume_struct<Wav_Riff_Chunk>();
+    if (!riff_chunk) {
         return false;
     }
-    EndianSwapU32(&RiffChunk->ID);
-    EndianSwapU32(&RiffChunk->Format);
-    if (RiffChunk->ID != Wav_RiffIDSignature) {
+    endian_swap(&riff_chunk->id);
+    endian_swap(&riff_chunk->format);
+    if (riff_chunk->id != WAV_RIFF_ID_SIGNATURE) {
         return false;
     }
-    if (RiffChunk->Format != Wav_RiffFormatSignature) {
+    if (riff_chunk->format != WAV_RIFF_FORMAT_SIGNATURE) {
         return false;
     }
     
     // NOTE(Momo): Load fmt Chunk
-    auto* FmtChunk = Stream_Consume<wav_fmt_chunk>(&Stream);
-    if (!FmtChunk) {
+    auto* fmt_chunk = stream.consume_struct<Wav_Fmt_Chunk>();
+    if (!fmt_chunk) {
         return false;
     }
-    EndianSwapU32(&FmtChunk->ID);
-    if (FmtChunk->ID != Wav_FmtIDSignature) {
+    endian_swap(&fmt_chunk->id);
+    if (fmt_chunk->id != WAV_FMT_ID_SIGNATURE) {
         return false;
     }
-    if (FmtChunk->Size != 16) {
+    if (fmt_chunk->size != 16) {
         return false;
     }
-    if (FmtChunk->AudioFormat != 1) {
+    if (fmt_chunk->audio_format != 1) {
         return false;
     }
     
-    u32 BytesPerSample = FmtChunk->BitsPerSample/8;
-    if (FmtChunk->ByteRate != 
-        FmtChunk->SampleRate * FmtChunk->NumChannels * BytesPerSample) {
+    u32 BytesPerSample = fmt_chunk->bits_per_sample/8;
+    if (fmt_chunk->byte_rate != 
+        fmt_chunk->sample_rate * fmt_chunk->num_channels * BytesPerSample) {
         return false;
     }
-    if (FmtChunk->BlockAlign != FmtChunk->NumChannels * BytesPerSample) {
+    if (fmt_chunk->block_align != fmt_chunk->num_channels * BytesPerSample) {
         return false;
     }
     
     // NOTE(Momo): Load data Chunk
-    auto* DataChunk = Stream_Consume<wav_data_chunk>(&Stream);
-    if (!DataChunk) {
+    auto* data_chunk = stream.consume_struct<Wav_Data_Chunk>();
+    if (!data_chunk) {
         return false;
     }
-    EndianSwapU32(&DataChunk->ID);
-    if (DataChunk->ID != Wav_DataIDSignature) {
-        return false;
-    }
-    
-    void* Data = Stream_ConsumeBlock(&Stream, DataChunk->Size);
-    if (Data == nullptr) {
+    endian_swap(&data_chunk->id);
+    if (data_chunk->id != WAV_DATA_ID_SIGNATURE) {
         return false;
     }
     
-    Result->RiffChunk = (*RiffChunk);
-    Result->FmtChunk = (*FmtChunk);
-    Result->DataChunk = (*DataChunk);
-    Result->Data = Data;
+    void* data = stream.consume_block(data_chunk->size);
+    if (data == nullptr) {
+        return false;
+    }
+    
+    result->riff_chunk = (*riff_chunk);
+    result->fmt_chunk = (*fmt_chunk);
+    result->data_chunk = (*data_chunk);
+    result->data = data;
     
     return true;
 }

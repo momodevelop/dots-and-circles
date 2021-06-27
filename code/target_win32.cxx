@@ -1358,7 +1358,7 @@ WinMain(HINSTANCE Instance,
             Win32_Log("[Win32::Main] Reloading game code!\n");
             Win32_UnloadGameCode(&GameCode);
             Win32_LoadGameCode(&GameCode);
-            ZeroBlock(State->GameMemory.Head.TransientMemory, 
+            zero_block(State->GameMemory.Head.TransientMemory, 
                       State->GameMemory.Head.TransientMemorySize);
         }
         

@@ -29,20 +29,20 @@ UpdateSplashImageEntity(splash_image_entity* Entity,
         return;
     
     // NOTE(Momo): Update
-    f32 Ease = EaseOutBounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    f32 Ease = ease_out_bounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     
     Entity->Position.x = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44f_Translation(Entity->Position.x,
-                              Entity->Position.y,
-                              Entity->Position.z);
-    m44f S = M44f_Scale(Entity->Scale.x,
-                        Entity->Scale.y,
-                        1.f);
+    m44f T = m44f::create_translation(Entity->Position.x,
+                                      Entity->Position.y,
+                                      Entity->Position.z);
+    m44f S = m44f::create_scale(Entity->Scale.x,
+                                Entity->Scale.y,
+                                1.f);
     Draw_TexturedQuadFromImage(Entity->TextureAabb,
-                               M44f_Concat(T,S),
+                               T*S,
                                Entity->Colors);
     
     
@@ -69,16 +69,16 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
-    Entity->Colors.A = EaseInSine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    Entity->Colors.a = ease_in_sine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
-    m44f T = M44f_Translation(Entity->Position.x,
-                              Entity->Position.y,
-                              Entity->Position.z);
-    m44f S = M44f_Scale(Entity->Scale.x, Entity->Scale.y, 1.f);
-    m44f TS = M44f_Concat(T,S);
-    Renderer_DrawQuad(G_Renderer, Entity->Colors, TS);
+    m44f T = m44f::create_translation(Entity->Position.x,
+                                      Entity->Position.y,
+                                      Entity->Position.z);
+    m44f S = m44f::create_scale(Entity->Scale.x, Entity->Scale.y, 1.f);
+    
+    Renderer_DrawQuad(G_Renderer, Entity->Colors, T*S);
     
 }
 
@@ -95,9 +95,9 @@ SplashMode_Init(permanent_state* PermState) {
     
     // NOTE(Momo): Create entities
     {
-        Mode->SplashImg[0].Position = v3f_create( 0.f, 0.f, 0.f );
-        Mode->SplashImg[0].Scale = v3f_create(400.f, 400.f, 1.f);
-        Mode->SplashImg[0].Colors = C4f_Create(1.f, 1.f, 1.f, 1.f);
+        Mode->SplashImg[0].Position = v3f::create( 0.f, 0.f, 0.f );
+        Mode->SplashImg[0].Scale = v3f::create(400.f, 400.f, 1.f);
+        Mode->SplashImg[0].Colors = c4f::create(1.f, 1.f, 1.f, 1.f);
         Mode->SplashImg[0].TextureAabb = Image_Ryoji;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 1.f;
@@ -107,8 +107,8 @@ SplashMode_Init(permanent_state* PermState) {
         Mode->SplashImg[0].EndX = -200.f;
         
         Mode->SplashImg[1].Position = {};
-        Mode->SplashImg[1].Scale = v3f_create(400.f, 400.f, 1.f);
-        Mode->SplashImg[1].Colors = C4f_Create(1.f, 1.f, 1.f, 1.f);
+        Mode->SplashImg[1].Scale = v3f::create(400.f, 400.f, 1.f);
+        Mode->SplashImg[1].Colors = c4f::create(1.f, 1.f, 1.f, 1.f);
         Mode->SplashImg[1].TextureAabb = Image_Yuu;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 1.f;
@@ -117,9 +117,9 @@ SplashMode_Init(permanent_state* PermState) {
         Mode->SplashImg[1].StartX = 1000.f;
         Mode->SplashImg[1].EndX = 200.f;
         
-        Mode->SplashBlackout.Position = v3f_create(0.f, 0.f, 1.0f);
-        Mode->SplashBlackout.Scale = v3f_create(1600.f, 900.f, 1.f);
-        Mode->SplashBlackout.Colors = C4f_Create(0.f, 0.f, 0.f, 0.0f);
+        Mode->SplashBlackout.Position = v3f::create(0.f, 0.f, 1.0f);
+        Mode->SplashBlackout.Scale = v3f::create(1600.f, 900.f, 1.f);
+        Mode->SplashBlackout.Colors = c4f::create(0.f, 0.f, 0.f, 0.0f);
         Mode->SplashBlackout.CountdownTimer = 0.f;
         Mode->SplashBlackout.CountdownDuration = 3.f;
         Mode->SplashBlackout.Timer = 0.f;
@@ -139,16 +139,16 @@ SplashMode_Update(permanent_state* PermState,
     
     // NOTE: Camera
     {
-        v3f Position = v3f_create(0.f, 0.f, 0.f);
-        v3f Anchor = v3f_create(0.5f, 0.5f, 0.5f);
-        c4f Color = C4f_Create(0.f, 0.3f, 0.3f, 1.f);
-        v3f Dimensions = v3f_create(800.f,
-                                    800.f,
-                                    800.f);
+        v3f Position = v3f::create(0.f, 0.f, 0.f);
+        v3f Anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        c4f Color = c4f::create(0.f, 0.3f, 0.3f, 1.f);
+        v3f Dimensions = v3f::create(800.f,
+                                     800.f,
+                                     800.f);
         
         Renderer_ClearColor(G_Renderer, Color);
         
-        aabb3f Frustum = Aabb3f_CreateCentered(Dimensions, Anchor);
+        aabb3f Frustum = aabb3f::create_centered(Dimensions, Anchor);
         Renderer_SetOrthoCamera(G_Renderer, 
                                 Position, 
                                 Frustum);

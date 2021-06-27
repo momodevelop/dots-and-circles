@@ -27,12 +27,12 @@ SandboxMode_Init(permanent_state* PermState) {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = v3f_create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = v3f_create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.Color = C4f_Grey2;
-        Mode->Camera.Dimensions = v3f_create(Game_DesignWidth,
-                                             Game_DesignHeight,
-                                             Game_DesignDepth);
+        Mode->Camera.Position = v3f::create(0.f, 0.f, 0.f);
+        Mode->Camera.Anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.Color = C4F_GREY2;
+        Mode->Camera.Dimensions = v3f::create(Game_DesignWidth,
+                                              Game_DesignHeight,
+                                              Game_DesignDepth);
     }
     
     
@@ -43,15 +43,15 @@ SandboxMode_Init(permanent_state* PermState) {
     f32 OffsetY = 0.f;
     for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
-        B->Position = v2f_create(StartX + OffsetX, StartY + OffsetY);
-        B->HitCircle = Circle2f_Create({}, BulletRadius);
+        B->Position = v2f::create(StartX + OffsetX, StartY + OffsetY);
+        B->HitCircle = circle2f::create({}, BulletRadius);
         
         OffsetX += BulletRadius * 2; // padding
         if(OffsetX >= Game_DesignWidth) {
             OffsetX = 0.f;
             OffsetY += BulletRadius * 2;
         }
-        B->Velocity = v2f_create(0.f, 0.f);
+        B->Velocity = v2f::create(0.f, 0.f);
     }
     
     Mode->ClickCount = 0;
@@ -89,7 +89,7 @@ SandboxMode_Update(permanent_state* PermState,
     
     
     // NOTE(Momo): Line to circle collision
-    line2f BonkLine = Line2f_CreateFromV2f(Mode->PrevMousePos, Mode->CurMousePos);
+    line2f BonkLine = line2f::create(Mode->PrevMousePos, Mode->CurMousePos);
     if (Mode->ClickCount >= 2) {
         if (!is_equal(Mode->PrevMousePos, Mode->CurMousePos)) {
             
@@ -99,10 +99,10 @@ SandboxMode_Update(permanent_state* PermState,
                     continue;
                 }
                 circle2f C = B->HitCircle;
-                C.Origin = B->Position;
+                C.origin = B->Position;
                 
-                circle2f PC = Circle2f_Create(Mode->PrevMousePos,
-                                              Mode->PlayerCircleRadius);
+                circle2f PC = circle2f::create(Mode->PrevMousePos,
+                                               Mode->PlayerCircleRadius);
                 v2f PCVel = Mode->CurMousePos - Mode->PrevMousePos;
                 v2f TimedVelocity = B->Velocity * DeltaTime;
                 
@@ -124,13 +124,13 @@ SandboxMode_Update(permanent_state* PermState,
         if (B->IsHit) {
             continue;
         }
-        m44f S = M44f_Scale(B->HitCircle.Radius*2, B->HitCircle.Radius*2, 1.f);
-        m44f T = M44f_Translation(B->Position.x,
+        m44f S = m44f::create_scale(B->HitCircle.radius*2, B->HitCircle.radius*2, 1.f);
+        m44f T = m44f::create_translation(B->Position.x,
                                   B->Position.y,
                                   ZOrder += 0.001f);
         
         Draw_TexturedQuadFromImage(Image_BulletDot,
-                                   M44f_Concat(T,S), 
+                                   T*S, 
                                    c4f{1.f, 1.f, 1.f, 0.5f});
     }
     
@@ -140,26 +140,26 @@ SandboxMode_Update(permanent_state* PermState,
         Renderer_DrawLine2f(G_Renderer, 
                             BonkLine,
                             Mode->PlayerCircleRadius * 2,
-                            C4f_Green,
+                            C4F_GREEN,
                             ZOrder);
         
-        circle2f StartCircle = Circle2f_Create(BonkLine.Min, 
-                                               Mode->PlayerCircleRadius);
+        circle2f StartCircle = circle2f::create(BonkLine.min, 
+                                                Mode->PlayerCircleRadius);
         Renderer_DrawCircle2f(G_Renderer,
                               StartCircle,
                               1.f, 
                               8, 
-                              C4f_Green, 
+                              C4F_GREEN, 
                               ZOrder);
         
         
-        circle2f EndCircle = Circle2f_Create(BonkLine.Max, 
-                                             Mode->PlayerCircleRadius);
+        circle2f EndCircle = circle2f::create(BonkLine.max, 
+                                              Mode->PlayerCircleRadius);
         Renderer_DrawCircle2f(G_Renderer,
                               EndCircle,
                               1.f, 
                               8, 
-                              C4f_Green, 
+                              C4F_GREEN, 
                               ZOrder);
     }
     

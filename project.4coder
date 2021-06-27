@@ -15,6 +15,7 @@ patterns = {
 };
 blacklist_patterns = {
 "stb*",
+"puff.c"
 };
 load_paths_custom = {
  {"."},

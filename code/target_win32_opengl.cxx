@@ -6,6 +6,10 @@
 #include <audioclient.h>
 #include <imm.h>
 
+// NOTE(Momo): Because MS has baggage :(
+#undef near
+#undef far
+
 #include "momo.h"
 
 #include "game_config.h"
@@ -15,8 +19,6 @@
 
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
-
-
 
 //~ WGL Bindings
 #define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
@@ -1135,11 +1137,11 @@ Win32_ProcessMessages(HWND Window,
                 v2u WindowDims = State->Opengl->WindowDimensions;
                 aabb2u RenderRegion = State->Opengl->RenderRegion;
                 
-                Input->RenderMousePos.x = Input->WindowMousePos.x - RenderRegion.Min.x;
-                Input->RenderMousePos.y = Input->WindowMousePos.y - RenderRegion.Min.y;
+                Input->RenderMousePos.x = Input->WindowMousePos.x - RenderRegion.min.x;
+                Input->RenderMousePos.y = Input->WindowMousePos.y - RenderRegion.min.y;
                 
                 v2f DesignDimsF = to_v2f(State->Opengl->DesignDimensions);
-                v2u RenderDimsU = Aabb2u_Dimensions(RenderRegion);
+                v2u RenderDimsU = dimensions(RenderRegion);
                 v2f RenderDimsF = to_v2f(RenderDimsU);
                 v2f DesignToRenderRatio = ratio(DesignDimsF, RenderDimsF);
                 
@@ -1688,8 +1690,8 @@ WinMain(HINSTANCE Instance,
             Win32_Log("[Win32::Main] Reloading game code!\n");
             Win32_UnloadGameCode(&GameCode);
             Win32_LoadGameCode(&GameCode);
-            ZeroBlock(State->GameMemory.Head.TransientMemory, 
-                      State->GameMemory.Head.TransientMemorySize);
+            zero_block(State->GameMemory.Head.TransientMemory, 
+                       State->GameMemory.Head.TransientMemorySize);
         }
         
         

@@ -23,12 +23,12 @@ MainMode_Init(permanent_state* PermState,
     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = v3f_create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = v3f_create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.Color = C4f_Grey2;
-        Mode->Camera.Dimensions = v3f_create(Game_DesignWidth,
-                                             Game_DesignHeight,
-                                             Game_DesignDepth);
+        Mode->Camera.Position = v3f::create(0.f, 0.f, 0.f);
+        Mode->Camera.Anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.Color = C4F_GREY2;
+        Mode->Camera.Dimensions = v3f::create(Game_DesignWidth,
+                                              Game_DesignHeight,
+                                              Game_DesignDepth);
     }
     
     b8 Success = false;
@@ -59,7 +59,7 @@ MainMode_Init(permanent_state* PermState,
         return false;
     }
     Mode->Wave.IsDone = true;
-    Mode->Rng = Rng_Seed(0); // TODO: Used system clock for seed.
+    Mode->rng = Rng_Series::create(0); // TODO: Used system clock for seed.
     
     assets* Assets = &TranState->Assets;
     player* Player = &Mode->Player;
@@ -121,7 +121,7 @@ Main_StateNormal_Update(permanent_state* PermState,
         Mode->DeathBomb.Position = Mode->Player.Position;
         
         Mode->State = Main_StateType_PlayerDied;
-        Mode->Player.Position = v2f_create(-1000.f, -1000.f);
+        Mode->Player.Position = v2f::create(-1000.f, -1000.f);
     }
     
     Main_RenderPlayer(Mode);
@@ -174,7 +174,7 @@ Main_StateSpawning_Update(permanent_state* PermState,
     game_mode_main* Mode = PermState->MainMode;
     assets* Assets = &TranState->Assets;
     
-    f32 Ease = EaseOutBounce(Clamp(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
+    f32 Ease = ease_out_bounce(Clamp(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
     Mode->Player.Size = Mode->Player.MaxSize * Ease;
     
     Main_UpdateInput(Mode);

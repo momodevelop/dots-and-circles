@@ -80,7 +80,7 @@ int main() {
         s32 W, H, C;
         stbi_info(Context->Filename, &W, &H, &C);
         
-        (*Aabb) = Aabb2u_CreateWH((u32)W, (u32)H);
+        (*Aabb) = aabb2u::create_wh((u32)W, (u32)H);
         
         
         UserDatas[AabbCounter] = Context;
@@ -106,7 +106,7 @@ int main() {
                                      Font->RasterScale, 
                                      &ix0, &iy0, &ix1, &iy1);
         
-        (*Aabb) = Aabb2u_CreateWH((u32)(ix1 - ix0), (u32)(iy1 - iy0));
+        (*Aabb) = aabb2u::create_wh((u32)(ix1 - ix0), (u32)(iy1 - iy0));
         UserDatas[AabbCounter] = Font;
         
         ++AabbCounter;
@@ -187,12 +187,12 @@ int main() {
                     aabb2i Box;
                     stbtt_GetCodepointBox(&LoadedFont.Info, 
                                           Font->Codepoint, 
-                                          &Box.Min.x, 
-                                          &Box.Min.y, 
-                                          &Box.Max.x, 
-                                          &Box.Max.y);
+                                          &Box.min.x, 
+                                          &Box.min.y, 
+                                          &Box.max.x, 
+                                          &Box.max.y);
                     
-                    aabb2f ScaledBox = Aabb2f_Mul(Aabb2i_To_Aabb2f(Box), FontPixelScale);
+                    aabb2f ScaledBox = mul(to_aabb2f(Box), FontPixelScale);
                     Tba_WriteFontGlyph(AssetBuilder, 
                                        Font->FontId, 
                                        Font->ImageId,
@@ -215,10 +215,10 @@ int main() {
         
         aabb2i BoundingBox = {}; 
         stbtt_GetFontBoundingBox(&LoadedFont.Info, 
-                                 &BoundingBox.Min.x,
-                                 &BoundingBox.Min.y,
-                                 &BoundingBox.Max.x,
-                                 &BoundingBox.Max.y
+                                 &BoundingBox.min.x,
+                                 &BoundingBox.min.y,
+                                 &BoundingBox.max.x,
+                                 &BoundingBox.max.y
                                  );
         printf("[Build Assets] Writing font information...\n");
         Tba_WriteFont(AssetBuilder, Font_Default, 
@@ -282,10 +282,10 @@ int main() {
                 return 1;
             }
             
-            wav_load_result WavResult = {};
-            if(!Wav_LoadFromMemory(&WavResult,
-                                   FileResult.Data,
-                                   FileResult.Size)) {
+            Wav_Load_Result WavResult = {};
+            if(!load_wav_from_memory(&WavResult,
+                                     FileResult.Data,
+                                     FileResult.Size)) {
                 return 1;
             }
             Tba_WriteWav(AssetBuilder,

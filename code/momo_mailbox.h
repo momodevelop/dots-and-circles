@@ -46,7 +46,7 @@ Mailbox::clear() {
     data_memory_at = memory;
     
     u8* start = memory + memory_size - sizeof(Mailbox_Entry_Header);
-    u8 adjust = align_backward_diff(start, alignof(Mailbox_Entry_Header));
+    u8 adjust = align_memory_backward_diff(start, alignof(Mailbox_Entry_Header));
     start-= adjust;
     
     entry_memory_start = start;
@@ -75,11 +75,11 @@ Mailbox::push_block(u32 size,
                     u32 id) 
 {
     // Allocate data
-    u8 data_adjust = AlignForwardDiff(data_memory_at, alignment);
+    u8 data_adjust = align_memory_forward_diff(data_memory_at, alignment);
     u32 data_size = size;
     
     // Allocate entry
-    u8 entry_adjust = align_backward_diff(entry_memory_at, alignof(Mailbox_Entry_Header));
+    u8 entry_adjust = align_memory_backward_diff(entry_memory_at, alignof(Mailbox_Entry_Header));
     u32 entry_size = sizeof(Mailbox_Entry_Header);
     
     if (entry_memory_at - entry_size - entry_adjust < data_memory_at + data_size +  data_adjust) 

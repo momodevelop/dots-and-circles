@@ -5,8 +5,8 @@
 
 static inline b8
 Bonk2_IsCircleXCircle(circle2f L, circle2f R) {
-	f32 DistSq = distance_sq(L.Origin, R.Origin);
-	f32 RSq = L.Radius + R.Radius;
+	f32 DistSq = distance_sq(L.origin, R.origin);
+	f32 RSq = L.radius + R.radius;
     RSq *= RSq;
 	return DistSq < RSq;
 }
@@ -14,23 +14,23 @@ Bonk2_IsCircleXCircle(circle2f L, circle2f R) {
 static inline b8
 Bonk2_IsCircleXLine(circle2f C, line2f L) {
     // NOTE(Momo): Extend the ends of the lines based on radius of the circle, and use that to form a parametric equation of the line (ray)
-    ray2f R = Ray2f_CreateFromLine2f(L);
-    v2f NormalizedDir = normalize(R.Dir);
-    L.Min = sub(L.Min, mul(NormalizedDir, C.Radius));
-    L.Max = add(L.Max, mul(NormalizedDir, C.Radius));
-    R = Ray2f_CreateFromLine2f(L);
+    ray2f R = ray2f::create(L);
+    v2f NormalizedDir = normalize(R.dir);
+    L.min = sub(L.min, mul(NormalizedDir, C.radius));
+    L.max = add(L.max, mul(NormalizedDir, C.radius));
+    R = ray2f::create(L);
     
-    v2f OriginToCircle = sub(C.Origin, R.Origin);
-    v2f OriginToClosestPtOnLine = project(OriginToCircle, R.Dir); 
-    v2f ClosestPtOnLine = add(R.Origin, OriginToClosestPtOnLine);
+    v2f OriginToCircle = sub(C.origin, R.origin);
+    v2f OriginToClosestPtOnLine = project(OriginToCircle, R.dir); 
+    v2f ClosestPtOnLine = add(R.origin, OriginToClosestPtOnLine);
     
     // NOTE(Momo): Find the time of intersection of the ClosestPtOnLine
     f32 Time = {}; 
-    if (!is_equal(R.Dir.x, 0.f)) {
-        Time = (ClosestPtOnLine.x - R.Origin.x)/R.Dir.x;
+    if (!is_equal(R.dir.x, 0.f)) {
+        Time = (ClosestPtOnLine.x - R.origin.x)/R.dir.x;
     }
-    else if (!is_equal(R.Dir.y, 0.f)) {
-        Time = (ClosestPtOnLine.y - R.Origin.y)/R.Dir.y;
+    else if (!is_equal(R.dir.y, 0.f)) {
+        Time = (ClosestPtOnLine.y - R.origin.y)/R.dir.y;
     }
     else {
         return false;
@@ -41,7 +41,7 @@ Bonk2_IsCircleXLine(circle2f C, line2f L) {
     }
     
     // NOTE(Momo): At this point, we are within range of the line segment, so we just have to check if the circle's radius is greater than its distance from the line.
-    f32 CircleRadiusSq = C.Radius * C.Radius;
+    f32 CircleRadiusSq = C.radius * C.radius;
     f32 CircleDistFromLineSq = distance_sq(OriginToCircle, 
                                            OriginToClosestPtOnLine);
     return CircleRadiusSq > CircleDistFromLineSq;
@@ -53,9 +53,9 @@ Bonk2_IsDynaCircleXCircle(circle2f DynaCircle,
                           v2f Velocity,
                           circle2f Circle) 
 {
-    line2f Line = Line2f_CreateFromV2f(DynaCircle.Origin,
-                                       add(DynaCircle.Origin, Velocity));
-    Circle.Radius += DynaCircle.Radius;
+    line2f Line = line2f::create(DynaCircle.origin,
+                                 DynaCircle.origin + Velocity);
+    Circle.radius += DynaCircle.radius;
     return Bonk2_IsCircleXLine(Circle, Line);
 }
 

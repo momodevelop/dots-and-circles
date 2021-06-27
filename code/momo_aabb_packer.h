@@ -20,7 +20,7 @@ sort_aabbs_for_packer(aabb2u* aabbs,
     switch (sort_type) {
         case AABB_PACKER_SORT_WIDTH: {
             for (u32 i = 0; i < sort_entry_count; ++i) {
-                u32 aabb_w = Aabb2u_Width(aabbs[i]);
+                u32 aabb_w = width(aabbs[i]);
                 f32 key = -(f32)aabb_w;
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -28,7 +28,7 @@ sort_aabbs_for_packer(aabb2u* aabbs,
         } break;
         case AABB_PACKER_SORT_HEIGHT: {
             for (u32 i = 0; i < sort_entry_count; ++i) {
-                u32 aabb_h = Aabb2u_Height(aabbs[i]);
+                u32 aabb_h = height(aabbs[i]);
                 f32 key = -(f32)aabb_h;
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -36,8 +36,8 @@ sort_aabbs_for_packer(aabb2u* aabbs,
         } break;
         case AABB_PACKER_SORT_AREA: {
             for (u32 i = 0; i < sort_entry_count; ++i) {
-                u32 aabb_w = Aabb2u_Width(aabbs[i]);
-                u32 aabb_h = Aabb2u_Height(aabbs[i]);
+                u32 aabb_w = width(aabbs[i]);
+                u32 aabb_h = height(aabbs[i]);
                 f32 key = -(f32)(aabb_w * aabb_h);
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -45,8 +45,8 @@ sort_aabbs_for_packer(aabb2u* aabbs,
         } break;
         case AABB_PACKER_SORT_PERIMETER: {
             for (u32 i = 0; i < sort_entry_count; ++i) {
-                u32 aabb_w = Aabb2u_Width(aabbs[i]);
-                u32 aabb_h = Aabb2u_Height(aabbs[i]);
+                u32 aabb_w = width(aabbs[i]);
+                u32 aabb_h = height(aabbs[i]);
                 f32 key = -(f32)(aabb_w + aabb_h);
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -54,8 +54,8 @@ sort_aabbs_for_packer(aabb2u* aabbs,
         } break;
         case AABB_PACKER_SORT_BIGGER_SIZE: {
             for (u32 i = 0; i < sort_entry_count; ++i) {
-                u32 aabb_w = Aabb2u_Width(aabbs[i]);
-                u32 aabb_h = Aabb2u_Height(aabbs[i]);
+                u32 aabb_w = width(aabbs[i]);
+                u32 aabb_h = height(aabbs[i]);
                 f32 key = -(f32)(MaxOf(aabb_w, aabb_h));
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -63,8 +63,8 @@ sort_aabbs_for_packer(aabb2u* aabbs,
         } break;
         case AABB_PACKER_SORT_PATHOLOGICAL: {
             for (u32 i = 0; i < sort_entry_count; ++i) {
-                u32 aabb_w = Aabb2u_Width(aabbs[i]);
-                u32 aabb_h = Aabb2u_Height(aabbs[i]);
+                u32 aabb_w = width(aabbs[i]);
+                u32 aabb_h = height(aabbs[i]);
                 
                 u32 wh_max = MaxOf(aabb_w, aabb_h);
                 u32 wh_min = MinOf(aabb_w, aabb_h);
@@ -99,20 +99,20 @@ pack_aabbs(Arena* arena,
     u32 current_node_count = 0;
     
     auto* nodes = arena->push_array<aabb2u>(aabb_count+1);
-    nodes[current_node_count++] = Aabb2u_Create(0, 0, total_width, total_height);
+    nodes[current_node_count++] = aabb2u::create(0, 0, total_width, total_height);
     
     for (u32 i = 0; i < aabb_count; ++i) {
         aabb2u* Aabb = aabbs + sort_entries[i].index;
-        u32 aabb_width = Aabb2u_Width(*Aabb);
-        u32 aabb_height = Aabb2u_Height(*Aabb);
+        u32 aabb_width = width(*Aabb);
+        u32 aabb_height = height(*Aabb);
         
         // NOTE(Momo): Iterate the empty spaces backwards to find the best fit index
         u32 chosen_space_index = current_node_count;
         for (u32  j = 0; j < chosen_space_index ; ++j ) {
             u32 Index = chosen_space_index - j - 1;
             aabb2u Space = nodes[Index];
-            u32 SpaceW = Aabb2u_Width(Space);
-            u32 SpaceH = Aabb2u_Height(Space);
+            u32 SpaceW = width(Space);
+            u32 SpaceH = height(Space);
             
             // NOTE(Momo): Check if the image fits
             if (aabb_width <= SpaceW && aabb_height <= SpaceH) {
@@ -130,8 +130,8 @@ pack_aabbs(Arena* arena,
         
         // NOTE(Momo): Swap and pop the chosen space
         aabb2u chosen_space = nodes[chosen_space_index];
-        u32 chosen_space_w = Aabb2u_Width(chosen_space);
-        u32 chosen_space_h = Aabb2u_Height(chosen_space);
+        u32 chosen_space_w = width(chosen_space);
+        u32 chosen_space_h = height(chosen_space);
         
         if (current_node_count > 0) {
             nodes[chosen_space_index] = nodes[current_node_count-1];
@@ -142,41 +142,41 @@ pack_aabbs(Arena* arena,
         if (chosen_space_w != aabb_width && chosen_space_h == aabb_height) {
             // Split right
             aabb2u split_space_right = 
-                Aabb2u_CreateXYWH(chosen_space.Min.x + aabb_width,
-                                  chosen_space.Min.y,
-                                  chosen_space_w - aabb_width,
-                                  chosen_space_h);
+                aabb2u::create_xywh(chosen_space.min.x + aabb_width,
+                                    chosen_space.min.y,
+                                    chosen_space_w - aabb_width,
+                                    chosen_space_h);
             nodes[current_node_count++] = split_space_right;
         }
         else if (chosen_space_w == aabb_width && chosen_space_h != aabb_height) {
             // Split down
             aabb2u split_space_down = 
-                Aabb2u_CreateXYWH(chosen_space.Min.x,
-                                  chosen_space.Min.y + aabb_height,
-                                  chosen_space_w,
-                                  chosen_space_h - aabb_height);
+                aabb2u::create_xywh(chosen_space.min.x,
+                                    chosen_space.min.y + aabb_height,
+                                    chosen_space_w,
+                                    chosen_space_h - aabb_height);
             nodes[current_node_count++] = split_space_down;
         }
         else if (chosen_space_w != aabb_width && chosen_space_h != aabb_height) {
             // Split right
             aabb2u split_space_right = 
-                Aabb2u_CreateXYWH(chosen_space.Min.x + aabb_width,
-                                  chosen_space.Min.y,
-                                  chosen_space_w - aabb_width,
-                                  aabb_height);
+                aabb2u::create_xywh(chosen_space.min.x + aabb_width,
+                                    chosen_space.min.y,
+                                    chosen_space_w - aabb_width,
+                                    aabb_height);
             
             // Split down
             aabb2u split_space_down = 
-                Aabb2u_CreateXYWH(chosen_space.Min.x,
-                                  chosen_space.Min.y + aabb_height,
-                                  chosen_space_w,
-                                  chosen_space_h - aabb_height);
+                aabb2u::create_xywh(chosen_space.min.x,
+                                    chosen_space.min.y + aabb_height,
+                                    chosen_space_w,
+                                    chosen_space_h - aabb_height);
             
             // Choose to insert the bigger one first before the smaller one
-            u32 split_space_right_w = Aabb2u_Width(split_space_right);
-            u32 split_splace_right_h = Aabb2u_Height(split_space_right);
-            u32 split_space_downW = Aabb2u_Width(split_space_down);
-            u32 split_space_downH = Aabb2u_Height(split_space_down);
+            u32 split_space_right_w = width(split_space_right);
+            u32 split_splace_right_h = height(split_space_right);
+            u32 split_space_downW = width(split_space_down);
+            u32 split_space_downH = height(split_space_down);
             
             u32 right_area = split_space_right_w * split_splace_right_h;
             u32 down_area = split_space_downW * split_space_downH;
@@ -193,9 +193,9 @@ pack_aabbs(Arena* arena,
         }
         
         // NOTE(Momo): Translate the Aabb
-        (*Aabb) = Aabb2u_Translate((*Aabb),
-                                   chosen_space.Min.x,
-                                   chosen_space.Min.y);
+        (*Aabb) = translate((*Aabb),
+                            chosen_space.min.x,
+                            chosen_space.min.y);
     }
     
     return true;

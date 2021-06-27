@@ -74,24 +74,24 @@ Renderer_CalcRenderRegion(u32 WindowWidth,
     
     if (OptimalWindowWidth > (f32)WindowWidth) {
         // NOTE(Momo): Width has priority - top and bottom bars
-        Ret.Min.x = 0;
-        Ret.Max.x = WindowWidth;
+        Ret.min.x = 0;
+        Ret.max.x = WindowWidth;
         
         f32 EmptyHeight = (f32)WindowHeight - OptimalWindowHeight;
         
-        Ret.Min.y = (u32)(EmptyHeight * 0.5f);
-        Ret.Max.y = Ret.Min.y + (u32)OptimalWindowHeight;
+        Ret.min.y = (u32)(EmptyHeight * 0.5f);
+        Ret.max.y = Ret.min.y + (u32)OptimalWindowHeight;
     }
     else {
         // NOTE(Momo): Height has priority - left and right bars
-        Ret.Min.y = 0;
-        Ret.Max.y = WindowHeight;
+        Ret.min.y = 0;
+        Ret.max.y = WindowHeight;
         
         
         f32 EmptyWidth = (f32)WindowWidth - OptimalWindowWidth;
         
-        Ret.Min.x = (u32)(EmptyWidth * 0.5f);
-        Ret.Max.x = Ret.Min.x + (u32)OptimalWindowWidth;
+        Ret.min.x = (u32)(EmptyWidth * 0.5f);
+        Ret.max.x = Ret.min.x + (u32)OptimalWindowWidth;
     }
     
     return Ret;
@@ -113,19 +113,19 @@ Renderer_SetOrthoCamera(Mailbox* commands,
 {
     auto* Data = commands->push_struct<renderer_command_set_basis>(RendererCommandType_SetBasis);
     
-    auto P  = M44f_Orthographic(-1.f, 1.f,
-                                -1.f, 1.f,
-                                -1.f, 1.f,
-                                frustum.Min.x,  
-                                frustum.Max.x, 
-                                frustum.Min.y, 
-                                frustum.Max.y,
-                                frustum.Min.z, 
-                                frustum.Max.z,
-                                true);
+    auto P  = m44f::create_orthographic(-1.f, 1.f,
+                                        -1.f, 1.f,
+                                        -1.f, 1.f,
+                                        frustum.min.x,  
+                                        frustum.max.x, 
+                                        frustum.min.y, 
+                                        frustum.max.y,
+                                        frustum.min.z, 
+                                        frustum.max.z,
+                                        true);
     
-    m44f V = M44f_Translation(-position.x, -position.y, -position.z);
-    Data->Basis = M44f_Concat(P,V);
+    m44f V = m44f::create_translation(-position.x, -position.y, -position.z);
+    Data->Basis = P * V;
 }
 
 static inline void
@@ -170,26 +170,23 @@ Renderer_DrawLine2f(Mailbox* commands,
                     f32 PosZ) 
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.y
-    if (Line.Min.y > Line.Max.y) {
-        Swap(v2f, Line.Min, Line.Max);
+    if (Line.min.y > Line.max.y) {
+        Swap(v2f, Line.min, Line.max);
     }
     
-    v2f LineVector = sub(Line.Max, Line.Min);
+    v2f LineVector = sub(Line.max, Line.min);
     f32 LineLength = length(LineVector);
-    v2f LineMiddle = midpoint(Line.Max, Line.Min);
+    v2f LineMiddle = midpoint(Line.max, Line.min);
     
     v2f XAxis = { 1.f, 0.f };
     f32 Angle = angle_between(LineVector, XAxis);
     
     //TODO: Change line3f
-    m44f T = M44f_Translation(LineMiddle.x, LineMiddle.y, PosZ);
-    m44f R = M44f_RotationZ(Angle);
-    m44f S = M44f_Scale(LineLength, Thickness, 1.f) ;
+    m44f T = m44f::create_translation(LineMiddle.x, LineMiddle.y, PosZ);
+    m44f R = m44f::create_rotation_z(Angle);
+    m44f S = m44f::create_scale(LineLength, Thickness, 1.f) ;
     
-    m44f RS = M44f_Concat(R,S);
-    m44f TRS = M44f_Concat(T, RS);
-    
-    Renderer_DrawQuad(commands, Colors, TRS);
+    Renderer_DrawQuad(commands, Colors, T*R*S);
 }
 
 static inline void
@@ -204,13 +201,13 @@ Renderer_DrawCircle2f(Mailbox* commands,
     // We can't really have a surface with less than 3 lines
     Assert(LineCount >= 3);
     f32 AngleIncrement = TAU / LineCount;
-    v2f Pt1 = { 0.f, Circle.Radius }; 
+    v2f Pt1 = { 0.f, Circle.radius }; 
     v2f Pt2 = rotate(Pt1, AngleIncrement);
     
     for (u32 I = 0; I < LineCount; ++I) {
-        v2f LinePt1 = Pt1 + Circle.Origin;
-        v2f LinePt2 = Pt2 + Circle.Origin;
-        line2f Line = Line2f_CreateFromV2f(LinePt1, LinePt2);
+        v2f LinePt1 = Pt1 + Circle.origin;
+        v2f LinePt2 = Pt2 + Circle.origin;
+        line2f Line = line2f::create(LinePt1, LinePt2);
         Renderer_DrawLine2f(commands, 
                             Line,
                             Thickness,
@@ -232,39 +229,39 @@ Renderer_DrawAabb2f(Mailbox* commands,
 {
     //Bottom
     Renderer_DrawLine2f(commands, 
-                        Line2f_Create(Aabb.Min.x, 
-                                      Aabb.Min.y,  
-                                      Aabb.Max.x, 
-                                      Aabb.Min.y),
+                        line2f::create(Aabb.min.x, 
+                                       Aabb.min.y,  
+                                       Aabb.max.x, 
+                                       Aabb.min.y),
                         Thickness, 
                         Colors,
                         PosZ);
     // Left
     Renderer_DrawLine2f(commands, 
-                        Line2f_Create(Aabb.Min.x,
-                                      Aabb.Min.y,
-                                      Aabb.Min.x,
-                                      Aabb.Max.y),  
+                        line2f::create(Aabb.min.x,
+                                       Aabb.min.y,
+                                       Aabb.min.x,
+                                       Aabb.max.y),  
                         Thickness, 
                         Colors,
                         PosZ);
     
     //Top
     Renderer_DrawLine2f(commands, 
-                        Line2f_Create(Aabb.Min.x,
-                                      Aabb.Max.y,
-                                      Aabb.Max.x,
-                                      Aabb.Max.y), 
+                        line2f::create(Aabb.min.x,
+                                       Aabb.max.y,
+                                       Aabb.max.x,
+                                       Aabb.max.y), 
                         Thickness, 
                         Colors,
                         PosZ);
     
     //Right 
     Renderer_DrawLine2f(commands, 
-                        Line2f_Create(Aabb.Max.x,
-                                      Aabb.Min.y,
-                                      Aabb.Max.x,
-                                      Aabb.Max.y),  
+                        line2f::create(Aabb.max.x,
+                                       Aabb.min.y,
+                                       Aabb.max.x,
+                                       Aabb.max.y),  
                         Thickness, 
                         Colors,
                         PosZ);

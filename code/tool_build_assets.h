@@ -200,21 +200,21 @@ Tba_WriteMsg(tba_context* Context,
 static inline void
 Tba_WriteWav(tba_context* Context, 
              sound_id SoundId,
-             wav_load_result* WavResult) 
+             Wav_Load_Result* WavResult) 
 {
     // We restrict the type of sound the game allows here
-    Assert(WavResult->FmtChunk.NumChannels == Game_AudioChannels);
-    Assert(WavResult->FmtChunk.SampleRate == Game_AudioSamplesPerSecond);
-    Assert(WavResult->FmtChunk.BitsPerSample == Game_AudioBitsPerSample);
+    Assert(WavResult->fmt_chunk.num_channels == Game_AudioChannels);
+    Assert(WavResult->fmt_chunk.sample_rate == Game_AudioSamplesPerSecond);
+    Assert(WavResult->fmt_chunk.bits_per_sample == Game_AudioBitsPerSample);
     
     Tba_WriteEntry(Context, AssetType_Sound);
     
     asset_file_sound Sound = {};
     Sound.Id = SoundId;
-    Sound.DataCount = WavResult->DataChunk.Size / sizeof(s16);
+    Sound.DataCount = WavResult->data_chunk.size / sizeof(s16);
     
     fwrite(&Sound, sizeof(Sound), 1, Context->File);
-    fwrite(WavResult->Data, sizeof(s16), Sound.DataCount, Context->File);
+    fwrite(WavResult->data, sizeof(s16), Sound.DataCount, Context->File);
     
 }
 

@@ -16,7 +16,7 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
         U8CStr_InitFromSiStr(&Buffer, "Expected only 2 arguments");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
-                              C4f_Red);
+                              C4F_RED);
         return;
     }
     
@@ -25,35 +25,35 @@ CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Main");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
-                              C4f_Yellow);
+                              C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Main;
     }
     else if (U8CStr_CmpSiStr(StateToChangeTo, "splash")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Splash");
         DebugConsole_PushInfo(Console, 
                               Buffer,  
-                              C4f_Yellow);
+                              C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Splash;
     }
     else if (U8CStr_CmpSiStr(StateToChangeTo, "sandbox")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Sandbox");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
-                              C4f_Yellow);
+                              C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else if (U8CStr_CmpSiStr(StateToChangeTo, "anime")) {
         U8CStr_InitFromSiStr(&Buffer, "Jumping to Anime");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
-                              C4f_Yellow);
+                              C4F_YELLOW);
         PermState->NextGameMode = GameModeType_AnimeTest;
     }
     else {
         U8CStr_InitFromSiStr(&Buffer, "Invalid state to jump to");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
-                              C4f_Red);
+                              C4F_RED);
     }
 }
 

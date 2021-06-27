@@ -13,12 +13,12 @@ Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
     player* Player = &Mode->Player;
     circle2f PlayerCircle = Player->HitCircle;
     v2f PlayerVel = Player->Position - Player->PrevPosition;
-    PlayerCircle.Origin += Player->Position;
+    PlayerCircle.origin += Player->Position;
     
     auto Lamb = [&](bullet* B) {
         circle2f BCircle = B->HitCircle;
         v2f BVel = B->Direction * B->Speed * DeltaTime;
-        BCircle.Origin += B->Position;
+        BCircle.origin += B->Position;
         
         if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
                                           PlayerVel,
@@ -27,7 +27,7 @@ Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
         {
             if (Player->MoodType == B->MoodType) {
                 v2f VectorToBullet = normalize(B->Position - Player->Position);
-                v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.Radius;
+                v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.radius;
                 Main_SpawnParticle(Mode, SpawnPos, 5);
                 Mode->Score += 50;
             }

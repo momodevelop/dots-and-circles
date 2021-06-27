@@ -26,7 +26,7 @@ Arena::push_block(u32 size, u8 alignment) {
     if (size == 0 || alignment == 0) {
         return nullptr;
     }
-    u8 adjust = AlignForwardDiff((u8*)this->memory + this->used, alignment);
+    u8 adjust = align_memory_forward_diff((u8*)this->memory + this->used, alignment);
     
     // if not enough space, return 
     u8* memory_end = (u8*)this->memory + this->capacity;

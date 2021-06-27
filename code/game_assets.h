@@ -157,8 +157,8 @@ Assets_GetAtlasUV(assets* Assets,
                   image* Image) 
 {
     auto Texture = Assets->Textures[Image->TextureId];
-    aabb2u TextureAabb = Aabb2u_Create(0, 0, Texture.Width, Texture.Height);
-    aabb2f NormalizedAabb = Aabb2u_Ratio(Image->Aabb, TextureAabb);
+    aabb2u TextureAabb = aabb2u::create(0, 0, Texture.Width, Texture.Height);
+    aabb2f NormalizedAabb = ratio(Image->Aabb, TextureAabb);
     return Aabb2f_To_Quad2f(NormalizedAabb);
 }
 

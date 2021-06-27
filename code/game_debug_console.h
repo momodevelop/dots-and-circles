@@ -5,9 +5,9 @@
 #define DebugConsole_InfoLineCount 5
 #define DebugConsole_MaxCommands 16
 #define DebugConsole_PosZ 90.f
-#define DebugConsole_InfoBgColor C4f_Grey3
-#define DebugConsole_InputBgColor C4f_Grey2
-#define DebugConsole_InputTextColor C4f_White
+#define DebugConsole_InfoBgColor C4F_GREY3
+#define DebugConsole_InputBgColor C4F_GREY2
+#define DebugConsole_InputTextColor C4F_WHITE
 #define DebugConsole_Width Game_DesignWidth 
 #define DebugConsole_Height 240.f
 #define DebugConsole_StartPosX 0.f
@@ -147,7 +147,7 @@ DebugConsole_Update(debug_console* Console,
         v2f StartPos = { DebugConsole_StartPosX, DebugConsole_StartPosY };
         v2f EndPos =  { DebugConsole_EndPosX, DebugConsole_EndPosY };
         
-        f32 P = EaseInQuad(Timer_Percent(Console->TransitTimer));
+        f32 P = ease_in_quad(Timer_Percent(Console->TransitTimer));
         v2f Delta = EndPos - StartPos; 
         
         v2f DeltaP = Delta * P;
@@ -189,7 +189,7 @@ DebugConsole_Update(debug_console* Console,
         
         u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
         if (Button_IsPoked(G_Input->ButtonConfirm)) {
-            DebugConsole_PushInfo(Console, InputLineCStr, C4f_White);
+            DebugConsole_PushInfo(Console, InputLineCStr, C4F_WHITE);
             
             u32 Min = 0;
             u32 Max = 0;
@@ -244,29 +244,28 @@ DebugConsole_Render(debug_console* Console)
         (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
     f32 PaddingWidth = Dimensions.w * 0.005f;
     {
-        m44f ScaleMatrix = M44f_Scale(Dimensions.x, 
-                                      Dimensions.y, 
-                                      1.f);
+        m44f S = m44f::create_scale(Dimensions.x, 
+                                    Dimensions.y, 
+                                    1.f);
         
-        m44f PositionMatrix = M44f_Translation(Console->Position.x,
-                                               Console->Position.y,
-                                               DebugConsole_PosZ);
-        m44f InfoBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
+        m44f P = m44f::create_translation(Console->Position.x,
+                                          Console->Position.y,
+                                          DebugConsole_PosZ);
         Renderer_DrawQuad(G_Renderer, 
                           DebugConsole_InfoBgColor, 
-                          InfoBgTransform);
+                          P * S);
     }
     
     {
-        m44f ScaleMatrix = M44f_Scale(Dimensions.w, LineHeight, 0.f);
-        m44f PositionMatrix = M44f_Translation(Console->Position.x, 
-                                               Bottom + LineHeight * 0.5f,
-                                               DebugConsole_PosZ+ 0.01f);
+        m44f S = m44f::create_scale(Dimensions.w, LineHeight, 0.f);
+        m44f P = m44f::create_translation(Console->Position.x, 
+                                          Bottom + LineHeight * 0.5f,
+                                          DebugConsole_PosZ+ 0.01f);
         
-        m44f InputBgTransform = M44f_Concat(PositionMatrix, ScaleMatrix);
+        
         Renderer_DrawQuad(G_Renderer, 
                           DebugConsole_InputBgColor, 
-                          InputBgTransform);
+                          P * S);
     }
     
     // Draw info text

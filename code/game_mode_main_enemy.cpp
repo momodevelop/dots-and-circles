@@ -34,13 +34,13 @@ Enemy_Spawn(game_mode_main* Mode,
             enemy_shoot_homing* Shoot = &Enemy->ShootHoming;
             Shoot->Timer = 0.f;
             Shoot->Duration = 0.1f;
-            Shoot->Mood = (mood_type)Rng_Choice(&Mode->Rng, MoodType_Count);
+            Shoot->Mood = (mood_type)Mode->rng.choice(MoodType_Count);
         } break;
         case EnemyShootType_8Directions: {
             enemy_shoot_8dir* Shoot = &Enemy->Shoot8Dir;
             Shoot->Timer = 0.f;
             Shoot->Duration = 0.1f;
-            Shoot->Mood = (mood_type)Rng_Choice(&Mode->Rng, MoodType_Count);
+            Shoot->Mood = (mood_type)Mode->rng.choice(MoodType_Count);
         } break;
     };
     
@@ -80,9 +80,9 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
         case EnemyShootType_8Directions: {
             enemy_shoot_8dir* Shoot = &Enemy->Shoot8Dir;
             Shoot->Timer += DeltaTime;
-            static m22f RotateMtx = M22f_Rotation(TAU/8);
+            static m22f RotateMtx = m22f::create_rotation(TAU/8);
             if (Shoot->Timer > Shoot->Duration) {
-                v2f Dir = v2f_create(1.f, 0.f);
+                v2f Dir = v2f::create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
                     Dir = RotateMtx * Dir;
                     Bullet_Spawn(Mode, Assets, Enemy->Position, Dir, 200.f, Shoot->Mood);
@@ -102,6 +102,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
         Enemy_SetStateDying(Enemy);
     }
 }
+
 
 static inline void 
 Main_UpdateEnemies(game_mode_main* Mode,
@@ -147,7 +148,7 @@ Main_RenderEnemies(game_mode_main* Mode)
         switch(Enemy->State) {
             case EnemyState_Spawning: {
                 enemy_state_spawn* Spawn = &Enemy->StateSpawn;
-                f32 Ease = EaseOutQuad(Spawn->Timer/Spawn->Duration);
+                f32 Ease = ease_out_quad(Spawn->Timer/Spawn->Duration);
                 Size = Enemy->Size * Ease;
             } break;
             case EnemyState_Dying: {
@@ -156,15 +157,15 @@ Main_RenderEnemies(game_mode_main* Mode)
                 Size = Enemy->Size * Ease;
             }
         }
-        m44f S = M44f_Scale(Size, Size, 1.f);
-        m44f R = M44f_RotationZ(Enemy->Rotation);
-        m44f T = M44f_Translation(Enemy->Position.x,
-                                  Enemy->Position.y,
-                                  ZLayEnemy + Offset);
+        m44f S = m44f::create_scale(Size, Size, 1.f);
+        m44f R = m44f::create_rotation_z(Enemy->Rotation);
+        m44f T = m44f::create_translation(Enemy->Position.x,
+                                          Enemy->Position.y,
+                                          ZLayEnemy + Offset);
         
         Draw_TexturedQuadFromImage(Image_Enemy,
                                    T*R*S, 
-                                   C4f_White);
+                                   C4F_WHITE);
     };
     Mode->Enemies.foreach(ForEachLamb);
 }

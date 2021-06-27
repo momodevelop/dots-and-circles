@@ -2,165 +2,192 @@
 #define __MM_STREAM__
 
 // TODO: Linked list of stream chunks?
-struct stream {
-    u8* Contents;
-    u32 ContentSize;
+struct Stream {
+    u8* contents;
+    u32 content_size;
+    u32 current;
     
-    u32 Current;
+    b8 init(void* memory, u32 memory_size);
+    b8 alloc(Arena* arena, u32 capacity);
+    void reset();
+    b8 is_eos();
+    void* consume_block(u32 amount);
+    
+    template<typename T>
+        T* consume_struct();
+    
+    b8 write_block(void* src, u32 src_size);
+    template<typename T>
+        b8 write_struct(T item);
 };
 
 
-static inline b8
-Stream_Create(stream* Stream, void* Memory, u32 MemorySize) {
-    if ( Memory == nullptr || MemorySize == 0) {
+b8
+Stream::init(void* memory, u32 memory_size) {
+    if ( memory == nullptr || memory_size == 0) {
         return false;
     }
-    Stream->Contents = (u8*)Memory;
-    Stream->ContentSize = MemorySize;
+    contents = (u8*)memory;
+    content_size = memory_size;
     return true;
 }
 
 
 
-static inline b8
-Stream_CreateFromArena(stream* Stream, Arena* arena, u32 Capacity) {
-    void* Memory = arena->push_block(Capacity);
-    return Stream_Create(Stream, Memory, Capacity); 
+b8
+Stream::alloc(Arena* arena, u32 capacity) {
+    void* memory = arena->push_block(capacity);
+    return init(memory, capacity); 
 } 
 
-static inline void
-Stream_Reset(stream* S) {
-    S->Current = 0;
+void
+Stream::reset() {
+    current = 0;
 }
 
-static inline b8
-Stream_IsEos(stream* S) {
-    return S->Current >= S->ContentSize;
+b8
+Stream::is_eos() {
+    return current >= content_size;
 }
 
-static inline void*
-Stream_ConsumeBlock(stream* S, u32 Amount) {
-    void* Ret = nullptr;
-    if (S->Current + Amount <= S->ContentSize) {
-        Ret = S->Contents + S->Current;
+void*
+Stream::consume_block(u32 amount) {
+    void* ret = nullptr;
+    if (current + amount <= content_size) {
+        ret = contents + current;
     }
-    S->Current += Amount;
-    return Ret;
+    current += amount;
+    return ret;
 }
 
-template<typename type>
-static inline type*
-Stream_Consume(stream* S) {
-    return (type*)Stream_ConsumeBlock(S, sizeof(type));
+template<typename T>
+T*
+Stream::consume_struct() {
+    return (T*)consume_block(sizeof(T));
 }
 
 
-static inline b8
-Stream_WriteBlock(stream* S, void* Src, u32 SrcSize) {
-    if (S->Current + SrcSize >= S->ContentSize) {
+b8
+Stream::write_block(void* src, u32 src_size) {
+    if (current + src_size >= content_size) {
         return false;
     }
-    CopyBlock(S->Contents + S->Current, Src, SrcSize);
-    S->Current += SrcSize; 
+    copy_block(contents + current, src, src_size);
+    current += src_size; 
     return true;
 }
 
-template<typename type>
-static inline b8
-Stream_Write(stream* S, type Struct) {
-    return Stream_WriteBlock(S, &Struct, sizeof(type));
+template<typename T>
+b8
+Stream::write_struct(T item) {
+    return write_block(&item, sizeof(T));
 }
 
 
 //~ NOTE(Momo): Bitstream
 
-struct bitstream {
-    u8* Contents;
-    u32 ContentSize;
+struct Bitstream {
+    u8* contents;
+    u32 content_size;
     
-    u32 Current;
+    u32 current;
     
     // For bit reading
-    u32 BitBuffer;
-    u32 BitCount;
+    u32 bit_buffer;
+    u32 bit_count;
+    
+    b8 init(void* memory, u32 memory_size);
+    b8 alloc(Arena* arena, u32 capacity);
+    void reset();
+    b8 is_eos();
+    void* consume_block(u32 amount);
+    
+    template<typename T>
+        T* consume_struct();
+    
+    b8 write_block(void* src, u32 src_size);
+    template<typename T>
+        b8 write_struct(T item);
+    u32 consume_bits(u32 amount);
+    
 };
 
-static inline b8
-Bitstream_Create(bitstream* Stream, void* Memory, u32 MemorySize) {
-    if ( Memory == nullptr || MemorySize == 0) {
+b8
+Bitstream::init(void* memory, u32 memory_size) {
+    if ( memory == nullptr || memory_size == 0) {
         return false;
     }
-    Stream->Contents = (u8*)Memory;
-    Stream->ContentSize = MemorySize;
+    contents = (u8*)memory;
+    content_size = memory_size;
     return true;
 }
 
 
 
-static inline b8
-Bitstream_CreateFromArena(bitstream* Stream, Arena* arena, u32 Capacity) {
-    void* Memory = arena->push_block(Capacity);
-    return Bitstream_Create(Stream, Memory, Capacity); 
+b8
+Bitstream::alloc(Arena* arena, u32 capacity) {
+    void* memory = arena->push_block(capacity);
+    return init(memory, capacity); 
 } 
 
-static inline void
-Bitstream_Reset(bitstream* S) {
-    S->Current = 0;
+void
+Bitstream::reset() {
+    current = 0;
 }
 
-static inline b8
-Bitstream_IsEos(bitstream* S) {
-    return S->Current >= S->ContentSize;
+b8
+Bitstream::is_eos() {
+    return current >= content_size;
 }
 
-static inline void*
-Bitstream_ConsumeBlock(bitstream* S, u32 Amount) {
-    void* Ret = nullptr;
-    if (S->Current + Amount <= S->ContentSize) {
-        Ret = S->Contents + S->Current;
+void*
+Bitstream::consume_block(u32 amount) {
+    void* ret = nullptr;
+    if (current + amount <= content_size) {
+        ret = contents + current;
     }
-    S->Current += Amount;
-    return Ret;
+    current += amount;
+    return ret;
 }
 
-template<typename type>
-static inline type*
-Bitstream_Consume(bitstream* S) {
-    return (type*)Bitstream_ConsumeBlock(S, sizeof(type));
+template<typename T>
+T*
+Bitstream::consume_struct() {
+    return (T*)consume_block(sizeof(T));
 }
 
 
-static inline b8
-Bitstream_WriteBlock(bitstream* S, void* Src, u32 SrcSize) {
-    if (S->Current + SrcSize >= S->ContentSize) {
+b8
+Bitstream::write_block(void* src, u32 src_size) {
+    if (current + src_size >= content_size) {
         return false;
     }
-    CopyBlock(S->Contents + S->Current, Src, SrcSize);
-    S->Current += SrcSize; 
+    copy_block(contents + current, src, src_size);
+    current += src_size; 
     return true;
 }
 
-template<typename type>
-static inline b8
-Bitstream_Write(bitstream* S, type Struct) {
-    return Bitstream_WriteBlock(S, &Struct, sizeof(type));
+template<typename T>
+b8
+Bitstream::write_struct(T item) {
+    return write_block(&item, sizeof(T));
 }
 
 // Bits are consumed from LSB to MSB
-static inline u32
-Bitstream_ConsumeBits(bitstream* S, u32 Amount){
-    Assert(Amount <= 32);
+u32
+Bitstream::consume_bits(u32 amount){
+    Assert(amount <= 32);
     
-    while(S->BitCount < Amount) {
-        u32 Byte = *Bitstream_Consume<u8>(S);
-        S->BitBuffer |= (Byte << S->BitCount);
-        S->BitCount += 8;
+    while(bit_count < amount) {
+        u32 byte = *consume_struct<u8>();
+        bit_buffer |= (byte << bit_count);
+        bit_count += 8;
     }
     
-    u32 Result = S->BitBuffer & ((1 << Amount) - 1); 
+    u32 Result = bit_buffer & ((1 << amount) - 1); 
     
-    S->BitCount -= Amount;
-    S->BitBuffer >>= Amount;
+    bit_count -= amount;
+    bit_buffer >>= amount;
     
     return Result;
 }

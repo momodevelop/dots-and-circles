@@ -80,26 +80,26 @@ static inline void
 Main_RenderPlayer(game_mode_main* Mode) 
 {
     player* Player = &Mode->Player;
-    m44f S = M44f_Scale(Player->Size, Player->Size, 1.f);
+    m44f S = m44f::create_scale(Player->Size, Player->Size, 1.f);
     
     {
-        m44f T = M44f_Translation(Player->Position.x,
+        m44f T = m44f::create_translation(Player->Position.x,
                                   Player->Position.y,
                                   ZLayPlayer);
-        c4f Color = C4f_Create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
+        c4f Color = c4f::create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
         Draw_TexturedQuadFromImage(Image_PlayerCircle,
-                                   M44f_Concat(T,S), 
+                                   T*S, 
                                    Color);
     }
     
     {
-        m44f T = M44f_Translation(Player->Position.x,
+        m44f T = m44f::create_translation(Player->Position.x,
                                   Player->Position.y,
                                   ZLayPlayer + 0.01f);
-        c4f Color = C4f_Create(1.f, 1.f, 1.f, Player->DotImageAlpha);
+        c4f Color = c4f::create(1.f, 1.f, 1.f, Player->DotImageAlpha);
         Draw_TexturedQuadFromImage(Image_PlayerDot,
-                                   M44f_Concat(T,S), 
+                                   T*S, 
                                    Color);
     }
 }

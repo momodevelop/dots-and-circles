@@ -52,8 +52,8 @@ struct game_mode_anime_test {
 static inline void 
 AnimeTestMode_Init(permanent_state* PermState) {
     game_mode_anime_test* Mode = PermState->AnimeTestMode;     
-    Mode->Entity.Pos = v3f_create(0.f, 0.f, 0.f);
-    Mode->Entity.Size = v3f_create(48.f*2, 48.f*2, 1.f);
+    Mode->Entity.Pos = v3f::create(0.f, 0.f, 0.f);
+    Mode->Entity.Size = v3f::create(48.f*2, 48.f*2, 1.f);
     AnimeComponent_Create(&Mode->Entity.Anime, Anime_KaruFront, 0.25f);
     
 }
@@ -73,16 +73,16 @@ AnimeTestMode_Update(permanent_state* PermState,
     AnimeComponent_Update(&Entity->Anime, Assets, DeltaTime);
     
     // TODO(Momo): Draw function?
-    m44f T = M44f_Translation(Entity->Pos.x, Entity->Pos.y, Entity->Pos.z);
-    m44f S = M44f_Scale(Entity->Size.x, Entity->Size.y, Entity->Size.z);
-    m44f Transform = M44f_Concat(T,S);
-    c4f Color = C4f_White;
+    m44f T = m44f::create_translation(Entity->Pos.x, Entity->Pos.y, Entity->Pos.z);
+    m44f S = m44f::create_scale(Entity->Size.x, Entity->Size.y, Entity->Size.z);
+    
+    c4f Color = C4F_WHITE;
     anime_component* AnimeCom = &Entity->Anime;
     {
         anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
         image_id ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
         Draw_TexturedQuadFromImage(ImageId,
-                                   Transform,
+                                   T*S,
                                    Color);
         
     }

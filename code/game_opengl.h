@@ -338,10 +338,10 @@ Opengl_AlignViewport(opengl* Opengl)
                                               Opengl->DesignDimensions.h);
     
     u32 x, y, w, h;
-    x = Region.Min.x;
-    y = Region.Min.y;
-    w = Aabb2u_Width(Region);
-    h = Aabb2u_Height(Region);
+    x = Region.min.x;
+    y = Region.min.y;
+    w = width(Region);
+    h = height(Region);
     
     Opengl->glViewport(x, y, w, h);
     Opengl->glScissor(x, y, w, h);
@@ -759,7 +759,7 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 LastDrawnInstanceIndex += InstancesToDrawCount;
                 InstancesToDrawCount = 0;
                 
-                auto Result = M44f_Transpose(Data->Basis);
+                auto Result = transpose(Data->Basis);
                 GLint uProjectionLoc = Opengl->glGetUniformLocation(Opengl->Shader,
                                                                     "uProjection");
                 
@@ -772,10 +772,10 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
             case RendererCommandType_ClearColor: {
                 auto* Data = (renderer_command_clear_color*)
                     Commands->get_entry_data(Entry);
-                Opengl->glClearColor(Data->Colors.R, 
-                                     Data->Colors.G, 
-                                     Data->Colors.B, 
-                                     Data->Colors.A);
+                Opengl->glClearColor(Data->Colors.r, 
+                                     Data->Colors.g, 
+                                     Data->Colors.b, 
+                                     Data->Colors.a);
             } break;
             case RendererCommandType_DrawQuad: {
                 auto* Data = (renderer_command_draw_quad*)
@@ -808,7 +808,7 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                                              &QuadUV);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = M44f_Transpose(Data->Transform);
+                m44f Transform = transpose(Data->Transform);
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
                                              CurrentInstanceIndex* sizeof(m44f), 
                                              sizeof(m44f), 
@@ -848,7 +848,7 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                                              &Data->TextureCoords);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = M44f_Transpose(Data->Transform);
+                m44f Transform = transpose(Data->Transform);
                 Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
                                              CurrentInstanceIndex* sizeof(m44f), 
                                              sizeof(m44f), 

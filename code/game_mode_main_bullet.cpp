@@ -1,4 +1,5 @@
 
+
 static inline void
 Bullet_Spawn(game_mode_main* Mode, 
              assets* Assets, 
@@ -21,9 +22,9 @@ Bullet_Spawn(game_mode_main* Mode,
     }
     B->Position = Position;
 	B->Speed = Speed;
-    B->Size = v2f_create(16.f, 16.f);
+    B->Size = v2f::create(16.f, 16.f);
     
-    B->HitCircle = Circle2f_Create(v2f_create(0.f, 0.f), 4.f);
+    B->HitCircle = circle2f::create(v2f::create(0.f, 0.f), 4.f);
     
     if (length_sq(Direction) > 0.f) {
 	    B->Direction = normalize(Direction);
@@ -39,10 +40,10 @@ Main_UpdateBullets(game_mode_main* Mode,
     auto SlearIfLamb = [&](bullet* B) {
         B->Position += B->Direction * B->Speed * DeltaTime;
         
-        return B->Position.x <= -Game_DesignWidth * 0.5f - B->HitCircle.Radius || 
-            B->Position.x >= Game_DesignWidth * 0.5f + B->HitCircle.Radius ||
-            B->Position.y <= -Game_DesignHeight * 0.5f - B->HitCircle.Radius ||
-            B->Position.y >= Game_DesignHeight * 0.5f + B->HitCircle.Radius;
+        return B->Position.x <= -Game_DesignWidth * 0.5f - B->HitCircle.radius || 
+            B->Position.x >= Game_DesignWidth * 0.5f + B->HitCircle.radius ||
+            B->Position.y <= -Game_DesignHeight * 0.5f - B->HitCircle.radius ||
+            B->Position.y >= Game_DesignHeight * 0.5f + B->HitCircle.radius;
     };
     
     Mode->DotBullets.foreach_slear_if(SlearIfLamb);
@@ -58,17 +59,17 @@ Main_RenderBullets(game_mode_main* Mode)
     // Thus we have to render Dots first before Circles.
     f32 LayerOffset = 0.f;
     auto ForEachLamb = [&](bullet* B, image_id Image) {
-        m44f S = M44f_Scale(B->Size.x, 
+        m44f S = m44f::create_scale(B->Size.x, 
                             B->Size.y, 
                             1.f);
         
-        m44f T = M44f_Translation(B->Position.x,
+        m44f T = m44f::create_translation(B->Position.x,
                                   B->Position.y,
                                   ZLayBullet + LayerOffset);
         
         Draw_TexturedQuadFromImage(Image,
-                                   M44f_Concat(T,S), 
-                                   C4f_White);
+                                   T*S, 
+                                   C4F_WHITE);
         LayerOffset += 0.00001f;
     };
     
