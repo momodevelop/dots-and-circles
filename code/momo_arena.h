@@ -9,6 +9,10 @@ struct Arena_Mark {
     Arena* arena;
     u32 old_used;
     
+    // TODO: Can we remove this?
+    // Can't we just create more free functions specific to Arena_Mark itself? 
+    // There are some functions from an API pov where
+    // Arena_Mark shouldn't act like Arean, for example: clear()
     operator Arena*() {
         return this->arena;
     }

@@ -10,10 +10,10 @@ CmdJump(debug_console* Console, void* Context, String Arguments) {
     Defer{ G_Scratch->clear(); };
     
     String Buffer = {};
-    String_Split_Result ArgList = split(Arguments, G_Scratch, ' ');
+    String_Split_Result ArgList = Arguments.split(G_Scratch, ' ');
     if ( ArgList.item_count != 2 ) {
         // Expect two arguments
-        init(&Buffer, "Expected only 2 arguments");
+        Buffer.init("Expected only 2 arguments");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_RED);
@@ -21,36 +21,36 @@ CmdJump(debug_console* Console, void* Context, String Arguments) {
     }
     
     String StateToChangeTo = ArgList.items[1];
-    if (is_equal(StateToChangeTo, "main")) {
-        init(&Buffer, "Jumping to Main");
+    if (StateToChangeTo == "main") {
+        Buffer.init("Jumping to Main");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (is_equal(StateToChangeTo, "splash")) {
-        init(&Buffer, "Jumping to Splash");
+    else if (StateToChangeTo == "splash") {
+        Buffer.init("Jumping to Splash");
         DebugConsole_PushInfo(Console, 
                               Buffer,  
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (is_equal(StateToChangeTo, "sandbox")) {
-        init(&Buffer, "Jumping to Sandbox");
+    else if (StateToChangeTo == "sandbox") {
+        Buffer.init("Jumping to Sandbox");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
-    else if (is_equal(StateToChangeTo, "anime")) {
-        init(&Buffer, "Jumping to Anime");
+    else if (StateToChangeTo == "anime") {
+        Buffer.init("Jumping to Anime");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_AnimeTest;
     }
     else {
-        init(&Buffer, "Invalid state to jump to");
+        Buffer.init("Invalid state to jump to");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_RED);
@@ -144,7 +144,7 @@ GameUpdateFunc(GameUpdate)
         // Init console
         {
             String Buffer = {};
-            init(&Buffer, "jump");
+            Buffer.init("jump");
             
             if (!DebugConsole_Init(&DebugState->Console,
                                    &DebugState->arena)) {
@@ -238,15 +238,15 @@ GameUpdateFunc(GameUpdate)
     }
     
     String Buffer = {};
-    init(&Buffer, "Debug Memory: ");
+    Buffer.init("Debug Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            DebugState->arena.remaining());
-    init(&Buffer, "Mode Memory: ");
+    Buffer.init("Mode Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            PermState->ModeArena.arena->remaining());
-    init(&Buffer, "TranState Memory: ");
+    Buffer.init("TranState Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            TranState->arena.remaining());

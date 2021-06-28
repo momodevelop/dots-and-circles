@@ -67,7 +67,7 @@ DebugConsole_Init(debug_console* C,
         return false;
     }
     
-    if (!alloc(&C->InputLine.Text, arena, DebugConsole_LineLength)) {
+    if (!C->InputLine.Text.alloc(arena, DebugConsole_LineLength)) {
         return false;
     }
     
@@ -75,7 +75,7 @@ DebugConsole_Init(debug_console* C,
         return false;
     }
     for (u32 I = 0; I < C->InfoLines.count; ++I) {
-        if (!alloc(&C->InfoLines[I].Text, arena, DebugConsole_LineLength)){
+        if (!C->InfoLines[I].Text.alloc(arena, DebugConsole_LineLength)){
             return false;
         }
     }
@@ -103,29 +103,29 @@ DebugConsole_AddCmd(debug_console* C,
 
 
 static inline void
-DebugConsole_PushInfo(debug_console* Console, String String, c4f Color) {
+DebugConsole_PushInfo(debug_console* Console, String str, c4f Color) {
     for (u32 I = 0; I < Console->InfoLines.count - 1; ++I) {
         u32 J = Console->InfoLines.count - 1 - I;
         debug_console_line* Dest = Console->InfoLines + J;
         debug_console_line* Src = Console->InfoLines + J - 1;
-        copy(&Dest->Text, Src->Text.str);
+        Dest->Text.copy(Src->Text.str);
         Dest->Color = Src->Color;
     }
     Console->InfoLines[0].Color = Color;
-    clear(&Console->InfoLines[0].Text);
-    copy(&Console->InfoLines[0].Text, String);
+    Console->InfoLines[0].Text.clear();
+    Console->InfoLines[0].Text.copy(str);
 }
 
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
-    pop(&Console->InputLine.Text);
+    Console->InputLine.Text.pop();
 }
 
 static inline void 
 DebugConsole_RemoveCmd(debug_console* C, String Key) {
     for (u32 I = 0; I < C->Commands.count; ++I) {
-        if (is_equal(C->Commands[I].Key, Key)) {
+        if (C->Commands[I].Key == Key) {
             C->Commands.slear(I);
             return;
         }
@@ -157,9 +157,9 @@ DebugConsole_Update(debug_console* Console,
     if (Console->IsActive) {
         Console->TransitTimer.tick(DeltaTime);
         if (G_Input->Characters.count > 0 && 
-            G_Input->Characters.count <= remaining(Console->InputLine.Text)) 
+            G_Input->Characters.count <= Console->InputLine.Text.remaining()) 
         {  
-            push(&Console->InputLine.Text, G_Input->Characters.str);
+            Console->InputLine.Text.push(G_Input->Characters.str);
         }
         
         // Remove character backspace logic
@@ -200,21 +200,20 @@ DebugConsole_Update(debug_console* Console,
                 }
             }
             String CommandStr = {};
-            init_from_range(&CommandStr,
-                            InputLineCStr, 
+            CommandStr.init(InputLineCStr, 
                             Min, 
                             Max); 
             
             // Send a command to a callback
             for (u32 I = 0; I < Console->Commands.count; ++I) {
                 debug_console_command* Command = Console->Commands + I;
-                if (is_equal(Command->Key, CommandStr)) {
+                if (Command->Key == CommandStr) {
                     Command->Callback(Console, 
                                       Command->Context, 
                                       InputLineCStr);
                 }
             }
-            clear(&Console->InputLine.Text);
+            Console->InputLine.Text.clear();
             
         }
     }

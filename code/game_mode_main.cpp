@@ -220,22 +220,21 @@ MainMode_Update(permanent_state* PermState,
     //Main_RenderDebugLines(Mode, RenderCommands);
     
     String Buffer = {};
-    init(&Buffer, "Dots: ");
+    Buffer.init("Dots: ");
     DebugInspector_PushU32(&DebugState->Inspector,
                            Buffer,
                            Mode->DotBullets.count);
-    init(&Buffer, "Circles: ");
+    Buffer.init("Circles: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->CircleBullets.count);
     
-    init(&Buffer, "Bullets: ");
+    Buffer.init("Bullets: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->DotBullets.count + Mode->CircleBullets.count);
     
-    
-    init(&Buffer, "Enemies: ");
+    Buffer.init("Enemies: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->Enemies.count);

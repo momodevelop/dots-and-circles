@@ -386,7 +386,7 @@ load_png_from_memory(Png_Image* png,
     
     // NOTE(Momo): For reserving memory for unfiltered data that is generated 
     // as we decode the file
-    Arena_Mark actual_image_streamMark = arena->mark();
+    Arena_Mark actual_image_stream_mark = arena->mark();
     Stream actual_image_stream = {};
     actual_image_stream.alloc(arena, image_size);
     
@@ -424,7 +424,7 @@ load_png_from_memory(Png_Image* png,
                 
                 Png_Error deflate_error = png_deflate(&idat_stream, &unfiltered_image_stream, arena);
                 if (deflate_error != PngError_None) {
-                    actual_image_streamMark.revert();
+                    actual_image_stream_mark.revert();
                     return deflate_error;
                 }
                 
@@ -435,7 +435,7 @@ load_png_from_memory(Png_Image* png,
                 while(!unfiltered_image_stream.is_eos()) {
                     u8* filter_type = unfiltered_image_stream.consume_struct<u8>();
                     if (filter_type == nullptr) {
-                        actual_image_streamMark.revert();
+                        actual_image_stream_mark.revert();
                         return PngError_CannotReadfilter_type;
                     }
                     PNG_LOG("%02X: ", (u32)(*filter_type));
@@ -445,7 +445,7 @@ load_png_from_memory(Png_Image* png,
                                 for (u32 J = 0; J < image_channels; ++J) {
                                     u8* pixel_byte = unfiltered_image_stream.consume_struct<u8>();
                                     if (pixel_byte == nullptr) {
-                                        actual_image_streamMark.revert();
+                                        actual_image_stream_mark.revert();
                                         return PngError_NotEnoughPixels;
                                     }
                                     PNG_LOG("%02X ", (u32)(*pixel_byte));

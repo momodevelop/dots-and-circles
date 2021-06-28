@@ -58,13 +58,13 @@ Main_RenderScore(game_mode_main* Mode) {
                   { -Game_DesignWidth * 0.5f + 10.f, 
                       Game_DesignHeight * 0.5f - 24.f,  
                       ZLayScore },
-                  create_string("Current Score"),
+                  String::create("Current Score"),
                   FontSize);
     }
     
     // NOTE(Momo): High Score
     {
-        String Str = create_string("High Score");
+        String Str = String::create("High Score");
         Draw_Text(Font_Default,
                   { (Game_DesignWidth * 0.5f) - 120.f,
                       Game_DesignHeight * 0.5f - 24.f,

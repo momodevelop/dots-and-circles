@@ -21,7 +21,7 @@ DebugInspector_Init(debug_inspector* Inspector, Arena* arena) {
     Entries->alloc(arena, DebugInspector_EntryCount);
     for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
         String_Buffer* Item = Entries->push();
-        alloc(Item, arena, DebugInspector_EntryCount);
+        Item->alloc(arena, DebugInspector_EntryCount);
     }
 }
 
@@ -49,7 +49,7 @@ DebugInspector_End(debug_inspector* Inspector)
                   Entry->str,
                   32.f, 
                   C4F_WHITE);
-        clear(Entry);
+        Entry->clear();
         OffsetY -= 32.f;
     }
 }
@@ -57,7 +57,7 @@ DebugInspector_End(debug_inspector* Inspector)
 static inline String_Buffer*
 DebugInspector_PushEntry(debug_inspector* Inspector, String Label) {
     String_Buffer* Entry = Inspector->Entries.push();
-    copy(Entry, Label);
+    Entry->copy(Label);
     return Entry;
 }
 
@@ -69,7 +69,7 @@ DebugInspector_PushU32(debug_inspector* Inspector,
     if(!Inspector->IsActive)
         return;
     String_Buffer* Entry = DebugInspector_PushEntry(Inspector, Label);
-    push(Entry, Item);
+    Entry->push(Item);
 }
 
 static inline void
@@ -79,7 +79,7 @@ DebugInspector_PushS32(debug_inspector* Inspector, String Label, s32 Item)
         return;
     
     String_Buffer* Entry = DebugInspector_PushEntry(Inspector, Label);
-    push(Entry, Item);
+    Entry->push(Item);
 }
 
 #endif //GAME_DEBUG_INSPECTOR_H

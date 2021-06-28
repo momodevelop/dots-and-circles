@@ -238,7 +238,7 @@ Assets_Init(assets* Assets,
         Defer { G_Scratch->clear(); };
         
         String Signature = {};
-        init(&Signature, Game_AssetFileSignature);
+        Signature.init(Game_AssetFileSignature);
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
                                                G_Scratch,
