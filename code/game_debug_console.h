@@ -18,16 +18,16 @@
 #define DebugConsole_StartPopDuration 0.5f
 #define DebugConsole_PopRepeatDuration 0.1f
 
-typedef void (*debug_console_callback)(struct debug_console* Console, void* Context, u8_cstr Args);
+typedef void (*debug_console_callback)(struct debug_console* Console, void* Context, String Args);
 
 struct debug_console_command {
-    u8_cstr Key;
+    String Key;
     debug_console_callback Callback;
     void* Context;
 };
 
 struct debug_console_line {
-    u8_str Text;
+    String_Buffer Text;
     c4f Color;
 };
 
@@ -67,7 +67,7 @@ DebugConsole_Init(debug_console* C,
         return false;
     }
     
-    if (!U8Str_New(&C->InputLine.Text, arena, DebugConsole_LineLength)) {
+    if (!alloc(&C->InputLine.Text, arena, DebugConsole_LineLength)) {
         return false;
     }
     
@@ -75,7 +75,7 @@ DebugConsole_Init(debug_console* C,
         return false;
     }
     for (u32 I = 0; I < C->InfoLines.count; ++I) {
-        if (!U8Str_New(&C->InfoLines[I].Text, arena, DebugConsole_LineLength)){
+        if (!alloc(&C->InfoLines[I].Text, arena, DebugConsole_LineLength)){
             return false;
         }
     }
@@ -85,7 +85,7 @@ DebugConsole_Init(debug_console* C,
 
 static inline b8 
 DebugConsole_AddCmd(debug_console* C, 
-                    u8_cstr Key, 
+                    String Key, 
                     debug_console_callback Callback, 
                     void* Context)
 {
@@ -103,29 +103,29 @@ DebugConsole_AddCmd(debug_console* C,
 
 
 static inline void
-DebugConsole_PushInfo(debug_console* Console, u8_cstr String, c4f Color) {
+DebugConsole_PushInfo(debug_console* Console, String String, c4f Color) {
     for (u32 I = 0; I < Console->InfoLines.count - 1; ++I) {
         u32 J = Console->InfoLines.count - 1 - I;
         debug_console_line* Dest = Console->InfoLines + J;
         debug_console_line* Src = Console->InfoLines + J - 1;
-        U8Str_Copy(&Dest->Text, &Src->Text);
+        copy(&Dest->Text, Src->Text.str);
         Dest->Color = Src->Color;
     }
     Console->InfoLines[0].Color = Color;
-    U8Str_Clear(&Console->InfoLines[0].Text);
-    U8Str_CopyCStr(&Console->InfoLines[0].Text, String);
+    clear(&Console->InfoLines[0].Text);
+    copy(&Console->InfoLines[0].Text, String);
 }
 
 
 static inline void 
 DebugConsole_Pop(debug_console* Console) {
-    U8Str_Pop(&Console->InputLine.Text);
+    pop(&Console->InputLine.Text);
 }
 
 static inline void 
-DebugConsole_RemoveCmd(debug_console* C, u8_cstr Key) {
+DebugConsole_RemoveCmd(debug_console* C, String Key) {
     for (u32 I = 0; I < C->Commands.count; ++I) {
-        if (U8CStr_Cmp(C->Commands[I].Key, Key)) {
+        if (is_equal(C->Commands[I].Key, Key)) {
             C->Commands.slear(I);
             return;
         }
@@ -156,10 +156,10 @@ DebugConsole_Update(debug_console* Console,
     
     if (Console->IsActive) {
         Console->TransitTimer.tick(DeltaTime);
-        if (G_Input->Characters.Count > 0 && 
-            G_Input->Characters.Count <= U8Str_Remaining(&Console->InputLine.Text)) 
+        if (G_Input->Characters.count > 0 && 
+            G_Input->Characters.count <= remaining(Console->InputLine.Text)) 
         {  
-            U8Str_PushCStr(&Console->InputLine.Text, G_Input->Characters.CStr);
+            push(&Console->InputLine.Text, G_Input->Characters.str);
         }
         
         // Remove character backspace logic
@@ -187,34 +187,34 @@ DebugConsole_Update(debug_console* Console,
         
         // Execute command
         
-        u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
+        String InputLineCStr = Console->InputLine.Text.str;
         if (Button_IsPoked(G_Input->ButtonConfirm)) {
             DebugConsole_PushInfo(Console, InputLineCStr, C4F_WHITE);
             
             u32 Min = 0;
             u32 Max = 0;
-            for (u32 I = 0; I < Console->InputLine.Text.Count; ++I) {
-                if (Console->InputLine.Text.Data[I] == ' ') {
+            for (u32 I = 0; I < Console->InputLine.Text.count; ++I) {
+                if (Console->InputLine.Text.data[I] == ' ') {
                     Max = I;
                     break;
                 }
             }
-            u8_cstr CommandStr = {};
-            U8CStr_SubString(&CommandStr,
-                             InputLineCStr, 
-                             Min, 
-                             Max); 
+            String CommandStr = {};
+            init_from_range(&CommandStr,
+                            InputLineCStr, 
+                            Min, 
+                            Max); 
             
             // Send a command to a callback
             for (u32 I = 0; I < Console->Commands.count; ++I) {
                 debug_console_command* Command = Console->Commands + I;
-                if (U8CStr_Cmp(Command->Key, CommandStr)) {
+                if (is_equal(Command->Key, CommandStr)) {
                     Command->Callback(Console, 
                                       Command->Context, 
                                       InputLineCStr);
                 }
             }
-            U8Str_Clear(&Console->InputLine.Text);
+            clear(&Console->InputLine.Text);
             
         }
     }
@@ -276,7 +276,7 @@ DebugConsole_Render(debug_console* Console)
             Position.y = Bottom + ((I+1) * LineHeight) + PaddingHeight;
             Position.z = DebugConsole_PosZ + 0.01f;
             
-            u8_cstr InfoLineCStr = Console->InfoLines[I].Text.CStr;
+            String InfoLineCStr = Console->InfoLines[I].Text.str;
             Draw_Text(Font_Default, 
                       Position,
                       InfoLineCStr,
@@ -289,7 +289,7 @@ DebugConsole_Render(debug_console* Console)
         Position.y = Bottom + PaddingHeight;
         Position.z = DebugConsole_PosZ + 0.02f;
         
-        u8_cstr InputLineCStr = Console->InputLine.Text.CStr;
+        String InputLineCStr = Console->InputLine.Text.str;
         Draw_Text(Font_Default, 
                   Position,
                   InputLineCStr,

@@ -38,14 +38,14 @@ struct platform_input {
 
 static inline b8
 Input_Init(platform_input* Input, Arena* arena) {
-    return Input->Characters.alloc(arena, 10);
+    return alloc(&Input->Characters, arena, 10);
 }
 
 
 static inline b8
 Input_TryPushCharacterInput(platform_input* Input, char C) {
     if (C >= 32 && C <= 126) {
-        Input->Characters.push(C);
+        push(&Input->Characters, C);
         return true;
     }
     return false;
@@ -53,7 +53,7 @@ Input_TryPushCharacterInput(platform_input* Input, char C) {
 
 static inline void
 Input_Update(platform_input* Input) {
-    Input->Characters.clear();
+    clear(&Input->Characters);
     for (auto&& itr : Input->Buttons) {
         itr.Before = itr.Now;
     }

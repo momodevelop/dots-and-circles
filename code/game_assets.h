@@ -41,7 +41,7 @@ struct sound {
     u32 DataCount;
 };
 
-typedef u8_cstr msg;
+typedef String msg;
 
 
 struct assets {
@@ -163,10 +163,10 @@ Assets_GetAtlasUV(assets* Assets,
 }
 
 static inline b8
-Assets_CheckSignature(void* Memory, u8_cstr Signature) {
+Assets_CheckSignature(void* Memory, String Signature) {
     u8* MemoryU8 = (u8*)Memory;
-    for (u32 I = 0; I < Signature.Count; ++I) {
-        if (MemoryU8[I] != Signature.Data[I]) {
+    for (u32 I = 0; I < Signature.count; ++I) {
+        if (MemoryU8[I] != Signature.data[I]) {
             return false;
         }
     }
@@ -237,13 +237,13 @@ Assets_Init(assets* Assets,
         
         Defer { G_Scratch->clear(); };
         
-        u8_cstr Signature = {};
-        U8CStr_InitFromSiStr(&Signature, Game_AssetFileSignature);
+        String Signature = {};
+        init(&Signature, Game_AssetFileSignature);
         
         void* ReadSignature = Assets_ReadBlock(&AssetFile,
                                                G_Scratch,
                                                &CurFileOffset,
-                                               (u32)Signature.Count,
+                                               (u32)Signature.count,
                                                1);
         if (ReadSignature == nullptr) {
             G_Log("[Assets] Cannot read signature\n");
@@ -438,13 +438,13 @@ Assets_Init(assets* Assets,
                 
                 
                 msg* Msg = Assets_GetMsg(Assets, File->Id);
-                Msg->Count = File->Count;
+                Msg->count = File->Count;
                 
-                Msg->Data = (u8*)
+                Msg->data = (u8*)
                     Assets_ReadBlock(&AssetFile,
                                      arena, 
                                      &CurFileOffset,
-                                     sizeof(u8) * Msg->Count,
+                                     sizeof(u8) * Msg->count,
                                      1);
                 
                 

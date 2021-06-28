@@ -219,23 +219,23 @@ MainMode_Update(permanent_state* PermState,
     
     //Main_RenderDebugLines(Mode, RenderCommands);
     
-    u8_cstr Buffer = {};
-    U8CStr_InitFromSiStr(&Buffer, "Dots: ");
+    String Buffer = {};
+    init(&Buffer, "Dots: ");
     DebugInspector_PushU32(&DebugState->Inspector,
                            Buffer,
                            Mode->DotBullets.count);
-    U8CStr_InitFromSiStr(&Buffer, "Circles: ");
+    init(&Buffer, "Circles: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->CircleBullets.count);
     
-    U8CStr_InitFromSiStr(&Buffer, "Bullets: ");
+    init(&Buffer, "Bullets: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->DotBullets.count + Mode->CircleBullets.count);
     
     
-    U8CStr_InitFromSiStr(&Buffer, "Enemies: ");
+    init(&Buffer, "Enemies: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer, 
                            Mode->Enemies.count);

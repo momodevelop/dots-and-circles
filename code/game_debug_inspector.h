@@ -11,17 +11,17 @@
 
 struct debug_inspector {
     b8 IsActive;
-    List<u8_str> Entries;
+    List<String_Buffer> Entries;
 };
 
 static inline void
 DebugInspector_Init(debug_inspector* Inspector, Arena* arena) {
     Inspector->IsActive = false;
-    List<u8_str>* Entries = &Inspector->Entries;
+    List<String_Buffer>* Entries = &Inspector->Entries;
     Entries->alloc(arena, DebugInspector_EntryCount);
     for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
-        u8_str* Item = Entries->push();
-        U8Str_New(Item, arena, DebugInspector_EntryCount);
+        String_Buffer* Item = Entries->push();
+        alloc(Item, arena, DebugInspector_EntryCount);
     }
 }
 
@@ -42,44 +42,44 @@ DebugInspector_End(debug_inspector* Inspector)
     f32 OffsetY = 0.f;
     
     for (u32 I = 0; I < Inspector->Entries.count; ++I) {
-        u8_str* Entry = Inspector->Entries + I;
+        String_Buffer* Entry = Inspector->Entries + I;
         v3f Position = { DebugInspector_PosX, DebugInspector_PosY + OffsetY, DebugInspector_PosZ }; 
         Draw_Text(Font_Default, 
                   Position, 
-                  Entry->CStr,
+                  Entry->str,
                   32.f, 
                   C4F_WHITE);
-        U8Str_Clear(Entry);
+        clear(Entry);
         OffsetY -= 32.f;
     }
 }
 
-static inline u8_str*
-DebugInspector_PushEntry(debug_inspector* Inspector, u8_cstr Label) {
-    u8_str* Entry = Inspector->Entries.push();
-    U8Str_CopyCStr(Entry, Label);
+static inline String_Buffer*
+DebugInspector_PushEntry(debug_inspector* Inspector, String Label) {
+    String_Buffer* Entry = Inspector->Entries.push();
+    copy(Entry, Label);
     return Entry;
 }
 
 static inline void
 DebugInspector_PushU32(debug_inspector* Inspector, 
-                       u8_cstr Label, 
+                       String Label, 
                        u32 Item)
 {
     if(!Inspector->IsActive)
         return;
-    u8_str* Entry = DebugInspector_PushEntry(Inspector, Label);
-    U8Str_PushU32(Entry, Item);
+    String_Buffer* Entry = DebugInspector_PushEntry(Inspector, Label);
+    push(Entry, Item);
 }
 
 static inline void
-DebugInspector_PushS32(debug_inspector* Inspector, u8_cstr Label, s32 Item)
+DebugInspector_PushS32(debug_inspector* Inspector, String Label, s32 Item)
 {
     if(!Inspector->IsActive)
         return;
     
-    u8_str* Entry = DebugInspector_PushEntry(Inspector, Label);
-    U8Str_PushS32(Entry, Item);
+    String_Buffer* Entry = DebugInspector_PushEntry(Inspector, Label);
+    push(Entry, Item);
 }
 
 #endif //GAME_DEBUG_INSPECTOR_H

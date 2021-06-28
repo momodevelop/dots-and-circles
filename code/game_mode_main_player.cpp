@@ -58,13 +58,13 @@ Main_RenderScore(game_mode_main* Mode) {
                   { -Game_DesignWidth * 0.5f + 10.f, 
                       Game_DesignHeight * 0.5f - 24.f,  
                       ZLayScore },
-                  U8CStr_CreateFromSiStr("Current Score"),
+                  create_string("Current Score"),
                   FontSize);
     }
     
     // NOTE(Momo): High Score
     {
-        u8_cstr Str = U8CStr_CreateFromSiStr("High Score");
+        String Str = create_string("High Score");
         Draw_Text(Font_Default,
                   { (Game_DesignWidth * 0.5f) - 120.f,
                       Game_DesignHeight * 0.5f - 24.f,
@@ -84,8 +84,8 @@ Main_RenderPlayer(game_mode_main* Mode)
     
     {
         m44f T = m44f::create_translation(Player->Position.x,
-                                  Player->Position.y,
-                                  ZLayPlayer);
+                                          Player->Position.y,
+                                          ZLayPlayer);
         c4f Color = c4f::create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
         Draw_TexturedQuadFromImage(Image_PlayerCircle,
@@ -95,8 +95,8 @@ Main_RenderPlayer(game_mode_main* Mode)
     
     {
         m44f T = m44f::create_translation(Player->Position.x,
-                                  Player->Position.y,
-                                  ZLayPlayer + 0.01f);
+                                          Player->Position.y,
+                                          ZLayPlayer + 0.01f);
         c4f Color = c4f::create(1.f, 1.f, 1.f, Player->DotImageAlpha);
         Draw_TexturedQuadFromImage(Image_PlayerDot,
                                    T*S, 

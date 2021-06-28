@@ -3,54 +3,54 @@
 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
-CmdJump(debug_console* Console, void* Context, u8_cstr Arguments) {
+CmdJump(debug_console* Console, void* Context, String Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
     
     Defer{ G_Scratch->clear(); };
     
-    u8_cstr Buffer = {};
-    u8_cstr_split_res ArgList = U8CStr_SplitByDelimiter(Arguments, G_Scratch, ' ');
-    if ( ArgList.ItemCount != 2 ) {
+    String Buffer = {};
+    String_Split_Result ArgList = split(Arguments, G_Scratch, ' ');
+    if ( ArgList.item_count != 2 ) {
         // Expect two arguments
-        U8CStr_InitFromSiStr(&Buffer, "Expected only 2 arguments");
+        init(&Buffer, "Expected only 2 arguments");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_RED);
         return;
     }
     
-    u8_cstr StateToChangeTo = ArgList.Items[1];
-    if (U8CStr_CmpSiStr(StateToChangeTo, "main")) {
-        U8CStr_InitFromSiStr(&Buffer, "Jumping to Main");
+    String StateToChangeTo = ArgList.items[1];
+    if (is_equal(StateToChangeTo, "main")) {
+        init(&Buffer, "Jumping to Main");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Main;
     }
-    else if (U8CStr_CmpSiStr(StateToChangeTo, "splash")) {
-        U8CStr_InitFromSiStr(&Buffer, "Jumping to Splash");
+    else if (is_equal(StateToChangeTo, "splash")) {
+        init(&Buffer, "Jumping to Splash");
         DebugConsole_PushInfo(Console, 
                               Buffer,  
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Splash;
     }
-    else if (U8CStr_CmpSiStr(StateToChangeTo, "sandbox")) {
-        U8CStr_InitFromSiStr(&Buffer, "Jumping to Sandbox");
+    else if (is_equal(StateToChangeTo, "sandbox")) {
+        init(&Buffer, "Jumping to Sandbox");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
-    else if (U8CStr_CmpSiStr(StateToChangeTo, "anime")) {
-        U8CStr_InitFromSiStr(&Buffer, "Jumping to Anime");
+    else if (is_equal(StateToChangeTo, "anime")) {
+        init(&Buffer, "Jumping to Anime");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_YELLOW);
         PermState->NextGameMode = GameModeType_AnimeTest;
     }
     else {
-        U8CStr_InitFromSiStr(&Buffer, "Invalid state to jump to");
+        init(&Buffer, "Invalid state to jump to");
         DebugConsole_PushInfo(Console, 
                               Buffer, 
                               C4F_RED);
@@ -143,8 +143,8 @@ GameUpdateFunc(GameUpdate)
         
         // Init console
         {
-            u8_cstr Buffer = {};
-            U8CStr_InitFromSiStr(&Buffer, "jump");
+            String Buffer = {};
+            init(&Buffer, "jump");
             
             if (!DebugConsole_Init(&DebugState->Console,
                                    &DebugState->arena)) {
@@ -237,16 +237,16 @@ GameUpdateFunc(GameUpdate)
         PermState->NextGameMode = GameModeType_None;
     }
     
-    u8_cstr Buffer = {};
-    U8CStr_InitFromSiStr(&Buffer, "Debug Memory: ");
+    String Buffer = {};
+    init(&Buffer, "Debug Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            DebugState->arena.remaining());
-    U8CStr_InitFromSiStr(&Buffer, "Mode Memory: ");
+    init(&Buffer, "Mode Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            PermState->ModeArena.arena->remaining());
-    U8CStr_InitFromSiStr(&Buffer, "TranState Memory: ");
+    init(&Buffer, "TranState Memory: ");
     DebugInspector_PushU32(&DebugState->Inspector, 
                            Buffer,
                            TranState->arena.remaining());

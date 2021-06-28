@@ -24,7 +24,7 @@ Draw_TexturedQuadFromImage(image_id ImageId,
 static inline void
 Draw_Text(font_id FontId,
           v3f Position,
-          u8_cstr String,
+          String str,
           f32 Size, 
           c4f Color = C4F_WHITE) 
 {
@@ -32,8 +32,8 @@ Draw_Text(font_id FontId,
     font* Font = Assets_GetFont(G_Assets, FontId);
     
     f32 ZLayerOffset = 0.f;
-    for(u32 I = 0; I < String.Count; ++I) {
-        font_glyph* Glyph = Font_GetGlyph(Font, String.Data[I]);
+    for(u32 I = 0; I < str.count; ++I) {
+        font_glyph* Glyph = Font_GetGlyph(Font, str.data[I]);
         aabb2f Box = Glyph->Box; 
         
         // NOTE(Momo): Set bottom left as origin
@@ -56,10 +56,10 @@ Draw_Text(font_id FontId,
                                    Color);
         
         CurPosition.x += Glyph->Advance * Size;
-        if (I != String.Count - 1 ) {
+        if (I != str.count - 1 ) {
             u32 Kerning = Font_GetKerning(Font, 
-                                          String.Data[I], 
-                                          String.Data[I+1]);
+                                          str.data[I], 
+                                          str.data[I+1]);
             CurPosition.x += Kerning * Size;
             
         }
