@@ -68,16 +68,16 @@ struct assets {
 //~ NOTE(Momo): Font functions
 static inline f32 
 Font_GetHeight(font* Font) {
-    return AbsOf(Font->Ascent) + AbsOf(Font->Descent);
+    return ABS(Font->Ascent) + ABS(Font->Descent);
 }
 
 static inline u32
 Font_GetKerning(font* Font, u32 CodepointA, u32 CodepointB) {
-    Assert(CodepointA >= FontGlyph_CodepointStart);
-    Assert(CodepointA <= FontGlyph_CodepointEnd);
+    ASSERT(CodepointA >= FontGlyph_CodepointStart);
+    ASSERT(CodepointA <= FontGlyph_CodepointEnd);
     
-    Assert(CodepointB >= FontGlyph_CodepointStart);
-    Assert(CodepointB <= FontGlyph_CodepointEnd);
+    ASSERT(CodepointB >= FontGlyph_CodepointStart);
+    ASSERT(CodepointB <= FontGlyph_CodepointEnd);
     u32 IndexA = CodepointA - FontGlyph_CodepointStart;
     u32 IndexB = CodepointB - FontGlyph_CodepointStart;
     u32 Ret = Font->Kernings[IndexA][IndexB];
@@ -87,11 +87,11 @@ Font_GetKerning(font* Font, u32 CodepointA, u32 CodepointB) {
 
 static inline void
 Font_SetKerning(font* Font, u32 CodepointA, u32 CodepointB, u32 Kerning) {
-    Assert(CodepointA >= FontGlyph_CodepointStart);
-    Assert(CodepointA <= FontGlyph_CodepointEnd);
+    ASSERT(CodepointA >= FontGlyph_CodepointStart);
+    ASSERT(CodepointA <= FontGlyph_CodepointEnd);
     
-    Assert(CodepointB >= FontGlyph_CodepointStart);
-    Assert(CodepointB <= FontGlyph_CodepointEnd);
+    ASSERT(CodepointB >= FontGlyph_CodepointStart);
+    ASSERT(CodepointB <= FontGlyph_CodepointEnd);
     
     u32 IndexA = CodepointA - FontGlyph_CodepointStart;
     u32 IndexB = CodepointB - FontGlyph_CodepointStart;
@@ -101,8 +101,8 @@ Font_SetKerning(font* Font, u32 CodepointA, u32 CodepointB, u32 Kerning) {
 
 static inline font_glyph* 
 Font_GetGlyph(font* Font, u32 Codepoint) {
-    Assert(Codepoint >= FontGlyph_CodepointStart);
-    Assert(Codepoint <= FontGlyph_CodepointEnd);
+    ASSERT(Codepoint >= FontGlyph_CodepointStart);
+    ASSERT(Codepoint <= FontGlyph_CodepointEnd);
     u32 Index = Codepoint - FontGlyph_CodepointStart;
     font_glyph* Ret = Font->Glyphs + Index;
     
@@ -112,39 +112,39 @@ Font_GetGlyph(font* Font, u32 Codepoint) {
 //~ NOTE(Momo): Asset functions
 static inline font*
 Assets_GetFont(assets* Assets, font_id FontId) {
-    Assert(FontId < Font_Count);
+    ASSERT(FontId < Font_Count);
     return Assets->Fonts + FontId;
 }
 
 static inline texture*
 Assets_GetTexture(assets* Assets, texture_id TextureId) {
-    Assert(TextureId < Texture_Count);
+    ASSERT(TextureId < Texture_Count);
     return Assets->Textures + TextureId;
 }
 
 static inline image*
 Assets_GetImage(assets* Assets, image_id ImageId) {
-    Assert(ImageId < Image_Count);
+    ASSERT(ImageId < Image_Count);
     return Assets->Images + ImageId;
 }
 
 static inline anime*
 Assets_GetAnime(assets* Assets, anime_id AnimeId) {
-    Assert(AnimeId < Anime_Count);
+    ASSERT(AnimeId < Anime_Count);
     return Assets->Animes + AnimeId;
 }
 
 
 static inline msg*
 Assets_GetMsg(assets* Assets, msg_id MsgId) {
-    Assert(MsgId < Msg_Count);
+    ASSERT(MsgId < Msg_Count);
     return Assets->Msgs + MsgId;
 }
 
 
 static inline sound*
 Assets_GetSound(assets* Assets, sound_id SoundId) {
-    Assert(SoundId < Sound_Count);
+    ASSERT(SoundId < Sound_Count);
     return Assets->Sounds + SoundId;
 }
 
@@ -227,7 +227,7 @@ Assets_Init(assets* Assets,
         G_Platform->LogFileErrorFp(&AssetFile);
         return false;
     }
-    Defer { G_Platform->CloseFileFp(&AssetFile); }; 
+    defer { G_Platform->CloseFileFp(&AssetFile); }; 
     
     u32 CurFileOffset = 0;
     u32 FileEntryCount = 0;
@@ -235,7 +235,7 @@ Assets_Init(assets* Assets,
     // Check file signaure
     {        
         
-        Defer { G_Scratch->clear(); };
+        defer { G_Scratch->clear(); };
         
         String Signature = {};
         Signature.init(Game_AssetFileSignature);
@@ -274,7 +274,7 @@ Assets_Init(assets* Assets,
         // NOTE(Momo): Read header
         asset_file_entry FileEntry = {};
         {
-            Defer { G_Scratch->clear(); };
+            defer { G_Scratch->clear(); };
             
             auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
                                                    &AssetFile,
@@ -289,7 +289,7 @@ Assets_Init(assets* Assets,
         
         switch(FileEntry.Type) {
             case AssetType_Texture: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 
                 auto* FileTexture = Assets_ReadStruct(asset_file_texture,
                                                       &AssetFile,
@@ -325,7 +325,7 @@ Assets_Init(assets* Assets,
                 }
             } break;
             case AssetType_Image: { 
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 
                 auto* FileImage = 
                     Assets_ReadStruct(asset_file_image,
@@ -343,7 +343,7 @@ Assets_Init(assets* Assets,
                 Image->TextureId = FileImage->TextureId;
             } break;
             case AssetType_Font: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 
                 auto* FileFont = Assets_ReadStruct(asset_file_font,
                                                    &AssetFile,
@@ -361,7 +361,7 @@ Assets_Init(assets* Assets,
                 Font->Descent = FileFont->Descent;
             } break;
             case AssetType_FontGlyph: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 
                 auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
                                                         &AssetFile,
@@ -383,7 +383,7 @@ Assets_Init(assets* Assets,
                 Glyph->Box = FileFontGlyph->Box;
             } break;
             case AssetType_FontKerning: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 
                 auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
                                                           &AssetFile,
@@ -402,7 +402,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Sound: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 
                 auto* File = Assets_ReadStruct(asset_file_sound,
                                                &AssetFile,
@@ -426,7 +426,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Message: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 auto* File = Assets_ReadStruct(asset_file_msg,
                                                &AssetFile,
                                                G_Scratch,
@@ -451,7 +451,7 @@ Assets_Init(assets* Assets,
                 
             } break;
             case AssetType_Anime: {
-                Defer { G_Scratch->clear(); };
+                defer { G_Scratch->clear(); };
                 auto* File = Assets_ReadStruct(asset_file_anime,
                                                &AssetFile,
                                                G_Scratch,

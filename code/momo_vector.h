@@ -55,7 +55,7 @@ struct v2i {
         };
     };
     inline auto& operator[](u32 i) { 
-        Assert(i < 2); 
+        ASSERT(i < 2); 
         return elements[i]; 
     }
 };
@@ -106,7 +106,7 @@ struct v4f {
     };
     
     inline auto& operator[](u32 i) { 
-        Assert(i < 4); 
+        ASSERT(i < 4); 
         return elements[i]; 
     }
     
@@ -116,7 +116,7 @@ struct v4f {
 //~ NOTE(Momo): v2f functions
 f32&
 v2f::operator[](u32 i) {
-    Assert(i < 2); 
+    ASSERT(i < 2); 
     return elements[i]; 
 }
 
@@ -313,7 +313,7 @@ rotate(v2f v, f32 rad) {
 //~ NOTE(Momo): v2u Functions
 u32&
 v2u::operator[](u32 i) {
-    Assert(i < 2); 
+    ASSERT(i < 2); 
     return elements[i]; 
 }
 
@@ -325,7 +325,7 @@ v2u::create(u32 x, u32 y)  {
 //~ NOTE(Momo): v3f Functions
 f32&
 v3f::operator[](u32 i) {
-    Assert(i < 3); 
+    ASSERT(i < 3); 
     return elements[i]; 
 }
 
@@ -401,7 +401,7 @@ operator*(f32 lhs, v3f rhs) {
 
 static inline v3f
 div(v3f l, f32 r) {
-    Assert(!is_equal(r, 0));
+    ASSERT(!is_equal(r, 0));
     l.x /= r;
     l.y /= r;
     l.z /= r;

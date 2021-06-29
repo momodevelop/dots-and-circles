@@ -174,7 +174,7 @@ Main_StateSpawning_Update(permanent_state* PermState,
     game_mode_main* Mode = PermState->MainMode;
     assets* Assets = &TranState->Assets;
     
-    f32 Ease = ease_out_bounce(Clamp(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
+    f32 Ease = ease_out_bounce(CLAMP(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
     Mode->Player.Size = Mode->Player.MaxSize * Ease;
     
     Main_UpdateInput(Mode);

@@ -240,7 +240,7 @@ DebugConsole_Render(debug_console* Console)
     f32 FontHeight = Font_GetHeight(Font) * FontSize;
     
     f32 PaddingHeight =
-        (LineHeight - FontHeight) * 0.5f  + AbsOf(Font->Descent) * FontSize; 
+        (LineHeight - FontHeight) * 0.5f  + ABS(Font->Descent) * FontSize; 
     f32 PaddingWidth = Dimensions.w * 0.005f;
     {
         m44f S = m44f::create_scale(Dimensions.x, 

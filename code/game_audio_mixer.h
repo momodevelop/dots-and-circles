@@ -49,7 +49,7 @@ AudioMixer_Init(game_audio_mixer* Mixer,
     for (u32 I = 0; I < Mixer->Instances.count; ++I ){
         Mixer->Instances[I] = {};
         u32* Item = Mixer->FreeList.push();
-        Assert(Item);
+        ASSERT(Item);
         (*Item) = I;
     }
     

@@ -58,7 +58,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
         // Do nothing
         break;
         default: {
-            Assert(false);
+            ASSERT(false);
         }
     }
     
@@ -92,7 +92,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
             
         } break;
         default: {
-            Assert(false);
+            ASSERT(false);
         }
     }
     

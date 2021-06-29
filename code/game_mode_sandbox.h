@@ -41,7 +41,7 @@ SandboxMode_Init(permanent_state* PermState) {
     f32 StartY = Game_DesignHeight * -0.5f + BulletRadius;
     f32 OffsetX = 0.f;
     f32 OffsetY = 0.f;
-    for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
         B->Position = v2f::create(StartX + OffsetX, StartY + OffsetY);
         B->HitCircle = circle2f::create({}, BulletRadius);
@@ -77,7 +77,7 @@ SandboxMode_Update(permanent_state* PermState,
     }
     
     // NOTE(Momo): Update Bullets
-    for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
         if (B->IsHit) {
             continue;
@@ -93,7 +93,7 @@ SandboxMode_Update(permanent_state* PermState,
     if (Mode->ClickCount >= 2) {
         if (!is_equal(Mode->PrevMousePos, Mode->CurMousePos)) {
             
-            for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
+            for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
                 game_mode_sandbox_bullet* B = Mode->Bullets + I;
                 if (B->IsHit) {
                     continue;
@@ -119,7 +119,7 @@ SandboxMode_Update(permanent_state* PermState,
     
     // NOTE(Momo): Render Bullets
     f32 ZOrder = 0.f;
-    for (u32 I = 0; I < ArrayCount(Mode->Bullets); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
         if (B->IsHit) {
             continue;

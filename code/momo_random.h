@@ -542,7 +542,7 @@ inline Rng_Series
 Rng_Series::create(u32 value)
 {
     Rng_Series series= {};
-    series.index = value % ArrayCount(table);
+    series.index = value % ARRAY_COUNT(table);
     return series;
 }
 
@@ -550,7 +550,7 @@ u32
 Rng_Series::next()
 {
     u32 result = table[index++];
-    if(index >= ArrayCount(table)) {
+    if(index >= ARRAY_COUNT(table)) {
         index = 0;
     }
     
@@ -585,7 +585,7 @@ Rng_Series::bilateral()
 f32 
 Rng_Series::between(f32 min, f32 max)
 {
-    f32 result = Lerp(min, unilateral(), max);
+    f32 result = LERP(min, unilateral(), max);
     
     return(result);
 }

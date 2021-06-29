@@ -17,7 +17,7 @@ Bullet_Spawn(game_mode_main* Mode,
             B = Mode->CircleBullets.push();
         } break;
         default: {
-            Assert(false);
+            ASSERT(false);
         }
     }
     B->Position = Position;

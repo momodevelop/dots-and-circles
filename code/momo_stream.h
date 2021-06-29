@@ -176,7 +176,7 @@ Bitstream::write_struct(T item) {
 // Bits are consumed from LSB to MSB
 u32
 Bitstream::consume_bits(u32 amount){
-    Assert(amount <= 32);
+    ASSERT(amount <= 32);
     
     while(bit_count < amount) {
         u32 byte = *consume_struct<u8>();

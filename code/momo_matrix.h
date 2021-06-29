@@ -41,7 +41,7 @@ union m44f {
 //~ NOTE(Momo): m22f
 inline v2f&
 m22f::operator[](u32 i){
-    Assert(i < 2); 
+    ASSERT(i < 2); 
     return elements[i]; 
 }
 
@@ -106,7 +106,7 @@ m22f::create_rotation(f32 rad) {
 //~ NOTE(Momo): m44f
 inline v4f& 
 m44f::operator[](u32 i) { 
-    Assert(i < 4); 
+    ASSERT(i < 4); 
     return elements[i]; 
 }
 static inline m44f 

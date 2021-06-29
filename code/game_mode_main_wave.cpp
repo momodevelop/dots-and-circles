@@ -18,7 +18,7 @@ Main_UpdateWaves(game_mode_main* Mode,
                 Pattern->Duration = 30.f;
             } break;
             default: {
-                Assert(false);
+                ASSERT(false);
             }
         }
         Mode->Wave.IsDone = false;
@@ -51,7 +51,7 @@ Main_UpdateWaves(game_mode_main* Mode,
                 
             } break;
             default: {
-                Assert(false);
+                ASSERT(false);
             }
         }
         

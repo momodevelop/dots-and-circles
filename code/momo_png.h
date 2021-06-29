@@ -155,7 +155,7 @@ png_create_huffman(Arena* arena,
     for (u32 sym = 0; sym < sym_len_table_size; ++sym) 
     {
         u16 len = sym_len_table[sym];
-        Assert(len < PNG_MAX_BITS);
+        ASSERT(len < PNG_MAX_BITS);
         ++ret.len_count_table[len];
     }
     
@@ -203,7 +203,7 @@ png_deflate(Bitstream* src_stream, Stream* dest_stream, Arena* arena)
     u8 BFINAL = 0;
     while(BFINAL == 0){
         Arena_Mark Scratch = arena->mark();
-        Defer { Scratch.revert(); };
+        defer { Scratch.revert(); };
         
         BFINAL = (u8)src_stream->consume_bits(1);
         u16 BTYPE = (u8)src_stream->consume_bits(2);
@@ -326,7 +326,7 @@ load_png_from_memory(Png_Image* png,
     static constexpr u8 png_signature[] = { 
         137, 80, 78, 71, 13, 10, 26, 10 
     };
-    for (u32 I = 0; I < ArrayCount(png_signature); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(png_signature); ++I) {
         if (png_signature[I] != png_header->signature[I]) {
             PNG_LOG("Png Singature wrong!\n");
             return PngError_Badsignature;

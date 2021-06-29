@@ -24,20 +24,20 @@ typedef ptrdiff_t iptr;
 
 
 // TODO(Momo): change to retarded name
-#define Kibibyte (1 << 10)
-#define Mebibyte (1 << 20)
-#define Gibibyte (1 << 30)
-#define Kibibytes(num) (Kibibyte * num)
-#define Megibytes(num) (Mebibyte * num)
-#define Gibibytes(num) (Gibibyte * num)
-#define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
+#define KIBIBYTE (1 << 10)
+#define MEBIBYTE (1 << 20)
+#define GIBIBYTE (1 << 30)
+#define KIBIBYTES(num) (KIBIBYTE * num)
+#define MEBIBYTES(num) (MEBIBYTE * num)
+#define GIBIBYTES(num) (GIBIBYTE * num)
+#define ARRAY_COUNT(arr) (sizeof(arr)/sizeof(*arr))
 
-#define Glue_(A,B) A##B
-#define Glue(A,B) Glue_(A,B)
+#define GLUE_(A,B) A##B
+#define GLUE(A,B) GLUE_(A,B)
 
-#define AbsOf(X) (((X) < 0) ? (-(X)) : (X))
-#define MaxOf(X,Y) ((X) > (Y) ? (X) : (Y))
-#define MinOf(X,Y) ((X) < (Y) ? (X) : (Y))
+#define ABS(X) (((X) < 0) ? (-(X)) : (X))
+#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
+#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
 
 // NOTE(Momo): We need to do/while to cater for if/else statements
@@ -52,23 +52,23 @@ typedef ptrdiff_t iptr;
 // >> else 
 // >>    ...
 // which causes an invalid ';' error
-#define Swap(T,A,B) do{ T Glue(zawarudo, __LINE__) = (A); (A) = (B); (B) = Glue(zawarudo, __LINE__); } while(0);
-#define Clamp(Value, Low, High) MaxOf(MinOf(Value, High), Low)
-#define OffsetOf(Type, Member) (usize)&(((Type*)0)->Member)
-#define Lerp(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
+#define SWAP(A,B) do{ auto GLUE(zawarudo, __LINE__) = (A); (A) = (B); (B) = GLUE(zawarudo, __LINE__); } while(0);
+#define CLAMP(Value, Low, High) MAX(MIN(Value, High), Low)
+#define OFFSET_OF(Type, Member) (usize)&(((Type*)0)->Member)
+#define LERP(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
 
 
 
 // C-string
 static inline u32
-SiStrLen(const char* Str) {
+cstr_length(const char* Str) {
     u32 Count = 0;
     for(; (*Str) != 0 ; ++Count, ++Str);
     return Count;
 }
 
 static inline void
-SiStrCopy(char * Dest, const char* Src) {
+cstr_copy(char * Dest, const char* Src) {
     for(; (*Src) != 0 ; ++Src, ++Dest) {
         (*Dest) = (*Src);
     }
@@ -76,7 +76,7 @@ SiStrCopy(char * Dest, const char* Src) {
 }
 
 static inline b8
-SiStrCompare(const char* Lhs, const char* Rhs) {
+cstr_compare(const char* Lhs, const char* Rhs) {
     for(; (*Rhs) != 0 ; ++Rhs, ++Lhs) {
         if ((*Lhs) != (*Rhs)) {
             return false;
@@ -86,7 +86,7 @@ SiStrCompare(const char* Lhs, const char* Rhs) {
 }
 
 static inline b8
-SiStrCompareN(const char* Lhs, const char* Rhs, usize N) {
+cstr_compare_n(const char* Lhs, const char* Rhs, usize N) {
     for(usize I = 0; I < N; ++I, ++Lhs, ++Rhs) {
         if ((*Lhs) != (*Rhs)) {
             return false;
@@ -95,7 +95,7 @@ SiStrCompareN(const char* Lhs, const char* Rhs, usize N) {
     return true;
 }
 static inline void
-SiStrConcat(char* Dest, const char* Src) {
+cstr_concat(char* Dest, const char* Src) {
     // Go to the end of Dest
     for (; (*Dest) != 0; ++Dest);
     for (; (*Src) != 0; ++Src, ++Dest) {
@@ -106,23 +106,23 @@ SiStrConcat(char* Dest, const char* Src) {
 
 
 static inline void 
-SiStrClear(char* Dest) {
+cstr_clear(char* Dest) {
     (*Dest) = 0;
 }
 
 static inline void
-SiStrReverse(char* Dest) {
+cstr_reverse(char* Dest) {
     char* BackPtr = Dest;
     for (; *(BackPtr+1) != 0; ++BackPtr);
     for (;Dest < BackPtr; ++Dest, --BackPtr) {
-        Swap(char, *Dest, *BackPtr);
+        SWAP(*Dest, *BackPtr);
     }
 }
 
 
 
 static inline void 
-SiStrItoa(char* Dest, s32 Num) {
+cstr_itoa(char* Dest, s32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -135,7 +135,7 @@ SiStrItoa(char* Dest, s32 Num) {
     }
     
     b8 Negative = Num < 0;
-    Num = AbsOf(Num);
+    Num = ABS(Num);
     
     char* It = Dest;
     for(; Num != 0; Num /= 10) {
@@ -148,28 +148,28 @@ SiStrItoa(char* Dest, s32 Num) {
     }
     (*It) = 0;
     
-    SiStrReverse(Dest);
+    cstr_reverse(Dest);
 }
 
 
-// Assertion
+// ASSERTion
 #if SLOW
 #include <assert.h>
-#define Assert(x) assert(x)
-//#define Assert(x) {if(!(x)) {*(volatile int *)0 = 0;}}
+#define ASSERT(x) assert(x)
+//#define ASSERT(x) {if(!(x)) {*(volatile int *)0 = 0;}}
 #else
-#define Assert(x) 
+#define ASSERT(x) 
 #endif
 
 
 // Run-time system endianness check
 static inline b8 
-IsSystemBigEndian() {
+is_os_big_endian() {
     int n = 1;
     return (*(char*)&n != 1);
 }
 
-// Defer 
+// defer 
 template<class F> struct zawarudo_ScopeGuard {
     F f;
     ~zawarudo_ScopeGuard() { f(); }
@@ -181,59 +181,34 @@ template<class F> zawarudo_ScopeGuard<F> operator+(zawarudo_defer_dummy, F f) {
 
 #define zawarudo_AnonVarSub(x) zawarudo_defer##x
 #define zawarudo_AnonVar(x) zawarudo_AnonVarSub(x)
-#define Defer auto zawarudo_AnonVar(__LINE__) = zawarudo_defer_dummy{} + [&]()
+#define defer auto zawarudo_AnonVar(__LINE__) = zawarudo_defer_dummy{} + [&]()
 
 // Safe Truncation
-#define I8_Min                (-128)
-#define I16_Min              (-32768)
-#define I32_Min               (-2147483648)
-#define I64_Min               (-9223372036854775808)
+#define I8_MIN                (-128)
+#define I16_MIN              (-32768)
+#define I32_MIN               (-2147483648)
+#define I64_MIN               (-9223372036854775808)
 
-#define I8_Max                (127)
-#define I16_Max               (32767)
-#define I32_Max               (2147483647)
-#define I64_Max               (9223372036854775807)
+#define I8_MAX                (127)
+#define I16_MAX               (32767)
+#define I32_MAX               (2147483647)
+#define I64_MAX               (9223372036854775807)
 
-#define U8_Max               (255)
-#define U16_Max               (65535)
-#define U32_Max               (4294967295)
-#define U64_Max               (18446744073709551615)
+#define U8_MAX               (255)
+#define U16_MAX               (65535)
+#define U32_MAX               (4294967295)
+#define U64_MAX               (18446744073709551615)
 
-
-
-static inline u32
-U64_ToU32(u64 Value) {
-    Assert(Value <= U32_Max);
-    return (u32)Value;
-}
-
-static inline u32
-S32_ToU32(s32 Value) {
-    Assert(Value >= 0);
-    return (u32)Value;
-}
-
-static inline u16
-S32_ToU16(s32 Value) {
-    Assert(Value <= U16_Max && Value >= 0);
-    return (u16)Value;
-}
-
-static inline u32
-S64_ToU32(s64 Value) {
-    Assert(Value <= U32_Max && Value >= 0);
-    return (u32)Value;
-}
 
 //~ NOTE(Momo): Converts single digits 
 static inline u8
-DigitToAscii(u8 Digit){
-    Assert(Digit >= 0 && Digit <= 9);
+digit_to_ascii(u8 Digit){
+    ASSERT(Digit >= 0 && Digit <= 9);
     return Digit + '0';
 }
 static inline u8
-AsciiToDigit(u8 Digit){
-    Assert(Digit >= '0' && Digit <= '9');
+ascii_to_digit(u8 Digit){
+    ASSERT(Digit >= '0' && Digit <= '9');
     return Digit - '0';
 }
 

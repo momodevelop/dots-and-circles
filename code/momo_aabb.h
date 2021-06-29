@@ -107,14 +107,14 @@ aspect_ratio(aabb2f a) {
 inline aabb3f
 aabb3f::create_centered(v3f dimensions, v3f anchor) {
     aabb3f ret = {};
-    ret.min.x = Lerp(0.f, -dimensions.w, anchor.x);
-    ret.max.x = Lerp(dimensions.w, 0.f, anchor.x);
+    ret.min.x = LERP(0.f, -dimensions.w, anchor.x);
+    ret.max.x = LERP(dimensions.w, 0.f, anchor.x);
     
-    ret.min.y = Lerp(0.f, -dimensions.h, anchor.y);
-    ret.max.y = Lerp(dimensions.h, 0.f, anchor.y);
+    ret.min.y = LERP(0.f, -dimensions.h, anchor.y);
+    ret.max.y = LERP(dimensions.h, 0.f, anchor.y);
     
-    ret.min.z = Lerp(0.f, -dimensions.d, anchor.z);
-    ret.max.z = Lerp(dimensions.d, 0.f, anchor.z);
+    ret.min.z = LERP(0.f, -dimensions.d, anchor.z);
+    ret.max.z = LERP(dimensions.d, 0.f, anchor.z);
     
     return ret; 
 }

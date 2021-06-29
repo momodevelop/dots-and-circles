@@ -56,7 +56,7 @@ sort_aabbs_for_packer(aabb2u* aabbs,
             for (u32 i = 0; i < sort_entry_count; ++i) {
                 u32 aabb_w = width(aabbs[i]);
                 u32 aabb_h = height(aabbs[i]);
-                f32 key = -(f32)(MaxOf(aabb_w, aabb_h));
+                f32 key = -(f32)(MAX(aabb_w, aabb_h));
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
             }
@@ -66,8 +66,8 @@ sort_aabbs_for_packer(aabb2u* aabbs,
                 u32 aabb_w = width(aabbs[i]);
                 u32 aabb_h = height(aabbs[i]);
                 
-                u32 wh_max = MaxOf(aabb_w, aabb_h);
-                u32 wh_min = MinOf(aabb_w, aabb_h);
+                u32 wh_max = MAX(aabb_w, aabb_h);
+                u32 wh_min = MIN(aabb_w, aabb_h);
                 f32 key = -(f32)(wh_max/wh_min * aabb_w * aabb_h);
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -90,7 +90,7 @@ pack_aabbs(Arena* arena,
            AABB_Packer_Sort_Type sort_type) 
 {
     Arena_Mark scratch = arena->mark();
-    Defer { scratch.revert(); };
+    defer { scratch.revert(); };
     auto* sort_entries = arena->push_array<Sort_Entry>(aabb_count);
     
     sort_aabbs_for_packer(aabbs, sort_entries, aabb_count, sort_type);

@@ -29,7 +29,7 @@ UpdateSplashImageEntity(splash_image_entity* Entity,
         return;
     
     // NOTE(Momo): Update
-    f32 Ease = ease_out_bounce(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    f32 Ease = ease_out_bounce(CLAMP(Entity->Timer/Entity->Duration, 0.f, 1.f));
     
     Entity->Position.x = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
     Entity->Timer += DeltaTime;
@@ -69,7 +69,7 @@ UpdateSplashBlackout(splash_blackout_entity* Entity,
     if (Entity->CountdownTimer <= Entity->CountdownDuration) 
         return;
     
-    Entity->Colors.a = ease_in_sine(Clamp(Entity->Timer/Entity->Duration, 0.f, 1.f));
+    Entity->Colors.a = ease_in_sine(CLAMP(Entity->Timer/Entity->Duration, 0.f, 1.f));
     Entity->Timer += DeltaTime;
     
     // NOTE(Momo): Render
@@ -154,7 +154,7 @@ SplashMode_Update(permanent_state* PermState,
                                 Frustum);
     }
     
-    for (u32 I = 0; I < ArrayCount(Mode->SplashImg); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(Mode->SplashImg); ++I) {
         UpdateSplashImageEntity(Mode->SplashImg + I, 
                                 Assets, 
                                 DeltaTime);

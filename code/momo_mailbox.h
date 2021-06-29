@@ -58,7 +58,7 @@ Mailbox::clear() {
 // NOTE(Momo): Accessors and Iterators
 Mailbox_Entry_Header*
 Mailbox::get_entry(u32 index) {
-    Assert(index < entry_count);
+    ASSERT(index < entry_count);
     return (Mailbox_Entry_Header*)(entry_memory_start - index * sizeof(Mailbox_Entry_Header));
 }
 

@@ -140,19 +140,19 @@ SdlCopyFile(const char* DestFilename, const char* SrcFilename) {
         SDL_Log("Cannot open DestFilename: %s", DestFilename);
         return false;
     }
-    Defer { SDL_RWclose(DestFile); };
+    defer { SDL_RWclose(DestFile); };
     if (SrcFile == nullptr) {
         SDL_Log("Cannot open SrcFilename: %s", SrcFilename);
         return false;
     }
-    Defer {SDL_RWclose(SrcFile); };
+    defer {SDL_RWclose(SrcFile); };
 
     SDL_RWseek(SrcFile, 0, RW_SEEK_END);
     auto SrcFilesize = SDL_RWtell(SrcFile);
     SDL_RWseek(SrcFile, 0, RW_SEEK_SET);
 
     void* FileMemory = malloc(SrcFilesize);    
-    Defer { free(FileMemory); };
+    defer { free(FileMemory); };
 
     SDL_RWread(SrcFile, FileMemory, 1, SrcFilesize);
     SDL_RWwrite(DestFile, FileMemory, 1, SrcFilesize);
@@ -208,7 +208,7 @@ SdlGetFileSize(const char* Path) {
     if (File == nullptr) {
         return {};
     }
-    Defer{ SDL_RWclose(File); };
+    defer{ SDL_RWclose(File); };
     
     u32 Ret = 0;
     SDL_RWseek(File, 0, RW_SEEK_END);
@@ -224,7 +224,7 @@ SdlReadFile(void* Dest, u32 DestSize, const char* Path) {
     if (File == nullptr) {
         return false;
     }
-    Defer{ SDL_RWclose(File); };
+    defer{ SDL_RWclose(File); };
     SDL_RWread(File, Dest, 1, DestSize);
     return true;
 }
@@ -250,7 +250,7 @@ int main(int argc, char* argv[]) {
         SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
-    Defer{
+    defer{
         SDL_Log("SDL shutting down\n");
         SDL_Quit();
     }; 
@@ -329,7 +329,7 @@ int main(int argc, char* argv[]) {
         SDL_Log("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
-    Defer { SDL_DestroyWindow(Window); };
+    defer { SDL_DestroyWindow(Window); };
 
 
     // Opengl Context
@@ -339,7 +339,7 @@ int main(int argc, char* argv[]) {
         SDL_Log("Failed to create OpenGL context! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
-    Defer { SDL_GL_DeleteContext(OpenglContext); };
+    defer { SDL_GL_DeleteContext(OpenglContext); };
 
     gladLoadGLLoader(SDL_GL_GetProcAddress);
 
@@ -383,7 +383,7 @@ int main(int argc, char* argv[]) {
         SDL_Log("Cannot allocate memory");
         return 1;
     }
-    Defer { free(ProgramMemory); };
+    defer { free(ProgramMemory); };
     
     // NOTE(Momo): Memory Arena for platform
     arena PlatformArena = Arena(ProgramMemory, TotalMemorySize);
@@ -558,7 +558,7 @@ int main(int argc, char* argv[]) {
             if (TimeToSleep > 0) {
                 SDL_Delay((s32)TimeToSleep);
             }
-            //Assert(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);
+            //ASSERT(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);
             while(SdlGetMsElapsed(LastCounter, SDL_GetPerformanceCounter()) < TargetMsPerFrame);
         }
         else {

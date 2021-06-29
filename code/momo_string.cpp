@@ -13,7 +13,7 @@ String::init(u8* buffer, u32 buffer_size) {
 
 b8
 String::init(const char* cstr) {
-    return init((u8*)cstr, SiStrLen(cstr));
+    return init((u8*)cstr, cstr_length(cstr));
 }
 
 
@@ -30,7 +30,7 @@ inline String
 String::create(const char* cstr) {
     String ret = {};
     ret.data = (u8*)cstr;
-    ret.count = SiStrLen(cstr);
+    ret.count = cstr_length(cstr);
     return ret;
     
 }
@@ -104,7 +104,7 @@ String::split(Arena* arena, u8 delimiter) {
         
         String* link = arena->push_struct<String>();
         // TODO: don't assert?
-        Assert(link);
+        ASSERT(link);
         link->init((*this), min, max);
         
         if (ret.items == nullptr) {
@@ -212,8 +212,7 @@ String_Buffer::push(u32 num) {
     // Reverse starting from start point to count
     u32 sub_str_len_half = (count - start_pt)/2;
     for(u32 I = 0; I < sub_str_len_half; ++I) {
-        Swap(u8, 
-             data[start_pt + I], 
+        SWAP(data[start_pt + I], 
              data[count - 1 - I]);
     }
     return true;
@@ -232,7 +231,7 @@ String_Buffer::push(s32 num) {
     u32 start_pt = count; 
     
     b8 Negative = num < 0;
-    num = AbsOf(num);
+    num = ABS(num);
     
     for(; num != 0; num /= 10) {
         s32 digit_to_convert = num % 10;
@@ -246,7 +245,7 @@ String_Buffer::push(s32 num) {
     // Reverse starting from start point to count
     u32 sub_str_len_half = (count - start_pt)/2;
     for(u32 i = 0; i < sub_str_len_half; ++i) {
-        Swap(u8, data[start_pt + i], 
+        SWAP(data[start_pt + i], 
              data[count-1-i]);
         
     }

@@ -42,7 +42,7 @@ Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
     for (u32 y = TextureAabb.min.y; y < TextureAabb.min.y + TextureAabbH; ++y) {
         for (u32 x = TextureAabb.min.x; x < TextureAabb.min.x + TextureAabbW; ++x) {
             u32 Index = (x + y * AtlasWidth) * 4;
-            Assert(Index < (AtlasWidth * AtlasHeight * 4));
+            ASSERT(Index < (AtlasWidth * AtlasHeight * 4));
             for (u32 c = 0; c < 4; ++c) {
                 (*AtlasMemory)[Index + c] = TextureMemory[j++];
             }
@@ -72,7 +72,7 @@ Tba_GenerateAtlas(Arena* arena,
         switch(Type) {
             case AtlasContextType_Image: {
                 Arena_Mark Scratch = arena->mark();
-                Defer { Scratch.revert(); };
+                defer { Scratch.revert(); };
                 
                 auto* Context = (atlas_context_image*)UserDatas[I];
                 s32 W, H, C;
@@ -94,7 +94,7 @@ Tba_GenerateAtlas(Arena* arena,
                                                           FileMem.Size, 
                                                           &W, &H, &C, 0);
                 
-                Defer { stbi_image_free(TextureMemory); };
+                defer { stbi_image_free(TextureMemory); };
                 Tba_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Aabb);
                 
             } break;
@@ -108,7 +108,7 @@ Tba_GenerateAtlas(Arena* arena,
                                                                  Context->RasterScale, 
                                                                  Context->Codepoint, 
                                                                  &W, &H, nullptr, nullptr);
-                Defer { stbtt_FreeTexture( FontTextureOneCh, nullptr ); };
+                defer { stbtt_FreeTexture( FontTextureOneCh, nullptr ); };
                 
                 u32 TextureDimensions = (u32)(W * H);
                 if (TextureDimensions == 0) 
@@ -119,7 +119,7 @@ Tba_GenerateAtlas(Arena* arena,
                 if (!FontTexture) {
                     return nullptr;
                 }
-                Defer { Scratch.revert(); };
+                defer { Scratch.revert(); };
                 
                 u8* FontTextureItr = FontTexture;
                 for (u32 j = 0, k = 0; j < TextureDimensions; ++j ){

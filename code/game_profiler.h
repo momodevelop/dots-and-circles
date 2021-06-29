@@ -27,9 +27,9 @@ zawarudo_StartProfiling(u32 Index,
                         u32 LineNumber)
 {
     
-    Assert(Index < ArrayCount(G_ProfilerEntries));
+    ASSERT(Index < ARRAY_COUNT(G_ProfilerEntries));
     profiler_entry* E = G_ProfilerEntries + Index;
-    Assert(!E->IsStarted);
+    ASSERT(!E->IsStarted);
     E->CustomName = CustomName;
     E->FunctionName = FunctionName;
     E->LineNumber = LineNumber;

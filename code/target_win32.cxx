@@ -63,7 +63,7 @@ struct win32_state {
     
     // Handle pool
     HANDLE Handles[8];
-    u32 HandleFreeList[ArrayCount(Handles)];
+    u32 HandleFreeList[ARRAY_COUNT(Handles)];
     u32 HandleFreeCount;
     
 #if INTERNAL
@@ -86,7 +86,7 @@ static inline u32
 Win32_DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
     // Do we want to cap this?
     HDC DeviceContext = GetDC(Window);
-    Defer { ReleaseDC(Window, DeviceContext); };
+    defer { ReleaseDC(Window, DeviceContext); };
     
     u32 RefreshRate = DefaultRefreshRate;
     {
@@ -137,7 +137,7 @@ static inline void
 Win32_WriteConsole(const char* Message) {
     WriteConsoleA(G_State->StdOut,
                   Message, 
-                  SiStrLen(Message), 
+                  cstr_length(Message), 
                   0, 
                   NULL);
 }
@@ -231,7 +231,7 @@ Win32_BuildExePathFilename(win32_state* State,
 static inline void
 Win32_DisplayBufferInWindow(HWND Window, win32_screen_buffer* Buffer) {
     HDC DeviceContext = GetDC(Window);
-    Defer { ReleaseDC(Window, DeviceContext); };
+    defer { ReleaseDC(Window, DeviceContext); };
 
     // Centering?
 
@@ -276,7 +276,7 @@ Win32_Init() {
     // This is kinda what we wanna do if we ever want Renderer 
     // to be its own DLL...
     // NOTE(Momo): Arena 
-    u32 PlatformMemorySize = Kibibytes(256);
+    u32 PlatformMemorySize = KIBIBYTES(256);
     void* PlatformMemory = Win32_AllocateMemory(PlatformMemorySize);
     if(!PlatformMemory) {
         Win32_Log("[Win32_State] Failed to allocate memory\n"); 
@@ -304,14 +304,14 @@ Win32_Init() {
     // NOTE(Momo): Performance Frequency 
     LARGE_INTEGER PerfCountFreq;
     QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = S64_ToU32(PerfCountFreq.QuadPart);
+    State->PerformanceFrequency = to_u32(PerfCountFreq.QuadPart);
     
     // NOTE(Momo): Initialize file handle store
     //GlobalFileHandles = CreatePool<HANDLE>(&G_State->Arena, 8);
-    for (u32 I = 0; I < ArrayCount(State->Handles); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(State->Handles); ++I) {
         State->HandleFreeList[I] = I;
     }
-    State->HandleFreeCount = ArrayCount(State->Handles);
+    State->HandleFreeCount = ARRAY_COUNT(State->Handles);
     
 #if INTERNAL
     // NOTE(Momo): Initialize console
@@ -333,7 +333,7 @@ Win32_Free(win32_state* State) {
 
 static inline void
 Win32_BeginRecordingInput(win32_state* State, const char* Path) {
-    Assert(!State->IsRecordingInput);
+    ASSERT(!State->IsRecordingInput);
     HANDLE RecordFileHandle = CreateFileA(Path,
                                           GENERIC_WRITE,
                                           FILE_SHARE_WRITE,
@@ -353,7 +353,7 @@ Win32_BeginRecordingInput(win32_state* State, const char* Path) {
 
 static inline void
 Win32_EndRecordingInput(win32_state* State) {
-    Assert(State->IsRecordingInput);
+    ASSERT(State->IsRecordingInput);
     CloseHandle(State->RecordingInputHandle);
     State->IsRecordingInput = false;
     Win32_Log("[Win32_EndRecordingInput] Recording has ended\n");
@@ -361,7 +361,7 @@ Win32_EndRecordingInput(win32_state* State) {
 
 static inline void
 Win32_RecordInput(win32_state* State, platform_input* Input) {
-    Assert(State->IsRecordingInput);
+    ASSERT(State->IsRecordingInput);
     DWORD BytesWritten;
     if(!WriteFile(State->RecordingInputHandle,
                   Input,
@@ -382,7 +382,7 @@ Win32_RecordInput(win32_state* State, platform_input* Input) {
 
 static inline void 
 Win32_EndPlaybackInput(win32_state* State) {
-    Assert(State->IsPlaybackInput);
+    ASSERT(State->IsPlaybackInput);
     CloseHandle(State->PlaybackInputHandle);
     State->IsPlaybackInput = false;
     Win32_Log("[Win32_EndPlaybackInput] Playback has ended\n");
@@ -390,7 +390,7 @@ Win32_EndPlaybackInput(win32_state* State) {
 
 static inline void
 Win32_BeginPlaybackInput(win32_state* State, const char* Path) {
-    Assert(!State->IsPlaybackInput);
+    ASSERT(!State->IsPlaybackInput);
     HANDLE RecordFileHandle = CreateFileA(Path,
                                           GENERIC_READ,
                                           FILE_SHARE_READ,
@@ -508,7 +508,7 @@ Win32_GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
         Win32_Log("[Win32_SaveState] Cannot open file: %s\n", Path);
         return;
     }
-    Defer { CloseHandle(Win32_Handle); }; 
+    defer { CloseHandle(Win32_Handle); }; 
     
     DWORD BytesWritten;
     if(!WriteFile(Win32_Handle, 
@@ -542,7 +542,7 @@ Win32_GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
         Win32_Log("[Win32_LoadState] Cannot open file: %s\n", Path);
         return;
     }
-    Defer { CloseHandle(Win32_Handle); }; 
+    defer { CloseHandle(Win32_Handle); }; 
     DWORD BytesRead;
     
     BOOL Success = ReadFile(Win32_Handle, 
@@ -616,7 +616,7 @@ Win32_AudioInit(win32_audio* Audio,
         Win32_Log("[Win32_Audio] Failed to create IMMDeviceEnumerator\n");
         return false;
     }
-    Defer { DeviceEnumerator->Release(); };
+    defer { DeviceEnumerator->Release(); };
     
     
     IMMDevice* Device;
@@ -627,7 +627,7 @@ Win32_AudioInit(win32_audio* Audio,
         Win32_Log("[Win32_Audio] Failed to get audio endpoint\n");
         return false;
     }
-    Defer { Device->Release(); };
+    defer { Device->Release(); };
     
     Hr = Device->Activate(__uuidof(IAudioClient2), 
                           CLSCTX_ALL, 
@@ -1076,13 +1076,13 @@ PlatformLogFileErrorDecl(Win32_LogFileError) {
 
 static inline
 PlatformCloseFileDecl(Win32_CloseFile) {
-    Assert(Handle->Id < ArrayCount(G_State->Handles));
+    ASSERT(Handle->Id < ARRAY_COUNT(G_State->Handles));
     HANDLE Win32_Handle = G_State->Handles[Handle->Id];
     if (Win32_Handle != INVALID_HANDLE_VALUE) {
         CloseHandle(Win32_Handle); 
     }
     G_State->HandleFreeList[G_State->HandleFreeCount++] = Handle->Id;
-    Assert(G_State->HandleFreeCount <= ArrayCount(G_State->Handles));
+    ASSERT(G_State->HandleFreeCount <= ARRAY_COUNT(G_State->Handles));
 }
 static inline
 PlatformAddTextureDecl(Win32_AddTexture) {
@@ -1101,7 +1101,7 @@ PlatformReadFileDecl(Win32_ReadFile) {
     if (Handle->Error) {
         return;
     }
-    Assert(Handle->Id < ArrayCount(G_State->Handles));
+    ASSERT(Handle->Id < ARRAY_COUNT(G_State->Handles));
     
     HANDLE Win32_Handle = G_State->Handles[Handle->Id];
     OVERLAPPED Overlapped = {};
@@ -1140,7 +1140,7 @@ PlatformGetFileSizeDecl(Win32_GetFileSize)
                                     OPEN_EXISTING,
                                     0,
                                     0);
-    Defer { CloseHandle(FileHandle); };
+    defer { CloseHandle(FileHandle); };
     
     if(FileHandle == INVALID_HANDLE_VALUE) {
         Win32_Log("[Win32_GetFileSize] Cannot open file: %s\n", Path);
@@ -1265,7 +1265,7 @@ WinMain(HINSTANCE Instance,
         Win32_Log("[Win32::Main] Cannot initialize win32 state");
         return 1;
     }
-    Defer { Win32_Free(State); };
+    defer { Win32_Free(State); };
     G_State = State;
     
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -1313,19 +1313,19 @@ WinMain(HINSTANCE Instance,
         Win32_Log("[Win32::Main] Cannot initialize audio");
         return 1;
     }
-    Defer { Win32_AudioFree(&Audio); }; 
+    defer { Win32_AudioFree(&Audio); }; 
     
     // Initialize game memory
     if (!Win32_InitGameMemory(&State->GameMemory,
-                             Megibytes(1),
-                             Megibytes(16),
-                             Megibytes(8),
-                             Megibytes(1))) 
+                             MEBIBYTES(1),
+                             MEBIBYTES(16),
+                             MEBIBYTES(8),
+                             MEBIBYTES(1))) 
     {
         Win32_Log("[Win32::Main] Cannot initialize game memory");
         return 1;
     }
-    Defer { Win32_FreeGameMemory(&State->GameMemory); };
+    defer { Win32_FreeGameMemory(&State->GameMemory); };
 
 
     // Allocate back buffer
@@ -1336,15 +1336,15 @@ WinMain(HINSTANCE Instance,
         Win32_Log("[Win32::Main] Cannot initialize screen buffer");                           
         return 1;
     }
-    Defer { Win32_FreeScreenBuffer(&State->ScreenBuffer); };
+    defer { Win32_FreeScreenBuffer(&State->ScreenBuffer); };
 
     // Initialize RenderCommands
     mailbox RenderCommands = {};
-    if(!Win32_InitRenderCommands(&RenderCommands, Megibytes(64))) {
+    if(!Win32_InitRenderCommands(&RenderCommands, MEBIBYTES(64))) {
         Win32_Log("[Win32::Main] Cannot initialize render commands");
         return 1;
     }
-    Defer { Win32_FreeRenderCommands(&RenderCommands); };
+    defer { Win32_FreeRenderCommands(&RenderCommands); };
     
     
     // Set sleep granularity to 1ms

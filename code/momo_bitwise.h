@@ -25,7 +25,7 @@
 // And thus, the forumla for backward alignment is: A & ~(N-1)
 static inline void* 
 align_memory_backward(void* ptr, u8 align) {
-    Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
+    ASSERT(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(uptr(ptr) & ~(align - 1));
 }
 
@@ -36,7 +36,7 @@ align_memory_backward(void* ptr, u8 align) {
 // A - (A & ~(N-1))
 static inline void* 
 align_memory_forward(void* ptr, u8 align) {
-    Assert(align > 0 && (align & (align - 1)) == 0); // power of 2 only
+    ASSERT(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
 }
 

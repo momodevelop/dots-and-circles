@@ -85,4 +85,4 @@ Arena_Mark::revert() {
 }
 
 // NOTE(Momo): It's a little sad that we can't run away from macros sometimes...
-#define ARENA_BOOT_STRUCT(Type, Member, Memory, MemorySize) (Type*)Arena::boot_block(sizeof(Type), OffsetOf(Type, Member), (Memory), (MemorySize)) 
+#define ARENA_BOOT_STRUCT(Type, Member, Memory, MemorySize) (Type*)Arena::boot_block(sizeof(Type), OFFSET_OF(Type, Member), (Memory), (MemorySize)) 

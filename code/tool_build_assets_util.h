@@ -25,7 +25,7 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
     if (File == nullptr) {
         return false;
     }
-    Defer { fclose(File); };
+    defer { fclose(File); };
     
     
     fseek(File, 0, SEEK_END);

@@ -2,7 +2,7 @@
 template<typename T>
 auto&
 Array<T>::operator[](u32 index) {
-    Assert(index < count); 
+    ASSERT(index < count); 
     return data[index];
 }
 

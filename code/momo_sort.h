@@ -44,7 +44,7 @@ quick_sort_partition(Sort_Entry* arr,
         // If the value left of large_index is smaller than pivot,
         // swap positions with the value in small_index
         else {
-            Swap(Sort_Entry, arr[large_index-1], arr[small_index]);
+            SWAP(arr[large_index-1], arr[small_index]);
             ++small_index;
         }
     }

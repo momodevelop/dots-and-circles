@@ -7,7 +7,7 @@ CmdJump(debug_console* Console, void* Context, String Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
     
-    Defer{ G_Scratch->clear(); };
+    defer{ G_Scratch->clear(); };
     
     String Buffer = {};
     String_Split_Result ArgList = Arguments.split(G_Scratch, ' ');

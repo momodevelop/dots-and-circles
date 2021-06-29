@@ -632,8 +632,8 @@ Opengl_Init(opengl* Opengl,
     GLint Result;
     Opengl->glGetProgramiv(Opengl->Shader, GL_LINK_STATUS, &Result);
     if (Result != GL_TRUE) {
-        char msg[Kibibyte];
-        Opengl->glGetProgramInfoLog(Opengl->Shader, Kibibyte, nullptr, msg);
+        char msg[KIBIBYTE];
+        Opengl->glGetProgramInfoLog(Opengl->Shader, KIBIBYTE, nullptr, msg);
         // TODO(Momo): Log?
         return false;
     }
@@ -649,7 +649,7 @@ Opengl_DrawInstances(opengl* Opengl,
                      u32 InstancesToDraw, 
                      u32 IndexToDrawFrom) 
 {
-    Assert(InstancesToDraw + IndexToDrawFrom < Opengl_Max_Entities);
+    ASSERT(InstancesToDraw + IndexToDrawFrom < Opengl_Max_Entities);
     if (InstancesToDraw > 0) {
         Opengl->glBindTexture(GL_TEXTURE_2D, Texture);
         Opengl->glTexParameteri(GL_TEXTURE_2D, 

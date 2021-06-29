@@ -21,7 +21,7 @@
 
 
 #define Tba_GenerateTestPng 1
-#define Tba_MemorySize Megibytes(8)
+#define Tba_MemorySize MEBIBYTES(8)
 #define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, arena.used)
 
 
@@ -33,7 +33,7 @@ int main() {
         printf("Failed to initialize memory");
         return 1; 
     }
-    Defer { free(Memory); };
+    defer { free(Memory); };
     
     Arena arena = {};
     arena.init(Memory, Tba_MemorySize);
@@ -53,8 +53,8 @@ int main() {
     //~ NOTE(Momo): Initialize context for images in atlas
     
     
-    atlas_context_image AtlasImageContexts[ArrayCount(Tba_ImageContexts)] = {};
-    for (u32 I = 0; I < ArrayCount(Tba_ImageContexts); ++I) {
+    atlas_context_image AtlasImageContexts[ARRAY_COUNT(Tba_ImageContexts)] = {};
+    for (u32 I = 0; I < ARRAY_COUNT(Tba_ImageContexts); ++I) {
         tba_image_context* TbaCtx = Tba_ImageContexts + I;
         atlas_context_image* AtlasCtx = AtlasImageContexts + I;
         
@@ -69,11 +69,11 @@ int main() {
     //~ NOTE(Momo): Initialize contexts for font images in atlas
     atlas_context_font AtlasFontContexts[FontGlyph_Count];
     
-    const u32 AabbCount = ArrayCount(AtlasImageContexts) + ArrayCount(AtlasFontContexts);
+    const u32 AabbCount = ARRAY_COUNT(AtlasImageContexts) + ARRAY_COUNT(AtlasFontContexts);
     aabb2u Aabbs[AabbCount] = {};
     void* UserDatas[AabbCount] = {};
     u32 AabbCounter = 0;
-    for (u32 I = 0; I < ArrayCount(AtlasImageContexts); ++I ) {
+    for (u32 I = 0; I < ARRAY_COUNT(AtlasImageContexts); ++I ) {
         atlas_context_image* Context = AtlasImageContexts + I;
         aabb2u* Aabb = Aabbs + AabbCounter;
         
@@ -88,7 +88,7 @@ int main() {
         ++AabbCounter;
     }
     
-    for (u32 I = 0; I < ArrayCount(AtlasFontContexts); ++I) {
+    for (u32 I = 0; I < ARRAY_COUNT(AtlasFontContexts); ++I) {
         atlas_context_font* Font = AtlasFontContexts + I;
         Font->Type = AtlasContextType_Font;
         Font->LoadedFont = &LoadedFont;
@@ -248,7 +248,7 @@ int main() {
     //NOTE(Momo): Anime
     printf("[Build Assets] Writing Anime...\n");
     {
-        for(u32 I = 0; I < ArrayCount(Tba_AnimeContexts); ++I) {
+        for(u32 I = 0; I < ARRAY_COUNT(Tba_AnimeContexts); ++I) {
             tba_anime_context * Ctx = Tba_AnimeContexts + I;
             Tba_WriteAnime(AssetBuilder, 
                            Ctx->Id,
@@ -260,7 +260,7 @@ int main() {
     // NOTE(Momo): Msg
     printf("[Build Assets] Writing Msg...\n");
     {
-        for(u32 I = 0; I < ArrayCount(Tba_MsgContexts); ++I) {
+        for(u32 I = 0; I < ARRAY_COUNT(Tba_MsgContexts); ++I) {
             tba_msg_context* Ctx = Tba_MsgContexts + I;
             Tba_WriteMsg(AssetBuilder,
                          Ctx->Id,
@@ -271,11 +271,11 @@ int main() {
     
     printf("[Build Assets] Writing Sound...\n");
     {
-        for(u32 I = 0; I < ArrayCount(Tba_SoundContexts); ++I) {
+        for(u32 I = 0; I < ARRAY_COUNT(Tba_SoundContexts); ++I) {
             tba_sound_context* Ctx = Tba_SoundContexts + I;
             
             Arena_Mark Mark = arena.mark();
-            Defer { Mark.revert(); };
+            defer { Mark.revert(); };
             
             read_file_result FileResult = {};
             if(!Tba_ReadFileIntoMemory(&FileResult, Mark, Ctx->Filename)) {

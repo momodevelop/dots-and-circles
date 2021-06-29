@@ -17,10 +17,10 @@ Tba_Begin(tba_context* Context,
     Context->EntryCount = 0;
     Context->File = nullptr; 
 	fopen_s(&Context->File, Filename, "wb");
-    Assert(Context->File);
+    ASSERT(Context->File);
     
     // NOTE(Momo): Write signature
-    fwrite(Signature, sizeof(u8), SiStrLen(Signature), Context->File);
+    fwrite(Signature, sizeof(u8), cstr_length(Signature), Context->File);
     Context->EntryCountAt = ftell(Context->File);
     
     // NOTE(Momo): Reserve space for EntryCount
@@ -79,13 +79,13 @@ Tba_WriteTextureFromFile(tba_context* Context,
     {
         s32 W, H, C;
         LoadedImage = stbi_load(Filename, &W, &H, &C, 0);
-        Assert(LoadedImage != nullptr);
+        ASSERT(LoadedImage != nullptr);
         
         Width = (u32)W;
         Height = (u32)H; 
         Channels = (u32)C;
     }
-    Defer { stbi_image_free(LoadedImage); };
+    defer { stbi_image_free(LoadedImage); };
     Tba_WriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
 }
 
@@ -191,7 +191,7 @@ Tba_WriteMsg(tba_context* Context,
     
     asset_file_msg Msg = {};
     Msg.Id = MsgId;
-    Msg.Count = SiStrLen(Message) - 1;
+    Msg.Count = cstr_length(Message) - 1;
     
     fwrite(&Msg, sizeof(Msg), 1, Context->File);
     fwrite(Message, sizeof(char), Msg.Count, Context->File);
@@ -203,9 +203,9 @@ Tba_WriteWav(tba_context* Context,
              Wav_Load_Result* WavResult) 
 {
     // We restrict the type of sound the game allows here
-    Assert(WavResult->fmt_chunk.num_channels == Game_AudioChannels);
-    Assert(WavResult->fmt_chunk.sample_rate == Game_AudioSamplesPerSecond);
-    Assert(WavResult->fmt_chunk.bits_per_sample == Game_AudioBitsPerSample);
+    ASSERT(WavResult->fmt_chunk.num_channels == Game_AudioChannels);
+    ASSERT(WavResult->fmt_chunk.sample_rate == Game_AudioSamplesPerSecond);
+    ASSERT(WavResult->fmt_chunk.bits_per_sample == Game_AudioBitsPerSample);
     
     Tba_WriteEntry(Context, AssetType_Sound);
     

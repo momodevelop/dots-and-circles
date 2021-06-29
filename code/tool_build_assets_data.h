@@ -78,7 +78,7 @@ image_id KaruFrontFrames[] = {
 
 static tba_anime_context
 Tba_AnimeContexts[] = {
-    Anime_KaruFront, KaruFrontFrames, ArrayCount(KaruFrontFrames),
+    Anime_KaruFront, KaruFrontFrames, ARRAY_COUNT(KaruFrontFrames),
 };
 
 

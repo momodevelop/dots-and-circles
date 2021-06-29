@@ -25,7 +25,7 @@ ratio(f32 value, f32 min, f32 max) {
 // NOTE(Momo): Common Functions
 static inline b8
 is_equal(f32 L, f32 R) {
-    return AbsOf(L - R) <= EPSILON;
+    return ABS(L - R) <= EPSILON;
 }
 
 static inline f32 

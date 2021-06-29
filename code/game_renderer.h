@@ -171,7 +171,7 @@ Renderer_DrawLine2f(Mailbox* commands,
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.y
     if (Line.min.y > Line.max.y) {
-        Swap(v2f, Line.min, Line.max);
+        SWAP(Line.min, Line.max);
     }
     
     v2f LineVector = sub(Line.max, Line.min);
@@ -199,7 +199,7 @@ Renderer_DrawCircle2f(Mailbox* commands,
 {
     // NOTE(Momo): Essentially a bunch of lines
     // We can't really have a surface with less than 3 lines
-    Assert(LineCount >= 3);
+    ASSERT(LineCount >= 3);
     f32 AngleIncrement = TAU / LineCount;
     v2f Pt1 = { 0.f, Circle.radius }; 
     v2f Pt2 = rotate(Pt1, AngleIncrement);

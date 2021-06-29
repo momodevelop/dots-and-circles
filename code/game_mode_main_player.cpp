@@ -23,7 +23,7 @@ Main_UpdateInput(game_mode_main* Mode)
                 Player->DotImageAlphaTarget = 0.f;
             }break;
             default:{ 
-                Assert(false);
+                ASSERT(false);
             }
         }
         Player->DotImageTransitionTimer = 0.f;
@@ -36,13 +36,13 @@ Main_UpdatePlayer(game_mode_main* Mode,
                   f32 DeltaTime) 
 {
     player* Player = &Mode->Player; 
-    Player->DotImageAlpha = Lerp(1.f - Player->DotImageAlphaTarget, 
+    Player->DotImageAlpha = LERP(1.f - Player->DotImageAlphaTarget, 
                                  Player->DotImageAlphaTarget, 
                                  Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
     
     Player->DotImageTransitionTimer += DeltaTime;
     Player->DotImageTransitionTimer = 
-        Clamp(Player->DotImageTransitionTimer, 
+        CLAMP(Player->DotImageTransitionTimer, 
               0.f, 
               Player->DotImageTransitionDuration);
     
