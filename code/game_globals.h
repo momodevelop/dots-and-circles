@@ -14,7 +14,7 @@ Arena* G_Scratch;
 
 // NOTE(Momo): Game related globals
 // Need to forward declare these
-struct assets;
-assets* G_Assets;
+struct Assets;
+Assets* G_Assets;
 
 #endif //GAME_GLOBALS_H

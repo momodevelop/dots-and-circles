@@ -6,64 +6,62 @@
 
 
 static inline void
-Draw_TexturedQuadFromImage(Image_ID ImageId,
-                           m44f Transform,
-                           c4f Color = C4F_WHITE) 
+Draw_TexturedQuadFromImage(Image_ID image_id,
+                           m44f transform,
+                           c4f color = C4F_WHITE) 
 {
-    image* Image = Assets_GetImage(G_Assets, ImageId);
-    texture* Texture = Assets_GetTexture(G_Assets, Image->TextureId);
-    quad2f AtlasUV = Assets_GetAtlasUV(G_Assets, Image);
+    Image* image = G_Assets->get_image(image_id);
+    Texture* texture = G_Assets->get_texture(image->texture_id);
+    quad2f atlas_uv = G_Assets->get_atlas_uv(image);
     
     Renderer_DrawTexturedQuad(G_Renderer,
-                              Color,
-                              Transform,
-                              Texture->Handle,
-                              AtlasUV);
+                              color,
+                              transform,
+                              texture->handle,
+                              atlas_uv);
 }
 
 static inline void
-Draw_Text(Font_ID FontId,
-          v3f Position,
+Draw_Text(Font_ID font_id,
+          v3f position,
           String str,
-          f32 Size, 
-          c4f Color = C4F_WHITE) 
+          f32 size, 
+          c4f color = C4F_WHITE) 
 {
-    v3f CurPosition = Position;
-    font* Font = Assets_GetFont(G_Assets, FontId);
+    v3f cur_position = position;
+    Font* font = G_Assets->get_font(font_id);
     
-    f32 ZLayerOffset = 0.f;
+    f32 z_layer_offset = 0.f;
     for(u32 I = 0; I < str.count; ++I) {
-        font_glyph* Glyph = Font_GetGlyph(Font, str.data[I]);
-        aabb2f Box = Glyph->Box; 
+        Font_Glyph* glyph = font->get_glyph(str.data[I]);
+        aabb2f box = glyph->box; 
         
         // NOTE(Momo): Set bottom left as origin
         m44f A = m44f::create_translation(0.5f, 0.5f, 0.f); 
         
-        f32 BoxWidth = width(Box);
-        f32 BoxHeight = height(Box);
+        f32 boxWidth = width(box);
+        f32 boxHeight = height(box);
         
-        m44f S = m44f::create_scale(BoxWidth * Size, 
-                                    BoxHeight* Size, 
+        m44f S = m44f::create_scale(boxWidth * size, 
+                                    boxHeight* size, 
                                     1.f);
         
-        m44f T = m44f::create_translation(CurPosition.x + Box.min.x * Size, 
-                                          CurPosition.y + Box.min.y * Size,  
-                                          CurPosition.z + ZLayerOffset);
+        m44f T = m44f::create_translation(cur_position.x + box.min.x * size, 
+                                          cur_position.y + box.min.y * size,  
+                                          cur_position.z + z_layer_offset);
         
         
-        Draw_TexturedQuadFromImage(Glyph->ImageId,
+        Draw_TexturedQuadFromImage(glyph->image_id,
                                    T*S*A,
-                                   Color);
+                                   color);
         
-        CurPosition.x += Glyph->Advance * Size;
+        cur_position.x += glyph->advance * size;
         if (I != str.count - 1 ) {
-            u32 Kerning = Font_GetKerning(Font, 
-                                          str.data[I], 
-                                          str.data[I+1]);
-            CurPosition.x += Kerning * Size;
-            
+            u32 kerning = font->get_kerning(str.data[I], 
+                                            str.data[I+1]);
+            cur_position.x += kerning * size;
         }
-        ZLayerOffset += 0.001f;
+        z_layer_offset += 0.001f;
         
     }
 }

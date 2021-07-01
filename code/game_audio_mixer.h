@@ -8,136 +8,159 @@
 // - Output result to buffer, or we can just grab a handle to the game_audio struct
 //   and manipulate the audio buffer directly?
 
-struct game_audio_mixer_instance {
-    Sound_ID SoundId; // From Assets
-    u32 CurrentOffset; // Current offset of the sound data
-    b8 IsLoop;
-    b8 IsPlaying;
+struct Game_Audio_Mixer_Instance {
+    Sound_ID sound_id; // From Assets
+    u32 current_offset; // Current offset of the sound data
+    b8 is_loop;
+    b8 is_playing;
 };
 
-struct game_audio_mixer_handle {
-    u32 Id;
-};
 
-struct game_audio_mixer {
-    Array<game_audio_mixer_instance> Instances;
-    List<u32> FreeList;
+// NOTE(Momo): id == 0 is invalid handle.
+// IDs are +1 of the actual indices
+struct Game_Audio_Mixer_Handle {
+    u32 id;
     
-    f32 Volume;
+    inline b8 is_valid();
 };
 
-static inline b8
-AudioMixer_Init(game_audio_mixer* Mixer,
-                f32 MasterVolume,
-                u32 MaxInstances,
-                Arena* arena) 
+struct Game_Audio_Mixer {
+    Array<Game_Audio_Mixer_Instance> instances;
+    List<u32> free_list;
+    f32 volume;
+    
+    b8 init(f32 master_volume, u32 max_instances, Arena* arena);
+    Game_Audio_Mixer_Handle play(Sound_ID sound_id, b8 loop);
+    b8 stop(Game_Audio_Mixer_Handle handle);
+    void update(platform_audio* audio);
+};
+
+b8
+Game_Audio_Mixer::init(f32 master_volume,
+                       u32 max_instances,
+                       Arena* arena) 
 {
-    Arena_Mark Mark = arena->mark();
-    b8 Success = Mixer->Instances.alloc(arena, MaxInstances);
-    if (!Success) {
-        Mark.revert();
+    // NOTE(Momo): We reject the highest value because
+    // we are reserving one index to represent an invalid index
+    // which is index == 0
+    if (max_instances == 0 || max_instances == U32_MAX) {
+        return false;
+    }
+    Arena_Mark mark = arena->mark();
+    b8 success = this->instances.alloc(arena, max_instances);
+    if (!success) {
+        mark.revert();
         return false;
     }
     
-    Success = Mixer->FreeList.alloc(arena, MaxInstances);
-    if (!Success) {
-        Mark.revert();
+    success = this->free_list.alloc(arena, max_instances);
+    if (!success) {
+        mark.revert();
         return false;
     }
-    Mixer->Volume = MasterVolume;
+    this->volume = master_volume;
     
-    for (u32 I = 0; I < Mixer->Instances.count; ++I ){
-        Mixer->Instances[I] = {};
-        u32* Item = Mixer->FreeList.push();
-        ASSERT(Item);
-        (*Item) = I;
-    }
-    
-    return true;
-}
-
-static inline b8
-AudioMixer_Play(game_audio_mixer* Mixer, 
-                Sound_ID SoundId, 
-                b8 Loop,
-                game_audio_mixer_handle* OutHandle)
-{
-    u32* Index = Mixer->FreeList.last();
-    if (Index == nullptr) {
-        return false;
-    }
-    
-    game_audio_mixer_instance* Instance = Mixer->Instances + (*Index);
-    Instance->IsLoop = Loop;
-    Instance->CurrentOffset = 0;
-    Instance->SoundId = SoundId;
-    Instance->IsPlaying = true;
-    
-    Mixer->FreeList.pop();
-    
-    
-    OutHandle->Id = (*Index);
-    
-    return true;
-}
-
-
-static inline b8
-AudioMixer_Stop(game_audio_mixer* Mixer,
-                game_audio_mixer_handle Handle) 
-{
-    if (Handle.Id < Mixer->Instances.count) {
-        game_audio_mixer_instance* Instance = Mixer->Instances + Handle.Id;
-        Instance->IsPlaying = false;
-        u32* Item = Mixer->FreeList.push();
-        if (Item == nullptr) {
+    for (u32 i = 0; i < this->instances.count; ++i ){
+        this->instances[i] = {};
+        u32* item = this->free_list.push();
+        if(!item) {
             return false;
         }
-        (*Item) = Handle.Id;
+        (*item) = i;
+    }
+    
+    return true;
+}
+
+Game_Audio_Mixer_Handle
+Game_Audio_Mixer::play(Sound_ID sound_id, 
+                       b8 loop)
+{
+    Game_Audio_Mixer_Handle ret = {};
+    u32* index_ptr = this->free_list.last();
+    if (index_ptr == nullptr) {
+        return ret;
+    }
+    this->free_list.pop();
+    u32 index = (*index_ptr);
+    
+    Game_Audio_Mixer_Instance* instance = this->instances + index;
+    instance->is_loop = loop;
+    instance->current_offset = 0;
+    instance->sound_id = sound_id;
+    instance->is_playing = true;
+    
+    ret.id = index + 1;
+    
+    return ret;
+}
+
+
+b8
+Game_Audio_Mixer::stop(Game_Audio_Mixer_Handle handle) 
+{
+    if(!handle.is_valid()) {
+        return false;
+    }
+    
+    if ((u32)handle.id < this->instances.count) {
+        Game_Audio_Mixer_Instance* instance = this->instances + handle.id - 1;
+        instance->is_playing = false;
+        u32* item = this->free_list.push();
+        if (item == nullptr) {
+            return false;
+        }
+        (*item) = handle.id;
         return true;
     }
     return false;
 }
 
 
-static inline void
-AudioMixer_Update(game_audio_mixer* Mixer, 
-                  platform_audio* Audio) 
+void
+Game_Audio_Mixer::update(platform_audio* audio) 
 {
-    s16* SampleOut = Audio->SampleBuffer;
-    for(u32 I = 0; I < Audio->SampleCount; ++I) {
+    s16* sample_out = audio->SampleBuffer;
+    for(u32 I = 0; I < audio->SampleCount; ++I) {
         
-        for (u32 J = 0; J < Audio->Channels; ++J) {
-            SampleOut[J] = 0;
+        for (u32 J = 0; J < audio->Channels; ++J) {
+            sample_out[J] = 0;
         }
         
-        for (u32 J = 0; J < Mixer->Instances.count; ++J) {
-            game_audio_mixer_instance* Instance = Mixer->Instances + J;
-            if (Instance->IsPlaying == false) {
+        for (u32 J = 0; J < this->instances.count; ++J) {
+            Game_Audio_Mixer_Instance* instance = this->instances + J;
+            if (instance->is_playing == false) {
                 continue;
             }
-            sound* Sound = Assets_GetSound(G_Assets, Instance->SoundId);
+            Sound* sound = G_Assets->get_sound(instance->sound_id);
             
-            for (u32 K = 0; K < Audio->Channels; ++K) {
-                SampleOut[K] += s16(Sound->Data[Instance->CurrentOffset++] * 
-                                    Mixer->Volume);
+            for (u32 K = 0; K < audio->Channels; ++K) {
+                sample_out[K] += s16(sound->data[instance->current_offset++] * 
+                                     this->volume);
             }
             
-            if (Instance->CurrentOffset >= Sound->DataCount) {
-                if (Instance->IsLoop) {
-                    Instance->CurrentOffset = 0;
+            if (instance->current_offset >= sound->data_count) {
+                if (instance->is_loop) {
+                    instance->current_offset = 0;
                 }
                 else {
-                    AudioMixer_Stop(Mixer, {J});
+                    stop({J});
                 }
             }
             
             
             
         }
-        SampleOut += Audio->Channels;
+        sample_out += audio->Channels;
         
     }
+}
+
+
+inline b8 
+Game_Audio_Mixer_Handle::is_valid() 
+{
+    return id != 0; 
 }
 
 #endif //GAME_AUDIO_MIXER_H
