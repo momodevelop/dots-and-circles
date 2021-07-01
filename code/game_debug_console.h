@@ -56,16 +56,17 @@ Debug_Console::init(Arena* arena, u32 max_commands)
 {
     const u32 line_length = 110;
     const u32 info_line_count = 5;
+    const f32 z_position = 90.f;
     
     transit_timer = Timer::create(0.25f);
     
     dimensions = v3f::create(Game_DesignWidth, 240.f, 1.f);
     start_position = v3f::create(0.f, 
                                  -Game_DesignHeight/2 - dimensions.h/2,
-                                 90.f);
+                                 z_position);
     end_position = v3f::create(0.f, 
                                -Game_DesignHeight/2 + dimensions.h/2,
-                               90.f);
+                               z_position);
     position = v3f::create();
     
     // NOTE(Momo): Timers related to type
@@ -281,7 +282,7 @@ Debug_Console::render()
         v3f text_position = {};
         text_position.x = left + padding_w;
         text_position.y = bottom + padding_h;
-        text_position.z = position.z + 0.01f;
+        text_position.z = position.z + 0.02f;
         
         Draw_Text(FONT_DEFAULT, 
                   text_position,
