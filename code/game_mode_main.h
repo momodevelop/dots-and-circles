@@ -111,7 +111,7 @@ struct game_mode_main {
     Big_Int Score;
     
     // Audio handles
-    game_audio_mixer_handle BgmHandle;
+    Game_Audio_Mixer_Handle BgmHandle;
     
     
 };

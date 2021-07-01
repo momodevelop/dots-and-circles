@@ -2,7 +2,6 @@
 
 static inline void
 Bullet_Spawn(game_mode_main* Mode, 
-             assets* Assets, 
              v2f Position, 
              v2f Direction, 
              f32 Speed, 
@@ -60,12 +59,12 @@ Main_RenderBullets(game_mode_main* Mode)
     f32 LayerOffset = 0.f;
     auto ForEachLamb = [&](bullet* B, Image_ID Image) {
         m44f S = m44f::create_scale(B->Size.x, 
-                            B->Size.y, 
-                            1.f);
+                                    B->Size.y, 
+                                    1.f);
         
         m44f T = m44f::create_translation(B->Position.x,
-                                  B->Position.y,
-                                  ZLayBullet + LayerOffset);
+                                          B->Position.y,
+                                          ZLayBullet + LayerOffset);
         
         Draw_TexturedQuadFromImage(Image,
                                    T*S, 
@@ -74,8 +73,8 @@ Main_RenderBullets(game_mode_main* Mode)
     };
     
     
-    Mode->DotBullets.foreach(ForEachLamb, Image_BulletDot);
-    Mode->CircleBullets.foreach(ForEachLamb, Image_BulletCircle);
+    Mode->DotBullets.foreach(ForEachLamb, IMAGE_BULLET_DOT);
+    Mode->CircleBullets.foreach(ForEachLamb, IMAGE_BULLET_CIRCLE);
     
     
     

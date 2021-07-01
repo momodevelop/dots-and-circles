@@ -1,4 +1,5 @@
 
+
 static inline void
 Enemy_SetStateSpawn(enemy* E) {
     E->State = EnemyState_Spawning;
@@ -18,8 +19,7 @@ Enemy_SetStateActive(enemy* E) {
 }
 
 static inline void
-Enemy_Spawn(game_mode_main* Mode, 
-            assets* Assets, 
+Enemy_Spawn(game_mode_main* Mode,
             v2f Position,
             enemy_shoot_type ShootType, 
             enemy_movement_type MovementType) 
@@ -50,7 +50,7 @@ Enemy_Spawn(game_mode_main* Mode,
 }
 
 static inline void
-Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* Assets, f32 DeltaTime) {
+Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, f32 DeltaTime) {
     enemy_state_active* Active = &Enemy->StateActive;
     // Movement
     switch( Enemy->MovementType ) {
@@ -73,7 +73,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
             Shoot->Timer += DeltaTime;
             if (Shoot->Timer > Shoot->Duration) {
                 v2f Direction = normalize(Player->Position - Enemy->Position);
-                Bullet_Spawn(Mode, Assets, Enemy->Position, Direction, 200.f, Shoot->Mood);
+                Bullet_Spawn(Mode, Enemy->Position, Direction, 200.f, Shoot->Mood);
                 Shoot->Timer = 0.f;
             }
         } break;
@@ -85,7 +85,7 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
                 v2f Dir = v2f::create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
                     Dir = RotateMtx * Dir;
-                    Bullet_Spawn(Mode, Assets, Enemy->Position, Dir, 200.f, Shoot->Mood);
+                    Bullet_Spawn(Mode, Enemy->Position, Dir, 200.f, Shoot->Mood);
                 }
                 Shoot->Timer = 0.f;
             }
@@ -106,7 +106,6 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, assets* 
 
 static inline void 
 Main_UpdateEnemies(game_mode_main* Mode,
-                   assets* Assets,
                    f32 DeltaTime) 
 {
     player* Player = &Mode->Player;
@@ -122,7 +121,7 @@ Main_UpdateEnemies(game_mode_main* Mode,
                 }
             } break;
             case EnemyState_Active: {
-                Enemy_DoStateActive(Enemy, Player, Mode, Assets, DeltaTime);
+                Enemy_DoStateActive(Enemy, Player, Mode, DeltaTime);
             } break;
             case EnemyState_Dying: {
                 enemy_state_dying* Dying = &Enemy->StateDying;
@@ -163,7 +162,7 @@ Main_RenderEnemies(game_mode_main* Mode)
                                           Enemy->Position.y,
                                           ZLayEnemy + Offset);
         
-        Draw_TexturedQuadFromImage(Image_Enemy,
+        Draw_TexturedQuadFromImage(IMAGE_ENEMY,
                                    T*R*S, 
                                    C4F_WHITE);
     };

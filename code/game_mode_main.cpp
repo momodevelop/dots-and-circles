@@ -61,7 +61,6 @@ MainMode_Init(permanent_state* PermState,
     Mode->Wave.IsDone = true;
     Mode->rng = Rng_Series::create(0); // TODO: Used system clock for seed.
     
-    assets* Assets = &TranState->Assets;
     player* Player = &Mode->Player;
     {
         Player->Position = {};
@@ -102,15 +101,14 @@ Main_StateNormal_Update(permanent_state* PermState,
                         debug_state* DebugState,
                         f32 DeltaTime) 
 {
-    assets* Assets = &TranState->Assets;
     game_mode_main* Mode = PermState->MainMode;
     
     Main_UpdateInput(Mode);
     Main_UpdatePlayer(Mode, DeltaTime);    
     Main_UpdateBullets(Mode, DeltaTime);
-    Main_UpdateWaves(Mode, Assets, DeltaTime);
-    Main_UpdateEnemies(Mode, Assets, DeltaTime); 
-    Main_UpdatePlayerBulletCollision(Mode, Assets, DeltaTime);
+    Main_UpdateWaves(Mode, DeltaTime);
+    Main_UpdateEnemies(Mode, DeltaTime); 
+    Main_UpdatePlayerBulletCollision(Mode, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
     
     // NOTE(Momo): if player's dead, do dead stuff
@@ -142,7 +140,6 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
 {
     // Everything stops
     game_mode_main* Mode = PermState->MainMode;
-    assets* Assets = &TranState->Assets;
     
     Main_UpdateDeathBomb(Mode, DeltaTime);
     Main_UpdateParticles(Mode, DeltaTime);
@@ -172,7 +169,6 @@ Main_StateSpawning_Update(permanent_state* PermState,
                           f32 DeltaTime) 
 {
     game_mode_main* Mode = PermState->MainMode;
-    assets* Assets = &TranState->Assets;
     
     f32 Ease = ease_out_bounce(CLAMP(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
     Mode->Player.Size = Mode->Player.MaxSize * Ease;

@@ -51,7 +51,7 @@ Main_RenderParticles(game_mode_main* Mode) {
                                           P->Position.y,
                                           ZLayParticles + Offset);
         
-        Draw_TexturedQuadFromImage(Image_Particle,
+        Draw_TexturedQuadFromImage(IMAGE_PARTICLE,
                                    T*S,
                                    c4f::create(1.f, 1.f, 1.f, Alpha));
         ++CurrentCount;

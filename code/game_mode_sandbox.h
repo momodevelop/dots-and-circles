@@ -66,7 +66,6 @@ SandboxMode_Update(permanent_state* PermState,
                    f32 DeltaTime) 
 {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
-    assets* Assets = &TranState->Assets;
     
     // NOTE(Momo): Update
     if (Button_IsPoked(G_Input->ButtonSwitch)) {
@@ -126,10 +125,10 @@ SandboxMode_Update(permanent_state* PermState,
         }
         m44f S = m44f::create_scale(B->HitCircle.radius*2, B->HitCircle.radius*2, 1.f);
         m44f T = m44f::create_translation(B->Position.x,
-                                  B->Position.y,
-                                  ZOrder += 0.001f);
+                                          B->Position.y,
+                                          ZOrder += 0.001f);
         
-        Draw_TexturedQuadFromImage(Image_BulletDot,
+        Draw_TexturedQuadFromImage(IMAGE_BULLET_DOT,
                                    T*S, 
                                    c4f{1.f, 1.f, 1.f, 0.5f});
     }

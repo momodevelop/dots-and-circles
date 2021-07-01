@@ -112,16 +112,15 @@ GameUpdateFunc(GameUpdate)
                                       arena,
                                       GameMemory->TransientMemory, 
                                       GameMemory->TransientMemorySize);
-        b8 Success = Assets_Init(&TranState->Assets,
-                                 &TranState->arena);
+        b8 Success = TranState->assets.init(&TranState->arena);
         
         if(!Success) {
             G_Log("[Transient] Failed to initialize assets\n");
             return false;
         }
-        G_Assets = &TranState->Assets;
+        G_Assets = &TranState->assets;
         
-        Success = AudioMixer_Init(&TranState->Mixer, 1.f, 32, &TranState->arena);
+        Success =  TranState->Mixer.init(1.f, 32, &TranState->arena);
         if (!Success) {
             G_Log("[Transient] Failed to initialize audio\n");
             return false;
@@ -225,7 +224,7 @@ GameUpdateFunc(GameUpdate)
                 SandboxMode_Init(PermState);
             } break;
             case GameModeType_AnimeTest: {
-                PermState->AnimeTestMode = ModeArena->push_struct<game_mode_anime_test>(); 
+                PermState->AnimeTestMode = ModeArena->push_struct<Game_Mode_Anime_Test>(); 
                 AnimeTestMode_Init(PermState);
             } break;
             default: {
@@ -283,7 +282,7 @@ GameUpdateFunc(GameUpdate)
     DebugConsole_Render(&DebugState->Console);
     DebugInspector_End(&DebugState->Inspector);
     
-    AudioMixer_Update(&TranState->Mixer, Audio);
+    TranState->Mixer.update(Audio);
     
     
     

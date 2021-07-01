@@ -3,58 +3,58 @@
 #ifndef GAME_MODE_ANIME_TEST_H
 #define GAME_MODE_ANIME_TEST_H
 
-struct anime_component {
-    Anime_ID AnimeId;
-    u32 CurrentFrameIndex;
-    f32 TimerPerFrame;
-    f32 DurationPerFrame;
+struct Anime_Component {
+    Anime_ID anime_id;
+    u32 current_frame_index;
+    f32 timer_per_frame;
+    f32 duration_per_frame;
 };
 
 static inline void
-AnimeComponent_Create(anime_component* A,
-                      Anime_ID Id, 
-                      f32 DurationPerFrame) 
+Anime_Component_create(Anime_Component* a,
+                       Anime_ID id, 
+                       f32 duration_per_frame) 
 {
-    A->AnimeId = Id;
-    A->CurrentFrameIndex = 0;
-    A->TimerPerFrame = 0.f;
-    A->DurationPerFrame = DurationPerFrame;
+    a->anime_id = id;
+    a->current_frame_index = 0;
+    a->timer_per_frame = 0.f;
+    a->duration_per_frame = duration_per_frame;
 }
 
 static inline void
-AnimeComponent_Update(anime_component* A, assets* Ass, f32 DeltaTime) {
-    anime* Anime = Assets_GetAnime(Ass, ANIME_KARU_FRONT);
-    A->TimerPerFrame += DeltaTime;
+Anime_Component_update(Anime_Component* a, f32 dt) {
+    Anime* anime = G_Assets->get_anime(ANIME_KARU_FRONT);
+    a->timer_per_frame += dt;
     
-    A->TimerPerFrame += DeltaTime;
-    if (A->TimerPerFrame >= 0.25f) 
+    a->timer_per_frame += dt;
+    if (a->timer_per_frame >= 0.25f) 
     {
-        A->TimerPerFrame = 0.f;
-        ++A->CurrentFrameIndex;
-        if (A->CurrentFrameIndex >= Anime->FrameCount) {
-            A->CurrentFrameIndex = 0;
+        a->timer_per_frame = 0.f;
+        ++a->current_frame_index;
+        if (a->current_frame_index >= anime->frame_count) {
+            a->current_frame_index = 0;
         }
     }
 }
 
-struct game_mode_anime_test_entity {
-    v3f Pos;
-    v3f Size;
+struct Game_Mode_Anime_Test_Entity {
+    v3f pos;
+    v3f size;
     
-    anime_component Anime;
+    Anime_Component anime_com;
 };
 
-struct game_mode_anime_test {
-    game_mode_anime_test_entity Entity;
-    v2f PrevMousePos;
+struct Game_Mode_Anime_Test {
+    Game_Mode_Anime_Test_Entity entity;
+    v2f prev_mouse_pos;
 };
 
 static inline void 
-AnimeTestMode_Init(permanent_state* PermState) {
-    game_mode_anime_test* Mode = PermState->AnimeTestMode;     
-    Mode->Entity.Pos = v3f::create(0.f, 0.f, 0.f);
-    Mode->Entity.Size = v3f::create(48.f*2, 48.f*2, 1.f);
-    AnimeComponent_Create(&Mode->Entity.Anime, ANIME_KARU_FRONT, 0.25f);
+AnimeTestMode_Init(permanent_state* perm_state) {
+    Game_Mode_Anime_Test* mode = perm_state->AnimeTestMode;     
+    mode->entity.pos = v3f::create(0.f, 0.f, 0.f);
+    mode->entity.size = v3f::create(48.f*2, 48.f*2, 1.f);
+    Anime_Component_create(&mode->entity.anime_com, ANIME_KARU_FRONT, 0.25f);
     
 }
 
@@ -62,28 +62,27 @@ AnimeTestMode_Init(permanent_state* PermState) {
 
 
 static inline void
-AnimeTestMode_Update(permanent_state* PermState, 
-                     transient_state* TranState,
-                     f32 DeltaTime) 
+AnimeTestMode_Update(permanent_state* perm_state, 
+                     transient_state* tran_state,
+                     f32 delta_time) 
 {
-    game_mode_anime_test* Mode = PermState->AnimeTestMode;     
-    assets* Assets = &TranState->Assets;
-    game_mode_anime_test_entity* Entity = &Mode->Entity;
+    Game_Mode_Anime_Test* mode = perm_state->AnimeTestMode;     
+    Game_Mode_Anime_Test_Entity* entity = &mode->entity;
     
-    AnimeComponent_Update(&Entity->Anime, Assets, DeltaTime);
+    Anime_Component_update(&entity->anime_com, delta_time);
     
     // TODO(Momo): Draw function?
-    m44f T = m44f::create_translation(Entity->Pos.x, Entity->Pos.y, Entity->Pos.z);
-    m44f S = m44f::create_scale(Entity->Size.x, Entity->Size.y, Entity->Size.z);
+    m44f t = m44f::create_translation(entity->pos.x, entity->pos.y, entity->pos.z);
+    m44f s = m44f::create_scale(entity->size.x, entity->size.y, entity->size.z);
     
-    c4f Color = C4F_WHITE;
-    anime_component* AnimeCom = &Entity->Anime;
+    c4f color = C4F_WHITE;
+    Anime_Component* anime_com = &entity->anime_com;
     {
-        anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
-        Image_ID ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
-        Draw_TexturedQuadFromImage(ImageId,
-                                   T*S,
-                                   Color);
+        Anime* anime = G_Assets->get_anime(anime_com->anime_id);
+        Image_ID image_id = anime->frames[anime_com->current_frame_index];
+        Draw_TexturedQuadFromImage(image_id,
+                                   t*s,
+                                   color);
         
     }
     

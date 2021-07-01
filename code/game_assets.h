@@ -214,7 +214,7 @@ read_block(platform_file_handle* File,
 template<typename T>
 static inline T*
 read_struct(platform_file_handle* file, Arena* arena, u32* file_offset) {
-    read_block(file, arena, file_offset, sizeof(T), alignof(T));
+    return (T*)read_block(file, arena, file_offset, sizeof(T), alignof(T));
 }
 
 b8

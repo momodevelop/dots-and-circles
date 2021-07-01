@@ -88,7 +88,7 @@ Main_RenderPlayer(game_mode_main* Mode)
                                           ZLayPlayer);
         c4f Color = c4f::create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
         
-        Draw_TexturedQuadFromImage(Image_PlayerCircle,
+        Draw_TexturedQuadFromImage(IMAGE_PLAYER_CIRCLE,
                                    T*S, 
                                    Color);
     }
@@ -98,7 +98,7 @@ Main_RenderPlayer(game_mode_main* Mode)
                                           Player->Position.y,
                                           ZLayPlayer + 0.01f);
         c4f Color = c4f::create(1.f, 1.f, 1.f, Player->DotImageAlpha);
-        Draw_TexturedQuadFromImage(Image_PlayerDot,
+        Draw_TexturedQuadFromImage(IMAGE_PLAYER_DOT,
                                    T*S, 
                                    Color);
     }

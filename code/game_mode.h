@@ -18,8 +18,8 @@ struct transient_state {
     b8 IsInitialized;
     
     Arena arena;
-    assets Assets; 
-    game_audio_mixer Mixer;
+    Assets assets; 
+    Game_Audio_Mixer Mixer;
 };
 
 struct permanent_state {
@@ -34,7 +34,7 @@ struct permanent_state {
         struct game_mode_splash* SplashMode;
         struct game_mode_main* MainMode;
         struct game_mode_sandbox* SandboxMode;
-        struct game_mode_anime_test* AnimeTestMode;
+        struct Game_Mode_Anime_Test* AnimeTestMode;
     };
     
     Arena arena;

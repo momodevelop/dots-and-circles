@@ -21,7 +21,6 @@ struct splash_image_entity {
 
 static inline void
 UpdateSplashImageEntity(splash_image_entity* Entity, 
-                        assets* Assets,
                         f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
@@ -62,7 +61,6 @@ struct splash_blackout_entity {
 
 static inline void
 UpdateSplashBlackout(splash_blackout_entity* Entity, 
-                     assets* Assets, 
                      f32 DeltaTime) 
 {
     Entity->CountdownTimer += DeltaTime;
@@ -135,8 +133,6 @@ SplashMode_Update(permanent_state* PermState,
 {
     game_mode_splash* Mode = PermState->SplashMode;
     
-    assets* Assets = &TranState->Assets;
-    
     // NOTE: Camera
     {
         v3f Position = v3f::create(0.f, 0.f, 0.f);
@@ -156,12 +152,10 @@ SplashMode_Update(permanent_state* PermState,
     
     for (u32 I = 0; I < ARRAY_COUNT(Mode->SplashImg); ++I) {
         UpdateSplashImageEntity(Mode->SplashImg + I, 
-                                Assets, 
                                 DeltaTime);
     }
     
     UpdateSplashBlackout(&Mode->SplashBlackout,
-                         Assets,
                          DeltaTime);
     
     // NOTE(Momo): Exit 

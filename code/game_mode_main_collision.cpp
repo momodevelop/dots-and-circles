@@ -7,7 +7,6 @@
 // TODO: We could put this into Bullet update
 static inline void
 Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
-                                 assets* Assets,
                                  f32 DeltaTime)
 {
     player* Player = &Mode->Player;

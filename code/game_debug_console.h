@@ -231,16 +231,16 @@ DebugConsole_Render(debug_console* Console)
     if (Console->TransitTimer.is_begin()) {
         return;
     }
-    font* Font = G_Assets->Fonts + FONT_DEFAULT;
+    Font* font= G_Assets->get_font(FONT_DEFAULT);
     v2f Dimensions = { DebugConsole_Width, DebugConsole_Height };
     f32 Bottom = Console->Position.y - Dimensions.h * 0.5f;
     f32 Left = Console->Position.x - Dimensions.w * 0.5f;
     f32 LineHeight = Dimensions.h / (Console->InfoLines.count + 1);
     f32 FontSize = LineHeight * 0.9f;
-    f32 FontHeight = Font_GetHeight(Font) * FontSize;
+    f32 FontHeight = font->height() * FontSize;
     
     f32 PaddingHeight =
-        (LineHeight - FontHeight) * 0.5f  + ABS(Font->Descent) * FontSize; 
+        (LineHeight - FontHeight) * 0.5f  + ABS(font->descent) * FontSize; 
     f32 PaddingWidth = Dimensions.w * 0.005f;
     {
         m44f S = m44f::create_scale(Dimensions.x, 

@@ -1,7 +1,6 @@
 
 static inline void
-Main_UpdateWaves(game_mode_main* Mode, 
-                 assets* Assets,
+Main_UpdateWaves(game_mode_main* Mode,
                  f32 DeltaTime) 
 {
     if (Mode->Wave.IsDone) {
@@ -36,8 +35,7 @@ Main_UpdateWaves(game_mode_main* Mode,
                                     Mode->rng.bilateral() * Game_DesignHeight * 0.5f);
                     
                     
-                    Enemy_Spawn(Mode, 
-                                Assets,
+                    Enemy_Spawn(Mode,
                                 Pos,
                                 EnemyShootType_8Directions,
                                 EnemyMovementType_Static);
