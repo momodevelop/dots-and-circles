@@ -67,7 +67,7 @@ int main() {
     
     
     //~ NOTE(Momo): Initialize contexts for font images in atlas
-    atlas_context_font AtlasFontContexts[FontGlyph_Count];
+    atlas_context_font AtlasFontContexts[FONT_GLYPH_COUNT];
     
     const u32 AabbCount = ARRAY_COUNT(AtlasImageContexts) + ARRAY_COUNT(AtlasFontContexts);
     aabb2u Aabbs[AabbCount] = {};
@@ -92,11 +92,11 @@ int main() {
         atlas_context_font* Font = AtlasFontContexts + I;
         Font->Type = AtlasContextType_Font;
         Font->LoadedFont = &LoadedFont;
-        Font->Codepoint = FontGlyph_CodepointStart + I;
+        Font->Codepoint = FONT_GLYPH_CODEPOINT_START + I;
         Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
-        Font->FontId = Font_Default;
-        Font->ImageId = image_id(Image_FontStart + I);
-        Font->TextureId = Texture_AtlasDefault;
+        Font->FontId = FONT_DEFAULT;
+        Font->ImageId = Image_ID(Image_FontStart + I);
+        Font->TextureId = TEXTURE_ATLAS_DEFAULT;
         
         aabb2u* Aabb = Aabbs + AabbCounter;
         s32 ix0, iy0, ix1, iy1;
@@ -156,7 +156,7 @@ int main() {
     // NOTE(Momo): Write atlas
     {
         Tba_WriteTexture(AssetBuilder, 
-                         Texture_AtlasDefault, 
+                         TEXTURE_ATLAS_DEFAULT, 
                          AtlasWidth, 
                          AtlasHeight, 
                          4, 
@@ -221,7 +221,7 @@ int main() {
                                  &BoundingBox.max.y
                                  );
         printf("[Build Assets] Writing font information...\n");
-        Tba_WriteFont(AssetBuilder, Font_Default, 
+        Tba_WriteFont(AssetBuilder, FONT_DEFAULT, 
                       Ascent * FontPixelScale, 
                       Descent * FontPixelScale, 
                       LineGap * FontPixelScale); 
@@ -230,16 +230,16 @@ int main() {
     // NOTE(Momo): Kerning info
     {
         printf("[Build Assets] Writing kerning...\n");
-        for (u32 i = FontGlyph_CodepointStart;
-             i <= FontGlyph_CodepointEnd; 
+        for (u32 i = FONT_GLYPH_CODEPOINT_START;
+             i <= FONT_GLYPH_CODEPOINT_END; 
              ++i) 
         {
-            for(u32 j = FontGlyph_CodepointStart;
-                j <= FontGlyph_CodepointEnd; 
+            for(u32 j = FONT_GLYPH_CODEPOINT_START;
+                j <= FONT_GLYPH_CODEPOINT_END; 
                 ++j) 
             {
                 s32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (s32)i, (s32)j);
-                Tba_WriteFontKerning(AssetBuilder, Font_Default, i, j, Kerning);
+                Tba_WriteFontKerning(AssetBuilder, FONT_DEFAULT, i, j, Kerning);
             }
         }
     }

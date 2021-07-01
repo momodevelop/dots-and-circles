@@ -2,152 +2,165 @@
 #define __GAME_ASSETS_H__
 
 // NOTE(Momo): Asset types
-struct texture {
-    u32 Width, Height, Channels;
-    u8* Data; // RGBA format
-    renderer_texture_handle Handle;
+struct Texture {
+    u32 width, height, channels;
+    u8* data; // RGBA format
+    renderer_texture_handle handle;
 };
 
-struct anime {
-    image_id *Frames;
-    u32 FrameCount;
+struct Anime {
+    Image_ID* frames;
+    u32 frame_count;
 };
 
-struct image {
-    aabb2u Aabb;
-    texture_id TextureId;
+struct Image {
+    aabb2u box;
+    Texture_ID texture_id;
 };
 
-struct font_glyph {
-    image_id ImageId;
-    aabb2f Box;
-    f32 Advance;
-    f32 LeftBearing;
+struct Font_Glyph {
+    Image_ID image_id;
+    aabb2f box;
+    f32 advance;
+    f32 left_bearing;
 };
 
-struct font {
+struct Font {
     // NOTE(Momo): We cater for a fixed set of codepoints. 
     // ASCII 32 to 126 
     // Worry about sparseness next time.
-    f32 LineGap;
-    f32 Ascent;
-    f32 Descent;
-    font_glyph Glyphs[FontGlyph_Count];
-    u32 Kernings[FontGlyph_Count][FontGlyph_Count];
+    f32 line_gap;
+    f32 ascent;
+    f32 descent;
+    Font_Glyph glyph[FONT_GLYPH_COUNT];
+    u32 kerning[FONT_GLYPH_COUNT][FONT_GLYPH_COUNT];
+    
+    void set_kerning(u32 codepoint_a, u32 codepoint_b, u32 kerning);
+    u32 get_kerning(u32 codepoint_a, u32 codepoint_b);
+    f32 height();
+    Font_Glyph get_glyph(u32 codepoint);
 };
 
-struct sound {
-    s16* Data;
-    u32 DataCount;
+struct Sound {
+    s16* data;
+    u32 data_count;
 };
 
-typedef String msg;
+typedef String Msg;
 
-
-struct assets {
+struct Assets {
+    Texture* textures;
+    u32 texture_count;
     
-    texture* Textures;
-    u32 TextureCount;
+    Image* images;
+    u32 image_count;
     
-    image* Images;
-    u32 ImageCount;
+    Font* fonts;
+    u32 font_count;
     
-    font* Fonts;
-    u32 FontCount;
+    Anime* animes;
+    u32 anime_count;
     
-    anime* Animes;
-    u32 AnimeCount;
+    Msg* msgs;
+    u32 msg_count;
     
-    msg* Msgs;
-    u32 MsgCount;
+    Sound* sounds;
+    u32 sound_count;
     
-    sound* Sounds;
-    u32 SoundCount;
+    
+    b8 init(Arena* arena);
+    Font* get_font(Font_ID font_id);
+    Texture* get_texture(Texture_ID texture_id);
+    Image* get_image(Image_ID image_id);
+    Anime* get_anime(Anime_ID anime_id);
+    Sound* get_sound(Sound_ID sound_id);
+    Msg* get_msg(Msg_ID msg_id);
+    
+    
+    
 };
 
 //~ NOTE(Momo): Font functions
-static inline f32 
-Font_GetHeight(font* Font) {
-    return ABS(Font->Ascent) + ABS(Font->Descent);
+f32 
+Font::height() {
+    return ABS(ascent) + ABS(descent);
 }
 
-static inline u32
-Font_GetKerning(font* Font, u32 CodepointA, u32 CodepointB) {
-    ASSERT(CodepointA >= FontGlyph_CodepointStart);
-    ASSERT(CodepointA <= FontGlyph_CodepointEnd);
+u32
+Font::get_kerning(u32 codepoint_a, u32 codepoint_b) {
+    ASSERT(codepoint_a >= FONT_GLYPH_CODEPOINT_START);
+    ASSERT(codepoint_a <= FONT_GLYPH_CODEPOINT_END);
     
-    ASSERT(CodepointB >= FontGlyph_CodepointStart);
-    ASSERT(CodepointB <= FontGlyph_CodepointEnd);
-    u32 IndexA = CodepointA - FontGlyph_CodepointStart;
-    u32 IndexB = CodepointB - FontGlyph_CodepointStart;
-    u32 Ret = Font->Kernings[IndexA][IndexB];
+    ASSERT(codepoint_b >= FONT_GLYPH_CODEPOINT_START);
+    ASSERT(codepoint_b <= FONT_GLYPH_CODEPOINT_END);
+    u32 index_a = codepoint_a - FONT_GLYPH_CODEPOINT_START;
+    u32 index_b = codepoint_b - FONT_GLYPH_CODEPOINT_START;
+    u32 ret = kernings[index_a][index_b];
     
-    return Ret;
+    return ret;
 }
 
-static inline void
-Font_SetKerning(font* Font, u32 CodepointA, u32 CodepointB, u32 Kerning) {
-    ASSERT(CodepointA >= FontGlyph_CodepointStart);
-    ASSERT(CodepointA <= FontGlyph_CodepointEnd);
+void
+Font::set_kerning(u32 codepoint_a, u32 codepoint_b, u32 kerning) {
+    ASSERT(codepoint_a >= FONT_GLYPH_CODEPOINT_START);
+    ASSERT(codepoint_a <= FONT_GLYPH_CODEPOINT_END);
     
-    ASSERT(CodepointB >= FontGlyph_CodepointStart);
-    ASSERT(CodepointB <= FontGlyph_CodepointEnd);
+    ASSERT(codepoint_b >= FONT_GLYPH_CODEPOINT_START);
+    ASSERT(codepoint_b <= FONT_GLYPH_CODEPOINT_END);
     
-    u32 IndexA = CodepointA - FontGlyph_CodepointStart;
-    u32 IndexB = CodepointB - FontGlyph_CodepointStart;
-    Font->Kernings[IndexA][IndexB] = Kerning;
-    
+    u32 index_a = codepoint_a - FONT_GLYPH_CODEPOINT_START;
+    u32 index_b = codepoint_b - FONT_GLYPH_CODEPOINT_START;
+    Font->kernings[index_a][index_b] = kerning;
 }
 
-static inline font_glyph* 
-Font_GetGlyph(font* Font, u32 Codepoint) {
-    ASSERT(Codepoint >= FontGlyph_CodepointStart);
-    ASSERT(Codepoint <= FontGlyph_CodepointEnd);
-    u32 Index = Codepoint - FontGlyph_CodepointStart;
-    font_glyph* Ret = Font->Glyphs + Index;
+Font_Glyph* 
+Font::get_glyph(u32 codepoint) {
+    ASSERT(codepoint >= FONT_GLYPH_CODEPOINT_START);
+    ASSERT(codepoint <= FONT_GLYPH_CODEPOINT_END);
+    u32 index = codepoint - FONT_GLYPH_CODEPOINT_START;
+    Font_Glyph* ret = glyph + index;
     
-    return Ret;
+    return ret;
 }
 
 //~ NOTE(Momo): Asset functions
-static inline font*
-Assets_GetFont(assets* Assets, font_id FontId) {
-    ASSERT(FontId < Font_Count);
-    return Assets->Fonts + FontId;
+Font*
+Assets::get_font(Font_ID font_id) {
+    ASSERT(font_id < FONT_COUNT);
+    return fonts + font_id;
 }
 
-static inline texture*
-Assets_GetTexture(assets* Assets, texture_id TextureId) {
-    ASSERT(TextureId < Texture_Count);
-    return Assets->Textures + TextureId;
+Texture*
+Assets::get_texture(Texture_ID texture_id) {
+    ASSERT(texture_id < TEXTURE_COUNT);
+    return textures + texture_id;
 }
 
-static inline image*
-Assets_GetImage(assets* Assets, image_id ImageId) {
-    ASSERT(ImageId < Image_Count);
-    return Assets->Images + ImageId;
+Image*
+Assets::get_image(Image_ID image_id) {
+    ASSERT(image_id < IMAGE_COUNT);
+    return images + image_id;
 }
 
-static inline anime*
-Assets_GetAnime(assets* Assets, anime_id AnimeId) {
-    ASSERT(AnimeId < Anime_Count);
-    return Assets->Animes + AnimeId;
-}
-
-
-static inline msg*
-Assets_GetMsg(assets* Assets, msg_id MsgId) {
-    ASSERT(MsgId < Msg_Count);
-    return Assets->Msgs + MsgId;
+Anime*
+Assets::get_anime(Anime_ID anime_id) {
+    ASSERT(anime_id < ANIME_COUNT);
+    return animes + anime_id;
 }
 
 
-static inline sound*
-Assets_GetSound(assets* Assets, sound_id SoundId) {
-    ASSERT(SoundId < Sound_Count);
-    return Assets->Sounds + SoundId;
+Msg*
+Assets::get_msg(Msg_ID msg_id) {
+    ASSERT(msg_id < MSG_COUNT);
+    return msgs + msg_id;
 }
 
+
+Sound*
+Assets::get_sound(Sound_ID sound_id) {
+    ASSERT(sound_id < SOUND_COUNT);
+    return sounds + sound_id;
+}
 
 
 // TODO: Maybe we should just pass in ID instead of pointer.
@@ -163,22 +176,24 @@ Assets_GetAtlasUV(assets* Assets,
 }
 
 static inline b8
-Assets_CheckSignature(void* Memory, String Signature) {
-    u8* MemoryU8 = (u8*)Memory;
-    for (u32 I = 0; I < Signature.count; ++I) {
-        if (MemoryU8[I] != Signature.data[I]) {
+check_asset_signature(void* memory, String signature) {
+    u8* memory_u8 = (u8*)memory;
+    for (u32 I = 0; I < signature.count; ++I) {
+        if (memory_u8[I] != signature.data[I]) {
             return false;
         }
     }
     return true; 
 }
 
+
+// TODO: extract this to platform_file_handle or something other API?
 static inline void*
-Assets_ReadBlock(platform_file_handle* File,
-                 Arena* arena,
-                 u32* FileOffset,
-                 u32 BlockSize,
-                 u8 BlockAlignment)
+read_block(platform_file_handle* File,
+           Arena* arena,
+           u32* FileOffset,
+           u32 BlockSize,
+           u8 BlockAlignment)
 {
     void* Ret = arena->push_block(BlockSize, BlockAlignment);
     if(!Ret) {
@@ -195,111 +210,111 @@ Assets_ReadBlock(platform_file_handle* File,
     }
     return Ret;
 }
-#define Assets_ReadStruct(Type, File, Arena, FileOffset) \
-(Type*)Assets_ReadBlock(File, Arena, FileOffset, sizeof(Type), alignof(Type))
 
-static inline b8
-Assets_Init(assets* Assets,
-            Arena* arena) 
+template<typename T>
+static inline T*
+read_struct(platform_file_handle* file, Arena* arena, u32* file_offset) {
+    read_block(file, arena, file_offset, sizeof(T), alignof(T));
+}
+
+b8
+Assets::init(Arena* arena) 
 {
     G_Platform->ClearTexturesFp();
     
-    Assets->TextureCount = Texture_Count;
-    Assets->Textures = arena->push_array<texture>(Texture_Count);
+    this->texture_count = TEXTURE_COUNT;
+    this->textures = arena->push_array<Texture>(TEXTURE_COUNT);
     
-    Assets->ImageCount = Image_Count;
-    Assets->Images = arena->push_array<image>(Image_Count);
+    this->image_count = IMAGE_COUNT;
+    this->images = arena->push_array<Image>(IMAGE_COUNT);
     
-    Assets->FontCount = Font_Count;
-    Assets->Fonts = arena->push_array<font>(Font_Count);
+    this->font_count = FONT_COUNT;
+    this->fonts = arena->push_array<Font>(FONT_COUNT);
     
-    Assets->AnimeCount = Anime_Count;
-    Assets->Animes = arena->push_array<anime>(Anime_Count);
+    this->anime_count = ANIME_COUNT;
+    this->animes = arena->push_array<Anime>(ANIME_COUNT);
     
-    Assets->MsgCount = Msg_Count;
-    Assets->Msgs = arena->push_array<msg>(Msg_Count);
+    this->msg_count = MSG_COUNT;
+    this->msgs = arena->push_array<Msg>(MSG_COUNT);
     
-    Assets->SoundCount = Sound_Count;
-    Assets->Sounds = arena->push_array<sound>(Sound_Count);
+    this->sound_count = SOUND_COUNT;
+    this->sounds = arena->push_array<Sound>(SOUND_COUNT);
     
-    platform_file_handle AssetFile = G_Platform->OpenAssetFileFp();
-    if (AssetFile.Error) {
-        G_Platform->LogFileErrorFp(&AssetFile);
+    platform_file_handle asset_file = G_Platform->OpenAssetFileFp();
+    if (asset_file.Error) {
+        G_Platform->LogFileErrorFp(&asset_file);
         return false;
     }
-    defer { G_Platform->CloseFileFp(&AssetFile); }; 
+    defer { G_Platform->CloseFileFp(&asset_file); }; 
     
-    u32 CurFileOffset = 0;
-    u32 FileEntryCount = 0;
+    u32 cur_file_offset = 0;
+    u32 file_entry_count = 0;
     
     // Check file signaure
     {        
         
         defer { G_Scratch->clear(); };
         
-        String Signature = {};
-        Signature.init(Game_AssetFileSignature);
+        String signature = {};
+        signature.init(Game_AssetFileSignature);
         
-        void* ReadSignature = Assets_ReadBlock(&AssetFile,
-                                               G_Scratch,
-                                               &CurFileOffset,
-                                               (u32)Signature.count,
-                                               1);
-        if (ReadSignature == nullptr) {
+        void* read_sig = read_block(&asset_file,
+                                    G_Scratch,
+                                    &cur_file_offset,
+                                    (u32)signature.count,
+                                    1);
+        if (read_sig == nullptr) {
             G_Log("[Assets] Cannot read signature\n");
             return false;
         }
         
-        if (!Assets_CheckSignature(ReadSignature, Signature)) {
+        if (!check_asset_signature(read_sig, signature)) {
             G_Log("[Assets] Wrong asset signature\n");
             return false;
         }
         
         // Get File Entry
-        u32* FileEntryCountPtr = Assets_ReadStruct(u32,
-                                                   &AssetFile,
-                                                   G_Scratch,
-                                                   &CurFileOffset);
-        if (FileEntryCountPtr == nullptr) {
+        u32* file_entry_count_ptr = read_struct<u32>(&asset_file,
+                                                     G_Scratch,
+                                                     &cur_file_offset);
+        if (file_entry_count_ptr == nullptr) {
             G_Log("[Assets] Cannot get file entry count\n");
             return false;
         }
-        FileEntryCount = *FileEntryCountPtr;
+        file_entry_count = *file_entry_count_ptr;
     }
     
     
-    for (u32 I = 0; I < FileEntryCount; ++I) 
+    for (u32 I = 0; I < file_entry_count; ++I) 
     {
         
         // NOTE(Momo): Read header
-        asset_file_entry FileEntry = {};
+        Asset_File_Entry file_entry = {};
         {
             defer { G_Scratch->clear(); };
             
-            auto* FileEntryPtr = Assets_ReadStruct(asset_file_entry,
-                                                   &AssetFile,
-                                                   G_Scratch,
-                                                   &CurFileOffset);
-            if (FileEntryPtr == nullptr) {
+            auto* file_entry_ptr = read_struct<Asset_File_Entry>(&asset_file,
+                                                                 G_Scratch,
+                                                                 &cur_file_offset);
+            if (file_entry_ptr == nullptr) {
                 G_Log("[Assets] Cannot get file entry\n");
                 return false;
             }
-            FileEntry = *FileEntryPtr;
+            file_entry = *file_entry_ptr;
         }
         
-        switch(FileEntry.Type) {
-            case AssetType_Texture: {
+        switch(file_entry.type) {
+            case ASSET_TYPE_TEXTURE: {
                 defer { G_Scratch->clear(); };
                 
-                auto* FileTexture = Assets_ReadStruct(asset_file_texture,
-                                                      &AssetFile,
-                                                      G_Scratch,
-                                                      &CurFileOffset);              
+                auto* FileTexture = read_struct<Asset_File_Texture>(&asset_file,
+                                                                    G_Scratch,
+                                                                    &cur_file_offset);              
                 if (FileTexture == nullptr) {
                     G_Log("[Assets] Error getting texture\n");
                     return false;
                 }
-                texture* Texture = Assets->Textures + FileTexture->Id;
+                auto* Texture = this->Textures + FileTexture->Id;
                 Texture->Width = FileTexture->Width;
                 Texture->Height = FileTexture->Height;
                 Texture->Channels = FileTexture->Channels;
@@ -307,9 +322,9 @@ Assets_Init(assets* Assets,
                     Texture->Height * 
                     Texture->Channels;
                 
-                Texture->Data = (u8*)Assets_ReadBlock(&AssetFile, 
+                Texture->Data = (u8*)Assets_ReadBlock(&asset_file, 
                                                       arena, 
-                                                      &CurFileOffset,
+                                                      &cur_file_offset,
                                                       TextureSize,
                                                       1);
                 if (Texture->Data == nullptr) {
@@ -324,49 +339,47 @@ Assets_Init(assets* Assets,
                     return false;
                 }
             } break;
-            case AssetType_Image: { 
+            case ASSET_TYPE_IMAGE: { 
                 defer { G_Scratch->clear(); };
                 
                 auto* FileImage = 
-                    Assets_ReadStruct(asset_file_image,
-                                      &AssetFile, 
-                                      G_Scratch,
-                                      &CurFileOffset);              
+                    read_struct<Asset_File_Image>(&asset_file, 
+                                                  G_Scratch,
+                                                  &cur_file_offset);              
                 
                 if (FileImage == nullptr) {
                     G_Log("[Assets] Error getting image\n");
                     return false;
                 }
                 
-                auto* Image = Assets_GetImage(Assets, FileImage->Id);
+                auto* Image = get_image(FileImage->Id);
                 Image->Aabb = FileImage->Aabb;
                 Image->TextureId = FileImage->TextureId;
             } break;
-            case AssetType_Font: {
+            case ASSET_TYPE_FONT: {
                 defer { G_Scratch->clear(); };
                 
-                auto* FileFont = Assets_ReadStruct(asset_file_font,
-                                                   &AssetFile,
-                                                   G_Scratch,
-                                                   &CurFileOffset);
+                auto* FileFont = read_struct<Asset_File_Font>(&asset_file,
+                                                              G_Scratch,
+                                                              &cur_file_offset);
                 
                 if (FileFont == nullptr) {
                     G_Log("[Assets] Error getting font\n");
                     return false;
                 }
                 
-                auto* Font = Assets->Fonts + FileFont->Id;
+                auto* Font = this->Fonts + FileFont->Id;
                 Font->LineGap = FileFont->LineGap;
                 Font->Ascent = FileFont->Ascent;
                 Font->Descent = FileFont->Descent;
             } break;
-            case AssetType_FontGlyph: {
+            case ASSET_TYPE_FONT_GLYPH: {
                 defer { G_Scratch->clear(); };
                 
-                auto* FileFontGlyph = Assets_ReadStruct(asset_file_font_glyph,
-                                                        &AssetFile,
+                auto* FileFontGlyph = Assets_ReadStruct(Asset_File_Font_Glyph,
+                                                        &asset_file,
                                                         G_Scratch,
-                                                        &CurFileOffset);
+                                                        &cur_file_offset);
                 
                 
                 if (FileFontGlyph == nullptr) {
@@ -382,13 +395,13 @@ Assets_Init(assets* Assets,
                 Glyph->LeftBearing = FileFontGlyph->LeftBearing;
                 Glyph->Box = FileFontGlyph->Box;
             } break;
-            case AssetType_FontKerning: {
+            case ASSET_TYPE_FONT_KERNING: {
                 defer { G_Scratch->clear(); };
                 
-                auto* FileFontKerning = Assets_ReadStruct(asset_file_font_kerning,
-                                                          &AssetFile,
+                auto* FileFontKerning = Assets_ReadStruct(Asset_File_Font_Kerning,
+                                                          &asset_file,
                                                           G_Scratch,
-                                                          &CurFileOffset);
+                                                          &cur_file_offset);
                 if (FileFontKerning == nullptr) {
                     G_Log("[Assets] Error getting font kerning\n");
                     return false;
@@ -401,13 +414,13 @@ Assets_Init(assets* Assets,
                                 FileFontKerning->Kerning);
                 
             } break;
-            case AssetType_Sound: {
+            case ASSET_TYPE_SOUND: {
                 defer { G_Scratch->clear(); };
                 
-                auto* File = Assets_ReadStruct(asset_file_sound,
-                                               &AssetFile,
+                auto* File = Assets_ReadStruct(Asset_File_Sound,
+                                               &asset_file,
                                                G_Scratch,
-                                               &CurFileOffset);
+                                               &cur_file_offset);
                 
                 if (File == nullptr) { 
                     G_Log("[Assets] Error getitng sound\n"); 
@@ -418,19 +431,19 @@ Assets_Init(assets* Assets,
                 Sound->DataCount = File->DataCount;
                 
                 Sound->Data = (s16*)
-                    Assets_ReadBlock(&AssetFile,
+                    Assets_ReadBlock(&asset_file,
                                      arena, 
-                                     &CurFileOffset,
+                                     &cur_file_offset,
                                      sizeof(s16) * Sound->DataCount,
                                      1);
                 
             } break;
-            case AssetType_Message: {
+            case ASSET_TYPE_MSG: {
                 defer { G_Scratch->clear(); };
-                auto* File = Assets_ReadStruct(asset_file_msg,
-                                               &AssetFile,
+                auto* File = Assets_ReadStruct(Asset_File_Msg,
+                                               &asset_file,
                                                G_Scratch,
-                                               &CurFileOffset);
+                                               &cur_file_offset);
                 if (File == nullptr) { 
                     G_Log("[Assets] Msg is null"); 
                     return false; 
@@ -441,21 +454,21 @@ Assets_Init(assets* Assets,
                 Msg->count = File->Count;
                 
                 Msg->data = (u8*)
-                    Assets_ReadBlock(&AssetFile,
+                    Assets_ReadBlock(&asset_file,
                                      arena, 
-                                     &CurFileOffset,
+                                     &cur_file_offset,
                                      sizeof(u8) * Msg->count,
                                      1);
                 
                 
                 
             } break;
-            case AssetType_Anime: {
+            case ASSET_TYPE_ANIME: {
                 defer { G_Scratch->clear(); };
-                auto* File = Assets_ReadStruct(asset_file_anime,
-                                               &AssetFile,
+                auto* File = Assets_ReadStruct(Asset_File_Anime,
+                                               &asset_file,
                                                G_Scratch,
-                                               &CurFileOffset);
+                                               &cur_file_offset);
                 
                 if (File == nullptr) { 
                     G_Log("[Assets] Anime is null"); 
@@ -465,11 +478,11 @@ Assets_Init(assets* Assets,
                 anime* Anime = Assets_GetAnime(Assets, File->Id);
                 Anime->FrameCount = File->FrameCount;
                 
-                Anime->Frames = (image_id*)
-                    Assets_ReadBlock(&AssetFile,
+                Anime->Frames = (Image_ID*)
+                    Assets_ReadBlock(&asset_file,
                                      arena, 
-                                     &CurFileOffset,
-                                     sizeof(image_id) * Anime->FrameCount,
+                                     &cur_file_offset,
+                                     sizeof(Image_ID) * Anime->FrameCount,
                                      1);
                 
             } break;

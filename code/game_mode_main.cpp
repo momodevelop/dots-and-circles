@@ -81,7 +81,7 @@ MainMode_Init(permanent_state* PermState,
     Mode->Wave.IsDone = true;
     
 #if 0    
-    Success = AudioMixer_Play(&TranState->Mixer, Sound_Test, false, &Mode->BgmHandle);
+    Success = AudioMixer_Play(&TranState->Mixer, SOUND_TEST, false, &Mode->BgmHandle);
     if (!Success) {
         return false;
         

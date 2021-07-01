@@ -6,7 +6,7 @@
 
 
 static inline void
-Draw_TexturedQuadFromImage(image_id ImageId,
+Draw_TexturedQuadFromImage(Image_ID ImageId,
                            m44f Transform,
                            c4f Color = C4F_WHITE) 
 {
@@ -22,7 +22,7 @@ Draw_TexturedQuadFromImage(image_id ImageId,
 }
 
 static inline void
-Draw_Text(font_id FontId,
+Draw_Text(Font_ID FontId,
           v3f Position,
           String str,
           f32 Size, 

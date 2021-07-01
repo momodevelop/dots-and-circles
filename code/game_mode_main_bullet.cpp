@@ -58,7 +58,7 @@ Main_RenderBullets(game_mode_main* Mode)
     // NOTE(Momo): Circles are in front of Dots and are therefore 'nearer'.
     // Thus we have to render Dots first before Circles.
     f32 LayerOffset = 0.f;
-    auto ForEachLamb = [&](bullet* B, image_id Image) {
+    auto ForEachLamb = [&](bullet* B, Image_ID Image) {
         m44f S = m44f::create_scale(B->Size.x, 
                             B->Size.y, 
                             1.f);

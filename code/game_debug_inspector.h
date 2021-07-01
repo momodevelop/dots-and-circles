@@ -44,7 +44,7 @@ DebugInspector_End(debug_inspector* Inspector)
     for (u32 I = 0; I < Inspector->Entries.count; ++I) {
         String_Buffer* Entry = Inspector->Entries + I;
         v3f Position = { DebugInspector_PosX, DebugInspector_PosY + OffsetY, DebugInspector_PosZ }; 
-        Draw_Text(Font_Default, 
+        Draw_Text(FONT_DEFAULT, 
                   Position, 
                   Entry->str,
                   32.f, 

@@ -8,7 +8,7 @@ struct splash_image_entity {
     v3f Position;
     c4f Colors;
     
-    image_id TextureAabb;
+    Image_ID TextureAabb;
     
     f32 CountdownTimer;
     f32 CountdownDuration;
@@ -98,7 +98,7 @@ SplashMode_Init(permanent_state* PermState) {
         Mode->SplashImg[0].Position = v3f::create( 0.f, 0.f, 0.f );
         Mode->SplashImg[0].Scale = v3f::create(400.f, 400.f, 1.f);
         Mode->SplashImg[0].Colors = c4f::create(1.f, 1.f, 1.f, 1.f);
-        Mode->SplashImg[0].TextureAabb = Image_Ryoji;
+        Mode->SplashImg[0].TextureAabb = IMAGE_RYOJI;
         Mode->SplashImg[0].CountdownTimer = 0.f;
         Mode->SplashImg[0].CountdownDuration = 1.f;
         Mode->SplashImg[0].Timer = 0.f;
@@ -109,7 +109,7 @@ SplashMode_Init(permanent_state* PermState) {
         Mode->SplashImg[1].Position = {};
         Mode->SplashImg[1].Scale = v3f::create(400.f, 400.f, 1.f);
         Mode->SplashImg[1].Colors = c4f::create(1.f, 1.f, 1.f, 1.f);
-        Mode->SplashImg[1].TextureAabb = Image_Yuu;
+        Mode->SplashImg[1].TextureAabb = IMAGE_YUU;
         Mode->SplashImg[1].CountdownTimer = 0.f;
         Mode->SplashImg[1].CountdownDuration = 1.f;
         Mode->SplashImg[1].Timer = 0.f;

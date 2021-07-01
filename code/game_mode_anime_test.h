@@ -4,7 +4,7 @@
 #define GAME_MODE_ANIME_TEST_H
 
 struct anime_component {
-    anime_id AnimeId;
+    Anime_ID AnimeId;
     u32 CurrentFrameIndex;
     f32 TimerPerFrame;
     f32 DurationPerFrame;
@@ -12,7 +12,7 @@ struct anime_component {
 
 static inline void
 AnimeComponent_Create(anime_component* A,
-                      anime_id Id, 
+                      Anime_ID Id, 
                       f32 DurationPerFrame) 
 {
     A->AnimeId = Id;
@@ -23,7 +23,7 @@ AnimeComponent_Create(anime_component* A,
 
 static inline void
 AnimeComponent_Update(anime_component* A, assets* Ass, f32 DeltaTime) {
-    anime* Anime = Assets_GetAnime(Ass, Anime_KaruFront);
+    anime* Anime = Assets_GetAnime(Ass, ANIME_KARU_FRONT);
     A->TimerPerFrame += DeltaTime;
     
     A->TimerPerFrame += DeltaTime;
@@ -54,7 +54,7 @@ AnimeTestMode_Init(permanent_state* PermState) {
     game_mode_anime_test* Mode = PermState->AnimeTestMode;     
     Mode->Entity.Pos = v3f::create(0.f, 0.f, 0.f);
     Mode->Entity.Size = v3f::create(48.f*2, 48.f*2, 1.f);
-    AnimeComponent_Create(&Mode->Entity.Anime, Anime_KaruFront, 0.25f);
+    AnimeComponent_Create(&Mode->Entity.Anime, ANIME_KARU_FRONT, 0.25f);
     
 }
 
@@ -80,7 +80,7 @@ AnimeTestMode_Update(permanent_state* PermState,
     anime_component* AnimeCom = &Entity->Anime;
     {
         anime* Anime = Assets_GetAnime(Assets, AnimeCom->AnimeId);
-        image_id ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
+        Image_ID ImageId = Anime->Frames[AnimeCom->CurrentFrameIndex];
         Draw_TexturedQuadFromImage(ImageId,
                                    T*S,
                                    Color);

@@ -231,7 +231,7 @@ DebugConsole_Render(debug_console* Console)
     if (Console->TransitTimer.is_begin()) {
         return;
     }
-    font* Font = G_Assets->Fonts + Font_Default;
+    font* Font = G_Assets->Fonts + FONT_DEFAULT;
     v2f Dimensions = { DebugConsole_Width, DebugConsole_Height };
     f32 Bottom = Console->Position.y - Dimensions.h * 0.5f;
     f32 Left = Console->Position.x - Dimensions.w * 0.5f;
@@ -276,7 +276,7 @@ DebugConsole_Render(debug_console* Console)
             Position.z = DebugConsole_PosZ + 0.01f;
             
             String InfoLineCStr = Console->InfoLines[I].Text.str;
-            Draw_Text(Font_Default, 
+            Draw_Text(FONT_DEFAULT, 
                       Position,
                       InfoLineCStr,
                       FontSize,
@@ -289,7 +289,7 @@ DebugConsole_Render(debug_console* Console)
         Position.z = DebugConsole_PosZ + 0.02f;
         
         String InputLineCStr = Console->InputLine.Text.str;
-        Draw_Text(Font_Default, 
+        Draw_Text(FONT_DEFAULT, 
                   Position,
                   InputLineCStr,
                   FontSize,

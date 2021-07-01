@@ -1,153 +1,153 @@
 #ifndef GAME_ASSETS_TYPES 
 #define GAME_ASSETS_TYPES
 
-enum texture_id {
-    Texture_AtlasDefault,
+enum Texture_ID {
+    TEXTURE_ATLAS_DEFAULT,
     
-    Texture_Count,
+    TEXTURE_COUNT,
 };
 
 // NOTE(Momo): For now we cater for a fixed set of codepoints. 
 // Namely ASCII 32 to 126. Worry about unicode next time.
 
 
-#define FontGlyph_CodepointStart 32
-#define FontGlyph_CodepointEnd 126
-#define FontGlyph_Count FontGlyph_CodepointEnd - FontGlyph_CodepointStart
+#define FONT_GLYPH_CODEPOINT_START 32
+#define FONT_GLYPH_CODEPOINT_END 126
+#define FONT_GLYPH_COUNT FONT_GLYPH_CODEPOINT_END - FONT_GLYPH_CODEPOINT_START
 
-enum sound_id {
-    Sound_Test,
-    Sound_MainBgm,
+enum Sound_ID {
+    SOUND_TEST,
+    SOUND_MAIN_BGM,
     
-    Sound_Count,
+    SOUND_COUNT,
 };
 
-enum font_id {
-    Font_Default,
+enum Font_ID {
+    FONT_DEFAULT,
     
-    Font_Count,
+    FONT_COUNT,
 };
 
-enum anime_id {
-    Anime_KaruFront,
+enum Anime_ID {
+    ANIME_KARU_FRONT,
     
-    Anime_Count,
+    ANIME_COUNT,
 };
 
-enum image_id {
-    Image_Ryoji,
-    Image_Yuu,
-    Image_Karu00,
-    Image_Karu01,
-    Image_Karu02,
-    Image_Karu10,
-    Image_Karu11,
-    Image_Karu12,
-    Image_Karu20,
-    Image_Karu21,
-    Image_Karu22,
-    Image_Karu30,
-    Image_Karu31,
-    Image_Karu32,
+enum Image_ID {
+    IMAGE_RYOJI,
+    IMAGE_YUU,
+    IMAGE_KARU_00,
+    IMAGE_KARU_01,
+    IMAGE_KARU_02,
+    IMAGE_KARU_10,
+    IMAGE_KARU_11,
+    IMAGE_KARU_12,
+    IMAGE_KARU_20,
+    IMAGE_KARU_21,
+    IMAGE_KARU_22,
+    IMAGE_KARU_30,
+    IMAGE_KARU_31,
+    IMAGE_KARU_32,
     
-    Image_PlayerDot,
-    Image_PlayerCircle,
-    Image_BulletDot,
-    Image_BulletCircle,
-    Image_Enemy,
-    Image_Particle,
+    IMAGE_PLAYER_DOT,
+    IMAGE_PLAYER_CIRCLE,
+    IMAGE_BULLET_DOT,
+    IMAGE_BULLET_CIRCLE,
+    IMAGE_ENEMY,
+    IMAGE_PARTICLE,
     
-    Image_FontStart,
-    Image_FontEnd = Image_FontStart + FontGlyph_Count,
+    IMAGE_FONT_START,
+    IMAGE_FONT_END = IMAGE_FONT_START + FONT_GLYPH_COUNT,
     
-    Image_Count,
+    IMAGE_COUNT,
 };
 
-enum msg_id {
-    Msg_ConsoleJumpToMain,
-    Msg_ConsoleJumpToSandbox,
-    Msg_ConsoleJumpToMenu,
+enum Msg_ID {
+    MSG_CONSOLE_JUMP_TO_MAIN,
+    MSG_CONSOLE_JUMP_TO_SANDBOX,
+    MSG_CONSOLE_JUMP_TO_MENU,
     
-    Msg_Count,
+    MSG_COUNT,
 };
 
-enum asset_type {
-    AssetType_Texture,
-    AssetType_Image,
-    AssetType_Font,
-    AssetType_FontGlyph,
-    AssetType_FontKerning,
-    AssetType_Sound,
-    AssetType_Anime,
-    AssetType_Message,
+enum Asset_Type {
+    ASSET_TYPE_TEXTURE,
+    ASSET_TYPE_IMAGE,
+    ASSET_TYPE_FONT,
+    ASSET_TYPE_FONT_GLYPH,
+    ASSET_TYPE_FONT_KERNING,
+    ASSET_TYPE_SOUND,
+    ASSET_TYPE_ANIME,
+    ASSET_TYPE_MSG,
 };
 
 
 // NOTE(Momo): asset pack file structures
 #pragma pack(push, 1)
-struct asset_file_entry {
-    asset_type Type;
+struct Asset_File_Entry {
+    Asset_Type type;
 };
 
-struct asset_file_msg {
-    msg_id Id;
-    u32 Count;
+struct Asset_File_Msg {
+    Msg_ID id;
+    u32 count;
     // NOTE(Momo): Data is:
-    // u8 String[Count]
+    // u8 string[count]
 };
 
-struct asset_file_texture {
-    texture_id Id;
-    u32 Width;
-    u32 Height;
-    u32 Channels;
+struct Asset_File_Texture {
+    Texture_ID id;
+    u32 width;
+    u32 height;
+    u32 channels;
     // NOTE(Momo): Data is:
-    // u8 Pixels[Width * Height * Channels]; 
+    // u8 Pixels[width * height * channels]; 
     
 };
 
-struct asset_file_image {
-    image_id Id;
+struct Asset_File_Image {
+    Image_ID id;
     
-    texture_id TextureId;
-    aabb2u Aabb;
+    Texture_ID texture_id;
+    aabb2u box;
     
 };
 
-struct asset_file_font {
-    font_id Id;
-    f32 Ascent;
-    f32 Descent;
-    f32 LineGap;
+struct Asset_File_Font {
+    Font_ID id;
+    f32 ascent;
+    f32 descent;
+    f32 line_gap;
 };
 
-struct asset_file_font_glyph {
-    font_id FontId;
-    image_id ImageId;
-    u32 Codepoint;
-    f32 Advance;
-    f32 LeftBearing;
-    aabb2f Box; 
+struct Asset_File_Font_Glyph {
+    Font_ID font_id;
+    Image_ID image_id;
+    u32 codepoint;
+    f32 advance;
+    f32 left_bearing;
+    aabb2f box; 
 };
 
-struct asset_file_font_kerning {
-    font_id FontId;
-    s32 Kerning;
-    u32 CodepointA;
-    u32 CodepointB;
+struct Asset_File_Font_Kerning {
+    Font_ID font_id;
+    s32 kerning;
+    u32 codepoint_a;
+    u32 codepoint_b;
 };
 
-struct asset_file_anime {
-    anime_id Id;
-    u32 FrameCount;
+struct Asset_File_Anime {
+    Anime_ID id;
+    u32 frame_count;
     // NOTE(Momo): Data is:
-    // image_id Data[FrameCount]
+    // Image_ID Data[FrameCount]
 };
 
-struct asset_file_sound {
-    sound_id Id;
+struct Asset_File_Sound {
+    Sound_ID id;
     
-    u32 DataCount;
+    u32 data_count;
     // NOTE(Momo): Data is: 
     // s16 Data[DataCount]
 };

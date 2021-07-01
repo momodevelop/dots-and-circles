@@ -9,7 +9,7 @@
 //   and manipulate the audio buffer directly?
 
 struct game_audio_mixer_instance {
-    sound_id SoundId; // From Assets
+    Sound_ID SoundId; // From Assets
     u32 CurrentOffset; // Current offset of the sound data
     b8 IsLoop;
     b8 IsPlaying;
@@ -58,7 +58,7 @@ AudioMixer_Init(game_audio_mixer* Mixer,
 
 static inline b8
 AudioMixer_Play(game_audio_mixer* Mixer, 
-                sound_id SoundId, 
+                Sound_ID SoundId, 
                 b8 Loop,
                 game_audio_mixer_handle* OutHandle)
 {
