@@ -45,7 +45,7 @@ Input_Init(platform_input* Input, Arena* arena) {
 static inline b8
 Input_TryPushCharacterInput(platform_input* Input, char C) {
     if (C >= 32 && C <= 126) {
-        Input->Characters.push(C);
+        Input->Characters.push((u8)C);
         return true;
     }
     return false;

@@ -47,7 +47,7 @@ struct debug_state {
     Arena arena;
     
     debug_inspector Inspector;
-    debug_console Console;
+    Debug_Console Console;
     
     struct permanent_state* PermanentState;
     struct transient_state* TransientState;

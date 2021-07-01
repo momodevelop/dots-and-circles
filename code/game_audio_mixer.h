@@ -20,8 +20,8 @@ struct Game_Audio_Mixer_Instance {
 // IDs are +1 of the actual indices
 struct Game_Audio_Mixer_Handle {
     u32 id;
-    
-    inline b8 is_valid();
+    b8 is_valid;
+    inline operator b8();
 };
 
 struct Game_Audio_Mixer {
@@ -90,7 +90,7 @@ Game_Audio_Mixer::play(Sound_ID sound_id,
     instance->sound_id = sound_id;
     instance->is_playing = true;
     
-    ret.id = index + 1;
+    ret.id = index;
     
     return ret;
 }
@@ -99,12 +99,12 @@ Game_Audio_Mixer::play(Sound_ID sound_id,
 b8
 Game_Audio_Mixer::stop(Game_Audio_Mixer_Handle handle) 
 {
-    if(!handle.is_valid()) {
+    if(!handle) {
         return false;
     }
     
     if ((u32)handle.id < this->instances.count) {
-        Game_Audio_Mixer_Instance* instance = this->instances + handle.id - 1;
+        Game_Audio_Mixer_Instance* instance = this->instances + handle.id;
         instance->is_playing = false;
         u32* item = this->free_list.push();
         if (item == nullptr) {
@@ -157,8 +157,8 @@ Game_Audio_Mixer::update(platform_audio* audio)
 }
 
 
-inline b8 
-Game_Audio_Mixer_Handle::is_valid() 
+inline
+Game_Audio_Mixer_Handle::operator b8() 
 {
     return id != 0; 
 }

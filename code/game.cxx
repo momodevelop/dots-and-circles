@@ -3,7 +3,7 @@
 
 // cmd: jump main/menu/atlas_test/etc...
 static inline void 
-CmdJump(debug_console* Console, void* Context, String Arguments) {
+CmdJump(Debug_Console* Console, void* Context, String Arguments) {
     auto* DebugState = (debug_state*)Context;
     permanent_state* PermState = DebugState->PermanentState;
     
@@ -14,46 +14,40 @@ CmdJump(debug_console* Console, void* Context, String Arguments) {
     if ( ArgList.item_count != 2 ) {
         // Expect two arguments
         Buffer.init("Expected only 2 arguments");
-        DebugConsole_PushInfo(Console, 
-                              Buffer, 
-                              C4F_RED);
+        Console->push_info(Buffer, 
+                           C4F_RED);
         return;
     }
     
     String StateToChangeTo = ArgList.items[1];
     if (StateToChangeTo == "main") {
         Buffer.init("Jumping to Main");
-        DebugConsole_PushInfo(Console, 
-                              Buffer, 
-                              C4F_YELLOW);
+        Console->push_info(Buffer, 
+                           C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Main;
     }
     else if (StateToChangeTo == "splash") {
         Buffer.init("Jumping to Splash");
-        DebugConsole_PushInfo(Console, 
-                              Buffer,  
-                              C4F_YELLOW);
+        Console->push_info(Buffer,  
+                           C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Splash;
     }
     else if (StateToChangeTo == "sandbox") {
         Buffer.init("Jumping to Sandbox");
-        DebugConsole_PushInfo(Console, 
-                              Buffer, 
-                              C4F_YELLOW);
+        Console->push_info(Buffer, 
+                           C4F_YELLOW);
         PermState->NextGameMode = GameModeType_Sandbox;
     }
     else if (StateToChangeTo == "anime") {
         Buffer.init("Jumping to Anime");
-        DebugConsole_PushInfo(Console, 
-                              Buffer, 
-                              C4F_YELLOW);
+        Console->push_info(Buffer, 
+                           C4F_YELLOW);
         PermState->NextGameMode = GameModeType_AnimeTest;
     }
     else {
         Buffer.init("Invalid state to jump to");
-        DebugConsole_PushInfo(Console, 
-                              Buffer, 
-                              C4F_RED);
+        Console->push_info(Buffer, 
+                           C4F_RED);
     }
 }
 
@@ -145,15 +139,13 @@ GameUpdateFunc(GameUpdate)
             String Buffer = {};
             Buffer.init("jump");
             
-            if (!DebugConsole_Init(&DebugState->Console,
-                                   &DebugState->arena)) {
+            if (!DebugState->Console.init(&DebugState->arena, 16)) {
                 return false;
             }
             
-            if (!DebugConsole_AddCmd(&DebugState->Console, 
-                                     Buffer, 
-                                     CmdJump, 
-                                     DebugState)) {
+            if (!DebugState->Console.add_command(Buffer, 
+                                                 CmdJump, 
+                                                 DebugState)) {
                 return false;
             }
         }
@@ -172,7 +164,7 @@ GameUpdateFunc(GameUpdate)
     }
     //StartProfiling(Test);
     DebugInspector_Begin(&DebugState->Inspector);
-    DebugConsole_Update(&DebugState->Console, DeltaTime);
+    DebugState->Console.update(DeltaTime);
     //EndProfiling(Test);
     
 #if 0
@@ -279,7 +271,7 @@ GameUpdateFunc(GameUpdate)
         }
     }
     
-    DebugConsole_Render(&DebugState->Console);
+    DebugState->Console.render();
     DebugInspector_End(&DebugState->Inspector);
     
     TranState->Mixer.update(Audio);

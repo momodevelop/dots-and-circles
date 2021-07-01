@@ -85,8 +85,7 @@ struct v3f {
     };
     
     inline f32& operator[](u32 i);
-    static v3f create(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f);
-    
+    static inline v3f create(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f);
 };
 
 struct v4f {

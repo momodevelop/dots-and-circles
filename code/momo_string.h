@@ -30,13 +30,15 @@ struct String {
     static inline String create(const char* cstr);
 };
 
-union String_Buffer {
-    String str;
-    struct {
-        u8* data;
-        u32 count;
+struct String_Buffer {
+    union {
+        String str;
+        struct {
+            u8* data;
+            u32 count;
+        };
     };
-    u32 cap;
+    u32 capacity;
     
     b8 init(u8* buffer, u32 buffer_size);
     b8 alloc(Arena* arena, u32 capacity);

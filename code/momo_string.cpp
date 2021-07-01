@@ -119,21 +119,21 @@ String::split(Arena* arena, u8 delimiter) {
 
 //~ NOTE(Momo): String_Buffer
 b8
-String_Buffer::init(u8* buffer, u32 capacity) {
-    if (!buffer || capacity == 0) {
+String_Buffer::init(u8* buffer, u32 buffer_size) {
+    if (!buffer || buffer_size == 0) {
         return false;
     }
-    data = buffer;
-    count = 0;
-    cap = capacity;
+    this->data = buffer;
+    this->count = 0;
+    this->capacity = buffer_size;
     return true;
 }
 
 
 b8
-String_Buffer::alloc(Arena* arena, u32 capacity) {
-    u8* buffer = arena->push_array<u8>(capacity);
-    return init(buffer, capacity);
+String_Buffer::alloc(Arena* arena, u32 size) {
+    u8* buffer = arena->push_array<u8>(size);
+    return init(buffer, size);
 }
 
 b8
@@ -147,25 +147,27 @@ String_Buffer::pop() {
 
 u32 
 String_Buffer::remaining() {
-    return cap - count;
+    return capacity - count;
 }
 
 b8
 String_Buffer::copy(String src) {
-    if (src.count > cap) {
+    if (src.count > capacity) {
         return false;
     }
-    for (u32 I = 0; I < src.count; ++I ) {
-        data[I] = src.data[I];
+    for (u32 i = 0; i < src.count; ++i ) {
+        data[i] = src.data[i];
     }
     count = src.count;
     return true;
 }
 
 
+
+
 b8
 String_Buffer::push(u8 item) {
-    if (count < cap) {
+    if (count < capacity) {
         data[count++] = item;
         return true;
     }
@@ -174,9 +176,9 @@ String_Buffer::push(u8 item) {
 
 b8
 String_Buffer::push(String src) {
-    if (count + src.count <= cap) {
-        for ( u32 I = 0; I < src.count; ++I ) {
-            data[count++] = src.data[I];
+    if (count + src.count <= capacity) {
+        for ( u32 i = 0; i < src.count; ++i ) {
+            data[count++] = src.data[i];
         }
         return true;
     }
@@ -211,9 +213,8 @@ String_Buffer::push(u32 num) {
     
     // Reverse starting from start point to count
     u32 sub_str_len_half = (count - start_pt)/2;
-    for(u32 I = 0; I < sub_str_len_half; ++I) {
-        SWAP(data[start_pt + I], 
-             data[count - 1 - I]);
+    for(u32 i = 0; i < sub_str_len_half; ++i) {
+        SWAP(data[start_pt + i], data[count - 1 - i]);
     }
     return true;
 }

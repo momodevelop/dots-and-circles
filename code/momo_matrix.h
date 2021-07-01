@@ -21,6 +21,9 @@ union m44f {
     
     static inline m44f create_translation(f32 x, f32 y, f32 z);
     static inline m44f create_scale(f32 x, f32 y, f32 z);
+    static inline m44f create_translation(v3f v);
+    static inline m44f create_scale(v3f v);
+    
     static inline m44f create_orthographic(f32 ndc_left,
                                            f32 ndc_right,
                                            f32 ndc_bottom,
@@ -166,6 +169,12 @@ m44f::create_translation(f32 x, f32 y, f32 z) {
     return ret;
 }
 
+
+inline m44f
+m44f::create_translation(v3f v) {
+    return create_translation(v.x, v.y, v.z);; 
+}
+
 inline m44f 
 m44f::create_rotation_x(f32 rad) {
     // NOTE(Momo): 
@@ -243,6 +252,11 @@ m44f::create_scale(f32 x, f32 y, f32 z) {
     ret[3][3] = 1.f;
     
     return ret; 
+}
+
+inline m44f
+m44f::create_scale(v3f v) {
+    return create_scale(v.x, v.y, v.z);; 
 }
 
 inline m44f 
