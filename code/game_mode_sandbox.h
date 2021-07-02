@@ -11,7 +11,7 @@ struct game_mode_sandbox_bullet {
 };
 struct game_mode_sandbox {
     game_mode_sandbox_bullet Bullets[2500];
-    game_camera Camera;
+    Game_Camera Camera;
     
     v2f PrevMousePos;
     v2f CurMousePos; 
@@ -27,10 +27,10 @@ SandboxMode_Init(permanent_state* PermState) {
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = v3f::create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = v3f::create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.Color = C4F_GREY2;
-        Mode->Camera.Dimensions = v3f::create(Game_DesignWidth,
+        Mode->Camera.position = v3f::create(0.f, 0.f, 0.f);
+        Mode->Camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.color = C4F_GREY2;
+        Mode->Camera.dimensions = v3f::create(Game_DesignWidth,
                                               Game_DesignHeight,
                                               Game_DesignDepth);
     }
@@ -70,8 +70,7 @@ SandboxMode_Update(permanent_state* PermState,
     // NOTE(Momo): Update
     if (Button_IsPoked(G_Input->ButtonSwitch)) {
         Mode->PrevMousePos = Mode->CurMousePos;
-        Mode->CurMousePos = Camera_ScreenToWorld(&Mode->Camera, 
-                                                 G_Input->DesignMousePos);
+        Mode->CurMousePos = Mode->Camera.screen_to_world(G_Input->DesignMousePos);
         ++Mode->ClickCount;
     }
     
@@ -114,7 +113,7 @@ SandboxMode_Update(permanent_state* PermState,
     }
     
     // NOTE(Momo): Render
-    Camera_Set(&Mode->Camera);
+    Mode->Camera.set();
     
     // NOTE(Momo): Render Bullets
     f32 ZOrder = 0.f;

@@ -23,10 +23,10 @@ MainMode_Init(permanent_state* PermState,
     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.Position = v3f::create(0.f, 0.f, 0.f);
-        Mode->Camera.Anchor = v3f::create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.Color = C4F_GREY2;
-        Mode->Camera.Dimensions = v3f::create(Game_DesignWidth,
+        Mode->Camera.position = v3f::create(0.f, 0.f, 0.f);
+        Mode->Camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        Mode->Camera.color = C4F_GREY2;
+        Mode->Camera.dimensions = v3f::create(Game_DesignWidth,
                                               Game_DesignHeight,
                                               Game_DesignDepth);
     }
@@ -88,7 +88,7 @@ MainMode_Init(permanent_state* PermState,
 #endif
     
     
-    Camera_Set(&Mode->Camera);
+    Mode->Camera.set();
     
     Mode->State = Main_StateType_Spawning;
     return true; 

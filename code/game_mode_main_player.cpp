@@ -6,8 +6,7 @@ Main_UpdateInput(game_mode_main* Mode)
     player* Player = &Mode->Player; 
     
     Player->PrevPosition = Player->Position;
-    Player->Position = Camera_ScreenToWorld(&Mode->Camera,
-                                            G_Input->DesignMousePos);
+    Player->Position = Mode->Camera.screen_to_world(G_Input->DesignMousePos);
     
     
     // NOTE(Momo): Absorb Mode Switch

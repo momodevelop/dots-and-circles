@@ -21,7 +21,7 @@ struct Game_Audio_Mixer_Instance {
 struct Game_Audio_Mixer_Handle {
     u32 id;
     b8 is_valid;
-    inline operator b8();
+    inline operator bool();
 };
 
 struct Game_Audio_Mixer {
@@ -158,7 +158,7 @@ Game_Audio_Mixer::update(platform_audio* audio)
 
 
 inline
-Game_Audio_Mixer_Handle::operator b8() 
+Game_Audio_Mixer_Handle::operator bool() 
 {
     return id != 0; 
 }

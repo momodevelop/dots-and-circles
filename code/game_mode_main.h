@@ -98,7 +98,7 @@ struct game_mode_main {
     static constexpr f32 SpawnDuration = 1.f;
     
     player Player;
-    game_camera Camera;
+    Game_Camera Camera;
     
     List<bullet> CircleBullets;
     List<bullet> DotBullets;
