@@ -61,7 +61,7 @@ GameUpdateFunc(GameUpdate)
         G_Platform = PlatformApi;
         G_Log = PlatformApi->LogFp;
         G_Renderer = RenderCommands;
-        G_Input = PlatformInput;
+        G_Input = platform_input;
         if (!Scratch.init(GameMemory->ScratchMemory, GameMemory->ScratchMemorySize)) {
             G_Log("Cannot initialize Scratch Memory");
             return false;
@@ -159,7 +159,7 @@ GameUpdateFunc(GameUpdate)
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
-    if (Button_IsPoked(G_Input->ButtonInspector)) {
+    if (G_Input->button_inspector.is_poked()) {
         DebugState->inspector.is_active = !DebugState->inspector.is_active;
     }
     //START_PROFILING(Test);
@@ -178,7 +178,7 @@ GameUpdateFunc(GameUpdate)
     
     
     // NOTE(Momo): Pause
-    if (Button_IsPoked(G_Input->ButtonPause)) {
+    if (G_Input->button_pause.is_poked()) {
         PermState->IsPaused = !PermState->IsPaused;
     }
     if (PermState->IsPaused) {
@@ -186,10 +186,10 @@ GameUpdateFunc(GameUpdate)
     }
     
     // NOTE(Momo): speed up/down
-    if (Button_IsPoked(G_Input->ButtonSpeedDown)) {
+    if (G_Input->button_speed_down.is_poked()) {
         PermState->GameSpeed -= 0.1f;
     }
-    if (Button_IsPoked(G_Input->ButtonSpeedUp)) {
+    if (G_Input->button_speed_up.is_poked()) {
         PermState->GameSpeed += 0.1f;
     }
     DeltaTime *= PermState->GameSpeed;

@@ -8,7 +8,7 @@
 platform_api* G_Platform;
 platform_log* G_Log;
 Mailbox* G_Renderer;
-platform_input* G_Input;
+Platform_Input* G_Input;
 Arena* G_Scratch;
 
 

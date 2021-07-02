@@ -6,82 +6,92 @@
 
 
 // Input API /////////////////////////////////////////
-struct platform_input_button {
-    bool Before : 1;
-    bool Now : 1;
+struct Platform_Input_Button {
+    b8 before : 1;
+    b8 now : 1;
+    
+    b8 is_poked();
+    b8 is_released();
+    b8 is_down();
+    b8 is_held();
 };
 
-struct platform_input {
-    String_Buffer Characters;
+struct Platform_Input {
+    String_Buffer characters;
     union {
-        platform_input_button Buttons[8];
+        Platform_Input_Button buttons[8];
         struct {
-            platform_input_button ButtonSwitch;
+            Platform_Input_Button button_switch;
             
             // NOTE(Momo): Kinda for in-game debugging
-            platform_input_button ButtonConfirm;
-            platform_input_button ButtonBack;
-            platform_input_button ButtonConsole;
-            platform_input_button ButtonInspector;
-            platform_input_button ButtonPause;
-            platform_input_button ButtonSpeedUp;
-            platform_input_button ButtonSpeedDown;
+            Platform_Input_Button button_confirm;
+            Platform_Input_Button button_back;
+            Platform_Input_Button button_console;
+            Platform_Input_Button button_inspector;
+            Platform_Input_Button button_pause;
+            Platform_Input_Button button_speed_up;
+            Platform_Input_Button button_speed_down;
         };
     };
     
     
-    v2f DesignMousePos;
-    v2f WindowMousePos;
-    v2f RenderMousePos;
+    v2f design_mouse_pos;
+    v2f window_mouse_pos;
+    v2f render_mouse_pos;
+    
+    //- functions
+    b8 alloc(Arena* arena);
+    b8 try_push_character_input(u8 c);
+    void update();
 };
 
 
-static inline b8
-Input_Init(platform_input* Input, Arena* arena) {
-    return Input->Characters.alloc(arena, 10);
+b8
+Platform_Input::alloc(Arena* arena) {
+    return characters.alloc(arena, 10);
 }
 
 
-static inline b8
-Input_TryPushCharacterInput(platform_input* Input, char C) {
-    if (C >= 32 && C <= 126) {
-        Input->Characters.push((u8)C);
+b8
+Platform_Input::try_push_character_input(u8 c) {
+    if (c >= 32 && c <= 126) {
+        characters.push(c);
         return true;
     }
     return false;
 }
 
-static inline void
-Input_Update(platform_input* Input) {
-    Input->Characters.clear();
-    for (auto&& itr : Input->Buttons) {
-        itr.Before = itr.Now;
+void
+Platform_Input::update() {
+    characters.clear();
+    for (auto&& itr : buttons) {
+        itr.before = itr.now;
     }
 }
 
 // before: 0, now: 1
-static inline b8 
-Button_IsPoked(platform_input_button Button) {
-    return !Button.Before && Button.Now;
+b8 
+Platform_Input_Button::is_poked() {
+    return !this->before && this->now;
 }
 
 // before: 1, now: 0
-static inline b8
-Button_IsReleased(platform_input_button Button) {
-    return Button.Before && !Button.Now;
+b8
+Platform_Input_Button::is_released() {
+    return this->before && !this->now;
 }
 
 
 // before: X, now: 1
-static inline b8
-Button_IsDown(platform_input_button Button) {
-    return Button.Now;
+b8
+Platform_Input_Button::is_down() {
+    return this->now;
 }
 
 // before: 1, now: 1
-static inline b8
-Button_IsHeld(platform_input_button Button) {
-    return Button.Before && Button.Now;
+b8
+Platform_Input_Button::is_held() {
+    return this->before && this->now;
 }
 
 // Platform Api ////////////////////////////////////////////////////
@@ -170,7 +180,7 @@ struct platform_audio {
 #define GameUpdateFunc(Name) b8 Name(game_memory* GameMemory, \
 platform_api* PlatformApi, \
 Mailbox* RenderCommands, \
-platform_input* PlatformInput, \
+Platform_Input* platform_input, \
 platform_audio* Audio,\
 f32 DeltaTime)
 typedef GameUpdateFunc(game_update);

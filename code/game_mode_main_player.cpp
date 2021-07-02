@@ -7,11 +7,11 @@ Main_UpdateInput(game_mode_main* mode)
     v2f direction = {};
     
     player->prev_position = player->position;
-    player->position = mode->camera.screen_to_world(G_Input->DesignMousePos);
+    player->position = mode->camera.screen_to_world(G_Input->design_mouse_pos);
     
     
     // NOTE(Momo): Absorb mode Switch
-    if(Button_IsPoked(G_Input->ButtonSwitch)) {
+    if(G_Input->button_switch.is_poked()) {
         player->mood_type = 
             (player->mood_type == MOOD_TYPE_DOT) ? MOOD_TYPE_CIRCLE : MOOD_TYPE_DOT;
         

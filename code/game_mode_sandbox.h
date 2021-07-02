@@ -68,9 +68,9 @@ SandboxMode_Update(permanent_state* PermState,
     game_mode_sandbox* Mode = PermState->SandboxMode;     
     
     // NOTE(Momo): Update
-    if (Button_IsPoked(G_Input->ButtonSwitch)) {
+    if (G_Input->button_switch.is_poked()) {
         Mode->PrevMousePos = Mode->CurMousePos;
-        Mode->CurMousePos = Mode->Camera.screen_to_world(G_Input->DesignMousePos);
+        Mode->CurMousePos = Mode->Camera.screen_to_world(G_Input->design_mouse_pos);
         ++Mode->ClickCount;
     }
     

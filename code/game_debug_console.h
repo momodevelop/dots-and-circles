@@ -146,7 +146,7 @@ Debug_Console::remove_command(String key) {
 void 
 Debug_Console::update(f32 dt) 
 {
-    if (Button_IsPoked(G_Input->ButtonConsole)) {
+    if (G_Input->button_console.is_poked()) {
         is_active = !is_active; 
     }
     
@@ -159,14 +159,14 @@ Debug_Console::update(f32 dt)
     
     if (is_active) {
         transit_timer.tick(dt);
-        if (G_Input->Characters.count > 0 && 
-            G_Input->Characters.count <= input_line.text.remaining()) 
+        if (G_Input->characters.count > 0 && 
+            G_Input->characters.count <= input_line.text.remaining()) 
         {  
-            input_line.text.push(G_Input->Characters.str);
+            input_line.text.push(G_Input->characters.str);
         }
         
         // Remove character backspace logic
-        if (Button_IsDown(G_Input->ButtonBack)) {
+        if (G_Input->button_back.is_down()) {
             if(!is_start_pop) {
                 pop();
                 is_start_pop = true;
@@ -190,7 +190,7 @@ Debug_Console::update(f32 dt)
         
         // Execute command
         String input_line_str = input_line.text.str;
-        if (Button_IsPoked(G_Input->ButtonConfirm)) {
+        if (G_Input->button_confirm.is_poked()) {
             push_info(input_line_str, C4F_WHITE);
             
             u32 min = 0;

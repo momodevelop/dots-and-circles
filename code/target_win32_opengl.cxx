@@ -358,12 +358,12 @@ Win32_EndRecordingInput(win32_state* State) {
 }
 
 static inline void
-Win32_RecordInput(win32_state* State, platform_input* Input) {
+Win32_RecordInput(win32_state* State, Platform_Input* Input) {
     ASSERT(State->IsRecordingInput);
     DWORD BytesWritten;
     if(!WriteFile(State->RecordingInputHandle,
                   Input,
-                  sizeof(platform_input),
+                  sizeof(Platform_Input),
                   &BytesWritten, 0)) 
     {
         Win32_Log("[Win32::RecordInput] Cannot write file\n");
@@ -371,7 +371,7 @@ Win32_RecordInput(win32_state* State, platform_input* Input) {
         return;
     }
     
-    if (BytesWritten != sizeof(platform_input)) {
+    if (BytesWritten != sizeof(Platform_Input)) {
         Win32_Log("[Win32::RecordInput] Did not complete writing\n");
         Win32_EndRecordingInput(State);
         return;
@@ -408,14 +408,14 @@ Win32_BeginPlaybackInput(win32_state* State, const char* Path) {
 
 // NOTE(Momo): returns true if 'done' reading all input, false otherwise
 static inline b8 
-Win32_PlaybackInput(win32_state* State, platform_input* Input) {
+Win32_PlaybackInput(win32_state* State, Platform_Input* Input) {
     DWORD BytesRead;
     BOOL Success = ReadFile(State->PlaybackInputHandle, 
                             Input,
-                            sizeof(platform_input),
+                            sizeof(Platform_Input),
                             &BytesRead,
                             0);
-    if(!Success || BytesRead != sizeof(platform_input)) {
+    if(!Success || BytesRead != sizeof(Platform_Input)) {
         return true;
     }
     return false;
@@ -1114,118 +1114,118 @@ Win32_GetClientDimensions(HWND Window) {
 
 static inline void
 Win32_ProcessMessages(HWND Window, 
-                      win32_state* State,
-                      platform_input* Input)
+                      win32_state* state,
+                      Platform_Input* input)
 {
-    MSG Msg = {};
-    while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
-        switch(Msg.message) {
+    MSG msg = {};
+    while(PeekMessage(&msg, Window, 0, 0, PM_REMOVE)) {
+        switch(msg.message) {
             case WM_QUIT:
             case WM_CLOSE: {
-                State->IsRunning = false;
+                state->IsRunning = false;
             } break;
             case WM_CHAR: {
-                Input_TryPushCharacterInput(Input, (char)Msg.wParam);
+                input->try_push_character_input((u8)msg.wParam);
             } break;
             case WM_MOUSEMOVE: {
                 // NOTE(Momo): This is the actual conversion from screen space to 
                 // design space. I'm not 100% if this should be here but I guess
                 // only time will tell.
-                Input->WindowMousePos.x = (f32)GET_X_LPARAM(Msg.lParam);
-                Input->WindowMousePos.y = (f32)GET_Y_LPARAM(Msg.lParam);
+                input->window_mouse_pos.x = (f32)GET_X_LPARAM(msg.lParam);
+                input->window_mouse_pos.y = (f32)GET_Y_LPARAM(msg.lParam);
                 
-                v2u WindowDims = State->Opengl->WindowDimensions;
-                aabb2u RenderRegion = State->Opengl->RenderRegion;
+                v2u WindowDims = state->Opengl->WindowDimensions;
+                aabb2u RenderRegion = state->Opengl->RenderRegion;
                 
-                Input->RenderMousePos.x = Input->WindowMousePos.x - RenderRegion.min.x;
-                Input->RenderMousePos.y = Input->WindowMousePos.y - RenderRegion.min.y;
+                input->render_mouse_pos.x = input->window_mouse_pos.x - RenderRegion.min.x;
+                input->render_mouse_pos.y = input->window_mouse_pos.y - RenderRegion.min.y;
                 
-                v2f DesignDimsF = to_v2f(State->Opengl->DesignDimensions);
+                v2f DesignDimsF = to_v2f(state->Opengl->DesignDimensions);
                 v2u RenderDimsU = dimensions(RenderRegion);
                 v2f RenderDimsF = to_v2f(RenderDimsU);
                 v2f DesignToRenderRatio = ratio(DesignDimsF, RenderDimsF);
                 
-                Input->DesignMousePos.x = Input->RenderMousePos.x * DesignToRenderRatio.w;
-                Input->DesignMousePos.y = Input->RenderMousePos.y * DesignToRenderRatio.h;
+                input->design_mouse_pos.x = input->render_mouse_pos.x * DesignToRenderRatio.w;
+                input->design_mouse_pos.y = input->render_mouse_pos.y * DesignToRenderRatio.h;
                 
             } break;
             case WM_LBUTTONUP:
             case WM_LBUTTONDOWN: {
-                u32 Code = (u32)Msg.wParam;
-                b8 IsDown = Msg.message == WM_LBUTTONDOWN;
-                Input->ButtonSwitch.Now = IsDown;
+                u32 Code = (u32)msg.wParam;
+                b8 is_down = msg.message == WM_LBUTTONDOWN;
+                input->button_switch.now = is_down;
             } break;
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
             case WM_KEYUP: {
-                u32 KeyCode = (u32)Msg.wParam;
-                b8 IsDown = Msg.message == WM_KEYDOWN;
+                u32 KeyCode = (u32)msg.wParam;
+                b8 is_down = msg.message == WM_KEYDOWN;
                 switch(KeyCode) {
                     case VK_RETURN:{
-                        Input->ButtonConfirm.Now = IsDown;
+                        input->button_confirm.now = is_down;
                     } break;
                     case VK_F1:{
-                        Input->ButtonConsole.Now = IsDown;
+                        input->button_console.now = is_down;
                     } break;
                     case VK_F2:{
-                        Input->ButtonInspector.Now = IsDown;
+                        input->button_inspector.now = is_down;
                     } break;
                     case VK_F3:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            Win32_GameMemory_Save(&State->GameMemory, Win32_SaveStateFile);
+                        if (msg.message == WM_KEYDOWN) {
+                            Win32_GameMemory_Save(&state->GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F4:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            Win32_GameMemory_Load(&State->GameMemory, Win32_SaveStateFile);
+                        if (msg.message == WM_KEYDOWN) {
+                            Win32_GameMemory_Load(&state->GameMemory, Win32_SaveStateFile);
                         }
                     } break;
                     case VK_F5:{
-                        Input->ButtonPause.Now = IsDown;
+                        input->button_pause.now = is_down;
                     } break;
                     case VK_F6:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            if(State->IsRecordingInput) {
-                                Win32_EndRecordingInput(State);
+                        if (msg.message == WM_KEYDOWN) {
+                            if(state->IsRecordingInput) {
+                                Win32_EndRecordingInput(state);
                             }
                             else {
-                                Win32_GameMemory_Save(&State->GameMemory, Win32_RecordStateFile);
-                                Win32_BeginRecordingInput(State, Win32_RecordInputFile);
+                                Win32_GameMemory_Save(&state->GameMemory, Win32_RecordStateFile);
+                                Win32_BeginRecordingInput(state, Win32_RecordInputFile);
                             }
                         }
                         
                     } break;
                     case VK_F7:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            if(State->IsPlaybackInput) {
-                                Win32_EndPlaybackInput(State);
+                        if (msg.message == WM_KEYDOWN) {
+                            if(state->IsPlaybackInput) {
+                                Win32_EndPlaybackInput(state);
                             }
                             else {
-                                Win32_GameMemory_Load(&State->GameMemory, Win32_RecordStateFile);
-                                Win32_BeginPlaybackInput(State, 
+                                Win32_GameMemory_Load(&state->GameMemory, Win32_RecordStateFile);
+                                Win32_BeginPlaybackInput(state, 
                                                          Win32_RecordInputFile);
                             }
                         }
                         
                     } break;
                     case VK_F11:{
-                        Input->ButtonSpeedDown.Now = IsDown;
+                        input->button_speed_down.now = is_down;
                     } break;
                     case VK_F12: {
-                        Input->ButtonSpeedUp.Now = IsDown;
+                        input->button_speed_up.now = is_down;
                     } break;
                     case VK_BACK:{
-                        Input->ButtonBack.Now = IsDown;
+                        input->button_back.now = is_down;
                     } break;
                 } 
-                TranslateMessage(&Msg);
+                TranslateMessage(&msg);
             } break;
             default: 
             {
-                //Win32_Log("[Win32::ProcessMessages] %d\n", Msg.message);
-                TranslateMessage(&Msg);
-                DispatchMessage(&Msg);
+                //Win32_Log("[Win32::ProcessMessages] %d\n", msg.message);
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
             } break;
         }
     }
@@ -1626,8 +1626,8 @@ WinMain(HINSTANCE Instance,
                                                   "lock");
     
     // Initialize game input
-    platform_input GameInput = {};
-    if(!Input_Init(&GameInput, &State->arena)) {
+    Platform_Input GameInput = {};
+    if(!GameInput.alloc(&State->arena)) {
         Win32_Log("[Win32::Main] Cannot initialize input");
         return 1;
     }
@@ -1695,7 +1695,7 @@ WinMain(HINSTANCE Instance,
         }
         
         
-        Input_Update(&GameInput);
+        GameInput.update();
         Win32_ProcessMessages(Window, 
                               State,
                               &GameInput);
