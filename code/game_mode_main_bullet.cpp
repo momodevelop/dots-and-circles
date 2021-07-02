@@ -1,7 +1,7 @@
 
 
 static inline void
-Bullet_Spawn(game_mode_main* mode, 
+spawn_bullet(Game_Mode_Main* mode, 
              v2f position, 
              v2f direction, 
              f32 speed, 
@@ -21,8 +21,7 @@ Bullet_Spawn(game_mode_main* mode,
     }
     b->position = position;
 	b->speed = speed;
-    b->Size = v2f::create(16.f, 16.f);
-    
+    b->size = v2f::create(16.f, 16.f);
     b->hit_circle = circle2f::create(v2f::create(0.f, 0.f), 4.f);
     
     if (length_sq(direction) > 0.f) {
@@ -33,11 +32,11 @@ Bullet_Spawn(game_mode_main* mode,
 }
 
 static inline void
-Main_UpdateBullets(game_mode_main* Mode,
-                   f32 DeltaTime) 
+update_bullets(Game_Mode_Main* mode,
+               f32 dt) 
 {
-    auto SlearIfLamb = [&](Bullet* B) {
-        B->position += B->direction * B->speed * DeltaTime;
+    auto slear_if_lamb = [&](Bullet* B) {
+        B->position += B->direction * B->speed * dt;
         
         return B->position.x <= -Game_DesignWidth * 0.5f - B->hit_circle.radius || 
             B->position.x >= Game_DesignWidth * 0.5f + B->hit_circle.radius ||
@@ -45,36 +44,36 @@ Main_UpdateBullets(game_mode_main* Mode,
             B->position.y >= Game_DesignHeight * 0.5f + B->hit_circle.radius;
     };
     
-    Mode->dot_bullets.foreach_slear_if(SlearIfLamb);
-    Mode->circle_bullets.foreach_slear_if(SlearIfLamb);
+    mode->dot_bullets.foreach_slear_if(slear_if_lamb);
+    mode->circle_bullets.foreach_slear_if(slear_if_lamb);
     
 }
 
 static inline void
-Main_RenderBullets(game_mode_main* Mode) 
+render_bullets(Game_Mode_Main* mode) 
 {
     // Bullet Rendering.
     // NOTE(Momo): Circles are in front of Dots and are therefore 'nearer'.
     // Thus we have to render Dots first before Circles.
-    f32 LayerOffset = 0.f;
-    auto ForEachLamb = [&](Bullet* B, Image_ID Image) {
-        m44f S = m44f::create_scale(B->Size.x, 
-                                    B->Size.y, 
+    f32 layer_offset = 0.f;
+    auto for_lamb = [&](Bullet* b, Image_ID image) {
+        m44f s = m44f::create_scale(b->size.x, 
+                                    b->size.y, 
                                     1.f);
         
-        m44f T = m44f::create_translation(B->position.x,
-                                          B->position.y,
-                                          ZLayBullet + LayerOffset);
+        m44f t = m44f::create_translation(b->position.x,
+                                          b->position.y,
+                                          ZLayBullet + layer_offset);
         
-        draw_textured_quad_from_image(Image,
-                                      T*S, 
+        draw_textured_quad_from_image(image,
+                                      t*s, 
                                       C4F_WHITE);
-        LayerOffset += 0.00001f;
+        layer_offset += 0.00001f;
     };
     
     
-    Mode->dot_bullets.foreach(ForEachLamb, IMAGE_BULLET_DOT);
-    Mode->circle_bullets.foreach(ForEachLamb, IMAGE_BULLET_CIRCLE);
+    mode->dot_bullets.foreach(for_lamb, IMAGE_BULLET_DOT);
+    mode->circle_bullets.foreach(for_lamb, IMAGE_BULLET_CIRCLE);
     
     
     

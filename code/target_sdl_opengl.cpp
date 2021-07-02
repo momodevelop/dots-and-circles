@@ -389,7 +389,7 @@ int main(int argc, char* argv[]) {
     arena PlatformArena = Arena(ProgramMemory, TotalMemorySize);
     
     // NOTE(Momo): Game
-    game_memory GameMemory = {};
+    Game_Memory GameMemory = {};
     GameMemory.MainMemory = PushBlock(&PlatformArena, GameMainMemorySize);
     GameMemory.MainMemorySize = GameMainMemorySize;
 
@@ -399,9 +399,9 @@ int main(int argc, char* argv[]) {
     }
 
 #if INTERNAL
-    GameMemory.DebugMemory = PushBlock(&PlatformArena, DebugMemorySize);
-    GameMemory.DebugMemorySize = DebugMemorySize; 
-    if ( !GameMemory.DebugMemory) {
+    GameMemory.debug_memory = PushBlock(&PlatformArena, debug_memory_size);
+    GameMemory.debug_memory_size = debug_memory_size; 
+    if ( !GameMemory.debug_memory) {
         SDL_Log("Cannot allocate debug memory");
         return 1;
     }
@@ -409,7 +409,7 @@ int main(int argc, char* argv[]) {
 #endif
     
     // NOTE(Momo): PlatformAPI
-    platform_api PlatformApi;
+    Platform_API PlatformApi;
     PlatformApi.Log = SdlLog;
     PlatformApi.ReadFile = SdlReadFile;
     PlatformApi.GetFileSize = SdlGetFileSize;

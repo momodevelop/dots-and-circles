@@ -95,94 +95,94 @@ Platform_Input_Button::is_held() {
 }
 
 // Platform Api ////////////////////////////////////////////////////
-struct platform_file_handle {
-    u32 Id;
-    u32 Error; // 0 is always no error!
+struct Platform_File_Handle {
+    u32 id;
+    u32 error; // 0 is always no error!
 };
 
 
-#define PlatformLogDecl(Name) void Name(const char* Format, ...)
-typedef PlatformLogDecl(platform_log);
+#define PLATFORM_LOG_DECL(Name) void Name(const char* Format, ...)
+typedef PLATFORM_LOG_DECL(Platform_Log);
 
-#define PlatformOpenAssetFileDecl(Name) platform_file_handle Name(void)
-typedef PlatformOpenAssetFileDecl(platform_open_asset_file);
+#define PLATFORM_OPEN_ASSET_FILE_DECL(Name) Platform_File_Handle Name(void)
+typedef PLATFORM_OPEN_ASSET_FILE_DECL(Platform_Open_Asset_File);
 
-#define PlatformCloseFileDecl(Name) void Name(platform_file_handle* Handle)
-typedef PlatformCloseFileDecl(platform_close_file);
+#define PLATFORM_CLOSE_FILE_DECL(Name) void Name(Platform_File_Handle* Handle)
+typedef PLATFORM_CLOSE_FILE_DECL(Platform_Close_File);
 
-#define PlatformReadFileDecl(Name) void Name(platform_file_handle* Handle, usize Offset, usize Size, void* Dest)
-typedef PlatformReadFileDecl(platform_read_file);
+#define PLATFORM_READ_FILE_DECL(Name) void Name(Platform_File_Handle* Handle, usize Offset, usize Size, void* Dest)
+typedef PLATFORM_READ_FILE_DECL(Platform_Read_File);
 
-#define PlatformGetFileSizeDecl(Name) u32 Name(const char* Path)
-typedef PlatformGetFileSizeDecl(platform_get_file_size);
+#define PLATFORM_GET_FILE_SIZE_DECL(Name) u32 Name(const char* Path)
+typedef PLATFORM_GET_FILE_SIZE_DECL(Platform_Get_File_Size);
 
-#define PlatformLogFileErrorDecl(Name) void Name(platform_file_handle* Handle)
-typedef PlatformLogFileErrorDecl(platform_log_file_error);
+#define PLATFORM_LOG_FILE_ERROR_DECL(Name) void Name(Platform_File_Handle* Handle)
+typedef PLATFORM_LOG_FILE_ERROR_DECL(Platform_Log_File_Error);
 
-#define PlatformAddTextureDecl(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
-typedef PlatformAddTextureDecl(platform_add_texture);
+#define PLATFORM_ADD_TEXTURE_DECL(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
+typedef PLATFORM_ADD_TEXTURE_DECL(Platform_Add_Texture);
 
-#define PlatformClearTexturesDecl(Name) void Name()
-typedef PlatformClearTexturesDecl(platform_clear_textures);
+#define PLATFORM_CLEAR_TEXTURES_DECL(Name) void Name()
+typedef PLATFORM_CLEAR_TEXTURES_DECL(Platform_Clear_Textures);
 
-#define PlatformHideCursorDecl(Name) void Name()
-typedef PlatformHideCursorDecl(platform_hide_cursor);
+#define PLATFORM_HIDE_CURSOR_DECL(Name) void Name()
+typedef PLATFORM_HIDE_CURSOR_DECL(Platform_Hide_Cursor);
 
-#define PlatformShowCursorDecl(Name) void Name()
-typedef PlatformShowCursorDecl(platform_show_cursor);
+#define PLATFORM_SHOW_CURSOR_DECL(Name) void Name()
+typedef PLATFORM_SHOW_CURSOR_DECL(Platform_Show_Cursor);
 
-#define PlatformGetPerformanceCounterDecl(Name) u64 Name()
-typedef PlatformGetPerformanceCounterDecl(platform_get_performance_counter);
+#define PLATFORM_GET_PERFORMANCE_COUNTER_DECL(Name) u64 Name()
+typedef PLATFORM_GET_PERFORMANCE_COUNTER_DECL(Platform_Get_Performance_Counter);
 
 
 
-struct platform_api {
-    platform_log* LogFp;
-    platform_get_file_size* GetFileSizeFp;
-    platform_add_texture* AddTextureFp;
-    platform_clear_textures* ClearTexturesFp;
-    platform_open_asset_file* OpenAssetFileFp;
-    platform_close_file* CloseFileFp;
-    platform_log_file_error* LogFileErrorFp;
-    platform_read_file* ReadFileFp;
-    platform_show_cursor* ShowCursorFp;
-    platform_hide_cursor* HideCursorFp;
+struct Platform_API {
+    Platform_Log* log;
+    Platform_Get_File_Size* get_file_size;
+    Platform_Add_Texture* add_texture;
+    Platform_Clear_Textures* clear_textures;
+    Platform_Open_Asset_File* open_asset_file;
+    Platform_Close_File* close_file;
+    Platform_Log_File_Error* log_file_error;
+    Platform_Read_File* read_file;
+    Platform_Show_Cursor* show_cursor;
+    Platform_Hide_Cursor* hide_cursor;
     
-    platform_get_performance_counter* GetPerformanceCounterFp;
+    Platform_Get_Performance_Counter* get_performance_counter;
 };
 
 // Memory required by the game to get it running
 // Note that Transient Memory, once set, should not be moved!
 // TODO(Momo): should change name to "platform_memory" because it is
 // memory FROM the platform
-struct game_memory {
-    void* PermanentMemory;
-    u32 PermanentMemorySize;
+struct Game_Memory {
+    void* permanent_memory;
+    u32 permanent_memory_size;
     
-    void* TransientMemory;
-    u32 TransientMemorySize;
+    void* transient_memory;
+    u32 transient_memory_size;
     
-    void* ScratchMemory;
-    u32 ScratchMemorySize;
+    void* scratch_memory;
+    u32 scratch_memory_size;
     
-    void* DebugMemory;
-    u32 DebugMemorySize;
+    void* debug_memory;
+    u32 debug_memory_size;
 };
 
-struct platform_audio {
-    s16* SampleBuffer;
-    u32 SampleCount;
-    u32 Channels;
+struct Platform_Audio {
+    s16* sample_buffer;
+    u32 sample_count;
+    u32 channels;
 };
 
 // Game function typedefs
 // Returns true if still running, false if need to quit.
-#define GameUpdateFunc(Name) b8 Name(game_memory* GameMemory, \
-platform_api* PlatformApi, \
-Mailbox* RenderCommands, \
+#define GameUpdateFunc(Name) b8 Name(Game_Memory* game_memory, \
+Platform_API* platform_api, \
+Mailbox* render_commands, \
 Platform_Input* platform_input, \
-platform_audio* Audio,\
-f32 DeltaTime)
+Platform_Audio* platform_audio,\
+f32 dt)
 typedef GameUpdateFunc(game_update);
 
 #endif //PLATFORM_H

@@ -1,6 +1,6 @@
 
 static inline void
-Main_UpdateInput(game_mode_main* mode)
+update_input(Game_Mode_Main* mode)
 {
     Player* player = &mode->player; 
     
@@ -32,8 +32,8 @@ Main_UpdateInput(game_mode_main* mode)
 
 
 static inline void 
-Main_UpdatePlayer(game_mode_main* mode, 
-                  f32 dt) 
+update_player(Game_Mode_Main* mode, 
+              f32 dt) 
 {
     Player* player = &mode->player; 
     player->dot_image_alpha = LERP(1.f - player->dot_image_alpha_target, 
@@ -49,8 +49,8 @@ Main_UpdatePlayer(game_mode_main* mode,
 }
 
 static inline void
-Main_RenderScore(game_mode_main* Mode) {
-    static constexpr f32 FontSize = 24.f;
+render_score(Game_Mode_Main* mode) {
+    static constexpr f32 font_size = 24.f;
     
     // NOTE(Momo): Current Score
     {
@@ -59,7 +59,7 @@ Main_RenderScore(game_mode_main* Mode) {
                       Game_DesignHeight * 0.5f - 24.f,  
                       ZLayScore },
                   String::create("Current Score"),
-                  FontSize);
+                  font_size);
     }
     
     // NOTE(Momo): High Score
@@ -70,14 +70,14 @@ Main_RenderScore(game_mode_main* Mode) {
                       Game_DesignHeight * 0.5f - 24.f,
                       ZLayScore },
                   Str,
-                  FontSize);
+                  font_size);
     }
     
 }
 
 
 static inline void 
-Main_RenderPlayer(game_mode_main* mode) 
+render_player(Game_Mode_Main* mode) 
 {
     Player* player = &mode->player;
     m44f s = m44f::create_scale(player->size, player->size, 1.f);

@@ -1,6 +1,6 @@
 
 static inline void
-Main_UpdateDeathBomb(game_mode_main* mode, f32 dt) {
+update_death_bomb(Game_Mode_Main* mode, f32 dt) {
     Death_Bomb* death_bomb = &mode->death_bomb;
     death_bomb->radius += death_bomb->growth_speed * dt;
     
@@ -14,8 +14,8 @@ Main_UpdateDeathBomb(game_mode_main* mode, f32 dt) {
                                   BCircle)) 
         {
             v2f vector_to_bullet = normalize(b->position - death_bomb->position);
-            v2f SpawnPos = death_bomb->position + vector_to_bullet * death_bomb->radius;
-            Main_SpawnParticle(mode, SpawnPos, 5);
+            v2f spawn_pos = death_bomb->position + vector_to_bullet * death_bomb->radius;
+            spawn_particles(mode, spawn_pos, 5);
             return true;
         }
         
@@ -32,7 +32,7 @@ Main_UpdateDeathBomb(game_mode_main* mode, f32 dt) {
         {
             v2f vector_to_bullet = normalize(e->position - death_bomb->position);
             v2f spawn_pos = death_bomb->position + vector_to_bullet * death_bomb->radius;
-            Main_SpawnParticle(mode, spawn_pos, 5);
+            spawn_particles(mode, spawn_pos, 5);
             return true;
         }
         
@@ -42,7 +42,7 @@ Main_UpdateDeathBomb(game_mode_main* mode, f32 dt) {
 }
 
 static inline void
-Main_RenderDeathBomb(game_mode_main* Mode)
+render_death_bomb(Game_Mode_Main* Mode)
 {
     Death_Bomb* death_bomb = &Mode->death_bomb;
     // Circle?

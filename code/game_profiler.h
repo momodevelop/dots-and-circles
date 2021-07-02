@@ -34,7 +34,7 @@ zawarudo_start_profiling(u32 index,
     e->function_name = function_name;
     e->line_number = line_number;
     e->file_name = file_name;
-    e->cycles -= G_Platform->GetPerformanceCounterFp(); 
+    e->cycles -= G_Platform->get_performance_counter(); 
     e->is_started = true;
     ++e->hit_count;
     
@@ -45,7 +45,7 @@ zawarudo_start_profiling(u32 index,
 static inline void
 zawarudo_end_profiling(Profiler_Entry* E) {
     // TODO: Replace this
-    E->cycles += G_Platform->GetPerformanceCounterFp(); 
+    E->cycles += G_Platform->get_performance_counter(); 
     E->is_started = false;
 }
 

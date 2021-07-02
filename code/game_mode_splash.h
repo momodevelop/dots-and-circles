@@ -3,164 +3,164 @@
 
 #include "game.h"
 
-struct splash_image_entity {
-    v3f Scale;
+struct Splash_Image_Entity {
+    v3f scale;
     v3f position;
-    c4f Colors;
+    c4f colors;
     
-    Image_ID TextureAabb;
+    Image_ID texture_aabb;
     
-    f32 CountdownTimer;
-    f32 CountdownDuration;
+    f32 cd_timer;
+    f32 cd_duration;
     
-    f32 Timer;
+    f32 timer;
     f32 duration;
-    f32 StartX;
-    f32 EndX;
+    f32 start_x;
+    f32 end_x;
+    
+    void update(f32 dt);
 };
 
-static inline void
-UpdateSplashImageEntity(splash_image_entity* Entity, 
-                        f32 DeltaTime) 
+void
+Splash_Image_Entity::update(f32 dt) 
 {
-    Entity->CountdownTimer += DeltaTime;
-    if (Entity->CountdownTimer <= Entity->CountdownDuration) 
+    this->cd_timer += dt;
+    if (this->cd_timer <= this->cd_duration) 
         return;
     
     // NOTE(Momo): Update
-    f32 Ease = ease_out_bounce(CLAMP(Entity->Timer/Entity->duration, 0.f, 1.f));
+    f32 Ease = ease_out_bounce(CLAMP(this->timer/this->duration, 0.f, 1.f));
     
-    Entity->position.x = Entity->StartX + (Entity->EndX - Entity->StartX) * Ease; 
-    Entity->Timer += DeltaTime;
+    this->position.x = this->start_x + (this->end_x - this->start_x) * Ease; 
+    this->timer += dt;
     
     // NOTE(Momo): Render
-    m44f T = m44f::create_translation(Entity->position.x,
-                                      Entity->position.y,
-                                      Entity->position.z);
-    m44f S = m44f::create_scale(Entity->Scale.x,
-                                Entity->Scale.y,
+    m44f T = m44f::create_translation(this->position.x,
+                                      this->position.y,
+                                      this->position.z);
+    m44f S = m44f::create_scale(this->scale.x,
+                                this->scale.y,
                                 1.f);
-    draw_textured_quad_from_image(Entity->TextureAabb,
+    draw_textured_quad_from_image(this->texture_aabb,
                                   T*S,
-                                  Entity->Colors);
+                                  this->colors);
     
     
 }
 
-struct splash_blackout_entity {
-    v3f Scale;
+struct Splash_Blackout_Entity {
+    v3f scale;
     v3f position;
-    c4f Colors;
+    c4f colors;
     
-    f32 CountdownTimer;
-    f32 CountdownDuration;
+    f32 cd_timer;
+    f32 cd_duration;
     
-    f32 Timer;
+    f32 timer;
     f32 duration;
+    
+    void update(f32 dt);
 };
 
-static inline void
-UpdateSplashBlackout(splash_blackout_entity* Entity, 
-                     f32 DeltaTime) 
+void
+Splash_Blackout_Entity::update(f32 dt) 
 {
-    Entity->CountdownTimer += DeltaTime;
-    if (Entity->CountdownTimer <= Entity->CountdownDuration) 
+    this->cd_timer += dt;
+    if (this->cd_timer <= this->cd_duration) 
         return;
     
-    Entity->Colors.a = ease_in_sine(CLAMP(Entity->Timer/Entity->duration, 0.f, 1.f));
-    Entity->Timer += DeltaTime;
+    this->colors.a = ease_in_sine(CLAMP(this->timer/this->duration, 0.f, 1.f));
+    this->timer += dt;
     
     // NOTE(Momo): Render
-    m44f T = m44f::create_translation(Entity->position.x,
-                                      Entity->position.y,
-                                      Entity->position.z);
-    m44f S = m44f::create_scale(Entity->Scale.x, Entity->Scale.y, 1.f);
+    m44f T = m44f::create_translation(this->position.x,
+                                      this->position.y,
+                                      this->position.z);
+    m44f S = m44f::create_scale(this->scale.x, this->scale.y, 1.f);
     
-    Renderer_DrawQuad(G_Renderer, Entity->Colors, T*S);
+    Renderer_DrawQuad(G_Renderer, this->colors, T*S);
     
 }
 
-struct game_mode_splash {
-    splash_image_entity SplashImg[2];
-    splash_blackout_entity SplashBlackout;
+struct Game_Mode_Splash {
+    Splash_Image_Entity images[2];
+    Splash_Blackout_Entity blackout;
 };
 
 
 static inline void
-SplashMode_Init(permanent_state* PermState) {
-    game_mode_splash* Mode = PermState->SplashMode;
-    G_Platform->ShowCursorFp();
+init_splash_mode(Permanent_State* perm_state) {
+    Game_Mode_Splash* mode = perm_state->splash_mode;
+    G_Platform->show_cursor();
     
     // NOTE(Momo): Create entities
     {
-        Mode->SplashImg[0].position = v3f::create( 0.f, 0.f, 0.f );
-        Mode->SplashImg[0].Scale = v3f::create(400.f, 400.f, 1.f);
-        Mode->SplashImg[0].Colors = c4f::create(1.f, 1.f, 1.f, 1.f);
-        Mode->SplashImg[0].TextureAabb = IMAGE_RYOJI;
-        Mode->SplashImg[0].CountdownTimer = 0.f;
-        Mode->SplashImg[0].CountdownDuration = 1.f;
-        Mode->SplashImg[0].Timer = 0.f;
-        Mode->SplashImg[0].duration = 2.f;
-        Mode->SplashImg[0].StartX = -1000.f;
-        Mode->SplashImg[0].EndX = -200.f;
+        mode->images[0].position = v3f::create( 0.f, 0.f, 0.f );
+        mode->images[0].scale = v3f::create(400.f, 400.f, 1.f);
+        mode->images[0].colors = c4f::create(1.f, 1.f, 1.f, 1.f);
+        mode->images[0].texture_aabb = IMAGE_RYOJI;
+        mode->images[0].cd_timer = 0.f;
+        mode->images[0].cd_duration = 1.f;
+        mode->images[0].timer = 0.f;
+        mode->images[0].duration = 2.f;
+        mode->images[0].start_x = -1000.f;
+        mode->images[0].end_x = -200.f;
         
-        Mode->SplashImg[1].position = {};
-        Mode->SplashImg[1].Scale = v3f::create(400.f, 400.f, 1.f);
-        Mode->SplashImg[1].Colors = c4f::create(1.f, 1.f, 1.f, 1.f);
-        Mode->SplashImg[1].TextureAabb = IMAGE_YUU;
-        Mode->SplashImg[1].CountdownTimer = 0.f;
-        Mode->SplashImg[1].CountdownDuration = 1.f;
-        Mode->SplashImg[1].Timer = 0.f;
-        Mode->SplashImg[1].duration = 2.f;
-        Mode->SplashImg[1].StartX = 1000.f;
-        Mode->SplashImg[1].EndX = 200.f;
+        mode->images[1].position = {};
+        mode->images[1].scale = v3f::create(400.f, 400.f, 1.f);
+        mode->images[1].colors = c4f::create(1.f, 1.f, 1.f, 1.f);
+        mode->images[1].texture_aabb = IMAGE_YUU;
+        mode->images[1].cd_timer = 0.f;
+        mode->images[1].cd_duration = 1.f;
+        mode->images[1].timer = 0.f;
+        mode->images[1].duration = 2.f;
+        mode->images[1].start_x = 1000.f;
+        mode->images[1].end_x = 200.f;
         
-        Mode->SplashBlackout.position = v3f::create(0.f, 0.f, 1.0f);
-        Mode->SplashBlackout.Scale = v3f::create(1600.f, 900.f, 1.f);
-        Mode->SplashBlackout.Colors = c4f::create(0.f, 0.f, 0.f, 0.0f);
-        Mode->SplashBlackout.CountdownTimer = 0.f;
-        Mode->SplashBlackout.CountdownDuration = 3.f;
-        Mode->SplashBlackout.Timer = 0.f;
-        Mode->SplashBlackout.duration = 1.f;
+        mode->blackout.position = v3f::create(0.f, 0.f, 1.0f);
+        mode->blackout.scale = v3f::create(1600.f, 900.f, 1.f);
+        mode->blackout.colors = c4f::create(0.f, 0.f, 0.f, 0.0f);
+        mode->blackout.cd_timer = 0.f;
+        mode->blackout.cd_duration = 3.f;
+        mode->blackout.timer = 0.f;
+        mode->blackout.duration = 1.f;
         
     }
 }
 
 static inline void
-SplashMode_Update(permanent_state* PermState,
-                  transient_state* TranState,
-                  f32 DeltaTime)
+update_splash_mode(Permanent_State* perm_state,
+                   Transient_State* tran_state,
+                   f32 dt)
 {
-    game_mode_splash* Mode = PermState->SplashMode;
+    Game_Mode_Splash* mode = perm_state->splash_mode;
     
     // NOTE: Camera
     {
         v3f position = v3f::create(0.f, 0.f, 0.f);
-        v3f Anchor = v3f::create(0.5f, 0.5f, 0.5f);
-        c4f Color = c4f::create(0.f, 0.3f, 0.3f, 1.f);
-        v3f Dimensions = v3f::create(800.f,
+        v3f anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        c4f color = c4f::create(0.f, 0.3f, 0.3f, 1.f);
+        v3f dimensions = v3f::create(800.f,
                                      800.f,
                                      800.f);
         
-        Renderer_ClearColor(G_Renderer, Color);
+        Renderer_ClearColor(G_Renderer, color);
         
-        aabb3f Frustum = aabb3f::create_centered(Dimensions, Anchor);
+        aabb3f frustum = aabb3f::create_centered(dimensions, anchor);
         Renderer_SetOrthoCamera(G_Renderer, 
                                 position, 
-                                Frustum);
+                                frustum);
     }
     
-    for (u32 I = 0; I < ARRAY_COUNT(Mode->SplashImg); ++I) {
-        UpdateSplashImageEntity(Mode->SplashImg + I, 
-                                DeltaTime);
+    for (u32 i = 0; i < ARRAY_COUNT(mode->images); ++i) {
+        mode->images[i].update(dt);
     }
     
-    UpdateSplashBlackout(&Mode->SplashBlackout,
-                         DeltaTime);
+    mode->blackout.update(dt);
     
     // NOTE(Momo): Exit 
-    if (Mode->SplashBlackout.Timer >= Mode->SplashBlackout.duration) {
-        PermState->NextGameMode = GameModeType_Main;
+    if (mode->blackout.timer >= mode->blackout.duration) {
+        perm_state->next_game_mode = GAME_MODE_MAIN;
     }
     
 }

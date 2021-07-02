@@ -3,54 +3,53 @@
 #ifndef GAME_MODE_H
 #define GAME_MODE_H
 
-enum game_mode_type {
-    GameModeType_Splash,
-    GameModeType_Main,
-    GameModeType_Menu,
-    GameModeType_Sandbox,
-    GameModeType_AnimeTest,
-    GameModeType_None
+enum Game_Mode_Type {
+    GAME_MODE_SPLASH,
+    GAME_MODE_MAIN,
+    GAME_MODE_SANDBOX,
+    GAME_MODE_ANIME_TEST,
+    GAME_MODE_NONE
 };
 
 // Stuff in this state can be zero initialized with no problems
 // I.e. This state contains stuff that does not need to exist past a frame
-struct transient_state {
-    b8 IsInitialized;
+struct Transient_State {
+    b8 is_initialized;
     
     Arena arena;
     Assets assets; 
-    Game_Audio_Mixer Mixer;
+    Game_Audio_Mixer mixer;
 };
 
-struct permanent_state {
-    b8 IsInitialized;
-    b8 IsPaused;
-    f32 GameSpeed;
-    Game_Camera Camera;
+struct Permanent_State {
+    b8 is_initialized;
+    b8 is_paused;
+    f32 game_speed;
+    Game_Camera camera;
     
-    game_mode_type CurrentGameMode;
-    game_mode_type NextGameMode;
+    Game_Mode_Type current_game_mode;
+    Game_Mode_Type next_game_mode;
     union {
-        struct game_mode_splash* SplashMode;
-        struct game_mode_main* MainMode;
-        struct game_mode_sandbox* SandboxMode;
-        struct Game_Mode_Anime_Test* AnimeTestMode;
+        struct Game_Mode_Splash* splash_mode;
+        struct Game_Mode_Main* main_mode;
+        struct Game_Mode_Sandbox* sandbox_mode;
+        struct Game_Mode_Anime_Test* anime_test_mode;
     };
     
     Arena arena;
-    Arena_Mark ModeArena;
+    Arena_Mark mode_arena;
     
 };
 
-struct debug_state {
-    b8 IsInitialized;
+struct Debug_State {
+    b8 is_initialized;
     Arena arena;
     
     Debug_Inspector inspector;
     Debug_Console console;
     
-    struct permanent_state* PermanentState;
-    struct transient_state* TransientState;
+    struct Permanent_State* perm_state;
+    struct Transient_State* tran_state;
 };
 
 // NOTE(Momo): Things that require states' definitions

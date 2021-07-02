@@ -187,40 +187,40 @@ check_asset_signature(void* memory, String signature) {
 }
 
 
-// TODO: extract this to platform_file_handle or something other API?
+// TODO: extract this to Platform_File_Handle or something other API?
 static inline void*
-read_block(platform_file_handle* File,
+read_block(Platform_File_Handle* file,
            Arena* arena,
-           u32* FileOffset,
-           u32 BlockSize,
-           u8 BlockAlignment)
+           u32* file_offset,
+           u32 block_size,
+           u8 block_alignment)
 {
-    void* Ret = arena->push_block(BlockSize, BlockAlignment);
-    if(!Ret) {
+    void* ret = arena->push_block(block_size, block_alignment);
+    if(!ret) {
         return nullptr; 
     }
-    G_Platform->ReadFileFp(File,
-                           (*FileOffset),
-                           BlockSize,
-                           Ret);
-    (*FileOffset) += BlockSize;
-    if (File->Error) {
-        G_Platform->LogFileErrorFp(File);
+    G_Platform->read_file(file,
+                          (*file_offset),
+                          block_size,
+                          ret);
+    (*file_offset) += block_size;
+    if (file->error) {
+        G_Platform->log_file_error(file);
         return nullptr;
     }
-    return Ret;
+    return ret;
 }
 
 template<typename T>
 static inline T*
-read_struct(platform_file_handle* file, Arena* arena, u32* file_offset) {
+read_struct(Platform_File_Handle* file, Arena* arena, u32* file_offset) {
     return (T*)read_block(file, arena, file_offset, sizeof(T), alignof(T));
 }
 
 b8
 Assets::init(Arena* arena) 
 {
-    G_Platform->ClearTexturesFp();
+    G_Platform->clear_textures();
     
     this->texture_count = TEXTURE_COUNT;
     this->textures = arena->push_array<Texture>(TEXTURE_COUNT);
@@ -240,12 +240,12 @@ Assets::init(Arena* arena)
     this->sound_count = SOUND_COUNT;
     this->sounds = arena->push_array<Sound>(SOUND_COUNT);
     
-    platform_file_handle asset_file = G_Platform->OpenAssetFileFp();
-    if (asset_file.Error) {
-        G_Platform->LogFileErrorFp(&asset_file);
+    Platform_File_Handle asset_file = G_Platform->open_asset_file();
+    if (asset_file.error) {
+        G_Platform->log_file_error(&asset_file);
         return false;
     }
-    defer { G_Platform->CloseFileFp(&asset_file); }; 
+    defer { G_Platform->close_file(&asset_file); }; 
     
     u32 cur_file_offset = 0;
     u32 file_entry_count = 0;
@@ -331,9 +331,9 @@ Assets::init(Arena* arena)
                     G_Log("[Assets] Error getting texture pixels\n");
                     return false;
                 }
-                texture->handle = G_Platform->AddTextureFp(file_texture->width, 
-                                                           file_texture->height,
-                                                           texture->data);
+                texture->handle = G_Platform->add_texture(file_texture->width, 
+                                                          file_texture->height,
+                                                          texture->data);
                 if (!texture->handle.Success) {
                     G_Log("[Assets] Cannot add assets!");
                     return false;

@@ -1,7 +1,7 @@
 
 static inline void
-Main_UpdateWaves(game_mode_main* mode,
-                 f32 dt) 
+update_wave(Game_Mode_Main* mode,
+            f32 dt) 
 {
     if (mode->wave.is_done) {
         // TODO: Random wave type

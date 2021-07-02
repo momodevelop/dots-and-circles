@@ -32,7 +32,7 @@ struct Game_Audio_Mixer {
     b8 init(f32 master_volume, u32 max_instances, Arena* arena);
     Game_Audio_Mixer_Handle play(Sound_ID sound_id, b8 loop);
     b8 stop(Game_Audio_Mixer_Handle handle);
-    void update(platform_audio* audio);
+    void update(Platform_Audio* audio);
 };
 
 b8
@@ -118,12 +118,12 @@ Game_Audio_Mixer::stop(Game_Audio_Mixer_Handle handle)
 
 
 void
-Game_Audio_Mixer::update(platform_audio* audio) 
+Game_Audio_Mixer::update(Platform_Audio* audio) 
 {
-    s16* sample_out = audio->SampleBuffer;
-    for(u32 I = 0; I < audio->SampleCount; ++I) {
+    s16* sample_out = audio->sample_buffer;
+    for(u32 I = 0; I < audio->sample_count; ++I) {
         
-        for (u32 J = 0; J < audio->Channels; ++J) {
+        for (u32 J = 0; J < audio->channels; ++J) {
             sample_out[J] = 0;
         }
         
@@ -134,7 +134,7 @@ Game_Audio_Mixer::update(platform_audio* audio)
             }
             Sound* sound = G_Assets->get_sound(instance->sound_id);
             
-            for (u32 K = 0; K < audio->Channels; ++K) {
+            for (u32 K = 0; K < audio->channels; ++K) {
                 sample_out[K] += s16(sound->data[instance->current_offset++] * 
                                      this->volume);
             }
@@ -151,7 +151,7 @@ Game_Audio_Mixer::update(platform_audio* audio)
             
             
         }
-        sample_out += audio->Channels;
+        sample_out += audio->channels;
         
     }
 }

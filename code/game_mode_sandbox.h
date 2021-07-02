@@ -1,111 +1,111 @@
-#ifndef GAME_MODE_SANDBOX
-#define GAME_MODE_SANDBOX
+#ifndef _GAME_MODE_SANDBOX_
+#define _GAME_MODE_SANDBOX_
 
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
-struct game_mode_sandbox_bullet {
+struct Game_Mode_Sandbox_Bullet {
     v2f position;
     circle2f hit_circle;
-    b8 IsHit;
-    v2f Velocity;
+    b8 is_hit;
+    v2f velocity;
 };
-struct game_mode_sandbox {
-    game_mode_sandbox_bullet Bullets[2500];
-    Game_Camera Camera;
+struct Game_Mode_Sandbox {
+    Game_Mode_Sandbox_Bullet bullets[2500];
+    Game_Camera camera;
     
-    v2f PrevMousePos;
-    v2f CurMousePos; 
-    u32 ClickCount;
+    v2f prev_mouse_pos;
+    v2f cur_mouse_pos; 
+    u32 click_count;
     
-    f32 PlayerCircleRadius;
+    f32 player_circle_radius;
 };
 
 static inline void 
-SandboxMode_Init(permanent_state* PermState) {
-    G_Platform->HideCursorFp();
+init_sandbox_mode(Permanent_State* perm_state) {
+    G_Platform->hide_cursor();
     
-    game_mode_sandbox* Mode = PermState->SandboxMode;     
+    Game_Mode_Sandbox* mode = perm_state->sandbox_mode;     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.position = v3f::create(0.f, 0.f, 0.f);
-        Mode->Camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.color = C4F_GREY2;
-        Mode->Camera.dimensions = v3f::create(Game_DesignWidth,
+        mode->camera.position = v3f::create(0.f, 0.f, 0.f);
+        mode->camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        mode->camera.color = C4F_GREY2;
+        mode->camera.dimensions = v3f::create(Game_DesignWidth,
                                               Game_DesignHeight,
                                               Game_DesignDepth);
     }
     
     
-    const f32 BulletRadius = 8.f;
-    f32 StartX = Game_DesignWidth * -0.5f + BulletRadius;
-    f32 StartY = Game_DesignHeight * -0.5f + BulletRadius;
-    f32 OffsetX = 0.f;
-    f32 OffsetY = 0.f;
-    for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
-        game_mode_sandbox_bullet* B = Mode->Bullets + I;
-        B->position = v2f::create(StartX + OffsetX, StartY + OffsetY);
-        B->hit_circle = circle2f::create({}, BulletRadius);
+    const f32 bullet_radius = 8.f;
+    f32 start_x = Game_DesignWidth * -0.5f + bullet_radius;
+    f32 start_y = Game_DesignHeight * -0.5f + bullet_radius;
+    f32 offset_x = 0.f;
+    f32 offset_y = 0.f;
+    for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
+        Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
+        b->position = v2f::create(start_x + offset_x, start_y + offset_y);
+        b->hit_circle = circle2f::create({}, bullet_radius);
         
-        OffsetX += BulletRadius * 2; // padding
-        if(OffsetX >= Game_DesignWidth) {
-            OffsetX = 0.f;
-            OffsetY += BulletRadius * 2;
+        offset_x += bullet_radius * 2; // padding
+        if(offset_x >= Game_DesignWidth) {
+            offset_x = 0.f;
+            offset_y += bullet_radius * 2;
         }
-        B->Velocity = v2f::create(0.f, 0.f);
+        b->velocity = v2f::create(0.f, 0.f);
     }
     
-    Mode->ClickCount = 0;
-    Mode->PlayerCircleRadius = 16.f;
+    mode->click_count = 0;
+    mode->player_circle_radius = 16.f;
     
 }
 
 
 static inline void
-SandboxMode_Update(permanent_state* PermState, 
-                   transient_state* TranState,
-                   f32 DeltaTime) 
+update_sandbox_mode(Permanent_State* perm_state, 
+                    Transient_State* tran_state,
+                    f32 dt) 
 {
-    game_mode_sandbox* Mode = PermState->SandboxMode;     
+    Game_Mode_Sandbox* mode = perm_state->sandbox_mode;     
     
     // NOTE(Momo): Update
     if (G_Input->button_switch.is_poked()) {
-        Mode->PrevMousePos = Mode->CurMousePos;
-        Mode->CurMousePos = Mode->Camera.screen_to_world(G_Input->design_mouse_pos);
-        ++Mode->ClickCount;
+        mode->prev_mouse_pos = mode->cur_mouse_pos;
+        mode->cur_mouse_pos = mode->camera.screen_to_world(G_Input->design_mouse_pos);
+        ++mode->click_count;
     }
     
-    // NOTE(Momo): Update Bullets
-    for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
-        game_mode_sandbox_bullet* B = Mode->Bullets + I;
-        if (B->IsHit) {
+    // NOTE(Momo): Update bullets
+    for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
+        Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
+        if (b->is_hit) {
             continue;
         }
         
-        B->position += B->Velocity * DeltaTime;
+        b->position += b->velocity * dt;
         
     }
     
     
     // NOTE(Momo): Line to circle collision
-    line2f BonkLine = line2f::create(Mode->PrevMousePos, Mode->CurMousePos);
-    if (Mode->ClickCount >= 2) {
-        if (!is_equal(Mode->PrevMousePos, Mode->CurMousePos)) {
+    line2f bonk_line = line2f::create(mode->prev_mouse_pos, mode->cur_mouse_pos);
+    if (mode->click_count >= 2) {
+        if (!is_equal(mode->prev_mouse_pos, mode->cur_mouse_pos)) {
             
-            for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
-                game_mode_sandbox_bullet* B = Mode->Bullets + I;
-                if (B->IsHit) {
+            for (u32 i = 0; i < ARRAY_COUNT(mode->bullets); ++i) {
+                Game_Mode_Sandbox_Bullet* b = mode->bullets + i;
+                if (b->is_hit) {
                     continue;
                 }
-                circle2f C = B->hit_circle;
-                C.origin = B->position;
+                circle2f c = b->hit_circle;
+                c.origin = b->position;
                 
-                circle2f PC = circle2f::create(Mode->PrevMousePos,
-                                               Mode->PlayerCircleRadius);
-                v2f PCVel = Mode->CurMousePos - Mode->PrevMousePos;
-                v2f TimedVelocity = B->Velocity * DeltaTime;
+                circle2f pc = circle2f::create(mode->prev_mouse_pos,
+                                               mode->player_circle_radius);
+                v2f pc_vel = mode->cur_mouse_pos - mode->prev_mouse_pos;
+                v2f timed_velocity = b->velocity * dt;
                 
-                if (Bonk2_IsDynaCircleXDynaCircle(PC, PCVel, C, TimedVelocity)) {
-                    B->IsHit = true;
+                if (Bonk2_IsDynaCircleXDynaCircle(pc, pc_vel, c, timed_velocity)) {
+                    b->is_hit = true;
                 }
                 
             }
@@ -113,19 +113,19 @@ SandboxMode_Update(permanent_state* PermState,
     }
     
     // NOTE(Momo): Render
-    Mode->Camera.set();
+    mode->camera.set();
     
-    // NOTE(Momo): Render Bullets
-    f32 ZOrder = 0.f;
-    for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
-        game_mode_sandbox_bullet* B = Mode->Bullets + I;
-        if (B->IsHit) {
+    // NOTE(Momo): Render bullets
+    f32 z_order = 0.f;
+    for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
+        Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
+        if (b->is_hit) {
             continue;
         }
-        m44f S = m44f::create_scale(B->hit_circle.radius*2, B->hit_circle.radius*2, 1.f);
-        m44f T = m44f::create_translation(B->position.x,
-                                          B->position.y,
-                                          ZOrder += 0.001f);
+        m44f S = m44f::create_scale(b->hit_circle.radius*2, b->hit_circle.radius*2, 1.f);
+        m44f T = m44f::create_translation(b->position.x,
+                                          b->position.y,
+                                          z_order += 0.001f);
         
         draw_textured_quad_from_image(IMAGE_BULLET_DOT,
                                       T*S, 
@@ -133,32 +133,32 @@ SandboxMode_Update(permanent_state* PermState,
     }
     
     // NOTE(Momo) Render Lines
-    if (Mode->ClickCount >= 2) {
-        ZOrder = 10.f;
+    if (mode->click_count >= 2) {
+        z_order = 10.f;
         Renderer_DrawLine2f(G_Renderer, 
-                            BonkLine,
-                            Mode->PlayerCircleRadius * 2,
+                            bonk_line,
+                            mode->player_circle_radius * 2,
                             C4F_GREEN,
-                            ZOrder);
+                            z_order);
         
-        circle2f StartCircle = circle2f::create(BonkLine.min, 
-                                                Mode->PlayerCircleRadius);
+        circle2f start_circle = circle2f::create(bonk_line.min, 
+                                                 mode->player_circle_radius);
         Renderer_DrawCircle2f(G_Renderer,
-                              StartCircle,
+                              start_circle,
                               1.f, 
                               8, 
                               C4F_GREEN, 
-                              ZOrder);
+                              z_order);
         
         
-        circle2f EndCircle = circle2f::create(BonkLine.max, 
-                                              Mode->PlayerCircleRadius);
+        circle2f end_circle = circle2f::create(bonk_line.max, 
+                                               mode->player_circle_radius);
         Renderer_DrawCircle2f(G_Renderer,
-                              EndCircle,
+                              end_circle,
                               1.f, 
                               8, 
                               C4F_GREEN, 
-                              ZOrder);
+                              z_order);
     }
     
 }

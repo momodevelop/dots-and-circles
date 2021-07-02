@@ -4,7 +4,7 @@
 #define GAME_MODE_MAIN_DEBUG_H
 
 static inline void 
-Main_RenderDebugLines(game_mode_main* mode){
+Main_RenderDebugLines(Game_Mode_Main* mode){
     circle2f circle = {};
     circle.origin = mode->player.position;
     circle.radius = mode->player.hit_circle.radius;

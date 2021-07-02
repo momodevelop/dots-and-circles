@@ -49,7 +49,7 @@ Tba_WriteTexture(tba_context* Context,
                  Texture_ID Id, 
                  u32 Width, 
                  u32 Height, 
-                 u32 Channels, 
+                 u32 channels, 
                  u8* Pixels) 
 {
     Tba_WriteEntry(Context, ASSET_TYPE_TEXTURE);
@@ -58,11 +58,11 @@ Tba_WriteTexture(tba_context* Context,
     Texture.Id = Id;
     Texture.Width = Width;
     Texture.Height = Height;
-    Texture.Channels = Channels;
+    Texture.channels = channels;
     fwrite(&Texture, sizeof(Texture), 1, Context->File);
     
     
-    u32 TextureSize = Width * Height * Channels;
+    u32 TextureSize = Width * Height * channels;
     for(u32 i = 0; i < TextureSize; ++i) {
         fwrite(Pixels + i, 1, 1, Context->File);
     }
@@ -74,7 +74,7 @@ Tba_WriteTextureFromFile(tba_context* Context,
                          Texture_ID Id, 
                          const char* Filename) 
 {
-    u32 Width = 0, Height = 0, Channels = 0;
+    u32 Width = 0, Height = 0, channels = 0;
     u8* LoadedImage = nullptr;
     {
         s32 W, H, C;
@@ -83,10 +83,10 @@ Tba_WriteTextureFromFile(tba_context* Context,
         
         Width = (u32)W;
         Height = (u32)H; 
-        Channels = (u32)C;
+        channels = (u32)C;
     }
     defer { stbi_image_free(LoadedImage); };
-    Tba_WriteTexture(Context, Id, Width, Height, Channels, LoadedImage);
+    Tba_WriteTexture(Context, Id, Width, Height, channels, LoadedImage);
 }
 
 

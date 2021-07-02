@@ -6,29 +6,29 @@
 
 // TODO: We could put this into Bullet update
 static inline void
-Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
-                                 f32 DeltaTime)
+update_player_bullet_collision(Game_Mode_Main* mode,
+                               f32 dt)
 {
-    Player* player = &Mode->player;
-    circle2f PlayerCircle = player->hit_circle;
-    v2f PlayerVel = player->position - player->prev_position;
-    PlayerCircle.origin += player->position;
+    Player* player = &mode->player;
+    circle2f player_circle = player->hit_circle;
+    v2f player_vel = player->position - player->prev_position;
+    player_circle.origin += player->position;
     
-    auto Lamb = [&](Bullet* B) {
-        circle2f BCircle = B->hit_circle;
-        v2f BVel = B->direction * B->speed * DeltaTime;
-        BCircle.origin += B->position;
+    auto lamb = [&](Bullet* b) {
+        circle2f b_circle = b->hit_circle;
+        v2f b_vel = b->direction * b->speed * dt;
+        b_circle.origin += b->position;
         
-        if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
-                                          PlayerVel,
-                                          BCircle,
-                                          BVel)) 
+        if (Bonk2_IsDynaCircleXDynaCircle(player_circle, 
+                                          player_vel,
+                                          b_circle,
+                                          b_vel)) 
         {
-            if (player->mood_type == B->mood_type) {
-                v2f VectorToBullet = normalize(B->position - player->position);
-                v2f SpawnPos = player->position + VectorToBullet * player->hit_circle.radius;
-                Main_SpawnParticle(Mode, SpawnPos, 5);
-                Mode->score += 50;
+            if (player->mood_type == b->mood_type) {
+                v2f vector_to_bullet = normalize(b->position - player->position);
+                v2f SpawnPos = player->position + vector_to_bullet * player->hit_circle.radius;
+                spawn_particles(mode, SpawnPos, 5);
+                mode->score += 50;
             }
             else {
                 player->is_dead = true;
@@ -38,8 +38,8 @@ Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
         
         return false;
     };
-    Mode->dot_bullets.foreach_slear_if(Lamb);
-    Mode->circle_bullets.foreach_slear_if(Lamb);
+    mode->dot_bullets.foreach_slear_if(lamb);
+    mode->circle_bullets.foreach_slear_if(lamb);
 }
 
 #endif //GAME_MODE_MAIN_COLLISION_H

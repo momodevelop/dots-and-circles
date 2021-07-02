@@ -19,7 +19,7 @@ Enemy_SetStateActive(Enemy* E) {
 }
 
 static inline void
-Enemy_Spawn(game_mode_main* mode,
+Enemy_Spawn(Game_Mode_Main* mode,
             v2f position,
             Enemy_Shoot_Type shoot_type, 
             Enemy_Movement_Type movement_type) 
@@ -50,7 +50,7 @@ Enemy_Spawn(game_mode_main* mode,
 }
 
 static inline void
-Enemy_DoStateActive(Enemy* enemy, Player* player, game_mode_main* mode, f32 dt) {
+Enemy_DoStateActive(Enemy* enemy, Player* player, Game_Mode_Main* mode, f32 dt) {
     Enemy_State_Active* active = &enemy->state_active;
     // Movement
     switch( enemy->movement_type ) {
@@ -73,7 +73,7 @@ Enemy_DoStateActive(Enemy* enemy, Player* player, game_mode_main* mode, f32 dt) 
             shoot->timer += dt;
             if (shoot->timer > shoot->duration) {
                 v2f direction = normalize(player->position - enemy->position);
-                Bullet_Spawn(mode, enemy->position, direction, 200.f, shoot->mood);
+                spawn_bullet(mode, enemy->position, direction, 200.f, shoot->mood);
                 shoot->timer = 0.f;
             }
         } break;
@@ -82,10 +82,10 @@ Enemy_DoStateActive(Enemy* enemy, Player* player, game_mode_main* mode, f32 dt) 
             shoot->timer += dt;
             static m22f rotate_mtx = m22f::create_rotation(TAU/8);
             if (shoot->timer > shoot->duration) {
-                v2f Dir = v2f::create(1.f, 0.f);
+                v2f dir = v2f::create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
-                    Dir = rotate_mtx * Dir;
-                    Bullet_Spawn(mode, enemy->position, Dir, 200.f, shoot->mood);
+                    dir = rotate_mtx * dir;
+                    spawn_bullet(mode, enemy->position, dir, 200.f, shoot->mood);
                 }
                 shoot->timer = 0.f;
             }
@@ -105,8 +105,8 @@ Enemy_DoStateActive(Enemy* enemy, Player* player, game_mode_main* mode, f32 dt) 
 
 
 static inline void 
-Main_UpdateEnemies(game_mode_main* mode,
-                   f32 dt) 
+update_enemies(Game_Mode_Main* mode,
+               f32 dt) 
 {
     Player* player = &mode->player;
     auto slear_lamb = [&](Enemy* enemy) {
@@ -138,7 +138,7 @@ Main_UpdateEnemies(game_mode_main* mode,
 }
 
 static inline void
-Main_RenderEnemies(game_mode_main* mode) 
+render_enemies(Game_Mode_Main* mode) 
 {
     u32 current_count = 0;
     

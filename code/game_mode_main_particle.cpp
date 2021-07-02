@@ -1,7 +1,7 @@
 static inline void
-Main_SpawnParticle(game_mode_main* mode, 
-                   v2f position,
-                   u32 amount) 
+spawn_particles(Game_Mode_Main* mode, 
+                v2f position,
+                u32 amount) 
 {
     for (u32 I = 0; I < amount; ++I) {
         Particle* p = mode->particles.push();
@@ -18,7 +18,7 @@ Main_SpawnParticle(game_mode_main* mode,
 }
 
 static inline void 
-Main_UpdateParticles(game_mode_main* mode, f32 dt) {
+update_particles(Game_Mode_Main* mode, f32 dt) {
     Queue<Particle>* q = &mode->particles;
     
     auto pop_lamb = [](Particle* p) {
@@ -36,7 +36,7 @@ Main_UpdateParticles(game_mode_main* mode, f32 dt) {
 
 
 static inline void
-Main_RenderParticles(game_mode_main* mode) {
+render_particles(Game_Mode_Main* mode) {
     Queue<Particle>* q = &mode->particles;
     u32 current_count = 0;
     auto ForEachLamb = [&](Particle* p) {

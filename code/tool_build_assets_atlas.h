@@ -100,7 +100,7 @@ Tba_GenerateAtlas(Arena* arena,
             } break;
             case AtlasContextType_Font: {
                 auto* Context = (atlas_context_font*)UserDatas[I]; 
-                const u32 Channels = 4;
+                const u32 channels = 4;
                 
                 s32 W, H;
                 u8* FontTextureOneCh = stbtt_GetCodepointTexture(&Context->LoadedFont->Info, 
@@ -115,7 +115,7 @@ Tba_GenerateAtlas(Arena* arena,
                     continue;
                 
                 Arena_Mark Scratch = arena->mark();
-                u8* FontTexture = (u8*)arena->push_block(TextureDimensions*Channels); 
+                u8* FontTexture = (u8*)arena->push_block(TextureDimensions*channels); 
                 if (!FontTexture) {
                     return nullptr;
                 }
@@ -123,7 +123,7 @@ Tba_GenerateAtlas(Arena* arena,
                 
                 u8* FontTextureItr = FontTexture;
                 for (u32 j = 0, k = 0; j < TextureDimensions; ++j ){
-                    for (u32 l = 0; l < Channels; ++l ) {
+                    for (u32 l = 0; l < channels; ++l ) {
                         FontTextureItr[k++] = FontTextureOneCh[j];
                     }
                 }

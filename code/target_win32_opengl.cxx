@@ -78,7 +78,7 @@ struct win32_handle_pool {
 };
 
 struct win32_game_memory {
-    game_memory Head;
+    Game_Memory Head;
     
     void* Data;
     u32 DataSize;
@@ -185,7 +185,7 @@ Win32_WriteConsole(const char* Message) {
 #endif
 
 static inline
-PlatformLogDecl(Win32_Log) {
+PLATFORM_LOG_DECL(Win32_Log) {
     char Buffer[256];
     
     va_list VaList;
@@ -904,7 +904,7 @@ struct win32_audio {
     u32 LatencySampleCount;
     u32 SamplesPerSecond;
     u16 BitsPerSample;
-    u16 Channels;
+    u16 channels;
     
 };
 
@@ -921,11 +921,11 @@ static inline b8
 Win32_AudioInit(win32_audio* Audio,
                 u32 SamplesPerSecond, 
                 u16 BitsPerSample,
-                u16 Channels,
+                u16 channels,
                 u32 LatencyFrames,
                 u32 RefreshRate)
 {
-    Audio->Channels = Channels;
+    Audio->channels = channels;
     Audio->BitsPerSample = BitsPerSample;
     Audio->SamplesPerSecond = SamplesPerSecond;
     Audio->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
@@ -972,7 +972,7 @@ Win32_AudioInit(win32_audio* Audio,
     WAVEFORMATEX WaveFormat = {};
     WaveFormat.wFormatTag = WAVE_FORMAT_PCM;
     WaveFormat.wBitsPerSample = BitsPerSample;
-    WaveFormat.nChannels = Channels;
+    WaveFormat.nChannels = channels;
     WaveFormat.nSamplesPerSec = SamplesPerSecond;
     WaveFormat.nBlockAlign = (WaveFormat.nChannels * WaveFormat.wBitsPerSample / 8);
     WaveFormat.nAvgBytesPerSec = WaveFormat.nSamplesPerSec * WaveFormat.nBlockAlign;
@@ -1037,9 +1037,9 @@ Win32_AudioInit(win32_audio* Audio,
     return true;
 }
 
-static inline platform_audio
+static inline Platform_Audio
 Win32_AudioPrepare(win32_audio* Audio) {
-    platform_audio Ret = {};
+    Platform_Audio Ret = {};
     
     UINT32 SoundPaddingSize;
     UINT32 SamplesToWrite = 0;
@@ -1056,34 +1056,34 @@ Win32_AudioPrepare(win32_audio* Audio) {
         }
     }
     
-    Ret.SampleBuffer = Audio->Buffer;
-    Ret.SampleCount = SamplesToWrite; 
-    Ret.Channels = Audio->Channels;
+    Ret.sample_buffer = Audio->Buffer;
+    Ret.sample_count = SamplesToWrite; 
+    Ret.channels = Audio->channels;
     
     return Ret;
 }
 
 static inline void
 Win32_AudioFlush(win32_audio* Audio, 
-                 platform_audio Output) 
+                 Platform_Audio Output) 
 {
     // NOTE(Momo): Kinda assumes 16-bit Sound
     BYTE* SoundBufferData;
-    if (SUCCEEDED(Audio->RenderClient->GetBuffer((UINT32)Output.SampleCount, &SoundBufferData))) 
+    if (SUCCEEDED(Audio->RenderClient->GetBuffer((UINT32)Output.sample_count, &SoundBufferData))) 
     {
-        s16* SrcSample = Output.SampleBuffer;
+        s16* SrcSample = Output.sample_buffer;
         s16* DestSample = (s16*)SoundBufferData;
         // Buffer structure for stereo:
         // s16   s16    s16  s16   s16  s16
         // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
-        for(u32 I = 0; I < Output.SampleCount; ++I ){
-            for (u32 J = 0; J < Audio->Channels; ++J) {
+        for(u32 I = 0; I < Output.sample_count; ++I ){
+            for (u32 J = 0; J < Audio->channels; ++J) {
                 *DestSample++ = *SrcSample++;
             }
             
         }
         
-        Audio->RenderClient->ReleaseBuffer((UINT32)Output.SampleCount, 0);
+        Audio->RenderClient->ReleaseBuffer((UINT32)Output.sample_count, 0);
     }
 }
 
@@ -1350,18 +1350,18 @@ enum platform_file_error {
 };
 
 static inline
-PlatformGetPerformanceCounterDecl(Win32_GetPerformanceCounterU64) {
+PLATFORM_GET_PERFORMANCE_COUNTER_DECL(Win32_GetPerformanceCounterU64) {
     return (u64)Win32_GetPerformanceCounter().QuadPart;
 }
 
 static inline 
-PlatformOpenAssetFileDecl(Win32_OpenAssetFile) {
-    platform_file_handle Ret = {}; 
+PLATFORM_OPEN_ASSET_FILE_DECL(Win32_OpenAssetFile) {
+    Platform_File_Handle Ret = {}; 
     const char* Path = Game_AssetFileName;
     
     // Check if there are free handlers to go around
     if (G_State->HandleFreeCount == 0) {
-        Ret.Error = PlatformFileError_NotEnoughHandlers;
+        Ret.error = PlatformFileError_NotEnoughHandlers;
         return Ret;
     }    
     
@@ -1376,21 +1376,21 @@ PlatformOpenAssetFileDecl(Win32_OpenAssetFile) {
     
     if(Win32_Handle == INVALID_HANDLE_VALUE) {
         Win32_Log("[Win32::OpenAssetFile] Cannot open file: %s\n", Path);
-        Ret.Error = PlatformFileError_CannotOpenFile;
+        Ret.error = PlatformFileError_CannotOpenFile;
         return Ret;
     } 
     
     u32 FreeSlotIndex = G_State->HandleFreeList[G_State->HandleFreeCount-1];
     G_State->Handles[FreeSlotIndex] = Win32_Handle;
     --G_State->HandleFreeCount;
-    Ret.Id = FreeSlotIndex;
+    Ret.id = FreeSlotIndex;
     
     return Ret; 
 }
 
 static inline 
-PlatformLogFileErrorDecl(Win32_LogFileError) {
-    switch(Handle->Error) {
+PLATFORM_LOG_FILE_ERROR_DECL(Win32_LogFileError) {
+    switch(Handle->error) {
         case PlatformFileError_None: {
             Win32_Log("[Win32::File] There is no file error\n");
         } break;
@@ -1413,33 +1413,33 @@ PlatformLogFileErrorDecl(Win32_LogFileError) {
 }
 
 static inline
-PlatformCloseFileDecl(Win32_CloseFile) {
-    ASSERT(Handle->Id < ARRAY_COUNT(G_State->Handles));
-    HANDLE Win32_Handle = G_State->Handles[Handle->Id];
+PLATFORM_CLOSE_FILE_DECL(Win32_CloseFile) {
+    ASSERT(Handle->id < ARRAY_COUNT(G_State->Handles));
+    HANDLE Win32_Handle = G_State->Handles[Handle->id];
     if (Win32_Handle != INVALID_HANDLE_VALUE) {
         CloseHandle(Win32_Handle); 
     }
-    G_State->HandleFreeList[G_State->HandleFreeCount++] = Handle->Id;
+    G_State->HandleFreeList[G_State->HandleFreeCount++] = Handle->id;
     ASSERT(G_State->HandleFreeCount <= ARRAY_COUNT(G_State->Handles));
 }
 static inline
-PlatformAddTextureDecl(Win32_AddTexture) {
+PLATFORM_ADD_TEXTURE_DECL(Win32_AddTexture) {
     return Opengl_AddTexture(G_State->Opengl, Width, Height, Pixels);
 }
 
 static inline 
-PlatformClearTexturesDecl(Win32_ClearTextures) {
+PLATFORM_CLEAR_TEXTURES_DECL(Win32_ClearTextures) {
     return Opengl_ClearTextures(G_State->Opengl);
 }
 
 static inline 
-PlatformReadFileDecl(Win32_ReadFile) {
-    if (Handle->Error) {
+PLATFORM_READ_FILE_DECL(Win32_ReadFile) {
+    if (Handle->error) {
         return;
     }
-    ASSERT(Handle->Id < ARRAY_COUNT(G_State->Handles));
+    ASSERT(Handle->id < ARRAY_COUNT(G_State->Handles));
     
-    HANDLE Win32_Handle = G_State->Handles[Handle->Id];
+    HANDLE Win32_Handle = G_State->Handles[Handle->id];
     OVERLAPPED Overlapped = {};
     Overlapped.Offset = (u32)((Offset >> 0) & 0xFFFFFFFF);
     Overlapped.OffsetHigh = (u32)((Offset >> 32) & 0xFFFFFFFF);
@@ -1452,22 +1452,22 @@ PlatformReadFileDecl(Win32_ReadFile) {
         // success;
     }
     else {
-        Handle->Error = PlatformFileError_ReadFileFailed; 
+        Handle->error = PlatformFileError_ReadFileFailed; 
     }
 }
 
 static inline 
-PlatformHideCursorDecl(Win32_HideCursor) {
+PLATFORM_HIDE_CURSOR_DECL(Win32_HideCursor) {
     ShowCursor(FALSE);
 }
 
 static inline
-PlatformShowCursorDecl(Win32_ShowCursor) {
+PLATFORM_SHOW_CURSOR_DECL(Win32_ShowCursor) {
     ShowCursor(TRUE);
 }
 
 static inline
-PlatformGetFileSizeDecl(Win32_GetFileSize) 
+PLATFORM_GET_FILE_SIZE_DECL(Win32_GetFileSize) 
 {
     HANDLE FileHandle = CreateFileA(Path, 
                                     GENERIC_READ, 
@@ -1492,20 +1492,20 @@ PlatformGetFileSizeDecl(Win32_GetFileSize)
     }
 }
 
-static inline platform_api
+static inline Platform_API
 Win32_InitPlatformApi() {
-    platform_api PlatformApi = {};
-    PlatformApi.LogFp = Win32_Log;
-    PlatformApi.ReadFileFp = Win32_ReadFile;
-    PlatformApi.GetFileSizeFp = Win32_GetFileSize;
-    PlatformApi.ClearTexturesFp = Win32_ClearTextures;
-    PlatformApi.AddTextureFp = Win32_AddTexture;
-    PlatformApi.OpenAssetFileFp = Win32_OpenAssetFile;
-    PlatformApi.CloseFileFp = Win32_CloseFile;
-    PlatformApi.LogFileErrorFp = Win32_LogFileError;
-    PlatformApi.ShowCursorFp = Win32_ShowCursor;
-    PlatformApi.HideCursorFp = Win32_HideCursor;
-    PlatformApi.GetPerformanceCounterFp = Win32_GetPerformanceCounterU64;
+    Platform_API PlatformApi = {};
+    PlatformApi.log = Win32_Log;
+    PlatformApi.read_file = Win32_ReadFile;
+    PlatformApi.get_file_size = Win32_GetFileSize;
+    PlatformApi.clear_textures = Win32_ClearTextures;
+    PlatformApi.add_texture = Win32_AddTexture;
+    PlatformApi.open_asset_file = Win32_OpenAssetFile;
+    PlatformApi.close_file = Win32_CloseFile;
+    PlatformApi.log_file_error = Win32_LogFileError;
+    PlatformApi.show_cursor = Win32_ShowCursor;
+    PlatformApi.hide_cursor = Win32_HideCursor;
+    PlatformApi.get_performance_counter = Win32_GetPerformanceCounterU64;
     return PlatformApi;
 }
 
@@ -1517,12 +1517,12 @@ Win32_FreeGameMemory(win32_game_memory* GameMemory) {
 
 static inline b8
 Win32_InitGameMemory(win32_game_memory* GameMemory,
-                     u32 PermanentMemorySize,
-                     u32 TransientMemorySize,
-                     u32 ScratchMemorySize,
-                     u32 DebugMemorySize) 
+                     u32 permanent_memory_size,
+                     u32 transient_memory_size,
+                     u32 scratch_memory_size,
+                     u32 debug_memory_size) 
 {
-    GameMemory->DataSize = PermanentMemorySize + TransientMemorySize + ScratchMemorySize + DebugMemorySize;
+    GameMemory->DataSize = permanent_memory_size + transient_memory_size + scratch_memory_size + debug_memory_size;
     
 #if INTERNAL
     SYSTEM_INFO SystemInfo;
@@ -1541,26 +1541,26 @@ Win32_InitGameMemory(win32_game_memory* GameMemory,
     
     u8* MemoryPtr = (u8*)GameMemory->Data;
     
-    GameMemory->Head.PermanentMemorySize = PermanentMemorySize;
-    GameMemory->Head.PermanentMemory = GameMemory->Data;
-    MemoryPtr += PermanentMemorySize;
+    GameMemory->Head.permanent_memory_size = permanent_memory_size;
+    GameMemory->Head.permanent_memory = GameMemory->Data;
+    MemoryPtr += permanent_memory_size;
     
-    GameMemory->Head.TransientMemorySize = TransientMemorySize;
-    GameMemory->Head.TransientMemory = MemoryPtr;;
-    MemoryPtr += TransientMemorySize;
+    GameMemory->Head.transient_memory_size = transient_memory_size;
+    GameMemory->Head.transient_memory = MemoryPtr;;
+    MemoryPtr += transient_memory_size;
     
-    GameMemory->Head.ScratchMemorySize = ScratchMemorySize;
-    GameMemory->Head.ScratchMemory = MemoryPtr;
-    MemoryPtr += ScratchMemorySize;
+    GameMemory->Head.scratch_memory_size = scratch_memory_size;
+    GameMemory->Head.scratch_memory = MemoryPtr;
+    MemoryPtr += scratch_memory_size;
     
-    GameMemory->Head.DebugMemorySize = DebugMemorySize;
-    GameMemory->Head.DebugMemory = MemoryPtr;
+    GameMemory->Head.debug_memory_size = debug_memory_size;
+    GameMemory->Head.debug_memory = MemoryPtr;
     
     Win32_Log("[Win32::GameMemory] Allocated\n");
-    Win32_Log("[Win32::GameMemory] Permanent Memory Size: %d bytes\n", PermanentMemorySize);
-    Win32_Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", TransientMemorySize);
-    Win32_Log("[Win32::GameMemory] Scratch Memory Size: %d bytes\n", ScratchMemorySize);
-    Win32_Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", DebugMemorySize);
+    Win32_Log("[Win32::GameMemory] Permanent Memory Size: %d bytes\n", permanent_memory_size);
+    Win32_Log("[Win32::GameMemory] Transient Memory Size: %d bytes\n", transient_memory_size);
+    Win32_Log("[Win32::GameMemory] Scratch Memory Size: %d bytes\n", scratch_memory_size);
+    Win32_Log("[Win32::GameMemory] Debug Memory Size: %d bytes\n", debug_memory_size);
     
     return true;
 }
@@ -1634,7 +1634,7 @@ WinMain(HINSTANCE Instance,
     
     
     // Initialize platform api
-    platform_api PlatformApi = Win32_InitPlatformApi();
+    Platform_API PlatformApi = Win32_InitPlatformApi();
     
     
     win32_audio Audio = {};
@@ -1690,8 +1690,8 @@ WinMain(HINSTANCE Instance,
             Win32_Log("[Win32::Main] Reloading game code!\n");
             Win32_UnloadGameCode(&GameCode);
             Win32_LoadGameCode(&GameCode);
-            zero_block(State->GameMemory.Head.TransientMemory, 
-                       State->GameMemory.Head.TransientMemorySize);
+            zero_block(State->GameMemory.Head.transient_memory, 
+                       State->GameMemory.Head.transient_memory_size);
         }
         
         
@@ -1716,7 +1716,7 @@ WinMain(HINSTANCE Instance,
         
         // Compute how much sound to write and where
         // TODO: Functionize this
-        platform_audio GameAudioOutput = Win32_AudioPrepare(&Audio);
+        Platform_Audio GameAudioOutput = Win32_AudioPrepare(&Audio);
         
         if (GameCode.GameUpdate) 
         {

@@ -47,7 +47,7 @@ struct Player {
 };
 
 struct Bullet {
-    v2f Size;
+    v2f size;
     Mood_Type mood_type;
     v2f direction;
 	v2f position;
@@ -73,11 +73,11 @@ struct Particle {
 #include "game_mode_main_wave.h"
 
 
-enum game_mode_main_state_type {
-    Main_StateType_Spawning,
-    Main_StateType_Normal,
-    Main_StateType_PlayerDied,
-    Main_StateType_Cleanup,
+enum Game_Mode_Main_State_Type {
+    GAME_MODE_MAIN_STATE_SPAWN,
+    GAME_MODE_MAIN_STATE_NORMAL,
+    GAME_MODE_MAIN_STATE_PLAYER_DIED,
+    GAME_MODE_MAIN_STATE_CLEANUP,
 };
 
 
@@ -88,8 +88,8 @@ struct Death_Bomb {
 };
 
 
-struct game_mode_main {
-    game_mode_main_state_type State;
+struct Game_Mode_Main {
+    Game_Mode_Main_State_Type state;
     
     // TODO: we might do like a tagged union state thing but
     // I don't really know the problem space for that yet
@@ -111,7 +111,7 @@ struct game_mode_main {
     Big_Int score;
     
     // Audio handles
-    Game_Audio_Mixer_Handle BgmHandle;
+    Game_Audio_Mixer_Handle bgm_handle;
     
     
 };
