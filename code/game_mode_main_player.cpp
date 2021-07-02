@@ -1,49 +1,50 @@
 
 static inline void
-Main_UpdateInput(game_mode_main* Mode)
+Main_UpdateInput(game_mode_main* mode)
 {
-    v2f Direction = {};
-    player* Player = &Mode->Player; 
+    Player* player = &mode->player; 
     
-    Player->PrevPosition = Player->Position;
-    Player->Position = Mode->Camera.screen_to_world(G_Input->DesignMousePos);
+    v2f direction = {};
+    
+    player->prev_position = player->position;
+    player->position = mode->camera.screen_to_world(G_Input->DesignMousePos);
     
     
-    // NOTE(Momo): Absorb Mode Switch
+    // NOTE(Momo): Absorb mode Switch
     if(Button_IsPoked(G_Input->ButtonSwitch)) {
-        Player->MoodType = 
-            (Player->MoodType == MoodType_Dot) ? MoodType_Circle : MoodType_Dot;
+        player->mood_type = 
+            (player->mood_type == MOOD_TYPE_DOT) ? MOOD_TYPE_CIRCLE : MOOD_TYPE_DOT;
         
-        switch(Player->MoodType) {
-            case MoodType_Dot: {
-                Player->DotImageAlphaTarget = 1.f;
+        switch(player->mood_type) {
+            case MOOD_TYPE_DOT: {
+                player->dot_image_alpha_target = 1.f;
             } break;
-            case MoodType_Circle: {
-                Player->DotImageAlphaTarget = 0.f;
+            case MOOD_TYPE_CIRCLE: {
+                player->dot_image_alpha_target = 0.f;
             }break;
             default:{ 
                 ASSERT(false);
             }
         }
-        Player->DotImageTransitionTimer = 0.f;
+        player->dot_image_transition_timer = 0.f;
     }
 }
 
 
 static inline void 
-Main_UpdatePlayer(game_mode_main* Mode, 
-                  f32 DeltaTime) 
+Main_UpdatePlayer(game_mode_main* mode, 
+                  f32 dt) 
 {
-    player* Player = &Mode->Player; 
-    Player->DotImageAlpha = LERP(1.f - Player->DotImageAlphaTarget, 
-                                 Player->DotImageAlphaTarget, 
-                                 Player->DotImageTransitionTimer / Player->DotImageTransitionDuration);
+    Player* player = &mode->player; 
+    player->dot_image_alpha = LERP(1.f - player->dot_image_alpha_target, 
+                                   player->dot_image_alpha_target, 
+                                   player->dot_image_transition_timer / player->dot_image_transition_duration);
     
-    Player->DotImageTransitionTimer += DeltaTime;
-    Player->DotImageTransitionTimer = 
-        CLAMP(Player->DotImageTransitionTimer, 
+    player->dot_image_transition_timer += dt;
+    player->dot_image_transition_timer = 
+        CLAMP(player->dot_image_transition_timer, 
               0.f, 
-              Player->DotImageTransitionDuration);
+              player->dot_image_transition_duration);
     
 }
 
@@ -53,7 +54,7 @@ Main_RenderScore(game_mode_main* Mode) {
     
     // NOTE(Momo): Current Score
     {
-        Draw_Text(FONT_DEFAULT, 
+        draw_text(FONT_DEFAULT, 
                   { -Game_DesignWidth * 0.5f + 10.f, 
                       Game_DesignHeight * 0.5f - 24.f,  
                       ZLayScore },
@@ -64,7 +65,7 @@ Main_RenderScore(game_mode_main* Mode) {
     // NOTE(Momo): High Score
     {
         String Str = String::create("High Score");
-        Draw_Text(FONT_DEFAULT,
+        draw_text(FONT_DEFAULT,
                   { (Game_DesignWidth * 0.5f) - 120.f,
                       Game_DesignHeight * 0.5f - 24.f,
                       ZLayScore },
@@ -76,29 +77,29 @@ Main_RenderScore(game_mode_main* Mode) {
 
 
 static inline void 
-Main_RenderPlayer(game_mode_main* Mode) 
+Main_RenderPlayer(game_mode_main* mode) 
 {
-    player* Player = &Mode->Player;
-    m44f S = m44f::create_scale(Player->Size, Player->Size, 1.f);
+    Player* player = &mode->player;
+    m44f s = m44f::create_scale(player->size, player->size, 1.f);
     
     {
-        m44f T = m44f::create_translation(Player->Position.x,
-                                          Player->Position.y,
+        m44f t = m44f::create_translation(player->position.x,
+                                          player->position.y,
                                           ZLayPlayer);
-        c4f Color = c4f::create(1.f, 1.f, 1.f, 1.f - Player->DotImageAlpha);
+        c4f color = c4f::create(1.f, 1.f, 1.f, 1.f - player->dot_image_alpha);
         
-        Draw_TexturedQuadFromImage(IMAGE_PLAYER_CIRCLE,
-                                   T*S, 
-                                   Color);
+        draw_textured_quad_from_image(IMAGE_PLAYER_CIRCLE,
+                                      t*s, 
+                                      color);
     }
     
     {
-        m44f T = m44f::create_translation(Player->Position.x,
-                                          Player->Position.y,
+        m44f t = m44f::create_translation(player->position.x,
+                                          player->position.y,
                                           ZLayPlayer + 0.01f);
-        c4f Color = c4f::create(1.f, 1.f, 1.f, Player->DotImageAlpha);
-        Draw_TexturedQuadFromImage(IMAGE_PLAYER_DOT,
-                                   T*S, 
-                                   Color);
+        c4f color = c4f::create(1.f, 1.f, 1.f, player->dot_image_alpha);
+        draw_textured_quad_from_image(IMAGE_PLAYER_DOT,
+                                      t*s, 
+                                      color);
     }
 }

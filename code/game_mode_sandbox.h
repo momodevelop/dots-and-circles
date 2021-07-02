@@ -4,8 +4,8 @@
 
 // NOTE(Momo): Mode /////////////////////////////////////////////
 struct game_mode_sandbox_bullet {
-    v2f Position;
-    circle2f HitCircle;
+    v2f position;
+    circle2f hit_circle;
     b8 IsHit;
     v2f Velocity;
 };
@@ -43,8 +43,8 @@ SandboxMode_Init(permanent_state* PermState) {
     f32 OffsetY = 0.f;
     for (u32 I = 0; I < ARRAY_COUNT(Mode->Bullets); ++I) {
         game_mode_sandbox_bullet* B = Mode->Bullets + I;
-        B->Position = v2f::create(StartX + OffsetX, StartY + OffsetY);
-        B->HitCircle = circle2f::create({}, BulletRadius);
+        B->position = v2f::create(StartX + OffsetX, StartY + OffsetY);
+        B->hit_circle = circle2f::create({}, BulletRadius);
         
         OffsetX += BulletRadius * 2; // padding
         if(OffsetX >= Game_DesignWidth) {
@@ -81,7 +81,7 @@ SandboxMode_Update(permanent_state* PermState,
             continue;
         }
         
-        B->Position += B->Velocity * DeltaTime;
+        B->position += B->Velocity * DeltaTime;
         
     }
     
@@ -96,8 +96,8 @@ SandboxMode_Update(permanent_state* PermState,
                 if (B->IsHit) {
                     continue;
                 }
-                circle2f C = B->HitCircle;
-                C.origin = B->Position;
+                circle2f C = B->hit_circle;
+                C.origin = B->position;
                 
                 circle2f PC = circle2f::create(Mode->PrevMousePos,
                                                Mode->PlayerCircleRadius);
@@ -122,14 +122,14 @@ SandboxMode_Update(permanent_state* PermState,
         if (B->IsHit) {
             continue;
         }
-        m44f S = m44f::create_scale(B->HitCircle.radius*2, B->HitCircle.radius*2, 1.f);
-        m44f T = m44f::create_translation(B->Position.x,
-                                          B->Position.y,
+        m44f S = m44f::create_scale(B->hit_circle.radius*2, B->hit_circle.radius*2, 1.f);
+        m44f T = m44f::create_translation(B->position.x,
+                                          B->position.y,
                                           ZOrder += 0.001f);
         
-        Draw_TexturedQuadFromImage(IMAGE_BULLET_DOT,
-                                   T*S, 
-                                   c4f{1.f, 1.f, 1.f, 0.5f});
+        draw_textured_quad_from_image(IMAGE_BULLET_DOT,
+                                      T*S, 
+                                      c4f{1.f, 1.f, 1.f, 0.5f});
     }
     
     // NOTE(Momo) Render Lines

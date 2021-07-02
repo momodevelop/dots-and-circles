@@ -131,7 +131,7 @@ GameUpdateFunc(GameUpdate)
                                        GameMemory->DebugMemory,
                                        GameMemory->DebugMemorySize);
         // Init inspector
-        DebugInspector_Init(&DebugState->Inspector, &DebugState->arena);
+        DebugState->inspector.init(&DebugState->arena);
         
         
         // Init console
@@ -139,11 +139,11 @@ GameUpdateFunc(GameUpdate)
             String Buffer = {};
             Buffer.init("jump");
             
-            if (!DebugState->Console.init(&DebugState->arena, 16)) {
+            if (!DebugState->console.init(&DebugState->arena, 16)) {
                 return false;
             }
             
-            if (!DebugState->Console.add_command(Buffer, 
+            if (!DebugState->console.add_command(Buffer, 
                                                  CmdJump, 
                                                  DebugState)) {
                 return false;
@@ -160,12 +160,12 @@ GameUpdateFunc(GameUpdate)
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
     if (Button_IsPoked(G_Input->ButtonInspector)) {
-        DebugState->Inspector.IsActive = !DebugState->Inspector.IsActive;
+        DebugState->inspector.is_active = !DebugState->inspector.is_active;
     }
-    //StartProfiling(Test);
-    DebugInspector_Begin(&DebugState->Inspector);
-    DebugState->Console.update(DeltaTime);
-    //EndProfiling(Test);
+    //START_PROFILING(Test);
+    DebugState->inspector.begin();
+    DebugState->console.update(DeltaTime);
+    //END_PROFILING(Test);
     
 #if 0
     G_Log("%s %s %d: %d\n", 
@@ -185,7 +185,7 @@ GameUpdateFunc(GameUpdate)
         DeltaTime = 0.f;
     }
     
-    // NOTE(Momo): Speed up/down
+    // NOTE(Momo): speed up/down
     if (Button_IsPoked(G_Input->ButtonSpeedDown)) {
         PermState->GameSpeed -= 0.1f;
     }
@@ -217,7 +217,7 @@ GameUpdateFunc(GameUpdate)
             } break;
             case GameModeType_AnimeTest: {
                 PermState->AnimeTestMode = ModeArena->push_struct<Game_Mode_Anime_Test>(); 
-                AnimeTestMode_Init(PermState);
+                init_anime_test_mode(PermState);
             } break;
             default: {
                 return false;
@@ -230,17 +230,14 @@ GameUpdateFunc(GameUpdate)
     
     String Buffer = {};
     Buffer.init("Debug Memory: ");
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           Buffer,
-                           DebugState->arena.remaining());
+    DebugState->inspector.push_u32(Buffer,
+                                   DebugState->arena.remaining());
     Buffer.init("Mode Memory: ");
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           Buffer,
-                           PermState->ModeArena.arena->remaining());
+    DebugState->inspector.push_u32(Buffer,
+                                   PermState->ModeArena.arena->remaining());
     Buffer.init("TranState Memory: ");
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           Buffer,
-                           TranState->arena.remaining());
+    DebugState->inspector.push_u32(Buffer,
+                                   TranState->arena.remaining());
     
     
     // State update
@@ -271,8 +268,8 @@ GameUpdateFunc(GameUpdate)
         }
     }
     
-    DebugState->Console.render();
-    DebugInspector_End(&DebugState->Inspector);
+    DebugState->console.render();
+    DebugState->inspector.end();
     
     TranState->Mixer.update(Audio);
     

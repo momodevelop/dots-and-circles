@@ -6,84 +6,84 @@
 #define EnemyCap 128
 
 //~ NOTE(Momo): Enemy States
-enum enemy_state {
+enum Enemy_State {
     EnemyState_Spawning,
     EnemyState_Active,
     EnemyState_Dying
         
 };
-struct enemy_state_spawn {
-    f32 Timer;
-    constexpr static f32 Duration = 0.5f;
+struct Enemy_State_Spawn {
+    f32 timer;
+    constexpr static f32 duration = 0.5f;
 };
 
-struct enemy_state_dying {
-    f32 Timer;
-    constexpr static f32 Duration = 0.5f;
+struct Enemy_State_Dying {
+    f32 timer;
+    constexpr static f32 duration = 0.5f;
 };
 
-struct enemy_state_active {
-    f32 Timer;
-    constexpr static f32 Duration = 10.f;
+struct Enemy_State_Active {
+    f32 timer;
+    constexpr static f32 duration = 10.f;
 };
 
 //~ NOTE(Momo): Enemy movement patterns
-enum enemy_movement_type {
-    EnemyMovementType_Static,
+enum Enemy_Movement_Type {
+    ENEMY_MOVEMENT_TYPE_STATIC,
     
-    EnemyMovementType_Count,
+    ENEMY_MOVEMENT_TYPE_COUNT,
 };
 
-struct enemy_movement_none{};
+struct Enemy_Movement_None{};
 
 //~ NOTE(Momo): Enemy shoot patterns
 
-enum enemy_shoot_type  {
-    EnemyShootType_Homing,
-    EnemyShootType_8Directions,
+enum Enemy_Shoot_Type  {
+    ENEMY_SHOOT_TYPE_HOMING,
+    ENEMY_SHOOT_TYPE_8_DIR,
     
-    EnemyFiringPatternType_Count,
+    ENEMY_SHOOT_TYPE_COUNT,
 };
 
-struct enemy_shoot_homing {
-    f32 Timer;
-    f32 Duration;
-    mood_type Mood;
+struct Enemy_Shoot_Homing {
+    f32 timer;
+    f32 duration;
+    Mood_Type mood;
 };
 
-struct enemy_shoot_8dir {
-    f32 Timer;
-    f32 Duration;
-    mood_type Mood;
+struct Enemy_Shoot_8_Dir {
+    f32 timer;
+    f32 duration;
+    Mood_Type mood;
 };
 
 //~ 
-struct enemy {
-    constexpr static f32 Size = 32.f; 
-    constexpr static f32 SpawnStateRotationSpeed = 100.f;
-    constexpr static f32 ActiveStateRotationSpeed = 2.f;
-    constexpr static f32 DieStateRotationSpeed = 1.f;
+struct Enemy {
+    constexpr static f32 size = 32.f; 
+    constexpr static f32 spawn_state_rotation_speed = 100.f;
+    constexpr static f32 active_state_rotation_speed = 2.f;
+    constexpr static f32 die_state_rotation_speed = 1.f;
     
-    f32 Rotation;
-    f32 RotationSpeed;
+    f32 rotation;
+    f32 rotation_speed;
     
-	v2f Position;
+	v2f position;
     
-    enemy_state State;
+    Enemy_State state;
     union {
-        enemy_state_spawn StateSpawn;
-        enemy_state_active StateActive;
-        enemy_state_dying StateDying;
+        Enemy_State_Spawn state_spawn;
+        Enemy_State_Active state_active;
+        Enemy_State_Dying state_dying;
     };
     
-    enemy_movement_type MovementType;
+    Enemy_Movement_Type movement_type;
     union {
-        enemy_movement_none MovementNone;
+        Enemy_Movement_None movement_none;
     };
-    enemy_shoot_type ShootType;
+    Enemy_Shoot_Type shoot_type;
     union {
-        enemy_shoot_homing ShootHoming;
-        enemy_shoot_8dir Shoot8Dir;
+        Enemy_Shoot_Homing shoot_homing;
+        Enemy_Shoot_8_Dir shoot_8_dir;
     };
 };
 

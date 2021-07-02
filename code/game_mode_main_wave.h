@@ -3,24 +3,24 @@
 #ifndef GAME_MODE_MAIN_WAVE_H
 #define GAME_MODE_MAIN_WAVE_H
 // Wave
-enum wave_pattern_type {
-    WavePatternType_SpawnNForDuration,   // Spawns N enemies at a time
+enum Wave_Pattern_Type {
+    WAVE_PATTERN_TYPE_SPAWN_N_FOR_DURATION,   // Spawns N enemies at a time
 };
 
-struct wave_pattern_spawn_n_for_duration {
-    u32 EnemiesPerSpawn;
-    f32 SpawnTimer;
-    f32 SpawnDuration;
-    f32 Timer;
-    f32 Duration;
+struct Wave_Pattern_Spawn_N_For_Duration {
+    u32 enemies_per_spawn;
+    f32 spawn_timer;
+    f32 spawn_duration;
+    f32 timer;
+    f32 duration;
 };
 
-struct wave {
-    wave_pattern_type Type;
+struct Wave {
+    Wave_Pattern_Type type;
     union {
-        wave_pattern_spawn_n_for_duration PatternSpawnNForDuration;    
+        Wave_Pattern_Spawn_N_For_Duration pattern_spawn_n_for_duration;    
     };
-    b8 IsDone;
+    b8 is_done;
 };
 
 #endif //GAME_MODE_MAIN_WAVE_H

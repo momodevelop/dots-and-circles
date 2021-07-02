@@ -1,60 +1,60 @@
 
 
 static inline void
-Enemy_SetStateSpawn(enemy* E) {
-    E->State = EnemyState_Spawning;
-    E->StateSpawn.Timer = 0.f;
+Enemy_SetStateSpawn(Enemy* E) {
+    E->state = EnemyState_Spawning;
+    E->state_spawn.timer = 0.f;
 }
 
 static inline void
-Enemy_SetStateDying(enemy* E) {
-    E->State = EnemyState_Dying;
-    E->StateDying.Timer = 0.f;
+Enemy_SetStateDying(Enemy* E) {
+    E->state = EnemyState_Dying;
+    E->state_dying.timer = 0.f;
 }
 
 static inline void
-Enemy_SetStateActive(enemy* E) {
-    E->State = EnemyState_Active;
-    E->StateActive.Timer = 0.f;
+Enemy_SetStateActive(Enemy* E) {
+    E->state = EnemyState_Active;
+    E->state_active.timer = 0.f;
 }
 
 static inline void
-Enemy_Spawn(game_mode_main* Mode,
-            v2f Position,
-            enemy_shoot_type ShootType, 
-            enemy_movement_type MovementType) 
+Enemy_Spawn(game_mode_main* mode,
+            v2f position,
+            Enemy_Shoot_Type shoot_type, 
+            Enemy_Movement_Type movement_type) 
 {
-    enemy* Enemy = Mode->Enemies.push();
-    Enemy->Position = Position;
+    Enemy* enemy = mode->enemies.push();
+    enemy->position = position;
     
     // NOTE(Momo): Shoot
-    Enemy->ShootType = ShootType;
-    switch(Enemy->ShootType) {
-        case EnemyShootType_Homing: {
-            enemy_shoot_homing* Shoot = &Enemy->ShootHoming;
-            Shoot->Timer = 0.f;
-            Shoot->Duration = 0.1f;
-            Shoot->Mood = (mood_type)Mode->rng.choice(MoodType_Count);
+    enemy->shoot_type = shoot_type;
+    switch(enemy->shoot_type) {
+        case ENEMY_SHOOT_TYPE_HOMING: {
+            Enemy_Shoot_Homing* shoot = &enemy->shoot_homing;
+            shoot->timer = 0.f;
+            shoot->duration = 0.1f;
+            shoot->mood = (Mood_Type)mode->rng.choice(MOOD_TYPE_COUNT);
         } break;
-        case EnemyShootType_8Directions: {
-            enemy_shoot_8dir* Shoot = &Enemy->Shoot8Dir;
-            Shoot->Timer = 0.f;
-            Shoot->Duration = 0.1f;
-            Shoot->Mood = (mood_type)Mode->rng.choice(MoodType_Count);
+        case ENEMY_SHOOT_TYPE_8_DIR: {
+            Enemy_Shoot_8_Dir* shoot = &enemy->shoot_8_dir;
+            shoot->timer = 0.f;
+            shoot->duration = 0.1f;
+            shoot->mood = (Mood_Type)mode->rng.choice(MOOD_TYPE_COUNT);
         } break;
     };
     
-    Enemy->MovementType = MovementType;
+    enemy->movement_type = movement_type;
     
-    Enemy_SetStateSpawn(Enemy);
+    Enemy_SetStateSpawn(enemy);
 }
 
 static inline void
-Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, f32 DeltaTime) {
-    enemy_state_active* Active = &Enemy->StateActive;
+Enemy_DoStateActive(Enemy* enemy, Player* player, game_mode_main* mode, f32 dt) {
+    Enemy_State_Active* active = &enemy->state_active;
     // Movement
-    switch( Enemy->MovementType ) {
-        case EnemyMovementType_Static:
+    switch( enemy->movement_type ) {
+        case ENEMY_MOVEMENT_TYPE_STATIC:
         // Do nothing
         break;
         default: {
@@ -62,32 +62,32 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, f32 Delt
         }
     }
     
-    // Rotation
-    Enemy->Rotation += Enemy->RotationSpeed * DeltaTime;
-    Enemy->RotationSpeed += (Enemy->ActiveStateRotationSpeed - Enemy->RotationSpeed) * 0.9f;
+    // rotation
+    enemy->rotation += enemy->rotation_speed * dt;
+    enemy->rotation_speed += (enemy->active_state_rotation_speed - enemy->rotation_speed) * 0.9f;
     
     // Fire
-    switch (Enemy->ShootType) {
-        case EnemyShootType_Homing: {
-            enemy_shoot_homing* Shoot = &Enemy->ShootHoming;
-            Shoot->Timer += DeltaTime;
-            if (Shoot->Timer > Shoot->Duration) {
-                v2f Direction = normalize(Player->Position - Enemy->Position);
-                Bullet_Spawn(Mode, Enemy->Position, Direction, 200.f, Shoot->Mood);
-                Shoot->Timer = 0.f;
+    switch (enemy->shoot_type) {
+        case ENEMY_SHOOT_TYPE_HOMING: {
+            Enemy_Shoot_Homing* shoot = &enemy->shoot_homing;
+            shoot->timer += dt;
+            if (shoot->timer > shoot->duration) {
+                v2f direction = normalize(player->position - enemy->position);
+                Bullet_Spawn(mode, enemy->position, direction, 200.f, shoot->mood);
+                shoot->timer = 0.f;
             }
         } break;
-        case EnemyShootType_8Directions: {
-            enemy_shoot_8dir* Shoot = &Enemy->Shoot8Dir;
-            Shoot->Timer += DeltaTime;
-            static m22f RotateMtx = m22f::create_rotation(TAU/8);
-            if (Shoot->Timer > Shoot->Duration) {
+        case ENEMY_SHOOT_TYPE_8_DIR: {
+            Enemy_Shoot_8_Dir* shoot = &enemy->shoot_8_dir;
+            shoot->timer += dt;
+            static m22f rotate_mtx = m22f::create_rotation(TAU/8);
+            if (shoot->timer > shoot->duration) {
                 v2f Dir = v2f::create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
-                    Dir = RotateMtx * Dir;
-                    Bullet_Spawn(Mode, Enemy->Position, Dir, 200.f, Shoot->Mood);
+                    Dir = rotate_mtx * Dir;
+                    Bullet_Spawn(mode, enemy->position, Dir, 200.f, shoot->mood);
                 }
-                Shoot->Timer = 0.f;
+                shoot->timer = 0.f;
             }
             
         } break;
@@ -97,74 +97,75 @@ Enemy_DoStateActive(enemy* Enemy, player* Player, game_mode_main* Mode, f32 Delt
     }
     
     // Life time
-    Active->Timer += DeltaTime;
-    if (Active->Timer > Active->Duration) {
-        Enemy_SetStateDying(Enemy);
+    active->timer += dt;
+    if (active->timer > active->duration) {
+        Enemy_SetStateDying(enemy);
     }
 }
 
 
 static inline void 
-Main_UpdateEnemies(game_mode_main* Mode,
-                   f32 DeltaTime) 
+Main_UpdateEnemies(game_mode_main* mode,
+                   f32 dt) 
 {
-    player* Player = &Mode->Player;
-    auto SlearIfLamb = [&](enemy* Enemy) {
-        switch(Enemy->State) {
+    Player* player = &mode->player;
+    auto slear_lamb = [&](Enemy* enemy) {
+        switch(enemy->state) {
             case EnemyState_Spawning: {
-                enemy_state_spawn* Spawn = &Enemy->StateSpawn;
-                Spawn->Timer += DeltaTime;
+                Enemy_State_Spawn* spawn = &enemy->state_spawn;
+                spawn->timer += dt;
                 
-                Enemy->Rotation += DeltaTime * Enemy->SpawnStateRotationSpeed;
-                if (Spawn->Timer >= Spawn->Duration) {
-                    Enemy_SetStateActive(Enemy);
+                enemy->rotation += dt * enemy->spawn_state_rotation_speed;
+                if (spawn->timer >= spawn->duration) {
+                    Enemy_SetStateActive(enemy);
                 }
             } break;
             case EnemyState_Active: {
-                Enemy_DoStateActive(Enemy, Player, Mode, DeltaTime);
+                Enemy_DoStateActive(enemy, player, mode, dt);
             } break;
             case EnemyState_Dying: {
-                enemy_state_dying* Dying = &Enemy->StateDying;
-                Dying->Timer += DeltaTime;
-                Enemy->Rotation += DeltaTime * Enemy->DieStateRotationSpeed;
+                Enemy_State_Dying* dying = &enemy->state_dying;
+                dying->timer += dt;
+                enemy->rotation += dt * enemy->die_state_rotation_speed;
                 
-                return Dying->Timer >= Dying->Duration;
+                return dying->timer >= dying->duration;
             } break;
         }
         return false;
     };
-    Mode->Enemies.foreach_slear_if(SlearIfLamb);
+    mode->enemies.foreach_slear_if(slear_lamb);
     
 }
 
 static inline void
-Main_RenderEnemies(game_mode_main* Mode) 
+Main_RenderEnemies(game_mode_main* mode) 
 {
-    u32 CurrentCount = 0;
-    auto ForEachLamb = [&](enemy* Enemy){
-        f32 Offset = 0.00001f * CurrentCount++;
-        f32 Size = Enemy->Size;
-        switch(Enemy->State) {
+    u32 current_count = 0;
+    
+    auto for_lamb = [&](Enemy* enemy){
+        f32 size = enemy->size;
+        f32 offset = 0.00001f * current_count++;
+        switch(enemy->state) {
             case EnemyState_Spawning: {
-                enemy_state_spawn* Spawn = &Enemy->StateSpawn;
-                f32 Ease = ease_out_quad(Spawn->Timer/Spawn->Duration);
-                Size = Enemy->Size * Ease;
+                Enemy_State_Spawn* spawn = &enemy->state_spawn;
+                f32 ease = ease_out_quad(spawn->timer/spawn->duration);
+                size = enemy->size * ease;
             } break;
             case EnemyState_Dying: {
-                enemy_state_dying* Dying = &Enemy->StateDying;
-                f32 Ease = 1.f - Dying->Timer/Dying->Duration;
-                Size = Enemy->Size * Ease;
+                Enemy_State_Dying* Dying = &enemy->state_dying;
+                f32 ease = 1.f - Dying->timer/Dying->duration;
+                size = enemy->size * ease;
             }
         }
-        m44f S = m44f::create_scale(Size, Size, 1.f);
-        m44f R = m44f::create_rotation_z(Enemy->Rotation);
-        m44f T = m44f::create_translation(Enemy->Position.x,
-                                          Enemy->Position.y,
-                                          ZLayEnemy + Offset);
+        m44f s = m44f::create_scale(size, size, 1.f);
+        m44f r = m44f::create_rotation_z(enemy->rotation);
+        m44f t = m44f::create_translation(enemy->position.x,
+                                          enemy->position.y,
+                                          ZLayEnemy + offset);
         
-        Draw_TexturedQuadFromImage(IMAGE_ENEMY,
-                                   T*R*S, 
-                                   C4F_WHITE);
+        draw_textured_quad_from_image(IMAGE_ENEMY,
+                                      t*r*s, 
+                                      C4F_WHITE);
     };
-    Mode->Enemies.foreach(ForEachLamb);
+    mode->enemies.foreach(for_lamb);
 }

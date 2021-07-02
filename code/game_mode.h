@@ -46,8 +46,8 @@ struct debug_state {
     b8 IsInitialized;
     Arena arena;
     
-    debug_inspector Inspector;
-    Debug_Console Console;
+    Debug_Inspector inspector;
+    Debug_Console console;
     
     struct permanent_state* PermanentState;
     struct transient_state* TransientState;

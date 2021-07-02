@@ -3,83 +3,98 @@
 #ifndef GAME_DEBUG_INSPECTOR_H
 #define GAME_DEBUG_INSPECTOR_H
 
-#define DebugInspector_PosX -Game_DesignWidth * 0.5f + 10.f
-#define DebugInspector_PosY Game_DesignHeight * 0.5f - 32.f
-#define DebugInspector_PosZ 91.f
-#define DebugInspector_EntryCount 32
-#define DebugInspector_EntryLength 256
 
-struct debug_inspector {
-    b8 IsActive;
-    List<String_Buffer> Entries;
+struct Debug_Inspector {
+    b8 is_active;
+    List<String_Buffer> entries;
+    
+    b8 init(Arena* arena);
+    void begin();
+    void end();
+    String_Buffer* push_entry(String label);
+    void push_u32(String label, u32 item);
+    void push_s32(String label, s32 item);
 };
 
-static inline void
-DebugInspector_Init(debug_inspector* Inspector, Arena* arena) {
-    Inspector->IsActive = false;
-    List<String_Buffer>* Entries = &Inspector->Entries;
-    Entries->alloc(arena, DebugInspector_EntryCount);
-    for (u32 I = 0; I < DebugInspector_EntryCount; ++I) {
-        String_Buffer* Item = Entries->push();
-        Item->alloc(arena, DebugInspector_EntryCount);
+b8
+Debug_Inspector::init(Arena* arena) {
+    constexpr static u32 entry_count = 32;
+    
+    this->is_active = false;
+    if (!this->entries.alloc(arena, entry_count)) {
+        return false;
     }
+    
+    for (u32 i = 0; i < entry_count; ++i) {
+        String_Buffer* item = this->entries.push();
+        if (!item->alloc(arena, entry_count)) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
-static inline void
-DebugInspector_Begin(debug_inspector* Inspector) {
-    if(!Inspector->IsActive)
+void
+Debug_Inspector::begin() {
+    if(!this->is_active)
         return;
     
-    Inspector->Entries.clear();
+    this->entries.clear();
 }
 
-static inline void 
-DebugInspector_End(debug_inspector* Inspector) 
+void 
+Debug_Inspector::end() 
 {
-    if(!Inspector->IsActive)
+    if(!this->is_active)
         return;
     
-    f32 OffsetY = 0.f;
+    f32 offset_y = 0.f;
     
-    for (u32 I = 0; I < Inspector->Entries.count; ++I) {
-        String_Buffer* Entry = Inspector->Entries + I;
-        v3f Position = { DebugInspector_PosX, DebugInspector_PosY + OffsetY, DebugInspector_PosZ }; 
-        Draw_Text(FONT_DEFAULT, 
-                  Position, 
-                  Entry->str,
+    for (u32 I = 0; I < this->entries.count; ++I) {
+        String_Buffer* entry = this->entries + I;
+        v3f position = { 
+            -Game_DesignWidth * 0.5f + 10.f, 
+            (Game_DesignHeight * 0.5f - 32.f) + offset_y, 
+            91.f
+        }; 
+        
+        
+        draw_text(FONT_DEFAULT, 
+                  position, 
+                  entry->str,
                   32.f, 
                   C4F_WHITE);
-        Entry->clear();
-        OffsetY -= 32.f;
+        entry->clear();
+        offset_y -= 32.f;
     }
 }
 
-static inline String_Buffer*
-DebugInspector_PushEntry(debug_inspector* Inspector, String Label) {
-    String_Buffer* Entry = Inspector->Entries.push();
-    Entry->copy(Label);
-    return Entry;
+String_Buffer*
+Debug_Inspector::push_entry(String label) {
+    String_Buffer* entry = this->entries.push();
+    entry->copy(label);
+    return entry;
 }
 
-static inline void
-DebugInspector_PushU32(debug_inspector* Inspector, 
-                       String Label, 
-                       u32 Item)
+void
+Debug_Inspector::push_u32(String label, 
+                          u32 item)
 {
-    if(!Inspector->IsActive)
+    if(!this->is_active)
         return;
-    String_Buffer* Entry = DebugInspector_PushEntry(Inspector, Label);
-    Entry->push(Item);
+    String_Buffer* entry = this->push_entry(label);
+    entry->push(item);
 }
 
-static inline void
-DebugInspector_PushS32(debug_inspector* Inspector, String Label, s32 Item)
+void
+Debug_Inspector::push_s32(String label, s32 item)
 {
-    if(!Inspector->IsActive)
+    if(!this->is_active)
         return;
     
-    String_Buffer* Entry = DebugInspector_PushEntry(Inspector, Label);
-    Entry->push(Item);
+    String_Buffer* entry = this->push_entry(label);
+    entry->push(item);
 }
 
 #endif //GAME_DEBUG_INSPECTOR_H

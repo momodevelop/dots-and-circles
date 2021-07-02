@@ -11,9 +11,9 @@ struct Anime_Component {
 };
 
 static inline void
-Anime_Component_create(Anime_Component* a,
-                       Anime_ID id, 
-                       f32 duration_per_frame) 
+create(Anime_Component* a,
+       Anime_ID id, 
+       f32 duration_per_frame) 
 {
     a->anime_id = id;
     a->current_frame_index = 0;
@@ -22,7 +22,7 @@ Anime_Component_create(Anime_Component* a,
 }
 
 static inline void
-Anime_Component_update(Anime_Component* a, f32 dt) {
+update(Anime_Component* a, f32 dt) {
     Anime* anime = G_Assets->get_anime(ANIME_KARU_FRONT);
     a->timer_per_frame += dt;
     
@@ -50,11 +50,11 @@ struct Game_Mode_Anime_Test {
 };
 
 static inline void 
-AnimeTestMode_Init(permanent_state* perm_state) {
+init_anime_test_mode(permanent_state* perm_state) {
     Game_Mode_Anime_Test* mode = perm_state->AnimeTestMode;     
     mode->entity.pos = v3f::create(0.f, 0.f, 0.f);
     mode->entity.size = v3f::create(48.f*2, 48.f*2, 1.f);
-    Anime_Component_create(&mode->entity.anime_com, ANIME_KARU_FRONT, 0.25f);
+    create(&mode->entity.anime_com, ANIME_KARU_FRONT, 0.25f);
     
 }
 
@@ -69,7 +69,7 @@ AnimeTestMode_Update(permanent_state* perm_state,
     Game_Mode_Anime_Test* mode = perm_state->AnimeTestMode;     
     Game_Mode_Anime_Test_Entity* entity = &mode->entity;
     
-    Anime_Component_update(&entity->anime_com, delta_time);
+    update(&entity->anime_com, delta_time);
     
     // TODO(Momo): Draw function?
     m44f t = m44f::create_translation(entity->pos.x, entity->pos.y, entity->pos.z);
@@ -80,9 +80,9 @@ AnimeTestMode_Update(permanent_state* perm_state,
     {
         Anime* anime = G_Assets->get_anime(anime_com->anime_id);
         Image_ID image_id = anime->frames[anime_com->current_frame_index];
-        Draw_TexturedQuadFromImage(image_id,
-                                   t*s,
-                                   color);
+        draw_textured_quad_from_image(image_id,
+                                      t*s,
+                                      color);
         
     }
     

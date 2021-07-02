@@ -272,7 +272,7 @@ Debug_Console::render()
             text_position.z = position.z + 0.01f;
             
             String infoLineCStr = info_lines[i].text.str;
-            Draw_Text(FONT_DEFAULT, 
+            draw_text(FONT_DEFAULT, 
                       text_position,
                       info_lines[i].text.str,
                       font_size,
@@ -284,7 +284,7 @@ Debug_Console::render()
         text_position.y = bottom + padding_h;
         text_position.z = position.z + 0.02f;
         
-        Draw_Text(FONT_DEFAULT, 
+        draw_text(FONT_DEFAULT, 
                   text_position,
                   input_line.text.str,
                   font_size,

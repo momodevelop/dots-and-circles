@@ -1,50 +1,50 @@
 
 static inline void
-Main_UpdateWaves(game_mode_main* Mode,
-                 f32 DeltaTime) 
+Main_UpdateWaves(game_mode_main* mode,
+                 f32 dt) 
 {
-    if (Mode->Wave.IsDone) {
+    if (mode->wave.is_done) {
         // TODO: Random wave type
-        Mode->Wave.Type = WavePatternType_SpawnNForDuration;
+        mode->wave.type = WAVE_PATTERN_TYPE_SPAWN_N_FOR_DURATION;
         // Initialize the wave
-        switch (Mode->Wave.Type) {
-            case WavePatternType_SpawnNForDuration: {
-                auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
-                Pattern->EnemiesPerSpawn = 1;
-                Pattern->SpawnTimer = 0.f;
-                Pattern->SpawnDuration = 3.f;
-                Pattern->Timer = 0.f;
-                Pattern->Duration = 30.f;
+        switch (mode->wave.type) {
+            case WAVE_PATTERN_TYPE_SPAWN_N_FOR_DURATION: {
+                auto* pattern = &mode->wave.pattern_spawn_n_for_duration;
+                pattern->enemies_per_spawn = 1;
+                pattern->spawn_timer = 0.f;
+                pattern->spawn_duration = 3.f;
+                pattern->timer = 0.f;
+                pattern->duration = 30.f;
             } break;
             default: {
                 ASSERT(false);
             }
         }
-        Mode->Wave.IsDone = false;
+        mode->wave.is_done = false;
     }
     else {
         // Update the wave.
-        switch(Mode->Wave.Type) {
-            case WavePatternType_SpawnNForDuration: {
-                auto* Pattern = &Mode->Wave.PatternSpawnNForDuration;
-                Pattern->SpawnTimer += DeltaTime;
-                Pattern->Timer += DeltaTime;
-                if (Pattern->SpawnTimer >= Pattern->SpawnDuration ) {
-                    v2f Pos = 
-                        v2f::create(Mode->rng.bilateral() * Game_DesignWidth * 0.5f,
-                                    Mode->rng.bilateral() * Game_DesignHeight * 0.5f);
+        switch(mode->wave.type) {
+            case WAVE_PATTERN_TYPE_SPAWN_N_FOR_DURATION: {
+                auto* pattern = &mode->wave.pattern_spawn_n_for_duration;
+                pattern->spawn_timer += dt;
+                pattern->timer += dt;
+                if (pattern->spawn_timer >= pattern->spawn_duration ) {
+                    v2f pos = 
+                        v2f::create(mode->rng.bilateral() * Game_DesignWidth * 0.5f,
+                                    mode->rng.bilateral() * Game_DesignHeight * 0.5f);
                     
                     
-                    Enemy_Spawn(Mode,
-                                Pos,
-                                EnemyShootType_8Directions,
-                                EnemyMovementType_Static);
+                    Enemy_Spawn(mode,
+                                pos,
+                                ENEMY_SHOOT_TYPE_8_DIR,
+                                ENEMY_MOVEMENT_TYPE_STATIC);
                     
-                    Pattern->SpawnTimer = 0.f;
+                    pattern->spawn_timer = 0.f;
                 }
                 
-                if (Pattern->Timer >= Pattern->Duration) {
-                    Mode->Wave.IsDone = true;
+                if (pattern->timer >= pattern->duration) {
+                    mode->wave.is_done = true;
                 }
                 
             } break;

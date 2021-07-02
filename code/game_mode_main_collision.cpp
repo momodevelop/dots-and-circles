@@ -9,37 +9,37 @@ static inline void
 Main_UpdatePlayerBulletCollision(game_mode_main* Mode,
                                  f32 DeltaTime)
 {
-    player* Player = &Mode->Player;
-    circle2f PlayerCircle = Player->HitCircle;
-    v2f PlayerVel = Player->Position - Player->PrevPosition;
-    PlayerCircle.origin += Player->Position;
+    Player* player = &Mode->player;
+    circle2f PlayerCircle = player->hit_circle;
+    v2f PlayerVel = player->position - player->prev_position;
+    PlayerCircle.origin += player->position;
     
-    auto Lamb = [&](bullet* B) {
-        circle2f BCircle = B->HitCircle;
-        v2f BVel = B->Direction * B->Speed * DeltaTime;
-        BCircle.origin += B->Position;
+    auto Lamb = [&](Bullet* B) {
+        circle2f BCircle = B->hit_circle;
+        v2f BVel = B->direction * B->speed * DeltaTime;
+        BCircle.origin += B->position;
         
         if (Bonk2_IsDynaCircleXDynaCircle(PlayerCircle, 
                                           PlayerVel,
                                           BCircle,
                                           BVel)) 
         {
-            if (Player->MoodType == B->MoodType) {
-                v2f VectorToBullet = normalize(B->Position - Player->Position);
-                v2f SpawnPos = Player->Position + VectorToBullet * Player->HitCircle.radius;
+            if (player->mood_type == B->mood_type) {
+                v2f VectorToBullet = normalize(B->position - player->position);
+                v2f SpawnPos = player->position + VectorToBullet * player->hit_circle.radius;
                 Main_SpawnParticle(Mode, SpawnPos, 5);
-                Mode->Score += 50;
+                Mode->score += 50;
             }
             else {
-                Player->IsDead = true;
+                player->is_dead = true;
             }
             return true;
         }
         
         return false;
     };
-    Mode->DotBullets.foreach_slear_if(Lamb);
-    Mode->CircleBullets.foreach_slear_if(Lamb);
+    Mode->dot_bullets.foreach_slear_if(Lamb);
+    Mode->circle_bullets.foreach_slear_if(Lamb);
 }
 
 #endif //GAME_MODE_MAIN_COLLISION_H

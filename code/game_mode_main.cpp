@@ -23,61 +23,61 @@ MainMode_Init(permanent_state* PermState,
     
     // NOTE(Momo): Init camera
     {
-        Mode->Camera.position = v3f::create(0.f, 0.f, 0.f);
-        Mode->Camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
-        Mode->Camera.color = C4F_GREY2;
-        Mode->Camera.dimensions = v3f::create(Game_DesignWidth,
+        Mode->camera.position = v3f::create(0.f, 0.f, 0.f);
+        Mode->camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        Mode->camera.color = C4F_GREY2;
+        Mode->camera.dimensions = v3f::create(Game_DesignWidth,
                                               Game_DesignHeight,
                                               Game_DesignDepth);
     }
     
     b8 Success = false;
     
-    Success = Mode->DotBullets.alloc(ModeArena, DotCap);
+    Success = Mode->dot_bullets.alloc(ModeArena, DotCap);
     if (!Success) {
         return false;
     }
     
-    Success = Mode->CircleBullets.alloc(ModeArena, CircleCap);
+    Success = Mode->circle_bullets.alloc(ModeArena, CircleCap);
     if (!Success) {
         return false;
     }
     
-    Success = Mode->Enemies.alloc(ModeArena, EnemyCap);
+    Success = Mode->enemies.alloc(ModeArena, EnemyCap);
     if (!Success) {
         return false;
     }
     
-    Success = Mode->Particles.alloc(ModeArena, ParticleCap);
+    Success = Mode->particles.alloc(ModeArena, ParticleCap);
     if (!Success) {
         return false;
     }
     
     
-    Success = Mode->Score.alloc(ModeArena, 128);
+    Success = Mode->score.alloc(ModeArena, 128);
     if (!Success) {
         return false;
     }
-    Mode->Wave.IsDone = true;
+    Mode->wave.is_done = true;
     Mode->rng = Rng_Series::create(0); // TODO: Used system clock for seed.
     
-    player* Player = &Mode->Player;
+    Player* player = &Mode->player;
     {
-        Player->Position = {};
-        Player->PrevPosition = {};
-        Player->Size = Player->MaxSize;
-        Player->HitCircle = { v2f{}, 16.f};
+        player->position = {};
+        player->prev_position = {};
+        player->size = player->max_size;
+        player->hit_circle = { v2f{}, 16.f};
         
         // NOTE(Momo): We start as Dot
-        Player->MoodType = MoodType_Dot;
-        Player->DotImageAlpha = 1.f;
-        Player->DotImageAlphaTarget = 1.f;
+        player->mood_type = MOOD_TYPE_DOT;
+        player->dot_image_alpha = 1.f;
+        player->dot_image_alpha_target = 1.f;
         
-        Player->DotImageTransitionDuration = 0.1f;
-        Player->DotImageTransitionTimer = Player->DotImageTransitionDuration;
-        Player->IsDead = false;
+        player->dot_image_transition_duration = 0.1f;
+        player->dot_image_transition_timer = player->dot_image_transition_duration;
+        player->is_dead = false;
     }
-    Mode->Wave.IsDone = true;
+    Mode->wave.is_done = true;
     
 #if 0    
     Success = AudioMixer_Play(&TranState->Mixer, SOUND_TEST, false, &Mode->BgmHandle);
@@ -88,7 +88,7 @@ MainMode_Init(permanent_state* PermState,
 #endif
     
     
-    Mode->Camera.set();
+    Mode->camera.set();
     
     Mode->State = Main_StateType_Spawning;
     return true; 
@@ -112,14 +112,14 @@ Main_StateNormal_Update(permanent_state* PermState,
     Main_UpdateParticles(Mode, DeltaTime);
     
     // NOTE(Momo): if player's dead, do dead stuff
-    if(Mode->Player.IsDead) 
+    if(Mode->player.is_dead) 
     {
         // NOTE(Momo): Drop the death bomb
-        Mode->DeathBomb.Radius = 0.f;
-        Mode->DeathBomb.Position = Mode->Player.Position;
+        Mode->death_bomb.radius = 0.f;
+        Mode->death_bomb.position = Mode->player.position;
         
         Mode->State = Main_StateType_PlayerDied;
-        Mode->Player.Position = v2f::create(-1000.f, -1000.f);
+        Mode->player.position = v2f::create(-1000.f, -1000.f);
     }
     
     Main_RenderPlayer(Mode);
@@ -153,12 +153,12 @@ Main_StatePlayerDied_Update(permanent_state* PermState,
     
     
     // NOTE: PlayerDied -> Spawning state
-    // NOTE: Change state if enemy and bullet count is 0
-    if (Mode->DeathBomb.Radius >= Game_DesignWidth * 2.f) 
+    // NOTE: Change state if enemy and Bullet count is 0
+    if (Mode->death_bomb.radius >= Game_DesignWidth * 2.f) 
     {
         Mode->State = Main_StateType_Spawning;
-        Mode->SpawnTimer = 0.f;
-        Mode->Player.IsDead = false;
+        Mode->spawn_timer = 0.f;
+        Mode->player.is_dead = false;
     }
 }
 
@@ -170,8 +170,8 @@ Main_StateSpawning_Update(permanent_state* PermState,
 {
     game_mode_main* Mode = PermState->MainMode;
     
-    f32 Ease = ease_out_bounce(CLAMP(Mode->SpawnTimer/Mode->SpawnDuration, 0.f, 1.f));
-    Mode->Player.Size = Mode->Player.MaxSize * Ease;
+    f32 Ease = ease_out_bounce(CLAMP(Mode->spawn_timer/Mode->spawn_duration, 0.f, 1.f));
+    Mode->player.size = Mode->player.max_size * Ease;
     
     Main_UpdateInput(Mode);
     Main_UpdatePlayer(Mode, DeltaTime);    
@@ -181,11 +181,11 @@ Main_StateSpawning_Update(permanent_state* PermState,
     
     
     // NOTE(Momo): Spawning -> Normal state
-    if (Mode->SpawnTimer >= Mode->SpawnDuration) {
+    if (Mode->spawn_timer >= Mode->spawn_duration) {
         Mode->State = Main_StateType_Normal;
-        Mode->Player.Size = Mode->Player.MaxSize;
+        Mode->player.size = Mode->player.max_size;
     }
-    Mode->SpawnTimer += DeltaTime;
+    Mode->spawn_timer += DeltaTime;
     
     
 }
@@ -214,26 +214,21 @@ MainMode_Update(permanent_state* PermState,
     }
     
     //Main_RenderDebugLines(Mode, RenderCommands);
-    
     String Buffer = {};
     Buffer.init("Dots: ");
-    DebugInspector_PushU32(&DebugState->Inspector,
-                           Buffer,
-                           Mode->DotBullets.count);
+    DebugState->inspector.push_u32(Buffer,
+                                   Mode->dot_bullets.count);
     Buffer.init("Circles: ");
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           Buffer, 
-                           Mode->CircleBullets.count);
+    DebugState->inspector.push_u32(Buffer, 
+                                   Mode->circle_bullets.count);
     
     Buffer.init("Bullets: ");
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           Buffer, 
-                           Mode->DotBullets.count + Mode->CircleBullets.count);
+    DebugState->inspector.push_u32(Buffer, 
+                                   Mode->dot_bullets.count + Mode->circle_bullets.count);
     
-    Buffer.init("Enemies: ");
-    DebugInspector_PushU32(&DebugState->Inspector, 
-                           Buffer, 
-                           Mode->Enemies.count);
+    Buffer.init("enemies: ");
+    DebugState->inspector.push_u32(Buffer, 
+                                   Mode->enemies.count);
 }
 
 #endif //GAME_MODE_H

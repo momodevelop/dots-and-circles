@@ -1,34 +1,34 @@
 
 
 static inline void
-Bullet_Spawn(game_mode_main* Mode, 
-             v2f Position, 
-             v2f Direction, 
-             f32 Speed, 
-             mood_type Mood) 
+Bullet_Spawn(game_mode_main* mode, 
+             v2f position, 
+             v2f direction, 
+             f32 speed, 
+             Mood_Type mood) 
 {
-    bullet* B = nullptr;
-    switch (Mood) {
-        case MoodType_Dot: {
-            B = Mode->DotBullets.push();
+    Bullet* b = nullptr;
+    switch (mood) {
+        case MOOD_TYPE_DOT: {
+            b = mode->dot_bullets.push();
         } break;
-        case MoodType_Circle: {
-            B = Mode->CircleBullets.push();
+        case MOOD_TYPE_CIRCLE: {
+            b = mode->circle_bullets.push();
         } break;
         default: {
             ASSERT(false);
         }
     }
-    B->Position = Position;
-	B->Speed = Speed;
-    B->Size = v2f::create(16.f, 16.f);
+    b->position = position;
+	b->speed = speed;
+    b->Size = v2f::create(16.f, 16.f);
     
-    B->HitCircle = circle2f::create(v2f::create(0.f, 0.f), 4.f);
+    b->hit_circle = circle2f::create(v2f::create(0.f, 0.f), 4.f);
     
-    if (length_sq(Direction) > 0.f) {
-	    B->Direction = normalize(Direction);
+    if (length_sq(direction) > 0.f) {
+	    b->direction = normalize(direction);
     }
-    B->MoodType = Mood;
+    b->mood_type = mood;
     
 }
 
@@ -36,17 +36,17 @@ static inline void
 Main_UpdateBullets(game_mode_main* Mode,
                    f32 DeltaTime) 
 {
-    auto SlearIfLamb = [&](bullet* B) {
-        B->Position += B->Direction * B->Speed * DeltaTime;
+    auto SlearIfLamb = [&](Bullet* B) {
+        B->position += B->direction * B->speed * DeltaTime;
         
-        return B->Position.x <= -Game_DesignWidth * 0.5f - B->HitCircle.radius || 
-            B->Position.x >= Game_DesignWidth * 0.5f + B->HitCircle.radius ||
-            B->Position.y <= -Game_DesignHeight * 0.5f - B->HitCircle.radius ||
-            B->Position.y >= Game_DesignHeight * 0.5f + B->HitCircle.radius;
+        return B->position.x <= -Game_DesignWidth * 0.5f - B->hit_circle.radius || 
+            B->position.x >= Game_DesignWidth * 0.5f + B->hit_circle.radius ||
+            B->position.y <= -Game_DesignHeight * 0.5f - B->hit_circle.radius ||
+            B->position.y >= Game_DesignHeight * 0.5f + B->hit_circle.radius;
     };
     
-    Mode->DotBullets.foreach_slear_if(SlearIfLamb);
-    Mode->CircleBullets.foreach_slear_if(SlearIfLamb);
+    Mode->dot_bullets.foreach_slear_if(SlearIfLamb);
+    Mode->circle_bullets.foreach_slear_if(SlearIfLamb);
     
 }
 
@@ -57,24 +57,24 @@ Main_RenderBullets(game_mode_main* Mode)
     // NOTE(Momo): Circles are in front of Dots and are therefore 'nearer'.
     // Thus we have to render Dots first before Circles.
     f32 LayerOffset = 0.f;
-    auto ForEachLamb = [&](bullet* B, Image_ID Image) {
+    auto ForEachLamb = [&](Bullet* B, Image_ID Image) {
         m44f S = m44f::create_scale(B->Size.x, 
                                     B->Size.y, 
                                     1.f);
         
-        m44f T = m44f::create_translation(B->Position.x,
-                                          B->Position.y,
+        m44f T = m44f::create_translation(B->position.x,
+                                          B->position.y,
                                           ZLayBullet + LayerOffset);
         
-        Draw_TexturedQuadFromImage(Image,
-                                   T*S, 
-                                   C4F_WHITE);
+        draw_textured_quad_from_image(Image,
+                                      T*S, 
+                                      C4F_WHITE);
         LayerOffset += 0.00001f;
     };
     
     
-    Mode->DotBullets.foreach(ForEachLamb, IMAGE_BULLET_DOT);
-    Mode->CircleBullets.foreach(ForEachLamb, IMAGE_BULLET_CIRCLE);
+    Mode->dot_bullets.foreach(ForEachLamb, IMAGE_BULLET_DOT);
+    Mode->circle_bullets.foreach(ForEachLamb, IMAGE_BULLET_CIRCLE);
     
     
     

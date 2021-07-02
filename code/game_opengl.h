@@ -606,7 +606,7 @@ Opengl_Init(opengl* Opengl,
                                         OpenglVaoBind_Transform, 
                                         1); 
     
-    // NOTE(Momo): Alpha blend
+    // NOTE(Momo): alpha blend
     Opengl->glEnable(GL_BLEND);
     Opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     

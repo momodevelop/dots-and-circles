@@ -14,58 +14,58 @@
 #define ZLayScore 15.f
 #define ZLayDebug 16.f
 
-enum mood_type {
-    MoodType_Dot,
-    MoodType_Circle,
+enum Mood_Type {
+    MOOD_TYPE_DOT,
+    MOOD_TYPE_CIRCLE,
     
-    MoodType_Count,
+    MOOD_TYPE_COUNT,
 };
 
 
 
-struct player {
+struct Player {
     // NOTE(Momo): Rendering
-    f32 DotImageAlpha;
-    f32 DotImageAlphaTarget;
-    f32 DotImageTransitionTimer;
-    f32 DotImageTransitionDuration;
+    f32 dot_image_alpha;
+    f32 dot_image_alpha_target;
+    f32 dot_image_transition_timer;
+    f32 dot_image_transition_duration;
     
-    static constexpr f32 MaxSize = 32.f;
-    f32 Size;
+    static constexpr f32 max_size = 32.f;
+    f32 size;
     
 	// Collision
-    circle2f HitCircle;
+    circle2f hit_circle;
     
     // Physics
-    v2f Position;
-    v2f PrevPosition;
+    v2f position;
+    v2f prev_position;
     
     // Gameplay
-    mood_type MoodType;
+    Mood_Type mood_type;
     
-    b8 IsDead;
+    b8 is_dead;
 };
 
-struct bullet {
+struct Bullet {
     v2f Size;
-    mood_type MoodType;
-    v2f Direction;
-	v2f Position;
-	f32 Speed;
-	circle2f HitCircle; 
+    Mood_Type mood_type;
+    v2f direction;
+	v2f position;
+	f32 speed;
+	circle2f hit_circle; 
 };
 
-struct particle {
-    constexpr static f32 Duration = 0.25f;
-    constexpr static f32 Alpha = 0.8f;
-    constexpr static f32 Size = 10.f;
-    constexpr static f32 SpeedMin = 10.f;
-    constexpr static f32 SpeedMax = 20.f;
+struct Particle {
+    constexpr static f32 duration = 0.25f;
+    constexpr static f32 alpha = 0.8f;
+    constexpr static f32 size = 10.f;
+    constexpr static f32 min_speed = 10.f;
+    constexpr static f32 max_speed = 20.f;
     
-    f32 Timer;
-    v2f Position;
-    v2f Direction;
-    f32 Speed;
+    f32 timer;
+    v2f position;
+    v2f direction;
+    f32 speed;
 };
 
 
@@ -81,10 +81,10 @@ enum game_mode_main_state_type {
 };
 
 
-struct death_bomb {
-    static constexpr f32 GrowthSpeed = 750.f;
-    f32 Radius;
-    v2f Position;
+struct Death_Bomb {
+    static constexpr f32 growth_speed = 750.f;
+    f32 radius;
+    v2f position;
 };
 
 
@@ -94,21 +94,21 @@ struct game_mode_main {
     // TODO: we might do like a tagged union state thing but
     // I don't really know the problem space for that yet
     // because not all states have variables atm
-    f32 SpawnTimer;
-    static constexpr f32 SpawnDuration = 1.f;
+    f32 spawn_timer;
+    static constexpr f32 spawn_duration = 1.f;
     
-    player Player;
-    Game_Camera Camera;
+    Player player;
+    Game_Camera camera;
     
-    List<bullet> CircleBullets;
-    List<bullet> DotBullets;
-    List<enemy> Enemies;
-    Queue<particle> Particles;
-    death_bomb DeathBomb;
+    List<Bullet> circle_bullets;
+    List<Bullet> dot_bullets;
+    List<Enemy> enemies;
+    Queue<Particle> particles;
+    Death_Bomb death_bomb;
     
-    wave Wave;
+    Wave wave;
     Rng_Series rng;
-    Big_Int Score;
+    Big_Int score;
     
     // Audio handles
     Game_Audio_Mixer_Handle BgmHandle;

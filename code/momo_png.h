@@ -362,7 +362,7 @@ load_png_from_memory(Png_Image* png,
     
     // colour_type 1 = Pallete used
     // colour_type 2 = Colour used 
-    // colour_type 4 = Alpha used
+    // colour_type 4 = alpha used
     u32 image_channels = 0;
     switch(IHDR->colour_type){
         case 2: {

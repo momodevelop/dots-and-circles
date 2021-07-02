@@ -1,53 +1,53 @@
 
 static inline void
-Main_UpdateDeathBomb(game_mode_main* Mode, f32 DeltaTime) {
-    death_bomb* DeathBomb = &Mode->DeathBomb;
-    DeathBomb->Radius += DeathBomb->GrowthSpeed * DeltaTime;
+Main_UpdateDeathBomb(game_mode_main* mode, f32 dt) {
+    Death_Bomb* death_bomb = &mode->death_bomb;
+    death_bomb->radius += death_bomb->growth_speed * dt;
     
-    circle2f DeathBombCir = circle2f::create(DeathBomb->Position, DeathBomb->Radius);
+    circle2f death_bomb_circle = circle2f::create(death_bomb->position, death_bomb->radius);
     
-    auto BulletLamb = [&](bullet* B) {
-        circle2f BCircle = translate(B->HitCircle, B->Position);
+    auto bullet_lamb = [&](Bullet* b) {
+        circle2f BCircle = translate(b->hit_circle, b->position);
         
         // NOTE(Momo): We can safely assume that the circles are not moving
-        if (Bonk2_IsCircleXCircle(DeathBombCir,
+        if (Bonk2_IsCircleXCircle(death_bomb_circle,
                                   BCircle)) 
         {
-            v2f VectorToBullet = normalize(B->Position - DeathBomb->Position);
-            v2f SpawnPos = DeathBomb->Position + VectorToBullet * DeathBomb->Radius;
-            Main_SpawnParticle(Mode, SpawnPos, 5);
+            v2f vector_to_bullet = normalize(b->position - death_bomb->position);
+            v2f SpawnPos = death_bomb->position + vector_to_bullet * death_bomb->radius;
+            Main_SpawnParticle(mode, SpawnPos, 5);
             return true;
         }
         
         return false;
     };
-    Mode->CircleBullets.foreach_slear_if(BulletLamb);
-    Mode->DotBullets.foreach_slear_if(BulletLamb);
+    mode->circle_bullets.foreach_slear_if(bullet_lamb);
+    mode->dot_bullets.foreach_slear_if(bullet_lamb);
     
-    auto EnemyLamb = [&](enemy* E) {
-        circle2f ECir = circle2f::create(E->Position, 0.1f);
+    auto enemy_lamb = [&](Enemy* e) {
+        circle2f ECir = circle2f::create(e->position, 0.1f);
         
         // NOTE(Momo): We can safely assume that the circles are not moving
-        if (Bonk2_IsCircleXCircle(DeathBombCir, ECir)) 
+        if (Bonk2_IsCircleXCircle(death_bomb_circle, ECir)) 
         {
-            v2f VectorToBullet = normalize(E->Position - DeathBomb->Position);
-            v2f SpawnPos = DeathBomb->Position + VectorToBullet * DeathBomb->Radius;
-            Main_SpawnParticle(Mode, SpawnPos, 5);
+            v2f vector_to_bullet = normalize(e->position - death_bomb->position);
+            v2f spawn_pos = death_bomb->position + vector_to_bullet * death_bomb->radius;
+            Main_SpawnParticle(mode, spawn_pos, 5);
             return true;
         }
         
         return false;
     };
-    Mode->Enemies.foreach_slear_if(EnemyLamb);
+    mode->enemies.foreach_slear_if(enemy_lamb);
 }
 
 static inline void
 Main_RenderDeathBomb(game_mode_main* Mode)
 {
-    death_bomb* DeathBomb = &Mode->DeathBomb;
+    Death_Bomb* death_bomb = &Mode->death_bomb;
     // Circle?
     Renderer_DrawCircle2f(G_Renderer,
-                          circle2f::create(DeathBomb->Position, DeathBomb->Radius),
+                          circle2f::create(death_bomb->position, death_bomb->radius),
                           5.f, 32, C4F_WHITE, ZLayDeathBomb);
 }
 

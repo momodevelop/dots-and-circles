@@ -6,9 +6,9 @@
 
 
 static inline void
-Draw_TexturedQuadFromImage(Image_ID image_id,
-                           m44f transform,
-                           c4f color = C4F_WHITE) 
+draw_textured_quad_from_image(Image_ID image_id,
+                              m44f transform,
+                              c4f color = C4F_WHITE) 
 {
     Image* image = G_Assets->get_image(image_id);
     Texture* texture = G_Assets->get_texture(image->texture_id);
@@ -22,7 +22,7 @@ Draw_TexturedQuadFromImage(Image_ID image_id,
 }
 
 static inline void
-Draw_Text(Font_ID font_id,
+draw_text(Font_ID font_id,
           v3f position,
           String str,
           f32 size, 
@@ -32,8 +32,8 @@ Draw_Text(Font_ID font_id,
     Font* font = G_Assets->get_font(font_id);
     
     f32 z_layer_offset = 0.f;
-    for(u32 I = 0; I < str.count; ++I) {
-        Font_Glyph* glyph = font->get_glyph(str.data[I]);
+    for(u32 i = 0; i < str.count; ++i) {
+        Font_Glyph* glyph = font->get_glyph(str.data[i]);
         aabb2f box = glyph->box; 
         
         // NOTE(Momo): Set bottom left as origin
@@ -51,14 +51,14 @@ Draw_Text(Font_ID font_id,
                                           cur_position.z + z_layer_offset);
         
         
-        Draw_TexturedQuadFromImage(glyph->image_id,
-                                   T*S*A,
-                                   color);
+        draw_textured_quad_from_image(glyph->image_id,
+                                      T*S*A,
+                                      color);
         
         cur_position.x += glyph->advance * size;
-        if (I != str.count - 1 ) {
-            u32 kerning = font->get_kerning(str.data[I], 
-                                            str.data[I+1]);
+        if (i != str.count - 1 ) {
+            u32 kerning = font->get_kerning(str.data[i], 
+                                            str.data[i+1]);
             cur_position.x += kerning * size;
         }
         z_layer_offset += 0.001f;
