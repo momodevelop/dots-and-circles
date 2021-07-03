@@ -4,8 +4,8 @@
 #include "game_renderer.h"
 
 // Configuration
-#define Opengl_Max_Textures 8
-#define Opengl_Max_Entities 4096
+#define OPENGL_MAX_TEXTURES 8
+#define OPENGL_MAX_ENTITIES 4096
 
 // Opengl typedefs
 #define GL_TRUE                 1
@@ -64,110 +64,110 @@ typedef iptr GLintptr;
 typedef b8   GLboolean;
 typedef f32  GLfloat;
 
-#define OpenglFunction(Name) opengl_func_##Name
-#define OpenglFunctionPtr(Name) OpenglFunction(Name)* Name
+#define OPENGL_FUNCTION_DECL(Name) opengl_func_##Name
+#define OPENGL_FUNCTION_PTR(Name) OPENGL_FUNCTION_DECL(Name)* Name
 #define OpenglDebugCallbackFunc(Name) void Name(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *msg,const void *userParam)
 typedef OpenglDebugCallbackFunc(GLDEBUGPROC);
 
-typedef void    OpenglFunction(glEnable)(GLenum cap);
-typedef void    OpenglFunction(glDisable)(GLenum cap);
-typedef void    OpenglFunction(glViewport)(GLint x, 
-                                           GLint y, 
-                                           GLsizei width, 
-                                           GLsizei height);
-typedef void    OpenglFunction(glScissor)(GLint x, 
-                                          GLint y, 
-                                          GLsizei width, 
-                                          GLsizei height); 
-typedef GLuint  OpenglFunction(glCreateShader)(GLenum type);
-typedef void    OpenglFunction(glCompileShader)(GLuint program);
-typedef void    OpenglFunction(glShaderSource)(GLuint shader, 
-                                               GLsizei count, 
-                                               GLchar** string, 
-                                               GLint* length);
-typedef void    OpenglFunction(glAttachShader)(GLuint program, GLuint shader);
-typedef void    OpenglFunction(glDeleteShader)(GLuint program);
-typedef void    OpenglFunction(glClear)(GLbitfield mask);
-typedef void    OpenglFunction(glClearColor)(GLclampf r, 
-                                             GLclampf g, 
-                                             GLclampf b, 
-                                             GLclampf a);
-typedef void    OpenglFunction(glCreateBuffers)(GLsizei n, GLuint* buffers);
-typedef void    OpenglFunction(glNamedBufferStorage)(GLuint buffer, 
-                                                     GLsizeiptr size, 
-                                                     const void* data, 
-                                                     GLbitfield flags);
-typedef void    OpenglFunction(glCreateVertexArrays)(GLsizei n, GLuint* arrays);
-typedef void    OpenglFunction(glVertexArrayVertexBuffer)(GLuint vaobj, 
-                                                          GLuint bindingindex, 
-                                                          GLuint buffer, 
-                                                          GLintptr offset, 
-                                                          GLsizei stride);
-typedef void    OpenglFunction(glEnableVertexArrayAttrib)(GLuint vaobj, GLuint index);
-typedef void    OpenglFunction(glVertexArrayAttribFormat)(GLuint vaobj,
-                                                          GLuint attribindex,
-                                                          GLint size,
+typedef void    OPENGL_FUNCTION_DECL(glEnable)(GLenum cap);
+typedef void    OPENGL_FUNCTION_DECL(glDisable)(GLenum cap);
+typedef void    OPENGL_FUNCTION_DECL(glViewport)(GLint x, 
+                                                 GLint y, 
+                                                 GLsizei width, 
+                                                 GLsizei height);
+typedef void    OPENGL_FUNCTION_DECL(glScissor)(GLint x, 
+                                                GLint y, 
+                                                GLsizei width, 
+                                                GLsizei height); 
+typedef GLuint  OPENGL_FUNCTION_DECL(glCreateShader)(GLenum type);
+typedef void    OPENGL_FUNCTION_DECL(glCompileShader)(GLuint program);
+typedef void    OPENGL_FUNCTION_DECL(glShaderSource)(GLuint shader, 
+                                                     GLsizei count, 
+                                                     GLchar** string, 
+                                                     GLint* length);
+typedef void    OPENGL_FUNCTION_DECL(glAttachShader)(GLuint program, GLuint shader);
+typedef void    OPENGL_FUNCTION_DECL(glDeleteShader)(GLuint program);
+typedef void    OPENGL_FUNCTION_DECL(glClear)(GLbitfield mask);
+typedef void    OPENGL_FUNCTION_DECL(glClearColor)(GLclampf r, 
+                                                   GLclampf g, 
+                                                   GLclampf b, 
+                                                   GLclampf a);
+typedef void    OPENGL_FUNCTION_DECL(glCreateBuffers)(GLsizei n, GLuint* buffers);
+typedef void    OPENGL_FUNCTION_DECL(glNamedBufferStorage)(GLuint buffer, 
+                                                           GLsizeiptr size, 
+                                                           const void* data, 
+                                                           GLbitfield flags);
+typedef void    OPENGL_FUNCTION_DECL(glCreateVertexArrays)(GLsizei n, GLuint* arrays);
+typedef void    OPENGL_FUNCTION_DECL(glVertexArrayVertexBuffer)(GLuint vaobj, 
+                                                                GLuint bindingindex, 
+                                                                GLuint buffer, 
+                                                                GLintptr offset, 
+                                                                GLsizei stride);
+typedef void    OPENGL_FUNCTION_DECL(glEnableVertexArrayAttrib)(GLuint vaobj, GLuint index);
+typedef void    OPENGL_FUNCTION_DECL(glVertexArrayAttribFormat)(GLuint vaobj,
+                                                                GLuint attribindex,
+                                                                GLint size,
+                                                                GLenum type,
+                                                                GLboolean normalized,
+                                                                GLuint relativeoffset);
+typedef void    OPENGL_FUNCTION_DECL(glVertexArrayAttribBinding)(GLuint vaobj,
+                                                                 GLuint attribindex,
+                                                                 GLuint bindingindex);
+typedef void    OPENGL_FUNCTION_DECL(glVertexArrayBindingDivisor)(GLuint vaobj,
+                                                                  GLuint bindingindex,
+                                                                  GLuint divisor);
+typedef void    OPENGL_FUNCTION_DECL(glBlendFunc)(GLenum sfactor, GLenum dfactor);
+typedef void    OPENGL_FUNCTION_DECL(glVertexArrayElementBuffer)(GLuint vaobj, GLuint buffer);
+typedef GLuint  OPENGL_FUNCTION_DECL(glCreateProgram)();
+typedef void    OPENGL_FUNCTION_DECL(glLinkProgram)(GLuint program);
+typedef void    OPENGL_FUNCTION_DECL(glGetProgramiv)(GLuint program, GLenum pname, GLint* params);
+typedef void    OPENGL_FUNCTION_DECL(glGetProgramInfoLog)(GLuint program, 
+                                                          GLsizei maxLength,
+                                                          GLsizei* length,
+                                                          GLchar* infoLog);
+typedef void    OPENGL_FUNCTION_DECL(glCreateTextures)(GLenum target, 
+                                                       GLsizei n, 
+                                                       GLuint* textures);
+typedef void    OPENGL_FUNCTION_DECL(glTextureStorage2D)(GLuint texture,
+                                                         GLsizei levels,
+                                                         GLenum internalformat,
+                                                         GLsizei width,
+                                                         GLsizei height);
+typedef void    OPENGL_FUNCTION_DECL(glTextureSubImage2D)(GLuint texture,
+                                                          GLint level,
+                                                          GLint xoffset,
+                                                          GLint yoffset,
+                                                          GLsizei width,
+                                                          GLsizei height,
+                                                          GLenum format,
                                                           GLenum type,
-                                                          GLboolean normalized,
-                                                          GLuint relativeoffset);
-typedef void    OpenglFunction(glVertexArrayAttribBinding)(GLuint vaobj,
-                                                           GLuint attribindex,
-                                                           GLuint bindingindex);
-typedef void    OpenglFunction(glVertexArrayBindingDivisor)(GLuint vaobj,
-                                                            GLuint bindingindex,
-                                                            GLuint divisor);
-typedef void    OpenglFunction(glBlendFunc)(GLenum sfactor, GLenum dfactor);
-typedef void    OpenglFunction(glVertexArrayElementBuffer)(GLuint vaobj, GLuint buffer);
-typedef GLuint  OpenglFunction(glCreateProgram)();
-typedef void    OpenglFunction(glLinkProgram)(GLuint program);
-typedef void    OpenglFunction(glGetProgramiv)(GLuint program, GLenum pname, GLint* params);
-typedef void    OpenglFunction(glGetProgramInfoLog)(GLuint program, 
-                                                    GLsizei maxLength,
-                                                    GLsizei* length,
-                                                    GLchar* infoLog);
-typedef void    OpenglFunction(glCreateTextures)(GLenum target, 
-                                                 GLsizei n, 
-                                                 GLuint* textures);
-typedef void    OpenglFunction(glTextureStorage2D)(GLuint texture,
-                                                   GLsizei levels,
-                                                   GLenum internalformat,
-                                                   GLsizei width,
-                                                   GLsizei height);
-typedef void    OpenglFunction(glTextureSubImage2D)(GLuint texture,
-                                                    GLint level,
-                                                    GLint xoffset,
-                                                    GLint yoffset,
-                                                    GLsizei width,
-                                                    GLsizei height,
-                                                    GLenum format,
-                                                    GLenum type,
-                                                    const void* pixels);
-typedef void    OpenglFunction(glBindTexture)(GLenum target, GLuint texture);
-typedef void    OpenglFunction(glTexParameteri)(GLenum target ,GLenum pname, GLint param);
-typedef void    OpenglFunction(glBindVertexArray)(GLuint array);
-typedef void    OpenglFunction(glDrawElementsInstancedBaseInstance)(GLenum mode,
-                                                                    GLsizei count,
-                                                                    GLenum type,
-                                                                    const void* indices,
-                                                                    GLsizei instancecount,
-                                                                    GLuint baseinstance);
-typedef void    OpenglFunction(glUseProgram)(GLuint program);
-typedef void    OpenglFunction(glNamedBufferSubData)(GLuint buffer,
-                                                     GLintptr offset,
-                                                     GLsizeiptr size,
-                                                     const void* data);
-typedef GLint   OpenglFunction(glGetUniformLocation)(GLuint program,
-                                                     const GLchar* name);
-typedef void    OpenglFunction(glProgramUniformMatrix4fv)(GLuint program,
-                                                          GLint location,
-                                                          GLsizei count,
-                                                          GLboolean transpose,
-                                                          const GLfloat* value);
-typedef void    OpenglFunction(glUseProgram)(GLuint program);
-typedef void    OpenglFunction(glDeleteTextures)(GLsizei n, 
-                                                 const GLuint* textures);
-typedef void    OpenglFunction(glDebugMessageCallbackARB)(GLDEBUGPROC *callback, 
-                                                          const void *userParam);
+                                                          const void* pixels);
+typedef void    OPENGL_FUNCTION_DECL(glBindTexture)(GLenum target, GLuint texture);
+typedef void    OPENGL_FUNCTION_DECL(glTexParameteri)(GLenum target ,GLenum pname, GLint param);
+typedef void    OPENGL_FUNCTION_DECL(glBindVertexArray)(GLuint array);
+typedef void    OPENGL_FUNCTION_DECL(glDrawElementsInstancedBaseInstance)(GLenum mode,
+                                                                          GLsizei count,
+                                                                          GLenum type,
+                                                                          const void* indices,
+                                                                          GLsizei instancecount,
+                                                                          GLuint baseinstance);
+typedef void    OPENGL_FUNCTION_DECL(glUseProgram)(GLuint program);
+typedef void    OPENGL_FUNCTION_DECL(glNamedBufferSubData)(GLuint buffer,
+                                                           GLintptr offset,
+                                                           GLsizeiptr size,
+                                                           const void* data);
+typedef GLint   OPENGL_FUNCTION_DECL(glGetUniformLocation)(GLuint program,
+                                                           const GLchar* name);
+typedef void    OPENGL_FUNCTION_DECL(glProgramUniformMatrix4fv)(GLuint program,
+                                                                GLint location,
+                                                                GLsizei count,
+                                                                GLboolean transpose,
+                                                                const GLfloat* value);
+typedef void    OPENGL_FUNCTION_DECL(glUseProgram)(GLuint program);
+typedef void    OPENGL_FUNCTION_DECL(glDeleteTextures)(GLsizei n, 
+                                                       const GLuint* textures);
+typedef void    OPENGL_FUNCTION_DECL(glDebugMessageCallbackARB)(GLDEBUGPROC *callback, 
+                                                                const void *userParam);
 
 
 // Stuff to work with game
@@ -190,14 +190,14 @@ constexpr static inline f32 QuadUV[] = {
     0.f, 0.f, // bottom left
 };
 
-// NOTE(Momo): Buffers
+// NOTE(Momo): buffers
 enum {
-    OpenglVbo_Model,
-    OpenglVbo_Indices,
-    OpenglVbo_Colors,
-    OpenglVbo_Texture,
-    OpenglVbo_Transform,
-    OpenglVbo_Max
+    OPENGL_VBO_MODEL,
+    OPENGL_VBO_INDICES,
+    OPENGL_VBO_COLORS,
+    OPENGL_VBO_TEXTURE,
+    OPENGL_VBO_TRANSFORM,
+    OPENGL_VBO_MAX
 };
 
 constexpr static const char* OpenglVertexShader = R"###(
@@ -232,110 +232,110 @@ void main(void) {
 
 // NOTE(Momo): Attributes
 enum { 
-    OpenglAtb_Model,    // 0 
-    OpenglAtb_Colors,   // 1
-    OpenglAtb_Texture1, // 2
-    OpenglAtb_Texture2, // 3
-    OpenglAtb_Texture3, // 4
-    OpenglAtb_Texture4, // 5
-    OpenglAtb_Transform1, // 6
-    OpenglAtb_Transform2, // 7
-    OpenglAtb_Transform3, // 8
-    OpenglAtb_Transform4  // 9
+    OPENGL_ATB_MODEL,    // 0 
+    OPENGL_ATB_COLORS,   // 1
+    OPENGL_ATB_TEXTURE_1, // 2
+    OPENGL_ATB_TEXTURE_2, // 3
+    OPENGL_ATB_TEXTURE_3, // 4
+    OPENGL_ATB_TEXTURE_4, // 5
+    OPENGL_ATB_TRANSFORM_1, // 6
+    OPENGL_ATB_TRANSFORM_2, // 7
+    OPENGL_ATB_TRANSFORM_3, // 8
+    OPENGL_ATB_TRANSFORM_4  // 9
 };
 
 // NOTE(Momo): VAO bindings
 enum {
-    OpenglVaoBind_Model,
-    OpenglVaoBind_Colors,
-    OpenglVaoBind_Texture,
-    OpenglVaoBind_Transform
+    OPENGL_VAO_BIND_MODEL,
+    OPENGL_VAO_BIND_COLORS,
+    OPENGL_VAO_BIND_TEXTURE,
+    OPENGL_VAO_BIND_TRANSFORM
 };
 
 enum {
-    OpenglPredefTexture_Dummy,
-    OpenglPredefTexture_Blank,
+    OPENGL_PREDEF_TEXTURE_DUMMY,
+    OPENGL_PREDEF_TEXTURE_BLANK,
     
-    OpenglPredefTexture_Max
+    OPENGL_PREDEF_TEXTURE_MAX
 };
 
-struct opengl {
+struct Opengl {
     // Bindings that needs to be filled by platform
-    OpenglFunctionPtr(glEnable);
-    OpenglFunctionPtr(glDisable); 
-    OpenglFunctionPtr(glViewport);
-    OpenglFunctionPtr(glScissor);
-    OpenglFunctionPtr(glCreateShader);
-    OpenglFunctionPtr(glCompileShader);
-    OpenglFunctionPtr(glShaderSource);
-    OpenglFunctionPtr(glAttachShader);
-    OpenglFunctionPtr(glDeleteShader);
-    OpenglFunctionPtr(glClear);
-    OpenglFunctionPtr(glClearColor);
-    OpenglFunctionPtr(glCreateBuffers);
-    OpenglFunctionPtr(glNamedBufferStorage);
-    OpenglFunctionPtr(glCreateVertexArrays);
-    OpenglFunctionPtr(glVertexArrayVertexBuffer);
-    OpenglFunctionPtr(glEnableVertexArrayAttrib);
-    OpenglFunctionPtr(glVertexArrayAttribFormat);
-    OpenglFunctionPtr(glVertexArrayAttribBinding);
-    OpenglFunctionPtr(glVertexArrayBindingDivisor);
-    OpenglFunctionPtr(glBlendFunc);
-    OpenglFunctionPtr(glCreateProgram);
-    OpenglFunctionPtr(glLinkProgram);
-    OpenglFunctionPtr(glGetProgramiv);
-    OpenglFunctionPtr(glGetProgramInfoLog);
-    OpenglFunctionPtr(glVertexArrayElementBuffer);
-    OpenglFunctionPtr(glCreateTextures);
-    OpenglFunctionPtr(glTextureStorage2D);
-    OpenglFunctionPtr(glTextureSubImage2D);
-    OpenglFunctionPtr(glBindTexture);
-    OpenglFunctionPtr(glTexParameteri);
-    OpenglFunctionPtr(glBindVertexArray);
-    OpenglFunctionPtr(glDrawElementsInstancedBaseInstance);
-    OpenglFunctionPtr(glGetUniformLocation);
-    OpenglFunctionPtr(glProgramUniformMatrix4fv);
-    OpenglFunctionPtr(glNamedBufferSubData);
-    OpenglFunctionPtr(glUseProgram);
-    OpenglFunctionPtr(glDeleteTextures);
-    OpenglFunctionPtr(glDebugMessageCallbackARB);
+    OPENGL_FUNCTION_PTR(glEnable);
+    OPENGL_FUNCTION_PTR(glDisable); 
+    OPENGL_FUNCTION_PTR(glViewport);
+    OPENGL_FUNCTION_PTR(glScissor);
+    OPENGL_FUNCTION_PTR(glCreateShader);
+    OPENGL_FUNCTION_PTR(glCompileShader);
+    OPENGL_FUNCTION_PTR(glShaderSource);
+    OPENGL_FUNCTION_PTR(glAttachShader);
+    OPENGL_FUNCTION_PTR(glDeleteShader);
+    OPENGL_FUNCTION_PTR(glClear);
+    OPENGL_FUNCTION_PTR(glClearColor);
+    OPENGL_FUNCTION_PTR(glCreateBuffers);
+    OPENGL_FUNCTION_PTR(glNamedBufferStorage);
+    OPENGL_FUNCTION_PTR(glCreateVertexArrays);
+    OPENGL_FUNCTION_PTR(glVertexArrayVertexBuffer);
+    OPENGL_FUNCTION_PTR(glEnableVertexArrayAttrib);
+    OPENGL_FUNCTION_PTR(glVertexArrayAttribFormat);
+    OPENGL_FUNCTION_PTR(glVertexArrayAttribBinding);
+    OPENGL_FUNCTION_PTR(glVertexArrayBindingDivisor);
+    OPENGL_FUNCTION_PTR(glBlendFunc);
+    OPENGL_FUNCTION_PTR(glCreateProgram);
+    OPENGL_FUNCTION_PTR(glLinkProgram);
+    OPENGL_FUNCTION_PTR(glGetProgramiv);
+    OPENGL_FUNCTION_PTR(glGetProgramInfoLog);
+    OPENGL_FUNCTION_PTR(glVertexArrayElementBuffer);
+    OPENGL_FUNCTION_PTR(glCreateTextures);
+    OPENGL_FUNCTION_PTR(glTextureStorage2D);
+    OPENGL_FUNCTION_PTR(glTextureSubImage2D);
+    OPENGL_FUNCTION_PTR(glBindTexture);
+    OPENGL_FUNCTION_PTR(glTexParameteri);
+    OPENGL_FUNCTION_PTR(glBindVertexArray);
+    OPENGL_FUNCTION_PTR(glDrawElementsInstancedBaseInstance);
+    OPENGL_FUNCTION_PTR(glGetUniformLocation);
+    OPENGL_FUNCTION_PTR(glProgramUniformMatrix4fv);
+    OPENGL_FUNCTION_PTR(glNamedBufferSubData);
+    OPENGL_FUNCTION_PTR(glUseProgram);
+    OPENGL_FUNCTION_PTR(glDeleteTextures);
+    OPENGL_FUNCTION_PTR(glDebugMessageCallbackARB);
     
-    b8 IsInitialized;
+    b8 is_initialized;
     
-    GLuint Buffers[OpenglVbo_Max]; 
-    GLuint Shader;
+    GLuint buffers[OPENGL_VBO_MAX]; 
+    GLuint shader;
     
     // NOTE(Momo): We only need one blueprint which is a 1x1 square.
-    GLuint Model; 
+    GLuint model; 
     
     // NOTE(Momo): A table mapping  between
     // 'game texture handler' <-> 'opengl texture handler'  
     // Index 0 will always be an invalid 'dummy texture
     // Index 1 will always be a blank texture for items with no texture (but has colors)
-    List<GLuint> Textures;
+    List<GLuint> textures;
     
-    v2u WindowDimensions;
-    v2u DesignDimensions;
-    aabb2u RenderRegion;
+    v2u window_dimensions;
+    v2u design_dimensions;
+    aabb2u render_region;
 };
 
 static inline void 
-Opengl_AttachShader(opengl* Opengl, u32 Program, u32 Type, char* Code) {
-    GLuint Shader = Opengl->glCreateShader(Type);
-    Opengl->glShaderSource(Shader, 1, &Code, NULL);
-    Opengl->glCompileShader(Shader);
-    Opengl->glAttachShader(Program, Shader);
-    Opengl->glDeleteShader(Shader);
+Opengl_AttachShader(Opengl* opengl, u32 Program, u32 Type, char* Code) {
+    GLuint shader = opengl->glCreateShader(Type);
+    opengl->glShaderSource(shader, 1, &Code, NULL);
+    opengl->glCompileShader(shader);
+    opengl->glAttachShader(Program, shader);
+    opengl->glDeleteShader(shader);
 }
 
 // TODO: Change name to OpenglAliugnViewport
 static inline void 
-Opengl_AlignViewport(opengl* Opengl) 
+Opengl_AlignViewport(Opengl* opengl) 
 {
-    aabb2u Region = Renderer_CalcRenderRegion(Opengl->WindowDimensions.w, 
-                                              Opengl->WindowDimensions.h, 
-                                              Opengl->DesignDimensions.w, 
-                                              Opengl->DesignDimensions.h);
+    aabb2u Region = Renderer_CalcRenderRegion(opengl->window_dimensions.w, 
+                                              opengl->window_dimensions.h, 
+                                              opengl->design_dimensions.w, 
+                                              opengl->design_dimensions.h);
     
     u32 x, y, w, h;
     x = Region.min.x;
@@ -343,29 +343,29 @@ Opengl_AlignViewport(opengl* Opengl)
     w = width(Region);
     h = height(Region);
     
-    Opengl->glViewport(x, y, w, h);
-    Opengl->glScissor(x, y, w, h);
+    opengl->glViewport(x, y, w, h);
+    opengl->glScissor(x, y, w, h);
     
     // NOTE(Momo): Cache this to make calculations 
     // for window-space to render-space more CPU friendly.
-    Opengl->RenderRegion = Region;
+    opengl->render_region = Region;
 }
 
 
 
 
 static inline void 
-Opengl_Resize(opengl* Opengl,  
+Opengl_Resize(Opengl* opengl,  
               u16 WindowWidth, 
               u16 WindowHeight) 
 {
-    Opengl->WindowDimensions.w = WindowWidth;
-    Opengl->WindowDimensions.h = WindowHeight;
-    Opengl_AlignViewport(Opengl);
+    opengl->window_dimensions.w = WindowWidth;
+    opengl->window_dimensions.h = WindowHeight;
+    Opengl_AlignViewport(opengl);
 }
 
 static inline void 
-Opengl_AddPredefTextures(opengl* Opengl) {
+Opengl_AddPredefTextures(Opengl* opengl) {
     struct pixel { u8 E[4]; };
     
     
@@ -379,291 +379,291 @@ Opengl_AddPredefTextures(opengl* Opengl) {
         };
         
         GLuint DummyTexture;
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, &DummyTexture);
-        Opengl->glTextureStorage2D(DummyTexture, 1, GL_RGBA8, 2, 2);
-        Opengl->glTextureSubImage2D(DummyTexture, 
+        opengl->glCreateTextures(GL_TEXTURE_2D, 1, &DummyTexture);
+        opengl->glTextureStorage2D(DummyTexture, 1, GL_RGBA8, 2, 2);
+        opengl->glTextureSubImage2D(DummyTexture, 
                                     0, 0, 0, 
                                     2, 2, 
                                     GL_RGBA, 
                                     GL_UNSIGNED_BYTE, 
                                     &Pixels);
-        Opengl->Textures.push_item(DummyTexture);
+        opengl->textures.push_item(DummyTexture);
     }
     
     // NOTE(Momo): Blank texture setup
     {
         pixel Pixel = { 255, 255, 255, 255 };
         GLuint BlankTexture;
-        Opengl->glCreateTextures(GL_TEXTURE_2D, 1, &BlankTexture);
-        Opengl->glTextureStorage2D(BlankTexture, 1, GL_RGBA8, 1, 1);
-        Opengl->glTextureSubImage2D(BlankTexture, 
+        opengl->glCreateTextures(GL_TEXTURE_2D, 1, &BlankTexture);
+        opengl->glTextureStorage2D(BlankTexture, 1, GL_RGBA8, 1, 1);
+        opengl->glTextureSubImage2D(BlankTexture, 
                                     0, 0, 0, 
                                     1, 1, 
                                     GL_RGBA, GL_UNSIGNED_BYTE, 
                                     &Pixel);
-        Opengl->Textures.push_item(BlankTexture);
+        opengl->textures.push_item(BlankTexture);
     }
     
     
 }
 
 static inline b8
-Opengl_Init(opengl* Opengl,
+Opengl_Init(Opengl* opengl,
             Arena* arena,
-            v2u WindowDimensions) 
+            v2u window_dimensions) 
 {
-    Opengl->Textures.alloc(arena, Opengl_Max_Textures);
-    Opengl->DesignDimensions = WindowDimensions;
-    Opengl->WindowDimensions = WindowDimensions;
+    opengl->textures.alloc(arena, OPENGL_MAX_TEXTURES);
+    opengl->design_dimensions = window_dimensions;
+    opengl->window_dimensions = window_dimensions;
     
-    Opengl->glEnable(GL_DEPTH_TEST);
-    Opengl->glEnable(GL_SCISSOR_TEST);
+    opengl->glEnable(GL_DEPTH_TEST);
+    opengl->glEnable(GL_SCISSOR_TEST);
     
-    Opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
     
-    Opengl_AlignViewport(Opengl);
+    Opengl_AlignViewport(opengl);
     
     
     // NOTE(Momo): Setup VBO
-    Opengl->glCreateBuffers(OpenglVbo_Max, Opengl->Buffers);
-    Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Model], 
+    opengl->glCreateBuffers(OPENGL_VBO_MAX, opengl->buffers);
+    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_MODEL], 
                                  sizeof(QuadModel), 
                                  QuadModel, 
                                  0);
     
-    Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Indices], 
+    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_INDICES], 
                                  sizeof(QuadIndices), 
                                  QuadIndices, 
                                  0);
     
-    Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Texture], 
-                                 sizeof(v2f) * 4 * Opengl_Max_Entities, 
+    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_TEXTURE], 
+                                 sizeof(v2f) * 4 * OPENGL_MAX_ENTITIES, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
     
-    Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Colors], 
-                                 sizeof(v4f) * Opengl_Max_Entities, 
+    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_COLORS], 
+                                 sizeof(v4f) * OPENGL_MAX_ENTITIES, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
     
-    Opengl->glNamedBufferStorage(Opengl->Buffers[OpenglVbo_Transform], 
-                                 sizeof(m44f) * Opengl_Max_Entities, 
+    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_TRANSFORM], 
+                                 sizeof(m44f) * OPENGL_MAX_ENTITIES, 
                                  nullptr, 
                                  GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
-    Opengl->glCreateVertexArrays(1, &Opengl->Model);
-    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
-                                      OpenglVaoBind_Model, 
-                                      Opengl->Buffers[OpenglVbo_Model], 
+    opengl->glCreateVertexArrays(1, &opengl->model);
+    opengl->glVertexArrayVertexBuffer(opengl->model, 
+                                      OPENGL_VAO_BIND_MODEL, 
+                                      opengl->buffers[OPENGL_VBO_MODEL], 
                                       0, 
                                       sizeof(f32)*3);
     
-    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
-                                      OpenglVaoBind_Texture, 
-                                      Opengl->Buffers[OpenglVbo_Texture], 
+    opengl->glVertexArrayVertexBuffer(opengl->model, 
+                                      OPENGL_VAO_BIND_TEXTURE, 
+                                      opengl->buffers[OPENGL_VBO_TEXTURE], 
                                       0, 
                                       sizeof(f32) * 8);
     
-    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
-                                      OpenglVaoBind_Colors, 
-                                      Opengl->Buffers[OpenglVbo_Colors],  
+    opengl->glVertexArrayVertexBuffer(opengl->model, 
+                                      OPENGL_VAO_BIND_COLORS, 
+                                      opengl->buffers[OPENGL_VBO_COLORS],  
                                       0, 
                                       sizeof(v4f));
     
-    Opengl->glVertexArrayVertexBuffer(Opengl->Model, 
-                                      OpenglVaoBind_Transform, 
-                                      Opengl->Buffers[OpenglVbo_Transform], 
+    opengl->glVertexArrayVertexBuffer(opengl->model, 
+                                      OPENGL_VAO_BIND_TRANSFORM, 
+                                      opengl->buffers[OPENGL_VBO_TRANSFORM], 
                                       0, 
                                       sizeof(m44f));
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Model); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Model, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_MODEL); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_MODEL, 
                                       3, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       0);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Model, 
-                                       OpenglVaoBind_Model);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_MODEL, 
+                                       OPENGL_VAO_BIND_MODEL);
     
     // aColor
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Colors); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Colors, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_COLORS); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_COLORS, 
                                       4, 
                                       GL_FLOAT, GL_FALSE, 0);
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Colors, 
-                                       OpenglVaoBind_Colors);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_COLORS, 
+                                       OPENGL_VAO_BIND_COLORS);
     
-    Opengl->glVertexArrayBindingDivisor(Opengl->Model, OpenglVaoBind_Colors, 1); 
+    opengl->glVertexArrayBindingDivisor(opengl->model, OPENGL_VAO_BIND_COLORS, 1); 
     
     // aTexCoord
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture1); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Texture1, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_1); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TEXTURE_1, 
                                       2, 
                                       GL_FLOAT, 
-                                      GL_FALSE, 
+                                      GL_FALSE,
                                       sizeof(v2f) * 0);
     
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture2); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Texture2, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_2); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TEXTURE_2, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 1);
     
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture3); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Texture3, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_3); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TEXTURE_3, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 2);
     
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Texture4); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Texture4, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_4); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TEXTURE_4, 
                                       2, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(v2f) * 3);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Texture1, 
-                                       OpenglVaoBind_Texture);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TEXTURE_1, 
+                                       OPENGL_VAO_BIND_TEXTURE);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Texture2, 
-                                       OpenglVaoBind_Texture);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TEXTURE_2, 
+                                       OPENGL_VAO_BIND_TEXTURE);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Texture3, 
-                                       OpenglVaoBind_Texture);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TEXTURE_3, 
+                                       OPENGL_VAO_BIND_TEXTURE);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Texture4, 
-                                       OpenglVaoBind_Texture);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TEXTURE_4, 
+                                       OPENGL_VAO_BIND_TEXTURE);
     
-    Opengl->glVertexArrayBindingDivisor(Opengl->Model, 
-                                        OpenglVaoBind_Texture, 
+    opengl->glVertexArrayBindingDivisor(opengl->model, 
+                                        OPENGL_VAO_BIND_TEXTURE, 
                                         1); 
     
     
     // aTransform
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform1); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Transform1, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_1); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TRANSFORM_1, 
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 0 * 4);
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform2);
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Transform2, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_2);
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TRANSFORM_2, 
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 1 * 4);
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform3); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Transform3, 
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_3); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TRANSFORM_3, 
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 2 * 4);
-    Opengl->glEnableVertexArrayAttrib(Opengl->Model, OpenglAtb_Transform4); 
-    Opengl->glVertexArrayAttribFormat(Opengl->Model, 
-                                      OpenglAtb_Transform4,
+    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_4); 
+    opengl->glVertexArrayAttribFormat(opengl->model, 
+                                      OPENGL_ATB_TRANSFORM_4,
                                       4, 
                                       GL_FLOAT, 
                                       GL_FALSE, 
                                       sizeof(f32) * 3 * 4);
     
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Transform1, 
-                                       OpenglVaoBind_Transform);
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Transform2, 
-                                       OpenglVaoBind_Transform);
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Transform3, 
-                                       OpenglVaoBind_Transform);
-    Opengl->glVertexArrayAttribBinding(Opengl->Model, 
-                                       OpenglAtb_Transform4, 
-                                       OpenglVaoBind_Transform);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TRANSFORM_1, 
+                                       OPENGL_VAO_BIND_TRANSFORM);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TRANSFORM_2, 
+                                       OPENGL_VAO_BIND_TRANSFORM);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TRANSFORM_3, 
+                                       OPENGL_VAO_BIND_TRANSFORM);
+    opengl->glVertexArrayAttribBinding(opengl->model, 
+                                       OPENGL_ATB_TRANSFORM_4, 
+                                       OPENGL_VAO_BIND_TRANSFORM);
     
-    Opengl->glVertexArrayBindingDivisor(Opengl->Model, 
-                                        OpenglVaoBind_Transform, 
+    opengl->glVertexArrayBindingDivisor(opengl->model, 
+                                        OPENGL_VAO_BIND_TRANSFORM, 
                                         1); 
     
     // NOTE(Momo): alpha blend
-    Opengl->glEnable(GL_BLEND);
-    Opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    opengl->glEnable(GL_BLEND);
+    opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // NOTE(Momo): Setup indices
-    Opengl->glVertexArrayElementBuffer(Opengl->Model, 
-                                       Opengl->Buffers[OpenglVbo_Indices]);
+    opengl->glVertexArrayElementBuffer(opengl->model, 
+                                       opengl->buffers[OPENGL_VBO_INDICES]);
     
     
     
-    // NOTE(Momo): Setup Shader Program
-    Opengl->Shader = Opengl->glCreateProgram();
-    Opengl_AttachShader(Opengl, 
-                        Opengl->Shader, 
+    // NOTE(Momo): Setup shader Program
+    opengl->shader = opengl->glCreateProgram();
+    Opengl_AttachShader(opengl, 
+                        opengl->shader, 
                         GL_VERTEX_SHADER, 
                         (char*)OpenglVertexShader);
-    Opengl_AttachShader(Opengl, 
-                        Opengl->Shader, 
+    Opengl_AttachShader(opengl, 
+                        opengl->shader, 
                         GL_FRAGMENT_SHADER, 
                         (char*)OpenglFragmentShader);
     
-    Opengl->glLinkProgram(Opengl->Shader);
+    opengl->glLinkProgram(opengl->shader);
     
     GLint Result;
-    Opengl->glGetProgramiv(Opengl->Shader, GL_LINK_STATUS, &Result);
+    opengl->glGetProgramiv(opengl->shader, GL_LINK_STATUS, &Result);
     if (Result != GL_TRUE) {
         char msg[KIBIBYTE];
-        Opengl->glGetProgramInfoLog(Opengl->Shader, KIBIBYTE, nullptr, msg);
+        opengl->glGetProgramInfoLog(opengl->shader, KIBIBYTE, nullptr, msg);
         // TODO(Momo): Log?
         return false;
     }
-    Opengl_AddPredefTextures(Opengl);
-    Opengl->IsInitialized = true;
+    Opengl_AddPredefTextures(opengl);
+    opengl->is_initialized = true;
     return true;
 }
 
 
 static inline void 
-Opengl_DrawInstances(opengl* Opengl, 
-                     GLuint Texture, 
+Opengl_DrawInstances(Opengl* opengl, 
+                     GLuint texture, 
                      u32 InstancesToDraw, 
                      u32 IndexToDrawFrom) 
 {
-    ASSERT(InstancesToDraw + IndexToDrawFrom < Opengl_Max_Entities);
+    ASSERT(InstancesToDraw + IndexToDrawFrom < OPENGL_MAX_ENTITIES);
     if (InstancesToDraw > 0) {
-        Opengl->glBindTexture(GL_TEXTURE_2D, Texture);
-        Opengl->glTexParameteri(GL_TEXTURE_2D, 
+        opengl->glBindTexture(GL_TEXTURE_2D, texture);
+        opengl->glTexParameteri(GL_TEXTURE_2D, 
                                 GL_TEXTURE_MIN_FILTER, 
                                 GL_NEAREST);
-        Opengl->glTexParameteri(GL_TEXTURE_2D, 
+        opengl->glTexParameteri(GL_TEXTURE_2D, 
                                 GL_TEXTURE_MAG_FILTER, 
                                 GL_NEAREST);
-        Opengl->glEnable(GL_BLEND);
-        Opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        Opengl->glBindVertexArray(Opengl->Model);
-        Opengl->glUseProgram(Opengl->Shader);
+        opengl->glEnable(GL_BLEND);
+        opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        opengl->glBindVertexArray(opengl->model);
+        opengl->glUseProgram(opengl->shader);
         
-        Opengl->glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
+        opengl->glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
                                                     6, 
                                                     GL_UNSIGNED_BYTE, 
                                                     nullptr, 
@@ -674,14 +674,14 @@ Opengl_DrawInstances(opengl* Opengl,
 
 
 static inline renderer_texture_handle
-Opengl_AddTexture(opengl* Opengl,
+Opengl_AddTexture(Opengl* opengl,
                   u32 Width,
                   u32 Height,
                   void* Pixels) 
 {
     renderer_texture_handle Ret = {};
     
-    if (Opengl->Textures.remaining() == 0) {
+    if (opengl->textures.remaining() == 0) {
         Ret.Success = false;
         Ret.Id = 0;
         return Ret;
@@ -690,17 +690,17 @@ Opengl_AddTexture(opengl* Opengl,
     
     GLuint Entry;
     
-    Opengl->glCreateTextures(GL_TEXTURE_2D, 
+    opengl->glCreateTextures(GL_TEXTURE_2D, 
                              1, 
                              &Entry);
     
-    Opengl->glTextureStorage2D(Entry, 
+    opengl->glTextureStorage2D(Entry, 
                                1, 
                                GL_RGBA8, 
                                Width, 
                                Height);
     
-    Opengl->glTextureSubImage2D(Entry, 
+    opengl->glTextureSubImage2D(Entry, 
                                 0, 
                                 0, 
                                 0, 
@@ -710,23 +710,23 @@ Opengl_AddTexture(opengl* Opengl,
                                 GL_UNSIGNED_BYTE, 
                                 Pixels);
     
-    Ret.Id = Opengl->Textures.count;
+    Ret.Id = opengl->textures.count;
     Ret.Success = true;
-    Opengl->Textures.push_item(Entry);
+    opengl->textures.push_item(Entry);
     return Ret;
 }
 
 static inline void
-Opengl_ClearTextures(opengl* Opengl) {
-    Opengl->glDeleteTextures(Opengl->Textures.count, 
-                             Opengl->Textures.data);
-    Opengl->Textures.clear();
-    Opengl_AddPredefTextures(Opengl);
+Opengl_ClearTextures(Opengl* opengl) {
+    opengl->glDeleteTextures(opengl->textures.count, 
+                             opengl->textures.data);
+    opengl->textures.clear();
+    Opengl_AddPredefTextures(opengl);
 }
 
 
 static inline void
-Opengl_Render(opengl* Opengl, Mailbox* Commands) 
+Opengl_Render(Opengl* opengl, Mailbox* Commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
     GLuint CurrentTexture = 0;
@@ -734,7 +734,7 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
     u32 LastDrawnInstanceIndex = 0;
     u32 CurrentInstanceIndex = 0;
     
-    Opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     for (u32 i = 0; i < Commands->entry_count; ++i) {
         Mailbox_Entry_Header* Entry = Commands->get_entry(i);
@@ -744,15 +744,15 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 auto* Data = (renderer_command_set_design_resolution*)
                     Commands->get_entry_data(Entry);
                 
-                Opengl->DesignDimensions.w = Data->Width;
-                Opengl->DesignDimensions.h = Data->Height;
-                Opengl_AlignViewport(Opengl);
+                opengl->design_dimensions.w = Data->Width;
+                opengl->design_dimensions.h = Data->Height;
+                Opengl_AlignViewport(opengl);
             } break;
             case RendererCommandType_SetBasis: {
                 auto* Data = (renderer_command_set_basis*)
                     Commands->get_entry_data(Entry);
                 
-                Opengl_DrawInstances(Opengl, 
+                Opengl_DrawInstances(opengl, 
                                      CurrentTexture, 
                                      InstancesToDrawCount, 
                                      LastDrawnInstanceIndex);
@@ -760,10 +760,10 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 InstancesToDrawCount = 0;
                 
                 auto Result = transpose(Data->Basis);
-                GLint uProjectionLoc = Opengl->glGetUniformLocation(Opengl->Shader,
+                GLint uProjectionLoc = opengl->glGetUniformLocation(opengl->shader,
                                                                     "uProjection");
                 
-                Opengl->glProgramUniformMatrix4fv(Opengl->Shader, 
+                opengl->glProgramUniformMatrix4fv(opengl->shader, 
                                                   uProjectionLoc, 
                                                   1, 
                                                   GL_FALSE, 
@@ -772,7 +772,7 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
             case RendererCommandType_ClearColor: {
                 auto* Data = (renderer_command_clear_color*)
                     Commands->get_entry_data(Entry);
-                Opengl->glClearColor(Data->Colors.r, 
+                opengl->glClearColor(Data->Colors.r, 
                                      Data->Colors.g, 
                                      Data->Colors.b, 
                                      Data->Colors.a);
@@ -781,13 +781,13 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 auto* Data = (renderer_command_draw_quad*)
                     Commands->get_entry_data(Entry);
                 
-                GLuint OpenglTextureHandle = *(Opengl->Textures + OpenglPredefTexture_Blank);
+                GLuint OpenglTextureHandle = *(opengl->textures + OPENGL_PREDEF_TEXTURE_BLANK);
                 
                 // NOTE(Momo): If the currently set texture is not same as the 
                 // currently processed texture, batch draw all instances before 
                 // the current instance.
                 if (CurrentTexture != OpenglTextureHandle) {
-                    Opengl_DrawInstances(Opengl, 
+                    Opengl_DrawInstances(opengl, 
                                          CurrentTexture, 
                                          InstancesToDrawCount, 
                                          LastDrawnInstanceIndex);
@@ -797,19 +797,19 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 }
                 
                 // NOTE(Momo): Update the current instance values
-                Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Colors], 
+                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_COLORS], 
                                              CurrentInstanceIndex * sizeof(v4f),
                                              sizeof(v4f), 
                                              &Data->Colors);
                 
-                Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Texture],
+                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TEXTURE],
                                              CurrentInstanceIndex * sizeof(quad2f),
                                              sizeof(QuadUV),
                                              &QuadUV);
                 
                 // NOTE(Momo): Transpose; game is row-major
                 m44f Transform = transpose(Data->Transform);
-                Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
+                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TRANSFORM], 
                                              CurrentInstanceIndex* sizeof(m44f), 
                                              sizeof(m44f), 
                                              &Transform);
@@ -822,12 +822,12 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 auto* Data = (renderer_command_draw_textured_quad*)
                     Commands->get_entry_data(Entry);
                 
-                GLuint OpenglTextureHandle = *(Opengl->Textures + Data->TextureHandle.Id); 
+                GLuint OpenglTextureHandle = *(opengl->textures + Data->TextureHandle.Id); 
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently
                 // processed texture, batch draw all instances before the current instance.
                 if (CurrentTexture != OpenglTextureHandle) {
-                    Opengl_DrawInstances(Opengl, 
+                    Opengl_DrawInstances(opengl, 
                                          CurrentTexture, 
                                          InstancesToDrawCount, 
                                          LastDrawnInstanceIndex);
@@ -837,19 +837,19 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
                 }
                 
                 // NOTE(Momo): Update the current instance values
-                Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Colors], 
+                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_COLORS], 
                                              CurrentInstanceIndex * sizeof(v4f),
                                              sizeof(v4f), 
                                              &Data->Colors);
                 
-                Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Texture],
+                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TEXTURE],
                                              CurrentInstanceIndex * sizeof(quad2f),
                                              sizeof(quad2f),
                                              &Data->TextureCoords);
                 
                 // NOTE(Momo): Transpose; game is row-major
                 m44f Transform = transpose(Data->Transform);
-                Opengl->glNamedBufferSubData(Opengl->Buffers[OpenglVbo_Transform], 
+                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TRANSFORM], 
                                              CurrentInstanceIndex* sizeof(m44f), 
                                              sizeof(m44f), 
                                              &Transform);
@@ -862,7 +862,7 @@ Opengl_Render(opengl* Opengl, Mailbox* Commands)
         }
     }
     
-    Opengl_DrawInstances(Opengl, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+    Opengl_DrawInstances(opengl, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
     
 }
 
