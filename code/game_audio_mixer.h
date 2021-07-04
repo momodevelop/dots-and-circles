@@ -132,7 +132,7 @@ Game_Audio_Mixer::update(Platform_Audio* audio)
             if (instance->is_playing == false) {
                 continue;
             }
-            Sound* sound = G_Assets->get_sound(instance->sound_id);
+            Sound* sound = g_assets->get_sound(instance->sound_id);
             
             for (u32 K = 0; K < audio->channels; ++K) {
                 sample_out[K] += s16(sound->data[instance->current_offset++] * 

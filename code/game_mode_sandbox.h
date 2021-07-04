@@ -22,7 +22,7 @@ struct Game_Mode_Sandbox {
 
 static inline void 
 init_sandbox_mode(Permanent_State* perm_state) {
-    G_Platform->hide_cursor();
+    g_platform->hide_cursor();
     
     Game_Mode_Sandbox* mode = perm_state->sandbox_mode;     
     // NOTE(Momo): Init camera
@@ -30,15 +30,15 @@ init_sandbox_mode(Permanent_State* perm_state) {
         mode->camera.position = v3f::create(0.f, 0.f, 0.f);
         mode->camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
         mode->camera.color = C4F_GREY2;
-        mode->camera.dimensions = v3f::create(Game_DesignWidth,
-                                              Game_DesignHeight,
+        mode->camera.dimensions = v3f::create(GAME_DESIGN_WIDTH,
+                                              GAME_DESIGN_HEIGHT,
                                               Game_DesignDepth);
     }
     
     
     const f32 bullet_radius = 8.f;
-    f32 start_x = Game_DesignWidth * -0.5f + bullet_radius;
-    f32 start_y = Game_DesignHeight * -0.5f + bullet_radius;
+    f32 start_x = GAME_DESIGN_WIDTH * -0.5f + bullet_radius;
+    f32 start_y = GAME_DESIGN_HEIGHT * -0.5f + bullet_radius;
     f32 offset_x = 0.f;
     f32 offset_y = 0.f;
     for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
@@ -47,7 +47,7 @@ init_sandbox_mode(Permanent_State* perm_state) {
         b->hit_circle = circle2f::create({}, bullet_radius);
         
         offset_x += bullet_radius * 2; // padding
-        if(offset_x >= Game_DesignWidth) {
+        if(offset_x >= GAME_DESIGN_WIDTH) {
             offset_x = 0.f;
             offset_y += bullet_radius * 2;
         }
@@ -68,9 +68,9 @@ update_sandbox_mode(Permanent_State* perm_state,
     Game_Mode_Sandbox* mode = perm_state->sandbox_mode;     
     
     // NOTE(Momo): Update
-    if (G_Input->button_switch.is_poked()) {
+    if (g_input->button_switch.is_poked()) {
         mode->prev_mouse_pos = mode->cur_mouse_pos;
-        mode->cur_mouse_pos = mode->camera.screen_to_world(G_Input->design_mouse_pos);
+        mode->cur_mouse_pos = mode->camera.screen_to_world(g_input->design_mouse_pos);
         ++mode->click_count;
     }
     
@@ -135,7 +135,7 @@ update_sandbox_mode(Permanent_State* perm_state,
     // NOTE(Momo) Render Lines
     if (mode->click_count >= 2) {
         z_order = 10.f;
-        Renderer_DrawLine2f(G_Renderer, 
+        Renderer_DrawLine2f(g_renderer, 
                             bonk_line,
                             mode->player_circle_radius * 2,
                             C4F_GREEN,
@@ -143,7 +143,7 @@ update_sandbox_mode(Permanent_State* perm_state,
         
         circle2f start_circle = circle2f::create(bonk_line.min, 
                                                  mode->player_circle_radius);
-        Renderer_DrawCircle2f(G_Renderer,
+        Renderer_DrawCircle2f(g_renderer,
                               start_circle,
                               1.f, 
                               8, 
@@ -153,7 +153,7 @@ update_sandbox_mode(Permanent_State* perm_state,
         
         circle2f end_circle = circle2f::create(bonk_line.max, 
                                                mode->player_circle_radius);
-        Renderer_DrawCircle2f(G_Renderer,
+        Renderer_DrawCircle2f(g_renderer,
                               end_circle,
                               1.f, 
                               8, 

@@ -21,8 +21,8 @@ struct Game_Camera {
 void
 Game_Camera::set() {
     aabb3f center_box = aabb3f::create_centered(this->dimensions, this->anchor);
-    Renderer_ClearColor(G_Renderer, this->color);
-    Renderer_SetOrthoCamera(G_Renderer, 
+    Renderer_ClearColor(g_renderer, this->color);
+    Renderer_SetOrthoCamera(g_renderer, 
                             this->position, 
                             center_box);
 }

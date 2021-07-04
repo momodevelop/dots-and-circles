@@ -46,7 +46,7 @@ render_death_bomb(Game_Mode_Main* Mode)
 {
     Death_Bomb* death_bomb = &Mode->death_bomb;
     // Circle?
-    Renderer_DrawCircle2f(G_Renderer,
+    Renderer_DrawCircle2f(g_renderer,
                           circle2f::create(death_bomb->position, death_bomb->radius),
                           5.f, 32, C4F_WHITE, ZLayDeathBomb);
 }

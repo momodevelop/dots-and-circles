@@ -66,8 +66,8 @@ typedef f32  GLfloat;
 
 #define OPENGL_FUNCTION_DECL(Name) opengl_func_##Name
 #define OPENGL_FUNCTION_PTR(Name) OPENGL_FUNCTION_DECL(Name)* Name
-#define OpenglDebugCallbackFunc(Name) void Name(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *msg,const void *userParam)
-typedef OpenglDebugCallbackFunc(GLDEBUGPROC);
+#define OPENGL_DEBUG_CALLBACK_FUNC(Name) void Name(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *msg,const void *userParam)
+typedef OPENGL_DEBUG_CALLBACK_FUNC(GLDEBUGPROC);
 
 typedef void    OPENGL_FUNCTION_DECL(glEnable)(GLenum cap);
 typedef void    OPENGL_FUNCTION_DECL(glDisable)(GLenum cap);

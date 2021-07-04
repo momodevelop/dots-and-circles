@@ -5,16 +5,16 @@
 
 
 // NOTE(Momo): Globals related to things from platform layer
-Platform_API* G_Platform;
+Platform_API* g_platform;
 Platform_Log* G_Log;
-Mailbox* G_Renderer;
-Platform_Input* G_Input;
-Arena* G_Scratch;
+Mailbox* g_renderer;
+Platform_Input* g_input;
+Arena* g_scratch;
 
 
 // NOTE(Momo): Game related globals
 // Need to forward declare these
 struct Assets;
-Assets* G_Assets;
+Assets* g_assets;
 
 #endif //GAME_GLOBALS_H

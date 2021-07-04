@@ -54,8 +54,8 @@ Debug_Inspector::end()
     for (u32 I = 0; I < this->entries.count; ++I) {
         String_Buffer* entry = this->entries + I;
         v3f position = { 
-            -Game_DesignWidth * 0.5f + 10.f, 
-            (Game_DesignHeight * 0.5f - 32.f) + offset_y, 
+            -GAME_DESIGN_WIDTH * 0.5f + 10.f, 
+            (GAME_DESIGN_HEIGHT * 0.5f - 32.f) + offset_y, 
             91.f
         }; 
         

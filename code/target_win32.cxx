@@ -1019,7 +1019,7 @@ PLATFORM_GET_PERFORMANCE_COUNTER_DECL(Win32_GetPerformanceCounterU64) {
 static inline 
 PLATFORM_OPEN_ASSET_FILE_DECL(Win32_OpenAssetFile) {
     Platform_File_Handle Ret = {}; 
-    const char* Path = Game_AssetFileName;
+    const char* Path = GAME_ASSET_FILENAME;
     
     // Check if there are free handlers to go around
     if (G_State->HandleFreeCount == 0) {
@@ -1271,8 +1271,8 @@ WinMain(HINSTANCE Instance,
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     ImmDisableIME((DWORD)-1);
     HWND Window = Win32_CreateWindow(Instance, 
-                                    Game_DesignWidth,
-                                    Game_DesignHeight,
+                                    GAME_DESIGN_WIDTH,
+                                    GAME_DESIGN_HEIGHT,
                                     "Dots and Circles");
     if (!Window) { 
         Win32_Log("[Win32::Main] Cannot create window");
@@ -1330,8 +1330,8 @@ WinMain(HINSTANCE Instance,
 
     // Allocate back buffer
     if (!Win32_InitScreenBuffer(&State->ScreenBuffer, 
-                                Game_DesignWidth, 
-                                Game_DesignHeight)) 
+                                GAME_DESIGN_WIDTH, 
+                                GAME_DESIGN_HEIGHT)) 
     {
         Win32_Log("[Win32::Main] Cannot initialize screen buffer");                           
         return 1;

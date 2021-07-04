@@ -60,12 +60,12 @@ Debug_Console::init(Arena* arena, u32 max_commands)
     
     transit_timer = Timer::create(0.25f);
     
-    dimensions = v3f::create(Game_DesignWidth, 240.f, 1.f);
+    dimensions = v3f::create(GAME_DESIGN_WIDTH, 240.f, 1.f);
     start_position = v3f::create(0.f, 
-                                 -Game_DesignHeight/2 - dimensions.h/2,
+                                 -GAME_DESIGN_HEIGHT/2 - dimensions.h/2,
                                  z_position);
     end_position = v3f::create(0.f, 
-                               -Game_DesignHeight/2 + dimensions.h/2,
+                               -GAME_DESIGN_HEIGHT/2 + dimensions.h/2,
                                z_position);
     position = v3f::create();
     
@@ -146,7 +146,7 @@ Debug_Console::remove_command(String key) {
 void 
 Debug_Console::update(f32 dt) 
 {
-    if (G_Input->button_console.is_poked()) {
+    if (g_input->button_console.is_poked()) {
         is_active = !is_active; 
     }
     
@@ -159,14 +159,14 @@ Debug_Console::update(f32 dt)
     
     if (is_active) {
         transit_timer.tick(dt);
-        if (G_Input->characters.count > 0 && 
-            G_Input->characters.count <= input_line.text.remaining()) 
+        if (g_input->characters.count > 0 && 
+            g_input->characters.count <= input_line.text.remaining()) 
         {  
-            input_line.text.push(G_Input->characters.str);
+            input_line.text.push(g_input->characters.str);
         }
         
         // Remove character backspace logic
-        if (G_Input->button_back.is_down()) {
+        if (g_input->button_back.is_down()) {
             if(!is_start_pop) {
                 pop();
                 is_start_pop = true;
@@ -190,7 +190,7 @@ Debug_Console::update(f32 dt)
         
         // Execute command
         String input_line_str = input_line.text.str;
-        if (G_Input->button_confirm.is_poked()) {
+        if (g_input->button_confirm.is_poked()) {
             push_info(input_line_str, C4F_WHITE);
             
             u32 min = 0;
@@ -234,7 +234,7 @@ Debug_Console::render()
         return;
     }
     
-    Font* font= G_Assets->get_font(FONT_DEFAULT);
+    Font* font= g_assets->get_font(FONT_DEFAULT);
     f32 bottom = position.y - dimensions.h * 0.5f;
     f32 left = position.x - dimensions.w * 0.5f;
     f32 line_height = dimensions.h / (info_lines.count + 1);
@@ -246,7 +246,7 @@ Debug_Console::render()
     {
         m44f s = m44f::create_scale(dimensions);
         m44f p = m44f::create_translation(position);
-        Renderer_DrawQuad(G_Renderer, 
+        Renderer_DrawQuad(g_renderer, 
                           C4F_GREY3, 
                           p* s);
     }
@@ -258,7 +258,7 @@ Debug_Console::render()
                                           position.z + 0.01f);
         
         
-        Renderer_DrawQuad(G_Renderer, 
+        Renderer_DrawQuad(g_renderer, 
                           C4F_GREY2, 
                           p* s);
     }

@@ -5,46 +5,46 @@
 
 
 // NOTE(Momo):  Atlas stuff ////////////////////////
-enum atlas_context_type {
-    AtlasContextType_Image,
-    AtlasContextType_Font,
+enum Atlas_Context_Type {
+    ATLAS_CONTEXT_TYPE_IMAGE,
+    ATLAS_CONTEXT_TYPE_FONT,
 };
 
-struct atlas_context_image {
-    atlas_context_type Type;
-    const char* Filename;
-    Image_ID Id;
-    Texture_ID TextureId;
-    u8* Texture;
+struct Atlas_Context_Image {
+    Atlas_Context_Type type;
+    const char* filename;
+    Image_ID id;
+    Texture_ID texture_id;
+    u8* texture;
 };
 
 
-struct atlas_context_font {
-    atlas_context_type Type;
-    Font_ID FontId;
-    Texture_ID TextureId;
-    Image_ID ImageId;
-    f32 RasterScale;
-    u32 Codepoint;
-    loaded_font* LoadedFont;
-    u8* Texture;
+struct Atlas_Context_Font {
+    Atlas_Context_Type type;
+    Font_ID font_id;
+    Texture_ID texture_id;
+    Image_ID image_id;
+    f32 raster_scale;
+    u32 codepoint;
+    Loaded_Font* loaded_font;
+    u8* texture;
 };    
 
 
 static inline void 
-Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
-                           u8* TextureMemory, aabb2u TextureAabb) 
+write_sub_texture_to_atlas(u8** atlas_memory, u32 atlas_width, u32 atlas_height,
+                           u8* texture_memory, aabb2u texture_aabb) 
 {
     s32 j = 0;
-    u32 TextureAabbW = width(TextureAabb);
-    u32 TextureAabbH = height(TextureAabb);
+    u32 texture_aabb_w = width(texture_aabb);
+    u32 texture_aabb_h = height(texture_aabb);
     
-    for (u32 y = TextureAabb.min.y; y < TextureAabb.min.y + TextureAabbH; ++y) {
-        for (u32 x = TextureAabb.min.x; x < TextureAabb.min.x + TextureAabbW; ++x) {
-            u32 Index = (x + y * AtlasWidth) * 4;
-            ASSERT(Index < (AtlasWidth * AtlasHeight * 4));
+    for (u32 y = texture_aabb.min.y; y < texture_aabb.min.y + texture_aabb_h; ++y) {
+        for (u32 x = texture_aabb.min.x; x < texture_aabb.min.x + texture_aabb_w; ++x) {
+            u32 Index = (x + y * atlas_width) * 4;
+            ASSERT(Index < (atlas_width * atlas_height * 4));
             for (u32 c = 0; c < 4; ++c) {
-                (*AtlasMemory)[Index + c] = TextureMemory[j++];
+                (*atlas_memory)[Index + c] = texture_memory[j++];
             }
         }
     }
@@ -52,35 +52,35 @@ Tba_WriteSubTextureToAtlas(u8** AtlasMemory, u32 AtlasWidth, u32 AtlasHeight,
 
 
 static inline u8*
-Tba_GenerateAtlas(Arena* arena, 
-                  aabb2u* Aabbs, 
-                  void* UserDatas[],
-                  u32 AabbCount, 
-                  u32 Width, 
-                  u32 Height) 
+generate_atlas(Arena* arena, 
+               aabb2u* aabbs, 
+               void* user_datas[],
+               u32 aabb_count, 
+               u32 width, 
+               u32 height) 
 {
-    u32 AtlasSize = Width * Height * 4;
-    u8* AtlasMemory = (u8*)arena->push_block(AtlasSize);
-    if (!AtlasMemory) {
+    u32 atlas_size = width * height * 4;
+    u8* atlas_memory = (u8*)arena->push_block(atlas_size);
+    if (!atlas_memory) {
         return 0;
     }
     
-    for (u32 I = 0; I < AabbCount; ++I) {
-        aabb2u Aabb = Aabbs[I];
+    for (u32 I = 0; I < aabb_count; ++I) {
+        aabb2u aabb = aabbs[I];
         
-        auto Type = *(atlas_context_type*)UserDatas[I];
+        auto Type = *(Atlas_Context_Type*)user_datas[I];
         switch(Type) {
-            case AtlasContextType_Image: {
-                Arena_Mark Scratch = arena->mark();
-                defer { Scratch.revert(); };
+            case ATLAS_CONTEXT_TYPE_IMAGE: {
+                Arena_Mark scratch = arena->mark();
+                defer { scratch.revert(); };
                 
-                auto* Context = (atlas_context_image*)UserDatas[I];
+                auto* context = (Atlas_Context_Image*)user_datas[I];
                 s32 W, H, C;
                 
-                read_file_result FileMem = {};
-                if(!Tba_ReadFileIntoMemory(&FileMem,
-                                           arena, 
-                                           Context->Filename)){
+                Read_File_Result file_mem = {};
+                if(!read_file_into_memory(&file_mem,
+                                          arena, 
+                                          context->filename)){
                     return nullptr;
                 }
                 
@@ -90,44 +90,44 @@ Tba_GenerateAtlas(Arena* arena,
                 //
                 // Github Issue: https://github.com/nothings/stb/issues/58          
                 //
-                u8* TextureMemory = stbi_load_from_memory((u8*)FileMem.Data, 
-                                                          FileMem.Size, 
-                                                          &W, &H, &C, 0);
+                u8* texture_memory = stbi_load_from_memory((u8*)file_mem.data, 
+                                                           file_mem.size, 
+                                                           &W, &H, &C, 0);
                 
-                defer { stbi_image_free(TextureMemory); };
-                Tba_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, TextureMemory, Aabb);
+                defer { stbi_image_free(texture_memory); };
+                write_sub_texture_to_atlas(&atlas_memory, width, height, texture_memory, aabb);
                 
             } break;
-            case AtlasContextType_Font: {
-                auto* Context = (atlas_context_font*)UserDatas[I]; 
+            case ATLAS_CONTEXT_TYPE_FONT: {
+                auto* context = (Atlas_Context_Font*)user_datas[I]; 
                 const u32 channels = 4;
                 
                 s32 W, H;
-                u8* FontTextureOneCh = stbtt_GetCodepointTexture(&Context->LoadedFont->Info, 
-                                                                 Context->RasterScale,
-                                                                 Context->RasterScale, 
-                                                                 Context->Codepoint, 
-                                                                 &W, &H, nullptr, nullptr);
-                defer { stbtt_FreeTexture( FontTextureOneCh, nullptr ); };
+                u8* font_texture_one_ch = stbtt_GetCodepointTexture(&context->loaded_font->info, 
+                                                                    context->raster_scale,
+                                                                    context->raster_scale, 
+                                                                    context->codepoint, 
+                                                                    &W, &H, nullptr, nullptr);
+                defer { stbtt_FreeTexture( font_texture_one_ch, nullptr ); };
                 
-                u32 TextureDimensions = (u32)(W * H);
-                if (TextureDimensions == 0) 
+                u32 texture_dimensions = (u32)(W * H);
+                if (texture_dimensions == 0) 
                     continue;
                 
-                Arena_Mark Scratch = arena->mark();
-                u8* FontTexture = (u8*)arena->push_block(TextureDimensions*channels); 
-                if (!FontTexture) {
+                Arena_Mark scratch = arena->mark();
+                u8* font_texture = (u8*)arena->push_block(texture_dimensions*channels); 
+                if (!font_texture) {
                     return nullptr;
                 }
-                defer { Scratch.revert(); };
+                defer { scratch.revert(); };
                 
-                u8* FontTextureItr = FontTexture;
-                for (u32 j = 0, k = 0; j < TextureDimensions; ++j ){
+                u8* font_texture_itr = font_texture;
+                for (u32 j = 0, k = 0; j < texture_dimensions; ++j ){
                     for (u32 l = 0; l < channels; ++l ) {
-                        FontTextureItr[k++] = FontTextureOneCh[j];
+                        font_texture_itr[k++] = font_texture_one_ch[j];
                     }
                 }
-                Tba_WriteSubTextureToAtlas(&AtlasMemory, Width, Height, FontTexture, Aabb);
+                write_sub_texture_to_atlas(&atlas_memory, width, height, font_texture, aabb);
                 
             } break;
             
@@ -135,7 +135,7 @@ Tba_GenerateAtlas(Arena* arena,
         
     }
     
-    return AtlasMemory;
+    return atlas_memory;
     
 }
 

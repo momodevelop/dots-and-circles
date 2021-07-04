@@ -8,10 +8,10 @@ cmd_jump(Debug_Console* console, void* context, String args) {
     auto* debug_state = (Debug_State*)context;
     Permanent_State* perm_state = debug_state->perm_state;
     
-    defer{ G_Scratch->clear(); };
+    defer{ g_scratch->clear(); };
     
     String buffer = {};
-    String_Split_Result arg_list = args.split(G_Scratch, ' ');
+    String_Split_Result arg_list = args.split(g_scratch, ' ');
     if ( arg_list.item_count != 2 ) {
         // Expect two arguments
         buffer.init("Expected only 2 arguments");
@@ -59,15 +59,15 @@ GameUpdateFunc(GameUpdate)
     Arena scratch = {};
     {
         // Let's say we want to time this block
-        G_Platform = platform_api;
+        g_platform = platform_api;
         G_Log = platform_api->log;
-        G_Renderer = render_commands;
-        G_Input = platform_input;
+        g_renderer = render_commands;
+        g_input = platform_input;
         if (!scratch.init(game_memory->scratch_memory, game_memory->scratch_memory_size)) {
             G_Log("Cannot initialize Scratch Memory");
             return false;
         }
-        G_Scratch = &scratch;
+        g_scratch = &scratch;
     }
     
     
@@ -91,9 +91,9 @@ GameUpdateFunc(GameUpdate)
         perm_state->is_initialized = true;
         perm_state->is_paused = false;
         
-        Renderer_SetDesignResolution(G_Renderer,
-                                     Game_DesignWidth, 
-                                     Game_DesignHeight);
+        Renderer_SetDesignResolution(g_renderer,
+                                     GAME_DESIGN_WIDTH, 
+                                     GAME_DESIGN_HEIGHT);
         perm_state->game_speed = 1.f;
         G_Log("[Permanent] Init End\n");
         
@@ -113,7 +113,7 @@ GameUpdateFunc(GameUpdate)
             G_Log("[Transient] Failed to initialize assets\n");
             return false;
         }
-        G_Assets = &tran_state->assets;
+        g_assets = &tran_state->assets;
         
         success =  tran_state->mixer.init(1.f, 32, &tran_state->arena);
         if (!success) {
@@ -160,7 +160,7 @@ GameUpdateFunc(GameUpdate)
     // NOTE(Momo): Input
     // TODO(Momo): Consider putting everything into a Debug_Update()
     // Or, change seperate variable state into inspector and update seperately
-    if (G_Input->button_inspector.is_poked()) {
+    if (g_input->button_inspector.is_poked()) {
         debug_state->inspector.is_active = !debug_state->inspector.is_active;
     }
     //START_PROFILING(Test);
@@ -170,7 +170,7 @@ GameUpdateFunc(GameUpdate)
     
     
     // NOTE(Momo): Pause
-    if (G_Input->button_pause.is_poked()) {
+    if (g_input->button_pause.is_poked()) {
         perm_state->is_paused = !perm_state->is_paused;
     }
     if (perm_state->is_paused) {
@@ -178,10 +178,10 @@ GameUpdateFunc(GameUpdate)
     }
     
     // NOTE(Momo): speed up/down
-    if (G_Input->button_speed_down.is_poked()) {
+    if (g_input->button_speed_down.is_poked()) {
         perm_state->game_speed -= 0.1f;
     }
-    if (G_Input->button_speed_up.is_poked()) {
+    if (g_input->button_speed_up.is_poked()) {
         perm_state->game_speed += 0.1f;
     }
     dt *= perm_state->game_speed;

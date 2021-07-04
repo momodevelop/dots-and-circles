@@ -38,10 +38,10 @@ update_bullets(Game_Mode_Main* mode,
     auto slear_if_lamb = [&](Bullet* B) {
         B->position += B->direction * B->speed * dt;
         
-        return B->position.x <= -Game_DesignWidth * 0.5f - B->hit_circle.radius || 
-            B->position.x >= Game_DesignWidth * 0.5f + B->hit_circle.radius ||
-            B->position.y <= -Game_DesignHeight * 0.5f - B->hit_circle.radius ||
-            B->position.y >= Game_DesignHeight * 0.5f + B->hit_circle.radius;
+        return B->position.x <= -GAME_DESIGN_WIDTH * 0.5f - B->hit_circle.radius || 
+            B->position.x >= GAME_DESIGN_WIDTH * 0.5f + B->hit_circle.radius ||
+            B->position.y <= -GAME_DESIGN_HEIGHT * 0.5f - B->hit_circle.radius ||
+            B->position.y >= GAME_DESIGN_HEIGHT * 0.5f + B->hit_circle.radius;
     };
     
     mode->dot_bullets.foreach_slear_if(slear_if_lamb);

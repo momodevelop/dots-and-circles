@@ -19,15 +19,15 @@ init_main_mode(Permanent_State* perm_state,
     Game_Mode_Main* mode = perm_state->main_mode;
     Arena* mode_arena = perm_state->mode_arena;
     
-    G_Platform->hide_cursor();
+    g_platform->hide_cursor();
     
     // NOTE(Momo): Init camera
     {
         mode->camera.position = v3f::create(0.f, 0.f, 0.f);
         mode->camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
         mode->camera.color = C4F_GREY2;
-        mode->camera.dimensions = v3f::create(Game_DesignWidth,
-                                              Game_DesignHeight,
+        mode->camera.dimensions = v3f::create(GAME_DESIGN_WIDTH,
+                                              GAME_DESIGN_HEIGHT,
                                               Game_DesignDepth);
     }
     
@@ -154,7 +154,7 @@ update_main_mode_player_died_state(Permanent_State* perm_state,
     
     // NOTE: PlayerDied -> Spawning state
     // NOTE: Change state if enemy and Bullet count is 0
-    if (mode->death_bomb.radius >= Game_DesignWidth * 2.f) 
+    if (mode->death_bomb.radius >= GAME_DESIGN_WIDTH * 2.f) 
     {
         mode->state = GAME_MODE_MAIN_STATE_PLAYER_DIED;
         mode->spawn_timer = 0.f;

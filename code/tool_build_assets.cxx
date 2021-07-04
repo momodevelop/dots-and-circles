@@ -20,107 +20,107 @@
 #include "tool_build_assets_data.h"
 
 
-#define Tba_GenerateTestPng 1
-#define Tba_MemorySize MEBIBYTES(8)
-#define Tba_MemCheck printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, arena.used)
+#define GENERATE_TEST_PNG 1
+#define ASSET_BUILDER_MEMORY_SIZE MEBIBYTES(8)
+#define ASSET_BUILDER_MEM_CHECK printf("[Memcheck] Line %d: %d bytes used\n", __LINE__, arena.used)
 
 
 int main() {
     printf("Start!\n");
     
-    void* Memory = malloc(Tba_MemorySize);
-    if (!Memory) {
+    void* memory = malloc(ASSET_BUILDER_MEMORY_SIZE);
+    if (!memory) {
         printf("Failed to initialize memory");
         return 1; 
     }
-    defer { free(Memory); };
+    defer { free(memory); };
     
     Arena arena = {};
-    arena.init(Memory, Tba_MemorySize);
+    arena.init(memory, ASSET_BUILDER_MEMORY_SIZE);
     
     //~ NOTE(Momo): Load font
     
     // TODO(Momo): Preload stuff related to font that we actually need and then free
     // loaded font's data to be more memory efficient.
-    loaded_font LoadedFont = {};
-    if (!Tba_LoadFont(&LoadedFont, &arena, "assets/DroidSansMono.ttf")) 
+    Loaded_Font loaded_font = {};
+    if (!load_font(&loaded_font, &arena, "assets/DroidSansMono.ttf")) 
     {
         printf("[Atlas] Failed to load font\n");
         return 1; 
     }
-    f32 FontPixelScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 1.f); 
+    f32 font_pixel_scale = stbtt_ScaleForPixelHeight(&loaded_font.info, 1.f); 
     
     //~ NOTE(Momo): Initialize context for images in atlas
     
     
-    atlas_context_image AtlasImageContexts[ARRAY_COUNT(Tba_ImageContexts)] = {};
-    for (u32 I = 0; I < ARRAY_COUNT(Tba_ImageContexts); ++I) {
-        tba_image_context* TbaCtx = Tba_ImageContexts + I;
-        atlas_context_image* AtlasCtx = AtlasImageContexts + I;
+    Atlas_Context_Image atlas_image_contexts[ARRAY_COUNT(g_image_contexts)] = {};
+    for (u32 I = 0; I < ARRAY_COUNT(g_image_contexts); ++I) {
+        Asset_Builder_Image_Context* builder_context = g_image_contexts + I;
+        Atlas_Context_Image* atlas_context = atlas_image_contexts + I;
         
-        AtlasCtx->Type = AtlasContextType_Image;
-        AtlasCtx->Filename = TbaCtx->Filename;
-        AtlasCtx->Id = TbaCtx->ImageId;
-        AtlasCtx->TextureId = TbaCtx->TextureId;
+        atlas_context->type = ATLAS_CONTEXT_TYPE_IMAGE;
+        atlas_context->filename = builder_context->filename;
+        atlas_context->id = builder_context->image_id;
+        atlas_context->texture_id = builder_context->texture_id;
     }
     
     
     
     //~ NOTE(Momo): Initialize contexts for font images in atlas
-    atlas_context_font AtlasFontContexts[FONT_GLYPH_COUNT];
+    Atlas_Context_Font atlas_font_contexts[FONT_GLYPH_COUNT];
     
-    const u32 AabbCount = ARRAY_COUNT(AtlasImageContexts) + ARRAY_COUNT(AtlasFontContexts);
-    aabb2u Aabbs[AabbCount] = {};
-    void* UserDatas[AabbCount] = {};
-    u32 AabbCounter = 0;
-    for (u32 I = 0; I < ARRAY_COUNT(AtlasImageContexts); ++I ) {
-        atlas_context_image* Context = AtlasImageContexts + I;
-        aabb2u* Aabb = Aabbs + AabbCounter;
+    const u32 aabb_count = ARRAY_COUNT(atlas_image_contexts) + ARRAY_COUNT(atlas_font_contexts);
+    aabb2u aabbs[aabb_count] = {};
+    void* user_datas[aabb_count] = {};
+    u32 aabb_counter = 0;
+    for (u32 I = 0; I < ARRAY_COUNT(atlas_image_contexts); ++I ) {
+        Atlas_Context_Image* Context = atlas_image_contexts + I;
+        aabb2u* aabb = aabbs + aabb_counter;
         
         s32 W, H, C;
-        stbi_info(Context->Filename, &W, &H, &C);
+        stbi_info(Context->filename, &W, &H, &C);
         
-        (*Aabb) = aabb2u::create_wh((u32)W, (u32)H);
+        (*aabb) = aabb2u::create_wh((u32)W, (u32)H);
         
         
-        UserDatas[AabbCounter] = Context;
+        user_datas[aabb_counter] = Context;
         
-        ++AabbCounter;
+        ++aabb_counter;
     }
     
-    for (u32 I = 0; I < ARRAY_COUNT(AtlasFontContexts); ++I) {
-        atlas_context_font* Font = AtlasFontContexts + I;
-        Font->Type = AtlasContextType_Font;
-        Font->LoadedFont = &LoadedFont;
-        Font->Codepoint = FONT_GLYPH_CODEPOINT_START + I;
-        Font->RasterScale = stbtt_ScaleForPixelHeight(&LoadedFont.Info, 72.f);
-        Font->FontId = FONT_DEFAULT;
-        Font->ImageId = Image_ID(Image_FontStart + I);
-        Font->TextureId = TEXTURE_ATLAS_DEFAULT;
+    for (u32 i = 0; i < ARRAY_COUNT(atlas_font_contexts); ++i) {
+        Atlas_Context_Font* font = atlas_font_contexts + i;
+        font->type = ATLAS_CONTEXT_TYPE_FONT;
+        font->loaded_font = &loaded_font;
+        font->codepoint = FONT_GLYPH_CODEPOINT_START + i;
+        font->raster_scale = stbtt_ScaleForPixelHeight(&loaded_font.info, 72.f);
+        font->font_id = FONT_DEFAULT;
+        font->image_id = Image_ID(IMAGE_FONT_START + i);
+        font->texture_id = TEXTURE_ATLAS_DEFAULT;
         
-        aabb2u* Aabb = Aabbs + AabbCounter;
+        aabb2u* aabb = aabbs + aabb_counter;
         s32 ix0, iy0, ix1, iy1;
-        stbtt_GetCodepointTextureBox(&Font->LoadedFont->Info, 
-                                     Font->Codepoint, 
-                                     Font->RasterScale, 
-                                     Font->RasterScale, 
+        stbtt_GetCodepointTextureBox(&font->loaded_font->info, 
+                                     font->codepoint, 
+                                     font->raster_scale, 
+                                     font->raster_scale, 
                                      &ix0, &iy0, &ix1, &iy1);
         
-        (*Aabb) = aabb2u::create_wh((u32)(ix1 - ix0), (u32)(iy1 - iy0));
-        UserDatas[AabbCounter] = Font;
+        (*aabb) = aabb2u::create_wh((u32)(ix1 - ix0), (u32)(iy1 - iy0));
+        user_datas[aabb_counter] = font;
         
-        ++AabbCounter;
+        ++aabb_counter;
     }
     
     
     //~ NOTE(Momo): Pack rects
-    u32 AtlasWidth = 1024;
-    u32 AtlasHeight = 1024;
+    u32 atlas_width = 1024;
+    u32 atlas_height = 1024;
     if (!pack_aabbs(&arena,
-                    AtlasWidth,
-                    AtlasHeight,
-                    Aabbs,
-                    AabbCount, 
+                    atlas_width,
+                    atlas_height,
+                    aabbs,
+                    aabb_count, 
                     AABB_PACKER_SORT_HEIGHT)) 
     {
         printf("[Atlas] Failed to generate texture\n");
@@ -128,18 +128,18 @@ int main() {
     }
     
     // NOTE(Momo): Generate atlas from rects
-    u8* AtlasTexture = Tba_GenerateAtlas(&arena,
-                                         Aabbs, 
-                                         UserDatas,
-                                         AabbCount, 
-                                         AtlasWidth, 
-                                         AtlasHeight);
-    if (!AtlasTexture) {
+    u8* atlas_texture = generate_atlas(&arena,
+                                       aabbs, 
+                                       user_datas,
+                                       aabb_count, 
+                                       atlas_width, 
+                                       atlas_height);
+    if (!atlas_texture) {
         printf("[Atlas] Cannot generate atlas, not enough memory\n");
         return 1;
     }
-#if Tba_GenerateTestPng 
-    stbi_write_png("test.png", AtlasWidth, AtlasHeight, 4, AtlasTexture, AtlasWidth*4);
+#if GENERATE_TEST_PNG 
+    stbi_write_png("test.png", atlas_width, atlas_height, 4, atlas_texture, atlas_width*4);
     printf("[Atlas] Written test atlas: test.png\n");
 #endif
     printf("[Atlas] Atlas generated\n");
@@ -147,60 +147,56 @@ int main() {
     //~ NOTE(Momo): Actual asset building
     printf("[Build Assets] Building Assets\n");
     
-    tba_context AssetBuilder_ = {};
-    tba_context* AssetBuilder = &AssetBuilder_;
-    Tba_Begin(AssetBuilder, 
-              Game_AssetFileName,
-              Game_AssetFileSignature);
+    Asset_Builder asset_builder = {};
+    
+    asset_builder.begin(GAME_ASSET_FILENAME,
+                        GAME_ASSET_FILE_SIGNATURE);
     
     // NOTE(Momo): Write atlas
     {
-        Tba_WriteTexture(AssetBuilder, 
-                         TEXTURE_ATLAS_DEFAULT, 
-                         AtlasWidth, 
-                         AtlasHeight, 
-                         4, 
-                         AtlasTexture);
+        asset_builder.write_texture(TEXTURE_ATLAS_DEFAULT, 
+                                    atlas_width, 
+                                    atlas_height, 
+                                    4, 
+                                    atlas_texture);
         
         // NOTE(Momo): Write atlas aabb for images in font
-        for(u32 i = 0; i <  AabbCount; ++i) {
-            aabb2u Aabb = Aabbs[i];
-            auto Type = *(atlas_context_type*)UserDatas[i];
-            switch(Type) {
-                case AtlasContextType_Image: {
-                    auto* Image = (atlas_context_image*)UserDatas[i];
-                    Tba_WriteImage(AssetBuilder, 
-                                   Image->Id, 
-                                   Image->TextureId, 
-                                   Aabb);
+        for(u32 i = 0; i <  aabb_count; ++i) {
+            aabb2u aabb = aabbs[i];
+            auto type = *(Atlas_Context_Type*)user_datas[i];
+            switch(type) {
+                case ATLAS_CONTEXT_TYPE_IMAGE: {
+                    auto* image = (Atlas_Context_Image*)user_datas[i];
+                    asset_builder.write_image(image->id, 
+                                              image->texture_id, 
+                                              aabb);
                 } break;
-                case AtlasContextType_Font: {
-                    auto* Font  = (atlas_context_font*)UserDatas[i];
+                case ATLAS_CONTEXT_TYPE_FONT: {
+                    auto* font  = (Atlas_Context_Font*)user_datas[i];
                     
-                    s32 Advance;
-                    s32 LeftSideBearing; 
-                    stbtt_GetCodepointHMetrics(&LoadedFont.Info, 
-                                               Font->Codepoint, 
-                                               &Advance, 
-                                               &LeftSideBearing);
+                    s32 advance;
+                    s32 left_side_bearing; 
+                    stbtt_GetCodepointHMetrics(&loaded_font.info, 
+                                               font->codepoint, 
+                                               &advance, 
+                                               &left_side_bearing);
                     
-                    aabb2i Box;
-                    stbtt_GetCodepointBox(&LoadedFont.Info, 
-                                          Font->Codepoint, 
-                                          &Box.min.x, 
-                                          &Box.min.y, 
-                                          &Box.max.x, 
-                                          &Box.max.y);
+                    aabb2i box;
+                    stbtt_GetCodepointBox(&loaded_font.info, 
+                                          font->codepoint, 
+                                          &box.min.x, 
+                                          &box.min.y, 
+                                          &box.max.x, 
+                                          &box.max.y);
                     
-                    aabb2f ScaledBox = mul(to_aabb2f(Box), FontPixelScale);
-                    Tba_WriteFontGlyph(AssetBuilder, 
-                                       Font->FontId, 
-                                       Font->ImageId,
-                                       Font->TextureId,
-                                       Font->Codepoint, FontPixelScale * Advance,
-                                       FontPixelScale * LeftSideBearing,
-                                       Aabb,
-                                       ScaledBox);
+                    aabb2f scaled_box = mul(to_aabb2f(box), font_pixel_scale);
+                    asset_builder.write_font_glyph(font->font_id, 
+                                                   font->image_id,
+                                                   font->texture_id,
+                                                   font->codepoint, font_pixel_scale * advance,
+                                                   font_pixel_scale * left_side_bearing,
+                                                   aabb,
+                                                   scaled_box);
                     
                 } break;
                 
@@ -208,23 +204,23 @@ int main() {
         }
     }
     
-    // NOTE(Momo): Font info
+    // NOTE(Momo): font info
     {
-        s32 Ascent, Descent, LineGap;
-        stbtt_GetFontVMetrics(&LoadedFont.Info, &Ascent, &Descent, &LineGap); 
+        s32 ascent, descent, line_gap;
+        stbtt_GetFontVMetrics(&loaded_font.info, &ascent, &descent, &line_gap); 
         
-        aabb2i BoundingBox = {}; 
-        stbtt_GetFontBoundingBox(&LoadedFont.Info, 
-                                 &BoundingBox.min.x,
-                                 &BoundingBox.min.y,
-                                 &BoundingBox.max.x,
-                                 &BoundingBox.max.y
+        aabb2i bounding_box = {}; 
+        stbtt_GetFontBoundingBox(&loaded_font.info, 
+                                 &bounding_box.min.x,
+                                 &bounding_box.min.y,
+                                 &bounding_box.max.x,
+                                 &bounding_box.max.y
                                  );
         printf("[Build Assets] Writing font information...\n");
-        Tba_WriteFont(AssetBuilder, FONT_DEFAULT, 
-                      Ascent * FontPixelScale, 
-                      Descent * FontPixelScale, 
-                      LineGap * FontPixelScale); 
+        asset_builder.write_font(FONT_DEFAULT, 
+                                 ascent * font_pixel_scale, 
+                                 descent * font_pixel_scale, 
+                                 line_gap * font_pixel_scale); 
     }
     
     // NOTE(Momo): Kerning info
@@ -238,8 +234,8 @@ int main() {
                 j <= FONT_GLYPH_CODEPOINT_END; 
                 ++j) 
             {
-                s32 Kerning = stbtt_GetCodepointKernAdvance(&LoadedFont.Info, (s32)i, (s32)j);
-                Tba_WriteFontKerning(AssetBuilder, FONT_DEFAULT, i, j, Kerning);
+                s32 kerning = stbtt_GetCodepointKernAdvance(&loaded_font.info, (s32)i, (s32)j);
+                asset_builder.write_font_kerning(FONT_DEFAULT, i, j, kerning);
             }
         }
     }
@@ -248,56 +244,52 @@ int main() {
     //NOTE(Momo): Anime
     printf("[Build Assets] Writing Anime...\n");
     {
-        for(u32 I = 0; I < ARRAY_COUNT(Tba_AnimeContexts); ++I) {
-            tba_anime_context * Ctx = Tba_AnimeContexts + I;
-            Tba_WriteAnime(AssetBuilder, 
-                           Ctx->Id,
-                           Ctx->Frames,
-                           Ctx->FrameCount);
+        for(u32 i = 0; i < ARRAY_COUNT(g_anime_contexts); ++i) {
+            Asset_Builder_Anime_Context * ctx = g_anime_contexts + i;
+            asset_builder.write_anime(ctx->id,
+                                      ctx->frames,
+                                      ctx->frame_count);
         }
     }
     
     // NOTE(Momo): Msg
     printf("[Build Assets] Writing Msg...\n");
     {
-        for(u32 I = 0; I < ARRAY_COUNT(Tba_MsgContexts); ++I) {
-            tba_msg_context* Ctx = Tba_MsgContexts + I;
-            Tba_WriteMsg(AssetBuilder,
-                         Ctx->Id,
-                         Ctx->Str);
+        for(u32 i = 0; i < ARRAY_COUNT(g_msg_contexts); ++i) {
+            Asset_Builder_Msg_Context* ctx = g_msg_contexts + i;
+            asset_builder.write_msg(ctx->id,
+                                    ctx->str);
         }
     }
     
     
     printf("[Build Assets] Writing Sound...\n");
     {
-        for(u32 I = 0; I < ARRAY_COUNT(Tba_SoundContexts); ++I) {
-            tba_sound_context* Ctx = Tba_SoundContexts + I;
+        for(u32 I = 0; I < ARRAY_COUNT(g_sound_contexts); ++I) {
+            Asset_Builder_Sound_Context* ctx = g_sound_contexts + I;
             
-            Arena_Mark Mark = arena.mark();
-            defer { Mark.revert(); };
+            Arena_Mark mark = arena.mark();
+            defer { mark.revert(); };
             
-            read_file_result FileResult = {};
-            if(!Tba_ReadFileIntoMemory(&FileResult, Mark, Ctx->Filename)) {
+            Read_File_Result file_result = {};
+            if(!read_file_into_memory(&file_result, mark, ctx->filename)) {
                 return 1;
             }
             
-            Wav_Load_Result WavResult = {};
-            if(!load_wav_from_memory(&WavResult,
-                                     FileResult.Data,
-                                     FileResult.Size)) {
+            Wav_Load_Result wav_result = {};
+            if(!load_wav_from_memory(&wav_result,
+                                     file_result.data,
+                                     file_result.size)) {
                 return 1;
             }
-            Tba_WriteWav(AssetBuilder,
-                         Ctx->Id,
-                         &WavResult);
+            asset_builder.write_sound(ctx->id,
+                                      &wav_result);
         }
     }
-    
-    Tba_End(AssetBuilder);
+    asset_builder.end();
     printf("[Build Assets] Assets Built\n");
     
-    Tba_MemCheck;
+    ASSET_BUILDER_MEM_CHECK;
     return 0;
     
 }

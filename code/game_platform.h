@@ -101,25 +101,25 @@ struct Platform_File_Handle {
 };
 
 
-#define PLATFORM_LOG_DECL(Name) void Name(const char* Format, ...)
+#define PLATFORM_LOG_DECL(Name) void Name(const char* format, ...)
 typedef PLATFORM_LOG_DECL(Platform_Log);
 
 #define PLATFORM_OPEN_ASSET_FILE_DECL(Name) Platform_File_Handle Name(void)
 typedef PLATFORM_OPEN_ASSET_FILE_DECL(Platform_Open_Asset_File);
 
-#define PLATFORM_CLOSE_FILE_DECL(Name) void Name(Platform_File_Handle* Handle)
+#define PLATFORM_CLOSE_FILE_DECL(Name) void Name(Platform_File_Handle* handle)
 typedef PLATFORM_CLOSE_FILE_DECL(Platform_Close_File);
 
-#define PLATFORM_READ_FILE_DECL(Name) void Name(Platform_File_Handle* Handle, usize Offset, usize Size, void* Dest)
+#define PLATFORM_READ_FILE_DECL(Name) void Name(Platform_File_Handle* handle, usize offset, usize size, void* dest)
 typedef PLATFORM_READ_FILE_DECL(Platform_Read_File);
 
-#define PLATFORM_GET_FILE_SIZE_DECL(Name) u32 Name(const char* Path)
+#define PLATFORM_GET_FILE_SIZE_DECL(Name) u32 Name(const char* path)
 typedef PLATFORM_GET_FILE_SIZE_DECL(Platform_Get_File_Size);
 
-#define PLATFORM_LOG_FILE_ERROR_DECL(Name) void Name(Platform_File_Handle* Handle)
+#define PLATFORM_LOG_FILE_ERROR_DECL(Name) void Name(Platform_File_Handle* handle)
 typedef PLATFORM_LOG_FILE_ERROR_DECL(Platform_Log_File_Error);
 
-#define PLATFORM_ADD_TEXTURE_DECL(Name) renderer_texture_handle Name(u32 Width, u32 Height, void* Pixels)
+#define PLATFORM_ADD_TEXTURE_DECL(Name) renderer_texture_handle Name(u32 width, u32 height, void* pixels)
 typedef PLATFORM_ADD_TEXTURE_DECL(Platform_Add_Texture);
 
 #define PLATFORM_CLEAR_TEXTURES_DECL(Name) void Name()

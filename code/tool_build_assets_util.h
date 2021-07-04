@@ -3,24 +3,26 @@
 #ifndef TOOL_BUILD_ASSETS_UTIL_H
 #define TOOL_BUILD_ASSETS_UTIL_H
 
-struct loaded_font {
-	stbtt_fontinfo Info;
-    void* Data;
+struct Loaded_Font {
+	stbtt_fontinfo info;
+    void* data;
+
+
 };
 
-struct read_file_result {
-    void* Data;
-    u32 Size;
+struct Read_File_Result {
+    void* data;
+    u32 size;
 };
 
 
 static inline b8
-Tba_ReadFileIntoMemory(read_file_result* Result,
+read_file_into_memory(Read_File_Result* result,
                        Arena* arena, 
-                       const char* Filename) {
+                       const char* filename) {
     
     FILE* File = nullptr;
-    fopen_s(&File, Filename, "rb");
+    fopen_s(&File, filename, "rb");
     
     if (File == nullptr) {
         return false;
@@ -29,32 +31,32 @@ Tba_ReadFileIntoMemory(read_file_result* Result,
     
     
     fseek(File, 0, SEEK_END);
-    u32 Size = ftell(File);
+    u32 size = ftell(File);
     fseek(File, 0, SEEK_SET);
     
-    void* Buffer = arena->push_block(Size);
-    fread(Buffer, Size, 1, File);
+    void* Buffer = arena->push_block(size);
+    fread(Buffer, size, 1, File);
     
-    Result->Data = Buffer;
-    Result->Size = Size;
+    result->data = Buffer;
+    result->size = size;
     
     return true;
 }
 
 static inline b8
-Tba_LoadFont(loaded_font* Ret, Arena* arena, const char* Filename) {
-    read_file_result ReadFileResult = {};
-    if (!Tba_ReadFileIntoMemory(&ReadFileResult,
+load_font(Loaded_Font* ret, Arena* arena, const char* filename) {
+    Read_File_Result result = {};
+    if (!read_file_into_memory(&result,
                                 arena, 
-                                Filename)) 
+                                filename)) 
     {
         return false;
     }
     stbtt_fontinfo Font;
-    stbtt_InitFont(&Font, (u8*)ReadFileResult.Data, 0);
+    stbtt_InitFont(&Font, (u8*)result.data, 0);
     
-    Ret->Info = Font;
-    Ret->Data = ReadFileResult.Data;
+    ret->info = Font;
+    ret->data = result.data;
     
     return true;
 }

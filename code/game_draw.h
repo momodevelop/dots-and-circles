@@ -10,11 +10,11 @@ draw_textured_quad_from_image(Image_ID image_id,
                               m44f transform,
                               c4f color = C4F_WHITE) 
 {
-    Image* image = G_Assets->get_image(image_id);
-    Texture* texture = G_Assets->get_texture(image->texture_id);
-    quad2f atlas_uv = G_Assets->get_atlas_uv(image);
+    Image* image = g_assets->get_image(image_id);
+    Texture* texture = g_assets->get_texture(image->texture_id);
+    quad2f atlas_uv = g_assets->get_atlas_uv(image);
     
-    Renderer_DrawTexturedQuad(G_Renderer,
+    Renderer_DrawTexturedQuad(g_renderer,
                               color,
                               transform,
                               texture->handle,
@@ -29,7 +29,7 @@ draw_text(Font_ID font_id,
           c4f color = C4F_WHITE) 
 {
     v3f cur_position = position;
-    Font* font = G_Assets->get_font(font_id);
+    Font* font = g_assets->get_font(font_id);
     
     f32 z_layer_offset = 0.f;
     for(u32 i = 0; i < str.count; ++i) {

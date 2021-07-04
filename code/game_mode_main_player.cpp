@@ -7,11 +7,11 @@ update_input(Game_Mode_Main* mode)
     v2f direction = {};
     
     player->prev_position = player->position;
-    player->position = mode->camera.screen_to_world(G_Input->design_mouse_pos);
+    player->position = mode->camera.screen_to_world(g_input->design_mouse_pos);
     
     
     // NOTE(Momo): Absorb mode Switch
-    if(G_Input->button_switch.is_poked()) {
+    if(g_input->button_switch.is_poked()) {
         player->mood_type = 
             (player->mood_type == MOOD_TYPE_DOT) ? MOOD_TYPE_CIRCLE : MOOD_TYPE_DOT;
         
@@ -55,8 +55,8 @@ render_score(Game_Mode_Main* mode) {
     // NOTE(Momo): Current Score
     {
         draw_text(FONT_DEFAULT, 
-                  { -Game_DesignWidth * 0.5f + 10.f, 
-                      Game_DesignHeight * 0.5f - 24.f,  
+                  { -GAME_DESIGN_WIDTH * 0.5f + 10.f, 
+                      GAME_DESIGN_HEIGHT * 0.5f - 24.f,  
                       ZLayScore },
                   String::create("Current Score"),
                   font_size);
@@ -66,8 +66,8 @@ render_score(Game_Mode_Main* mode) {
     {
         String Str = String::create("High Score");
         draw_text(FONT_DEFAULT,
-                  { (Game_DesignWidth * 0.5f) - 120.f,
-                      Game_DesignHeight * 0.5f - 24.f,
+                  { (GAME_DESIGN_WIDTH * 0.5f) - 120.f,
+                      GAME_DESIGN_HEIGHT * 0.5f - 24.f,
                       ZLayScore },
                   Str,
                   font_size);

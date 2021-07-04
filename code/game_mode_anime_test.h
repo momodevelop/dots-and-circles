@@ -23,7 +23,7 @@ create(Anime_Component* a,
 
 static inline void
 update(Anime_Component* a, f32 dt) {
-    Anime* anime = G_Assets->get_anime(ANIME_KARU_FRONT);
+    Anime* anime = g_assets->get_anime(ANIME_KARU_FRONT);
     a->timer_per_frame += dt;
     
     a->timer_per_frame += dt;
@@ -78,7 +78,7 @@ update_anime_test_mode(Permanent_State* perm_state,
     c4f color = C4F_WHITE;
     Anime_Component* anime_com = &entity->anime_com;
     {
-        Anime* anime = G_Assets->get_anime(anime_com->anime_id);
+        Anime* anime = g_assets->get_anime(anime_com->anime_id);
         Image_ID image_id = anime->frames[anime_com->current_frame_index];
         draw_textured_quad_from_image(image_id,
                                       t*s,

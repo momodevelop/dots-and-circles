@@ -78,7 +78,7 @@ Splash_Blackout_Entity::update(f32 dt)
                                       this->position.z);
     m44f S = m44f::create_scale(this->scale.x, this->scale.y, 1.f);
     
-    Renderer_DrawQuad(G_Renderer, this->colors, T*S);
+    Renderer_DrawQuad(g_renderer, this->colors, T*S);
     
 }
 
@@ -91,7 +91,7 @@ struct Game_Mode_Splash {
 static inline void
 init_splash_mode(Permanent_State* perm_state) {
     Game_Mode_Splash* mode = perm_state->splash_mode;
-    G_Platform->show_cursor();
+    g_platform->show_cursor();
     
     // NOTE(Momo): Create entities
     {
@@ -144,10 +144,10 @@ update_splash_mode(Permanent_State* perm_state,
                                      800.f,
                                      800.f);
         
-        Renderer_ClearColor(G_Renderer, color);
+        Renderer_ClearColor(g_renderer, color);
         
         aabb3f frustum = aabb3f::create_centered(dimensions, anchor);
-        Renderer_SetOrthoCamera(G_Renderer, 
+        Renderer_SetOrthoCamera(g_renderer, 
                                 position, 
                                 frustum);
     }

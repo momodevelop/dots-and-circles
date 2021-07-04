@@ -4,17 +4,17 @@
 #define GAME_CONFIG_H
 
 // NOTE(Momo): Global Settings
-#define Game_DesignWidth 800
-#define Game_DesignHeight 800
+#define GAME_DESIGN_WIDTH 800
+#define GAME_DESIGN_HEIGHT 800
 #define Game_DesignDepth 200
 
-#define Game_AudioSamplesPerSecond 48000
-#define Game_AudioChannels 2
-#define Game_AudioBitsPerSample 16
-#define Game_AudioLatencyFrames 1
+#define GAME_AUDIO_SAMPLES_PER_SECOND 48000
+#define GAME_AUDIO_CHANNELS 2
+#define GAME_AUDIO_BITS_PER_SAMPLE 16
+#define GAME_AUDIO_LATENCY_FRAMES 1
 
 
-#define Game_AssetFileName "yuu"
-#define Game_AssetFileSignature "MOMO"
+#define GAME_ASSET_FILENAME "yuu"
+#define GAME_ASSET_FILE_SIGNATURE "MOMO"
 
 #endif //GAME_CONFIG_H
