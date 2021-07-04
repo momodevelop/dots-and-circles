@@ -10,7 +10,7 @@ IF NOT "%Platform%" == "X64" IF NOT "%Platform%" == "x64" (EXIT /b)
 
 pushd %BuildDir%
 
-call devenv target_win32.exe
+call devenv target_win32_opengl.exe
 
 :End 
 

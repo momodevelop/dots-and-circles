@@ -1328,13 +1328,6 @@ win32_create_window(HINSTANCE instance,
     
 }
 
-static inline void
-win32_swap_buffers(HWND window) {
-    HDC DeviceContext = GetDC(window); 
-    defer { ReleaseDC(window, DeviceContext); };
-    SwapBuffers(DeviceContext);
-}
-
 // Platform Functions ////////////////////////////////////////////////////
 enum Win32_File_Error_Type {
     WIN32_FILE_ERROR_NONE,

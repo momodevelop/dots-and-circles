@@ -28,10 +28,10 @@ load_paths = {
 
 build_assets = "bass";
 build_game = "bg";
-build_win32 = "bw32ogl";
+build_win32 = "bw32";
 build_test = "test";
 run_assets = "rass";
-run_win32 = "rw32ogl";
+run_win32 = "rw32";
 debug_win32 = "dw32";
 debug_assets = "dass";
 

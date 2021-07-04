@@ -112,6 +112,18 @@ m44f::operator[](u32 i) {
     ASSERT(i < 4); 
     return elements[i]; 
 }
+
+static inline v4f
+concat(m44f l, v4f r) {
+    v4f ret = {};
+    ret[0] = l[0][0] * r[0] + l[0][1] * r[1] + l[0][2] * r[2] + l[0][3] * r[3];
+    ret[1] = l[1][0] * r[0] + l[1][1] * r[1] + l[1][2] * r[2] + l[1][3] * r[3];
+    ret[2] = l[2][0] * r[0] + l[2][1] * r[1] + l[2][2] * r[2] + l[2][3] * r[3];
+    ret[3] = l[3][0] * r[0] + l[3][1] * r[1] + l[3][2] * r[2] + l[3][3] * r[3];
+    
+    return ret;
+}
+
 static inline m44f 
 concat(m44f lhs, m44f rhs) {
     m44f ret = {};
@@ -126,6 +138,11 @@ concat(m44f lhs, m44f rhs) {
 
 static inline m44f 
 operator*(m44f l, m44f r) {
+    return concat(l,r);
+}
+
+static inline v4f 
+operator*(m44f l, v4f r) {
     return concat(l,r);
 }
 

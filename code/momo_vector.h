@@ -90,7 +90,7 @@ struct v3f {
 
 struct v4f {
     union {
-        f32 elements[4] = {0};
+        f32 elements[4];
         struct {
             union {
                 v3f xyz;
@@ -104,10 +104,8 @@ struct v4f {
         
     };
     
-    inline auto& operator[](u32 i) { 
-        ASSERT(i < 4); 
-        return elements[i]; 
-    }
+    inline f32& operator[](u32 i);
+    static inline v4f create(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f, f32 w = 0.f);
     
 };
 
@@ -506,7 +504,21 @@ project(v3f from, v3f to) {
     return ret;
 }
 
-// TODO: I'm not sure if these are better are free functions or member functions...
+
+//~ NOTE(Momo): v4f 
+f32&
+v4f::operator[](u32 i) {
+    ASSERT(i < 4); 
+    return elements[i]; 
+}
+
+v4f
+v4f::create(f32 x, f32 y, f32 z, f32 w)  {
+    return { x, y, z, w };
+}
+
+
+//~ TODO: I'm not sure if these are better are free functions or member functions...
 static inline v3f 
 to_v3f(v2f v) {
     v3f ret = {};

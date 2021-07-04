@@ -6,6 +6,10 @@
 #include <audioclient.h>
 #include <imm.h>
 
+// NOTE(Momo): Because MS has baggage :(
+#undef near
+#undef far
+
 #include "momo.h"
 
 #include "game_config.h"
@@ -15,127 +19,162 @@
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 
-
 //~ NOTE(Momo): Consts
-#define Win32_RecordStateFile "record_state"
-#define Win32_RecordInputFile "record_input"
-#define Win32_SaveStateFile "game_state"
+#define WIN32_RECORD_STATE_FILE "record_state"
+#define WIN32_RECORD_INPUT_FILE "record_input"
+#define WIN32_SAVE_STATE_FILE "game_state"
 
 //~ NOTE(Momo): Structs
-// File handle pool
-struct win32_handle_pool {
-    HANDLE Slots[8];
-    s32 FreeList;
+
+struct Win32_Game_Memory {
+    Game_Memory head;
+    
+    void* data;
+    u32 data_size;
 };
 
-struct win32_screen_buffer {
-    BITMAPINFO Info;
-    void* Memory;
-    u32 Width;
-    u32 Height;
-    static constexpr u32 BytesPerPixel = 4;
+struct Win32_Screen_Buffer {
+    BITMAPINFO info;
+    
+    u32 width;
+    u32 height;
+    u32 bytes_per_pixel;
+    void* data;
 };
 
-struct win32_game_memory {
-    Game_Memory Head;
+struct Win32_State {
+    Arena arena;
+    b8 is_running;
     
-    void* Data;
-    u32 DataSize;
-};
-
-struct win32_state {
-    arena Arena;
-    b8 IsRunning;
+    // TODO: maybe these can be shifted out?
+    b8 is_recording_input;
+    HANDLE recording_input_handle;
+    b8 is_playback_input;
+    HANDLE playback_input_handle;
     
-    b8 IsRecordingInput;
-    HANDLE RecordingInputHandle;
-    b8 IsPlaybackInput;
-    HANDLE PlaybackInputHandle;
-    
-    void* PlatformMemoryBlock;
-    u32 PlatformMemoryBlockSize;
+    void* platform_memory_block;
+    u32 platform_memory_block_size;
     
     
     // File paths 
-    u32 PerformanceFrequency;
-    char ExeFullPath[MAX_PATH];
-    char* OnePastExeDirectory;
+    u32 performance_frequency;
+    char exe_full_path[MAX_PATH];
+    char* one_past_exe_dir;
     
     // Handle pool
-    HANDLE Handles[8];
-    u32 HandleFreeList[ARRAY_COUNT(Handles)];
-    u32 HandleFreeCount;
+    HANDLE handles[8];
+    u32 handle_free_list[ARRAY_COUNT(handles)];
+    u32 handle_free_count;
     
 #if INTERNAL
-    HANDLE StdOut;
+    HANDLE std_out;
 #endif
-
-    win32_screen_buffer ScreenBuffer;
-    win32_game_memory GameMemory;
-    
+    Win32_Game_Memory game_memory;
+    Win32_Screen_Buffer screen_buffer;
 };
 
 
 //~ Globals
-win32_state* G_State = {};
+Win32_State* g_state = {};
+
+
+//~ NOTE(Momo): Rendering!!
+struct Win32_Pixel {
+    u8 r, g, b, a;
+};
+
+static inline void
+win32_set_pixel_on_screen(Win32_Screen_Buffer* screen, s32 x, s32 y, Win32_Pixel pixel) 
+{
+    u32 pitch = screen->width * screen->bytes_per_pixel;
+    u8* itr = ((u8*)screen->data) + (y * pitch + x * screen->bytes_per_pixel);
+    (*itr++) = pixel.b;
+    (*itr++) = pixel.g;
+    (*itr++) = pixel.r;
+    (*itr++) = pixel.a;
+}
+
+static inline void
+win32_draw_line_on_screen(Win32_Screen_Buffer* screen, s32 x0, s32 y0, s32 x1, s32 y1) {
+    b8 steep = false;
+    if (ABS(x0 - x1) < ABS(y0 - y1)) {
+        SWAP(x0, y0);
+        SWAP(x1, y1);
+        steep = true;
+    }
+    
+    // NOTE(Momo): Force lines to be left-to-right
+    if (x0 > x1)  {
+        SWAP(x0, x1);
+        SWAP(y0, y1);
+    }
+    
+    for (s32 x = x0; x <= x1; ++x) {
+        f32 t = (x - x0)/(float)(x1 - x0);
+        s32 y = s32((y0 * (1.f - t)) + (y1 * t));
+        if (steep)
+            win32_set_pixel_on_screen(screen, y, x, { 255, 255, 255, 255 });
+        else
+            win32_set_pixel_on_screen(screen, x, y, { 255, 255, 255, 255 });
+    }
+    
+}
 
 //~ NOTE(Momo): Helper functions and globals
-
-
 static inline u32
-Win32_DetermineIdealRefreshRate(HWND Window, u32 DefaultRefreshRate) {
+win32_determine_ideal_refresh_rate(HWND window, u32 default_refresh_rate) {
     // Do we want to cap this?
-    HDC DeviceContext = GetDC(Window);
-    defer { ReleaseDC(Window, DeviceContext); };
+    HDC dc = GetDC(window);
+    defer { ReleaseDC(window, dc); };
     
-    u32 RefreshRate = DefaultRefreshRate;
+    u32 refresh_rate = default_refresh_rate;
     {
-        s32 DisplayRefreshRate = GetDeviceCaps(DeviceContext, VREFRESH);
+        s32 display_refresh_rate = GetDeviceCaps(dc, VREFRESH);
         // It is possible for the refresh rate to be 0 or less
         // because of something called 'adaptive vsync'
-        if (DisplayRefreshRate > 1) {
-            RefreshRate = DisplayRefreshRate;
+        if (display_refresh_rate > 1) {
+            refresh_rate = display_refresh_rate;
         }
     }
-    return RefreshRate;
+    return refresh_rate;
     
 }
 
 static inline LARGE_INTEGER
-Win32_FiletimeToLargeInt(FILETIME Filetime) {
-    LARGE_INTEGER Ret = {};
-    Ret.LowPart = Filetime.dwLowDateTime;
-    Ret.HighPart = Filetime.dwHighDateTime;
+win32_file_time_to_large_int(FILETIME file_time) {
+    LARGE_INTEGER ret = {};
+    ret.LowPart = file_time.dwLowDateTime;
+    ret.HighPart = file_time.dwHighDateTime;
     
-    return Ret;
+    return ret;
 }
 
 static inline LONG
-RECT_Width(RECT Value) {
-    return Value.right - Value.left;
+width(RECT value) {
+    return value.right - value.left;
 }
 
 static inline LONG
-RECT_Height(RECT Value) {
-    return Value.bottom - Value.top;
+height(RECT value) {
+    return value.bottom - value.top;
 }
 
 
 static inline FILETIME 
-Win32_GetLastWriteTime(const char* Filename) {
-    WIN32_FILE_ATTRIBUTE_DATA Data;
-    FILETIME LastWriteTime = {};
+win32_get_file_last_write_time(const char* filename) {
+    WIN32_FILE_ATTRIBUTE_DATA data;
+    FILETIME last_write_time = {};
     
-    if(GetFileAttributesEx(Filename, GetFileExInfoStandard, &Data)) {
-        LastWriteTime = Data.ftLastWriteTime;
+    if(GetFileAttributesEx(filename, GetFileExInfoStandard, &data)) {
+        last_write_time = data.ftLastWriteTime;
     }
-    return LastWriteTime; 
+    return last_write_time; 
 }
 
 #if INTERNAL
 static inline void
-Win32_WriteConsole(const char* Message) {
-    WriteConsoleA(G_State->StdOut,
+win32_write_console(const char* Message) {
+    WriteConsoleA(g_state->std_out,
                   Message, 
                   cstr_length(Message), 
                   0, 
@@ -144,27 +183,27 @@ Win32_WriteConsole(const char* Message) {
 #endif
 
 static inline
-PLATFORM_LOG_DECL(Win32_Log) {
-    char Buffer[256];
+PLATFORM_LOG_DECL(win32_log) {
+    char buffer[256];
     
-    va_list VaList;
-    va_start(VaList, Format);
+    va_list valist;
+    va_start(valist, format);
     
-    stbsp_vsprintf(Buffer, Format, VaList);
+    stbsp_vsprintf(buffer, format, valist);
     
 #if INTERNAL
-    Win32_WriteConsole(Buffer);
+    win32_write_console(buffer);
 #endif
     // TODO: Logging to text file?
-    va_end(VaList);
+    va_end(valist);
 }
 
 #if INTERNAL
 static inline void*
-Win32_AllocateMemoryAtAddress(usize MemorySize, LPVOID Address ) {
+win32_allocate_memory_at_address(usize memory_size, LPVOID address ) {
     return VirtualAllocEx(GetCurrentProcess(),
-                          Address, 
-                          MemorySize,
+                          address, 
+                          memory_size,
                           MEM_RESERVE | MEM_COMMIT, 
                           PAGE_READWRITE);
     
@@ -172,769 +211,747 @@ Win32_AllocateMemoryAtAddress(usize MemorySize, LPVOID Address ) {
 #endif
 
 static inline void*
-Win32_AllocateMemory(usize MemorySize) {
+win32_allocate_memory(usize memory_size) {
     return VirtualAllocEx(GetCurrentProcess(),
                           0, 
-                          MemorySize,
+                          memory_size,
                           MEM_RESERVE | MEM_COMMIT, 
                           PAGE_READWRITE);
     
 }
 
 static inline void
-Win32_FreeMemory(void* Memory) {
-    if(Memory) {
+win32_free_memory(void* memory) {
+    if(memory) {
         VirtualFreeEx(GetCurrentProcess(), 
-                      Memory,    
+                      memory,    
                       0, 
                       MEM_RELEASE); 
     }
 }
 
 static inline LARGE_INTEGER
-Win32_GetPerformanceCounter(void) {
-    LARGE_INTEGER Result;
-    QueryPerformanceCounter(&Result);
-    return Result;
+win32_get_performance_counter(void) {
+    LARGE_INTEGER result;
+    QueryPerformanceCounter(&result);
+    return result;
 }
 
-//~ NOTE(Momo): Win32_ State related
-static inline f32
-Win32_GetSecondsElapsed(win32_state* State,
-                       LARGE_INTEGER Start, 
-                       LARGE_INTEGER End) 
-{
-    return (f32(End.QuadPart - Start.QuadPart)) / State->PerformanceFrequency; 
-}
-
+//~ NOTE(Momo): Screen buffer related
 static inline void
-Win32_BuildExePathFilename(win32_state* State,
-                          char* Dest, 
-                          const char* Filename) {
-    for(const char *Itr = State->ExeFullPath; 
-        Itr != State->OnePastExeDirectory; 
-        ++Itr, ++Dest) 
-    {
-        (*Dest) = (*Itr);
-    }
-    
-    for (const char* Itr = Filename;
-         (*Itr) != 0;
-         ++Itr, ++Dest) 
-    {
-        (*Dest) = (*Itr);
-    }
-    
-    (*Dest) = 0;
+win32_free_screen_buffer(Win32_Screen_Buffer* screen) {
+    win32_free_memory(screen->data);
 }
 
-static inline void
-Win32_DisplayBufferInWindow(HWND Window, win32_screen_buffer* Buffer) {
-    HDC DeviceContext = GetDC(Window);
-    defer { ReleaseDC(Window, DeviceContext); };
-
-    // Centering?
-
-}
-
-static inline void
-Win32_FreeScreenBuffer(win32_screen_buffer* Buffer) {
-    if (Buffer->Memory) {
-        Win32_FreeMemory(Buffer->Memory);
-    }
-}
 static inline b8 
-Win32_InitScreenBuffer(win32_screen_buffer* Buffer, u32 Width, u32 Height) {
-    if (Buffer->Memory) {
-        Win32_FreeMemory(Buffer->Memory);
-    }
-    Buffer->Width = Width;
-    Buffer->Height = Height;
-
-    Buffer->Memory = Win32_AllocateMemory(Buffer->Width * Buffer->Height * Buffer->BytesPerPixel);
-    if (!Buffer->Memory) {
+win32_init_screen_buffer(Win32_Screen_Buffer* screen, u32 width, u32 height) {
+    
+    // TODO(Momo): Should follow window width/height?
+    
+    screen->width = width;
+    screen->height = height;
+    screen->bytes_per_pixel = 4;
+    
+    screen->info.bmiHeader.biSize = sizeof(screen->info.bmiHeader);
+    screen->info.bmiHeader.biWidth = width;
+    screen->info.bmiHeader.biHeight = height;
+    screen->info.bmiHeader.biPlanes = 1;
+    screen->info.bmiHeader.biBitCount = 32;
+    screen->info.bmiHeader.biCompression = BI_RGB;
+    
+    screen->data = win32_allocate_memory(screen->width * screen->height * screen->bytes_per_pixel);
+    
+    if (!screen->data) {
         return false;
     }
-
-    // NOTE(casey): When the biHeight field is negative, this is the clue to
-    // Windows to treat this bitmap as top-down, not bottom-up, meaning that
-    // the first three bytes of the image are the color for the top left pixel
-    // in the bitmap, not the bottom left!
-    Buffer->Info.bmiHeader.biSize = sizeof(Buffer->Info.bmiHeader);
-    Buffer->Info.bmiHeader.biWidth = Buffer->Width;
-    Buffer->Info.bmiHeader.biHeight = Buffer->Height;
-    Buffer->Info.bmiHeader.biPlanes = 1;
-    Buffer->Info.bmiHeader.biBitCount = 32;
-    Buffer->Info.bmiHeader.biCompression = BI_RGB;
-
     return true;
 }
 
+static inline void
+win32_push_screen_buffer_to_window(HDC dc, Win32_Screen_Buffer* screen, u32 window_w, u32 window_h) {
+    // TODO: Aspect ratio correction
+    // TODO: use correct values
+    StretchDIBits(dc,
+                  /*
+x, y, window width, window height,
+x, y, buffer width, buffer height
+*/
+                  0, 0, window_w, window_h,
+                  0, 0, screen->width, screen->height, 
+                  screen->data,
+                  &screen->info,
+                  DIB_RGB_COLORS, SRCCOPY);
+}
 
-static inline win32_state*
-Win32_Init() {
+
+
+
+//~ NOTE(Momo): state related
+static inline f32
+win32_get_seconds_elapsed(Win32_State* state,
+                          LARGE_INTEGER start, 
+                          LARGE_INTEGER end) 
+{
+    return (f32(end.QuadPart - start.QuadPart)) / state->performance_frequency; 
+}
+
+static inline void
+win32_build_exe_path_filename(Win32_State* state,
+                              char* dest, 
+                              const char* filename) {
+    for(const char *itr = state->exe_full_path; 
+        itr != state->one_past_exe_dir; 
+        ++itr, ++dest) 
+    {
+        (*dest) = (*itr);
+    }
+    
+    for (const char* itr = filename;
+         (*itr) != 0;
+         ++itr, ++dest) 
+    {
+        (*dest) = (*itr);
+    }
+    
+    (*dest) = 0;
+}
+
+static inline Win32_State*
+win32_init() {
     // This is kinda what we wanna do if we ever want Renderer 
     // to be its own DLL...
     // NOTE(Momo): Arena 
-    u32 PlatformMemorySize = KIBIBYTES(256);
-    void* PlatformMemory = Win32_AllocateMemory(PlatformMemorySize);
-    if(!PlatformMemory) {
-        Win32_Log("[Win32_State] Failed to allocate memory\n"); 
+    u32 platform_memory_size = KIBIBYTES(256);
+    void* platform_memory = win32_allocate_memory(platform_memory_size);
+    if(!platform_memory) {
+        win32_log("[Win32::state] Failed to allocate memory\n"); 
         return 0;
-    }
-    win32_state* State = Arena_BootupStruct(win32_state,
-                                            Arena,
-                                            PlatformMemory, 
-                                            PlatformMemorySize);
-    if (!State) {
-        Win32_Log("[Win32_State] Failed to allocate state\n"); 
+    } 
+    Win32_State* state = ARENA_BOOT_STRUCT(Win32_State,
+                                           arena,
+                                           platform_memory, 
+                                           platform_memory_size);
+    if (!state) {
+        win32_log("[Win32::state] Failed to allocate state\n"); 
         return 0;
     }
     
-    // NOTE(Momo): Initialize paths
-    GetModuleFileNameA(0, State->ExeFullPath, 
-                       sizeof(State->ExeFullPath));
-    State->OnePastExeDirectory = State->ExeFullPath;
-    for( char* Itr = State->ExeFullPath; *Itr; ++Itr) {
-        if (*Itr == '\\') {
-            State->OnePastExeDirectory = Itr + 1;
+    // NOTE(Momo): initialize paths
+    GetModuleFileNameA(0, state->exe_full_path, 
+                       sizeof(state->exe_full_path));
+    state->one_past_exe_dir = state->exe_full_path;
+    for( char* itr = state->exe_full_path; *itr; ++itr) {
+        if (*itr == '\\') {
+            state->one_past_exe_dir = itr + 1;
         }
     }
     
     // NOTE(Momo): Performance Frequency 
-    LARGE_INTEGER PerfCountFreq;
-    QueryPerformanceFrequency(&PerfCountFreq);
-    State->PerformanceFrequency = to_u32(PerfCountFreq.QuadPart);
+    LARGE_INTEGER perf_count_freq;
+    QueryPerformanceFrequency(&perf_count_freq);
+    state->performance_frequency = u32(perf_count_freq.QuadPart);
     
-    // NOTE(Momo): Initialize file handle store
-    //GlobalFileHandles = CreatePool<HANDLE>(&G_State->Arena, 8);
-    for (u32 I = 0; I < ARRAY_COUNT(State->Handles); ++I) {
-        State->HandleFreeList[I] = I;
+    // NOTE(Momo): initialize file handle store
+    //Globalfile_handles = CreatePool<HANDLE>(&g_state->Arena, 8);
+    for (u32 i = 0; i < ARRAY_COUNT(state->handles); ++i) {
+        state->handle_free_list[i] = i;
     }
-    State->HandleFreeCount = ARRAY_COUNT(State->Handles);
+    state->handle_free_count = ARRAY_COUNT(state->handles);
     
 #if INTERNAL
-    // NOTE(Momo): Initialize console
+    // NOTE(Momo): initialize console
     AllocConsole();    
-    State->StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    state->std_out = GetStdHandle(STD_OUTPUT_HANDLE);
     
 #endif
     
-    State->IsRunning = true;
-    return State;
+    state->is_running = true;
+    return state;
 }
 
 
 static inline void
-Win32_Free(win32_state* State) {
+win32_free(Win32_State* state) {
     FreeConsole();
-    Win32_FreeMemory(State); 
+    win32_free_memory(state); 
 }
 
 static inline void
-Win32_BeginRecordingInput(win32_state* State, const char* Path) {
-    ASSERT(!State->IsRecordingInput);
-    HANDLE RecordFileHandle = CreateFileA(Path,
-                                          GENERIC_WRITE,
-                                          FILE_SHARE_WRITE,
-                                          0,
-                                          CREATE_ALWAYS,
-                                          0,
-                                          0);
+win32_begin_recording_input(Win32_State* state, const char* path) {
+    ASSERT(!state->is_recording_input);
+    HANDLE record_file_handle = CreateFileA(path,
+                                            GENERIC_WRITE,
+                                            FILE_SHARE_WRITE,
+                                            0,
+                                            CREATE_ALWAYS,
+                                            0,
+                                            0);
     
-    if (RecordFileHandle == INVALID_HANDLE_VALUE) {
-        Win32_Log("[Win32_BeginRecordingInput] Cannot open file: %s\n", Path);
+    if (record_file_handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::BeginRecordingInput] Cannot open file: %s\n", path);
         return;
     }
-    State->RecordingInputHandle = RecordFileHandle;
-    State->IsRecordingInput = true;
-    Win32_Log("[Win32_BeginRecordingInput] Recording has begun: %s\n", Path);
+    state->recording_input_handle = record_file_handle;
+    state->is_recording_input = true;
+    win32_log("[Win32::BeginRecordingInput] Recording has begun: %s\n", path);
 }
 
 static inline void
-Win32_EndRecordingInput(win32_state* State) {
-    ASSERT(State->IsRecordingInput);
-    CloseHandle(State->RecordingInputHandle);
-    State->IsRecordingInput = false;
-    Win32_Log("[Win32_EndRecordingInput] Recording has ended\n");
+win32_end_recording_input(Win32_State* state) {
+    ASSERT(state->is_recording_input);
+    CloseHandle(state->recording_input_handle);
+    state->is_recording_input = false;
+    win32_log("[Win32::EndRecordingInput] Recording has ended\n");
 }
 
 static inline void
-Win32_RecordInput(win32_state* State, platform_input* Input) {
-    ASSERT(State->IsRecordingInput);
+win32_record_input(Win32_State* state, Platform_Input* input) {
+    ASSERT(state->is_recording_input);
     DWORD BytesWritten;
-    if(!WriteFile(State->RecordingInputHandle,
-                  Input,
-                  sizeof(platform_input),
+    if(!WriteFile(state->recording_input_handle,
+                  input,
+                  sizeof(Platform_Input),
                   &BytesWritten, 0)) 
     {
-        Win32_Log("[Win32_RecordInput] Cannot write file\n");
-        Win32_EndRecordingInput(State);
+        win32_log("[Win32::Recordinput] Cannot write file\n");
+        win32_end_recording_input(state);
         return;
     }
     
-    if (BytesWritten != sizeof(platform_input)) {
-        Win32_Log("[Win32_RecordInput] Did not complete writing\n");
-        Win32_EndRecordingInput(State);
+    if (BytesWritten != sizeof(Platform_Input)) {
+        win32_log("[Win32::Recordinput] Did not complete writing\n");
+        win32_end_recording_input(state);
         return;
     }
 }
 
 static inline void 
-Win32_EndPlaybackInput(win32_state* State) {
-    ASSERT(State->IsPlaybackInput);
-    CloseHandle(State->PlaybackInputHandle);
-    State->IsPlaybackInput = false;
-    Win32_Log("[Win32_EndPlaybackInput] Playback has ended\n");
+win32_end_playback_input(Win32_State* state) {
+    ASSERT(state->is_playback_input);
+    CloseHandle(state->playback_input_handle);
+    state->is_playback_input = false;
+    win32_log("[Win32::EndPlaybackInput] Playback has ended\n");
 }
 
 static inline void
-Win32_BeginPlaybackInput(win32_state* State, const char* Path) {
-    ASSERT(!State->IsPlaybackInput);
-    HANDLE RecordFileHandle = CreateFileA(Path,
-                                          GENERIC_READ,
-                                          FILE_SHARE_READ,
-                                          0,
-                                          OPEN_EXISTING,
-                                          0,
-                                          0);
+win32_begin_playback_input(Win32_State* state, const char* path) {
+    ASSERT(!state->is_playback_input);
+    HANDLE record_file_handle = CreateFileA(path,
+                                            GENERIC_READ,
+                                            FILE_SHARE_READ,
+                                            0,
+                                            OPEN_EXISTING,
+                                            0,
+                                            0);
     
-    if (RecordFileHandle == INVALID_HANDLE_VALUE) {
-        Win32_Log("[Win32_BeginPlaybackInput] Cannot open file: %s\n", Path);
+    if (record_file_handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::BeginPlaybackInput] Cannot open file: %s\n", path);
         return;
     }
-    State->PlaybackInputHandle = RecordFileHandle;
-    State->IsPlaybackInput = true;
-    Win32_Log("[Win32_BeginPlaybackInput] Playback has begun: %s\n", Path);
+    state->playback_input_handle = record_file_handle;
+    state->is_playback_input = true;
+    win32_log("[Win32::BeginPlaybackInput] Playback has begun: %s\n", path);
 }
 
 // NOTE(Momo): returns true if 'done' reading all input, false otherwise
 static inline b8 
-Win32_PlaybackInput(win32_state* State, platform_input* Input) {
-    DWORD BytesRead;
-    BOOL Success = ReadFile(State->PlaybackInputHandle, 
-                            Input,
-                            sizeof(platform_input),
-                            &BytesRead,
+win32_playback_input(Win32_State* state, Platform_Input* input) {
+    DWORD bytes_read;
+    BOOL success = ReadFile(state->playback_input_handle, 
+                            input,
+                            sizeof(Platform_Input),
+                            &bytes_read,
                             0);
-    if(!Success || BytesRead != sizeof(platform_input)) {
+    if(!success || bytes_read != sizeof(Platform_Input)) {
         return true;
     }
     return false;
 }
 
 //~ NOTE(Momo): game code related
-struct win32_game_code {
-    HMODULE Dll;
-    game_update* GameUpdate;
-    FILETIME LastWriteTime;
-    b8 IsValid;
+struct Win32_Game_Code {
+    HMODULE dll;
+    game_update* game_update;
+    FILETIME last_write_time;
+    b8 is_valid;
     
-    char SrcFileName[MAX_PATH];
-    char TempFileName[MAX_PATH];
-    char LockFileName[MAX_PATH];        
+    char src_filename[MAX_PATH];
+    char temp_filename[MAX_PATH];
+    char lock_filename[MAX_PATH];        
 };
 
 
-static inline win32_game_code 
-Win32_InitGameCode(win32_state* State,
-                  const char* SrcFileName,
-                  const char* TempFileName,
-                  const char* LockFileName) 
+static inline Win32_Game_Code 
+win32_init_game_code(Win32_State* state,
+                     const char* src_filename,
+                     const char* temp_filename,
+                     const char* lock_filename) 
 {
-    win32_game_code Ret = {};
-    Win32_BuildExePathFilename(State, Ret.SrcFileName, SrcFileName);
-    Win32_BuildExePathFilename(State, Ret.TempFileName, TempFileName);
-    Win32_BuildExePathFilename(State, Ret.LockFileName, LockFileName);
+    Win32_Game_Code ret = {};
+    win32_build_exe_path_filename(state, ret.src_filename, src_filename);
+    win32_build_exe_path_filename(state, ret.temp_filename, temp_filename);
+    win32_build_exe_path_filename(state, ret.lock_filename, lock_filename);
     
-    return Ret;
+    return ret;
 }
 
 static inline void
-Win32_LoadGameCode(win32_game_code* Code) 
+win32_load_game_code(Win32_Game_Code* code) 
 {
-    WIN32_FILE_ATTRIBUTE_DATA Ignored; 
-    if(!GetFileAttributesEx(Code->LockFileName, 
+    WIN32_FILE_ATTRIBUTE_DATA ignored; 
+    if(!GetFileAttributesEx(code->lock_filename, 
                             GetFileExInfoStandard, 
-                            &Ignored)) 
+                            &ignored)) 
     {
-        Code->LastWriteTime = Win32_GetLastWriteTime(Code->SrcFileName);
-        BOOL Success = FALSE;
+        code->last_write_time = win32_get_file_last_write_time(code->src_filename);
+        BOOL success = FALSE;
         do {
-            Success = CopyFile(Code->SrcFileName, Code->TempFileName, FALSE); 
-        } while (!Success); 
-        Code->Dll = LoadLibraryA(Code->TempFileName);
-        if(Code->Dll) {
-            Code->GameUpdate = 
-                (game_update*)GetProcAddress(Code->Dll, "GameUpdate");
-            Code->IsValid = (Code->GameUpdate != 0);
+            success = CopyFile(code->src_filename, code->temp_filename, FALSE); 
+        } while (!success); 
+        code->dll = LoadLibraryA(code->temp_filename);
+        if(code->dll) {
+            code->game_update = 
+                (game_update*)GetProcAddress(code->dll, "game_update");
+            code->is_valid = (code->game_update != 0);
         }
     }
 }
 
 static inline void 
-Win32_UnloadGameCode(win32_game_code* Code) {
-    if (Code->Dll) {
-        FreeLibrary(Code->Dll);
-        Code->Dll = 0;
+win32_unload_game_code(Win32_Game_Code* code) {
+    if (code->dll) {
+        FreeLibrary(code->dll);
+        code->dll = 0;
     }
-    Code->IsValid = false;
-    Code->GameUpdate = 0;
+    code->is_valid = false;
+    code->game_update = 0;
 }
 
 static inline b8
-Win32_IsGameCodeOutdated(win32_game_code* Code) {    
+win32_is_game_code_outdated(Win32_Game_Code* code) {    
     // Check last modified date
-    FILETIME LastWriteTime = Win32_GetLastWriteTime(Code->SrcFileName);
-    LARGE_INTEGER CurrentLastWriteTime = Win32_FiletimeToLargeInt(LastWriteTime); 
-    LARGE_INTEGER GameCodeLastWriteTime = Win32_FiletimeToLargeInt(Code->LastWriteTime);
+    FILETIME last_write_time = win32_get_file_last_write_time(code->src_filename);
+    LARGE_INTEGER current_last_write_time = win32_file_time_to_large_int(last_write_time); 
+    LARGE_INTEGER game_code_last_write_time = win32_file_time_to_large_int(code->last_write_time);
     
-    return (CurrentLastWriteTime.QuadPart > GameCodeLastWriteTime.QuadPart); 
+    return (current_last_write_time.QuadPart > game_code_last_write_time.QuadPart); 
 }
 
 
 
 static inline void
-Win32_GameMemory_Save(win32_game_memory* GameMemory, const char* Path) {
+win32_save_game_memory(Win32_Game_Memory* game_memory, const char* path) {
     // We just dump the whole game memory into a file
-    HANDLE Win32_Handle = CreateFileA(Path,
-                                     GENERIC_WRITE,
-                                     FILE_SHARE_WRITE,
-                                     0,
-                                     CREATE_ALWAYS,
-                                     0,
-                                     0);
-    if (Win32_Handle == INVALID_HANDLE_VALUE) {
-        Win32_Log("[Win32_SaveState] Cannot open file: %s\n", Path);
+    HANDLE win32_handle = CreateFileA(path,
+                                      GENERIC_WRITE,
+                                      FILE_SHARE_WRITE,
+                                      0,
+                                      CREATE_ALWAYS,
+                                      0,
+                                      0);
+    if (win32_handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::SaveState] Cannot open file: %s\n", path);
         return;
     }
-    defer { CloseHandle(Win32_Handle); }; 
+    defer { CloseHandle(win32_handle); }; 
     
-    DWORD BytesWritten;
-    if(!WriteFile(Win32_Handle, 
-                  GameMemory->Data,
-                  (DWORD)GameMemory->DataSize,
-                  &BytesWritten,
+    DWORD bytes_written;
+    if(!WriteFile(win32_handle, 
+                  game_memory->data,
+                  (DWORD)game_memory->data_size,
+                  &bytes_written,
                   0)) 
     {
-        Win32_Log("[Win32_SaveState] Cannot write file: %s\n", Path);
+        win32_log("[Win32::SaveState] Cannot write file: %s\n", path);
         return;
     }
     
-    if (BytesWritten != GameMemory->DataSize) {
-        Win32_Log("[Win32_SaveState] Did not complete writing: %s\n", Path);
+    if (bytes_written != game_memory->data_size) {
+        win32_log("[Win32::SaveState] Did not complete writing: %s\n", path);
         return;
     }
-    Win32_Log("[Win32_SaveState] State saved: %s\n", Path);
+    win32_log("[Win32::SaveState] state saved: %s\n", path);
     
 }
 
 static inline void
-Win32_GameMemory_Load(win32_game_memory* GameMemory, const char* Path) {
-    HANDLE Win32_Handle = CreateFileA(Path,
-                                     GENERIC_READ,
-                                     FILE_SHARE_READ,
-                                     0,
-                                     OPEN_EXISTING,
-                                     0,
-                                     0);
-    if (Win32_Handle == INVALID_HANDLE_VALUE) {
-        Win32_Log("[Win32_LoadState] Cannot open file: %s\n", Path);
+win32_load_game_memory(Win32_Game_Memory* game_memory, const char* path) {
+    HANDLE win32_handle = CreateFileA(path,
+                                      GENERIC_READ,
+                                      FILE_SHARE_READ,
+                                      0,
+                                      OPEN_EXISTING,
+                                      0,
+                                      0);
+    if (win32_handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::LoadState] Cannot open file: %s\n", path);
         return;
     }
-    defer { CloseHandle(Win32_Handle); }; 
-    DWORD BytesRead;
+    defer { CloseHandle(win32_handle); }; 
+    DWORD bytes_read;
     
-    BOOL Success = ReadFile(Win32_Handle, 
-                            GameMemory->Data,
-                            (DWORD)GameMemory->DataSize,
-                            &BytesRead,
+    BOOL success = ReadFile(win32_handle, 
+                            game_memory->data,
+                            (DWORD)game_memory->data_size,
+                            &bytes_read,
                             0);
     
-    if (Success && GameMemory->DataSize == BytesRead) {
-        Win32_Log("[Win32_LoadState] State loaded from: %s\n", Path);
+    if (success && game_memory->data_size == bytes_read) {
+        win32_log("[Win32::LoadState] state loaded from: %s\n", path);
         return;
     }
-    Win32_Log("[Win32_LoadState] Could not read all bytes: %s\n", Path);
+    win32_log("[Win32::LoadState] Could not read all bytes: %s\n", path);
 }
 
 
-//~ NOTE(Momo): Audio related
-struct win32_audio {
+//~ NOTE(Momo): audio related
+struct Win32_Audio {
     // Wasapi
-    IAudioClient2* Client;
-    IAudioRenderClient* RenderClient;
+    IAudioClient2* client;
+    IAudioRenderClient* render_client;
     
     // "Secondary" buffer
-    u32 BufferSize;
-    s16* Buffer;
+    u32 buffer_size;
+    s16* buffer;
     
     // Other variables for tracking purposes
-    u32 LatencySampleCount;
-    u32 SamplesPerSecond;
-    u16 BitsPerSample;
+    u32 latency_sample_count;
+    u32 samples_per_second;
+    u16 bits_per_sample;
     u16 channels;
     
 };
 
 static inline void
-Win32_AudioFree(win32_audio* Audio) {
-    Audio->Client->Stop();
-    Audio->Client->Release();
-    Audio->RenderClient->Release();
-    Win32_FreeMemory(Audio->Buffer);
+win32_audio_free(Win32_Audio* audio) {
+    audio->client->Stop();
+    audio->client->Release();
+    audio->render_client->Release();
+    win32_free_memory(audio->buffer);
 }
 
 
 static inline b8
-Win32_AudioInit(win32_audio* Audio,
-               u32 SamplesPerSecond, 
-               u16 BitsPerSample,
-               u16 channels,
-               u32 LatencyFrames,
-               u32 RefreshRate)
+win32_audio_init(Win32_Audio* audio,
+                 u32 samples_per_second, 
+                 u16 bits_per_sample,
+                 u16 channels,
+                 u32 latency_frames,
+                 u32 refresh_rate)
 {
-    Audio->channels = channels;
-    Audio->BitsPerSample = BitsPerSample;
-    Audio->SamplesPerSecond = SamplesPerSecond;
-    Audio->LatencySampleCount = (SamplesPerSecond / RefreshRate) * LatencyFrames;
+    audio->channels = channels;
+    audio->bits_per_sample = bits_per_sample;
+    audio->samples_per_second = samples_per_second;
+    audio->latency_sample_count = (samples_per_second / refresh_rate) * latency_frames;
     
-    HRESULT Hr = CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY);
-    if (FAILED(Hr)) {
-        Win32_Log("[Win32_Audio] Failed CoInitializeEx\n");
+    HRESULT hr = CoInitializeEx(0, COINIT_SPEED_OVER_MEMORY);
+    if (FAILED(hr)) {
+        win32_log("[Win32::Audio] Failed CoInitializeEx\n");
         return false;
     }
     
-    IMMDeviceEnumerator* DeviceEnumerator;
-    Hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), 
+    IMMDeviceEnumerator* device_enum;
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), 
                           nullptr,
                           CLSCTX_ALL, 
                           __uuidof(IMMDeviceEnumerator),
-                          (LPVOID*)(&DeviceEnumerator));
+                          (LPVOID*)(&device_enum));
     
-    if (FAILED(Hr)) {
-        Win32_Log("[Win32_Audio] Failed to create IMMDeviceEnumerator\n");
+    if (FAILED(hr)) {
+        win32_log("[Win32::Audio] Failed to create IMMDeviceEnumerator\n");
         return false;
     }
-    defer { DeviceEnumerator->Release(); };
+    defer { device_enum->Release(); };
     
     
     IMMDevice* Device;
-    Hr = DeviceEnumerator->GetDefaultAudioEndpoint(eRender, 
-                                                   eConsole, 
-                                                   &Device);
-    if (FAILED(Hr)) {
-        Win32_Log("[Win32_Audio] Failed to get audio endpoint\n");
+    hr = device_enum->GetDefaultAudioEndpoint(eRender, 
+                                              eConsole, 
+                                              &Device);
+    if (FAILED(hr)) {
+        win32_log("[Win32::Audio] Failed to get audio endpoint\n");
         return false;
     }
     defer { Device->Release(); };
     
-    Hr = Device->Activate(__uuidof(IAudioClient2), 
+    hr = Device->Activate(__uuidof(IAudioClient2), 
                           CLSCTX_ALL, 
                           nullptr, 
-                          (LPVOID*)&Audio->Client);
-    if(FAILED(Hr)) {
-        Win32_Log("[Win32_Audio] Failed to create IAudioClient\n");
+                          (LPVOID*)&audio->client);
+    if(FAILED(hr)) {
+        win32_log("[Win32::Audio] Failed to create IAudioClient\n");
         return false;
     }
     
-    WAVEFORMATEX WaveFormat = {};
-    WaveFormat.wFormatTag = WAVE_FORMAT_PCM;
-    WaveFormat.wBitsPerSample = BitsPerSample;
-    WaveFormat.nChannels = channels;
-    WaveFormat.nSamplesPerSec = SamplesPerSecond;
-    WaveFormat.nBlockAlign = (WaveFormat.nChannels * WaveFormat.wBitsPerSample / 8);
-    WaveFormat.nAvgBytesPerSec = WaveFormat.nSamplesPerSec * WaveFormat.nBlockAlign;
+    WAVEFORMATEX wave_format = {};
+    wave_format.wFormatTag = WAVE_FORMAT_PCM;
+    wave_format.wBitsPerSample = bits_per_sample;
+    wave_format.nChannels = channels;
+    wave_format.nSamplesPerSec = samples_per_second;
+    wave_format.nBlockAlign = (wave_format.nChannels * wave_format.wBitsPerSample / 8);
+    wave_format.nAvgBytesPerSec = wave_format.nSamplesPerSec * wave_format.nBlockAlign;
     
     // buffer size in 100 nanoseconds
 #if 0
-    REFERENCE_TIME BufferDuration = 10000000ULL * Audio->BufferSize / SamplesPerSecond; 
+    REFERENCE_TIME buffer_duration = 10000000ULL * audio->buffer_size / samples_per_second; 
 #else
     
 #if 0
     const int64_t REFTIMES_PER_SEC = 10000000; // hundred nanoseconds
-    REFERENCE_TIME BufferDuration = REFTIMES_PER_SEC * 2;
+    REFERENCE_TIME buffer_duration = REFTIMES_PER_SEC * 2;
 #endif
-    REFERENCE_TIME BufferDuration = 0;
-    Hr = Audio->Client->GetDevicePeriod(nullptr, &BufferDuration);
+    REFERENCE_TIME buffer_duration = 0;
+    hr = audio->client->GetDevicePeriod(nullptr, &buffer_duration);
     
 #endif
     
-    DWORD StreamFlags = ( AUDCLNT_STREAMFLAGS_RATEADJUST 
-                         | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
-                         | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY );
+    DWORD stream_flags = ( AUDCLNT_STREAMFLAGS_RATEADJUST 
+                          | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
+                          | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY );
     
-    Hr = Audio->Client->Initialize(AUDCLNT_SHAREMODE_SHARED, 
-                                   StreamFlags, 
-                                   BufferDuration,
+    hr = audio->client->Initialize(AUDCLNT_SHAREMODE_SHARED, 
+                                   stream_flags, 
+                                   buffer_duration,
                                    0, 
-                                   &WaveFormat, 
+                                   &wave_format, 
                                    nullptr);
-    if (FAILED(Hr))
+    if (FAILED(hr))
     {
-        Win32_Log("[Win32_Audio] Failed to initialize audio client\n");
+        win32_log("[Win32::audio] Failed to initialize audio client\n");
         return false;
     }
     
-    if (FAILED(Audio->Client->GetService(__uuidof(IAudioRenderClient),
-                                         (LPVOID*)(&Audio->RenderClient))))
+    if (FAILED(audio->client->GetService(__uuidof(IAudioRenderClient),
+                                         (LPVOID*)(&audio->render_client))))
     {
-        Win32_Log("[Win32_Audio] Failed to create IAudioClient\n");
+        win32_log("[Win32::audio] Failed to create IAudioClient\n");
         return false;
     }
     
-    UINT32 SoundFrameCount;
-    Hr = Audio->Client->GetBufferSize(&SoundFrameCount);
-    if (FAILED(Hr))
+    UINT32 sound_frame_count;
+    hr = audio->client->GetBufferSize(&sound_frame_count);
+    if (FAILED(hr))
     {
-        Win32_Log("[Win32_Audio] Failed to get buffer size\n");
+        win32_log("[Win32::audio] Failed to get buffer size\n");
         return false;
     }
     
-    Audio->BufferSize = SoundFrameCount;
-    Audio->Buffer = (s16*)Win32_AllocateMemory(Audio->BufferSize);
-    if (!Audio->Buffer) {
-        Win32_Log("[Win32_Audio] Failed to allocate secondary buffer\n");
+    audio->buffer_size = sound_frame_count;
+    audio->buffer = (s16*)win32_allocate_memory(audio->buffer_size);
+    if (!audio->buffer) {
+        win32_log("[Win32::audio] Failed to allocate secondary buffer\n");
         return false;
     }
     
     
-    Win32_Log("[Win32_Audio] Loaded!\n");
+    win32_log("[Win32::audio] Loaded!\n");
     
-    Audio->Client->Start();
+    audio->client->Start();
     
     return true;
 }
 
 static inline Platform_Audio
-Win32_AudioPrepare(win32_audio* Audio) {
-    Platform_Audio Ret = {};
+win32_audio_prepare(Win32_Audio* audio) {
+    Platform_Audio ret = {};
     
-    UINT32 SoundPaddingSize;
-    UINT32 SamplesToWrite = 0;
+    UINT32 sound_padding_size;
+    UINT32 samples_to_write = 0;
     
     // Padding is how much valid data is queued up in the sound buffer
     // if there's enough padding then we could skip writing more data
-    HRESULT Hr = Audio->Client->GetCurrentPadding(&SoundPaddingSize);
-    if (SUCCEEDED(Hr)) {
-        SamplesToWrite = (UINT32)Audio->BufferSize - SoundPaddingSize;
+    HRESULT hr = audio->client->GetCurrentPadding(&sound_padding_size);
+    if (SUCCEEDED(hr)) {
+        samples_to_write = (UINT32)audio->buffer_size - sound_padding_size;
         
         // Cap the samples to write to how much latency is allowed.
-        if (SamplesToWrite > Audio->LatencySampleCount) {
-            SamplesToWrite = Audio->LatencySampleCount;
+        if (samples_to_write > audio->latency_sample_count) {
+            samples_to_write = audio->latency_sample_count;
         }
     }
     
-    Ret.sample_buffer = Audio->Buffer;
-    Ret.sample_count = SamplesToWrite; 
-    Ret.channels = Audio->channels;
+    ret.sample_buffer = audio->buffer;
+    ret.sample_count = samples_to_write; 
+    ret.channels = audio->channels;
     
-    return Ret;
+    return ret;
 }
 
 static inline void
-Win32_AudioFlush(win32_audio* Audio, 
-                Platform_Audio Output) 
+win32_flush_audio(Win32_Audio* audio, 
+                  Platform_Audio output) 
 {
     // NOTE(Momo): Kinda assumes 16-bit Sound
-    BYTE* SoundBufferData;
-    if (SUCCEEDED(Audio->RenderClient->GetBuffer((UINT32)Output.sample_count, &SoundBufferData))) 
+    BYTE* sound_buffer_data;
+    if (SUCCEEDED(audio->render_client->GetBuffer((UINT32)output.sample_count, &sound_buffer_data))) 
     {
-        s16* SrcSample = Output.sample_buffer;
-        s16* DestSample = (s16*)SoundBufferData;
-        // Buffer structure for stereo:
+        s16* src_sample = output.sample_buffer;
+        s16* dest_sample = (s16*)sound_buffer_data;
+        // buffer structure for stereo:
         // s16   s16    s16  s16   s16  s16
         // [LEFT RIGHT] LEFT RIGHT LEFT RIGHT....
-        for(u32 I = 0; I < Output.sample_count; ++I ){
-            for (u32 J = 0; J < Audio->channels; ++J) {
-                *DestSample++ = *SrcSample++;
+        for(u32 I = 0; I < output.sample_count; ++I ){
+            for (u32 J = 0; J < audio->channels; ++J) {
+                *dest_sample++ = *src_sample++;
             }
             
         }
         
-        Audio->RenderClient->ReleaseBuffer((UINT32)Output.sample_count, 0);
+        audio->render_client->ReleaseBuffer((UINT32)output.sample_count, 0);
     }
 }
 
 
 static inline v2u
-Win32_GetMonitorDimensions() {
-    v2u Ret = {};
-    Ret.W = S32_ToU32(GetSystemMetrics(SM_CXSCREEN));
-    Ret.H = S32_ToU32(GetSystemMetrics(SM_CYSCREEN));
-    return Ret;
+win32_get_monitor_dimensions() {
+    v2u ret = {};
+    ret.w = u32(GetSystemMetrics(SM_CXSCREEN));
+    ret.h = u32(GetSystemMetrics(SM_CYSCREEN));
+    return ret;
 }
 
 static inline v2u
-Win32_GetWindowDimensions(HWND Window) {
-    RECT Rect = {};
-    GetWindowRect(Window, &Rect);
-    return V2u_Create(u16(Rect.right - Rect.left),
-                      u16(Rect.bottom - Rect.top));
+win32_get_window_dimensions(HWND window) {
+    RECT rect = {};
+    GetWindowRect(window, &rect);
+    return { u32(rect.right - rect.left), u32(rect.bottom - rect.top) };
     
 }
 
 static inline v2u
-Win32_GetClientDimensions(HWND Window) {
-    RECT Rect = {};
-    GetClientRect(Window, &Rect);
-    return V2u_Create(u32(Rect.right - Rect.left),
-                      u32(Rect.bottom - Rect.top));
+win32_get_client_dimensions(HWND window) {
+    RECT rect = {};
+    GetClientRect(window, &rect);
+    return { u32(rect.right - rect.left), u32(rect.bottom - rect.top) };
     
 }
 
 static inline void
-Win32_ProcessMessages(HWND Window, 
-                     win32_state* State,
-                     platform_input* Input)
+win32_process_messages(HWND window, 
+                       Win32_State* state,
+                       Platform_Input* input)
 {
-    MSG Msg = {};
-    while(PeekMessage(&Msg, Window, 0, 0, PM_REMOVE)) {
-        switch(Msg.message) {
+    MSG msg = {};
+    while(PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
+        switch(msg.message) {
             case WM_QUIT:
             case WM_CLOSE: {
-                State->IsRunning = false;
+                state->is_running = false;
             } break;
             case WM_CHAR: {
-                Input_TryPushCharacterInput(Input, (char)Msg.wParam);
-            } break;
-            case WM_PAINT: {
-                PAINTSTRUCT Paint;
-                HDC DeviceContext = BeginPaint(Window, &Paint);
-                v2u Dimension = Win32_GetClientDimensions(Window);
-                Win32_DisplayBufferInWindow(Window, &State->ScreenBuffer);
-                EndPaint(Window, &Paint);
+                input->try_push_character_input((u8)msg.wParam);
             } break;
             case WM_MOUSEMOVE: {
-                // NOTE(Momo): This is the actual conversion from screen space to 
-                // design space. I'm not 100% if this should be here but I guess
-                // only time will tell.
-#if 0
-                Input->WindowMousePos.X = (f32)GET_X_LPARAM(Msg.lParam);
-                Input->WindowMousePos.Y = (f32)GET_Y_LPARAM(Msg.lParam);
-                
-                v2u WindowDims = State->Opengl->WindowDimensions;
-                aabb2u RenderRegion = State->Opengl->RenderRegion;
-                
-                Input->RenderMousePos.X = Input->WindowMousePos.X - RenderRegion.Min.X;
-                Input->RenderMousePos.Y = Input->WindowMousePos.Y - RenderRegion.Min.Y;
-                
-                v2f DesignDimsF = V2f_CreateFromV2u(State->Opengl->DesignDimensions);
-                v2u RenderDimsU = Aabb2u_Dimensions(RenderRegion);
-                v2f RenderDimsF = V2f_CreateFromV2u(RenderDimsU);
-                v2f DesignToRenderRatio = V2f_Ratio(DesignDimsF, RenderDimsF);
-                
-                Input->DesignMousePos.X = Input->RenderMousePos.X * DesignToRenderRatio.W;
-                Input->DesignMousePos.Y = Input->RenderMousePos.Y * DesignToRenderRatio.H;
-#endif
-                
+                // TODO
             } break;
             case WM_LBUTTONUP:
             case WM_LBUTTONDOWN: {
-                u32 Code = (u32)Msg.wParam;
-                b8 IsDown = Msg.message == WM_LBUTTONDOWN;
-                Input->ButtonSwitch.Now = IsDown;
+                b8 is_down = msg.message == WM_LBUTTONDOWN;
+                input->button_switch.now = is_down;
             } break;
             case WM_SYSKEYDOWN:
             case WM_SYSKEYUP:
             case WM_KEYDOWN:
             case WM_KEYUP: {
-                u32 KeyCode = (u32)Msg.wParam;
-                b8 IsDown = Msg.message == WM_KEYDOWN;
+                u32 KeyCode = (u32)msg.wParam;
+                b8 is_down = msg.message == WM_KEYDOWN;
                 switch(KeyCode) {
                     case VK_RETURN:{
-                        Input->ButtonConfirm.Now = IsDown;
+                        input->button_confirm.now = is_down;
                     } break;
                     case VK_F1:{
-                        Input->ButtonConsole.Now = IsDown;
+                        input->button_console.now = is_down;
                     } break;
                     case VK_F2:{
-                        Input->ButtonInspector.Now = IsDown;
+                        input->button_inspector.now = is_down;
                     } break;
                     case VK_F3:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            Win32_GameMemory_Save(&State->GameMemory, Win32_SaveStateFile);
+                        if (msg.message == WM_KEYDOWN) {
+                            win32_save_game_memory(&state->game_memory, WIN32_SAVE_STATE_FILE);
                         }
                     } break;
                     case VK_F4:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            Win32_GameMemory_Load(&State->GameMemory, Win32_SaveStateFile);
+                        if (msg.message == WM_KEYDOWN) {
+                            win32_load_game_memory(&state->game_memory, WIN32_SAVE_STATE_FILE);
                         }
                     } break;
                     case VK_F5:{
-                        Input->ButtonPause.Now = IsDown;
+                        input->button_pause.now = is_down;
                     } break;
                     case VK_F6:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            if(State->IsRecordingInput) {
-                                Win32_EndRecordingInput(State);
+                        if (msg.message == WM_KEYDOWN) {
+                            if(state->is_recording_input) {
+                                win32_end_recording_input(state);
                             }
                             else {
-                                Win32_GameMemory_Save(&State->GameMemory, Win32_RecordStateFile);
-                                Win32_BeginRecordingInput(G_State, Win32_RecordInputFile);
+                                win32_save_game_memory(&state->game_memory, WIN32_RECORD_STATE_FILE);
+                                win32_begin_recording_input(state, WIN32_RECORD_INPUT_FILE);
                             }
                         }
                         
                     } break;
                     case VK_F7:{
-                        if (Msg.message == WM_KEYDOWN) {
-                            if(State->IsPlaybackInput) {
-                                Win32_EndPlaybackInput(G_State);
+                        if (msg.message == WM_KEYDOWN) {
+                            if(state->is_playback_input) {
+                                win32_end_playback_input(state);
                             }
                             else {
-                                Win32_GameMemory_Load(&State->GameMemory, Win32_RecordStateFile);
-                                Win32_BeginPlaybackInput(State, 
-                                                         Win32_RecordInputFile);
+                                win32_load_game_memory(&state->game_memory, WIN32_RECORD_STATE_FILE);
+                                win32_begin_playback_input(state, 
+                                                           WIN32_RECORD_INPUT_FILE);
                             }
                         }
                         
                     } break;
                     case VK_F11:{
-                        Input->ButtonSpeedDown.Now = IsDown;
+                        input->button_speed_down.now = is_down;
                     } break;
                     case VK_F12: {
-                        Input->ButtonSpeedUp.Now = IsDown;
+                        input->button_speed_up.now = is_down;
                     } break;
                     case VK_BACK:{
-                        Input->ButtonBack.Now = IsDown;
+                        input->button_back.now = is_down;
                     } break;
                 } 
-                TranslateMessage(&Msg);
+                TranslateMessage(&msg);
             } break;
             default: 
             {
-                //Win32_Log("[Win32_ProcessMessages] %d\n", Msg.message);
-                TranslateMessage(&Msg);
-                DispatchMessage(&Msg);
+                //win32_log("[Win32::ProcessMessages] %d\n", msg.message);
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
             } break;
         }
     }
 }
 
 LRESULT CALLBACK
-Win32_WindowCallback(HWND Window, 
-                    UINT Message, 
-                    WPARAM WParam,
-                    LPARAM LParam) 
+Win32_WindowCallback(HWND window, 
+                     UINT Message, 
+                     WPARAM WParam,
+                     LPARAM LParam) 
 {
     LRESULT Result = 0;
     switch(Message) {
         case WM_CLOSE: {
-            G_State->IsRunning = false;
+            g_state->is_running = false;
         } break;
         case WM_DESTROY: {
-            G_State->IsRunning = false;
+            g_state->is_running = false;
+        } break;
+        case WM_PAINT: {
+            PAINTSTRUCT paint;
+            HDC dc = BeginPaint(window, &paint);
+            v2u dimensions = win32_get_client_dimensions(window);
+            win32_push_screen_buffer_to_window(dc, &g_state->screen_buffer, dimensions.w, dimensions.h);
+            EndPaint(window, &paint);
         } break;
         case WM_WINDOWPOSCHANGED: {
-            v2u WindowWH = Win32_GetWindowDimensions(Window);
-            Win32_Log("[Win32_Resize] Window: %d x %d\n", WindowWH.W, WindowWH.H);
-                
-            v2u ClientWH = Win32_GetClientDimensions(Window);
-            Win32_Log("[Win32_Resize] Client: %d x %d\n", ClientWH.W, ClientWH.H);
+            // TODO
         } break;
         default: {
             //TODO: Log message?
-            Result = DefWindowProcA(Window, Message, WParam, LParam);
+            Result = DefWindowProcA(window, Message, WParam, LParam);
         };   
     }
     return Result;
@@ -942,30 +959,30 @@ Win32_WindowCallback(HWND Window,
 
 
 static inline HWND 
-Win32_CreateWindow(HINSTANCE Instance,
-                  u32 WindowWidth,
-                  u32 WindowHeight,
-                  const char* Title) 
+win32_create_window(HINSTANCE instance,
+                    u32 window_width,
+                    u32 window_height,
+                    const char* Title) 
 {
-    WNDCLASSA WindowClass = {};
-    WindowClass.style = CS_HREDRAW | CS_VREDRAW;
-    WindowClass.lpfnWndProc = Win32_WindowCallback;
-    WindowClass.hInstance = Instance;
-    WindowClass.hCursor = LoadCursor(0, IDC_ARROW);
-    WindowClass.lpszClassName = "MainWindowClass";
+    WNDCLASSA window_class = {};
+    window_class.style = CS_HREDRAW | CS_VREDRAW;
+    window_class.lpfnWndProc = Win32_WindowCallback;
+    window_class.hInstance = instance;
+    window_class.hCursor = LoadCursor(0, IDC_ARROW);
+    window_class.lpszClassName = "MainWindowClass";
     
-    if(!RegisterClassA(&WindowClass)) {
-        Win32_Log("[Win32_Window] Failed to create class\n");
+    if(!RegisterClassA(&window_class)) {
+        win32_log("[Win32::window] Failed to create class\n");
         return NULL;
     }
     
-    HWND Window = {};
+    HWND window = {};
     RECT WindowRect = {};
-    v2u MonitorDimensions = Win32_GetMonitorDimensions();
-    WindowRect.left = MonitorDimensions.W / 2 - WindowWidth / 2;
-    WindowRect.right = MonitorDimensions.W / 2 + WindowWidth / 2;
-    WindowRect.top = MonitorDimensions.H / 2 - WindowHeight / 2;
-    WindowRect.bottom = MonitorDimensions.H / 2 + WindowHeight / 2;
+    v2u monitor_dimensions = win32_get_monitor_dimensions();
+    WindowRect.left = monitor_dimensions.w / 2 - window_width / 2;
+    WindowRect.right = monitor_dimensions.w / 2 + window_width / 2;
+    WindowRect.top = monitor_dimensions.h / 2 - window_height / 2;
+    WindowRect.bottom = monitor_dimensions.h / 2 + window_height / 2;
     
     DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
     AdjustWindowRectEx(&WindowRect,
@@ -974,463 +991,484 @@ Win32_CreateWindow(HINSTANCE Instance,
                        0);
     
     // TODO: Adaptively create 'best' window resolution based on current desktop reso.
-    Window = CreateWindowExA(
+    window = CreateWindowExA(
                              0,
-                             WindowClass.lpszClassName,
+                             window_class.lpszClassName,
                              Title,
                              Style,
                              WindowRect.left,
                              WindowRect.top,
-                             RECT_Width(WindowRect),
-                             RECT_Height(WindowRect),
+                             width(WindowRect),
+                             height(WindowRect),
                              0,
                              0,
-                             Instance,
+                             instance,
                              0);
     
-    if (!Window) {
-        Win32_Log("[Win32_Window] Failed to create window\n");
+    if (!window) {
+        win32_log("[Win32::window] Failed to create window\n");
         return NULL;
     }
-    Win32_Log("[Win32_Window] Window created successfully\n");
-    v2u WindowWH = Win32_GetWindowDimensions(Window);
-    v2u ClientWH = Win32_GetClientDimensions(Window);
-    Win32_Log("[Win32_Window] Client: %d x %d\n", ClientWH.W, ClientWH.H);
-    Win32_Log("[Win32_Window] Window: %d x %d\n", WindowWH.W, WindowWH.H);
-    return Window;
+    win32_log("[Win32::window] window created successfully\n");
+    v2u WindowWH = win32_get_window_dimensions(window);
+    v2u ClientWH = win32_get_client_dimensions(window);
+    win32_log("[Win32::window] client: %d x %d\n", ClientWH.w, ClientWH.h);
+    win32_log("[Win32::window] window: %d x %d\n", WindowWH.w, WindowWH.h);
+    return window;
     
 }
 
+static inline void
+win32_swap_buffers(HWND window) {
+    HDC DeviceContext = GetDC(window); 
+    defer { ReleaseDC(window, DeviceContext); };
+    SwapBuffers(DeviceContext);
+}
 
 // Platform Functions ////////////////////////////////////////////////////
-enum platform_file_error {
-    PlatformFileError_None,
-    PlatformFileError_NotEnoughHandlers,
-    PlatformFileError_CannotOpenFile,   
-    PlatformFileError_Closed,
-    PlatformFileError_ReadFileFailed,
+enum Win32_File_Error_Type {
+    WIN32_FILE_ERROR_NONE,
+    WIN32_FILE_ERROR_NO_HANDLERS,
+    WIN32_FILE_ERROR_CANNOT_OPEN,   
+    WIN32_FILE_ERROR_ALREADY_CLOSED,
+    WIN32_FILE_ERROR_READ_FILE_FAILED,
 };
 
 static inline
-PLATFORM_GET_PERFORMANCE_COUNTER_DECL(Win32_GetPerformanceCounterU64) {
-    return (u64)Win32_GetPerformanceCounter().QuadPart;
+PLATFORM_GET_PERFORMANCE_COUNTER_DECL(win32_get_performance_counter_u64) {
+    return (u64)win32_get_performance_counter().QuadPart;
 }
 
 static inline 
-PLATFORM_OPEN_ASSET_FILE_DECL(Win32_OpenAssetFile) {
-    Platform_File_Handle Ret = {}; 
-    const char* Path = GAME_ASSET_FILENAME;
+PLATFORM_OPEN_ASSET_FILE_DECL(win32_open_asset_file) {
+    Platform_File_Handle ret = {}; 
+    const char* path = GAME_ASSET_FILENAME;
     
     // Check if there are free handlers to go around
-    if (G_State->HandleFreeCount == 0) {
-        Ret.Error = PlatformFileError_NotEnoughHandlers;
-        return Ret;
+    if (g_state->handle_free_count == 0) {
+        ret.error = WIN32_FILE_ERROR_NO_HANDLERS;
+        return ret;
     }    
     
-    HANDLE Win32_Handle = CreateFileA(Path, 
+    HANDLE win32_handle = CreateFileA(path, 
+                                      GENERIC_READ, 
+                                      FILE_SHARE_READ,
+                                      0,
+                                      OPEN_EXISTING,
+                                      0,
+                                      0);
+    
+    
+    if(win32_handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::OpenAssetFile] Cannot open file: %s\n", path);
+        ret.error = WIN32_FILE_ERROR_CANNOT_OPEN;
+        return ret;
+    } 
+    
+    u32 free_slot_index = g_state->handle_free_list[g_state->handle_free_count-1];
+    g_state->handles[free_slot_index] = win32_handle;
+    --g_state->handle_free_count;
+    ret.id = free_slot_index;
+    
+    return ret; 
+}
+
+static inline 
+PLATFORM_LOG_FILE_ERROR_DECL(win32_log_file_error) {
+    switch(handle->error) {
+        case WIN32_FILE_ERROR_NONE: {
+            win32_log("[Win32::File] There is no file error\n");
+        } break;
+        case WIN32_FILE_ERROR_NO_HANDLERS: {
+            win32_log("[Win32::File] There is not enough handlers\n");
+        } break;
+        case WIN32_FILE_ERROR_CANNOT_OPEN:{
+            win32_log("[Win32::File] Cannot open file\n");
+        } break;
+        case WIN32_FILE_ERROR_ALREADY_CLOSED:{
+            win32_log("[Win32::File] File is already closed\n");
+        } break;
+        case WIN32_FILE_ERROR_READ_FILE_FAILED: {
+            win32_log("[Win32::File] File read failed\n");
+        } break;
+        default: {
+            win32_log("[Win32::File] Undefined error!\n");
+        };
+    }
+}
+
+static inline
+PLATFORM_CLOSE_FILE_DECL(win32_close_file) {
+    ASSERT(handle->id < ARRAY_COUNT(g_state->handles));
+    HANDLE win32_handle = g_state->handles[handle->id];
+    if (win32_handle != INVALID_HANDLE_VALUE) {
+        CloseHandle(win32_handle); 
+    }
+    g_state->handle_free_list[g_state->handle_free_count++] = handle->id;
+    ASSERT(g_state->handle_free_count <= ARRAY_COUNT(g_state->handles));
+}
+
+
+#if 0
+static inline
+PLATFORM_ADD_TEXTURE_DECL(win32_add_texture) {
+    return Opengl_AddTexture(g_state->opengl, width, height, pixels);
+}
+
+static inline 
+PLATFORM_CLEAR_TEXTURES_DECL(win32_clear_textures) {
+    return Opengl_ClearTextures(g_state->opengl);
+}
+#endif
+
+static inline 
+PLATFORM_READ_FILE_DECL(win32_read_file) {
+    if (handle->error) {
+        return;
+    }
+    ASSERT(handle->id < ARRAY_COUNT(g_state->handles));
+    
+    HANDLE win32_handle = g_state->handles[handle->id];
+    OVERLAPPED overlapped = {};
+    overlapped.Offset = (u32)((offset >> 0) & 0xFFFFFFFF);
+    overlapped.OffsetHigh = (u32)((offset >> 32) & 0xFFFFFFFF);
+    
+    u32 file_size_32 = (u32)size;
+    DWORD bytes_read;
+    if(ReadFile(win32_handle, dest, file_size_32, &bytes_read, &overlapped) &&
+       file_size_32 == bytes_read) 
+    {
+        // success;
+    }
+    else {
+        handle->error = WIN32_FILE_ERROR_READ_FILE_FAILED; 
+    }
+}
+
+static inline 
+PLATFORM_HIDE_CURSOR_DECL(win32_hide_cursor) {
+    ShowCursor(FALSE);
+}
+
+static inline
+PLATFORM_SHOW_CURSOR_DECL(win32_show_cursor) {
+    ShowCursor(TRUE);
+}
+
+static inline
+PLATFORM_GET_FILE_SIZE_DECL(win32_get_file_size) 
+{
+    HANDLE file_handle = CreateFileA(path, 
                                      GENERIC_READ, 
                                      FILE_SHARE_READ,
                                      0,
                                      OPEN_EXISTING,
                                      0,
                                      0);
+    defer { CloseHandle(file_handle); };
     
-    
-    if(Win32_Handle == INVALID_HANDLE_VALUE) {
-        Win32_Log("[Win32_OpenAssetFile] Cannot open file: %s\n", Path);
-        Ret.Error = PlatformFileError_CannotOpenFile;
-        return Ret;
-    } 
-    
-    u32 FreeSlotIndex = G_State->HandleFreeList[G_State->HandleFreeCount-1];
-    G_State->Handles[FreeSlotIndex] = Win32_Handle;
-    --G_State->HandleFreeCount;
-    Ret.Id = FreeSlotIndex;
-    
-    return Ret; 
-}
-
-static inline 
-PLATFORM_LOG_FILE_ERROR_DECL(Win32_LogFileError) {
-    switch(Handle->Error) {
-        case PlatformFileError_None: {
-            Win32_Log("[Win32_File] There is no file error\n");
-        } break;
-        case PlatformFileError_NotEnoughHandlers: {
-            Win32_Log("[Win32_File] There is not enough handlers\n");
-        } break;
-        case PlatformFileError_CannotOpenFile:{
-            Win32_Log("[Win32_File] Cannot open file\n");
-        } break;
-        case PlatformFileError_Closed:{
-            Win32_Log("[Win32_File] File is already closed\n");
-        } break;
-        case PlatformFileError_ReadFileFailed: {
-            Win32_Log("[Win32_File] File read failed\n");
-        } break;
-        default: {
-            Win32_Log("[Win32_File] Undefined error!\n");
-        };
-    }
-}
-
-static inline
-PLATFORM_CLOSE_FILE_DECL(Win32_CloseFile) {
-    ASSERT(Handle->Id < ARRAY_COUNT(G_State->Handles));
-    HANDLE Win32_Handle = G_State->Handles[Handle->Id];
-    if (Win32_Handle != INVALID_HANDLE_VALUE) {
-        CloseHandle(Win32_Handle); 
-    }
-    G_State->HandleFreeList[G_State->HandleFreeCount++] = Handle->Id;
-    ASSERT(G_State->HandleFreeCount <= ARRAY_COUNT(G_State->Handles));
-}
-static inline
-PLATFORM_ADD_TEXTURE_DECL(Win32_AddTexture) {
-    //TODO(Momo): todo
-    return {0};
-}
-
-static inline 
-PLATFORM_CLEAR_TEXTURES_DECL(Win32_ClearTextures) {
-    //TODO(Momo): todo
-    return;
-}
-
-static inline 
-PLATFORM_READ_FILE_DECL(Win32_ReadFile) {
-    if (Handle->Error) {
-        return;
-    }
-    ASSERT(Handle->Id < ARRAY_COUNT(G_State->Handles));
-    
-    HANDLE Win32_Handle = G_State->Handles[Handle->Id];
-    OVERLAPPED Overlapped = {};
-    Overlapped.Offset = (u32)((Offset >> 0) & 0xFFFFFFFF);
-    Overlapped.OffsetHigh = (u32)((Offset >> 32) & 0xFFFFFFFF);
-    
-    u32 FileSize32 = (u32)Size;
-    DWORD BytesRead;
-    if(ReadFile(Win32_Handle, Dest, FileSize32, &BytesRead, &Overlapped) &&
-       FileSize32 == BytesRead) 
-    {
-        // success;
-    }
-    else {
-        Handle->Error = PlatformFileError_ReadFileFailed; 
-    }
-}
-
-static inline 
-PLATFORM_HIDE_CURSOR_DECL(Win32_HideCursor) {
-    ShowCursor(FALSE);
-}
-
-static inline
-PLATFORM_SHOW_CURSOR_DECL(Win32_ShowCursor) {
-    ShowCursor(TRUE);
-}
-
-static inline
-PLATFORM_GET_FILE_SIZE_DECL(Win32_GetFileSize) 
-{
-    HANDLE FileHandle = CreateFileA(Path, 
-                                    GENERIC_READ, 
-                                    FILE_SHARE_READ,
-                                    0,
-                                    OPEN_EXISTING,
-                                    0,
-                                    0);
-    defer { CloseHandle(FileHandle); };
-    
-    if(FileHandle == INVALID_HANDLE_VALUE) {
-        Win32_Log("[Win32_GetFileSize] Cannot open file: %s\n", Path);
+    if(file_handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::GetFileSize] Cannot open file: %s\n", path);
         return 0;
     } else {
-        LARGE_INTEGER FileSize;
-        if (!GetFileSizeEx(FileHandle, &FileSize)) {
-            Win32_Log("[Win32_GetFileSize] Problems getting file size: %s\n", Path);
+        LARGE_INTEGER file_size;
+        if (!GetFileSizeEx(file_handle, &file_size)) {
+            win32_log("[Win32::GetFileSize] Problems getting file size: %s\n", path);
             return 0;
         }
         
-        return (u32)FileSize.QuadPart;
+        return (u32)file_size.QuadPart;
     }
 }
 
 static inline Platform_API
-Win32_InitPlatformApi() {
-    Platform_API PlatformApi = {};
-    PlatformApi.log = Win32_Log;
-    PlatformApi.read_file = Win32_ReadFile;
-    PlatformApi.get_file_size = Win32_GetFileSize;
-    PlatformApi.clear_textures = Win32_ClearTextures;
-    PlatformApi.add_texture = Win32_AddTexture;
-    PlatformApi.open_asset_file = Win32_OpenAssetFile;
-    PlatformApi.close_file = Win32_CloseFile;
-    PlatformApi.log_file_error = Win32_LogFileError;
-    PlatformApi.show_cursor = Win32_ShowCursor;
-    PlatformApi.hide_cursor = Win32_HideCursor;
-    PlatformApi.get_performance_counter = Win32_GetPerformanceCounterU64;
-    return PlatformApi;
+win32_init_platform_api() {
+    Platform_API platform_api = {};
+    
+    platform_api.log = win32_log;
+    platform_api.read_file = win32_read_file;
+    platform_api.get_file_size = win32_get_file_size;
+    //platform_api.clear_textures = win32_clear_textures;
+    //platform_api.add_texture = win32_add_texture;
+    platform_api.open_asset_file = win32_open_asset_file;
+    platform_api.close_file = win32_close_file;
+    platform_api.log_file_error = win32_log_file_error;
+    platform_api.show_cursor = win32_show_cursor;
+    platform_api.hide_cursor = win32_hide_cursor;
+    platform_api.get_performance_counter = win32_get_performance_counter_u64;
+    
+    return platform_api;
 }
 
 static inline void
-Win32_FreeGameMemory(win32_game_memory* GameMemory) {
-    Win32_Log("[Win32_GameMemory] Freed\n");
-    Win32_FreeMemory(GameMemory->Data);
+win32_free_game_memory(Win32_Game_Memory* game_memory) {
+    win32_log("[Win32::game_memory] Freed\n");
+    win32_free_memory(game_memory->data);
 }
 
 static inline b8
-Win32_InitGameMemory(win32_game_memory* GameMemory,
-                    u32 permanent_memory_size,
-                    u32 transient_memory_size,
-                    u32 scratch_memory_size,
-                    u32 debug_memory_size) 
+win32_init_game_memory(Win32_Game_Memory* game_memory,
+                       u32 permanent_memory_size,
+                       u32 transient_memory_size,
+                       u32 scratch_memory_size,
+                       u32 debug_memory_size) 
 {
-    GameMemory->DataSize = permanent_memory_size + transient_memory_size + scratch_memory_size + debug_memory_size;
+    game_memory->data_size = permanent_memory_size + transient_memory_size + scratch_memory_size + debug_memory_size;
     
 #if INTERNAL
     SYSTEM_INFO SystemInfo;
     GetSystemInfo(&SystemInfo);
     
-    GameMemory->Data = 
-        Win32_AllocateMemoryAtAddress(GameMemory->DataSize, 
-                                     SystemInfo.lpMinimumApplicationAddress);
+    game_memory->data = 
+        win32_allocate_memory_at_address(game_memory->data_size, 
+                                         SystemInfo.lpMinimumApplicationAddress);
 #else
-    GameMemory->Data = Win32_AllocateMemory(GameMemory->DataSize);
+    game_memory->data = win32_allocate_memory(game_memory->data_size);
 #endif
-    if (!GameMemory->Data) {
-        Win32_Log("[Win32_GameMemory] Failed to allocate\n");
+    if (!game_memory->data) {
+        win32_log("[Win32::game_memory] Failed to allocate\n");
         return false;
     }
     
-    u8* MemoryPtr = (u8*)GameMemory->Data;
+    u8* MemoryPtr = (u8*)game_memory->data;
     
-    GameMemory->Head.permanent_memory_size = permanent_memory_size;
-    GameMemory->Head.permanent_memory = GameMemory->Data;
+    game_memory->head.permanent_memory_size = permanent_memory_size;
+    game_memory->head.permanent_memory = game_memory->data;
     MemoryPtr += permanent_memory_size;
     
-    GameMemory->Head.transient_memory_size = transient_memory_size;
-    GameMemory->Head.transient_memory = MemoryPtr;;
+    game_memory->head.transient_memory_size = transient_memory_size;
+    game_memory->head.transient_memory = MemoryPtr;;
     MemoryPtr += transient_memory_size;
     
-    GameMemory->Head.scratch_memory_size = scratch_memory_size;
-    GameMemory->Head.scratch_memory = MemoryPtr;
+    game_memory->head.scratch_memory_size = scratch_memory_size;
+    game_memory->head.scratch_memory = MemoryPtr;
     MemoryPtr += scratch_memory_size;
     
-    GameMemory->Head.debug_memory_size = debug_memory_size;
-    GameMemory->Head.debug_memory = MemoryPtr;
+    game_memory->head.debug_memory_size = debug_memory_size;
+    game_memory->head.debug_memory = MemoryPtr;
     
-    Win32_Log("[Win32_GameMemory] Allocated\n");
-    Win32_Log("[Win32_GameMemory] Permanent Memory Size: %d bytes\n", permanent_memory_size);
-    Win32_Log("[Win32_GameMemory] Transient Memory Size: %d bytes\n", transient_memory_size);
-    Win32_Log("[Win32_GameMemory] Scratch Memory Size: %d bytes\n", scratch_memory_size);
-    Win32_Log("[Win32_GameMemory] Debug Memory Size: %d bytes\n", debug_memory_size);
+    win32_log("[Win32::game_memory] Allocated\n");
+    win32_log("[Win32::game_memory] Permanent Memory Size: %d bytes\n", permanent_memory_size);
+    win32_log("[Win32::game_memory] Transient Memory Size: %d bytes\n", transient_memory_size);
+    win32_log("[Win32::game_memory] Scratch Memory Size: %d bytes\n", scratch_memory_size);
+    win32_log("[Win32::game_memory] Debug Memory Size: %d bytes\n", debug_memory_size);
     
     return true;
 }
 
 static inline void
-Win32_FreeRenderCommands(mailbox* RenderCommands) {
-    Win32_Log("[Win32_RenderCommands] Freed\n"); 
-    Win32_FreeMemory(RenderCommands->Memory);
+win32_free_render_commands(Mailbox* render_commands) {
+    win32_log("[Win32::render_commands] Freed\n"); 
+    win32_free_memory(render_commands->memory);
 }
 
 
 static inline b8
-Win32_InitRenderCommands(mailbox* RenderCommands,
-                        u32 RenderCommandsMemorySize) {
+win32_init_render_commands(Mailbox* render_commands,
+                           u32 RenderCommandsMemorySize) {
     void* RenderCommandsMemory =
-        Win32_AllocateMemory(RenderCommandsMemorySize); 
+        win32_allocate_memory(RenderCommandsMemorySize); 
     if (!RenderCommandsMemory) {
-        Win32_Log("[Win32_RenderCommands] Failed to allocate\n"); 
+        win32_log("[Win32::render_commands] Failed to allocate\n"); 
         return false;
     }
-    (*RenderCommands) = Mailbox_Create(RenderCommandsMemory,
-                                       RenderCommandsMemorySize);
-    Win32_Log("[Win32_RenderCommands] Allocated: %d bytes\n", RenderCommandsMemorySize);
+    render_commands->init(RenderCommandsMemory,
+                          RenderCommandsMemorySize);
+    win32_log("[Win32::render_commands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
     return true;
     
 }
 
-
 int CALLBACK
-WinMain(HINSTANCE Instance,
-        HINSTANCE PrevInstance,
-        LPSTR CommandLine,
-        int ShowCode)
+WinMain(HINSTANCE instance,
+        HINSTANCE prev_instance,
+        LPSTR command_line,
+        int show_code)
 {
-    win32_state* State = Win32_Init();
-    if (!State) {
-        Win32_Log("[Win32::Main] Cannot initialize win32 state");
+    Win32_State* state = win32_init();
+    if (!state) {
+        win32_log("[Win32::Main] Cannot initialize win32 state");
         return 1;
     }
-    defer { Win32_Free(State); };
-    G_State = State;
+    defer { win32_free(state); };
+    g_state = state;
     
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     ImmDisableIME((DWORD)-1);
-    HWND Window = Win32_CreateWindow(Instance, 
-                                    GAME_DESIGN_WIDTH,
-                                    GAME_DESIGN_HEIGHT,
-                                    "Dots and Circles");
-    if (!Window) { 
-        Win32_Log("[Win32::Main] Cannot create window");
+    
+    
+    // TODO: should determine the 'best size' based on design width and height
+    HWND window = win32_create_window(instance, 
+                                      GAME_DESIGN_WIDTH,
+                                      GAME_DESIGN_HEIGHT,
+                                      "Dots and Circles");
+    if (!window) { 
+        win32_log("[Win32::Main] Cannot create window\n");
         return 1; 
     }
     
-    u32 RefreshRate = Win32_DetermineIdealRefreshRate(Window, 60); 
-    f32 TargetSecsPerFrame = 1.f / RefreshRate; 
-    Win32_Log("[Win32::Main] Target Secs Per Frame: %.2f\n", TargetSecsPerFrame);
-    Win32_Log("[Win32::Main] Monitor Refresh Rate: %d Hz\n", RefreshRate);
+    u32 refresh_rate = win32_determine_ideal_refresh_rate(window, 60); 
+    f32 target_secs_per_frame = 1.f / refresh_rate; 
+    win32_log("[Win32::Main] Target Secs Per Frame: %.2f\n", target_secs_per_frame);
+    win32_log("[Win32::Main] Monitor Refresh Rate: %d Hz\n", refresh_rate);
     
     // Load the game code DLL
-    win32_game_code GameCode = Win32_InitGameCode(State,
-                                                 "compiled_game.dll", 
-                                                 "active_game.dll", 
-                                                 "lock");
+    Win32_Game_Code GameCode = win32_init_game_code(state,
+                                                    "compiled_game.dll", 
+                                                    "active_game.dll", 
+                                                    "lock");
     
     // Initialize game input
-    platform_input GameInput = {};
-    if(!Input_Init(&GameInput, &State->Arena)) {
-        Win32_Log("[Win32::Main] Cannot initialize input");
+    Platform_Input game_input = {};
+    if(!game_input.alloc(&state->arena)) {
+        win32_log("[Win32::Main] Cannot initialize input\n");
         return 1;
     }
     
     
     // Initialize platform api
-    Platform_API PlatformApi = Win32_InitPlatformApi();
+    Platform_API platform_api = win32_init_platform_api();
     
     
-    win32_audio Audio = {};
-    if(!Win32_AudioInit(&Audio,
-                       Game_AudioSamplesPerSecond,
-                       Game_AudioBitsPerSample,
-                       Game_AudioChannels,
-                       Game_AudioLatencyFrames,
-                       RefreshRate)) 
+    Win32_Audio audio = {};
+    if(!win32_audio_init(&audio,
+                         GAME_AUDIO_SAMPLES_PER_SECOND,
+                         GAME_AUDIO_BITS_PER_SAMPLE,
+                         GAME_AUDIO_CHANNELS,
+                         GAME_AUDIO_LATENCY_FRAMES,
+                         refresh_rate)) 
     {
-        Win32_Log("[Win32::Main] Cannot initialize audio");
+        win32_log("[Win32::Main] Cannot initialize audio\n");
         return 1;
     }
-    defer { Win32_AudioFree(&Audio); }; 
+    defer { win32_audio_free(&audio); }; 
     
     // Initialize game memory
-    if (!Win32_InitGameMemory(&State->GameMemory,
-                             MEBIBYTES(1),
-                             MEBIBYTES(16),
-                             MEBIBYTES(8),
-                             MEBIBYTES(1))) 
+    if (!win32_init_game_memory(&state->game_memory,
+                                MEBIBYTES(1),
+                                MEBIBYTES(16),
+                                MEBIBYTES(8),
+                                MEBIBYTES(1))) 
     {
-        Win32_Log("[Win32::Main] Cannot initialize game memory");
+        win32_log("[Win32::Main] Cannot initialize game memory\n");
         return 1;
     }
-    defer { Win32_FreeGameMemory(&State->GameMemory); };
-
-
-    // Allocate back buffer
-    if (!Win32_InitScreenBuffer(&State->ScreenBuffer, 
-                                GAME_DESIGN_WIDTH, 
-                                GAME_DESIGN_HEIGHT)) 
-    {
-        Win32_Log("[Win32::Main] Cannot initialize screen buffer");                           
-        return 1;
-    }
-    defer { Win32_FreeScreenBuffer(&State->ScreenBuffer); };
-
-    // Initialize RenderCommands
-    mailbox RenderCommands = {};
-    if(!Win32_InitRenderCommands(&RenderCommands, MEBIBYTES(64))) {
-        Win32_Log("[Win32::Main] Cannot initialize render commands");
-        return 1;
-    }
-    defer { Win32_FreeRenderCommands(&RenderCommands); };
+    defer { win32_free_game_memory(&state->game_memory); };
     
+    // Initialize render_commands
+    Mailbox render_commands = {};
+    if(!win32_init_render_commands(&render_commands, MEBIBYTES(64))) {
+        win32_log("[Win32::Main] Cannot initialize render commands\n");
+        return 1;
+    }
+    defer { win32_free_render_commands(&render_commands); };
+    
+    // Initialize screen buffer
+    if (!win32_init_screen_buffer(&state->screen_buffer, GAME_DESIGN_WIDTH, GAME_DESIGN_HEIGHT)) {
+        win32_log("[Win32::Main] Cannot initialize screen buffer\n");
+    }
+    defer { win32_free_screen_buffer(&state->screen_buffer); };
     
     // Set sleep granularity to 1ms
-    b8 SleepIsGranular = timeBeginPeriod(1) == TIMERR_NOERROR;
+    b8 is_sleep_granular = timeBeginPeriod(1) == TIMERR_NOERROR;
     
     
     // Game Loop
-    LARGE_INTEGER LastCount = Win32_GetPerformanceCounter(); 
-    while (State->IsRunning) {
-        if (Win32_IsGameCodeOutdated(&GameCode)) {
-            Win32_Log("[Win32::Main] Reloading game code!\n");
-            Win32_UnloadGameCode(&GameCode);
-            Win32_LoadGameCode(&GameCode);
-            zero_block(State->GameMemory.Head.transient_memory, 
-                      State->GameMemory.Head.transient_memory_size);
+    LARGE_INTEGER last_count = win32_get_performance_counter(); 
+    while (state->is_running) {
+        if (win32_is_game_code_outdated(&GameCode)) {
+            win32_log("[Win32::Main] Reloading game code!\n");
+            win32_unload_game_code(&GameCode);
+            win32_load_game_code(&GameCode);
+            zero_block(state->game_memory.head.transient_memory, 
+                       state->game_memory.head.transient_memory_size);
         }
         
         
-        Input_Update(&GameInput);
-        Win32_ProcessMessages(Window, 
-                              State,
-                              &GameInput);
+        game_input.update();
+        win32_process_messages(window, state, &game_input);
         
         // NOTE(Momo): Recording/Playback input
-        if (State->IsRecordingInput) {
-            Win32_RecordInput(State, &GameInput);
+        if (state->is_recording_input) {
+            (state, &game_input);
         }
-        if (State->IsPlaybackInput) {
-            // NOTE(Momo): This will actually modify GameInput
-            if (Win32_PlaybackInput(State, &GameInput)) {
-                Win32_EndPlaybackInput(State);
-                Win32_GameMemory_Load(&State->GameMemory, Win32_RecordStateFile);
-                Win32_BeginPlaybackInput(State, Win32_RecordInputFile);
+        if (state->is_playback_input) {
+            // NOTE(Momo): This will actually modify game_input
+            if (win32_playback_input(state, &game_input)) {
+                win32_end_playback_input(state);
+                win32_load_game_memory(&state->game_memory, WIN32_RECORD_STATE_FILE);
+                win32_begin_playback_input(state, WIN32_RECORD_INPUT_FILE);
             }
         }
         
         
         // Compute how much sound to write and where
-        // TODO: Functionize this
-        Platform_Audio GameAudioOutput = Win32_AudioPrepare(&Audio);
+        Platform_Audio platform_audio_output = win32_audio_prepare(&audio);
         
-        if (GameCode.GameUpdate) 
+#if 1
         {
-            f32 GameDeltaTime = TargetSecsPerFrame;
+            static v4f pt1 = v4f::create(-0.5f, 0.f, 0.f, 1.f); 
+            static v4f pt2 = v4f::create(0.5f, 0.f, 0.f, 1.f);
+            static f32 rotation = 0.f;
             
-#if 0
-            b8 IsGameRunning = GameCode.GameUpdate(&State->GameMemory.Head,
-                                                   &PlatformApi,
-                                                   &RenderCommands,
-                                                   &GameInput,
-                                                   &GameAudioOutput,
-                                                   GameDeltaTime);
-            State->IsRunning = IsGameRunning && State->IsRunning;
-#endif
-
+            f32 game_dt = target_secs_per_frame;
+            
+            
+            m44f s = m44f::create_scale(700.f, 700.f, 0.f);
+            m44f r = m44f::create_rotation_z(rotation);
+            m44f t = m44f::create_translation(400.f, 400.f, 0.f);
+            m44f transform = t*r*s;
+            v4f result1 = transform * pt1;
+            v4f result2 = transform * pt2;
+            win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+            win32_draw_line_on_screen(&state->screen_buffer, (s32)result1.x, (s32)result1.y, (s32)result2.x, (s32)result2.y);
+            rotation +=  game_dt;
         }
         
+#else
+        if (GameCode.game_update) 
+        {
+            f32 game_dt = target_secs_per_frame;
+            b8 is_game_running = GameCode.game_update(&state->game_memory.head,
+                                                      &platform_api,
+                                                      &render_commands,
+                                                      &game_input,
+                                                      &platform_audio_output,
+                                                      game_dt);
+            state->is_running = is_game_running && state->is_running;
+        }
+#endif
         
-        Mailbox_Clear(&RenderCommands);
+        render_commands.clear();
         
-        Win32_AudioFlush(&Audio, GameAudioOutput);
+        win32_flush_audio(&audio, platform_audio_output);
         
-        f32 SecsElapsed = 
-            Win32_GetSecondsElapsed(State, LastCount, Win32_GetPerformanceCounter());
+        f32 secs_elapsed = 
+            win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter());
         
         // NOTE(Momo): Sleep time
-        if (TargetSecsPerFrame > SecsElapsed) {
-            if (SleepIsGranular) {
-                DWORD MsToSleep = 
-                    (DWORD)(1000.f * (TargetSecsPerFrame - SecsElapsed));
+        if (target_secs_per_frame > secs_elapsed) {
+            if (is_sleep_granular) {
+                DWORD ms_to_sleep = 
+                    (DWORD)(1000.f * (target_secs_per_frame - secs_elapsed));
                 
                 // We cut the sleep some slack, so we sleep 1 sec less.
-                if (MsToSleep > 1) {
-                    Sleep(MsToSleep - 1);
+                if (ms_to_sleep > 1) {
+                    Sleep(ms_to_sleep - 1);
                 }
             }
-            while(TargetSecsPerFrame > 
-                  Win32_GetSecondsElapsed(State, LastCount, Win32_GetPerformanceCounter()));
+            while(target_secs_per_frame > 
+                  win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter()));
             
         }
         
-        LastCount = Win32_GetPerformanceCounter();
+        last_count = win32_get_performance_counter();
         
-        Win32_DisplayBufferInWindow(Window, &State->ScreenBuffer);
-
-        //Win32_SwapBuffers(Window);
+        v2u dimensions = win32_get_client_dimensions(window);
+        win32_push_screen_buffer_to_window(GetDC(window), &g_state->screen_buffer, dimensions.w, dimensions.h);
+        
+        
     }
     
     return 0;
