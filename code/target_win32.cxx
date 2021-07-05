@@ -141,12 +141,9 @@ win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p
 }
 
 
-static inline void
-win32_draw_horizontal_line(Win32_Screen_Buffer* screen, s32 start_x, s32 end_x, s32 y) {
-    
-}
-
-// NOTE(Momo): Every triangle can segment itself into up to two triangles;
+// NOTE(Momo): Upper/Lower triangle algorithm
+//
+// Every triangle can segment itself into up to two triangles;
 // upper and lower. The main idea is that we start from the lowest vertex and
 // and work our way upwards, drawing horizontal lines
 // 
@@ -163,9 +160,41 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1
     if (p0.y > p1.y) SWAP(p0, p1);
     if (p1.y > p2.y) SWAP(p1, p2);
     
-    // NOTE(Momo): Draw bottom triangle
+    // NOTE(Momo): Draw bottom triangle segment 
+    // We start from p0 and go up towards p1.
+    // As we go up the y, we find the corresponding x on the lines
+    // formed by (p1 - p0) and (p2 - p0). Having these two x's
+    // will form a line that we will draw on that y-axis.
+    // We then move upwards until the segment is completed
+    // 
+    s32 total_height = p2.y - p0.y;
+    for (s32 y = p0.y; y < p1.y; ++y) {
+        s32 segment_height = p1.y - p0.y;
+        
+        // NOTE(Momo): long side is formed by (p2 - p0).
+        // NOTE(Momo): short side is formed by (p1 - p0).
+        f32 long_side_alpha = (f32)(y - p0.y)/total_height;
+        f32 short_side_alpha = (f32)(y - p0.y)/segment_height;
+        
+        v2i long_side_pt = LERP(p0, p2, long_side_alpha);
+        v2i short_side_pt = LERP(p0, p1, short_side_alpha);
+        
+        // NOTE(Momo): This is to make sure that we go from left to right
+        // We will make sure that long_side_pt is the left side
+        if (long_side_pt.x > short_side_pt.x) {
+            SWAP(long_side_pt, short_side_pt);
+        }
+        
+        for(int x = long_side_pt.x; x <= short_side_pt.x; ++x) {
+            win32_set_pixel_on_screen(screen, x, y, pixel);
+        }
+    }
     
     // NOTE(Momo): Draw top triangle
+    // Same as bottom segment, just that the lines involved are:
+    // (p2 - p1) and (p2 - p0)
+    for (s32 y= p1.y; y <= p2.y; ++y) {
+    }
 }
 
 //~ NOTE(Momo): Helper functions and globals
@@ -1475,6 +1504,11 @@ WinMain(HINSTANCE instance,
                 
                 
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_filled_triangle_on_screen(screen, 
+                                                     to_v2i(p0.xy), 
+                                                     to_v2i(p1.xy), 
+                                                     to_v2i(p2.xy), 
+                                                     {255, 0, 0, 0});
                 win32_draw_triangle_outline_on_screen(screen, 
                                                       to_v2i(p0.xy), 
                                                       to_v2i(p1.xy), 
@@ -1500,6 +1534,11 @@ WinMain(HINSTANCE instance,
                 
                 
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_filled_triangle_on_screen(screen, 
+                                                     to_v2i(p0.xy), 
+                                                     to_v2i(p1.xy), 
+                                                     to_v2i(p2.xy), 
+                                                     {0, 255, 0, 0});
                 win32_draw_triangle_outline_on_screen(screen, 
                                                       to_v2i(p0.xy), 
                                                       to_v2i(p1.xy), 
@@ -1511,12 +1550,12 @@ WinMain(HINSTANCE instance,
             // Triangle 3
             {
                 v4f p0 = v4f::create(-0.5f, -3.f, 0.f, 1.f); 
-                v4f p1 = v4f::create(0.5f, 1.f, 0.f, 1.f);
-                v4f p2 = v4f::create(1.5f, 2.5f, 0.f, 1.f);
+                v4f p1 = v4f::create(1.5f, -1.5f, 0.f, 1.f);
+                v4f p2 = v4f::create(1.5f, 1.5f, 0.f, 1.f);
                 
                 m44f s = m44f::create_scale(100.f, 100.f, 0.f);
                 m44f r = m44f::create_rotation_z(rotation);
-                m44f t = m44f::create_translation(600.f, 300.f, 0.f);
+                m44f t = m44f::create_translation(400.f, 300.f, 0.f);
                 m44f transform = t*r*s;
                 p0 = transform * p0;
                 p1 = transform * p1;
@@ -1525,6 +1564,11 @@ WinMain(HINSTANCE instance,
                 
                 
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_filled_triangle_on_screen(screen, 
+                                                     to_v2i(p0.xy), 
+                                                     to_v2i(p1.xy), 
+                                                     to_v2i(p2.xy), 
+                                                     {0, 0, 255, 0});
                 win32_draw_triangle_outline_on_screen(screen, 
                                                       to_v2i(p0.xy), 
                                                       to_v2i(p1.xy), 

@@ -325,6 +325,47 @@ v2u::create(u32 x, u32 y)  {
     return { x, y };
 }
 
+//~ NOTE(Momo): v2i Functions
+static inline v2i 
+add(v2i l, v2i r) {
+    l.x += r.x;
+    l.y += r.y;
+    return l;
+}
+
+static inline v2i
+operator+(v2i l, v2i r) {
+    return add(l,r);
+}
+
+static inline v2i
+sub(v2i l, v2i r) {
+    l.x -= r.x;
+    l.y -= r.y;
+    return l;
+}
+
+
+static inline v2i
+operator-(v2i l, v2i r) {
+    return sub(l,r);
+}
+
+static inline v2i
+mul(v2i l, f32 r) {
+    l.x = s32(l.x * r);
+    l.y = s32(l.y * r);
+    return l;
+}
+
+
+static inline v2i 
+operator*(v2i lhs, f32 rhs) {
+    return mul(lhs, rhs);
+}
+
+
+
 //~ NOTE(Momo): v3f Functions
 f32&
 v3f::operator[](u32 i) {
