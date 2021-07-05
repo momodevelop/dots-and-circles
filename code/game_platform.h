@@ -183,6 +183,6 @@ Mailbox* render_commands, \
 Platform_Input* platform_input, \
 Platform_Audio* platform_audio,\
 f32 dt)
-typedef GameUpdateFunc(game_update);
+typedef GameUpdateFunc(Game_Update);
 
 #endif //PLATFORM_H

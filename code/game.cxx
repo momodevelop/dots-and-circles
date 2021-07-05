@@ -53,7 +53,7 @@ cmd_jump(Debug_Console* console, void* context, String args) {
 }
 
 extern "C" 
-GameUpdateFunc(GameUpdate) 
+GameUpdateFunc(game_update) 
 {
     // NOTE(Momo): Initialize globals
     Arena scratch = {};

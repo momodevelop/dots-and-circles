@@ -306,7 +306,7 @@ win32_init() {
     }
     state->handle_free_count = ARRAY_COUNT(state->handles);
     
-#if iNTERNAL
+#if INTERNAL
     // NOTE(Momo): initialize console
     AllocConsole();    
     state->std_out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -416,10 +416,18 @@ win32_playback_input(Win32_State* state, Platform_Input* input) {
     return false;
 }
 
+static inline void
+win32_swap_buffers(HWND window) {
+    HDC DeviceContext = GetDC(window); 
+    defer { ReleaseDC(window, DeviceContext); };
+    SwapBuffers(DeviceContext);
+}
+
+
 //~ NOTE(Momo): game code related
 struct Win32_Game_Code {
     HMODULE dll;
-    game_update* game_update;
+    Game_Update* game_update;
     FILETIME last_write_time;
     b8 is_valid;
     
@@ -459,7 +467,7 @@ win32_load_game_code(Win32_Game_Code* code)
         code->dll = LoadLibraryA(code->temp_filename);
         if(code->dll) {
             code->game_update = 
-                (game_update*)GetProcAddress(code->dll, "game_update");
+                (Game_Update*)GetProcAddress(code->dll, "game_update");
             code->is_valid = (code->game_update != 0);
         }
     }
@@ -1741,9 +1749,9 @@ WinMain(HINSTANCE instance,
                     Sleep(ms_to_sleep - 1);
                 }
             }
-            while(target_secs_per_frame > 
-                  win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter()));
-            
+            while(target_secs_per_frame > secs_elapsed) {
+                secs_elapsed = win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter());
+            }
         }
         
         last_count = win32_get_performance_counter();

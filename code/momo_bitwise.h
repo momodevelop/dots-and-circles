@@ -76,40 +76,40 @@ zero_block(void *mem, u32 size) {
 
 
 static inline u32
-constexpr four_cc(const char String[5]) {
+constexpr four_cc(const char str[5]) {
     return 
-        ((u32)(String[0]) << 0 ) |
-        ((u32)(String[1]) << 8 ) |
-        ((u32)(String[2]) << 16) |
-        ((u32)(String[3]) << 24);
+        ((u32)(str[0]) << 0 ) |
+        ((u32)(str[1]) << 8 ) |
+        ((u32)(str[2]) << 16) |
+        ((u32)(str[3]) << 24);
 }
 
 static inline void
-endian_swap(u16* Value) {
-    u16 Origin = (*Value);
-    (*Value) = ((Origin << 8) | Origin >> 8);
+endian_swap(u16* value) {
+    u16 origin = (*value);
+    (*value) = ((origin << 8) | origin >> 8);
 }
 
 static inline void
-endian_swap(u32* Value) {
-    u32 Origin = (*Value);
-    (*Value) =  ((Origin << 24) |
-                 ((Origin & 0xFF00) << 8) |
-                 ((Origin >> 8) & 0xFF00) |
-                 (Origin >> 24));
+endian_swap(u32* value) {
+    u32 origin = (*value);
+    (*value) =  ((origin << 24) |
+                 ((origin & 0xFF00) << 8) |
+                 ((origin >> 8) & 0xFF00) |
+                 (origin >> 24));
 }
 
 static inline void*
-consume_block(void** P, u32 Size) {
-    void* Ret = (*P);
-    (*P) = (u8*)(*P) + Size; 
+consume_block(void** p, u32 size) {
+    void* Ret = (*p);
+    (*p) = (u8*)(*p) + size; 
     return Ret;
 }
 
 template<typename type>
 static inline void
-consume_struct(void** Memory) {
-    return (type*)consume_block(Memory, sizeof(type));
+consume_struct(void** memory) {
+    return (type*)consume_block(memory, sizeof(type));
 }
 
 static inline void

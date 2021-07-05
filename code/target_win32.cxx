@@ -83,9 +83,21 @@ struct Win32_Pixel {
     u8 r, g, b, a;
 };
 
+
+static inline void
+win32_flush_screen_buffer(Win32_Screen_Buffer* screen) {
+    u32 buffer_size = screen->width * screen->height * screen->bytes_per_pixel;
+    zero_block(screen->data, buffer_size);
+}
+
 static inline void
 win32_set_pixel_on_screen(Win32_Screen_Buffer* screen, s32 x, s32 y, Win32_Pixel pixel) 
 {
+    // NOTE(Momo): Reject pixels that are not in screen
+    // TODO(Momo): Maybe width and height should be same type as x and y?
+    if (x < 0 || y < 0 || x >= (s32)screen->width || y >= (s32)screen->height)
+        return;
+    
     u32 pitch = screen->width * screen->bytes_per_pixel;
     u8* itr = ((u8*)screen->data) + (y * pitch + x * screen->bytes_per_pixel);
     (*itr++) = pixel.b;
@@ -95,29 +107,65 @@ win32_set_pixel_on_screen(Win32_Screen_Buffer* screen, s32 x, s32 y, Win32_Pixel
 }
 
 static inline void
-win32_draw_line_on_screen(Win32_Screen_Buffer* screen, s32 x0, s32 y0, s32 x1, s32 y1) {
+win32_draw_line_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, Win32_Pixel pixel = {255, 255, 255, 255}) 
+{
     b8 steep = false;
-    if (ABS(x0 - x1) < ABS(y0 - y1)) {
-        SWAP(x0, y0);
-        SWAP(x1, y1);
+    if (ABS(p0.x - p1.x) < ABS(p0.y - p1.y)) {
+        SWAP(p0.x, p0.y);
+        SWAP(p1.x, p1.y);
         steep = true;
     }
     
     // NOTE(Momo): Force lines to be left-to-right
-    if (x0 > x1)  {
-        SWAP(x0, x1);
-        SWAP(y0, y1);
+    if (p0.x > p1.x)  {
+        SWAP(p0.x, p1.x);
+        SWAP(p0.y, p1.y);
     }
     
-    for (s32 x = x0; x <= x1; ++x) {
-        f32 t = (x - x0)/(float)(x1 - x0);
-        s32 y = s32((y0 * (1.f - t)) + (y1 * t));
+    for (s32 x = p0.x; x <= p1.x; ++x) {
+        f32 t = (x - p0.x)/(float)(p1.x - p0.x);
+        s32 y = s32((p0.y * (1.f - t)) + (p1.y * t));
         if (steep)
-            win32_set_pixel_on_screen(screen, y, x, { 255, 255, 255, 255 });
+            win32_set_pixel_on_screen(screen, y, x, pixel);
         else
-            win32_set_pixel_on_screen(screen, x, y, { 255, 255, 255, 255 });
+            win32_set_pixel_on_screen(screen, x, y, pixel);
     }
+}
+
+static inline void 
+win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, v2i p2, Win32_Pixel pixel) 
+{
+    win32_draw_line_on_screen(screen, p0, p1, pixel);
+    win32_draw_line_on_screen(screen, p1, p2, pixel);
+    win32_draw_line_on_screen(screen, p2, p0, pixel);
+}
+
+
+static inline void
+win32_draw_horizontal_line(Win32_Screen_Buffer* screen, s32 start_x, s32 end_x, s32 y) {
     
+}
+
+// NOTE(Momo): Every triangle can segment itself into up to two triangles;
+// upper and lower. The main idea is that we start from the lowest vertex and
+// and work our way upwards, drawing horizontal lines
+// 
+// Note that it is entirely possible for a vertical version; where we 
+// we sort the vertices from left to right, and divide between left and right triangles
+//
+
+static inline void 
+win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, v2i p2, Win32_Pixel pixel = { 255, 255, 255, 255}) 
+{
+    // NOTE(Momo): Sort verices by y-axis, from smallest to largest
+    // such that p0.y < p1.y < p2.y 
+    if (p0.y > p2.y) SWAP(p0, p2);
+    if (p0.y > p1.y) SWAP(p0, p1);
+    if (p1.y > p2.y) SWAP(p1, p2);
+    
+    // NOTE(Momo): Draw bottom triangle
+    
+    // NOTE(Momo): Draw top triangle
 }
 
 //~ NOTE(Momo): Helper functions and globals
@@ -268,7 +316,8 @@ win32_init_screen_buffer(Win32_Screen_Buffer* screen, u32 width, u32 height) {
 }
 
 static inline void
-win32_push_screen_buffer_to_window(HDC dc, Win32_Screen_Buffer* screen, u32 window_w, u32 window_h) {
+win32_push_screen_buffer_to_window(Win32_Screen_Buffer* screen, HDC dc, u32 window_w, u32 window_h) 
+{
     // TODO: Aspect ratio correction
     // TODO: use correct values
     StretchDIBits(dc,
@@ -282,7 +331,6 @@ x, y, buffer width, buffer height
                   &screen->info,
                   DIB_RGB_COLORS, SRCCOPY);
 }
-
 
 
 
@@ -471,7 +519,7 @@ win32_playback_input(Win32_State* state, Platform_Input* input) {
 //~ NOTE(Momo): game code related
 struct Win32_Game_Code {
     HMODULE dll;
-    game_update* game_update;
+    Game_Update* game_update;
     FILETIME last_write_time;
     b8 is_valid;
     
@@ -511,7 +559,7 @@ win32_load_game_code(Win32_Game_Code* code)
         code->dll = LoadLibraryA(code->temp_filename);
         if(code->dll) {
             code->game_update = 
-                (game_update*)GetProcAddress(code->dll, "game_update");
+                (Game_Update*)GetProcAddress(code->dll, "game_update");
             code->is_valid = (code->game_update != 0);
         }
     }
@@ -943,7 +991,7 @@ Win32_WindowCallback(HWND window,
             PAINTSTRUCT paint;
             HDC dc = BeginPaint(window, &paint);
             v2u dimensions = win32_get_client_dimensions(window);
-            win32_push_screen_buffer_to_window(dc, &g_state->screen_buffer, dimensions.w, dimensions.h);
+            win32_push_screen_buffer_to_window(&g_state->screen_buffer, dc, dimensions.w, dimensions.h);
             EndPaint(window, &paint);
         } break;
         case WM_WINDOWPOSCHANGED: {
@@ -1018,12 +1066,6 @@ win32_create_window(HINSTANCE instance,
     
 }
 
-static inline void
-win32_swap_buffers(HWND window) {
-    HDC DeviceContext = GetDC(window); 
-    defer { ReleaseDC(window, DeviceContext); };
-    SwapBuffers(DeviceContext);
-}
 
 // Platform Functions ////////////////////////////////////////////////////
 enum Win32_File_Error_Type {
@@ -1407,22 +1449,91 @@ WinMain(HINSTANCE instance,
         Platform_Audio platform_audio_output = win32_audio_prepare(&audio);
         
 #if 1
+        // NOTE(Momo) Test our software renderer here!
         {
-            static v4f pt1 = v4f::create(-0.5f, 0.f, 0.f, 1.f); 
-            static v4f pt2 = v4f::create(0.5f, 0.f, 0.f, 1.f);
+            Win32_Screen_Buffer* screen = &state->screen_buffer;
+            win32_flush_screen_buffer(screen);
+            
             static f32 rotation = 0.f;
             
             f32 game_dt = target_secs_per_frame;
             
+            // Triangle 1
+            {
+                v4f p0 = v4f::create(-0.5f, -0.5f, 0.f, 1.f); 
+                v4f p1 = v4f::create(0.5f, -0.5f, 0.f, 1.f);
+                v4f p2 = v4f::create(0.f, 0.5f, 0.f, 1.f);
+                
+                m44f s = m44f::create_scale(100.f, 100.f, 0.f);
+                m44f r = m44f::create_rotation_z(rotation);
+                m44f t = m44f::create_translation(400.f, 400.f, 0.f);
+                m44f transform = t*r*s;
+                p0 = transform * p0;
+                p1 = transform * p1;
+                p2 = transform * p2;
+                
+                
+                
+                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_triangle_outline_on_screen(screen, 
+                                                      to_v2i(p0.xy), 
+                                                      to_v2i(p1.xy), 
+                                                      to_v2i(p2.xy), 
+                                                      {255, 0, 0, 0});
+                
+            }
             
-            m44f s = m44f::create_scale(700.f, 700.f, 0.f);
-            m44f r = m44f::create_rotation_z(rotation);
-            m44f t = m44f::create_translation(400.f, 400.f, 0.f);
-            m44f transform = t*r*s;
-            v4f result1 = transform * pt1;
-            v4f result2 = transform * pt2;
-            win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
-            win32_draw_line_on_screen(&state->screen_buffer, (s32)result1.x, (s32)result1.y, (s32)result2.x, (s32)result2.y);
+            // Triangle 2
+            {
+                v4f p0 = v4f::create(-1.5f, -0.5f, 0.f, 1.f); 
+                v4f p1 = v4f::create(3.f, -0.25f, 0.f, 1.f);
+                v4f p2 = v4f::create(0.f, 1.5f, 0.f, 1.f);
+                
+                m44f s = m44f::create_scale(100.f, 100.f, 0.f);
+                m44f r = m44f::create_rotation_z(rotation);
+                m44f t = m44f::create_translation(300.f, 500.f, 0.f);
+                m44f transform = t*r*s;
+                p0 = transform * p0;
+                p1 = transform * p1;
+                p2 = transform * p2;
+                
+                
+                
+                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_triangle_outline_on_screen(screen, 
+                                                      to_v2i(p0.xy), 
+                                                      to_v2i(p1.xy), 
+                                                      to_v2i(p2.xy), 
+                                                      {0, 255, 0, 0});
+                
+            }
+            
+            // Triangle 3
+            {
+                v4f p0 = v4f::create(-0.5f, -3.f, 0.f, 1.f); 
+                v4f p1 = v4f::create(0.5f, 1.f, 0.f, 1.f);
+                v4f p2 = v4f::create(1.5f, 2.5f, 0.f, 1.f);
+                
+                m44f s = m44f::create_scale(100.f, 100.f, 0.f);
+                m44f r = m44f::create_rotation_z(rotation);
+                m44f t = m44f::create_translation(600.f, 300.f, 0.f);
+                m44f transform = t*r*s;
+                p0 = transform * p0;
+                p1 = transform * p1;
+                p2 = transform * p2;
+                
+                
+                
+                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_triangle_outline_on_screen(screen, 
+                                                      to_v2i(p0.xy), 
+                                                      to_v2i(p1.xy), 
+                                                      to_v2i(p2.xy), 
+                                                      {0, 0, 255, 0});
+                
+            }
+            
+            
             rotation +=  game_dt;
         }
         
@@ -1458,15 +1569,20 @@ WinMain(HINSTANCE instance,
                     Sleep(ms_to_sleep - 1);
                 }
             }
-            while(target_secs_per_frame > 
-                  win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter()));
+            while(target_secs_per_frame > secs_elapsed) {
+                secs_elapsed = win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter());
+            }
+            
             
         }
         
+#if 1
+        win32_log("ms: %f\n", secs_elapsed);
+#endif
         last_count = win32_get_performance_counter();
         
         v2u dimensions = win32_get_client_dimensions(window);
-        win32_push_screen_buffer_to_window(GetDC(window), &g_state->screen_buffer, dimensions.w, dimensions.h);
+        win32_push_screen_buffer_to_window(&state->screen_buffer, GetDC(window), dimensions.w, dimensions.h);
         
         
     }

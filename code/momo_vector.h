@@ -97,6 +97,12 @@ struct v4f {
                 struct {
                     f32 x, y, z;
                 };
+                struct {
+                    union {
+                        v2f xy;
+                    };
+                    f32 z;
+                };
             }; 
             f32 w;
         };
@@ -539,6 +545,11 @@ to_v2f(v2i v) {
 static inline v2f
 to_v2f(v2u v) {
     return { f32(v.x), f32(v.y) };
+}
+
+static inline v2i 
+to_v2i(v2f v) {
+    return { s32(v.x), s32(v.y) };
 }
 
 #endif //MOMO_VECTOR_H
