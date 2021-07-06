@@ -141,6 +141,50 @@ win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p
 }
 
 
+static inline void
+win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i* pts, Win32_Pixel* colors) 
+{
+    // NOTE(Momo): Figure out the bounding box of the triangle
+    // Ie. find the smallest xy and the largest xy.
+    static constexpr u32 point_count = 3;
+    aabb2i box = { pts[0], pts[0] };
+    {
+        for (u32 i = 1; i < point_count; ++i) {
+            for (u32 j = 0; j < 2; ++i) {
+                if(box.min[j] > pts[i][j]) {
+                    box.min[j] = pts[i][j];
+                }
+                if (box.max[j] < pts[i][j]) {
+                    box.max[j] = pts[i][j];
+                }
+            }
+        }
+    }
+    
+    
+    v2i ab = pt[1] - pt[0];
+    v2i ac = pt[2] - pt[0];
+    
+    for (s32 y = box.min.y; y <= box.max.y; ++y) {
+        for (s32 x = box.min.x; x <= box.min.x; ++x) {
+            // NOTE(Momo): Check barycenter
+            v2i x_vector = { x, ab.x, ac.x };
+            v2i y_vector = { y, ab.y, ac.y };
+            // TODO
+            v2i barycenter = cross();
+            
+            // NOTE(Momo): Check if triangle is degenerate
+            
+            // NOTE(Momo): Check if within bounds
+            
+            // NOTE(Momo): Draw pixel
+            
+        }
+    }
+    
+    
+}
+
 // NOTE(Momo): Upper/Lower triangle algorithm
 //
 // Every triangle can segment itself into up to two triangles;
@@ -150,7 +194,6 @@ win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p
 // Note that it is entirely possible for a vertical version; where we 
 // we sort the vertices from left to right, and divide between left and right triangles
 //
-
 static inline void 
 win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, v2i p2, Win32_Pixel pixel = { 255, 255, 255, 255}) 
 {
@@ -193,7 +236,26 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1
     // NOTE(Momo): Draw top triangle
     // Same as bottom segment, just that the lines involved are:
     // (p2 - p1) and (p2 - p0)
-    for (s32 y= p1.y; y <= p2.y; ++y) {
+    for (s32 y = p1.y; y <= p2.y; ++y) {
+        s32 segment_height = p2.y - p1.y;
+        
+        // NOTE(Momo): long side is formed by (p2 - p0).
+        // NOTE(Momo): short side is formed by (p2 - p1).
+        f32 long_side_alpha = (f32)(y - p0.y)/total_height;
+        f32 short_side_alpha = (f32)(y - p1.y)/segment_height;
+        
+        v2i long_side_pt = LERP(p0, p2, long_side_alpha);
+        v2i short_side_pt = LERP(p1, p2, short_side_alpha);
+        
+        // NOTE(Momo): This is to make sure that we go from left to right
+        // We will make sure that long_side_pt is the left side
+        if (long_side_pt.x > short_side_pt.x) {
+            SWAP(long_side_pt, short_side_pt);
+        }
+        
+        for(int x = long_side_pt.x; x <= short_side_pt.x; ++x) {
+            win32_set_pixel_on_screen(screen, x, y, pixel);
+        }
     }
 }
 
@@ -1578,6 +1640,9 @@ WinMain(HINSTANCE instance,
             }
             
             
+            
+            
+            
             rotation +=  game_dt;
         }
         
@@ -1620,7 +1685,7 @@ WinMain(HINSTANCE instance,
             
         }
         
-#if 1
+#if 0
         win32_log("ms: %f\n", secs_elapsed);
 #endif
         last_count = win32_get_performance_counter();
