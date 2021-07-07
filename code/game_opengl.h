@@ -314,8 +314,8 @@ struct Opengl {
     // Index 1 will always be a blank texture for items with no texture (but has colors)
     List<GLuint> textures;
     
-    v2s window_dimensions;
-    v2s design_dimensions;
+    v2u window_dimensions;
+    v2u design_dimensions;
     aabb2u render_region;
 };
 
@@ -410,7 +410,7 @@ Opengl_AddPredefTextures(Opengl* opengl) {
 static inline b8
 Opengl_Init(Opengl* opengl,
             Arena* arena,
-            v2s window_dimensions) 
+            v2u window_dimensions) 
 {
     opengl->textures.alloc(arena, OPENGL_MAX_TEXTURES);
     opengl->design_dimensions = window_dimensions;

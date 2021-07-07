@@ -107,7 +107,7 @@ win32_set_pixel_on_screen(Win32_Screen_Buffer* screen, s32 x, s32 y, Win32_Pixel
 }
 
 static inline void
-win32_draw_line_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, Win32_Pixel pixel = {255, 255, 255, 255}) 
+win32_draw_line_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, Win32_Pixel pixel = {255, 255, 255, 255}) 
 {
     b8 steep = false;
     if (ABS(p0.x - p1.x) < ABS(p0.y - p1.y)) {
@@ -133,24 +133,25 @@ win32_draw_line_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, Win32_Pix
 }
 
 static inline void 
-win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, v2i p2, Win32_Pixel pixel) 
+win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel pixel) 
 {
     win32_draw_line_on_screen(screen, p0, p1, pixel);
     win32_draw_line_on_screen(screen, p1, p2, pixel);
     win32_draw_line_on_screen(screen, p2, p0, pixel);
 }
 
-
 static inline void
-win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i* pts, Win32_Pixel* colors) 
+win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel color) 
 {
+    v2s pts[3] = { p0, p1, p2 };
+    
     // NOTE(Momo): Figure out the bounding box of the triangle
     // Ie. find the smallest xy and the largest xy.
     static constexpr u32 point_count = 3;
     aabb2i box = { pts[0], pts[0] };
     {
         for (u32 i = 1; i < point_count; ++i) {
-            for (u32 j = 0; j < 2; ++i) {
+            for (u32 j = 0; j < 2; ++j) {
                 if(box.min[j] > pts[i][j]) {
                     box.min[j] = pts[i][j];
                 }
@@ -162,28 +163,43 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i* pts, Win3
     }
     
     
-    v2i ab = pt[1] - pt[0];
-    v2i ac = pt[2] - pt[0];
+    v2s ab = pts[1] - pts[0];
+    v2s ac = pts[2] - pts[0];
     
     for (s32 y = box.min.y; y <= box.max.y; ++y) {
-        for (s32 x = box.min.x; x <= box.min.x; ++x) {
+        for (s32 x = box.min.x; x <= box.max.x; ++x) {
             // NOTE(Momo): Check barycenter
-            v2i x_vector = { x, ab.x, ac.x };
-            v2i y_vector = { y, ab.y, ac.y };
-            // TODO
-            v2i barycenter = cross();
+            v2s pa = pts[0] - v2s{ x, y } ;
+            v3s x_vector = { pa.x, ab.x, ac.x };
+            v3s y_vector = { pa.y, ab.y, ac.y };
+            
+            v3s orthorgonal = cross(y_vector, x_vector);
             
             // NOTE(Momo): Check if triangle is degenerate
+            if (orthorgonal.x == 0) {
+                // NOTE(Momo): we are degenerate...then we give up
+                return;
+            }
+            v3f barycentric = {
+                1.f - (f32)(orthorgonal.y + orthorgonal.z)/(f32)orthorgonal.x,
+                (f32)orthorgonal.y/(f32)orthorgonal.x,
+                (f32)orthorgonal.z/(f32)orthorgonal.x
+            };
             
             // NOTE(Momo): Check if within bounds
+            if (barycentric.x < 0.f || barycentric.y < 0.f || barycentric.z < 0.f)
+                continue;
             
             // NOTE(Momo): Draw pixel
+            win32_set_pixel_on_screen(screen, x, y, color);
             
-        }
+        };
+        
+        
+        
     }
-    
-    
 }
+
 
 // NOTE(Momo): Upper/Lower triangle algorithm
 //
@@ -195,7 +211,7 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i* pts, Win3
 // we sort the vertices from left to right, and divide between left and right triangles
 //
 static inline void 
-win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1, v2i p2, Win32_Pixel pixel = { 255, 255, 255, 255}) 
+win32_draw_filled_triangle_on_screen_upper_lower_algo(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel pixel = { 255, 255, 255, 255}) 
 {
     // NOTE(Momo): Sort verices by y-axis, from smallest to largest
     // such that p0.y < p1.y < p2.y 
@@ -219,8 +235,8 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1
         f32 long_side_alpha = (f32)(y - p0.y)/total_height;
         f32 short_side_alpha = (f32)(y - p0.y)/segment_height;
         
-        v2i long_side_pt = LERP(p0, p2, long_side_alpha);
-        v2i short_side_pt = LERP(p0, p1, short_side_alpha);
+        v2s long_side_pt = LERP(p0, p2, long_side_alpha);
+        v2s short_side_pt = LERP(p0, p1, short_side_alpha);
         
         // NOTE(Momo): This is to make sure that we go from left to right
         // We will make sure that long_side_pt is the left side
@@ -244,8 +260,8 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2i p0, v2i p1
         f32 long_side_alpha = (f32)(y - p0.y)/total_height;
         f32 short_side_alpha = (f32)(y - p1.y)/segment_height;
         
-        v2i long_side_pt = LERP(p0, p2, long_side_alpha);
-        v2i short_side_pt = LERP(p1, p2, short_side_alpha);
+        v2s long_side_pt = LERP(p0, p2, long_side_alpha);
+        v2s short_side_pt = LERP(p1, p2, short_side_alpha);
         
         // NOTE(Momo): This is to make sure that we go from left to right
         // We will make sure that long_side_pt is the left side
@@ -941,15 +957,15 @@ win32_flush_audio(Win32_Audio* audio,
 }
 
 
-static inline v2s
+static inline v2u
 win32_get_monitor_dimensions() {
-    v2s ret = {};
+    v2u ret = {};
     ret.w = u32(GetSystemMetrics(SM_CXSCREEN));
     ret.h = u32(GetSystemMetrics(SM_CYSCREEN));
     return ret;
 }
 
-static inline v2s
+static inline v2u
 win32_get_window_dimensions(HWND window) {
     RECT rect = {};
     GetWindowRect(window, &rect);
@@ -957,7 +973,7 @@ win32_get_window_dimensions(HWND window) {
     
 }
 
-static inline v2s
+static inline v2u
 win32_get_client_dimensions(HWND window) {
     RECT rect = {};
     GetClientRect(window, &rect);
@@ -1081,7 +1097,7 @@ Win32_WindowCallback(HWND window,
         case WM_PAINT: {
             PAINTSTRUCT paint;
             HDC dc = BeginPaint(window, &paint);
-            v2s dimensions = win32_get_client_dimensions(window);
+            v2u dimensions = win32_get_client_dimensions(window);
             win32_push_screen_buffer_to_window(&g_state->screen_buffer, dc, dimensions.w, dimensions.h);
             EndPaint(window, &paint);
         } break;
@@ -1117,7 +1133,7 @@ win32_create_window(HINSTANCE instance,
     
     HWND window = {};
     RECT WindowRect = {};
-    v2s monitor_dimensions = win32_get_monitor_dimensions();
+    v2u monitor_dimensions = win32_get_monitor_dimensions();
     WindowRect.left = monitor_dimensions.w / 2 - window_width / 2;
     WindowRect.right = monitor_dimensions.w / 2 + window_width / 2;
     WindowRect.top = monitor_dimensions.h / 2 - window_height / 2;
@@ -1149,8 +1165,8 @@ win32_create_window(HINSTANCE instance,
         return NULL;
     }
     win32_log("[Win32::window] window created successfully\n");
-    v2s WindowWH = win32_get_window_dimensions(window);
-    v2s ClientWH = win32_get_client_dimensions(window);
+    v2u WindowWH = win32_get_window_dimensions(window);
+    v2u ClientWH = win32_get_client_dimensions(window);
     win32_log("[Win32::window] client: %d x %d\n", ClientWH.w, ClientWH.h);
     win32_log("[Win32::window] window: %d x %d\n", WindowWH.w, WindowWH.h);
     return window;
@@ -1549,6 +1565,33 @@ WinMain(HINSTANCE instance,
             
             f32 game_dt = target_secs_per_frame;
             
+#if 0
+            // Basic Triangle
+            {
+                v4f p0 = v4f::create(0.f, 0.f, 0.f, 1.f); 
+                v4f p1 = v4f::create(0.5f, 0.f, 0.f, 1.f);
+                v4f p2 = v4f::create(0.f, 0.5f, 0.f, 1.f);
+                
+                m44f s = m44f::create_scale(400.f, 400.f, 0.f);
+                m44f r = m44f::create_rotation_z(rotation);
+                m44f t = m44f::create_translation(0.f, 0.f, 0.f);
+                m44f transform = t*r*s;
+                p0 = transform * p0;
+                p1 = transform * p1;
+                p2 = transform * p2;
+                
+                
+                
+                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                win32_draw_filled_triangle_on_screen(screen, 
+                                                     to_v2s(p0.xy), 
+                                                     to_v2s(p1.xy), 
+                                                     to_v2s(p2.xy), 
+                                                     {255, 0, 0, 0});
+                
+                
+            }
+#else
             // Triangle 1
             {
                 v4f p0 = v4f::create(-0.5f, -0.5f, 0.f, 1.f); 
@@ -1567,15 +1610,11 @@ WinMain(HINSTANCE instance,
                 
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
                 win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2i(p0.xy), 
-                                                     to_v2i(p1.xy), 
-                                                     to_v2i(p2.xy), 
+                                                     to_v2s(p0.xy), 
+                                                     to_v2s(p1.xy), 
+                                                     to_v2s(p2.xy), 
                                                      {255, 0, 0, 0});
-                win32_draw_triangle_outline_on_screen(screen, 
-                                                      to_v2i(p0.xy), 
-                                                      to_v2i(p1.xy), 
-                                                      to_v2i(p2.xy), 
-                                                      {255, 0, 0, 0});
+                
                 
             }
             
@@ -1597,15 +1636,11 @@ WinMain(HINSTANCE instance,
                 
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
                 win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2i(p0.xy), 
-                                                     to_v2i(p1.xy), 
-                                                     to_v2i(p2.xy), 
+                                                     to_v2s(p0.xy), 
+                                                     to_v2s(p1.xy), 
+                                                     to_v2s(p2.xy), 
                                                      {0, 255, 0, 0});
-                win32_draw_triangle_outline_on_screen(screen, 
-                                                      to_v2i(p0.xy), 
-                                                      to_v2i(p1.xy), 
-                                                      to_v2i(p2.xy), 
-                                                      {0, 255, 0, 0});
+                
                 
             }
             
@@ -1627,23 +1662,25 @@ WinMain(HINSTANCE instance,
                 
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
                 win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2i(p0.xy), 
-                                                     to_v2i(p1.xy), 
-                                                     to_v2i(p2.xy), 
+                                                     to_v2s(p0.xy), 
+                                                     to_v2s(p1.xy), 
+                                                     to_v2s(p2.xy), 
                                                      {0, 0, 255, 0});
                 win32_draw_triangle_outline_on_screen(screen, 
-                                                      to_v2i(p0.xy), 
-                                                      to_v2i(p1.xy), 
-                                                      to_v2i(p2.xy), 
+                                                      to_v2s(p0.xy), 
+                                                      to_v2s(p1.xy), 
+                                                      to_v2s(p2.xy), 
                                                       {0, 0, 255, 0});
                 
             }
-            
-            
-            
-            
-            
             rotation +=  game_dt;
+#endif
+            
+            
+            
+            
+            
+            
         }
         
 #else
@@ -1685,12 +1722,12 @@ WinMain(HINSTANCE instance,
             
         }
         
-#if 0
+#if 1
         win32_log("ms: %f\n", secs_elapsed);
 #endif
         last_count = win32_get_performance_counter();
         
-        v2s dimensions = win32_get_client_dimensions(window);
+        v2u dimensions = win32_get_client_dimensions(window);
         win32_push_screen_buffer_to_window(&state->screen_buffer, GetDC(window), dimensions.w, dimensions.h);
         
         

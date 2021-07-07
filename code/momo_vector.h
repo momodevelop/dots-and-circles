@@ -24,7 +24,7 @@ struct v2f {
     static inline v2f create(f32 x = 0.f, f32 y = 0.f);
 };
 
-struct v2s {
+struct v2u {
     union {
         u32 elements[2];
         struct {
@@ -38,11 +38,11 @@ struct v2s {
     };
     
     inline u32& operator[](u32 i);
-    static inline v2s create(u32 x = 0, u32 y = 0);
+    static inline v2u create(u32 x = 0, u32 y = 0);
     
 };
 
-struct v2i {
+struct v2s {
     union {
         s32 elements[2];
         struct {
@@ -86,6 +86,34 @@ struct v3f {
     
     inline f32& operator[](u32 i);
     static inline v3f create(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f);
+};
+
+struct v3s {
+    union {
+        s32 elements[3];
+        struct {
+            union {
+                v2s xy;
+                struct {
+                    s32 x, y;
+                };
+            };
+            s32 z;
+        };
+        
+        struct {
+            union {
+                v2s wh;
+                struct {
+                    s32 w, h;
+                };
+            };
+            s32 d;
+        }; 
+    };
+    
+    inline s32& operator[](u32 i);
+    static inline v3s create(s32 x = 0.f, s32 y = 0.f, s32 z = 0.f);
 };
 
 struct v4f {
@@ -313,57 +341,77 @@ rotate(v2f v, f32 rad) {
     return ret;
 }
 
-//~ NOTE(Momo): v2s Functions
+//~ NOTE(Momo): v2u Functions
 u32&
-v2s::operator[](u32 i) {
+v2u::operator[](u32 i) {
     ASSERT(i < 2); 
     return elements[i]; 
 }
 
-v2s 
-v2s::create(u32 x, u32 y)  {
+v2u 
+v2u::create(u32 x, u32 y)  {
     return { x, y };
 }
 
-//~ NOTE(Momo): v2i Functions
-static inline v2i 
-add(v2i l, v2i r) {
+//~ NOTE(Momo): v2s Functions
+static inline v2s 
+add(v2s l, v2s r) {
     l.x += r.x;
     l.y += r.y;
     return l;
 }
 
-static inline v2i
-operator+(v2i l, v2i r) {
+static inline v2s
+operator+(v2s l, v2s r) {
     return add(l,r);
 }
 
-static inline v2i
-sub(v2i l, v2i r) {
+static inline v2s
+sub(v2s l, v2s r) {
     l.x -= r.x;
     l.y -= r.y;
     return l;
 }
 
 
-static inline v2i
-operator-(v2i l, v2i r) {
+static inline v2s
+operator-(v2s l, v2s r) {
     return sub(l,r);
 }
 
-static inline v2i
-mul(v2i l, f32 r) {
+static inline v2s
+mul(v2s l, f32 r) {
     l.x = s32(l.x * r);
     l.y = s32(l.y * r);
     return l;
 }
 
 
-static inline v2i 
-operator*(v2i lhs, f32 rhs) {
+static inline v2s 
+operator*(v2s lhs, f32 rhs) {
     return mul(lhs, rhs);
 }
 
+//~ NOTE(Momo): v3s Functions
+s32&
+v3s::operator[](u32 i) {
+    ASSERT(i < 3); 
+    return elements[i]; 
+}
+
+v3s 
+v3s::create(s32 x, s32 y, s32 z)  {
+    return { x, y, z };
+}
+
+v3s
+cross(v3s lhs, v3s rhs) {
+    return {
+        (lhs.y * rhs.z) - (lhs.z * rhs.y),
+        (lhs.z * rhs.x) - (lhs.x * rhs.z),
+        (lhs.x * rhs.y) - (lhs.y * rhs.x)
+    };
+}
 
 
 //~ NOTE(Momo): v3f Functions
@@ -577,20 +625,19 @@ to_v3f(v2f v) {
 }
 
 static inline v2f 
-to_v2f(v2i v) {
-    v2f ret = {};
-    ret.x = (f32)v.x;
-    ret.y = (f32)v.y;return ret;
-}
-
-static inline v2f
 to_v2f(v2s v) {
     return { f32(v.x), f32(v.y) };
 }
 
-static inline v2i 
-to_v2i(v2f v) {
+static inline v2f
+to_v2f(v2u v) {
+    return { f32(v.x), f32(v.y) };
+}
+
+static inline v2s 
+to_v2s(v2f v) {
     return { s32(v.x), s32(v.y) };
 }
+
 
 #endif //MOMO_VECTOR_H
