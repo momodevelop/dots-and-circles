@@ -941,15 +941,15 @@ win32_flush_audio(Win32_Audio* audio,
 }
 
 
-static inline v2u
+static inline v2s
 win32_get_monitor_dimensions() {
-    v2u ret = {};
+    v2s ret = {};
     ret.w = u32(GetSystemMetrics(SM_CXSCREEN));
     ret.h = u32(GetSystemMetrics(SM_CYSCREEN));
     return ret;
 }
 
-static inline v2u
+static inline v2s
 win32_get_window_dimensions(HWND window) {
     RECT rect = {};
     GetWindowRect(window, &rect);
@@ -957,7 +957,7 @@ win32_get_window_dimensions(HWND window) {
     
 }
 
-static inline v2u
+static inline v2s
 win32_get_client_dimensions(HWND window) {
     RECT rect = {};
     GetClientRect(window, &rect);
@@ -1081,7 +1081,7 @@ Win32_WindowCallback(HWND window,
         case WM_PAINT: {
             PAINTSTRUCT paint;
             HDC dc = BeginPaint(window, &paint);
-            v2u dimensions = win32_get_client_dimensions(window);
+            v2s dimensions = win32_get_client_dimensions(window);
             win32_push_screen_buffer_to_window(&g_state->screen_buffer, dc, dimensions.w, dimensions.h);
             EndPaint(window, &paint);
         } break;
@@ -1117,7 +1117,7 @@ win32_create_window(HINSTANCE instance,
     
     HWND window = {};
     RECT WindowRect = {};
-    v2u monitor_dimensions = win32_get_monitor_dimensions();
+    v2s monitor_dimensions = win32_get_monitor_dimensions();
     WindowRect.left = monitor_dimensions.w / 2 - window_width / 2;
     WindowRect.right = monitor_dimensions.w / 2 + window_width / 2;
     WindowRect.top = monitor_dimensions.h / 2 - window_height / 2;
@@ -1149,8 +1149,8 @@ win32_create_window(HINSTANCE instance,
         return NULL;
     }
     win32_log("[Win32::window] window created successfully\n");
-    v2u WindowWH = win32_get_window_dimensions(window);
-    v2u ClientWH = win32_get_client_dimensions(window);
+    v2s WindowWH = win32_get_window_dimensions(window);
+    v2s ClientWH = win32_get_client_dimensions(window);
     win32_log("[Win32::window] client: %d x %d\n", ClientWH.w, ClientWH.h);
     win32_log("[Win32::window] window: %d x %d\n", WindowWH.w, WindowWH.h);
     return window;
@@ -1690,7 +1690,7 @@ WinMain(HINSTANCE instance,
 #endif
         last_count = win32_get_performance_counter();
         
-        v2u dimensions = win32_get_client_dimensions(window);
+        v2s dimensions = win32_get_client_dimensions(window);
         win32_push_screen_buffer_to_window(&state->screen_buffer, GetDC(window), dimensions.w, dimensions.h);
         
         

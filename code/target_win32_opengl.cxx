@@ -727,7 +727,7 @@ OPENGL_DEBUG_CALLBACK_FUNC(win32_opengl_debug_callback) {
 static inline b8
 win32_init_opengl(Win32_State* state,
                   HWND window, 
-                  v2u window_dimensions) 
+                  v2s window_dimensions) 
 {
     HDC DeviceContext = GetDC(window); 
     defer { ReleaseDC(window, DeviceContext); };
@@ -1091,15 +1091,15 @@ win32_flush_audio(Win32_Audio* audio,
 }
 
 
-static inline v2u
+static inline v2s
 win32_get_monitor_dimensions() {
-    v2u ret = {};
+    v2s ret = {};
     ret.w = u32(GetSystemMetrics(SM_CXSCREEN));
     ret.h = u32(GetSystemMetrics(SM_CYSCREEN));
     return ret;
 }
 
-static inline v2u
+static inline v2s
 win32_get_window_dimensions(HWND window) {
     RECT rect = {};
     GetWindowRect(window, &rect);
@@ -1107,7 +1107,7 @@ win32_get_window_dimensions(HWND window) {
     
 }
 
-static inline v2u
+static inline v2s
 win32_get_client_dimensions(HWND window) {
     RECT rect = {};
     GetClientRect(window, &rect);
@@ -1137,14 +1137,14 @@ win32_process_messages(HWND window,
                 input->window_mouse_pos.x = (f32)GET_X_LPARAM(msg.lParam);
                 input->window_mouse_pos.y = (f32)GET_Y_LPARAM(msg.lParam);
                 
-                v2u WindowDims = state->opengl->window_dimensions;
+                v2s WindowDims = state->opengl->window_dimensions;
                 aabb2u RenderRegion = state->opengl->render_region;
                 
                 input->render_mouse_pos.x = input->window_mouse_pos.x - RenderRegion.min.x;
                 input->render_mouse_pos.y = input->window_mouse_pos.y - RenderRegion.min.y;
                 
                 v2f DesignDimsF = to_v2f(state->opengl->design_dimensions);
-                v2u RenderDimsU = dimensions(RenderRegion);
+                v2s RenderDimsU = dimensions(RenderRegion);
                 v2f RenderDimsF = to_v2f(RenderDimsU);
                 v2f DesignToRenderRatio = ratio(DesignDimsF, RenderDimsF);
                 
@@ -1254,11 +1254,11 @@ Win32_WindowCallback(HWND window,
                opengl->is_initialized) 
             {
 #if 0
-                v2u WindowWH = win32_get_window_dimensions(window);
+                v2s WindowWH = win32_get_window_dimensions(window);
                 win32_log("[Win32::Resize] window: %d x %d\n", WindowWH.w, WindowWH.h);
 #endif
                 
-                v2u ClientWH = win32_get_client_dimensions(window);
+                v2s ClientWH = win32_get_client_dimensions(window);
                 if (opengl->window_dimensions.w == ClientWH.w  &&
                     opengl->window_dimensions.h == ClientWH.h ) {
                     return Result;
@@ -1296,7 +1296,7 @@ win32_create_window(HINSTANCE instance,
     
     HWND window = {};
     RECT WindowRect = {};
-    v2u monitor_dimensions = win32_get_monitor_dimensions();
+    v2s monitor_dimensions = win32_get_monitor_dimensions();
     WindowRect.left = monitor_dimensions.w / 2 - window_width / 2;
     WindowRect.right = monitor_dimensions.w / 2 + window_width / 2;
     WindowRect.top = monitor_dimensions.h / 2 - window_height / 2;
@@ -1328,8 +1328,8 @@ win32_create_window(HINSTANCE instance,
         return NULL;
     }
     win32_log("[Win32::window] window created successfully\n");
-    v2u WindowWH = win32_get_window_dimensions(window);
-    v2u ClientWH = win32_get_client_dimensions(window);
+    v2s WindowWH = win32_get_window_dimensions(window);
+    v2s ClientWH = win32_get_client_dimensions(window);
     win32_log("[Win32::window] client: %d x %d\n", ClientWH.w, ClientWH.h);
     win32_log("[Win32::window] window: %d x %d\n", WindowWH.w, WindowWH.h);
     return window;

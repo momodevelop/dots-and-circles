@@ -24,7 +24,7 @@ struct v2f {
     static inline v2f create(f32 x = 0.f, f32 y = 0.f);
 };
 
-struct v2u {
+struct v2s {
     union {
         u32 elements[2];
         struct {
@@ -38,7 +38,7 @@ struct v2u {
     };
     
     inline u32& operator[](u32 i);
-    static inline v2u create(u32 x = 0, u32 y = 0);
+    static inline v2s create(u32 x = 0, u32 y = 0);
     
 };
 
@@ -313,15 +313,15 @@ rotate(v2f v, f32 rad) {
     return ret;
 }
 
-//~ NOTE(Momo): v2u Functions
+//~ NOTE(Momo): v2s Functions
 u32&
-v2u::operator[](u32 i) {
+v2s::operator[](u32 i) {
     ASSERT(i < 2); 
     return elements[i]; 
 }
 
-v2u 
-v2u::create(u32 x, u32 y)  {
+v2s 
+v2s::create(u32 x, u32 y)  {
     return { x, y };
 }
 
@@ -584,7 +584,7 @@ to_v2f(v2i v) {
 }
 
 static inline v2f
-to_v2f(v2u v) {
+to_v2f(v2s v) {
     return { f32(v.x), f32(v.y) };
 }
 
