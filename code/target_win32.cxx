@@ -141,7 +141,10 @@ win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p
 }
 
 static inline void
-win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel color) 
+win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel c0,
+                                     Win32_Pixel c1,
+                                     Win32_Pixel c2) 
+
 {
     v2s pts[3] = { p0, p1, p2 };
     
@@ -161,7 +164,6 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1
             }
         }
     }
-    
     
     v2s ab = pts[1] - pts[0];
     v2s ac = pts[2] - pts[0];
@@ -191,13 +193,29 @@ win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1
                 continue;
             
             // NOTE(Momo): Draw pixel
+            Win32_Pixel color = {};
+            
+            color.r = (u8)(barycentric.x * c0.r + 
+                           barycentric.y * c1.r + 
+                           barycentric.z * c2.r);
+            color.g = (u8)(barycentric.x * c0.g + 
+                           barycentric.y * c1.g + 
+                           barycentric.z * c2.g);
+            color.b = (u8)(barycentric.x * c0.b + 
+                           barycentric.y * c1.b + 
+                           barycentric.z * c2.b);
+            color.a = (u8)(barycentric.x * c0.a + 
+                           barycentric.y * c1.a + 
+                           barycentric.z * c2.a);
+            
+            
             win32_set_pixel_on_screen(screen, x, y, color);
             
         };
         
-        
-        
     }
+    
+    
 }
 
 
@@ -1565,7 +1583,7 @@ WinMain(HINSTANCE instance,
             
             f32 game_dt = target_secs_per_frame;
             
-#if 0
+#if 1
             // Basic Triangle
             {
                 v4f p0 = v4f::create(0.f, 0.f, 0.f, 1.f); 
@@ -1580,14 +1598,15 @@ WinMain(HINSTANCE instance,
                 p1 = transform * p1;
                 p2 = transform * p2;
                 
-                
-                
                 //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
+                
                 win32_draw_filled_triangle_on_screen(screen, 
                                                      to_v2s(p0.xy), 
                                                      to_v2s(p1.xy), 
                                                      to_v2s(p2.xy), 
-                                                     {255, 0, 0, 0});
+                                                     {255, 0, 0, 0},
+                                                     {0, 255, 0, 0},
+                                                     {0, 0, 255, 0});
                 
                 
             }
