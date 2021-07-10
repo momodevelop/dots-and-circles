@@ -264,12 +264,12 @@ Assets::init(Arena* arena)
                                     (u32)signature.count,
                                     1);
         if (read_sig == nullptr) {
-            G_Log("[Assets] Cannot read signature\n");
+            g_log("[Assets] Cannot read signature\n");
             return false;
         }
         
         if (!check_asset_signature(read_sig, signature)) {
-            G_Log("[Assets] Wrong asset signature\n");
+            g_log("[Assets] Wrong asset signature\n");
             return false;
         }
         
@@ -278,7 +278,7 @@ Assets::init(Arena* arena)
                                                      g_scratch,
                                                      &cur_file_offset);
         if (file_entry_count_ptr == nullptr) {
-            G_Log("[Assets] Cannot get file entry count\n");
+            g_log("[Assets] Cannot get file entry count\n");
             return false;
         }
         file_entry_count = *file_entry_count_ptr;
@@ -297,7 +297,7 @@ Assets::init(Arena* arena)
                                                                  g_scratch,
                                                                  &cur_file_offset);
             if (file_entry_ptr == nullptr) {
-                G_Log("[Assets] Cannot get file entry\n");
+                g_log("[Assets] Cannot get file entry\n");
                 return false;
             }
             file_entry = *file_entry_ptr;
@@ -311,7 +311,7 @@ Assets::init(Arena* arena)
                                                                      g_scratch,
                                                                      &cur_file_offset);              
                 if (file_texture == nullptr) {
-                    G_Log("[Assets] Error getting texture\n");
+                    g_log("[Assets] Error getting texture\n");
                     return false;
                 }
                 auto* texture = this->textures + file_texture->id;
@@ -328,14 +328,14 @@ Assets::init(Arena* arena)
                                                 texture_size,
                                                 1);
                 if (texture->data == nullptr) {
-                    G_Log("[Assets] Error getting texture pixels\n");
+                    g_log("[Assets] Error getting texture pixels\n");
                     return false;
                 }
                 texture->handle = g_platform->add_texture(file_texture->width, 
                                                           file_texture->height,
                                                           texture->data);
                 if (!texture->handle.success) {
-                    G_Log("[Assets] Cannot add assets!");
+                    g_log("[Assets] Cannot add assets!");
                     return false;
                 }
             } break;
@@ -348,7 +348,7 @@ Assets::init(Arena* arena)
                                                   &cur_file_offset);              
                 
                 if (file_image == nullptr) {
-                    G_Log("[Assets] Error getting image\n");
+                    g_log("[Assets] Error getting image\n");
                     return false;
                 }
                 
@@ -364,7 +364,7 @@ Assets::init(Arena* arena)
                                                                &cur_file_offset);
                 
                 if (file_font == nullptr) {
-                    G_Log("[Assets] Error getting font\n");
+                    g_log("[Assets] Error getting font\n");
                     return false;
                 }
                 
@@ -382,7 +382,7 @@ Assets::init(Arena* arena)
                 
                 
                 if (file_font_glyph == nullptr) {
-                    G_Log("[Assets] Error getting font glyph\n");
+                    g_log("[Assets] Error getting font glyph\n");
                     return false;
                 }
                 
@@ -401,7 +401,7 @@ Assets::init(Arena* arena)
                                                                                g_scratch,
                                                                                &cur_file_offset);
                 if (file_font_kerning == nullptr) {
-                    G_Log("[Assets] Error getting font kerning\n");
+                    g_log("[Assets] Error getting font kerning\n");
                     return false;
                 }
                 
@@ -419,7 +419,7 @@ Assets::init(Arena* arena)
                                                            &cur_file_offset);
                 
                 if (file == nullptr) { 
-                    G_Log("[Assets] Error getitng sound\n"); 
+                    g_log("[Assets] Error getitng sound\n"); 
                     return false; 
                 }
                 
@@ -439,7 +439,7 @@ Assets::init(Arena* arena)
                                                          g_scratch,
                                                          &cur_file_offset);
                 if (file == nullptr) { 
-                    G_Log("[Assets] Msg is null"); 
+                    g_log("[Assets] Msg is null"); 
                     return false; 
                 }
                 
@@ -463,7 +463,7 @@ Assets::init(Arena* arena)
                                                            &cur_file_offset);
                 
                 if (file == nullptr) { 
-                    G_Log("[Assets] Anime is null"); 
+                    g_log("[Assets] Anime is null"); 
                     return false; 
                 }
                 

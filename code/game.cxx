@@ -60,11 +60,11 @@ GameUpdateFunc(game_update)
     {
         // Let's say we want to time this block
         g_platform = platform_api;
-        G_Log = platform_api->log;
+        g_log = platform_api->log;
         g_renderer = render_commands;
         g_input = platform_input;
         if (!scratch.init(game_memory->scratch_memory, game_memory->scratch_memory_size)) {
-            G_Log("Cannot initialize Scratch Memory");
+            g_log("Cannot initialize Scratch Memory");
             return false;
         }
         g_scratch = &scratch;
@@ -78,7 +78,7 @@ GameUpdateFunc(game_update)
     
     //  Initialization of the game
     if(!perm_state->is_initialized) {
-        G_Log("[Permanent] Init Begin\n");
+        g_log("[Permanent] Init Begin\n");
         // NOTE(Momo): Arenas
         perm_state = ARENA_BOOT_STRUCT(Permanent_State,
                                        arena,
@@ -95,14 +95,14 @@ GameUpdateFunc(game_update)
                                      GAME_DESIGN_WIDTH, 
                                      GAME_DESIGN_HEIGHT);
         perm_state->game_speed = 1.f;
-        G_Log("[Permanent] Init End\n");
+        g_log("[Permanent] Init End\n");
         
     }
     
     
     
     if (!tran_state->is_initialized) {
-        G_Log("[Transient] Init Begin\n");
+        g_log("[Transient] Init Begin\n");
         tran_state = ARENA_BOOT_STRUCT(Transient_State,
                                        arena,
                                        game_memory->transient_memory, 
@@ -110,23 +110,23 @@ GameUpdateFunc(game_update)
         b8 success = tran_state->assets.init(&tran_state->arena);
         
         if(!success) {
-            G_Log("[Transient] Failed to initialize assets\n");
+            g_log("[Transient] Failed to initialize assets\n");
             return false;
         }
         g_assets = &tran_state->assets;
         
         success =  tran_state->mixer.init(1.f, 32, &tran_state->arena);
         if (!success) {
-            G_Log("[Transient] Failed to initialize audio\n");
+            g_log("[Transient] Failed to initialize audio\n");
             return false;
         }
         
         tran_state->is_initialized = true;
-        G_Log("[Transient] Init End\n");
+        g_log("[Transient] Init End\n");
     }
     
     if (!debug_state->is_initialized) {
-        G_Log("[Debug] Init Begin\n");
+        g_log("[Debug] Init Begin\n");
         debug_state = ARENA_BOOT_STRUCT(Debug_State,
                                         arena,
                                         game_memory->debug_memory,
@@ -154,7 +154,7 @@ GameUpdateFunc(game_update)
         debug_state->perm_state = perm_state;
         debug_state->tran_state = tran_state;
         debug_state->is_initialized = true;
-        G_Log("[Debug] Init End\n");
+        g_log("[Debug] Init End\n");
     }
     
     // NOTE(Momo): Input
