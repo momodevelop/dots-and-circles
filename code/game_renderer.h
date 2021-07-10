@@ -18,18 +18,18 @@ Ground rules about this renderer.
 #define RENDERER_H
 
 
-struct renderer_texture_handle {
-    b8 Success;
-    u32 Id;
+struct Renderer_Texture_Handle {
+    b8 success;
+    u32 id;
 };
 
 
-enum renderer_command_type {
-    RendererCommandType_ClearColor,
-    RendererCommandType_SetBasis,
-    RendererCommandType_DrawTexturedQuad,
-    RendererCommandType_DrawQuad,
-    RendererCommandType_SetDesignResolution,
+enum Renderer_Command_Type {
+    RENDERER_COMMAND_CLEAR_COLOR,
+    RENDERER_COMMAND_SET_BASIS,
+    RENDERER_COMMAND_DRAW_TEXTURED_QUAD,
+    RENDERER_COMMAND_DRAW_QUAD,
+    RENDERER_COMMAND_TYPE_SET_DESIGN_RESOLUTION,
 };
 
 struct renderer_command_clear_color {
@@ -41,7 +41,7 @@ struct renderer_command_set_basis {
 };
 
 struct renderer_command_draw_textured_quad {
-    renderer_texture_handle TextureHandle;
+    Renderer_Texture_Handle TextureHandle;
     c4f Colors;
     m44f Transform;
     quad2f TextureCoords; 
@@ -102,7 +102,7 @@ Renderer_CalcRenderRegion(u32 WindowWidth,
 static inline void
 Renderer_SetBasis(Mailbox* commands, m44f basis) {
     auto* Data = 
-        commands->push_struct<renderer_command_set_basis>(RendererCommandType_SetBasis);
+        commands->push_struct<renderer_command_set_basis>(RENDERER_COMMAND_SET_BASIS);
     Data->Basis = basis;
 }
 
@@ -111,7 +111,7 @@ Renderer_SetOrthoCamera(Mailbox* commands,
                         v3f position,
                         aabb3f frustum)   
 {
-    auto* Data = commands->push_struct<renderer_command_set_basis>(RendererCommandType_SetBasis);
+    auto* Data = commands->push_struct<renderer_command_set_basis>(RENDERER_COMMAND_SET_BASIS);
     
     auto P  = m44f::create_orthographic(-1.f, 1.f,
                                         -1.f, 1.f,
@@ -130,7 +130,7 @@ Renderer_SetOrthoCamera(Mailbox* commands,
 
 static inline void
 Renderer_ClearColor(Mailbox* commands, c4f colors) {
-    auto* Data = commands->push_struct<renderer_command_clear_color>(RendererCommandType_ClearColor);
+    auto* Data = commands->push_struct<renderer_command_clear_color>(RENDERER_COMMAND_CLEAR_COLOR);
     Data->Colors = colors;
 }
 
@@ -140,11 +140,11 @@ static inline void
 Renderer_DrawTexturedQuad(Mailbox* commands, 
                           c4f colors, 
                           m44f transform, 
-                          renderer_texture_handle texture_handle,
+                          Renderer_Texture_Handle texture_handle,
                           quad2f texture_coords = Quad2f_CreateDefaultUV())  
 
 {
-    auto* Data = commands->push_struct<renderer_command_draw_textured_quad>(RendererCommandType_DrawTexturedQuad);
+    auto* Data = commands->push_struct<renderer_command_draw_textured_quad>(RENDERER_COMMAND_DRAW_TEXTURED_QUAD);
     
     Data->Colors = colors;
     Data->Transform = transform;
@@ -157,7 +157,7 @@ Renderer_DrawQuad(Mailbox* commands,
                   c4f colors, 
                   m44f transform) 
 {
-    auto* Data = commands->push_struct<renderer_command_draw_quad>(RendererCommandType_DrawQuad);
+    auto* Data = commands->push_struct<renderer_command_draw_quad>(RENDERER_COMMAND_DRAW_QUAD);
     Data->Colors = colors;
     Data->Transform = transform;
 }
@@ -272,7 +272,7 @@ Renderer_SetDesignResolution(Mailbox* Commands,
                              u32 Width, 
                              u32 Height)  
 {
-    auto* Data = Commands->push_struct<renderer_command_set_design_resolution>(RendererCommandType_SetDesignResolution);
+    auto* Data = Commands->push_struct<renderer_command_set_design_resolution>(RENDERER_COMMAND_TYPE_SET_DESIGN_RESOLUTION);
     Data->Width = Width;
     Data->Height = Height;
 }

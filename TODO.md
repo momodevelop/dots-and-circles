@@ -6,6 +6,7 @@
 - Introspection?
 
 # Game
+- change win32_opengl batch files/filenames to just win32
 - pause state
 - Restructure waves
 - Enemy art (...32x32?)

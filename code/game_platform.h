@@ -119,7 +119,7 @@ typedef PLATFORM_GET_FILE_SIZE_DECL(Platform_Get_File_Size);
 #define PLATFORM_LOG_FILE_ERROR_DECL(Name) void Name(Platform_File_Handle* handle)
 typedef PLATFORM_LOG_FILE_ERROR_DECL(Platform_Log_File_Error);
 
-#define PLATFORM_ADD_TEXTURE_DECL(Name) renderer_texture_handle Name(u32 width, u32 height, void* pixels)
+#define PLATFORM_ADD_TEXTURE_DECL(Name) Renderer_Texture_Handle Name(u32 width, u32 height, void* pixels)
 typedef PLATFORM_ADD_TEXTURE_DECL(Platform_Add_Texture);
 
 #define PLATFORM_CLEAR_TEXTURES_DECL(Name) void Name()

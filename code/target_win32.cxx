@@ -6,6 +6,8 @@
 #include <audioclient.h>
 #include <imm.h>
 
+
+
 // NOTE(Momo): Because MS has baggage :(
 #undef near
 #undef far
@@ -15,42 +17,71 @@
 #include "game_config.h"
 #include "game_renderer.h"
 #include "game_platform.h"
+#include "game_opengl.h"
 
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 
-//~ NOTE(Momo): Consts
+
+
+//~ WGL Bindings
+#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
+#define WGL_CONTEXT_LAYER_PLANE_ARB             0x2093
+#define WGL_CONTEXT_FLAGS_ARB                   0x2094
+#define WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
+
+#define WGL_DRAW_TO_WINDOW_ARB                  0x2001
+#define WGL_ACCELERATION_ARB                    0x2003
+#define WGL_SUPPORT_OPENGL_ARB                  0x2010
+#define WGL_DOUBLE_BUFFER_ARB                   0x2011
+#define WGL_PIXEL_TYPE_ARB                      0x2013
+#define WGL_TYPE_RGBA_ARB                       0x202B
+#define WGL_FULL_ACCELERATION_ARB               0x2027
+#define WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB        0x20A9
+#define WGL_CONTEXT_FLAG_ARB                    0x2094
+#define WGL_CONTEXT_DEBUG_BIT_ARB               0x0001
+#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x0002
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
+
+#define WGL_FUNCTION_DECL(Name) wgl_func_##Name
+#define WGL_FUNCTION_DECL_PTR(Name) WGL_FUNCTION_DECL(Name)* Name
+typedef BOOL WINAPI 
+WGL_FUNCTION_DECL(wglChoosePixelFormatARB)(HDC hdc,
+                                           const int* piAttribIList,
+                                           const FLOAT* pfAttribFList,
+                                           UINT nMaxFormats,
+                                           int* piFormats,
+                                           UINT* nNumFormats);
+
+typedef BOOL WINAPI 
+WGL_FUNCTION_DECL(wglSwapIntervalEXT)(int interval);
+
+typedef HGLRC WINAPI 
+WGL_FUNCTION_DECL(wglCreateContextAttribsARB)(HDC hdc, 
+                                              HGLRC hShareContext,
+                                              const int* attribList);
+
+typedef const char* WINAPI 
+WGL_FUNCTION_DECL(wglGetExtensionsStringEXT)();
+
+static WGL_FUNCTION_DECL_PTR(wglCreateContextAttribsARB);
+static WGL_FUNCTION_DECL_PTR(wglChoosePixelFormatARB);
+static WGL_FUNCTION_DECL_PTR(wglSwapIntervalEXT);
+//static WGL_FUNCTION_DECL_PTR(wglGetExtensionsStringEXT);
+
+
+
+//~
 #define WIN32_RECORD_STATE_FILE "record_state"
 #define WIN32_RECORD_INPUT_FILE "record_input"
 #define WIN32_SAVE_STATE_FILE "game_state"
 
-//~ NOTE(Momo): Structs
-
-struct Win32_Game_Memory {
-    Game_Memory head;
-    
-    void* data;
-    u32 data_size;
-};
-
-struct Win32_Screen_Buffer {
-    BITMAPINFO info;
-    
-    u32 width;
-    u32 height;
-    u32 bytes_per_pixel;
-    void* data;
-};
 
 struct Win32_State {
     Arena arena;
     b8 is_running;
     
-    // TODO: maybe these can be shifted out?
-    b8 is_recording_input;
-    HANDLE recording_input_handle;
-    b8 is_playback_input;
-    HANDLE playback_input_handle;
     
     void* platform_memory_block;
     u32 platform_memory_block_size;
@@ -66,234 +97,42 @@ struct Win32_State {
     u32 handle_free_list[ARRAY_COUNT(handles)];
     u32 handle_free_count;
     
-#if INTERNAL
-    HANDLE std_out;
-#endif
-    Win32_Game_Memory game_memory;
-    Win32_Screen_Buffer screen_buffer;
+    Opengl* opengl;
+    
 };
-
-
-//~ Globals
 Win32_State* g_state = {};
 
-
-//~ NOTE(Momo): Rendering!!
-struct Win32_Pixel {
-    u8 r, g, b, a;
-};
-
-
+#if INTERNAL
+HANDLE g_std_out;
 static inline void
-win32_flush_screen_buffer(Win32_Screen_Buffer* screen) {
-    u32 buffer_size = screen->width * screen->height * screen->bytes_per_pixel;
-    zero_block(screen->data, buffer_size);
+win32_write_console(const char* Message) {
+    WriteConsoleA(g_std_out,
+                  Message, 
+                  cstr_length(Message), 
+                  0, 
+                  NULL);
 }
+#endif
 
-static inline void
-win32_set_pixel_on_screen(Win32_Screen_Buffer* screen, s32 x, s32 y, Win32_Pixel pixel) 
-{
-    // NOTE(Momo): Reject pixels that are not in screen
-    // TODO(Momo): Maybe width and height should be same type as x and y?
-    if (x < 0 || y < 0 || x >= (s32)screen->width || y >= (s32)screen->height)
-        return;
+//~ NOTE(Momo): Helper functions that extends winapi
+static inline
+PLATFORM_LOG_DECL(win32_log) {
+    char buffer[256];
     
-    u32 pitch = screen->width * screen->bytes_per_pixel;
-    u8* itr = ((u8*)screen->data) + (y * pitch + x * screen->bytes_per_pixel);
-    (*itr++) = pixel.b;
-    (*itr++) = pixel.g;
-    (*itr++) = pixel.r;
-    (*itr++) = pixel.a;
-}
-
-static inline void
-win32_draw_line_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, Win32_Pixel pixel = {255, 255, 255, 255}) 
-{
-    b8 steep = false;
-    if (ABS(p0.x - p1.x) < ABS(p0.y - p1.y)) {
-        SWAP(p0.x, p0.y);
-        SWAP(p1.x, p1.y);
-        steep = true;
-    }
+    va_list valist;
+    va_start(valist, format);
     
-    // NOTE(Momo): Force lines to be left-to-right
-    if (p0.x > p1.x)  {
-        SWAP(p0.x, p1.x);
-        SWAP(p0.y, p1.y);
-    }
+    stbsp_vsprintf(buffer, format, valist);
     
-    for (s32 x = p0.x; x <= p1.x; ++x) {
-        f32 t = (x - p0.x)/(float)(p1.x - p0.x);
-        s32 y = s32((p0.y * (1.f - t)) + (p1.y * t));
-        if (steep)
-            win32_set_pixel_on_screen(screen, y, x, pixel);
-        else
-            win32_set_pixel_on_screen(screen, x, y, pixel);
-    }
-}
-
-static inline void 
-win32_draw_triangle_outline_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel pixel) 
-{
-    win32_draw_line_on_screen(screen, p0, p1, pixel);
-    win32_draw_line_on_screen(screen, p1, p2, pixel);
-    win32_draw_line_on_screen(screen, p2, p0, pixel);
-}
-
-static inline void
-win32_draw_filled_triangle_on_screen(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel c0,
-                                     Win32_Pixel c1,
-                                     Win32_Pixel c2) 
-
-{
-    v2s pts[3] = { p0, p1, p2 };
-    
-    // NOTE(Momo): Figure out the bounding box of the triangle
-    // Ie. find the smallest xy and the largest xy.
-    static constexpr u32 point_count = 3;
-    aabb2i box = { pts[0], pts[0] };
-    {
-        for (u32 i = 1; i < point_count; ++i) {
-            for (u32 j = 0; j < 2; ++j) {
-                if(box.min[j] > pts[i][j]) {
-                    box.min[j] = pts[i][j];
-                }
-                if (box.max[j] < pts[i][j]) {
-                    box.max[j] = pts[i][j];
-                }
-            }
-        }
-    }
-    
-    v2s ab = pts[1] - pts[0];
-    v2s ac = pts[2] - pts[0];
-    
-    for (s32 y = box.min.y; y <= box.max.y; ++y) {
-        for (s32 x = box.min.x; x <= box.max.x; ++x) {
-            // NOTE(Momo): Check barycenter
-            v2s pa = pts[0] - v2s{ x, y } ;
-            v3s x_vector = { pa.x, ab.x, ac.x };
-            v3s y_vector = { pa.y, ab.y, ac.y };
-            
-            v3s orthorgonal = cross(y_vector, x_vector);
-            
-            // NOTE(Momo): Check if triangle is degenerate
-            if (orthorgonal.x == 0) {
-                // NOTE(Momo): we are degenerate...then we give up
-                return;
-            }
-            v3f barycentric = {
-                1.f - (f32)(orthorgonal.y + orthorgonal.z)/(f32)orthorgonal.x,
-                (f32)orthorgonal.y/(f32)orthorgonal.x,
-                (f32)orthorgonal.z/(f32)orthorgonal.x
-            };
-            
-            // NOTE(Momo): Check if within bounds
-            if (barycentric.x < 0.f || barycentric.y < 0.f || barycentric.z < 0.f)
-                continue;
-            
-            // NOTE(Momo): Draw pixel
-            Win32_Pixel color = {};
-            
-            color.r = (u8)(barycentric.x * c0.r + 
-                           barycentric.y * c1.r + 
-                           barycentric.z * c2.r);
-            color.g = (u8)(barycentric.x * c0.g + 
-                           barycentric.y * c1.g + 
-                           barycentric.z * c2.g);
-            color.b = (u8)(barycentric.x * c0.b + 
-                           barycentric.y * c1.b + 
-                           barycentric.z * c2.b);
-            color.a = (u8)(barycentric.x * c0.a + 
-                           barycentric.y * c1.a + 
-                           barycentric.z * c2.a);
-            
-            
-            win32_set_pixel_on_screen(screen, x, y, color);
-            
-        };
-        
-    }
-    
-    
+#if INTERNAL
+    win32_write_console(buffer);
+#endif
+    // TODO: Logging to text file?
+    va_end(valist);
 }
 
 
-// NOTE(Momo): Upper/Lower triangle algorithm
-//
-// Every triangle can segment itself into up to two triangles;
-// upper and lower. The main idea is that we start from the lowest vertex and
-// and work our way upwards, drawing horizontal lines
-// 
-// Note that it is entirely possible for a vertical version; where we 
-// we sort the vertices from left to right, and divide between left and right triangles
-//
-static inline void 
-win32_draw_filled_triangle_on_screen_upper_lower_algo(Win32_Screen_Buffer* screen, v2s p0, v2s p1, v2s p2, Win32_Pixel pixel = { 255, 255, 255, 255}) 
-{
-    // NOTE(Momo): Sort verices by y-axis, from smallest to largest
-    // such that p0.y < p1.y < p2.y 
-    if (p0.y > p2.y) SWAP(p0, p2);
-    if (p0.y > p1.y) SWAP(p0, p1);
-    if (p1.y > p2.y) SWAP(p1, p2);
-    
-    // NOTE(Momo): Draw bottom triangle segment 
-    // We start from p0 and go up towards p1.
-    // As we go up the y, we find the corresponding x on the lines
-    // formed by (p1 - p0) and (p2 - p0). Having these two x's
-    // will form a line that we will draw on that y-axis.
-    // We then move upwards until the segment is completed
-    // 
-    s32 total_height = p2.y - p0.y;
-    for (s32 y = p0.y; y < p1.y; ++y) {
-        s32 segment_height = p1.y - p0.y;
-        
-        // NOTE(Momo): long side is formed by (p2 - p0).
-        // NOTE(Momo): short side is formed by (p1 - p0).
-        f32 long_side_alpha = (f32)(y - p0.y)/total_height;
-        f32 short_side_alpha = (f32)(y - p0.y)/segment_height;
-        
-        v2s long_side_pt = LERP(p0, p2, long_side_alpha);
-        v2s short_side_pt = LERP(p0, p1, short_side_alpha);
-        
-        // NOTE(Momo): This is to make sure that we go from left to right
-        // We will make sure that long_side_pt is the left side
-        if (long_side_pt.x > short_side_pt.x) {
-            SWAP(long_side_pt, short_side_pt);
-        }
-        
-        for(int x = long_side_pt.x; x <= short_side_pt.x; ++x) {
-            win32_set_pixel_on_screen(screen, x, y, pixel);
-        }
-    }
-    
-    // NOTE(Momo): Draw top triangle
-    // Same as bottom segment, just that the lines involved are:
-    // (p2 - p1) and (p2 - p0)
-    for (s32 y = p1.y; y <= p2.y; ++y) {
-        s32 segment_height = p2.y - p1.y;
-        
-        // NOTE(Momo): long side is formed by (p2 - p0).
-        // NOTE(Momo): short side is formed by (p2 - p1).
-        f32 long_side_alpha = (f32)(y - p0.y)/total_height;
-        f32 short_side_alpha = (f32)(y - p1.y)/segment_height;
-        
-        v2s long_side_pt = LERP(p0, p2, long_side_alpha);
-        v2s short_side_pt = LERP(p1, p2, short_side_alpha);
-        
-        // NOTE(Momo): This is to make sure that we go from left to right
-        // We will make sure that long_side_pt is the left side
-        if (long_side_pt.x > short_side_pt.x) {
-            SWAP(long_side_pt, short_side_pt);
-        }
-        
-        for(int x = long_side_pt.x; x <= short_side_pt.x; ++x) {
-            win32_set_pixel_on_screen(screen, x, y, pixel);
-        }
-    }
-}
 
-//~ NOTE(Momo): Helper functions and globals
 static inline u32
 win32_determine_ideal_refresh_rate(HWND window, u32 default_refresh_rate) {
     // Do we want to cap this?
@@ -344,32 +183,6 @@ win32_get_file_last_write_time(const char* filename) {
     return last_write_time; 
 }
 
-#if INTERNAL
-static inline void
-win32_write_console(const char* Message) {
-    WriteConsoleA(g_state->std_out,
-                  Message, 
-                  cstr_length(Message), 
-                  0, 
-                  NULL);
-}
-#endif
-
-static inline
-PLATFORM_LOG_DECL(win32_log) {
-    char buffer[256];
-    
-    va_list valist;
-    va_start(valist, format);
-    
-    stbsp_vsprintf(buffer, format, valist);
-    
-#if INTERNAL
-    win32_write_console(buffer);
-#endif
-    // TODO: Logging to text file?
-    va_end(valist);
-}
 
 #if INTERNAL
 static inline void*
@@ -410,56 +223,18 @@ win32_get_performance_counter(void) {
     return result;
 }
 
-//~ NOTE(Momo): Screen buffer related
-static inline void
-win32_free_screen_buffer(Win32_Screen_Buffer* screen) {
-    win32_free_memory(screen->data);
-}
+#include "target_win32_game_memory.h"
+#include "target_win32_record_playback.h"
+#include "target_win32_game_code.h"
 
-static inline b8 
-win32_init_screen_buffer(Win32_Screen_Buffer* screen, u32 width, u32 height) {
-    
-    // TODO(Momo): Should follow window width/height?
-    
-    screen->width = width;
-    screen->height = height;
-    screen->bytes_per_pixel = 4;
-    
-    screen->info.bmiHeader.biSize = sizeof(screen->info.bmiHeader);
-    screen->info.bmiHeader.biWidth = width;
-    screen->info.bmiHeader.biHeight = height;
-    screen->info.bmiHeader.biPlanes = 1;
-    screen->info.bmiHeader.biBitCount = 32;
-    screen->info.bmiHeader.biCompression = BI_RGB;
-    
-    screen->data = win32_allocate_memory(screen->width * screen->height * screen->bytes_per_pixel);
-    
-    if (!screen->data) {
-        return false;
-    }
-    return true;
-}
-
-static inline void
-win32_push_screen_buffer_to_window(Win32_Screen_Buffer* screen, HDC dc, u32 window_w, u32 window_h) 
-{
-    // TODO: Aspect ratio correction
-    // TODO: use correct values
-    StretchDIBits(dc,
-                  /*
-x, y, window width, window height,
-x, y, buffer width, buffer height
-*/
-                  0, 0, window_w, window_h,
-                  0, 0, screen->width, screen->height, 
-                  screen->data,
-                  &screen->info,
-                  DIB_RGB_COLORS, SRCCOPY);
-}
+Win32_Game_Memory* g_game_memory = {};
+Win32_Input_Recorder* g_input_recorder;
+Win32_Input_Playbacker* g_input_playbacker;
 
 
 
-//~ NOTE(Momo): state related
+
+//~ NOTE(Momo): Win32 state related
 static inline f32
 win32_get_seconds_elapsed(Win32_State* state,
                           LARGE_INTEGER start, 
@@ -534,8 +309,7 @@ win32_init() {
 #if INTERNAL
     // NOTE(Momo): initialize console
     AllocConsole();    
-    state->std_out = GetStdHandle(STD_OUTPUT_HANDLE);
-    
+    g_std_out = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
     
     state->is_running = true;
@@ -550,230 +324,346 @@ win32_free(Win32_State* state) {
 }
 
 static inline void
-win32_begin_recording_input(Win32_State* state, const char* path) {
-    ASSERT(!state->is_recording_input);
-    HANDLE record_file_handle = CreateFileA(path,
-                                            GENERIC_WRITE,
-                                            FILE_SHARE_WRITE,
-                                            0,
-                                            CREATE_ALWAYS,
-                                            0,
-                                            0);
-    
-    if (record_file_handle == INVALID_HANDLE_VALUE) {
-        win32_log("[Win32::BeginRecordingInput] Cannot open file: %s\n", path);
-        return;
-    }
-    state->recording_input_handle = record_file_handle;
-    state->is_recording_input = true;
-    win32_log("[Win32::BeginRecordingInput] Recording has begun: %s\n", path);
+win32_swap_buffers(HWND window) {
+    HDC DeviceContext = GetDC(window); 
+    defer { ReleaseDC(window, DeviceContext); };
+    SwapBuffers(DeviceContext);
 }
+
+
+
+
+//~ NOTE(Momo) Opengl-related
 
 static inline void
-win32_end_recording_input(Win32_State* state) {
-    ASSERT(state->is_recording_input);
-    CloseHandle(state->recording_input_handle);
-    state->is_recording_input = false;
-    win32_log("[Win32::EndRecordingInput] Recording has ended\n");
-}
-
-static inline void
-win32_record_input(Win32_State* state, Platform_Input* input) {
-    ASSERT(state->is_recording_input);
-    DWORD BytesWritten;
-    if(!WriteFile(state->recording_input_handle,
-                  input,
-                  sizeof(Platform_Input),
-                  &BytesWritten, 0)) 
-    {
-        win32_log("[Win32::Recordinput] Cannot write file\n");
-        win32_end_recording_input(state);
-        return;
+win32_opengl_set_pixel_format(HDC dc) {
+    s32 suggested_pixel_format_index = 0;
+    u32 extended_pick = 0;
+    
+    if (wglChoosePixelFormatARB) {
+        s32 attrib_list[] = {
+            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+            WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+            WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+            WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+            WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB, GL_TRUE,
+            0,
+        };
+        
+        wglChoosePixelFormatARB(dc, attrib_list, 0, 1,
+                                &suggested_pixel_format_index, &extended_pick);
+        
     }
     
-    if (BytesWritten != sizeof(Platform_Input)) {
-        win32_log("[Win32::Recordinput] Did not complete writing\n");
-        win32_end_recording_input(state);
-        return;
+    if (!extended_pick) {
+        PIXELFORMATDESCRIPTOR desired_pixel_format = {};
+        desired_pixel_format.nSize = sizeof(desired_pixel_format);
+        desired_pixel_format.nVersion = 1;
+        desired_pixel_format.iPixelType = PFD_TYPE_RGBA;
+        desired_pixel_format.dwFlags = 
+            PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER; 
+        desired_pixel_format.cColorBits = 32;
+        desired_pixel_format.cAlphaBits = 8;
+        desired_pixel_format.iLayerType = PFD_MAIN_PLANE;
+        
+        // Here, we ask windows to find the best supported pixel 
+        // format based on our desired format.
+        suggested_pixel_format_index = 
+            ChoosePixelFormat(dc, &desired_pixel_format);
     }
-}
-
-static inline void 
-win32_end_playback_input(Win32_State* state) {
-    ASSERT(state->is_playback_input);
-    CloseHandle(state->playback_input_handle);
-    state->is_playback_input = false;
-    win32_log("[Win32::EndPlaybackInput] Playback has ended\n");
-}
-
-static inline void
-win32_begin_playback_input(Win32_State* state, const char* path) {
-    ASSERT(!state->is_playback_input);
-    HANDLE record_file_handle = CreateFileA(path,
-                                            GENERIC_READ,
-                                            FILE_SHARE_READ,
-                                            0,
-                                            OPEN_EXISTING,
-                                            0,
-                                            0);
+    PIXELFORMATDESCRIPTOR suggested_pixel_format = {};
     
-    if (record_file_handle == INVALID_HANDLE_VALUE) {
-        win32_log("[Win32::BeginPlaybackInput] Cannot open file: %s\n", path);
-        return;
-    }
-    state->playback_input_handle = record_file_handle;
-    state->is_playback_input = true;
-    win32_log("[Win32::BeginPlaybackInput] Playback has begun: %s\n", path);
+    DescribePixelFormat(dc, suggested_pixel_format_index, 
+                        sizeof(suggested_pixel_format), 
+                        &suggested_pixel_format);
+    SetPixelFormat(dc, 
+                   suggested_pixel_format_index, 
+                   &suggested_pixel_format);
 }
 
-// NOTE(Momo): returns true if 'done' reading all input, false otherwise
-static inline b8 
-win32_playback_input(Win32_State* state, Platform_Input* input) {
-    DWORD bytes_read;
-    BOOL success = ReadFile(state->playback_input_handle, 
-                            input,
-                            sizeof(Platform_Input),
-                            &bytes_read,
-                            0);
-    if(!success || bytes_read != sizeof(Platform_Input)) {
-        return true;
-    }
-    return false;
-}
-
-//~ NOTE(Momo): game code related
-struct Win32_Game_Code {
-    HMODULE dll;
-    Game_Update* game_update;
-    FILETIME last_write_time;
-    b8 is_valid;
-    
-    char src_filename[MAX_PATH];
-    char temp_filename[MAX_PATH];
-    char lock_filename[MAX_PATH];        
-};
-
-
-static inline Win32_Game_Code 
-win32_init_game_code(Win32_State* state,
-                     const char* src_filename,
-                     const char* temp_filename,
-                     const char* lock_filename) 
-{
-    Win32_Game_Code ret = {};
-    win32_build_exe_path_filename(state, ret.src_filename, src_filename);
-    win32_build_exe_path_filename(state, ret.temp_filename, temp_filename);
-    win32_build_exe_path_filename(state, ret.lock_filename, lock_filename);
-    
-    return ret;
-}
-
-static inline void
-win32_load_game_code(Win32_Game_Code* code) 
-{
-    WIN32_FILE_ATTRIBUTE_DATA ignored; 
-    if(!GetFileAttributesEx(code->lock_filename, 
-                            GetFileExInfoStandard, 
-                            &ignored)) 
-    {
-        code->last_write_time = win32_get_file_last_write_time(code->src_filename);
-        BOOL success = FALSE;
-        do {
-            success = CopyFile(code->src_filename, code->temp_filename, FALSE); 
-        } while (!success); 
-        code->dll = LoadLibraryA(code->temp_filename);
-        if(code->dll) {
-            code->game_update = 
-                (Game_Update*)GetProcAddress(code->dll, "game_update");
-            code->is_valid = (code->game_update != 0);
-        }
-    }
-}
-
-static inline void 
-win32_unload_game_code(Win32_Game_Code* code) {
-    if (code->dll) {
-        FreeLibrary(code->dll);
-        code->dll = 0;
-    }
-    code->is_valid = false;
-    code->game_update = 0;
-}
 
 static inline b8
-win32_is_game_code_outdated(Win32_Game_Code* code) {    
-    // Check last modified date
-    FILETIME last_write_time = win32_get_file_last_write_time(code->src_filename);
-    LARGE_INTEGER current_last_write_time = win32_file_time_to_large_int(last_write_time); 
-    LARGE_INTEGER game_code_last_write_time = win32_file_time_to_large_int(code->last_write_time);
+win32_opengl_load_wgl_extensions() {
+    WNDCLASSA window_class = {};
+    // Er yeah...we have to create a 'fake' Opengl context 
+    // to load the extensions lol.
+    window_class.lpfnWndProc = DefWindowProcA;
+    window_class.hInstance = GetModuleHandle(0);
+    window_class.lpszClassName = "WGLLoader";
     
-    return (current_last_write_time.QuadPart > game_code_last_write_time.QuadPart); 
+    if (RegisterClassA(&window_class)) {
+        HWND window = CreateWindowExA( 
+                                      0,
+                                      window_class.lpszClassName,
+                                      "WGL Loader",
+                                      0,
+                                      CW_USEDEFAULT,
+                                      CW_USEDEFAULT,
+                                      CW_USEDEFAULT,
+                                      CW_USEDEFAULT,
+                                      0,
+                                      0,
+                                      window_class.hInstance,
+                                      0);
+        defer { DestroyWindow(window); };
+        
+        HDC dc = GetDC(window);
+        defer { ReleaseDC(window, dc); };
+        
+        win32_opengl_set_pixel_format(dc);
+        
+        HGLRC opengl_context = wglCreateContext(dc);
+        defer { wglDeleteContext(opengl_context); };
+        
+        
+        if (wglMakeCurrent(dc, opengl_context)) {
+            
+#define WIN32_SET_WGL_FUNCTION_DECL(Name) \
+Name = (WGL_FUNCTION_DECL(Name)*)wglGetProcAddress(#Name); \
+if (!Name) { \
+win32_log("[Win32::OpenGL] Cannot load wgl function: " #Name " \n"); \
+return false; \
+}
+            
+            WIN32_SET_WGL_FUNCTION_DECL(wglChoosePixelFormatARB);
+            WIN32_SET_WGL_FUNCTION_DECL(wglCreateContextAttribsARB);
+            WIN32_SET_WGL_FUNCTION_DECL(wglSwapIntervalEXT);
+            
+            wglMakeCurrent(0, 0);
+            return true;
+        }
+        else {
+            win32_log("[Win32::OpenGL] Cannot begin to load wgl extensions\n");
+            return false;
+        }
+        
+    }
+    else {
+        win32_log("[Win32::Opengl] Cannot register class to load wgl extensions\n");
+        return false;
+    }
 }
 
-
-
-static inline void
-win32_save_game_memory(Win32_Game_Memory* game_memory, const char* path) {
-    // We just dump the whole game memory into a file
-    HANDLE win32_handle = CreateFileA(path,
-                                      GENERIC_WRITE,
-                                      FILE_SHARE_WRITE,
-                                      0,
-                                      CREATE_ALWAYS,
-                                      0,
-                                      0);
-    if (win32_handle == INVALID_HANDLE_VALUE) {
-        win32_log("[Win32::SaveState] Cannot open file: %s\n", path);
-        return;
-    }
-    defer { CloseHandle(win32_handle); }; 
-    
-    DWORD bytes_written;
-    if(!WriteFile(win32_handle, 
-                  game_memory->data,
-                  (DWORD)game_memory->data_size,
-                  &bytes_written,
-                  0)) 
+static inline void* 
+win32_try_get_opengl_function(const char* name, HMODULE fallback_module)
+{
+    void* p = (void*)wglGetProcAddress(name);
+    if ((p == 0) || 
+        (p == (void*)0x1) || 
+        (p == (void*)0x2) || 
+        (p == (void*)0x3) || 
+        (p == (void*)-1))
     {
-        win32_log("[Win32::SaveState] Cannot write file: %s\n", path);
-        return;
+        p = (void*)GetProcAddress(fallback_module, name);
     }
-    
-    if (bytes_written != game_memory->data_size) {
-        win32_log("[Win32::SaveState] Did not complete writing: %s\n", path);
-        return;
-    }
-    win32_log("[Win32::SaveState] state saved: %s\n", path);
+    return p;
     
 }
 
-static inline void
-win32_load_game_memory(Win32_Game_Memory* game_memory, const char* path) {
-    HANDLE win32_handle = CreateFileA(path,
-                                      GENERIC_READ,
-                                      FILE_SHARE_READ,
-                                      0,
-                                      OPEN_EXISTING,
-                                      0,
-                                      0);
-    if (win32_handle == INVALID_HANDLE_VALUE) {
-        win32_log("[Win32::LoadState] Cannot open file: %s\n", path);
-        return;
+#if INTERNAL
+static inline
+OPENGL_DEBUG_CALLBACK_FUNC(win32_opengl_debug_callback) {
+    // Ignore NOTIFICATION severity
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) 
+        return;    
+    const char* _source;
+    const char* _type;
+    const char* _severity;
+    switch (source) {
+        case GL_DEBUG_SOURCE_API:
+        _source = "API";
+        break;
+        
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        _source = "WINDOW SYSTEM";
+        break;
+        
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        _source = "SHADER COMPILER";
+        break;
+        
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+        _source = "THIRD PARTY";
+        break;
+        
+        case GL_DEBUG_SOURCE_APPLICATION:
+        _source = "APPLICATION";
+        break;
+        
+        case GL_DEBUG_SOURCE_OTHER:
+        _source = "UNKNOWN";
+        break;
+        
+        default:
+        _source = "UNKNOWN";
+        break;
     }
-    defer { CloseHandle(win32_handle); }; 
-    DWORD bytes_read;
     
-    BOOL success = ReadFile(win32_handle, 
-                            game_memory->data,
-                            (DWORD)game_memory->data_size,
-                            &bytes_read,
-                            0);
     
-    if (success && game_memory->data_size == bytes_read) {
-        win32_log("[Win32::LoadState] state loaded from: %s\n", path);
-        return;
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+        _type = "ERROR";
+        break;
+        
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        _type = "DEPRECATED BEHAVIOR";
+        break;
+        
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        _type = "UDEFINED BEHAVIOR";
+        break;
+        
+        case GL_DEBUG_TYPE_PORTABILITY:
+        _type = "PORTABILITY";
+        break;
+        
+        case GL_DEBUG_TYPE_PERFORMANCE:
+        _type = "PERFORMANCE";
+        break;
+        
+        case GL_DEBUG_TYPE_OTHER:
+        _type = "OTHER";
+        break;
+        
+        case GL_DEBUG_TYPE_MARKER:
+        _type = "MARKER";
+        break;
+        
+        default:
+        _type = "UNKNOWN";
+        break;
     }
-    win32_log("[Win32::LoadState] Could not read all bytes: %s\n", path);
+    
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_HIGH:
+        _severity = "HIGH";
+        break;
+        
+        case GL_DEBUG_SEVERITY_MEDIUM:
+        _severity = "MEDIUM";
+        break;
+        
+        case GL_DEBUG_SEVERITY_LOW:
+        _severity = "LOW";
+        break;
+        
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+        _severity = "NOTIFICATION";
+        break;
+        
+        default:
+        _severity = "UNKNOWN";
+        break;
+    }
+    
+    win32_log("[OpenGL] %d: %s of %s severity, raised from %s: %s\n",
+              id, _type, _severity, _source, msg);
+    
+};
+#endif
+
+static inline b8
+win32_init_opengl(Win32_State* state,
+                  HWND window, 
+                  v2u window_dimensions) 
+{
+    HDC DeviceContext = GetDC(window); 
+    defer { ReleaseDC(window, DeviceContext); };
+    
+    Opengl* opengl = state->arena.push_struct<Opengl>();
+    
+    if (!opengl) {
+        win32_log("[Win32::Opengl] Failed to allocate opengl\n"); 
+        return false;
+    }
+    
+    if (!win32_opengl_load_wgl_extensions()) {
+        return false;
+    }
+    
+    win32_opengl_set_pixel_format(DeviceContext);
+    
+    
+    s32 Win32_OpenglAttribs[] {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 5,
+        WGL_CONTEXT_FLAG_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB
+#if INTERNAL
+        | WGL_CONTEXT_DEBUG_BIT_ARB
+#endif
+        ,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0,
+    };
+    HGLRC OpenglContext = wglCreateContextAttribsARB(DeviceContext, 0, 
+                                                     Win32_OpenglAttribs); 
+    
+    if (!OpenglContext) {
+        //OpenglContext = wglCreateContext(DeviceContext);
+        win32_log("[Win32::Opengl] Cannot create opengl context");
+        return false;
+    }
+    
+    if(wglMakeCurrent(DeviceContext, OpenglContext)) {
+        HMODULE Module = LoadLibraryA("opengl32.dll");
+        // TODO: Log functions that are not loaded
+#define Win32_SetOpenglFunction(Name) \
+opengl->Name = (OPENGL_FUNCTION_DECL(Name)*)win32_try_get_opengl_function(#Name, Module); \
+if (!opengl->Name) { \
+win32_log("[Win32::Opengl] Cannot load opengl function '" #Name "' \n"); \
+return false; \
+}
+        
+        Win32_SetOpenglFunction(glEnable);
+        Win32_SetOpenglFunction(glDisable); 
+        Win32_SetOpenglFunction(glViewport);
+        Win32_SetOpenglFunction(glScissor);
+        Win32_SetOpenglFunction(glCreateShader);
+        Win32_SetOpenglFunction(glCompileShader);
+        Win32_SetOpenglFunction(glShaderSource);
+        Win32_SetOpenglFunction(glAttachShader);
+        Win32_SetOpenglFunction(glDeleteShader);
+        Win32_SetOpenglFunction(glClear);
+        Win32_SetOpenglFunction(glClearColor);
+        Win32_SetOpenglFunction(glCreateBuffers);
+        Win32_SetOpenglFunction(glNamedBufferStorage);
+        Win32_SetOpenglFunction(glCreateVertexArrays);
+        Win32_SetOpenglFunction(glVertexArrayVertexBuffer);
+        Win32_SetOpenglFunction(glEnableVertexArrayAttrib);
+        Win32_SetOpenglFunction(glVertexArrayAttribFormat);
+        Win32_SetOpenglFunction(glVertexArrayAttribBinding);
+        Win32_SetOpenglFunction(glVertexArrayBindingDivisor);
+        Win32_SetOpenglFunction(glBlendFunc);
+        Win32_SetOpenglFunction(glCreateProgram);
+        Win32_SetOpenglFunction(glLinkProgram);
+        Win32_SetOpenglFunction(glGetProgramiv);
+        Win32_SetOpenglFunction(glGetProgramInfoLog);
+        Win32_SetOpenglFunction(glVertexArrayElementBuffer);
+        Win32_SetOpenglFunction(glCreateTextures);
+        Win32_SetOpenglFunction(glTextureStorage2D);
+        Win32_SetOpenglFunction(glTextureSubImage2D);
+        Win32_SetOpenglFunction(glBindTexture);
+        Win32_SetOpenglFunction(glTexParameteri);
+        Win32_SetOpenglFunction(glBindVertexArray);
+        Win32_SetOpenglFunction(glDrawElementsInstancedBaseInstance);
+        Win32_SetOpenglFunction(glGetUniformLocation);
+        Win32_SetOpenglFunction(glProgramUniformMatrix4fv);
+        Win32_SetOpenglFunction(glNamedBufferSubData);
+        Win32_SetOpenglFunction(glUseProgram);
+        Win32_SetOpenglFunction(glDeleteTextures);
+        Win32_SetOpenglFunction(glDebugMessageCallbackARB);
+    }
+    opengl->init(&state->arena, window_dimensions.w, window_dimensions.h);
+    
+#if INTERNAL
+    opengl->glEnable(GL_DEBUG_OUTPUT);
+    opengl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    opengl->glDebugMessageCallbackARB(win32_opengl_debug_callback, nullptr);
+#endif
+    
+    state->opengl = opengl;
+    return true;
 }
 
 
@@ -987,7 +877,7 @@ static inline v2u
 win32_get_window_dimensions(HWND window) {
     RECT rect = {};
     GetWindowRect(window, &rect);
-    return { u32(rect.right - rect.left), u32(rect.bottom - rect.top) };
+    return { u16(rect.right - rect.left), u16(rect.bottom - rect.top) };
     
 }
 
@@ -1002,7 +892,10 @@ win32_get_client_dimensions(HWND window) {
 static inline void
 win32_process_messages(HWND window, 
                        Win32_State* state,
-                       Platform_Input* input)
+                       Platform_Input* input,
+                       Win32_Game_Memory* game_memory,
+                       Win32_Input_Recorder* input_recorder,
+                       Win32_Input_Playbacker * input_playbacker)
 {
     MSG msg = {};
     while(PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
@@ -1015,10 +908,30 @@ win32_process_messages(HWND window,
                 input->try_push_character_input((u8)msg.wParam);
             } break;
             case WM_MOUSEMOVE: {
-                // TODO
+                // NOTE(Momo): This is the actual conversion from screen space to 
+                // design space. I'm not 100% if this should be here but I guess
+                // only time will tell.
+                input->window_mouse_pos.x = (f32)GET_X_LPARAM(msg.lParam);
+                input->window_mouse_pos.y = (f32)GET_Y_LPARAM(msg.lParam);
+                
+                v2u WindowDims = state->opengl->window_dimensions;
+                aabb2u RenderRegion = state->opengl->render_region;
+                
+                input->render_mouse_pos.x = input->window_mouse_pos.x - RenderRegion.min.x;
+                input->render_mouse_pos.y = input->window_mouse_pos.y - RenderRegion.min.y;
+                
+                v2f DesignDimsF = to_v2f(state->opengl->design_dimensions);
+                v2u RenderDimsU = dimensions(RenderRegion);
+                v2f RenderDimsF = to_v2f(RenderDimsU);
+                v2f DesignToRenderRatio = ratio(DesignDimsF, RenderDimsF);
+                
+                input->design_mouse_pos.x = input->render_mouse_pos.x * DesignToRenderRatio.w;
+                input->design_mouse_pos.y = input->render_mouse_pos.y * DesignToRenderRatio.h;
+                
             } break;
             case WM_LBUTTONUP:
             case WM_LBUTTONDOWN: {
+                u32 Code = (u32)msg.wParam;
                 b8 is_down = msg.message == WM_LBUTTONDOWN;
                 input->button_switch.now = is_down;
             } break;
@@ -1040,12 +953,12 @@ win32_process_messages(HWND window,
                     } break;
                     case VK_F3:{
                         if (msg.message == WM_KEYDOWN) {
-                            win32_save_game_memory(&state->game_memory, WIN32_SAVE_STATE_FILE);
+                            game_memory->save(WIN32_SAVE_STATE_FILE);
                         }
                     } break;
                     case VK_F4:{
                         if (msg.message == WM_KEYDOWN) {
-                            win32_load_game_memory(&state->game_memory, WIN32_SAVE_STATE_FILE);
+                            game_memory->save(WIN32_SAVE_STATE_FILE);
                         }
                     } break;
                     case VK_F5:{
@@ -1053,25 +966,24 @@ win32_process_messages(HWND window,
                     } break;
                     case VK_F6:{
                         if (msg.message == WM_KEYDOWN) {
-                            if(state->is_recording_input) {
-                                win32_end_recording_input(state);
+                            if(input_recorder->is_recording_input) {
+                                input_recorder->end();
                             }
                             else {
-                                win32_save_game_memory(&state->game_memory, WIN32_RECORD_STATE_FILE);
-                                win32_begin_recording_input(state, WIN32_RECORD_INPUT_FILE);
+                                game_memory->save(WIN32_RECORD_STATE_FILE);
+                                input_recorder->begin(WIN32_RECORD_INPUT_FILE);
                             }
                         }
                         
                     } break;
                     case VK_F7:{
                         if (msg.message == WM_KEYDOWN) {
-                            if(state->is_playback_input) {
-                                win32_end_playback_input(state);
+                            if(input_playbacker->is_playback_input) {
+                                input_playbacker->end();
                             }
                             else {
-                                win32_load_game_memory(&state->game_memory, WIN32_RECORD_STATE_FILE);
-                                win32_begin_playback_input(state, 
-                                                           WIN32_RECORD_INPUT_FILE);
+                                game_memory->load(WIN32_RECORD_STATE_FILE);
+                                input_playbacker->begin(WIN32_RECORD_INPUT_FILE);
                             }
                         }
                         
@@ -1112,15 +1024,24 @@ Win32_WindowCallback(HWND window,
         case WM_DESTROY: {
             g_state->is_running = false;
         } break;
-        case WM_PAINT: {
-            PAINTSTRUCT paint;
-            HDC dc = BeginPaint(window, &paint);
-            v2u dimensions = win32_get_client_dimensions(window);
-            win32_push_screen_buffer_to_window(&g_state->screen_buffer, dc, dimensions.w, dimensions.h);
-            EndPaint(window, &paint);
-        } break;
         case WM_WINDOWPOSCHANGED: {
-            // TODO
+            Opengl* opengl = g_state->opengl;
+            if(opengl && 
+               opengl->is_initialized) 
+            {
+#if 0
+                v2u WindowWH = win32_get_window_dimensions(window);
+                win32_log("[Win32::Resize] window: %d x %d\n", WindowWH.w, WindowWH.h);
+#endif
+                
+                v2u ClientWH = win32_get_client_dimensions(window);
+                if (opengl->window_dimensions.w == ClientWH.w  &&
+                    opengl->window_dimensions.h == ClientWH.h ) {
+                    return Result;
+                }
+                win32_log("[Win32::Resize] client: %d x %d\n", ClientWH.w, ClientWH.h);
+                opengl->resize((u16)ClientWH.w, (u16)ClientWH.h);
+            }
         } break;
         default: {
             //TODO: Log message?
@@ -1191,7 +1112,6 @@ win32_create_window(HINSTANCE instance,
     
 }
 
-
 // Platform Functions ////////////////////////////////////////////////////
 enum Win32_File_Error_Type {
     WIN32_FILE_ERROR_NONE,
@@ -1209,7 +1129,7 @@ PLATFORM_GET_PERFORMANCE_COUNTER_DECL(win32_get_performance_counter_u64) {
 static inline 
 PLATFORM_OPEN_ASSET_FILE_DECL(win32_open_asset_file) {
     Platform_File_Handle ret = {}; 
-    const char* path = GAME_ASSET_FILENAME;
+    const char* Path = GAME_ASSET_FILENAME;
     
     // Check if there are free handlers to go around
     if (g_state->handle_free_count == 0) {
@@ -1217,7 +1137,7 @@ PLATFORM_OPEN_ASSET_FILE_DECL(win32_open_asset_file) {
         return ret;
     }    
     
-    HANDLE win32_handle = CreateFileA(path, 
+    HANDLE Win32_Handle = CreateFileA(Path, 
                                       GENERIC_READ, 
                                       FILE_SHARE_READ,
                                       0,
@@ -1226,16 +1146,16 @@ PLATFORM_OPEN_ASSET_FILE_DECL(win32_open_asset_file) {
                                       0);
     
     
-    if(win32_handle == INVALID_HANDLE_VALUE) {
-        win32_log("[Win32::OpenAssetFile] Cannot open file: %s\n", path);
+    if(Win32_Handle == INVALID_HANDLE_VALUE) {
+        win32_log("[Win32::OpenAssetFile] Cannot open file: %s\n", Path);
         ret.error = WIN32_FILE_ERROR_CANNOT_OPEN;
         return ret;
     } 
     
-    u32 free_slot_index = g_state->handle_free_list[g_state->handle_free_count-1];
-    g_state->handles[free_slot_index] = win32_handle;
+    u32 FreeSlotIndex = g_state->handle_free_list[g_state->handle_free_count-1];
+    g_state->handles[FreeSlotIndex] = Win32_Handle;
     --g_state->handle_free_count;
-    ret.id = free_slot_index;
+    ret.id = FreeSlotIndex;
     
     return ret; 
 }
@@ -1274,19 +1194,15 @@ PLATFORM_CLOSE_FILE_DECL(win32_close_file) {
     g_state->handle_free_list[g_state->handle_free_count++] = handle->id;
     ASSERT(g_state->handle_free_count <= ARRAY_COUNT(g_state->handles));
 }
-
-
-#if 0
 static inline
 PLATFORM_ADD_TEXTURE_DECL(win32_add_texture) {
-    return Opengl_AddTexture(g_state->opengl, width, height, pixels);
+    return g_state->opengl->add_texture(width, height, pixels);
 }
 
 static inline 
 PLATFORM_CLEAR_TEXTURES_DECL(win32_clear_textures) {
-    return Opengl_ClearTextures(g_state->opengl);
+    return g_state->opengl->clear_textures();
 }
-#endif
 
 static inline 
 PLATFORM_READ_FILE_DECL(win32_read_file) {
@@ -1355,8 +1271,8 @@ win32_init_platform_api() {
     platform_api.log = win32_log;
     platform_api.read_file = win32_read_file;
     platform_api.get_file_size = win32_get_file_size;
-    //platform_api.clear_textures = win32_clear_textures;
-    //platform_api.add_texture = win32_add_texture;
+    platform_api.clear_textures = win32_clear_textures;
+    platform_api.add_texture = win32_add_texture;
     platform_api.open_asset_file = win32_open_asset_file;
     platform_api.close_file = win32_close_file;
     platform_api.log_file_error = win32_log_file_error;
@@ -1365,62 +1281,6 @@ win32_init_platform_api() {
     platform_api.get_performance_counter = win32_get_performance_counter_u64;
     
     return platform_api;
-}
-
-static inline void
-win32_free_game_memory(Win32_Game_Memory* game_memory) {
-    win32_log("[Win32::game_memory] Freed\n");
-    win32_free_memory(game_memory->data);
-}
-
-static inline b8
-win32_init_game_memory(Win32_Game_Memory* game_memory,
-                       u32 permanent_memory_size,
-                       u32 transient_memory_size,
-                       u32 scratch_memory_size,
-                       u32 debug_memory_size) 
-{
-    game_memory->data_size = permanent_memory_size + transient_memory_size + scratch_memory_size + debug_memory_size;
-    
-#if INTERNAL
-    SYSTEM_INFO SystemInfo;
-    GetSystemInfo(&SystemInfo);
-    
-    game_memory->data = 
-        win32_allocate_memory_at_address(game_memory->data_size, 
-                                         SystemInfo.lpMinimumApplicationAddress);
-#else
-    game_memory->data = win32_allocate_memory(game_memory->data_size);
-#endif
-    if (!game_memory->data) {
-        win32_log("[Win32::game_memory] Failed to allocate\n");
-        return false;
-    }
-    
-    u8* MemoryPtr = (u8*)game_memory->data;
-    
-    game_memory->head.permanent_memory_size = permanent_memory_size;
-    game_memory->head.permanent_memory = game_memory->data;
-    MemoryPtr += permanent_memory_size;
-    
-    game_memory->head.transient_memory_size = transient_memory_size;
-    game_memory->head.transient_memory = MemoryPtr;;
-    MemoryPtr += transient_memory_size;
-    
-    game_memory->head.scratch_memory_size = scratch_memory_size;
-    game_memory->head.scratch_memory = MemoryPtr;
-    MemoryPtr += scratch_memory_size;
-    
-    game_memory->head.debug_memory_size = debug_memory_size;
-    game_memory->head.debug_memory = MemoryPtr;
-    
-    win32_log("[Win32::game_memory] Allocated\n");
-    win32_log("[Win32::game_memory] Permanent Memory Size: %d bytes\n", permanent_memory_size);
-    win32_log("[Win32::game_memory] Transient Memory Size: %d bytes\n", transient_memory_size);
-    win32_log("[Win32::game_memory] Scratch Memory Size: %d bytes\n", scratch_memory_size);
-    win32_log("[Win32::game_memory] Debug Memory Size: %d bytes\n", debug_memory_size);
-    
-    return true;
 }
 
 static inline void
@@ -1463,15 +1323,12 @@ WinMain(HINSTANCE instance,
     
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     ImmDisableIME((DWORD)-1);
-    
-    
-    // TODO: should determine the 'best size' based on design width and height
     HWND window = win32_create_window(instance, 
                                       GAME_DESIGN_WIDTH,
                                       GAME_DESIGN_HEIGHT,
                                       "Dots and Circles");
     if (!window) { 
-        win32_log("[Win32::Main] Cannot create window\n");
+        win32_log("[Win32::Main] Cannot create window");
         return 1; 
     }
     
@@ -1481,15 +1338,15 @@ WinMain(HINSTANCE instance,
     win32_log("[Win32::Main] Monitor Refresh Rate: %d Hz\n", refresh_rate);
     
     // Load the game code DLL
-    Win32_Game_Code GameCode = win32_init_game_code(state,
-                                                    "compiled_game.dll", 
-                                                    "active_game.dll", 
-                                                    "lock");
+    Win32_Game_Code game_code = {};
+    game_code.init("compiled_game.dll", 
+                   "active_game.dll", 
+                   "lock");
     
     // Initialize game input
     Platform_Input game_input = {};
     if(!game_input.alloc(&state->arena)) {
-        win32_log("[Win32::Main] Cannot initialize input\n");
+        win32_log("[Win32::Main] Cannot initialize input");
         return 1;
     }
     
@@ -1506,36 +1363,48 @@ WinMain(HINSTANCE instance,
                          GAME_AUDIO_LATENCY_FRAMES,
                          refresh_rate)) 
     {
-        win32_log("[Win32::Main] Cannot initialize audio\n");
+        win32_log("[Win32::Main] Cannot initialize audio");
         return 1;
     }
     defer { win32_audio_free(&audio); }; 
     
-    // Initialize game memory
-    if (!win32_init_game_memory(&state->game_memory,
-                                MEBIBYTES(1),
-                                MEBIBYTES(16),
-                                MEBIBYTES(8),
-                                MEBIBYTES(1))) 
+    // NOTE(Momo): Initialize game memory
+    Win32_Game_Memory game_memory = {};
+    if (!game_memory.init(MEBIBYTES(1),
+                          MEBIBYTES(16),
+                          MEBIBYTES(8),
+                          MEBIBYTES(1))) 
     {
-        win32_log("[Win32::Main] Cannot initialize game memory\n");
+        win32_log("[Win32::Main] Cannot initialize game memory");
         return 1;
     }
-    defer { win32_free_game_memory(&state->game_memory); };
+    defer { game_memory.free(); };
+    g_game_memory = &game_memory;
     
-    // Initialize render_commands
+    // NOTE(Momo): Initialize record and playback
+    Win32_Input_Recorder input_recorder = {};
+    Win32_Input_Playbacker input_playbacker = {};
+    g_input_recorder = &input_recorder;
+    g_input_playbacker = &input_playbacker;
+    
+    
+    
+    // NOTE(Momo): Initialize render_commands
     Mailbox render_commands = {};
     if(!win32_init_render_commands(&render_commands, MEBIBYTES(64))) {
-        win32_log("[Win32::Main] Cannot initialize render commands\n");
+        win32_log("[Win32::Main] Cannot initialize render commands");
         return 1;
     }
     defer { win32_free_render_commands(&render_commands); };
     
-    // Initialize screen buffer
-    if (!win32_init_screen_buffer(&state->screen_buffer, GAME_DESIGN_WIDTH, GAME_DESIGN_HEIGHT)) {
-        win32_log("[Win32::Main] Cannot initialize screen buffer\n");
+    // Initialize OpenGL
+    if(!win32_init_opengl(state,
+                          window, 
+                          win32_get_client_dimensions(window)))
+    {
+        return 1;
     }
-    defer { win32_free_screen_buffer(&state->screen_buffer); };
+    
     
     // Set sleep granularity to 1ms
     b8 is_sleep_granular = timeBeginPeriod(1) == TIMERR_NOERROR;
@@ -1544,178 +1413,56 @@ WinMain(HINSTANCE instance,
     // Game Loop
     LARGE_INTEGER last_count = win32_get_performance_counter(); 
     while (state->is_running) {
-        if (win32_is_game_code_outdated(&GameCode)) {
+        if (game_code.is_outdated()) {
             win32_log("[Win32::Main] Reloading game code!\n");
-            win32_unload_game_code(&GameCode);
-            win32_load_game_code(&GameCode);
-            zero_block(state->game_memory.head.transient_memory, 
-                       state->game_memory.head.transient_memory_size);
+            game_code.unload();
+            game_code.load();
+            zero_block(game_memory.head.transient_memory, 
+                       game_memory.head.transient_memory_size);
         }
         
         
         game_input.update();
-        win32_process_messages(window, state, &game_input);
+        win32_process_messages(window, 
+                               state,
+                               &game_input,
+                               &game_memory,
+                               &input_recorder,
+                               &input_playbacker);
         
         // NOTE(Momo): Recording/Playback input
-        if (state->is_recording_input) {
-            (state, &game_input);
+        if (input_recorder.is_recording_input) {
+            input_recorder.update(&game_input);
         }
-        if (state->is_playback_input) {
+        if (input_playbacker.is_playback_input) {
             // NOTE(Momo): This will actually modify game_input
-            if (win32_playback_input(state, &game_input)) {
-                win32_end_playback_input(state);
-                win32_load_game_memory(&state->game_memory, WIN32_RECORD_STATE_FILE);
-                win32_begin_playback_input(state, WIN32_RECORD_INPUT_FILE);
+            if (input_playbacker.update(&game_input)) {
+                input_playbacker.end();
+                game_memory.load(WIN32_RECORD_STATE_FILE);
+                input_playbacker.begin(WIN32_RECORD_INPUT_FILE);
             }
         }
         
         
         // Compute how much sound to write and where
+        // TODO: Functionize this
         Platform_Audio platform_audio_output = win32_audio_prepare(&audio);
         
-#if 1
-        // NOTE(Momo) Test our software renderer here!
-        {
-            Win32_Screen_Buffer* screen = &state->screen_buffer;
-            win32_flush_screen_buffer(screen);
-            
-            static f32 rotation = 0.f;
-            
-            f32 game_dt = target_secs_per_frame;
-            
-#if 1
-            // Basic Triangle
-            {
-                v4f p0 = v4f::create(0.f, 0.f, 0.f, 1.f); 
-                v4f p1 = v4f::create(0.5f, 0.f, 0.f, 1.f);
-                v4f p2 = v4f::create(0.f, 0.5f, 0.f, 1.f);
-                
-                m44f s = m44f::create_scale(400.f, 400.f, 0.f);
-                m44f r = m44f::create_rotation_z(rotation);
-                m44f t = m44f::create_translation(0.f, 0.f, 0.f);
-                m44f transform = t*r*s;
-                p0 = transform * p0;
-                p1 = transform * p1;
-                p2 = transform * p2;
-                
-                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
-                
-                win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2s(p0.xy), 
-                                                     to_v2s(p1.xy), 
-                                                     to_v2s(p2.xy), 
-                                                     {255, 0, 0, 0},
-                                                     {0, 255, 0, 0},
-                                                     {0, 0, 255, 0});
-                
-                
-            }
-#else
-            // Triangle 1
-            {
-                v4f p0 = v4f::create(-0.5f, -0.5f, 0.f, 1.f); 
-                v4f p1 = v4f::create(0.5f, -0.5f, 0.f, 1.f);
-                v4f p2 = v4f::create(0.f, 0.5f, 0.f, 1.f);
-                
-                m44f s = m44f::create_scale(100.f, 100.f, 0.f);
-                m44f r = m44f::create_rotation_z(rotation);
-                m44f t = m44f::create_translation(400.f, 400.f, 0.f);
-                m44f transform = t*r*s;
-                p0 = transform * p0;
-                p1 = transform * p1;
-                p2 = transform * p2;
-                
-                
-                
-                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
-                win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2s(p0.xy), 
-                                                     to_v2s(p1.xy), 
-                                                     to_v2s(p2.xy), 
-                                                     {255, 0, 0, 0});
-                
-                
-            }
-            
-            // Triangle 2
-            {
-                v4f p0 = v4f::create(-1.5f, -0.5f, 0.f, 1.f); 
-                v4f p1 = v4f::create(3.f, -0.25f, 0.f, 1.f);
-                v4f p2 = v4f::create(0.f, 1.5f, 0.f, 1.f);
-                
-                m44f s = m44f::create_scale(100.f, 100.f, 0.f);
-                m44f r = m44f::create_rotation_z(rotation);
-                m44f t = m44f::create_translation(300.f, 500.f, 0.f);
-                m44f transform = t*r*s;
-                p0 = transform * p0;
-                p1 = transform * p1;
-                p2 = transform * p2;
-                
-                
-                
-                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
-                win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2s(p0.xy), 
-                                                     to_v2s(p1.xy), 
-                                                     to_v2s(p2.xy), 
-                                                     {0, 255, 0, 0});
-                
-                
-            }
-            
-            // Triangle 3
-            {
-                v4f p0 = v4f::create(-0.5f, -3.f, 0.f, 1.f); 
-                v4f p1 = v4f::create(1.5f, -1.5f, 0.f, 1.f);
-                v4f p2 = v4f::create(1.5f, 1.5f, 0.f, 1.f);
-                
-                m44f s = m44f::create_scale(100.f, 100.f, 0.f);
-                m44f r = m44f::create_rotation_z(rotation);
-                m44f t = m44f::create_translation(400.f, 300.f, 0.f);
-                m44f transform = t*r*s;
-                p0 = transform * p0;
-                p1 = transform * p1;
-                p2 = transform * p2;
-                
-                
-                
-                //win32_log("(%f, %f) and (%f, %f)\n", pt1.x, pt1.y, pt2.x, pt2.y);
-                win32_draw_filled_triangle_on_screen(screen, 
-                                                     to_v2s(p0.xy), 
-                                                     to_v2s(p1.xy), 
-                                                     to_v2s(p2.xy), 
-                                                     {0, 0, 255, 0});
-                win32_draw_triangle_outline_on_screen(screen, 
-                                                      to_v2s(p0.xy), 
-                                                      to_v2s(p1.xy), 
-                                                      to_v2s(p2.xy), 
-                                                      {0, 0, 255, 0});
-                
-            }
-            rotation +=  game_dt;
-#endif
-            
-            
-            
-            
-            
-            
-        }
-        
-#else
-        if (GameCode.game_update) 
+        if (game_code.game_update) 
         {
             f32 game_dt = target_secs_per_frame;
-            b8 is_game_running = GameCode.game_update(&state->game_memory.head,
-                                                      &platform_api,
-                                                      &render_commands,
-                                                      &game_input,
-                                                      &platform_audio_output,
-                                                      game_dt);
+            b8 is_game_running = game_code.game_update(&game_memory.head,
+                                                       &platform_api,
+                                                       &render_commands,
+                                                       &game_input,
+                                                       &platform_audio_output,
+                                                       game_dt);
             state->is_running = is_game_running && state->is_running;
         }
-#endif
         
+        
+        
+        state->opengl->render(&render_commands);
         render_commands.clear();
         
         win32_flush_audio(&audio, platform_audio_output);
@@ -1737,19 +1484,11 @@ WinMain(HINSTANCE instance,
             while(target_secs_per_frame > secs_elapsed) {
                 secs_elapsed = win32_get_seconds_elapsed(state, last_count, win32_get_performance_counter());
             }
-            
-            
         }
         
-#if 1
-        win32_log("ms: %f\n", secs_elapsed);
-#endif
         last_count = win32_get_performance_counter();
         
-        v2u dimensions = win32_get_client_dimensions(window);
-        win32_push_screen_buffer_to_window(&state->screen_buffer, GetDC(window), dimensions.w, dimensions.h);
-        
-        
+        win32_swap_buffers(window);
     }
     
     return 0;

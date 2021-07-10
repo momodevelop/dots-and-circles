@@ -1,7 +1,0 @@
-[
-    {
-        "directory": "D:\\Stuff\\Repos\\c\\dots-and-circles\\sandbox\\png"
-        "command": "cl -DINTERNAL -Wdeprecated-declarations test.cpp"
-        "file": "test.cpp"
-    },
-]

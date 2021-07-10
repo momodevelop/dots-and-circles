@@ -170,26 +170,6 @@ typedef void    OPENGL_FUNCTION_DECL(glDebugMessageCallbackARB)(GLDEBUGPROC *cal
                                                                 const void *userParam);
 
 
-// Stuff to work with game
-constexpr static inline f32 QuadModel[] = {
-    -0.5f, -0.5f, 0.0f,  // bottom left
-    0.5f, -0.5f, 0.0f,  // bottom right
-    0.5f,  0.5f, 0.0f,  // top right
-    -0.5f,  0.5f, 0.0f,   // top left 
-};
-
-constexpr static inline u8 QuadIndices[] = {
-    0, 1, 2,
-    0, 2, 3,
-};
-
-constexpr static inline f32 QuadUV[] = {
-    0.0f, 1.0f,  // top left
-    1.0f, 1.0f, // top right
-    1.0f, 0.f, // bottom right
-    0.f, 0.f, // bottom left
-};
-
 // NOTE(Momo): buffers
 enum {
     OPENGL_VBO_MODEL,
@@ -199,35 +179,6 @@ enum {
     OPENGL_VBO_TRANSFORM,
     OPENGL_VBO_MAX
 };
-
-constexpr static const char* OpenglVertexShader = R"###(
-#version 450 core
-layout(location=0) in vec3 aModelVtx; 
-layout(location=1) in vec4 aColor;
-layout(location=2) in vec2 aTexCoord[4];
-layout(location=6) in mat4 aTransform;
-out vec4 mColor;
-out vec2 mTexCoord;
-uniform mat4 uProjection;
-
-void main(void) {
-	gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);
-	mColor = aColor;
-	mTexCoord = aTexCoord[gl_VertexID];
-	//mTexCoord.y = 1.0 - mTexCoord.y;
-})###";
-
-constexpr static const char* OpenglFragmentShader = R"###(
-#version 450 core
-out vec4 fragColor;
-in vec4 mColor;
-in vec2 mTexCoord;
-uniform sampler2D uTexture;
-
-void main(void) {
-    fragColor = texture(uTexture, mTexCoord) * mColor; 
-})###";
-
 
 
 // NOTE(Momo): Attributes
@@ -260,6 +211,56 @@ enum {
 };
 
 struct Opengl {
+    
+    constexpr static const char* vertex_shader = R"###(
+    #version 450 core
+    layout(location=0) in vec3 aModelVtx; 
+    layout(location=1) in vec4 aColor;
+    layout(location=2) in vec2 aTexCoord[4];
+    layout(location=6) in mat4 aTransform;
+    out vec4 mColor;
+    out vec2 mTexCoord;
+    uniform mat4 uProjection;
+    
+    void main(void) {
+        gl_Position = uProjection * aTransform *  vec4(aModelVtx, 1.0);
+        mColor = aColor;
+        mTexCoord = aTexCoord[gl_VertexID];
+        //mTexCoord.y = 1.0 - mTexCoord.y;
+    })###";
+    
+    constexpr static const char* fragment_shader = R"###(
+    #version 450 core
+    out vec4 fragColor;
+    in vec4 mColor;
+    in vec2 mTexCoord;
+    uniform sampler2D uTexture;
+    
+    void main(void) {
+        fragColor = texture(uTexture, mTexCoord) * mColor; 
+    })###";
+    
+    
+    // Stuff to work with game
+    constexpr static inline f32 quad_model[] = {
+        -0.5f, -0.5f, 0.0f,  // bottom left
+        0.5f, -0.5f, 0.0f,  // bottom right
+        0.5f,  0.5f, 0.0f,  // top right
+        -0.5f,  0.5f, 0.0f,   // top left 
+    };
+    
+    constexpr static inline u8 quad_indices[] = {
+        0, 1, 2,
+        0, 2, 3,
+    };
+    
+    constexpr static inline f32 quad_uv[] = {
+        0.0f, 1.0f,  // top left
+        1.0f, 1.0f, // top right
+        1.0f, 0.f, // bottom right
+        0.f, 0.f, // bottom left
+    };
+    
     // Bindings that needs to be filled by platform
     OPENGL_FUNCTION_PTR(glEnable);
     OPENGL_FUNCTION_PTR(glDisable); 
@@ -317,552 +318,555 @@ struct Opengl {
     v2u window_dimensions;
     v2u design_dimensions;
     aabb2u render_region;
+    
+    
+    void attach_shader(u32 program, u32 type, char* code);
+    void align_viewport();
+    void add_predefined_textures();
+    void draw_instances(GLuint texture, u32 instances_to_draw, u32 index_to_draw_from);
+    
+    // public
+    b8 init(Arena* arena, u32 w, u32 h);
+    void resize(u32 w, u32 h);
+    void clear_textures();
+    Renderer_Texture_Handle add_texture(u32 w, u32 h, void* pixels);
+    void render(Mailbox* commands); 
+    
 };
 
-static inline void 
-Opengl_AttachShader(Opengl* opengl, u32 Program, u32 Type, char* Code) {
-    GLuint shader = opengl->glCreateShader(Type);
-    opengl->glShaderSource(shader, 1, &Code, NULL);
-    opengl->glCompileShader(shader);
-    opengl->glAttachShader(Program, shader);
-    opengl->glDeleteShader(shader);
+void 
+Opengl::attach_shader(u32 program, u32 type, char* Code) {
+    GLuint shader_handle = this->glCreateShader(type);
+    this->glShaderSource(shader_handle, 1, &Code, NULL);
+    this->glCompileShader(shader_handle);
+    this->glAttachShader(program, shader_handle);
+    this->glDeleteShader(shader_handle);
 }
 
-// TODO: Change name to OpenglAliugnViewport
-static inline void 
-Opengl_AlignViewport(Opengl* opengl) 
+void 
+Opengl::align_viewport() 
 {
-    aabb2u Region = Renderer_CalcRenderRegion(opengl->window_dimensions.w, 
-                                              opengl->window_dimensions.h, 
-                                              opengl->design_dimensions.w, 
-                                              opengl->design_dimensions.h);
+    aabb2u region = Renderer_CalcRenderRegion(this->window_dimensions.w, 
+                                              this->window_dimensions.h, 
+                                              this->design_dimensions.w, 
+                                              this->design_dimensions.h);
     
     u32 x, y, w, h;
-    x = Region.min.x;
-    y = Region.min.y;
-    w = width(Region);
-    h = height(Region);
+    x = region.min.x;
+    y = region.min.y;
+    w = width(region);
+    h = height(region);
     
-    opengl->glViewport(x, y, w, h);
-    opengl->glScissor(x, y, w, h);
+    this->glViewport(x, y, w, h);
+    this->glScissor(x, y, w, h);
     
     // NOTE(Momo): Cache this to make calculations 
     // for window-space to render-space more CPU friendly.
-    opengl->render_region = Region;
+    this->render_region = region;
 }
 
 
 
 
-static inline void 
-Opengl_Resize(Opengl* opengl,  
-              u16 WindowWidth, 
-              u16 WindowHeight) 
+void 
+Opengl::resize(u32 w, u32 h) 
 {
-    opengl->window_dimensions.w = WindowWidth;
-    opengl->window_dimensions.h = WindowHeight;
-    Opengl_AlignViewport(opengl);
+    this->window_dimensions.w = w;
+    this->window_dimensions.h = h;
+    align_viewport();
 }
 
-static inline void 
-Opengl_AddPredefTextures(Opengl* opengl) {
-    struct pixel { u8 E[4]; };
+void 
+Opengl::add_predefined_textures() {
+    struct Pixel { u8 e[4]; };
     
     
     // NOTE(Momo): Dummy texture setup
     {
-        pixel Pixels[4] = {
+        Pixel pixels[4] = {
             { 125, 125, 125, 255 },
             { 255, 255, 255, 255 },
             { 255, 255, 255, 255 },
             { 125, 125, 125, 255 },
         };
         
-        GLuint DummyTexture;
-        opengl->glCreateTextures(GL_TEXTURE_2D, 1, &DummyTexture);
-        opengl->glTextureStorage2D(DummyTexture, 1, GL_RGBA8, 2, 2);
-        opengl->glTextureSubImage2D(DummyTexture, 
-                                    0, 0, 0, 
-                                    2, 2, 
-                                    GL_RGBA, 
-                                    GL_UNSIGNED_BYTE, 
-                                    &Pixels);
-        opengl->textures.push_item(DummyTexture);
+        GLuint dummy_texture;
+        this->glCreateTextures(GL_TEXTURE_2D, 1, &dummy_texture);
+        this->glTextureStorage2D(dummy_texture, 1, GL_RGBA8, 2, 2);
+        this->glTextureSubImage2D(dummy_texture, 
+                                  0, 0, 0, 
+                                  2, 2, 
+                                  GL_RGBA, 
+                                  GL_UNSIGNED_BYTE, 
+                                  &pixels);
+        this->textures.push_item(dummy_texture);
     }
     
     // NOTE(Momo): Blank texture setup
     {
-        pixel Pixel = { 255, 255, 255, 255 };
-        GLuint BlankTexture;
-        opengl->glCreateTextures(GL_TEXTURE_2D, 1, &BlankTexture);
-        opengl->glTextureStorage2D(BlankTexture, 1, GL_RGBA8, 1, 1);
-        opengl->glTextureSubImage2D(BlankTexture, 
-                                    0, 0, 0, 
-                                    1, 1, 
-                                    GL_RGBA, GL_UNSIGNED_BYTE, 
-                                    &Pixel);
-        opengl->textures.push_item(BlankTexture);
+        Pixel pixels = { 255, 255, 255, 255 };
+        GLuint blank_texture;
+        this->glCreateTextures(GL_TEXTURE_2D, 1, &blank_texture);
+        this->glTextureStorage2D(blank_texture, 1, GL_RGBA8, 1, 1);
+        this->glTextureSubImage2D(blank_texture, 
+                                  0, 0, 0, 
+                                  1, 1, 
+                                  GL_RGBA, GL_UNSIGNED_BYTE, 
+                                  &pixels);
+        this->textures.push_item(blank_texture);
     }
     
     
 }
 
-static inline b8
-Opengl_Init(Opengl* opengl,
-            Arena* arena,
-            v2u window_dimensions) 
+b8
+Opengl::init(Arena* arena,
+             u32 w, u32 h) 
 {
-    opengl->textures.alloc(arena, OPENGL_MAX_TEXTURES);
-    opengl->design_dimensions = window_dimensions;
-    opengl->window_dimensions = window_dimensions;
+    this->textures.alloc(arena, OPENGL_MAX_TEXTURES);
+    this->design_dimensions = { w, h };
+    this->window_dimensions = { w, h };
     
-    opengl->glEnable(GL_DEPTH_TEST);
-    opengl->glEnable(GL_SCISSOR_TEST);
+    this->glEnable(GL_DEPTH_TEST);
+    this->glEnable(GL_SCISSOR_TEST);
     
-    opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    opengl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    this->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    this->glClearColor(0.f, 0.f, 0.f, 0.f);
     
-    Opengl_AlignViewport(opengl);
+    this->align_viewport();
     
     
     // NOTE(Momo): Setup VBO
-    opengl->glCreateBuffers(OPENGL_VBO_MAX, opengl->buffers);
-    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_MODEL], 
-                                 sizeof(QuadModel), 
-                                 QuadModel, 
-                                 0);
+    this->glCreateBuffers(OPENGL_VBO_MAX, this->buffers);
+    this->glNamedBufferStorage(this->buffers[OPENGL_VBO_MODEL], 
+                               sizeof(quad_model), 
+                               quad_model, 
+                               0);
     
-    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_INDICES], 
-                                 sizeof(QuadIndices), 
-                                 QuadIndices, 
-                                 0);
+    this->glNamedBufferStorage(this->buffers[OPENGL_VBO_INDICES], 
+                               sizeof(quad_indices), 
+                               quad_indices, 
+                               0);
     
-    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_TEXTURE], 
-                                 sizeof(v2f) * 4 * OPENGL_MAX_ENTITIES, 
-                                 nullptr, 
-                                 GL_DYNAMIC_STORAGE_BIT);
+    this->glNamedBufferStorage(this->buffers[OPENGL_VBO_TEXTURE], 
+                               sizeof(v2f) * 4 * OPENGL_MAX_ENTITIES, 
+                               nullptr, 
+                               GL_DYNAMIC_STORAGE_BIT);
     
-    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_COLORS], 
-                                 sizeof(v4f) * OPENGL_MAX_ENTITIES, 
-                                 nullptr, 
-                                 GL_DYNAMIC_STORAGE_BIT);
+    this->glNamedBufferStorage(this->buffers[OPENGL_VBO_COLORS], 
+                               sizeof(v4f) * OPENGL_MAX_ENTITIES, 
+                               nullptr, 
+                               GL_DYNAMIC_STORAGE_BIT);
     
-    opengl->glNamedBufferStorage(opengl->buffers[OPENGL_VBO_TRANSFORM], 
-                                 sizeof(m44f) * OPENGL_MAX_ENTITIES, 
-                                 nullptr, 
-                                 GL_DYNAMIC_STORAGE_BIT);
+    this->glNamedBufferStorage(this->buffers[OPENGL_VBO_TRANSFORM], 
+                               sizeof(m44f) * OPENGL_MAX_ENTITIES, 
+                               nullptr, 
+                               GL_DYNAMIC_STORAGE_BIT);
     
     
     // NOTE(Momo): Setup VAO
-    opengl->glCreateVertexArrays(1, &opengl->model);
-    opengl->glVertexArrayVertexBuffer(opengl->model, 
-                                      OPENGL_VAO_BIND_MODEL, 
-                                      opengl->buffers[OPENGL_VBO_MODEL], 
-                                      0, 
-                                      sizeof(f32)*3);
+    this->glCreateVertexArrays(1, &this->model);
+    this->glVertexArrayVertexBuffer(this->model, 
+                                    OPENGL_VAO_BIND_MODEL, 
+                                    this->buffers[OPENGL_VBO_MODEL], 
+                                    0, 
+                                    sizeof(f32)*3);
     
-    opengl->glVertexArrayVertexBuffer(opengl->model, 
-                                      OPENGL_VAO_BIND_TEXTURE, 
-                                      opengl->buffers[OPENGL_VBO_TEXTURE], 
-                                      0, 
-                                      sizeof(f32) * 8);
+    this->glVertexArrayVertexBuffer(this->model, 
+                                    OPENGL_VAO_BIND_TEXTURE, 
+                                    this->buffers[OPENGL_VBO_TEXTURE], 
+                                    0, 
+                                    sizeof(f32) * 8);
     
-    opengl->glVertexArrayVertexBuffer(opengl->model, 
-                                      OPENGL_VAO_BIND_COLORS, 
-                                      opengl->buffers[OPENGL_VBO_COLORS],  
-                                      0, 
-                                      sizeof(v4f));
+    this->glVertexArrayVertexBuffer(this->model, 
+                                    OPENGL_VAO_BIND_COLORS, 
+                                    this->buffers[OPENGL_VBO_COLORS],  
+                                    0, 
+                                    sizeof(v4f));
     
-    opengl->glVertexArrayVertexBuffer(opengl->model, 
-                                      OPENGL_VAO_BIND_TRANSFORM, 
-                                      opengl->buffers[OPENGL_VBO_TRANSFORM], 
-                                      0, 
-                                      sizeof(m44f));
+    this->glVertexArrayVertexBuffer(this->model, 
+                                    OPENGL_VAO_BIND_TRANSFORM, 
+                                    this->buffers[OPENGL_VBO_TRANSFORM], 
+                                    0, 
+                                    sizeof(m44f));
     
     // NOTE(Momo): Setup Attributes
     // aModelVtx
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_MODEL); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_MODEL, 
-                                      3, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      0);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_MODEL); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_MODEL, 
+                                    3, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    0);
     
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_MODEL, 
-                                       OPENGL_VAO_BIND_MODEL);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_MODEL, 
+                                     OPENGL_VAO_BIND_MODEL);
     
     // aColor
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_COLORS); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_COLORS, 
-                                      4, 
-                                      GL_FLOAT, GL_FALSE, 0);
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_COLORS, 
-                                       OPENGL_VAO_BIND_COLORS);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_COLORS); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_COLORS, 
+                                    4, 
+                                    GL_FLOAT, GL_FALSE, 0);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_COLORS, 
+                                     OPENGL_VAO_BIND_COLORS);
     
-    opengl->glVertexArrayBindingDivisor(opengl->model, OPENGL_VAO_BIND_COLORS, 1); 
+    this->glVertexArrayBindingDivisor(this->model, OPENGL_VAO_BIND_COLORS, 1); 
     
     // aTexCoord
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_1); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TEXTURE_1, 
-                                      2, 
-                                      GL_FLOAT, 
-                                      GL_FALSE,
-                                      sizeof(v2f) * 0);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TEXTURE_1); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TEXTURE_1, 
+                                    2, 
+                                    GL_FLOAT, 
+                                    GL_FALSE,
+                                    sizeof(v2f) * 0);
     
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_2); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TEXTURE_2, 
-                                      2, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(v2f) * 1);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TEXTURE_2); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TEXTURE_2, 
+                                    2, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(v2f) * 1);
     
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_3); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TEXTURE_3, 
-                                      2, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(v2f) * 2);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TEXTURE_3); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TEXTURE_3, 
+                                    2, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(v2f) * 2);
     
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TEXTURE_4); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TEXTURE_4, 
-                                      2, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(v2f) * 3);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TEXTURE_4); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TEXTURE_4, 
+                                    2, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(v2f) * 3);
     
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TEXTURE_1, 
-                                       OPENGL_VAO_BIND_TEXTURE);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TEXTURE_1, 
+                                     OPENGL_VAO_BIND_TEXTURE);
     
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TEXTURE_2, 
-                                       OPENGL_VAO_BIND_TEXTURE);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TEXTURE_2, 
+                                     OPENGL_VAO_BIND_TEXTURE);
     
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TEXTURE_3, 
-                                       OPENGL_VAO_BIND_TEXTURE);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TEXTURE_3, 
+                                     OPENGL_VAO_BIND_TEXTURE);
     
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TEXTURE_4, 
-                                       OPENGL_VAO_BIND_TEXTURE);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TEXTURE_4, 
+                                     OPENGL_VAO_BIND_TEXTURE);
     
-    opengl->glVertexArrayBindingDivisor(opengl->model, 
-                                        OPENGL_VAO_BIND_TEXTURE, 
-                                        1); 
+    this->glVertexArrayBindingDivisor(this->model, 
+                                      OPENGL_VAO_BIND_TEXTURE, 
+                                      1); 
     
     
     // aTransform
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_1); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TRANSFORM_1, 
-                                      4, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(f32) * 0 * 4);
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_2);
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TRANSFORM_2, 
-                                      4, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(f32) * 1 * 4);
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_3); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TRANSFORM_3, 
-                                      4, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(f32) * 2 * 4);
-    opengl->glEnableVertexArrayAttrib(opengl->model, OPENGL_ATB_TRANSFORM_4); 
-    opengl->glVertexArrayAttribFormat(opengl->model, 
-                                      OPENGL_ATB_TRANSFORM_4,
-                                      4, 
-                                      GL_FLOAT, 
-                                      GL_FALSE, 
-                                      sizeof(f32) * 3 * 4);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TRANSFORM_1); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TRANSFORM_1, 
+                                    4, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(f32) * 0 * 4);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TRANSFORM_2);
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TRANSFORM_2, 
+                                    4, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(f32) * 1 * 4);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TRANSFORM_3); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TRANSFORM_3, 
+                                    4, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(f32) * 2 * 4);
+    this->glEnableVertexArrayAttrib(this->model, OPENGL_ATB_TRANSFORM_4); 
+    this->glVertexArrayAttribFormat(this->model, 
+                                    OPENGL_ATB_TRANSFORM_4,
+                                    4, 
+                                    GL_FLOAT, 
+                                    GL_FALSE, 
+                                    sizeof(f32) * 3 * 4);
     
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TRANSFORM_1, 
-                                       OPENGL_VAO_BIND_TRANSFORM);
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TRANSFORM_2, 
-                                       OPENGL_VAO_BIND_TRANSFORM);
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TRANSFORM_3, 
-                                       OPENGL_VAO_BIND_TRANSFORM);
-    opengl->glVertexArrayAttribBinding(opengl->model, 
-                                       OPENGL_ATB_TRANSFORM_4, 
-                                       OPENGL_VAO_BIND_TRANSFORM);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TRANSFORM_1, 
+                                     OPENGL_VAO_BIND_TRANSFORM);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TRANSFORM_2, 
+                                     OPENGL_VAO_BIND_TRANSFORM);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TRANSFORM_3, 
+                                     OPENGL_VAO_BIND_TRANSFORM);
+    this->glVertexArrayAttribBinding(this->model, 
+                                     OPENGL_ATB_TRANSFORM_4, 
+                                     OPENGL_VAO_BIND_TRANSFORM);
     
-    opengl->glVertexArrayBindingDivisor(opengl->model, 
-                                        OPENGL_VAO_BIND_TRANSFORM, 
-                                        1); 
+    this->glVertexArrayBindingDivisor(this->model, 
+                                      OPENGL_VAO_BIND_TRANSFORM, 
+                                      1); 
     
     // NOTE(Momo): alpha blend
-    opengl->glEnable(GL_BLEND);
-    opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    this->glEnable(GL_BLEND);
+    this->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // NOTE(Momo): Setup indices
-    opengl->glVertexArrayElementBuffer(opengl->model, 
-                                       opengl->buffers[OPENGL_VBO_INDICES]);
+    this->glVertexArrayElementBuffer(this->model, 
+                                     this->buffers[OPENGL_VBO_INDICES]);
     
     
     
     // NOTE(Momo): Setup shader Program
-    opengl->shader = opengl->glCreateProgram();
-    Opengl_AttachShader(opengl, 
-                        opengl->shader, 
+    this->shader = this->glCreateProgram();
+    this->attach_shader(this->shader, 
                         GL_VERTEX_SHADER, 
-                        (char*)OpenglVertexShader);
-    Opengl_AttachShader(opengl, 
-                        opengl->shader, 
+                        (char*)this->vertex_shader);
+    this->attach_shader(this->shader, 
                         GL_FRAGMENT_SHADER, 
-                        (char*)OpenglFragmentShader);
+                        (char*)this->fragment_shader);
     
-    opengl->glLinkProgram(opengl->shader);
+    this->glLinkProgram(this->shader);
     
     GLint Result;
-    opengl->glGetProgramiv(opengl->shader, GL_LINK_STATUS, &Result);
+    this->glGetProgramiv(this->shader, GL_LINK_STATUS, &Result);
     if (Result != GL_TRUE) {
         char msg[KIBIBYTE];
-        opengl->glGetProgramInfoLog(opengl->shader, KIBIBYTE, nullptr, msg);
+        this->glGetProgramInfoLog(this->shader, KIBIBYTE, nullptr, msg);
         // TODO(Momo): Log?
         return false;
     }
-    Opengl_AddPredefTextures(opengl);
-    opengl->is_initialized = true;
+    this->add_predefined_textures();
+    this->is_initialized = true;
     return true;
 }
 
 
-static inline void 
-Opengl_DrawInstances(Opengl* opengl, 
-                     GLuint texture, 
-                     u32 InstancesToDraw, 
-                     u32 IndexToDrawFrom) 
+void 
+Opengl::draw_instances(GLuint texture, 
+                       u32 instances_to_draw, 
+                       u32 index_to_draw_from) 
 {
-    ASSERT(InstancesToDraw + IndexToDrawFrom < OPENGL_MAX_ENTITIES);
-    if (InstancesToDraw > 0) {
-        opengl->glBindTexture(GL_TEXTURE_2D, texture);
-        opengl->glTexParameteri(GL_TEXTURE_2D, 
-                                GL_TEXTURE_MIN_FILTER, 
-                                GL_NEAREST);
-        opengl->glTexParameteri(GL_TEXTURE_2D, 
-                                GL_TEXTURE_MAG_FILTER, 
-                                GL_NEAREST);
-        opengl->glEnable(GL_BLEND);
-        opengl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        opengl->glBindVertexArray(opengl->model);
-        opengl->glUseProgram(opengl->shader);
+    ASSERT(instances_to_draw + index_to_draw_from < OPENGL_MAX_ENTITIES);
+    if (instances_to_draw > 0) {
+        this->glBindTexture(GL_TEXTURE_2D, texture);
+        this->glTexParameteri(GL_TEXTURE_2D, 
+                              GL_TEXTURE_MIN_FILTER, 
+                              GL_NEAREST);
+        this->glTexParameteri(GL_TEXTURE_2D, 
+                              GL_TEXTURE_MAG_FILTER, 
+                              GL_NEAREST);
+        this->glEnable(GL_BLEND);
+        this->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        this->glBindVertexArray(this->model);
+        this->glUseProgram(this->shader);
         
-        opengl->glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
-                                                    6, 
-                                                    GL_UNSIGNED_BYTE, 
-                                                    nullptr, 
-                                                    InstancesToDraw,
-                                                    IndexToDrawFrom);
+        this->glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 
+                                                  6, 
+                                                  GL_UNSIGNED_BYTE, 
+                                                  nullptr, 
+                                                  instances_to_draw,
+                                                  index_to_draw_from);
     }
 }
 
 
-static inline renderer_texture_handle
-Opengl_AddTexture(Opengl* opengl,
-                  u32 Width,
-                  u32 Height,
-                  void* Pixels) 
+Renderer_Texture_Handle
+Opengl::add_texture(u32 width,
+                    u32 height,
+                    void* pixels) 
 {
-    renderer_texture_handle Ret = {};
+    Renderer_Texture_Handle ret = {};
     
-    if (opengl->textures.remaining() == 0) {
-        Ret.Success = false;
-        Ret.Id = 0;
-        return Ret;
+    if (this->textures.remaining() == 0) {
+        ret.success = false;
+        ret.id = 0;
+        return ret;
     }
     
     
-    GLuint Entry;
+    GLuint entry;
     
-    opengl->glCreateTextures(GL_TEXTURE_2D, 
+    this->glCreateTextures(GL_TEXTURE_2D, 
+                           1, 
+                           &entry);
+    
+    this->glTextureStorage2D(entry, 
                              1, 
-                             &Entry);
+                             GL_RGBA8, 
+                             width, 
+                             height);
     
-    opengl->glTextureStorage2D(Entry, 
-                               1, 
-                               GL_RGBA8, 
-                               Width, 
-                               Height);
+    this->glTextureSubImage2D(entry, 
+                              0, 
+                              0, 
+                              0, 
+                              width, 
+                              height, 
+                              GL_RGBA, 
+                              GL_UNSIGNED_BYTE, 
+                              pixels);
     
-    opengl->glTextureSubImage2D(Entry, 
-                                0, 
-                                0, 
-                                0, 
-                                Width, 
-                                Height, 
-                                GL_RGBA, 
-                                GL_UNSIGNED_BYTE, 
-                                Pixels);
-    
-    Ret.Id = opengl->textures.count;
-    Ret.Success = true;
-    opengl->textures.push_item(Entry);
-    return Ret;
+    ret.id = this->textures.count;
+    ret.success = true;
+    this->textures.push_item(entry);
+    return ret;
 }
 
-static inline void
-Opengl_ClearTextures(Opengl* opengl) {
-    opengl->glDeleteTextures(opengl->textures.count, 
-                             opengl->textures.data);
-    opengl->textures.clear();
-    Opengl_AddPredefTextures(opengl);
+void
+Opengl::clear_textures() {
+    this->glDeleteTextures(this->textures.count, 
+                           this->textures.data);
+    this->textures.clear();
+    this->add_predefined_textures();
 }
 
 
-static inline void
-Opengl_Render(Opengl* opengl, Mailbox* Commands) 
+void
+Opengl::render(Mailbox* commands) 
 {
     // TODO(Momo): Better way to do this without binding texture first?
-    GLuint CurrentTexture = 0;
-    u32 InstancesToDrawCount = 0;
-    u32 LastDrawnInstanceIndex = 0;
-    u32 CurrentInstanceIndex = 0;
+    GLuint current_texture = 0;
+    u32 instances_to_draw = 0;
+    u32 last_drawn_instance_index = 0;
+    u32 current_instance_index = 0;
     
-    opengl->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    this->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    for (u32 i = 0; i < Commands->entry_count; ++i) {
-        Mailbox_Entry_Header* Entry = Commands->get_entry(i);
+    for (u32 i = 0; i < commands->entry_count; ++i) {
+        Mailbox_Entry_Header* Entry = commands->get_entry(i);
         
         switch(Entry->type) {
-            case RendererCommandType_SetDesignResolution: {
-                auto* Data = (renderer_command_set_design_resolution*)
-                    Commands->get_entry_data(Entry);
+            case RENDERER_COMMAND_TYPE_SET_DESIGN_RESOLUTION: {
+                auto* data = (renderer_command_set_design_resolution*)
+                    commands->get_entry_data(Entry);
                 
-                opengl->design_dimensions.w = Data->Width;
-                opengl->design_dimensions.h = Data->Height;
-                Opengl_AlignViewport(opengl);
+                this->design_dimensions.w = data->Width;
+                this->design_dimensions.h = data->Height;
+                this->align_viewport();
             } break;
-            case RendererCommandType_SetBasis: {
-                auto* Data = (renderer_command_set_basis*)
-                    Commands->get_entry_data(Entry);
+            case RENDERER_COMMAND_SET_BASIS: {
+                auto* data = (renderer_command_set_basis*)
+                    commands->get_entry_data(Entry);
                 
-                Opengl_DrawInstances(opengl, 
-                                     CurrentTexture, 
-                                     InstancesToDrawCount, 
-                                     LastDrawnInstanceIndex);
-                LastDrawnInstanceIndex += InstancesToDrawCount;
-                InstancesToDrawCount = 0;
+                this->draw_instances(current_texture, 
+                                     instances_to_draw, 
+                                     last_drawn_instance_index);
+                last_drawn_instance_index += instances_to_draw;
+                instances_to_draw = 0;
                 
-                auto Result = transpose(Data->Basis);
-                GLint uProjectionLoc = opengl->glGetUniformLocation(opengl->shader,
-                                                                    "uProjection");
+                auto Result = transpose(data->Basis);
+                GLint uProjectionLoc = this->glGetUniformLocation(this->shader,
+                                                                  "uProjection");
                 
-                opengl->glProgramUniformMatrix4fv(opengl->shader, 
-                                                  uProjectionLoc, 
-                                                  1, 
-                                                  GL_FALSE, 
-                                                  (const GLfloat*)&Result);
+                this->glProgramUniformMatrix4fv(this->shader, 
+                                                uProjectionLoc, 
+                                                1, 
+                                                GL_FALSE, 
+                                                (const GLfloat*)&Result);
             } break;
-            case RendererCommandType_ClearColor: {
-                auto* Data = (renderer_command_clear_color*)
-                    Commands->get_entry_data(Entry);
-                opengl->glClearColor(Data->Colors.r, 
-                                     Data->Colors.g, 
-                                     Data->Colors.b, 
-                                     Data->Colors.a);
+            case RENDERER_COMMAND_CLEAR_COLOR: {
+                auto* data = (renderer_command_clear_color*)
+                    commands->get_entry_data(Entry);
+                this->glClearColor(data->Colors.r, 
+                                   data->Colors.g, 
+                                   data->Colors.b, 
+                                   data->Colors.a);
             } break;
-            case RendererCommandType_DrawQuad: {
-                auto* Data = (renderer_command_draw_quad*)
-                    Commands->get_entry_data(Entry);
+            case RENDERER_COMMAND_DRAW_QUAD: {
+                auto* data = (renderer_command_draw_quad*)
+                    commands->get_entry_data(Entry);
                 
-                GLuint OpenglTextureHandle = *(opengl->textures + OPENGL_PREDEF_TEXTURE_BLANK);
+                GLuint OpenglTextureHandle = *(this->textures + OPENGL_PREDEF_TEXTURE_BLANK);
                 
                 // NOTE(Momo): If the currently set texture is not same as the 
                 // currently processed texture, batch draw all instances before 
                 // the current instance.
-                if (CurrentTexture != OpenglTextureHandle) {
-                    Opengl_DrawInstances(opengl, 
-                                         CurrentTexture, 
-                                         InstancesToDrawCount, 
-                                         LastDrawnInstanceIndex);
-                    LastDrawnInstanceIndex += InstancesToDrawCount;
-                    InstancesToDrawCount = 0;
-                    CurrentTexture = OpenglTextureHandle;
+                if (current_texture != OpenglTextureHandle) {
+                    this->draw_instances(current_texture, 
+                                         instances_to_draw, 
+                                         last_drawn_instance_index);
+                    last_drawn_instance_index += instances_to_draw;
+                    instances_to_draw = 0;
+                    current_texture = OpenglTextureHandle;
                 }
                 
                 // NOTE(Momo): Update the current instance values
-                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_COLORS], 
-                                             CurrentInstanceIndex * sizeof(v4f),
-                                             sizeof(v4f), 
-                                             &Data->Colors);
+                this->glNamedBufferSubData(this->buffers[OPENGL_VBO_COLORS], 
+                                           current_instance_index * sizeof(v4f),
+                                           sizeof(v4f), 
+                                           &data->Colors);
                 
-                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TEXTURE],
-                                             CurrentInstanceIndex * sizeof(quad2f),
-                                             sizeof(QuadUV),
-                                             &QuadUV);
+                this->glNamedBufferSubData(this->buffers[OPENGL_VBO_TEXTURE],
+                                           current_instance_index * sizeof(quad2f),
+                                           sizeof(quad_uv),
+                                           &quad_uv);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = transpose(Data->Transform);
-                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TRANSFORM], 
-                                             CurrentInstanceIndex* sizeof(m44f), 
-                                             sizeof(m44f), 
-                                             &Transform);
+                m44f transform = transpose(data->Transform);
+                this->glNamedBufferSubData(this->buffers[OPENGL_VBO_TRANSFORM], 
+                                           current_instance_index* sizeof(m44f), 
+                                           sizeof(m44f), 
+                                           &transform);
                 
                 // NOTE(Momo): Update Bookkeeping
-                ++InstancesToDrawCount;
-                ++CurrentInstanceIndex;
+                ++instances_to_draw;
+                ++current_instance_index;
             } break;
-            case RendererCommandType_DrawTexturedQuad: {
-                auto* Data = (renderer_command_draw_textured_quad*)
-                    Commands->get_entry_data(Entry);
+            case RENDERER_COMMAND_DRAW_TEXTURED_QUAD: {
+                auto* data = (renderer_command_draw_textured_quad*)
+                    commands->get_entry_data(Entry);
                 
-                GLuint OpenglTextureHandle = *(opengl->textures + Data->TextureHandle.Id); 
+                GLuint texture_handle = *(this->textures + data->TextureHandle.id); 
                 
                 // NOTE(Momo): If the currently set texture is not same as the currently
                 // processed texture, batch draw all instances before the current instance.
-                if (CurrentTexture != OpenglTextureHandle) {
-                    Opengl_DrawInstances(opengl, 
-                                         CurrentTexture, 
-                                         InstancesToDrawCount, 
-                                         LastDrawnInstanceIndex);
-                    LastDrawnInstanceIndex += InstancesToDrawCount;
-                    InstancesToDrawCount = 0;
-                    CurrentTexture = OpenglTextureHandle;
+                if (current_texture != texture_handle) {
+                    this->draw_instances(current_texture, 
+                                         instances_to_draw, 
+                                         last_drawn_instance_index);
+                    last_drawn_instance_index += instances_to_draw;
+                    instances_to_draw = 0;
+                    current_texture = texture_handle;
                 }
                 
                 // NOTE(Momo): Update the current instance values
-                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_COLORS], 
-                                             CurrentInstanceIndex * sizeof(v4f),
-                                             sizeof(v4f), 
-                                             &Data->Colors);
+                this->glNamedBufferSubData(this->buffers[OPENGL_VBO_COLORS], 
+                                           current_instance_index * sizeof(v4f),
+                                           sizeof(v4f), 
+                                           &data->Colors);
                 
-                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TEXTURE],
-                                             CurrentInstanceIndex * sizeof(quad2f),
-                                             sizeof(quad2f),
-                                             &Data->TextureCoords);
+                this->glNamedBufferSubData(this->buffers[OPENGL_VBO_TEXTURE],
+                                           current_instance_index * sizeof(quad2f),
+                                           sizeof(quad2f),
+                                           &data->TextureCoords);
                 
                 // NOTE(Momo): Transpose; game is row-major
-                m44f Transform = transpose(Data->Transform);
-                opengl->glNamedBufferSubData(opengl->buffers[OPENGL_VBO_TRANSFORM], 
-                                             CurrentInstanceIndex* sizeof(m44f), 
-                                             sizeof(m44f), 
-                                             &Transform);
+                m44f transform = transpose(data->Transform);
+                this->glNamedBufferSubData(this->buffers[OPENGL_VBO_TRANSFORM], 
+                                           current_instance_index* sizeof(m44f), 
+                                           sizeof(m44f), 
+                                           &transform);
                 
                 // NOTE(Momo): Update Bookkeeping
-                ++InstancesToDrawCount;
-                ++CurrentInstanceIndex;
+                ++instances_to_draw;
+                ++current_instance_index;
                 
             } break;
         }
     }
     
-    Opengl_DrawInstances(opengl, CurrentTexture, InstancesToDrawCount, LastDrawnInstanceIndex);
+    this->draw_instances(current_texture, instances_to_draw, last_drawn_instance_index);
     
 }
 

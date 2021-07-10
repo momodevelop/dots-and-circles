@@ -1,8 +1,0 @@
-static inline u32
-$2Find($0* Arr, $1 Item) {
-	for (u32 I = 0; I < Arr->Count; ++I) {
-		if ($2(Arr->E[I], Item)) {
-			return I;
-		}	
-	}
-}

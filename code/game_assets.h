@@ -5,7 +5,7 @@
 struct Texture {
     u32 width, height, channels;
     u8* data; // RGBA format
-    renderer_texture_handle handle;
+    Renderer_Texture_Handle handle;
 };
 
 struct Anime {
@@ -334,7 +334,7 @@ Assets::init(Arena* arena)
                 texture->handle = g_platform->add_texture(file_texture->width, 
                                                           file_texture->height,
                                                           texture->data);
-                if (!texture->handle.Success) {
+                if (!texture->handle.success) {
                     G_Log("[Assets] Cannot add assets!");
                     return false;
                 }

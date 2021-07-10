@@ -227,7 +227,7 @@ GameUpdateFunc(game_update)
     buffer.init("Mode Memory: ");
     debug_state->inspector.push_u32(buffer,
                                     perm_state->mode_arena.arena->remaining());
-    buffer.init("tran_state Memory: ");
+    buffer.init("Trans Memory: ");
     debug_state->inspector.push_u32(buffer,
                                     tran_state->arena.remaining());
     
