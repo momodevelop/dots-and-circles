@@ -186,7 +186,7 @@ win32_get_file_last_write_time(const char* filename) {
 
 #if INTERNAL
 static inline void*
-win32_allocate_memory_at_address(usize memory_size, LPVOID address ) {
+win32_allocate_memory_at_address(umi memory_size, LPVOID address ) {
     return VirtualAllocEx(GetCurrentProcess(),
                           address, 
                           memory_size,
@@ -197,7 +197,7 @@ win32_allocate_memory_at_address(usize memory_size, LPVOID address ) {
 #endif
 
 static inline void*
-win32_allocate_memory(usize memory_size) {
+win32_allocate_memory(umi memory_size) {
     return VirtualAllocEx(GetCurrentProcess(),
                           0, 
                           memory_size,

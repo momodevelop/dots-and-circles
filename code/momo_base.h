@@ -15,9 +15,8 @@ typedef int32_t s32;
 typedef int64_t s64;
 typedef float f32;
 typedef double f64;
-typedef size_t usize;
-typedef uintptr_t uptr;
-typedef ptrdiff_t iptr;
+typedef uintptr_t umi;
+typedef ptrdiff_t smi;
 
 #define BEGIN_NS(Name) namespace Name {
 #define END_NS() }
@@ -54,7 +53,7 @@ typedef ptrdiff_t iptr;
 // which causes an invalid ';' error
 #define SWAP(A,B) do{ auto GLUE(zawarudo, __LINE__) = (A); (A) = (B); (B) = GLUE(zawarudo, __LINE__); } while(0);
 #define CLAMP(Value, Low, High) MAX(MIN(Value, High), Low)
-#define OFFSET_OF(Type, Member) (usize)&(((Type*)0)->Member)
+#define OFFSET_OF(Type, Member) (umi)&(((Type*)0)->Member)
 #define LERP(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
 
 
@@ -86,8 +85,8 @@ cstr_compare(const char* Lhs, const char* Rhs) {
 }
 
 static inline b8
-cstr_compare_n(const char* Lhs, const char* Rhs, usize N) {
-    for(usize I = 0; I < N; ++I, ++Lhs, ++Rhs) {
+cstr_compare_n(const char* Lhs, const char* Rhs, umi N) {
+    for(umi I = 0; I < N; ++I, ++Lhs, ++Rhs) {
         if ((*Lhs) != (*Rhs)) {
             return false;
         }

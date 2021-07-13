@@ -113,8 +113,8 @@ Debug_Console::add_command(String key,
 
 void
 Debug_Console::push_info(String str, c4f color) {
-    for (u32 i = 0; i < info_lines.count - 1; ++i) {
-        u32 j = info_lines.count - 1 - i;
+    for (umi i = 0; i < info_lines.count - 1; ++i) {
+        umi j = info_lines.count - 1 - i;
         Debug_Console_Line* dest = info_lines + j;
         Debug_Console_Line* src = info_lines + j - 1;
         dest->text.copy(src->text.str);

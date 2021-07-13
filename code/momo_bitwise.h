@@ -26,7 +26,7 @@
 static inline void* 
 align_memory_backward(void* ptr, u8 align) {
     ASSERT(align > 0 && (align & (align - 1)) == 0); // power of 2 only
-    return (void*)(uptr(ptr) & ~(align - 1));
+    return (void*)(umi(ptr) & ~(align - 1));
 }
 
 // The functions below return the difference in bytes between the given addresses and 
@@ -37,21 +37,21 @@ align_memory_backward(void* ptr, u8 align) {
 static inline void* 
 align_memory_forward(void* ptr, u8 align) {
     ASSERT(align > 0 && (align & (align - 1)) == 0); // power of 2 only
-    return (void*)((uptr(ptr) + (align - 1)) & ~(align - 1));
+    return (void*)((umi(ptr) + (align - 1)) & ~(align - 1));
 }
 
 static inline u8 
 align_memory_backward_diff(void* ptr, u8 align)  {
-    return u8((uptr)ptr - uptr(align_memory_backward(ptr, align)));
+    return u8((umi)ptr - umi(align_memory_backward(ptr, align)));
 }
 
 static inline u8 
 align_memory_forward_diff(void* ptr, u8 align)  {
-    return u8(uptr(align_memory_forward(ptr, align)) - uptr(ptr));
+    return u8(umi(align_memory_forward(ptr, align)) - umi(ptr));
 }
 
 static inline void 
-copy_block(void* dest, void* src, u32 size) {
+copy_block(void* dest, void* src, umi size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
          p < e; ++p, 
          ++q)

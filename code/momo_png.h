@@ -1,5 +1,6 @@
+#if 0
 /* date = May 16th 2021 8:30 pm */
-#ifndef MOMO_PNG_H
+
 #define MOMO_PNG_H
 
 
@@ -288,7 +289,7 @@ png_deflate(Bitstream* src_stream, Stream* dest_stream, Arena* arena)
                         }
                         u32 Dist = dists[sym] + src_stream->consume_bits(dist_ex_bits[sym]);
                         while(Len--) {
-                            u32 target_index = dest_stream->current - Dist;
+                            umi target_index = dest_stream->current - Dist;
                             u8 byte_to_write = dest_stream->contents[target_index];
                             dest_stream->write_struct<u8>(byte_to_write);
                         }

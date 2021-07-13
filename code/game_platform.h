@@ -110,7 +110,7 @@ typedef PLATFORM_OPEN_ASSET_FILE_DECL(Platform_Open_Asset_File);
 #define PLATFORM_CLOSE_FILE_DECL(Name) void Name(Platform_File_Handle* handle)
 typedef PLATFORM_CLOSE_FILE_DECL(Platform_Close_File);
 
-#define PLATFORM_READ_FILE_DECL(Name) void Name(Platform_File_Handle* handle, usize offset, usize size, void* dest)
+#define PLATFORM_READ_FILE_DECL(Name) void Name(Platform_File_Handle* handle, umi offset, umi size, void* dest)
 typedef PLATFORM_READ_FILE_DECL(Platform_Read_File);
 
 #define PLATFORM_GET_FILE_SIZE_DECL(Name) u32 Name(const char* path)

@@ -1,5 +1,6 @@
 
 
+
 #include "game.h"
 
 // cmd: jump main/menu/atlas_test/etc...
@@ -223,13 +224,13 @@ GameUpdateFunc(game_update)
     String buffer = {};
     buffer.init("Debug Memory: ");
     debug_state->inspector.push_u32(buffer,
-                                    debug_state->arena.remaining());
+                                    (u32)debug_state->arena.remaining());
     buffer.init("Mode Memory: ");
     debug_state->inspector.push_u32(buffer,
-                                    perm_state->mode_arena.arena->remaining());
+                                    (u32)perm_state->mode_arena.arena->remaining());
     buffer.init("Trans Memory: ");
     debug_state->inspector.push_u32(buffer,
-                                    tran_state->arena.remaining());
+                                    (u32)tran_state->arena.remaining());
     
     
     // State update

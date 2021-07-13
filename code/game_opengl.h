@@ -59,8 +59,8 @@ typedef u32  GLuint;
 typedef c8   GLchar;
 typedef u32  GLbitfield;
 typedef f32  GLclampf;
-typedef iptr GLsizeiptr; 
-typedef iptr GLintptr;
+typedef smi GLsizeiptr; 
+typedef smi GLintptr;
 typedef b8   GLboolean;
 typedef f32  GLfloat;
 
@@ -717,7 +717,7 @@ Opengl::add_texture(u32 width,
                               GL_UNSIGNED_BYTE, 
                               pixels);
     
-    ret.id = this->textures.count;
+    ret.id = (u32)this->textures.count;
     ret.success = true;
     this->textures.push_item(entry);
     return ret;
@@ -725,7 +725,7 @@ Opengl::add_texture(u32 width,
 
 void
 Opengl::clear_textures() {
-    this->glDeleteTextures(this->textures.count, 
+    this->glDeleteTextures((s32)this->textures.count, 
                            this->textures.data);
     this->textures.clear();
     this->add_predefined_textures();
