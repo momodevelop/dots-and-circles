@@ -7,14 +7,14 @@
 template<typename T>
 struct Array {
     T* data;
-    umi count;
+    u32 count;
     
-    auto& operator[](umi index);
-    T* operator+(umi index);
+    auto& operator[](u32 index);
+    T* operator+(u32 index);
     
-    b8 init(T* buffer, umi cap);
-    b8 alloc(Arena* arena, umi count);
-    T* get(umi index);
+    b8 init(T* buffer, u32 cap);
+    b8 alloc(Arena* arena, u32 count);
+    T* get(u32 index);
 };
 
 #include "momo_array.cpp"

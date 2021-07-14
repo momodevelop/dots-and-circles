@@ -1,6 +1,6 @@
 
 b8 
-Arena::init(void* mem, umi cap) {
+Arena::init(void* mem, u32 cap) {
     if (!mem || cap == 0) {
         return false;
     }
@@ -16,13 +16,13 @@ Arena::clear() {
     this->used = 0;
 }
 
-umi 
+u32 
 Arena::remaining() {
     return this->capacity - this->used;
 }
 
 void* 
-Arena::push_block(umi size, u8 alignment) {
+Arena::push_block(u32 size, u8 alignment) {
     if (size == 0 || alignment == 0) {
         return nullptr;
     }
@@ -48,21 +48,21 @@ Arena::push_struct() {
 
 template<class T>
 T*
-Arena::push_array(umi count) {
+Arena::push_array(u32 count) {
     return (T*)push_block(sizeof(T) * count, alignof(T));
 }
 
 void* 
-Arena::boot_block(umi struct_size,
-                  umi offset_to_arena,
+Arena::boot_block(u32 struct_size,
+                  u32 offset_to_arena,
                   void* memory,
-                  umi memory_size)
+                  u32 memory_size)
 {
     if (struct_size > memory_size) {
         return nullptr;
     }
     void* arena_memory = (u8*)memory + struct_size; 
-    umi arena_memory_size = memory_size - struct_size;
+    u32 arena_memory_size = memory_size - struct_size;
     Arena* arena_ptr = (Arena*)((u8*)memory + offset_to_arena);
     if (!arena_ptr->init(arena_memory, arena_memory_size)) {
         return nullptr;

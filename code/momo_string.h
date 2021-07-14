@@ -23,11 +23,11 @@ struct String {
     String_Split_Result split(Arena* arena, u8 delimiter);
     
     b8 operator==(String rhs);
-    b8 operator==(const char* rhs);
+    b8 operator==(const c8* rhs);
     b8 operator!=(String rhs);
-    b8 operator!=(const char* rhs);
+    b8 operator!=(const c8* rhs);
     
-    static inline String create(const char* cstr);
+    static inline String create(const c8* cstr);
 };
 
 struct String_Buffer {
@@ -39,6 +39,7 @@ struct String_Buffer {
         };
     };
     u32 capacity;
+    
     
     b8 init(u8* buffer, u32 buffer_size);
     b8 alloc(Arena* arena, u32 capacity);

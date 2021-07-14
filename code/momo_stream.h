@@ -4,26 +4,26 @@
 // TODO: Linked list of stream chunks?
 struct Stream {
     u8* contents;
-    umi content_size;
-    umi current;
+    u32 content_size;
+    u32 current;
     
-    b8 init(void* memory, umi memory_size);
-    b8 alloc(Arena* arena, umi capacity);
+    b8 init(void* memory, u32 memory_size);
+    b8 alloc(Arena* arena, u32 capacity);
     void reset();
     b8 is_eos();
-    void* consume_block(umi amount);
+    void* consume_block(u32 amount);
     
     template<typename T>
         T* consume_struct();
     
-    b8 write_block(void* src, umi src_size);
+    b8 write_block(void* src, u32 src_size);
     template<typename T>
         b8 write_struct(T item);
 };
 
 
 b8
-Stream::init(void* memory, umi memory_size) {
+Stream::init(void* memory, u32 memory_size) {
     if ( memory == nullptr || memory_size == 0) {
         return false;
     }
@@ -35,7 +35,7 @@ Stream::init(void* memory, umi memory_size) {
 
 
 b8
-Stream::alloc(Arena* arena, umi capacity) {
+Stream::alloc(Arena* arena, u32 capacity) {
     void* memory = arena->push_block(capacity);
     return init(memory, capacity); 
 } 
@@ -51,7 +51,7 @@ Stream::is_eos() {
 }
 
 void*
-Stream::consume_block(umi amount) {
+Stream::consume_block(u32 amount) {
     void* ret = nullptr;
     if (current + amount <= content_size) {
         ret = contents + current;
@@ -68,7 +68,7 @@ Stream::consume_struct() {
 
 
 b8
-Stream::write_block(void* src, umi src_size) {
+Stream::write_block(void* src, u32 src_size) {
     if (current + src_size >= content_size) {
         return false;
     }
@@ -88,23 +88,23 @@ Stream::write_struct(T item) {
 
 struct Bitstream {
     u8* contents;
-    umi content_size;
-    umi current;
+    u32 content_size;
+    u32 current;
     
     // For bit reading
     u32 bit_buffer;
     u32 bit_count;
     
-    b8 init(void* memory, umi memory_size);
-    b8 alloc(Arena* arena, umi capacity);
+    b8 init(void* memory, u32 memory_size);
+    b8 alloc(Arena* arena, u32 capacity);
     void reset();
     b8 is_eos();
-    void* consume_block(umi amount);
+    void* consume_block(u32 amount);
     
     template<typename T>
         T* consume_struct();
     
-    b8 write_block(void* src, umi src_size);
+    b8 write_block(void* src, u32 src_size);
     template<typename T>
         b8 write_struct(T item);
     
@@ -113,7 +113,7 @@ struct Bitstream {
 };
 
 b8
-Bitstream::init(void* memory, umi memory_size) {
+Bitstream::init(void* memory, u32 memory_size) {
     if ( memory == nullptr || memory_size == 0) {
         return false;
     }
@@ -125,7 +125,7 @@ Bitstream::init(void* memory, umi memory_size) {
 
 
 b8
-Bitstream::alloc(Arena* arena, umi capacity) {
+Bitstream::alloc(Arena* arena, u32 capacity) {
     void* memory = arena->push_block(capacity);
     return init(memory, capacity); 
 } 
@@ -141,7 +141,7 @@ Bitstream::is_eos() {
 }
 
 void*
-Bitstream::consume_block(umi amount) {
+Bitstream::consume_block(u32 amount) {
     void* ret = nullptr;
     if (current + amount <= content_size) {
         ret = contents + current;
@@ -158,7 +158,7 @@ Bitstream::consume_struct() {
 
 
 b8
-Bitstream::write_block(void* src, umi src_size) {
+Bitstream::write_block(void* src, u32 src_size) {
     if (current + src_size >= content_size) {
         return false;
     }

@@ -12,7 +12,7 @@ String::init(u8* buffer, u32 buffer_size) {
 }
 
 b8
-String::init(const char* cstr) {
+String::init(const c8* cstr) {
     return init((u8*)cstr, cstr_length(cstr));
 }
 
@@ -145,7 +145,7 @@ String_Buffer::pop() {
     return true;
 }
 
-u32 
+u32
 String_Buffer::remaining() {
     return capacity - count;
 }

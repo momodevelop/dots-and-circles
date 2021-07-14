@@ -1,7 +1,7 @@
 
 template<typename T>
 T& 
-List<T>::operator[](umi index) {
+List<T>::operator[](u32 index) {
     ASSERT(index < count); 
     return data[index];
 }
@@ -9,7 +9,7 @@ List<T>::operator[](umi index) {
 
 template<typename T>
 b8
-List<T>::init(T* data_in, umi cap_in) {
+List<T>::init(T* data_in, u32 cap_in) {
     if (!data_in || cap_in == 0) {
         return false;
     }
@@ -22,7 +22,7 @@ List<T>::init(T* data_in, umi cap_in) {
 
 template<typename T>
 b8
-List<T>::alloc(Arena* arena, umi cap_in) {
+List<T>::alloc(Arena* arena, u32 cap_in) {
     T* buffer = arena->push_array<T>(cap_in);
     if (!buffer) {
         return false;
@@ -65,7 +65,7 @@ List<T>::push_item(T item) {
 // NOTE(Momo): "Swap last element and remove"
 template<typename T>
 b8
-List<T>::slear(umi index) {
+List<T>::slear(u32 index) {
     if (index < count) {
         data[index] = data[count-1];
         --count;
@@ -99,7 +99,7 @@ List<T>::last() {
 }
 
 template<typename T>
-umi
+u32
 List<T>::remaining() {
     return cap - count;
 }
@@ -108,7 +108,7 @@ List<T>::remaining() {
 
 template<typename T>
 T*
-List<T>::get(umi index) {
+List<T>::get(u32 index) {
     if(index < count) {
         return data + index;
     }
@@ -119,7 +119,7 @@ List<T>::get(umi index) {
 
 template<typename T>
 T* 
-List<T>::operator+(umi index) {
+List<T>::operator+(u32 index) {
     return get(index);
 }
 
@@ -128,7 +128,7 @@ template<typename T>
 template<typename Callback, typename... Args>
 void
 List<T>::foreach_slear_if(Callback callback, Args... args) {
-    for (umi i = 0; i < count;) {
+    for (u32 i = 0; i < count;) {
         if (callback(data + i, args...)) {
             slear(i);
             continue;
@@ -141,7 +141,7 @@ template<typename T>
 template<typename Callback, typename... Args>
 void
 List<T>::foreach(Callback callback, Args... args) {
-    for (umi i = 0; i < count; ++i) {
+    for (u32 i = 0; i < count; ++i) {
         callback(data + i, args...);
     }
 }
@@ -219,7 +219,7 @@ List_Reverse_Itr<T>::operator++() {
 template<typename T>
 T&
 List_Reverse_Itr<T>::operator*() {
-    umi actual_index = this->list->count - this->index - 1;
+    u32 actual_index = this->list->count - this->index - 1;
     return this->list[actual_index];
 }
 

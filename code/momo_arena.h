@@ -7,7 +7,7 @@ struct Arena_Mark {
     // I considered using destructors, to return the arena but...
     // there are still cases where I feel that you do *not* want to destruct
     Arena* arena;
-    umi old_used;
+    u32 old_used;
     
     // TODO: Can we remove this?
     // Can't we just create more free functions specific to Arena_Mark itself? 
@@ -22,21 +22,21 @@ struct Arena_Mark {
 
 struct Arena {
     u8* memory;
-    umi used;
-    umi capacity;
+    u32 used;
+    u32 capacity;
     
-    b8 init(void* memory, umi capacity);
+    b8 init(void* memory, u32 capacity);
     void clear();
-    umi remaining();
+    u32 remaining();
     
-    void* push_block(umi size, u8 alignment = alignof(void*));
+    void* push_block(u32 size, u8 alignment = alignof(void*));
     template<class T> T* push_struct();
-    template<class T> T* push_array(umi count);
+    template<class T> T* push_array(u32 count);
     
-    static void* boot_block(umi struct_size,
-                            umi offset_to_arena,
+    static void* boot_block(u32 struct_size,
+                            u32 offset_to_arena,
                             void* memory,
-                            umi memory_size);
+                            u32 memory_size);
     
     Arena_Mark mark();
 };

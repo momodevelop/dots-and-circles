@@ -1,14 +1,14 @@
 
 template<typename T>
 auto&
-Array<T>::operator[](umi index) {
+Array<T>::operator[](u32 index) {
     ASSERT(index < count); 
     return data[index];
 }
 
 template<typename T>
 b8
-Array<T>::init(T* buffer, umi count_) {
+Array<T>::init(T* buffer, u32 count_) {
     if (!buffer || count_ == 0) {
         return false;
     }
@@ -19,14 +19,14 @@ Array<T>::init(T* buffer, umi count_) {
 
 template<typename T>
 b8
-Array<T>::alloc(Arena* arena, umi count_) {
+Array<T>::alloc(Arena* arena, u32 count_) {
     T* buffer = arena->push_array<T>(count_);
     return init(buffer, count_);
 }
 
 template<typename T>
 T*
-Array<T>::get(umi index) {
+Array<T>::get(u32 index) {
     if(index < count) {
         return data + index;
     }
@@ -37,7 +37,7 @@ Array<T>::get(umi index) {
 
 template<typename T>
 T* 
-Array<T>::operator+(umi index) {
+Array<T>::operator+(u32 index) {
     return get(index);
 }
 

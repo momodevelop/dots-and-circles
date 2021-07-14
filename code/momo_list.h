@@ -9,7 +9,7 @@ struct List;
 template<typename T>
 struct List_Forward_Itr {
     List<T>* list;
-    umi index;
+    u32 index;
     
     T& operator->();
     List_Forward_Itr<T>& operator++();
@@ -21,7 +21,7 @@ struct List_Forward_Itr {
 template<typename T>
 struct List_Reverse_Itr {
     List<T>* list;
-    umi index;
+    u32 index;
     
     T& operator->();
     List_Reverse_Itr<T>& operator++();
@@ -34,22 +34,22 @@ struct List_Reverse_Itr {
 template<typename T>
 struct List {
     T* data;
-    umi count;
-    umi cap;
+    u32 count;
+    u32 cap;
     
-    T& operator[](umi index);
-    T* operator+(umi index);
+    T& operator[](u32 index);
+    T* operator+(u32 index);
     
-    b8 init(T* data, umi cap);
-    b8 alloc(Arena* arena, umi cap);
+    b8 init(T* data, u32 cap);
+    b8 alloc(Arena* arena, u32 cap);
     void clear();
     T* push();
     T* push_item(T item);
-    b8 slear(umi index);
+    b8 slear(u32 index);
     b8 pop();
     T* last();
-    umi remaining();
-    T* get(umi index);
+    u32 remaining();
+    T* get(u32 index);
     
     template<typename Callback, typename ...Args> 
         void foreach(Callback cb, Args...args);
