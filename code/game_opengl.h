@@ -320,17 +320,17 @@ struct Opengl {
     aabb2u render_region;
     
     
-    void attach_shader(u32 program, u32 type, char* code);
-    void align_viewport();
-    void add_predefined_textures();
-    void draw_instances(GLuint texture, u32 instances_to_draw, u32 index_to_draw_from);
+    inline void attach_shader(u32 program, u32 type, char* code);
+    inline void align_viewport();
+    inline void add_predefined_textures();
+    inline void draw_instances(GLuint texture, u32 instances_to_draw, u32 index_to_draw_from);
     
     // public
-    b8 init(Arena* arena, u32 w, u32 h);
-    void resize(u32 w, u32 h);
-    void clear_textures();
-    Renderer_Texture_Handle add_texture(u32 w, u32 h, void* pixels);
-    void render(Mailbox* commands); 
+    inline b8 init(Arena* arena, u32 w, u32 h);
+    inline void resize(u32 w, u32 h);
+    inline void clear_textures();
+    inline Renderer_Texture_Handle add_texture(u32 w, u32 h, void* pixels);
+    inline void render(Mailbox* commands); 
     
 };
 

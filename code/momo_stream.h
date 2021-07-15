@@ -7,18 +7,18 @@ struct Stream {
     u32 content_size;
     u32 current;
     
-    b8 init(void* memory, u32 memory_size);
-    b8 alloc(Arena* arena, u32 capacity);
-    void reset();
-    b8 is_eos();
-    void* consume_block(u32 amount);
+    inline b8 init(void* memory, u32 memory_size);
+    inline b8 alloc(Arena* arena, u32 capacity);
+    inline void reset();
+    inline b8 is_eos();
+    inline void* consume_block(u32 amount);
     
     template<typename T>
-        T* consume_struct();
+        inline T* consume_struct();
     
-    b8 write_block(void* src, u32 src_size);
+    inline b8 write_block(void* src, u32 src_size);
     template<typename T>
-        b8 write_struct(T item);
+        inline b8 write_struct(T item);
 };
 
 

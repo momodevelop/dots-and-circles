@@ -7,7 +7,7 @@ struct circle2f {
     v2f origin;
     f32 radius;
     
-    static circle2f create(v2f origin, f32 radius);
+    static inline circle2f create(v2f origin, f32 radius);
 };
 
 circle2f

@@ -11,9 +11,9 @@ struct Big_Int_Forward_Itr {
     Big_Int* big_int;
     u32 index;
     
-    b8 operator!=(Big_Int_Forward_Itr rhs);
-    u8& operator*();
-    Big_Int_Forward_Itr& operator++();
+    inline b8 operator!=(Big_Int_Forward_Itr rhs);
+    inline u8& operator*();
+    inline Big_Int_Forward_Itr& operator++();
 };
 
 
@@ -21,9 +21,9 @@ struct Big_Int_Reverse_Itr {
     Big_Int* big_int;
     u32 index;
     
-    b8 operator!=(Big_Int_Reverse_Itr rhs);
-    Big_Int_Reverse_Itr& operator++();
-    u8& operator*();
+    inline b8 operator!=(Big_Int_Reverse_Itr rhs);
+    inline Big_Int_Reverse_Itr& operator++();
+    inline u8& operator*();
 };
 
 struct Big_Int {
@@ -31,21 +31,21 @@ struct Big_Int {
     u32 count;
     u32 places;
     
-    Big_Int& operator=(u32 rhs);
-    Big_Int& operator+=(u32 rhs);
+    inline Big_Int& operator=(u32 rhs);
+    inline Big_Int& operator+=(u32 rhs);
     
-    Big_Int_Forward_Itr begin();
-    Big_Int_Forward_Itr end();
-    Big_Int_Reverse_Itr rbegin();
-    Big_Int_Reverse_Itr rend();
+    inline Big_Int_Forward_Itr begin();
+    inline Big_Int_Forward_Itr end();
+    inline Big_Int_Reverse_Itr rbegin();
+    inline Big_Int_Reverse_Itr rend();
     
-    void set_zero();
-    void set_max();
+    inline void set_zero();
+    inline void set_max();
     
-    b8 init(u8* buffer, u32 count);
-    b8 alloc(Arena* arena, u32 count);
-    void add(u32 value);
-    void set(u32 value);
+    inline b8 init(u8* buffer, u32 count);
+    inline b8 alloc(Arena* arena, u32 count);
+    inline void add(u32 value);
+    inline void set(u32 value);
     
 };
 

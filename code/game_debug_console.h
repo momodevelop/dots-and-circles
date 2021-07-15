@@ -41,13 +41,13 @@ struct Debug_Console {
     
     
     //- Functions
-    b8 init(Arena* arena, u32 max_commands);
-    b8 add_command(String key, Debug_Console_Callback callback, void* context);
-    void push_info(String str, c4f color);
-    void pop();
-    void update(f32 dt);
-    void render();
-    void remove_command(String key);
+    inline b8 init(Arena* arena, u32 max_commands);
+    inline b8 add_command(String key, Debug_Console_Callback callback, void* context);
+    inline void push_info(String str, c4f color);
+    inline void pop();
+    inline void update(f32 dt);
+    inline void render();
+    inline void remove_command(String key);
 };
 
 

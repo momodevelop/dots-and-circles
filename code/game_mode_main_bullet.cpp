@@ -28,7 +28,6 @@ spawn_bullet(Game_Mode_Main* mode,
 	    b->direction = normalize(direction);
     }
     b->mood_type = mood;
-    
 }
 
 static inline void

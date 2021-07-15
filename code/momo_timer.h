@@ -6,12 +6,12 @@ struct Timer {
     f32 end;
     
     static inline Timer create(f32 duration);
-    void tick(f32 dt);
-    void untick(f32 dt);
-    void reset();
-    b8 is_end();
-    b8 is_begin();
-    f32 percent();
+    inline void tick(f32 dt);
+    inline void untick(f32 dt);
+    inline void reset();
+    inline b8 is_end();
+    inline b8 is_begin();
+    inline f32 percent();
 };
 
 inline Timer

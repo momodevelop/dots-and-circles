@@ -10,23 +10,23 @@ struct Queue {
     u32 start;
     u32 finish;
     
-    b8 init(T* buffer, u32 cap);
-    b8 alloc(Arena* arena, u32 cap);
-    b8 is_empty();
-    b8 is_full();
-    T* push();
-    T* next();
-    b8 pop();
-    T* get(u32 index);
+    inline b8 init(T* buffer, u32 cap);
+    inline b8 alloc(Arena* arena, u32 cap);
+    inline b8 is_empty();
+    inline b8 is_full();
+    inline T* push();
+    inline T* next();
+    inline b8 pop();
+    inline T* get(u32 index);
     
     template<typename Callback, typename... Args> 
-        void _foreach_sub(u32 start, u32 finish, Callback callback, Args... args);
+        inline void _foreach_sub(u32 start, u32 finish, Callback callback, Args... args);
     
     template<typename Callback, typename... Args> 
-        void foreach(Callback callback, Args... args);
+        inline void foreach(Callback callback, Args... args);
     
     template<typename Callback, typename... Args>
-        void pop_until(Callback callback, Args... args);
+        inline void pop_until(Callback callback, Args... args);
 };
 
 #include "momo_queue.cpp"

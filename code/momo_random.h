@@ -527,12 +527,12 @@ struct Rng_Series
     
     u32 index;
     
-    u32 next();
-    u32 choice(u32 choice_count);
-    f32 unilateral();
-    f32 bilateral();
-    f32 between(f32 min, f32 max);
-    s32 between(s32 min, s32 max);
+    inline u32 next();
+    inline u32 choice(u32 choice_count);
+    inline f32 unilateral();
+    inline f32 bilateral();
+    inline f32 between(f32 min, f32 max);
+    inline s32 between(s32 min, s32 max);
     
     static inline Rng_Series create(u32 value);
     

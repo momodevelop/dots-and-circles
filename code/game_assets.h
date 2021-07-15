@@ -35,10 +35,10 @@ struct Font {
     Font_Glyph glyphs[FONT_GLYPH_COUNT];
     u32 kernings[FONT_GLYPH_COUNT][FONT_GLYPH_COUNT];
     
-    void set_kerning(u32 codepoint_a, u32 codepoint_b, u32 kerning);
-    u32 get_kerning(u32 codepoint_a, u32 codepoint_b);
-    f32 height();
-    Font_Glyph* get_glyph(u32 codepoint);
+    inline void set_kerning(u32 codepoint_a, u32 codepoint_b, u32 kerning);
+    inline u32 get_kerning(u32 codepoint_a, u32 codepoint_b);
+    inline f32 height();
+    inline Font_Glyph* get_glyph(u32 codepoint);
 };
 
 struct Sound {
@@ -68,14 +68,14 @@ struct Assets {
     u32 sound_count;
     
     
-    b8 init(Arena* arena);
-    Font* get_font(Font_ID font_id);
-    Texture* get_texture(Texture_ID texture_id);
-    Image* get_image(Image_ID image_id);
-    Anime* get_anime(Anime_ID anime_id);
-    Sound* get_sound(Sound_ID sound_id);
-    Msg* get_msg(Msg_ID msg_id);
-    quad2f get_atlas_uv(Image* image);
+    inline b8 init(Arena* arena);
+    inline Font* get_font(Font_ID font_id);
+    inline Texture* get_texture(Texture_ID texture_id);
+    inline Image* get_image(Image_ID image_id);
+    inline Anime* get_anime(Anime_ID anime_id);
+    inline Sound* get_sound(Sound_ID sound_id);
+    inline Msg* get_msg(Msg_ID msg_id);
+    inline quad2f get_atlas_uv(Image* image);
     
     
     

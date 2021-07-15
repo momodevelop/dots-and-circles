@@ -11,10 +11,10 @@ struct List_Forward_Itr {
     List<T>* list;
     u32 index;
     
-    T& operator->();
-    List_Forward_Itr<T>& operator++();
-    T& operator*();
-    b8 operator!=(List_Forward_Itr<T> rhs);
+    inline T& operator->();
+    inline List_Forward_Itr<T>& operator++();
+    inline T& operator*();
+    inline b8 operator!=(List_Forward_Itr<T> rhs);
     
 };
 
@@ -23,10 +23,10 @@ struct List_Reverse_Itr {
     List<T>* list;
     u32 index;
     
-    T& operator->();
-    List_Reverse_Itr<T>& operator++();
-    T& operator*();
-    b8 operator!=(List_Reverse_Itr<T> rhs);
+    inline T& operator->();
+    inline List_Reverse_Itr<T>& operator++();
+    inline T& operator*();
+    inline b8 operator!=(List_Reverse_Itr<T> rhs);
     
 };
 
@@ -37,30 +37,30 @@ struct List {
     u32 count;
     u32 cap;
     
-    T& operator[](u32 index);
-    T* operator+(u32 index);
+    inline T& operator[](u32 index);
+    inline T* operator+(u32 index);
     
-    b8 init(T* data, u32 cap);
-    b8 alloc(Arena* arena, u32 cap);
-    void clear();
-    T* push();
-    T* push_item(T item);
-    b8 slear(u32 index);
-    b8 pop();
-    T* last();
-    u32 remaining();
-    T* get(u32 index);
+    inline b8 init(T* data, u32 cap);
+    inline b8 alloc(Arena* arena, u32 cap);
+    inline void clear();
+    inline T* push();
+    inline T* push_item(T item);
+    inline b8 slear(u32 index);
+    inline b8 pop();
+    inline T* last();
+    inline u32 remaining();
+    inline T* get(u32 index);
     
     template<typename Callback, typename ...Args> 
-        void foreach(Callback cb, Args...args);
+        inline void foreach(Callback cb, Args...args);
     template<typename Callback, typename ...Args>
-        void foreach_slear_if(Callback cb, Args... arg);
+        inline void foreach_slear_if(Callback cb, Args... arg);
     
     // iterators
-    List_Forward_Itr<T> begin();
-    List_Forward_Itr<T> end();
-    List_Reverse_Itr<T> rbegin();
-    List_Reverse_Itr<T> rend();
+    inline List_Forward_Itr<T> begin();
+    inline List_Forward_Itr<T> end();
+    inline List_Reverse_Itr<T> rbegin();
+    inline List_Reverse_Itr<T> rend();
     
     
 };

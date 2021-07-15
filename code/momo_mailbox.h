@@ -16,14 +16,14 @@ struct Mailbox {
     u32 memory_size;
     u32 entry_count;
     
-    b8 init(void * mem, u32 mem_size);
-    void clear();
-    Mailbox_Entry_Header* get_entry(u32 index);
-    void* get_entry_data(Mailbox_Entry_Header* entry);
-    void* push_block(u32 size, u8 alignment, u32 id);
+    inline b8 init(void * mem, u32 mem_size);
+    inline void clear();
+    inline Mailbox_Entry_Header* get_entry(u32 index);
+    inline void* get_entry_data(Mailbox_Entry_Header* entry);
+    inline void* push_block(u32 size, u8 alignment, u32 id);
     
     template<typename T>
-        T* push_struct(u32);
+        inline T* push_struct(u32);
 };
 
 b8

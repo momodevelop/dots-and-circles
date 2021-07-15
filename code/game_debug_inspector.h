@@ -8,12 +8,12 @@ struct Debug_Inspector {
     b8 is_active;
     List<String_Buffer> entries;
     
-    b8 init(Arena* arena);
-    void begin();
-    void end();
-    String_Buffer* push_entry(String label);
-    void push_u32(String label, u32 item);
-    void push_s32(String label, s32 item);
+    inline b8 init(Arena* arena);
+    inline void begin();
+    inline void end();
+    inline String_Buffer* push_entry(String label);
+    inline void push_u32(String label, u32 item);
+    inline void push_s32(String label, s32 item);
 };
 
 b8

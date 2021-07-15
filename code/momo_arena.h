@@ -13,7 +13,7 @@ struct Arena_Mark {
     // Can't we just create more free functions specific to Arena_Mark itself? 
     // There are some functions from an API pov where
     // Arena_Mark shouldn't act like Arean, for example: clear()
-    operator Arena*() {
+    inline operator Arena*() {
         return this->arena;
     }
     
@@ -25,20 +25,20 @@ struct Arena {
     u32 used;
     u32 capacity;
     
-    b8 init(void* memory, u32 capacity);
-    void clear();
-    u32 remaining();
+    inline b8 init(void* memory, u32 capacity);
+    inline void clear();
+    inline u32 remaining();
     
-    void* push_block(u32 size, u8 alignment = alignof(void*));
-    template<class T> T* push_struct();
-    template<class T> T* push_array(u32 count);
+    inline void* push_block(u32 size, u8 alignment = alignof(void*));
+    template<class T> inline T* push_struct();
+    template<class T> inline T* push_array(u32 count);
     
-    static void* boot_block(u32 struct_size,
-                            u32 offset_to_arena,
-                            void* memory,
-                            u32 memory_size);
+    static inline void* boot_block(u32 struct_size,
+                                   u32 offset_to_arena,
+                                   void* memory,
+                                   u32 memory_size);
     
-    Arena_Mark mark();
+    inline Arena_Mark mark();
 };
 
 #include "momo_arena.cpp"

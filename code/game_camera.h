@@ -12,9 +12,9 @@ struct Game_Camera {
     v3f dimensions; // In 2D, this represents the near and far clip planes
     c4f color;
     
-    void set();
-    v2f screen_to_view(v2f screen_pos);
-    v2f screen_to_world(v2f screen_pos);
+    inline void set();
+    inline v2f screen_to_view(v2f screen_pos);
+    inline v2f screen_to_world(v2f screen_pos);
     
 };
 
