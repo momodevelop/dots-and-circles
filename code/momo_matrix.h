@@ -24,19 +24,25 @@ union m44f {
     static inline m44f create_translation(v3f v);
     static inline m44f create_scale(v3f v);
     
-    static inline m44f create_orthographic(f32 ndc_left,
-                                           f32 ndc_right,
-                                           f32 ndc_bottom,
-                                           f32 ndc_top,
-                                           f32 ndc_near,
-                                           f32 ndc_far,
-                                           f32 left,
+    static inline m44f create_orthographic(f32 left,
                                            f32 right,
                                            f32 bottom,
                                            f32 top,
                                            f32 near,
-                                           f32 far,
-                                           b8 flip_z);
+                                           f32 far);
+    
+    static inline m44f create_frustum(f32 left,
+                                      f32 right,
+                                      f32 bottom,
+                                      f32 top,
+                                      f32 near,
+                                      f32 far);
+    
+    static inline m44f create_perspective(f32 fov,
+                                          f32 aspect,
+                                          f32 near,
+                                          f32 far);
+    
     inline v4f& operator[](u32 i);
     
 };
@@ -277,18 +283,14 @@ m44f::create_scale(v3f v) {
 }
 
 inline m44f 
-m44f::create_orthographic(f32 ndc_left, f32 ndc_right,
-                          f32 ndc_bottom, f32 ndc_top,
-                          f32 ndc_near, f32 ndc_far,
-                          f32 left, f32 right, 
+m44f::create_orthographic(f32 left, f32 right, 
                           f32 bottom, f32 top,
-                          f32 near, f32 far,
-                          b8 flip_z) 
+                          f32 near, f32 far) 
 {
     m44f ret = {};
-    ret[0][0] = (ndc_right-ndc_left)/(right-left);
-    ret[1][1] = (ndc_top-ndc_bottom)/(top-bottom);
-    ret[2][2] = (flip_z ? -1.f : 1.f) * (ndc_far-ndc_near)/(far-near);
+    ret[0][0] = 2.f/(right-left);
+    ret[1][1] = 2.f/(top-bottom);
+    ret[2][2] = -2.f/(far-near);
     ret[3][3] = 1.f;
     ret[0][3] = -(right+left)/(right-left);
     ret[1][3] = -(top+bottom)/(top-bottom);
@@ -296,5 +298,34 @@ m44f::create_orthographic(f32 ndc_left, f32 ndc_right,
     
     return ret;
 }
+
+m44f 
+m44f::create_frustum(f32 left, f32 right, 
+                     f32 bottom, f32 top,
+                     f32 near, f32 far) 
+{
+    m44f ret = {};
+    ret[0][0] = (2.f*near)/(right-left);
+    ret[1][1] = (2.f*near)/(top-bottom);
+    ret[2][2] = -(far+near)/(far-near);
+    ret[3][2] = -1.f;
+    ret[0][3] = -near*(right+left)/(right-left);
+    ret[1][3] = -near*(top+bottom)/(top-bottom);
+    ret[2][3] = 2.f*far*near/(near-far);
+    
+    return ret;
+}
+
+m44f 
+m44f::create_perspective(f32 fov, f32 aspect,
+                         f32 near, f32 far) 
+{
+    f32 top = near * tan(fov*0.5f);
+    f32 right = top * aspect;
+    return create_frustum(-right, right,
+                          -top, top,
+                          near, far);
+}
+
 
 #endif //MOMO_MATRIX_H

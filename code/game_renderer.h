@@ -113,16 +113,12 @@ Renderer_SetOrthoCamera(Mailbox* commands,
 {
     auto* Data = commands->push_struct<renderer_command_set_basis>(RENDERER_COMMAND_SET_BASIS);
     
-    auto P  = m44f::create_orthographic(-1.f, 1.f,
-                                        -1.f, 1.f,
-                                        -1.f, 1.f,
-                                        frustum.min.x,  
+    auto P  = m44f::create_orthographic(frustum.min.x,  
                                         frustum.max.x, 
                                         frustum.min.y, 
                                         frustum.max.y,
                                         frustum.min.z, 
-                                        frustum.max.z,
-                                        true);
+                                        frustum.max.z);
     
     m44f V = m44f::create_translation(-position.x, -position.y, -position.z);
     Data->Basis = P * V;
