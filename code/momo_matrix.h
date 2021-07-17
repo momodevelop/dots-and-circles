@@ -308,7 +308,7 @@ m44f::create_frustum(f32 left, f32 right,
     ret[0][0] = (2.f*near)/(right-left);
     ret[1][1] = (2.f*near)/(top-bottom);
     ret[2][2] = -(far+near)/(far-near);
-    ret[3][2] = -1.f;
+    ret[3][2] = 1.f;
     ret[0][3] = -near*(right+left)/(right-left);
     ret[1][3] = -near*(top+bottom)/(top-bottom);
     ret[2][3] = 2.f*far*near/(near-far);
