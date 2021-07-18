@@ -44,8 +44,8 @@ update_bullets(Game_Mode_Main* mode,
             B->position.y >= GAME_DESIGN_HEIGHT * 0.5f + B->hit_circle.radius;
     };
     
-    List_Foreach_Slear_If(&mode->dot_bullets, slear_if_lamb);
-    List_Foreach_Slear_If(&mode->circle_bullets, slear_if_lamb);
+    List_ForEachSlearIf(&mode->dot_bullets, slear_if_lamb);
+    List_ForEachSlearIf(&mode->circle_bullets, slear_if_lamb);
     
 }
 

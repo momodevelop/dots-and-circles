@@ -134,7 +134,7 @@ update_enemies(Game_Mode_Main* mode,
         }
         return false;
     };
-    List_Foreach_Slear_If(&mode->enemies, slear_lamb);
+    List_ForEachSlearIf(&mode->enemies, slear_lamb);
     
     
 }

@@ -38,8 +38,8 @@ update_player_bullet_collision(Game_Mode_Main* mode,
         
         return false;
     };
-    List_Foreach_Slear_If(&mode->dot_bullets, lamb);
-    List_Foreach_Slear_If(&mode->circle_bullets, lamb);
+    List_ForEachSlearIf(&mode->dot_bullets, lamb);
+    List_ForEachSlearIf(&mode->circle_bullets, lamb);
 }
 
 #endif //GAME_MODE_MAIN_COLLISION_H

@@ -399,7 +399,7 @@ Opengl::add_predefined_textures() {
                                   GL_RGBA, 
                                   GL_UNSIGNED_BYTE, 
                                   &pixels);
-        List_Push_Item(&textures, dummy_texture);
+        List_PushItem(&textures, dummy_texture);
     }
     
     // NOTE(Momo): Blank texture setup
@@ -413,7 +413,7 @@ Opengl::add_predefined_textures() {
                                   1, 1, 
                                   GL_RGBA, GL_UNSIGNED_BYTE, 
                                   &pixels);
-        List_Push_Item(&textures, blank_texture);
+        List_PushItem(&textures, blank_texture);
     }
     
     
@@ -719,7 +719,7 @@ Opengl::add_texture(u32 width,
     
     ret.id = (u32)this->textures.count;
     ret.success = true;
-    List_Push_Item(&this->textures, entry);
+    List_PushItem(&this->textures, entry);
     return ret;
 }
 

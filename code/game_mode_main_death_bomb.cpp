@@ -23,8 +23,8 @@ update_death_bomb(Game_Mode_Main* mode, f32 dt) {
         return false;
     };
     
-    List_Foreach_Slear_If(&mode->circle_bullets, bullet_lamb);
-    List_Foreach_Slear_If(&mode->dot_bullets, bullet_lamb);
+    List_ForEachSlearIf(&mode->circle_bullets, bullet_lamb);
+    List_ForEachSlearIf(&mode->dot_bullets, bullet_lamb);
     
     auto enemy_lamb = [&](Enemy* e) {
         circle2f ECir = circle2f::create(e->position, 0.1f);
@@ -40,7 +40,7 @@ update_death_bomb(Game_Mode_Main* mode, f32 dt) {
         
         return false;
     };
-    List_Foreach_Slear_If(&mode->enemies, enemy_lamb);
+    List_ForEachSlearIf(&mode->enemies, enemy_lamb);
 }
 
 static inline void
