@@ -36,7 +36,7 @@ int main() {
     defer { free(memory); };
     
     Arena arena = {};
-    arena.init(memory, ASSET_BUILDER_MEMORY_SIZE);
+    Arena_Init(&arena, memory, ASSET_BUILDER_MEMORY_SIZE);
     
     //~ NOTE(Momo): Load font
     
@@ -268,7 +268,7 @@ int main() {
         for(u32 I = 0; I < ARRAY_COUNT(g_sound_contexts); ++I) {
             Asset_Builder_Sound_Context* ctx = g_sound_contexts + I;
             
-            Arena_Marker mark = arena.mark();
+            Arena_Marker mark = Arena_Mark(&arena);
             defer { Arena_Revert(&mark); };
             
             Read_File_Result file_result = {};

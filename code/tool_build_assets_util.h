@@ -6,8 +6,8 @@
 struct Loaded_Font {
 	stbtt_fontinfo info;
     void* data;
-
-
+    
+    
 };
 
 struct Read_File_Result {
@@ -18,8 +18,8 @@ struct Read_File_Result {
 
 static inline b8
 read_file_into_memory(Read_File_Result* result,
-                       Arena* arena, 
-                       const char* filename) {
+                      Arena* arena, 
+                      const char* filename) {
     
     FILE* File = nullptr;
     fopen_s(&File, filename, "rb");
@@ -34,7 +34,7 @@ read_file_into_memory(Read_File_Result* result,
     u32 size = ftell(File);
     fseek(File, 0, SEEK_SET);
     
-    void* Buffer = arena->push_block(size);
+    void* Buffer = Arena_Push_Block(arena, size);
     fread(Buffer, size, 1, File);
     
     result->data = Buffer;
@@ -47,8 +47,8 @@ static inline b8
 load_font(Loaded_Font* ret, Arena* arena, const char* filename) {
     Read_File_Result result = {};
     if (!read_file_into_memory(&result,
-                                arena, 
-                                filename)) 
+                               arena, 
+                               filename)) 
     {
         return false;
     }

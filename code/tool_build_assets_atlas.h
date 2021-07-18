@@ -60,7 +60,7 @@ generate_atlas(Arena* arena,
                u32 height) 
 {
     u32 atlas_size = width * height * 4;
-    u8* atlas_memory = (u8*)arena->push_block(atlas_size);
+    u8* atlas_memory = (u8*)Arena_Push_Block(arena, atlas_size);
     if (!atlas_memory) {
         return 0;
     }
@@ -115,7 +115,7 @@ generate_atlas(Arena* arena,
                     continue;
                 
                 Arena_Marker scratch = Arena_Mark(arena);
-                u8* font_texture = (u8*)arena->push_block(texture_dimensions*channels); 
+                u8* font_texture = (u8*)Arena_Push_Block(arena, texture_dimensions*channels); 
                 if (!font_texture) {
                     return nullptr;
                 }
