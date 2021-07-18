@@ -21,12 +21,12 @@ Debug_Inspector::init(Arena* arena) {
     constexpr static u32 entry_count = 32;
     
     this->is_active = false;
-    if (!this->entries.alloc(arena, entry_count)) {
+    if (!List_Alloc(&this->entries, arena, entry_count)) {
         return false;
     }
     
     for (u32 i = 0; i < entry_count; ++i) {
-        String_Buffer* item = this->entries.push();
+        String_Buffer* item = List_Push(&this->entries);
         if (!item->alloc(arena, entry_count)) {
             return false;
         }
@@ -40,7 +40,7 @@ Debug_Inspector::begin() {
     if(!this->is_active)
         return;
     
-    this->entries.clear();
+    List_Clear(&this->entries);
 }
 
 void 
@@ -72,7 +72,7 @@ Debug_Inspector::end()
 
 String_Buffer*
 Debug_Inspector::push_entry(String label) {
-    String_Buffer* entry = this->entries.push();
+    String_Buffer* entry = List_Push(&this->entries);
     entry->copy(label);
     return entry;
 }

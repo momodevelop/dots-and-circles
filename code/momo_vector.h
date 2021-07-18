@@ -225,7 +225,7 @@ div(v2f l, f32 r) {
 }
 
 static inline v2f
-ratio(v2f l, v2f r) {
+Ratio(v2f l, v2f r) {
     l.x /= r.x;
     l.y /= r.y;
     
@@ -267,7 +267,7 @@ length_sq(v2f v) {
 
 static inline f32 
 length(v2f l)  { 
-    return sqrt(length_sq(l));
+    return Sqrt(length_sq(l));
 }
 
 static inline f32
@@ -277,7 +277,7 @@ distance_sq(v2f l, v2f r) {
 
 static inline f32
 distance(v2f l, v2f r)  { 
-    return sqrt(distance_sq(l, r)); 
+    return Sqrt(distance_sq(l, r)); 
 }
 
 static inline v2f 
@@ -292,7 +292,7 @@ angle_between(v2f l, v2f r) {
     f32 l_len = length(l);
     f32 r_len = length(r);
     f32 lr_dot = dot(l,r);
-    f32 ret = acos(lr_dot/(l_len * r_len));
+    f32 ret = Acos(lr_dot/(l_len * r_len));
     return ret;
 }
 
@@ -332,8 +332,8 @@ rotate(v2f v, f32 rad) {
     // Technically, we can use matrices but
     // meh, it's easy to code this out without it.
     // Removes dependencies too
-    f32 c = cos(rad);
-    f32 s = sin(rad);
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     
     v2f ret = {};
     ret.x = (c * v.x) - (s * v.y);
@@ -542,12 +542,12 @@ distance_sq(v3f l, v3f r) {
 
 static inline f32
 distance(v3f l, v3f r)  { 
-    return sqrt(distance_sq(l, r)); 
+    return Sqrt(distance_sq(l, r)); 
 }
 
 static inline f32 
 length(v3f l)  { 
-    return sqrt(length_sq(l));
+    return Sqrt(length_sq(l));
 }
 
 static inline v3f 
@@ -562,7 +562,7 @@ angle_between(v3f L, v3f R) {
     f32 l_len = length(L);
     f32 r_len = length(R);
     f32 LRDot = dot(L,R);
-    f32 Ret = acos(LRDot/(l_len * r_len));
+    f32 Ret = Acos(LRDot/(l_len * r_len));
     
     return Ret;
 }

@@ -33,17 +33,17 @@ init_main_mode(Permanent_State* perm_state,
     
     b8 success = false;
     
-    success = mode->dot_bullets.alloc(mode_arena, DotCap);
+    success = List_Alloc(&mode->dot_bullets, mode_arena, DotCap);
     if (!success) {
         return false;
     }
     
-    success = mode->circle_bullets.alloc(mode_arena, CircleCap);
+    success = List_Alloc(&mode->circle_bullets, mode_arena, CircleCap);
     if (!success) {
         return false;
     }
     
-    success = mode->enemies.alloc(mode_arena, EnemyCap);
+    success = List_Alloc(&mode->enemies, mode_arena, EnemyCap);
     if (!success) {
         return false;
     }

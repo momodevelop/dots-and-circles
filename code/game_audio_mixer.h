@@ -47,13 +47,13 @@ Game_Audio_Mixer::init(f32 master_volume,
         return false;
     }
     Arena_Marker mark = Arena_Mark(arena);
-    b8 success = this->instances.alloc(arena, max_instances);
+    b8 success = Array_Alloc(&instances, arena, max_instances);
     if (!success) {
         Arena_Revert(&mark);
         return false;
     }
     
-    success = this->free_list.alloc(arena, max_instances);
+    success = List_Alloc(&this->free_list, arena, max_instances);
     if (!success) {
         Arena_Revert(&mark);
         return false;
@@ -62,7 +62,7 @@ Game_Audio_Mixer::init(f32 master_volume,
     
     for (u32 i = 0; i < this->instances.count; ++i ){
         this->instances[i] = {};
-        u32* item = this->free_list.push();
+        u32* item = List_Push(&this->free_list);
         if(!item) {
             return false;
         }
@@ -77,11 +77,11 @@ Game_Audio_Mixer::play(Sound_ID sound_id,
                        b8 loop)
 {
     Game_Audio_Mixer_Handle ret = {};
-    u32* index_ptr = this->free_list.last();
+    u32* index_ptr = List_Last(&this->free_list);
     if (index_ptr == nullptr) {
         return ret;
     }
-    this->free_list.pop();
+    List_Pop(&this->free_list);
     u32 index = (*index_ptr);
     
     Game_Audio_Mixer_Instance* instance = this->instances + index;
@@ -106,7 +106,7 @@ Game_Audio_Mixer::stop(Game_Audio_Mixer_Handle handle)
     if ((u32)handle.id < this->instances.count) {
         Game_Audio_Mixer_Instance* instance = this->instances + handle.id;
         instance->is_playing = false;
-        u32* item = this->free_list.push();
+        u32* item = List_Push(&this->free_list);
         if (item == nullptr) {
             return false;
         }

@@ -15,10 +15,10 @@
 #define EPSILON 1.19209290E-07f
 #define TAU PI * 2.f
 
-// Get the ratio of Value within the range [Min,Max] 
+// Get the Ratio of Value within the range [Min,Max] 
 // Return value Will be [0, 1]
 static inline f32
-ratio(f32 value, f32 min, f32 max) {
+Ratio(f32 value, f32 min, f32 max) {
     return (value - min)/(max - min); 
 }
 
@@ -29,53 +29,53 @@ is_equal(f32 L, f32 R) {
 }
 
 static inline f32 
-deg_to_rad(f32 degrees) {
+Deg_To_Rad(f32 degrees) {
     return degrees * PI / 180.f;
 }
 
 static inline f32 
-rad_to_deg(f32 radians) {
+Rad_To_Deg(f32 radians) {
     return radians * 180.f / PI;
 }
 
 static inline f32 
-sin(f32 x) {
+Sin(f32 x) {
     return sinf(x);
 }
 
 static inline f32 
-cos(f32 x) {
+Cos(f32 x) {
     return cosf(x);
 }
 
 static inline f32 
-tan(f32 x) {
+Tan(f32 x) {
     return tanf(x);
 }
 
 
 static inline f32 
-sqrt(f32 x) {
+Sqrt(f32 x) {
     return sqrtf(x);
 }
 
 static inline f32 
-asin(f32 x) {
+Asin(f32 x) {
     return asinf(x);
 }
 
 static inline f32 
-acos(f32 x) {
+Acos(f32 x) {
     return acosf(x);
 }
 
 static inline f32 
-atan(f32 x) {
+Atan(f32 x) {
     return atanf(x);
 }
 
 static inline f32
-pow(f32 b, f32 e) {
+Pow(f32 b, f32 e) {
     return powf(b,e);
 }
 

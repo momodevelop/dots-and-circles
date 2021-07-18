@@ -1,6 +1,6 @@
 
 template<typename T>
-T& 
+inline T& 
 List<T>::operator[](u32 index) {
     ASSERT(index < count); 
     return data[index];
@@ -8,54 +8,54 @@ List<T>::operator[](u32 index) {
 
 
 template<typename T>
-b8
-List<T>::init(T* data_in, u32 cap_in) {
-    if (!data_in || cap_in == 0) {
+static inline b8
+List_Init(List<T>* l, T* data, u32 cap) {
+    if (!data || cap == 0) {
         return false;
     }
-    this->data = data_in;
-    this->cap = cap_in;
-    this->count = 0;
+    l->data = data;
+    l->cap = cap;
+    l->count = 0;
     
     return true;
 }
 
 template<typename T>
-b8
-List<T>::alloc(Arena* arena, u32 cap_in) {
-    T* buffer = Arena_Push_Array<T>(arena, cap_in);
+static inline b8
+List_Alloc(List<T>* l, Arena* arena, u32 cap) {
+    T* buffer = Arena_Push_Array<T>(arena, cap);
     if (!buffer) {
         return false;
     }
-    return init(buffer, cap_in);
+    return List_Init(l, buffer, cap);
 }
 
 
 
 template<typename T>
-void
-List<T>::clear() {
-    count = 0;
+static inline void
+List_Clear(List<T>* l) {
+    l->count = 0;
 }
 
 // NOTE(Momo): Push, but does not override whatever's in
 // the container because user might have already initialized
 // something important before that remained inside
 template<typename T>
-T*
-List<T>::push() {
-    if(count < cap) {
-        T* ret = data + count++;
+static inline T*
+List_Push(List<T>* l) {
+    if(l->count < l->cap) {
+        T* ret = l->data + l->count++;
         return ret;
     }
     return nullptr;
 }
 
 template<typename T>
-T*
-List<T>::push_item(T item) {
-    if(count < cap) {
-        T* ret = data + count++;
+static inline T*
+List_Push_Item(List<T>* l, T item) {
+    if(l->count < l->cap) {
+        T* ret = l->data + l->count++;
         (*ret) = item;
         return ret;
     }
@@ -64,11 +64,11 @@ List<T>::push_item(T item) {
 
 // NOTE(Momo): "Swap last element and remove"
 template<typename T>
-b8
-List<T>::slear(u32 index) {
-    if (index < count) {
-        data[index] = data[count-1];
-        --count;
+static inline b8
+List_Slear(List<T>* l, u32 index) {
+    if (index < l->count) {
+        l->data[index] = l->data[l->count-1];
+        --l->count;
         return true;
     }
     else {
@@ -77,40 +77,40 @@ List<T>::slear(u32 index) {
 }
 
 template<typename T>
-b8
-List<T>::pop() {
-    if (count != 0) {
-        --count;
+static inline b8
+List_Pop(List<T>* l) {
+    if (l->count != 0) {
+        --l->count;
         return true;
     }
     return false;
 }
 
 template<typename T>
-T*
-List<T>::last() {
-    if (count == 0){
+static inline T*
+List_Last(List<T>* l) {
+    if (l->count == 0){
         return nullptr;
     }
     else {
-        return get(count - 1);
+        return List_Get(l, l->count - 1);
     }
     
 }
 
 template<typename T>
-u32
-List<T>::remaining() {
-    return cap - count;
+static inline u32
+List_Remaining(List<T>* l) {
+    return l->cap - l->count;
 }
 
 
 
 template<typename T>
-T*
-List<T>::get(u32 index) {
-    if(index < count) {
-        return data + index;
+static inline T*
+List_Get(List<T>* l, u32 index) {
+    if(index < l->count) {
+        return l->data + index;
     }
     else {
         return nullptr;
@@ -118,31 +118,29 @@ List<T>::get(u32 index) {
 }
 
 template<typename T>
-T* 
-List<T>::operator+(u32 index) {
-    return get(index);
+static inline T* 
+operator+(List<T> l, u32 index) {
+    return List_Get(&l, index);
 }
 
 // TODO: refactor this into the class?
-template<typename T>
-template<typename Callback, typename... Args>
-void
-List<T>::foreach_slear_if(Callback callback, Args... args) {
-    for (u32 i = 0; i < count;) {
-        if (callback(data + i, args...)) {
-            slear(i);
+template<typename T, typename Callback, typename... Args>
+static inline void
+List_Foreach_Slear_If(List<T>* l, Callback callback, Args... args) {
+    for (u32 i = 0; i < l->count;) {
+        if (callback(l->data + i, args...)) {
+            List_Slear(l, i);
             continue;
         }
         ++i;
     }
 }
 
-template<typename T>
-template<typename Callback, typename... Args>
-void
-List<T>::foreach(Callback callback, Args... args) {
-    for (u32 i = 0; i < count; ++i) {
-        callback(data + i, args...);
+template<typename T, typename Callback, typename... Args>
+static inline void
+List_Foreach(List<T>* l, Callback callback, Args... args) {
+    for (u32 i = 0; i < l->count; ++i) {
+        callback(l->data + i, args...);
     }
 }
 

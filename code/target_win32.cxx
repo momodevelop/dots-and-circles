@@ -923,7 +923,7 @@ win32_process_messages(HWND window,
                 v2f DesignDimsF = to_v2f(state->opengl->design_dimensions);
                 v2u RenderDimsU = dimensions(RenderRegion);
                 v2f RenderDimsF = to_v2f(RenderDimsU);
-                v2f DesignToRenderRatio = ratio(DesignDimsF, RenderDimsF);
+                v2f DesignToRenderRatio = Ratio(DesignDimsF, RenderDimsF);
                 
                 input->design_mouse_pos.x = input->render_mouse_pos.x * DesignToRenderRatio.w;
                 input->design_mouse_pos.y = input->render_mouse_pos.y * DesignToRenderRatio.h;

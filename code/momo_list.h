@@ -38,23 +38,6 @@ struct List {
     u32 cap;
     
     inline T& operator[](u32 index);
-    inline T* operator+(u32 index);
-    
-    inline b8 init(T* data, u32 cap);
-    inline b8 alloc(Arena* arena, u32 cap);
-    inline void clear();
-    inline T* push();
-    inline T* push_item(T item);
-    inline b8 slear(u32 index);
-    inline b8 pop();
-    inline T* last();
-    inline u32 remaining();
-    inline T* get(u32 index);
-    
-    template<typename Callback, typename ...Args> 
-        inline void foreach(Callback cb, Args...args);
-    template<typename Callback, typename ...Args>
-        inline void foreach_slear_if(Callback cb, Args... arg);
     
     // iterators
     inline List_Forward_Itr<T> begin();

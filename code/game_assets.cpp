@@ -90,7 +90,7 @@ Assets::get_atlas_uv(Image* image)
 {
     auto texture = textures[image->texture_id];
     aabb2u texture_aabb = aabb2u::create(0, 0, texture.width, texture.height);
-    aabb2f normalized_aabb = ratio(image->box, texture_aabb);
+    aabb2f normalized_aabb = Ratio(image->box, texture_aabb);
     return Aabb2f_To_Quad2f(normalized_aabb);
 }
 

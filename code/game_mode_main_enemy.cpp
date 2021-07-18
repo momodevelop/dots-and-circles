@@ -1,5 +1,6 @@
 
 
+
 static inline void
 Enemy_SetStateSpawn(Enemy* E) {
     E->state = EnemyState_Spawning;
@@ -24,7 +25,7 @@ Enemy_Spawn(Game_Mode_Main* mode,
             Enemy_Shoot_Type shoot_type, 
             Enemy_Movement_Type movement_type) 
 {
-    Enemy* enemy = mode->enemies.push();
+    Enemy* enemy = List_Push(&mode->enemies);
     enemy->position = position;
     
     // NOTE(Momo): Shoot
@@ -133,7 +134,8 @@ update_enemies(Game_Mode_Main* mode,
         }
         return false;
     };
-    mode->enemies.foreach_slear_if(slear_lamb);
+    List_Foreach_Slear_If(&mode->enemies, slear_lamb);
+    
     
 }
 
@@ -167,5 +169,5 @@ render_enemies(Game_Mode_Main* mode)
                                       t*r*s, 
                                       C4F_WHITE);
     };
-    mode->enemies.foreach(for_lamb);
+    List_Foreach(&mode->enemies, for_lamb);
 }

@@ -1,5 +1,6 @@
 
 
+
 static inline void
 spawn_bullet(Game_Mode_Main* mode, 
              v2f position, 
@@ -10,10 +11,10 @@ spawn_bullet(Game_Mode_Main* mode,
     Bullet* b = nullptr;
     switch (mood) {
         case MOOD_TYPE_DOT: {
-            b = mode->dot_bullets.push();
+            b = List_Push(&mode->dot_bullets);
         } break;
         case MOOD_TYPE_CIRCLE: {
-            b = mode->circle_bullets.push();
+            b = List_Push(&mode->circle_bullets);
         } break;
         default: {
             ASSERT(false);
@@ -43,8 +44,8 @@ update_bullets(Game_Mode_Main* mode,
             B->position.y >= GAME_DESIGN_HEIGHT * 0.5f + B->hit_circle.radius;
     };
     
-    mode->dot_bullets.foreach_slear_if(slear_if_lamb);
-    mode->circle_bullets.foreach_slear_if(slear_if_lamb);
+    List_Foreach_Slear_If(&mode->dot_bullets, slear_if_lamb);
+    List_Foreach_Slear_If(&mode->circle_bullets, slear_if_lamb);
     
 }
 
@@ -71,8 +72,10 @@ render_bullets(Game_Mode_Main* mode)
     };
     
     
-    mode->dot_bullets.foreach(for_lamb, IMAGE_BULLET_DOT);
-    mode->circle_bullets.foreach(for_lamb, IMAGE_BULLET_CIRCLE);
+#if 0
+    List_Foreach(&mode->dot_bullets, for_lamb, IMAGE_BULLET_DOT);
+    List_Foreach(&mode->circle_bullets, for_lamb, IMAGE_BULLET_CIRCLE);
+#endif
     
     
     

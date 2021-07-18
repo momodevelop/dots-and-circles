@@ -10,11 +10,6 @@ struct Array {
     u32 count;
     
     inline auto& operator[](u32 index);
-    inline T* operator+(u32 index);
-    
-    inline b8 init(T* buffer, u32 cap);
-    inline b8 alloc(Arena* arena, u32 count);
-    inline T* get(u32 index);
 };
 
 #include "momo_array.cpp"

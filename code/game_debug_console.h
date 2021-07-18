@@ -73,7 +73,7 @@ Debug_Console::init(Arena* arena, u32 max_commands)
     start_pop_repeat_timer = Timer::create(0.5f);
     pop_repeat_timer = Timer::create(0.1f); 
     
-    if (!commands.alloc(arena, max_commands)) {
+    if (!List_Alloc(&commands, arena, max_commands)) {
         return false;
     }
     
@@ -81,7 +81,7 @@ Debug_Console::init(Arena* arena, u32 max_commands)
         return false;
     }
     
-    if (!info_lines.alloc(arena, 5)) {
+    if (!Array_Alloc(&info_lines, arena, 5)) {
         return false;
     }
     for (u32 i = 0; i < info_lines.count; ++i) {
@@ -98,7 +98,7 @@ Debug_Console::add_command(String key,
                            Debug_Console_Callback callback, 
                            void* context)
 {
-    Debug_Console_Command* command = commands.push();
+    Debug_Console_Command* command = List_Push(&commands);
     if (command == nullptr) {
         return false;
     }
@@ -135,7 +135,7 @@ void
 Debug_Console::remove_command(String key) {
     for (u32 i = 0; i < commands.count; ++i) {
         if (commands[i].key == key) {
-            commands.slear(i);
+            List_Slear(&commands, i);
             return;
         }
     }

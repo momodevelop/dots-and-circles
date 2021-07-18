@@ -399,7 +399,7 @@ Opengl::add_predefined_textures() {
                                   GL_RGBA, 
                                   GL_UNSIGNED_BYTE, 
                                   &pixels);
-        this->textures.push_item(dummy_texture);
+        List_Push_Item(&textures, dummy_texture);
     }
     
     // NOTE(Momo): Blank texture setup
@@ -413,7 +413,7 @@ Opengl::add_predefined_textures() {
                                   1, 1, 
                                   GL_RGBA, GL_UNSIGNED_BYTE, 
                                   &pixels);
-        this->textures.push_item(blank_texture);
+        List_Push_Item(&textures, blank_texture);
     }
     
     
@@ -423,7 +423,7 @@ b8
 Opengl::init(Arena* arena,
              u32 w, u32 h) 
 {
-    this->textures.alloc(arena, OPENGL_MAX_TEXTURES);
+    List_Alloc(&this->textures, arena, OPENGL_MAX_TEXTURES);
     this->design_dimensions = { w, h };
     this->window_dimensions = { w, h };
     
@@ -688,7 +688,7 @@ Opengl::add_texture(u32 width,
 {
     Renderer_Texture_Handle ret = {};
     
-    if (this->textures.remaining() == 0) {
+    if (List_Remaining(&this->textures) == 0) {
         ret.success = false;
         ret.id = 0;
         return ret;
@@ -719,7 +719,7 @@ Opengl::add_texture(u32 width,
     
     ret.id = (u32)this->textures.count;
     ret.success = true;
-    this->textures.push_item(entry);
+    List_Push_Item(&this->textures, entry);
     return ret;
 }
 
@@ -727,7 +727,7 @@ void
 Opengl::clear_textures() {
     this->glDeleteTextures((s32)this->textures.count, 
                            this->textures.data);
-    this->textures.clear();
+    List_Clear(&this->textures);
     this->add_predefined_textures();
 }
 

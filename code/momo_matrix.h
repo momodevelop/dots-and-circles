@@ -101,8 +101,8 @@ m22f::create_rotation(f32 rad) {
     // c -s
     // s  c
     
-    f32 c = cos(rad);
-    f32 s = sin(rad);
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     m22f ret = {};
     ret[0][0] = c;
     ret[0][1] = -s;
@@ -206,8 +206,8 @@ m44f::create_rotation_x(f32 rad) {
     // 0  s  c  0
     // 0  0  0  1
     
-    f32 c = cos(rad);
-    f32 s = sin(rad);
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     m44f ret = {};
     ret[0][0] = 1.f;
     ret[3][3] = 1.f;
@@ -227,8 +227,8 @@ m44f::create_rotation_y(f32 rad) {
     // -s  0  c  0
     //  0  0  0  1
     
-    f32 c = cos(rad);
-    f32 s = sin(rad);
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     m44f Ret = {};
     Ret[0][0] = c;
     Ret[0][2] = s;
@@ -248,8 +248,8 @@ m44f::create_rotation_z(f32 rad) {
     //  0  0  1  0
     //  0  0  0  1
     
-    f32 c = cos(rad);
-    f32 s = sin(rad);
+    f32 c = Cos(rad);
+    f32 s = Sin(rad);
     m44f Ret = {};
     Ret[0][0] = c;
     Ret[0][1] = -s;
@@ -320,7 +320,7 @@ m44f
 m44f::create_perspective(f32 fov, f32 aspect,
                          f32 near, f32 far) 
 {
-    f32 top = near * tan(fov*0.5f);
+    f32 top = near * Tan(fov*0.5f);
     f32 right = top * aspect;
     return create_frustum(-right, right,
                           -top, top,

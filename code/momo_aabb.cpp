@@ -108,19 +108,19 @@ to_aabb2f(aabb2u v) {
 
 // NOTE(Momo): Gets the Normalized values of Aabb A based on another Aabb B
 static inline aabb2f 
-ratio(aabb2f a, aabb2f b) {
+Ratio(aabb2f a, aabb2f b) {
     aabb2f ret = {};
-    ret.min.x = ratio(a.min.x, b.min.x, b.max.x);
-    ret.min.y = ratio(a.min.y, b.min.y, b.max.y);
-    ret.max.x = ratio(a.max.x, b.min.x, b.max.x);
-    ret.max.y = ratio(a.max.y, b.min.x, b.max.y);
+    ret.min.x = Ratio(a.min.x, b.min.x, b.max.x);
+    ret.min.y = Ratio(a.min.y, b.min.y, b.max.y);
+    ret.max.x = Ratio(a.max.x, b.min.x, b.max.x);
+    ret.max.y = Ratio(a.max.y, b.min.x, b.max.y);
     
     return ret;
 }
 
 static inline aabb2f 
-ratio(aabb2u a, aabb2u b) {
-    return ratio(to_aabb2f(a), to_aabb2f(b));
+Ratio(aabb2u a, aabb2u b) {
+    return Ratio(to_aabb2f(a), to_aabb2f(b));
 }
 
 static inline aabb2u
