@@ -268,7 +268,7 @@ int main() {
         for(u32 I = 0; I < ARRAY_COUNT(g_sound_contexts); ++I) {
             Asset_Builder_Sound_Context* ctx = g_sound_contexts + I;
             
-            Arena_Mark mark = arena.mark();
+            Arena_Marker mark = arena.mark();
             defer { mark.revert(); };
             
             Read_File_Result file_result = {};

@@ -36,7 +36,7 @@ Stream::init(void* memory, u32 memory_size) {
 
 b8
 Stream::alloc(Arena* arena, u32 capacity) {
-    void* memory = arena->push_block(capacity);
+    void* memory = Arena_Push_Block(arena, capacity);
     return init(memory, capacity); 
 } 
 
@@ -126,7 +126,7 @@ Bitstream::init(void* memory, u32 memory_size) {
 
 b8
 Bitstream::alloc(Arena* arena, u32 capacity) {
-    void* memory = arena->push_block(capacity);
+    void* memory = Arena_Push_Block(arena, capacity);
     return init(memory, capacity); 
 } 
 

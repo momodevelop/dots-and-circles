@@ -29,7 +29,7 @@ Big_Int::set_max() {
 
 b8
 Big_Int::alloc(Arena* arena, u32 length) {
-    u8* buffer = arena->push_array<u8>(length);
+    u8* buffer = Arena_Push_Array<u8>(arena, length);
     return init(buffer, length);
 }
 

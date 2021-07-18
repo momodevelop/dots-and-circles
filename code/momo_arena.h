@@ -2,7 +2,7 @@
 #define __MOMO_ARENA__
 
 struct Arena;
-struct Arena_Mark {
+struct Arena_Marker {
     // NOTE(Momo): Regarding reverting, an arena status back to an Arena_Mark,
     // I considered using destructors, to return the arena but...
     // there are still cases where I feel that you do *not* want to destruct
@@ -17,7 +17,6 @@ struct Arena_Mark {
         return this->arena;
     }
     
-    void revert();
 };
 
 struct Arena {
@@ -25,21 +24,9 @@ struct Arena {
     u32 used;
     u32 capacity;
     
-    inline b8 init(void* memory, u32 capacity);
-    inline void clear();
-    inline u32 remaining();
-    
-    inline void* push_block(u32 size, u8 alignment = alignof(void*));
-    template<class T> inline T* push_struct();
-    template<class T> inline T* push_array(u32 count);
-    
-    static inline void* boot_block(u32 struct_size,
-                                   u32 offset_to_arena,
-                                   void* memory,
-                                   u32 memory_size);
-    
-    inline Arena_Mark mark();
 };
+
+
 
 #include "momo_arena.cpp"
 

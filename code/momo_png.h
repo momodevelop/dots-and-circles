@@ -32,8 +32,8 @@ struct Png_Context {
     u32 image_height;
     u32 image_channels;
     
-    Arena_Mark image_streamMark;
-    Arena_Mark depressed_image_streamMark;
+    Arena_Marker image_streamMark;
+    Arena_Marker depressed_image_streamMark;
 };
 
 
@@ -203,7 +203,7 @@ png_deflate(Bitstream* src_stream, Stream* dest_stream, Arena* arena)
     
     u8 BFINAL = 0;
     while(BFINAL == 0){
-        Arena_Mark Scratch = arena->mark();
+        Arena_Marker Scratch = Arena_Mark(arena);
         defer { Scratch.revert(); };
         
         BFINAL = (u8)src_stream->consume_bits(1);
@@ -387,7 +387,7 @@ load_png_from_memory(Png_Image* png,
     
     // NOTE(Momo): For reserving memory for unfiltered data that is generated 
     // as we decode the file
-    Arena_Mark actual_image_stream_mark = arena->mark();
+    Arena_Marker actual_image_stream_mark = Arena_Mark(arena);
     Stream actual_image_stream = {};
     actual_image_stream.alloc(arena, image_size);
     
@@ -418,7 +418,7 @@ load_png_from_memory(Png_Image* png,
                 
                 // NOTE(Momo): Allow space for unfiltered image
                 u32 unfiltered_image_size = IHDR->width * (image_channels + 1);
-                Arena_Mark unfiltered_image_stream_mark = arena->mark();
+                Arena_Marker unfiltered_image_stream_mark = Arena_Mark(arena);
                 
                 Stream unfiltered_image_stream = {};
                 unfiltered_image_stream.init(arena, unfiltered_image_size);

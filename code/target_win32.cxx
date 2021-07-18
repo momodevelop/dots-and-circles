@@ -275,7 +275,7 @@ win32_init() {
         win32_log("[Win32::state] Failed to allocate memory\n"); 
         return 0;
     } 
-    Win32_State* state = ARENA_BOOT_STRUCT(Win32_State,
+    Win32_State* state = Arena_Boot_Struct(Win32_State,
                                            arena,
                                            platform_memory, 
                                            platform_memory_size);
@@ -571,7 +571,7 @@ win32_init_opengl(Win32_State* state,
     HDC DeviceContext = GetDC(window); 
     defer { ReleaseDC(window, DeviceContext); };
     
-    Opengl* opengl = state->arena.push_struct<Opengl>();
+    Opengl* opengl = Arena_Push<Opengl>(&state->arena);
     
     if (!opengl) {
         win32_log("[Win32::Opengl] Failed to allocate opengl\n"); 

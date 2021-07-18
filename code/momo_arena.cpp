@@ -1,62 +1,64 @@
 
-b8 
-Arena::init(void* mem, u32 cap) {
+
+
+static inline b8 
+Arena_Init(Arena* arena, void* mem, u32 cap) {
     if (!mem || cap == 0) {
         return false;
     }
-    this->memory = (u8*)mem;
-    this->used = 0; 
-    this->capacity = cap;
+    arena->memory = (u8*)mem;
+    arena->used = 0; 
+    arena->capacity = cap;
     
     return true;
 }
 
-void
-Arena::clear() {
-    this->used = 0;
+static inline void
+Arena_Clear(Arena* arena) {
+    arena->used = 0;
 }
 
-u32 
-Arena::remaining() {
-    return this->capacity - this->used;
+static inline u32 
+Arena_Remaining(Arena* arena) {
+    return arena->capacity - arena->used;
 }
 
-void* 
-Arena::push_block(u32 size, u8 alignment) {
+static inline void* 
+Arena_Push_Block(Arena* arena, u32 size, u8 alignment = alignof(void*)) {
     if (size == 0 || alignment == 0) {
         return nullptr;
     }
-    u8 adjust = align_memory_forward_diff((u8*)this->memory + this->used, alignment);
+    u8 adjust = align_memory_forward_diff((u8*)arena->memory + arena->used, alignment);
     
     // if not enough space, return 
-    u8* memory_end = (u8*)this->memory + this->capacity;
-    u8* block_end = (u8*)this->memory + this->used + adjust + size;
+    u8* memory_end = (u8*)arena->memory + arena->capacity;
+    u8* block_end = (u8*)arena->memory + arena->used + adjust + size;
     if (block_end > memory_end) {
         return nullptr;
     }
     
-    void* ret = (u8*)this->memory + this->used + adjust;
-    this->used += adjust + size;
+    void* ret = (u8*)arena->memory + arena->used + adjust;
+    arena->used += adjust + size;
     return ret;
 }
 
 template<class T>
-T* 
-Arena::push_struct() {
-    return (T*)push_block(sizeof(T), alignof(T));
+static inline T* 
+Arena_Push(Arena* arena) {
+    return (T*)Arena_Push_Block(arena, sizeof(T), alignof(T));
 }
 
 template<class T>
-T*
-Arena::push_array(u32 count) {
-    return (T*)push_block(sizeof(T) * count, alignof(T));
+static inline T*
+Arena_Push_Array(Arena* arena, u32 count) {
+    return (T*)Arena_Push_Block(arena, sizeof(T) * count, alignof(T));
 }
 
-void* 
-Arena::boot_block(u32 struct_size,
-                  u32 offset_to_arena,
-                  void* memory,
-                  u32 memory_size)
+static inline void* 
+Arena_Boot_Block(u32 struct_size,
+                 u32 offset_to_arena,
+                 void* memory,
+                 u32 memory_size)
 {
     if (struct_size > memory_size) {
         return nullptr;
@@ -64,25 +66,25 @@ Arena::boot_block(u32 struct_size,
     void* arena_memory = (u8*)memory + struct_size; 
     u32 arena_memory_size = memory_size - struct_size;
     Arena* arena_ptr = (Arena*)((u8*)memory + offset_to_arena);
-    if (!arena_ptr->init(arena_memory, arena_memory_size)) {
+    if (!Arena_Init(arena_ptr, arena_memory, arena_memory_size)) {
         return nullptr;
     }
     return memory;
 }
 
-Arena_Mark
-Arena::mark() {
-    Arena_Mark ret = {0};
-    ret.arena = this;
-    ret.old_used = this->used;
+static inline Arena_Marker
+Arena_Mark(Arena* arena) {
+    Arena_Marker ret = {0};
+    ret.arena = arena;
+    ret.old_used = arena->used;
     
     return ret;
 }
 
 void
-Arena_Mark::revert() {
-    this->arena->used = this->old_used;
+Arena_Revert(Arena_Marker* mark) {
+    mark->arena->used = mark->old_used;
 }
 
 // NOTE(Momo): It's a little sad that we can't run away from macros sometimes...
-#define ARENA_BOOT_STRUCT(Type, Member, Memory, MemorySize) (Type*)Arena::boot_block(sizeof(Type), OFFSET_OF(Type, Member), (Memory), (MemorySize)) 
+#define Arena_Boot_Struct(Type, Member, Memory, MemorySize) (Type*)Arena_Boot_Block(sizeof(Type), OFFSET_OF(Type, Member), (Memory), (MemorySize)) 

@@ -37,7 +37,7 @@ struct Permanent_State {
     };
     
     Arena arena;
-    Arena_Mark mode_arena;
+    Arena_Marker mode_arena;
     
 };
 

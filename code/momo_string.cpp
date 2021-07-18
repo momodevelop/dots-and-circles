@@ -1,4 +1,5 @@
 
+
 //~ NOTE(Momo): Strings
 b8
 String::init(u8* buffer, u32 buffer_size) {
@@ -102,7 +103,7 @@ String::split(Arena* arena, u8 delimiter) {
     for (;max != count;) {
         max = find(delimiter, min);
         
-        String* link = arena->push_struct<String>();
+        String* link = Arena_Push<String>(arena);
         // TODO: don't assert?
         ASSERT(link);
         link->init((*this), min, max);
@@ -132,7 +133,7 @@ String_Buffer::init(u8* buffer, u32 buffer_size) {
 
 b8
 String_Buffer::alloc(Arena* arena, u32 size) {
-    u8* buffer = arena->push_array<u8>(size);
+    u8* buffer = Arena_Push_Array<u8>(arena, size);
     return init(buffer, size);
 }
 

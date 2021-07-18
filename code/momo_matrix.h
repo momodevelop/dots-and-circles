@@ -48,7 +48,7 @@ union m44f {
 };
 
 //~ NOTE(Momo): m22f
-inline v2f&
+v2f&
 m22f::operator[](u32 i){
     ASSERT(i < 2); 
     return elements[i]; 
@@ -85,7 +85,7 @@ operator*(m22f l, v2f r) {
     return concat(l,r);
 }
 
-inline m22f 
+m22f 
 m22f::create_identity() {
     m22f ret = {};
     ret[0][0] = 1.f;

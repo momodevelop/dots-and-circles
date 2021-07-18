@@ -71,8 +71,8 @@ generate_atlas(Arena* arena,
         auto Type = *(Atlas_Context_Type*)user_datas[I];
         switch(Type) {
             case ATLAS_CONTEXT_TYPE_IMAGE: {
-                Arena_Mark scratch = arena->mark();
-                defer { scratch.revert(); };
+                Arena_Marker scratch = Arena_Mark(arena);
+                defer { Arena_Revert(&scratch); };
                 
                 auto* context = (Atlas_Context_Image*)user_datas[I];
                 s32 W, H, C;
@@ -114,12 +114,12 @@ generate_atlas(Arena* arena,
                 if (texture_dimensions == 0) 
                     continue;
                 
-                Arena_Mark scratch = arena->mark();
+                Arena_Marker scratch = Arena_Mark(arena);
                 u8* font_texture = (u8*)arena->push_block(texture_dimensions*channels); 
                 if (!font_texture) {
                     return nullptr;
                 }
-                defer { scratch.revert(); };
+                defer { Arena_Revert(&scratch); };
                 
                 u8* font_texture_itr = font_texture;
                 for (u32 j = 0, k = 0; j < texture_dimensions; ++j ){

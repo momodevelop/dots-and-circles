@@ -46,7 +46,7 @@ Game_Audio_Mixer::init(f32 master_volume,
     if (max_instances == 0 || max_instances == U32_MAX) {
         return false;
     }
-    Arena_Mark mark = arena->mark();
+    Arena_Marker mark = Arena_Mark(arena);
     b8 success = this->instances.alloc(arena, max_instances);
     if (!success) {
         mark.revert();
