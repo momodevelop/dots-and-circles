@@ -48,10 +48,12 @@ load_wav_from_memory(Wav_Load_Result* result,
                      u32 memory_size) 
 {
     Stream stream = {};
-    stream.init(memory, memory_size);
+    if (!Stream_Init(&stream, memory, memory_size)) {
+        return false;
+    }
     
     // NOTE(Momo): Load Riff Chunk
-    auto* riff_chunk = stream.consume_struct<Wav_Riff_Chunk>();
+    auto* riff_chunk = Stream_Consume<Wav_Riff_Chunk>(&stream);
     if (!riff_chunk) {
         return false;
     }
@@ -65,7 +67,7 @@ load_wav_from_memory(Wav_Load_Result* result,
     }
     
     // NOTE(Momo): Load fmt Chunk
-    auto* fmt_chunk = stream.consume_struct<Wav_Fmt_Chunk>();
+    auto* fmt_chunk = Stream_Consume<Wav_Fmt_Chunk>(&stream);
     if (!fmt_chunk) {
         return false;
     }
@@ -90,7 +92,7 @@ load_wav_from_memory(Wav_Load_Result* result,
     }
     
     // NOTE(Momo): Load data Chunk
-    auto* data_chunk = stream.consume_struct<Wav_Data_Chunk>();
+    auto* data_chunk = Stream_Consume<Wav_Data_Chunk>(&stream);
     if (!data_chunk) {
         return false;
     }
@@ -99,7 +101,7 @@ load_wav_from_memory(Wav_Load_Result* result,
         return false;
     }
     
-    void* data = stream.consume_block(data_chunk->size);
+    void* data = Stream_Consume_Block(&stream, data_chunk->size);
     if (data == nullptr) {
         return false;
     }

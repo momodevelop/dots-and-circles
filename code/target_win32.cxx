@@ -275,10 +275,10 @@ win32_init() {
         win32_log("[Win32::state] Failed to allocate memory\n"); 
         return 0;
     } 
-    Win32_State* state = Arena_Boot_Struct(Win32_State,
-                                           arena,
-                                           platform_memory, 
-                                           platform_memory_size);
+    Win32_State* state = Arena_Boot(Win32_State,
+                                    arena,
+                                    platform_memory, 
+                                    platform_memory_size);
     if (!state) {
         win32_log("[Win32::state] Failed to allocate state\n"); 
         return 0;

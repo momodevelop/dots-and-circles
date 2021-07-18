@@ -7,80 +7,68 @@ struct Stream {
     u32 content_size;
     u32 current;
     
-    inline b8 init(void* memory, u32 memory_size);
-    inline b8 alloc(Arena* arena, u32 capacity);
-    inline void reset();
-    inline b8 is_eos();
-    inline void* consume_block(u32 amount);
-    
-    template<typename T>
-        inline T* consume_struct();
-    
-    inline b8 write_block(void* src, u32 src_size);
-    template<typename T>
-        inline b8 write_struct(T item);
 };
 
 
-b8
-Stream::init(void* memory, u32 memory_size) {
+static inline b8
+Stream_Init(Stream* s, void* memory, u32 memory_size) {
     if ( memory == nullptr || memory_size == 0) {
         return false;
     }
-    contents = (u8*)memory;
-    content_size = memory_size;
+    s->contents = (u8*)memory;
+    s->content_size = memory_size;
     return true;
 }
 
 
 
-b8
-Stream::alloc(Arena* arena, u32 capacity) {
+static inline b8
+Stream_Alloc(Stream* s, Arena* arena, u32 capacity) {
     void* memory = Arena_Push_Block(arena, capacity);
-    return init(memory, capacity); 
+    return Stream_Init(s, memory, capacity); 
 } 
 
-void
-Stream::reset() {
-    current = 0;
+static inline void
+Stream_Reset(Stream* s) {
+    s->current = 0;
 }
 
-b8
-Stream::is_eos() {
-    return current >= content_size;
+static inline b8
+Stream_Is_Eos(Stream* s) {
+    return s->current >= s->content_size;
 }
 
-void*
-Stream::consume_block(u32 amount) {
+static inline void*
+Stream_Consume_Block(Stream* s, u32 amount) {
     void* ret = nullptr;
-    if (current + amount <= content_size) {
-        ret = contents + current;
+    if (s->current + amount <= s->content_size) {
+        ret = s->contents + s->current;
     }
-    current += amount;
+    s->current += amount;
     return ret;
 }
 
 template<typename T>
-T*
-Stream::consume_struct() {
-    return (T*)consume_block(sizeof(T));
+static inline T*
+Stream_Consume(Stream* s) {
+    return (T*)Stream_Consume_Block(s, sizeof(T));
 }
 
 
-b8
-Stream::write_block(void* src, u32 src_size) {
-    if (current + src_size >= content_size) {
+static inline b8
+Stream_Write_Block(Stream* s, void* src, u32 src_size) {
+    if (s->current + src_size >= s->content_size) {
         return false;
     }
-    copy_block(contents + current, src, src_size);
-    current += src_size; 
+    copy_block(s->contents + s->current, src, src_size);
+    s->current += src_size; 
     return true;
 }
 
 template<typename T>
-b8
-Stream::write_struct(T item) {
-    return write_block(&item, sizeof(T));
+static inline b8
+Stream_Write(Stream* s, T item) {
+    return Stream_Write_Block(s, &item, sizeof(T));
 }
 
 

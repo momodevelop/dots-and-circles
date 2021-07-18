@@ -195,7 +195,7 @@ read_block(Platform_File_Handle* file,
            u32 block_size,
            u8 block_alignment)
 {
-    void* ret = arena->push_block(block_size, block_alignment);
+    void* ret = Arena_Push_Block(arena, block_size, block_alignment);
     if(!ret) {
         return nullptr; 
     }
@@ -223,22 +223,22 @@ Assets::init(Arena* arena)
     g_platform->clear_textures();
     
     this->texture_count = TEXTURE_COUNT;
-    this->textures = arena->push_array<Texture>(TEXTURE_COUNT);
+    this->textures = Arena_Push_Array<Texture>(arena, TEXTURE_COUNT);
     
     this->image_count = IMAGE_COUNT;
-    this->images = arena->push_array<Image>(IMAGE_COUNT);
+    this->images = Arena_Push_Array<Image>(arena, IMAGE_COUNT);
     
     this->font_count = FONT_COUNT;
-    this->fonts = arena->push_array<Font>(FONT_COUNT);
+    this->fonts = Arena_Push_Array<Font>(arena, FONT_COUNT);
     
     this->anime_count = ANIME_COUNT;
-    this->animes = arena->push_array<Anime>(ANIME_COUNT);
+    this->animes = Arena_Push_Array<Anime>(arena, ANIME_COUNT);
     
     this->msg_count = MSG_COUNT;
-    this->msgs = arena->push_array<Msg>(MSG_COUNT);
+    this->msgs = Arena_Push_Array<Msg>(arena, MSG_COUNT);
     
     this->sound_count = SOUND_COUNT;
-    this->sounds = arena->push_array<Sound>(SOUND_COUNT);
+    this->sounds = Arena_Push_Array<Sound>(arena, SOUND_COUNT);
     
     Platform_File_Handle asset_file = g_platform->open_asset_file();
     if (asset_file.error) {
@@ -252,8 +252,7 @@ Assets::init(Arena* arena)
     
     // Check file signaure
     {        
-        
-        defer { g_scratch->clear(); };
+        defer { Arena_Clear(g_scratch); };
         
         String signature = {};
         signature.init(GAME_ASSET_FILE_SIGNATURE);
@@ -291,7 +290,7 @@ Assets::init(Arena* arena)
         // NOTE(Momo): Read header
         Asset_File_Entry file_entry = {};
         {
-            defer { g_scratch->clear(); };
+            defer { Arena_Clear(g_scratch); };
             
             auto* file_entry_ptr = read_struct<Asset_File_Entry>(&asset_file,
                                                                  g_scratch,
@@ -305,7 +304,7 @@ Assets::init(Arena* arena)
         
         switch(file_entry.type) {
             case ASSET_TYPE_TEXTURE: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 
                 auto* file_texture = read_struct<Asset_File_Texture>(&asset_file,
                                                                      g_scratch,
@@ -340,7 +339,7 @@ Assets::init(Arena* arena)
                 }
             } break;
             case ASSET_TYPE_IMAGE: { 
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 
                 auto* file_image = 
                     read_struct<Asset_File_Image>(&asset_file, 
@@ -357,7 +356,7 @@ Assets::init(Arena* arena)
                 image->texture_id = file_image->texture_id;
             } break;
             case ASSET_TYPE_FONT: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 
                 auto* file_font = read_struct<Asset_File_Font>(&asset_file,
                                                                g_scratch,
@@ -374,7 +373,7 @@ Assets::init(Arena* arena)
                 font->descent = file_font->descent;
             } break;
             case ASSET_TYPE_FONT_GLYPH: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 
                 auto* file_font_glyph = read_struct<Asset_File_Font_Glyph>(&asset_file,
                                                                            g_scratch,
@@ -395,7 +394,7 @@ Assets::init(Arena* arena)
                 glyph->box = file_font_glyph->box;
             } break;
             case ASSET_TYPE_FONT_KERNING: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 
                 auto* file_font_kerning = read_struct<Asset_File_Font_Kerning>(&asset_file,
                                                                                g_scratch,
@@ -412,7 +411,7 @@ Assets::init(Arena* arena)
                 
             } break;
             case ASSET_TYPE_SOUND: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 
                 auto* file = read_struct<Asset_File_Sound>(&asset_file,
                                                            g_scratch,
@@ -434,7 +433,7 @@ Assets::init(Arena* arena)
                 
             } break;
             case ASSET_TYPE_MSG: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 auto* file = read_struct<Asset_File_Msg>(&asset_file,
                                                          g_scratch,
                                                          &cur_file_offset);
@@ -457,7 +456,7 @@ Assets::init(Arena* arena)
                 
             } break;
             case ASSET_TYPE_ANIME: {
-                defer { g_scratch->clear(); };
+                defer { Arena_Clear(g_scratch); };
                 auto* file = read_struct<Asset_File_Anime>(&asset_file,
                                                            g_scratch,
                                                            &cur_file_offset);

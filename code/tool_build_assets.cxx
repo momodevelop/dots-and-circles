@@ -269,7 +269,7 @@ int main() {
             Asset_Builder_Sound_Context* ctx = g_sound_contexts + I;
             
             Arena_Marker mark = arena.mark();
-            defer { mark.revert(); };
+            defer { Arena_Revert(&mark); };
             
             Read_File_Result file_result = {};
             if(!read_file_into_memory(&file_result, mark, ctx->filename)) {

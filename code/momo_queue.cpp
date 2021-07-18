@@ -15,7 +15,7 @@ Queue<T>::init(T* buffer, u32 cap_in) {
 template<typename T>
 b8
 Queue<T>::alloc(Arena* arena, u32 cap_in) {
-    T* buffer = arena->push_array<T>(cap_in);
+    T* buffer = Arena_Push_Array<T>(arena, cap_in);
     if (!buffer) {
         return false;
     }

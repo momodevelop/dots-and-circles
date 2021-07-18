@@ -9,7 +9,7 @@ cmd_jump(Debug_Console* console, void* context, String args) {
     auto* debug_state = (Debug_State*)context;
     Permanent_State* perm_state = debug_state->perm_state;
     
-    defer{ g_scratch->clear(); };
+    defer{ Arena_Clear(g_scratch); };
     
     String buffer = {};
     String_Split_Result arg_list = args.split(g_scratch, ' ');
@@ -64,7 +64,7 @@ GameUpdateFunc(game_update)
         g_log = platform_api->log;
         g_renderer = render_commands;
         g_input = platform_input;
-        if (!scratch.init(game_memory->scratch_memory, game_memory->scratch_memory_size)) {
+        if (!Arena_Init(&scratch, game_memory->scratch_memory, game_memory->scratch_memory_size)) {
             g_log("Cannot initialize Scratch Memory");
             return false;
         }
@@ -81,12 +81,12 @@ GameUpdateFunc(game_update)
     if(!perm_state->is_initialized) {
         g_log("[Permanent] Init Begin\n");
         // NOTE(Momo): Arenas
-        perm_state = ARENA_BOOT_STRUCT(Permanent_State,
-                                       arena,
-                                       game_memory->permanent_memory, 
-                                       game_memory->permanent_memory_size);
+        perm_state = Arena_Boot(Permanent_State,
+                                arena,
+                                game_memory->permanent_memory, 
+                                game_memory->permanent_memory_size);
         
-        perm_state->mode_arena = perm_state->arena.mark();
+        perm_state->mode_arena = Arena_Mark(&perm_state->arena);
         perm_state->current_game_mode = GAME_MODE_NONE;
         perm_state->next_game_mode = GAME_MODE_MAIN;
         perm_state->is_initialized = true;
@@ -104,10 +104,10 @@ GameUpdateFunc(game_update)
     
     if (!tran_state->is_initialized) {
         g_log("[Transient] Init Begin\n");
-        tran_state = ARENA_BOOT_STRUCT(Transient_State,
-                                       arena,
-                                       game_memory->transient_memory, 
-                                       game_memory->transient_memory_size);
+        tran_state = Arena_Boot(Transient_State,
+                                arena,
+                                game_memory->transient_memory, 
+                                game_memory->transient_memory_size);
         b8 success = tran_state->assets.init(&tran_state->arena);
         
         if(!success) {
@@ -128,10 +128,10 @@ GameUpdateFunc(game_update)
     
     if (!debug_state->is_initialized) {
         g_log("[Debug] Init Begin\n");
-        debug_state = ARENA_BOOT_STRUCT(Debug_State,
-                                        arena,
-                                        game_memory->debug_memory,
-                                        game_memory->debug_memory_size);
+        debug_state = Arena_Boot(Debug_State,
+                                 arena,
+                                 game_memory->debug_memory,
+                                 game_memory->debug_memory_size);
         // Init inspector
         debug_state->inspector.init(&debug_state->arena);
         
@@ -190,26 +190,26 @@ GameUpdateFunc(game_update)
     
     // NOTE(Momo): Clean state/Switch states
     if (perm_state->next_game_mode != GAME_MODE_NONE) {
-        perm_state->mode_arena.revert();
+        Arena_Revert(&perm_state->mode_arena);
         Arena* mode_arena = perm_state->mode_arena;
         
         switch(perm_state->next_game_mode) {
             case GAME_MODE_SPLASH: {
-                perm_state->splash_mode = mode_arena->push_struct<Game_Mode_Splash>(); 
+                perm_state->splash_mode = Arena_Push<Game_Mode_Splash>(mode_arena); 
                 init_splash_mode(perm_state);
             } break;
             case GAME_MODE_MAIN: {
-                perm_state->main_mode = mode_arena->push_struct<Game_Mode_Main>(); 
+                perm_state->main_mode = Arena_Push<Game_Mode_Main>(mode_arena); 
                 if (!init_main_mode(perm_state, tran_state, debug_state)){
                     return false;
                 }
             } break;
             case GAME_MODE_SANDBOX: {
-                perm_state->sandbox_mode = mode_arena->push_struct<Game_Mode_Sandbox>(); 
+                perm_state->sandbox_mode = Arena_Push<Game_Mode_Sandbox>(mode_arena); 
                 init_sandbox_mode(perm_state);
             } break;
             case GAME_MODE_ANIME_TEST: {
-                perm_state->anime_test_mode = mode_arena->push_struct<Game_Mode_Anime_Test>(); 
+                perm_state->anime_test_mode = Arena_Push<Game_Mode_Anime_Test>(mode_arena); 
                 init_anime_test_mode(perm_state);
             } break;
             default: {
@@ -224,13 +224,13 @@ GameUpdateFunc(game_update)
     String buffer = {};
     buffer.init("Debug Memory: ");
     debug_state->inspector.push_u32(buffer,
-                                    (u32)debug_state->arena.remaining());
+                                    Arena_Remaining(&debug_state->arena));
     buffer.init("Mode Memory: ");
     debug_state->inspector.push_u32(buffer,
-                                    (u32)perm_state->mode_arena.arena->remaining());
+                                    Arena_Remaining(perm_state->mode_arena.arena));
     buffer.init("Trans Memory: ");
     debug_state->inspector.push_u32(buffer,
-                                    (u32)tran_state->arena.remaining());
+                                    Arena_Remaining(&tran_state->arena));
     
     
     // State update

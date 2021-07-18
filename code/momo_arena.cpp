@@ -87,4 +87,4 @@ Arena_Revert(Arena_Marker* mark) {
 }
 
 // NOTE(Momo): It's a little sad that we can't run away from macros sometimes...
-#define Arena_Boot_Struct(Type, Member, Memory, MemorySize) (Type*)Arena_Boot_Block(sizeof(Type), OFFSET_OF(Type, Member), (Memory), (MemorySize)) 
+#define Arena_Boot(Type, Member, Memory, MemorySize) (Type*)Arena_Boot_Block(sizeof(Type), OFFSET_OF(Type, Member), (Memory), (MemorySize)) 

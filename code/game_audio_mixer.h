@@ -49,13 +49,13 @@ Game_Audio_Mixer::init(f32 master_volume,
     Arena_Marker mark = Arena_Mark(arena);
     b8 success = this->instances.alloc(arena, max_instances);
     if (!success) {
-        mark.revert();
+        Arena_Revert(&mark);
         return false;
     }
     
     success = this->free_list.alloc(arena, max_instances);
     if (!success) {
-        mark.revert();
+        Arena_Revert(&mark);
         return false;
     }
     this->volume = master_volume;

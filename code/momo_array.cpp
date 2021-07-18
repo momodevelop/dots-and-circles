@@ -20,7 +20,7 @@ Array<T>::init(T* buffer, u32 count_) {
 template<typename T>
 b8
 Array<T>::alloc(Arena* arena, u32 count_) {
-    T* buffer = arena->push_array<T>(count_);
+    T* buffer = Arena_Push_Array<T>(arena, count_);
     return init(buffer, count_);
 }
 
