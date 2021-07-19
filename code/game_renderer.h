@@ -112,14 +112,14 @@ Renderer_SetOrthoCamera(Mailbox* commands,
 {
     auto* Data = Mailbox_Push<renderer_command_set_basis>(commands, RENDERER_COMMAND_SET_BASIS);
     
-    auto P  = m44f::create_orthographic(frustum.min.x,  
+    auto P  = m44f_Orthographic(frustum.min.x,  
                                         frustum.max.x, 
                                         frustum.min.y, 
                                         frustum.max.y,
                                         frustum.min.z, 
                                         frustum.max.z);
     
-    m44f V = m44f::create_translation(-position.x, -position.y, -position.z);
+    m44f V = m44f_Translation(-position.x, -position.y, -position.z);
     Data->Basis = P * V;
 }
 
@@ -158,7 +158,7 @@ Renderer_DrawQuad(Mailbox* commands,
 }
 
 static inline void 
-Renderer_DrawLine2f(Mailbox* commands, 
+Renderer_DrawLine(Mailbox* commands, 
                     line2f Line,
                     f32 Thickness,
                     c4f Colors,
@@ -166,7 +166,7 @@ Renderer_DrawLine2f(Mailbox* commands,
 {
     // NOTE(Momo): Min.Y needs to be lower than Max.y
     if (Line.min.y > Line.max.y) {
-        SWAP(Line.min, Line.max);
+        Swap(Line.min, Line.max);
     }
     
     v2f LineVector = Sub(Line.max, Line.min);
@@ -177,15 +177,15 @@ Renderer_DrawLine2f(Mailbox* commands,
     f32 Angle = AngleBetween(LineVector, XAxis);
     
     //TODO: Change line3f
-    m44f T = m44f::create_translation(LineMiddle.x, LineMiddle.y, PosZ);
-    m44f R = m44f::create_rotation_z(Angle);
-    m44f S = m44f::create_scale(LineLength, Thickness, 1.f) ;
+    m44f T = m44f_Translation(LineMiddle.x, LineMiddle.y, PosZ);
+    m44f R = m44f_RotationZ(Angle);
+    m44f S = m44f_Scale(LineLength, Thickness, 1.f) ;
     
     Renderer_DrawQuad(commands, Colors, T*R*S);
 }
 
 static inline void
-Renderer_DrawCircle2f(Mailbox* commands,
+Renderer_DrawCircle(Mailbox* commands,
                       circle2f Circle,
                       f32 Thickness, 
                       u32 LineCount,
@@ -203,7 +203,7 @@ Renderer_DrawCircle2f(Mailbox* commands,
         v2f LinePt1 = Pt1 + Circle.origin;
         v2f LinePt2 = Pt2 + Circle.origin;
         line2f Line = line2f::create(LinePt1, LinePt2);
-        Renderer_DrawLine2f(commands, 
+        Renderer_DrawLine(commands, 
                             Line,
                             Thickness,
                             Color,
@@ -216,14 +216,14 @@ Renderer_DrawCircle2f(Mailbox* commands,
 }
 
 static inline void 
-Renderer_DrawAabb2f(Mailbox* commands, 
+Renderer_DrawAabb(Mailbox* commands, 
                     aabb2f Aabb,
                     f32 Thickness,
                     c4f Colors,
                     f32 PosZ ) 
 {
     //Bottom
-    Renderer_DrawLine2f(commands, 
+    Renderer_DrawLine(commands, 
                         line2f::create(Aabb.min.x, 
                                        Aabb.min.y,  
                                        Aabb.max.x, 
@@ -232,7 +232,7 @@ Renderer_DrawAabb2f(Mailbox* commands,
                         Colors,
                         PosZ);
     // Left
-    Renderer_DrawLine2f(commands, 
+    Renderer_DrawLine(commands, 
                         line2f::create(Aabb.min.x,
                                        Aabb.min.y,
                                        Aabb.min.x,
@@ -242,7 +242,7 @@ Renderer_DrawAabb2f(Mailbox* commands,
                         PosZ);
     
     //Top
-    Renderer_DrawLine2f(commands, 
+    Renderer_DrawLine(commands, 
                         line2f::create(Aabb.min.x,
                                        Aabb.max.y,
                                        Aabb.max.x,
@@ -252,7 +252,7 @@ Renderer_DrawAabb2f(Mailbox* commands,
                         PosZ);
     
     //Right 
-    Renderer_DrawLine2f(commands, 
+    Renderer_DrawLine(commands, 
                         line2f::create(Aabb.max.x,
                                        Aabb.min.y,
                                        Aabb.max.x,

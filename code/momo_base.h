@@ -18,25 +18,21 @@ typedef double f64;
 typedef uintptr_t umi;
 typedef ptrdiff_t smi;
 
-#define BEGIN_NS(Name) namespace Name {
-#define END_NS() }
 
-
-// TODO(Momo): change to retarded name
 #define KIBIBYTE (1 << 10)
 #define MEBIBYTE (1 << 20)
 #define GIBIBYTE (1 << 30)
 #define KIBIBYTES(num) (KIBIBYTE * num)
 #define MEBIBYTES(num) (MEBIBYTE * num)
 #define GIBIBYTES(num) (GIBIBYTE * num)
-#define ARRAY_COUNT(arr) (sizeof(arr)/sizeof(*arr))
+#define ArrayCount(arr) (sizeof(arr)/sizeof(*arr))
 
-#define GLUE_(A,B) A##B
-#define GLUE(A,B) GLUE_(A,B)
+#define _Glue(A,B) A##B
+#define Glue(A,B) _Glue(A,B)
 
-#define ABS(X) (((X) < 0) ? (-(X)) : (X))
-#define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
-#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define Abs(X) (((X) < 0) ? (-(X)) : (X))
+#define Max(X,Y) ((X) > (Y) ? (X) : (Y))
+#define Min(X,Y) ((X) < (Y) ? (X) : (Y))
 
 
 // NOTE(Momo): We need to do/while to cater for if/else statements
@@ -51,23 +47,23 @@ typedef ptrdiff_t smi;
 // >> else 
 // >>    ...
 // which causes an invalid ';' error
-#define SWAP(A,B) do{ auto GLUE(zawarudo, __LINE__) = (A); (A) = (B); (B) = GLUE(zawarudo, __LINE__); } while(0);
-#define CLAMP(Value, Low, High) MAX(MIN(Value, High), Low)
-#define OFFSET_OF(Type, Member) (umi)&(((Type*)0)->Member)
-#define LERP(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
+#define Swap(A,B) do{ auto Glue(zawarudo, __LINE__) = (A); (A) = (B); (B) = Glue(zawarudo, __LINE__); } while(0);
+#define Clamp(Value, Low, High) Max(Min(Value, High), Low)
+#define OffsetOf(Type, Member) (umi)&(((Type*)0)->Member)
+#define Lerp(Start,End,Fraction) (Start) + (((End) - (Start)) * (Fraction))
 
 
 
 // C-string
 static inline u32
-cstr_length(const char* Str) {
+Sistr_Length(const char* Str) {
     u32 Count = 0;
     for(; (*Str) != 0 ; ++Count, ++Str);
     return Count;
 }
 
 static inline void
-cstr_copy(char * Dest, const char* Src) {
+Sistr_Copy(char * Dest, const char* Src) {
     for(; (*Src) != 0 ; ++Src, ++Dest) {
         (*Dest) = (*Src);
     }
@@ -75,7 +71,7 @@ cstr_copy(char * Dest, const char* Src) {
 }
 
 static inline b8
-cstr_compare(const char* Lhs, const char* Rhs) {
+Sistr_Compare(const char* Lhs, const char* Rhs) {
     for(; (*Rhs) != 0 ; ++Rhs, ++Lhs) {
         if ((*Lhs) != (*Rhs)) {
             return false;
@@ -85,7 +81,7 @@ cstr_compare(const char* Lhs, const char* Rhs) {
 }
 
 static inline b8
-cstr_compare_n(const char* Lhs, const char* Rhs, umi N) {
+Sistr_CompareN(const char* Lhs, const char* Rhs, umi N) {
     for(umi I = 0; I < N; ++I, ++Lhs, ++Rhs) {
         if ((*Lhs) != (*Rhs)) {
             return false;
@@ -94,7 +90,7 @@ cstr_compare_n(const char* Lhs, const char* Rhs, umi N) {
     return true;
 }
 static inline void
-cstr_concat(char* Dest, const char* Src) {
+Sistr_Concat(char* Dest, const char* Src) {
     // Go to the end of Dest
     for (; (*Dest) != 0; ++Dest);
     for (; (*Src) != 0; ++Src, ++Dest) {
@@ -105,23 +101,23 @@ cstr_concat(char* Dest, const char* Src) {
 
 
 static inline void 
-cstr_clear(char* Dest) {
+Sistr_Clear(char* Dest) {
     (*Dest) = 0;
 }
 
 static inline void
-cstr_reverse(char* Dest) {
+Sistr_Reverse(char* Dest) {
     char* BackPtr = Dest;
     for (; *(BackPtr+1) != 0; ++BackPtr);
     for (;Dest < BackPtr; ++Dest, --BackPtr) {
-        SWAP(*Dest, *BackPtr);
+        Swap(*Dest, *BackPtr);
     }
 }
 
 
 
 static inline void 
-cstr_itoa(char* Dest, s32 Num) {
+Sistr_Itoa(char* Dest, s32 Num) {
     // Naive method. 
     // Extract each number starting from the back and fill the buffer. 
     // Then reverse it.
@@ -134,7 +130,7 @@ cstr_itoa(char* Dest, s32 Num) {
     }
     
     b8 Negative = Num < 0;
-    Num = ABS(Num);
+    Num = Abs(Num);
     
     char* It = Dest;
     for(; Num != 0; Num /= 10) {
@@ -147,7 +143,7 @@ cstr_itoa(char* Dest, s32 Num) {
     }
     (*It) = 0;
     
-    cstr_reverse(Dest);
+    Sistr_Reverse(Dest);
 }
 
 
@@ -160,13 +156,6 @@ cstr_itoa(char* Dest, s32 Num) {
 #define ASSERT(x) 
 #endif
 
-
-// Run-time system endianness check
-static inline b8 
-is_os_big_endian() {
-    int n = 1;
-    return (*(char*)&n != 1);
-}
 
 // defer 
 template<class F> struct zawarudo_ScopeGuard {
@@ -201,14 +190,14 @@ template<class F> zawarudo_ScopeGuard<F> operator+(zawarudo_defer_dummy, F f) {
 
 //~ NOTE(Momo): Converts single digits 
 static inline u8
-digit_to_ascii(u8 Digit){
-    ASSERT(Digit >= 0 && Digit <= 9);
-    return Digit + '0';
+DigitToAscii(u8 digit){
+    ASSERT(digit >= 0 && digit <= 9);
+    return digit + '0';
 }
 static inline u8
-ascii_to_digit(u8 Digit){
-    ASSERT(Digit >= '0' && Digit <= '9');
-    return Digit - '0';
+AsciiToDigit(u8 ascii){
+    ASSERT(ascii >= '0' && ascii <= '9');
+    return ascii - '0';
 }
 
 #endif //MM_BASIC_TYPES_H

@@ -20,7 +20,7 @@ struct code_snippet {
 //  GenerateCode("template_array.cpp",   // input file 
 //               "gen_tpl_array_u32.h",  // output file
 //               Words,                  
-//               ARRAY_COUNT(Words));
+//               ArrayCount(Words));
 //              
 static inline void
 Codegen_GenerateCode(code_snippet* Snippets,
@@ -38,18 +38,18 @@ Codegen_GenerateCode(code_snippet* Snippets,
     defer { fclose(DestFile); };
     printf("Working on %s\n", DestFileName);  
     
-    fwrite(Header, 1, cstr_length(Header), DestFile);
+    fwrite(Header, 1, Sistr_Length(Header), DestFile);
     
     if (CodeGuard != 0) {
         const char* Ifndef = "#ifndef ";
         const char* Define = "#define ";
         
-        fwrite(Ifndef, 1, cstr_length(Ifndef), DestFile);
-        fwrite(CodeGuard, 1, cstr_length(CodeGuard), DestFile);
-        fwrite("\n", 1, cstr_length("\n"), DestFile);
-        fwrite(Define, 1, cstr_length(Define), DestFile);
-        fwrite(CodeGuard, 1, cstr_length(CodeGuard), DestFile);
-        fwrite("\n", 1, cstr_length("\n"), DestFile);
+        fwrite(Ifndef, 1, Sistr_Length(Ifndef), DestFile);
+        fwrite(CodeGuard, 1, Sistr_Length(CodeGuard), DestFile);
+        fwrite("\n", 1, Sistr_Length("\n"), DestFile);
+        fwrite(Define, 1, Sistr_Length(Define), DestFile);
+        fwrite(CodeGuard, 1, Sistr_Length(CodeGuard), DestFile);
+        fwrite("\n", 1, Sistr_Length("\n"), DestFile);
     }
     
     for (u32 SnippetIndex = 0; SnippetIndex < SnippetCount; ++SnippetIndex) {
@@ -76,7 +76,7 @@ Codegen_GenerateCode(code_snippet* Snippets,
                     }
                     ASSERT((u32)WordIndex < Snippet.WordCount);
                     const char* Word = Snippet.Words[WordIndex];
-                    fwrite(Word, 1, cstr_length(Word), DestFile); 
+                    fwrite(Word, 1, Sistr_Length(Word), DestFile); 
                 }
                 else {
                     fwrite(&CurrentChar, 1, 1, DestFile);
@@ -93,7 +93,7 @@ Codegen_GenerateCode(code_snippet* Snippets,
     
     if (CodeGuard != 0) {
         const char* Endif = "#endif";
-        fwrite(Endif, 1, cstr_length(Endif), DestFile);
+        fwrite(Endif, 1, Sistr_Length(Endif), DestFile);
     }
     
     
@@ -138,7 +138,7 @@ int main(int argc, const char* argv[]) {
             "ArrayGLuint_"
         };
         Snippet.Words = ArrArgs;
-        Snippet.WordCount = ARRAY_COUNT(ArrArgs);
+        Snippet.WordCount = ArrayCount(ArrArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("array_gluint.h"), "ARRAY_GLUINT");
         
         
@@ -150,7 +150,7 @@ int main(int argc, const char* argv[]) {
             "ListGLuint_"
         };
         Snippet.Words = ListArgs;
-        Snippet.WordCount = ARRAY_COUNT(ListArgs);
+        Snippet.WordCount = ArrayCount(ListArgs);
         
         Codegen_GenerateCode(&Snippet, 1, OutputFile("list_gluint.h"), "LIST_GLUINT");
         
@@ -166,7 +166,7 @@ int main(int argc, const char* argv[]) {
             "ArrayDebugConsoleCommand_"
         };
         Snippet.Words = ArrArgs;
-        Snippet.WordCount = ARRAY_COUNT(ArrArgs);
+        Snippet.WordCount = ArrayCount(ArrArgs);
         
         Codegen_GenerateCode(&Snippet, 1, OutputFile("array_debug_console_command.h"), "ARRAY_DEBUG_CONSOLE_COMMAND");
         
@@ -178,7 +178,7 @@ int main(int argc, const char* argv[]) {
             "ListDebugConsoleCommand_"
         };
         Snippet.Words = ListArgs;
-        Snippet.WordCount = ARRAY_COUNT(ListArgs);
+        Snippet.WordCount = ArrayCount(ListArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("list_debug_console_command.h"), "LIST_DEBUG_CONSOLE_COMMAND");
         
     }
@@ -193,7 +193,7 @@ int main(int argc, const char* argv[]) {
             "ArrayDebugConsoleString_"
         };
         Snippet.Words = ArrArgs;
-        Snippet.WordCount = ARRAY_COUNT(ArrArgs);
+        Snippet.WordCount = ArrayCount(ArrArgs);
         
         Codegen_GenerateCode(&Snippet, 1, OutputFile("array_debug_console_string.h"), "ARRAY_DEBUG_CONSOLE_STRING");
         
@@ -210,7 +210,7 @@ int main(int argc, const char* argv[]) {
             "ArrayDebugVariable_"
         };
         Snippet.Words = ArrArgs;
-        Snippet.WordCount = ARRAY_COUNT(ArrArgs);
+        Snippet.WordCount = ArrayCount(ArrArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("array_debug_variable.h"), "ARRAY_DEBUG_VARIABLE");
         
         Snippet.FileName = TplList;
@@ -221,7 +221,7 @@ int main(int argc, const char* argv[]) {
             "ListDebugVariable_"
         };
         Snippet.Words = ListArgs;
-        Snippet.WordCount = ARRAY_COUNT(ListArgs);
+        Snippet.WordCount = ArrayCount(ListArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("list_debug_variable.h"), "LIST_DEBUG_VARIABLE");
         
         
@@ -237,7 +237,7 @@ int main(int argc, const char* argv[]) {
             "ArrayBullet_"
         };
         Snippet.Words = ArrArgs;
-        Snippet.WordCount = ARRAY_COUNT(ArrArgs);
+        Snippet.WordCount = ArrayCount(ArrArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("array_bullet.h"), "ARRAY_BULLET");
         
         Snippet.FileName = TplList;
@@ -248,7 +248,7 @@ int main(int argc, const char* argv[]) {
             "ListBullet_"
         };
         Snippet.Words = ListArgs;
-        Snippet.WordCount = ARRAY_COUNT(ListArgs);
+        Snippet.WordCount = ArrayCount(ListArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("list_bullet.h"), "LIST_BULLET");
         
     }
@@ -262,7 +262,7 @@ int main(int argc, const char* argv[]) {
             "enemy", 
             "ArrayEnemy_"};
         Snippet.Words = ArrArgs;
-        Snippet.WordCount = ARRAY_COUNT(ArrArgs);
+        Snippet.WordCount = ArrayCount(ArrArgs);
         Codegen_GenerateCode(&Snippet, 1, OutputFile("array_enemy.h"), "ARRAY_ENEMY");
         
         
@@ -274,7 +274,7 @@ int main(int argc, const char* argv[]) {
             "ListEnemy_"
         };
         Snippet.Words = ListArgs;
-        Snippet.WordCount = ARRAY_COUNT(ListArgs);
+        Snippet.WordCount = ArrayCount(ListArgs);
         
         Codegen_GenerateCode(&Snippet, 1, OutputFile("list_enemy.h"), "LIST_ENEMY");
         

@@ -18,14 +18,14 @@ struct Transient_State {
     
     Arena arena;
     Assets assets; 
-    Game_Audio_Mixer mixer;
+    AudioMixer mixer;
 };
 
 struct Permanent_State {
     b8 is_initialized;
     b8 is_paused;
     f32 game_speed;
-    Game_Camera camera;
+    Camera camera;
     
     Game_Mode_Type current_game_mode;
     Game_Mode_Type next_game_mode;
@@ -45,8 +45,8 @@ struct Debug_State {
     b8 is_initialized;
     Arena arena;
     
-    Debug_Inspector inspector;
-    Debug_Console console;
+    Inspector inspector;
+    Console console;
     
     struct Permanent_State* perm_state;
     struct Transient_State* tran_state;

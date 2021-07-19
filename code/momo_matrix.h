@@ -3,46 +3,13 @@
 #ifndef MOMO_MATRIX_H
 #define MOMO_MATRIX_H
 
-union m22f {
+struct m22f {
     v2f elements[2];
     inline v2f& operator[](u32 i);
-    
-    static inline m22f create_rotation(f32 rad);
-    static inline m22f create_identity();
 };
 
-union m44f {
+struct m44f {
     v4f elements[4];
-    
-    static inline m44f create_identity();
-    static inline m44f create_rotation_x(f32 rad);
-    static inline m44f create_rotation_y(f32 rad);
-    static inline m44f create_rotation_z(f32 rad);
-    
-    static inline m44f create_translation(f32 x, f32 y, f32 z);
-    static inline m44f create_scale(f32 x, f32 y, f32 z);
-    static inline m44f create_translation(v3f v);
-    static inline m44f create_scale(v3f v);
-    
-    static inline m44f create_orthographic(f32 left,
-                                           f32 right,
-                                           f32 bottom,
-                                           f32 top,
-                                           f32 near,
-                                           f32 far);
-    
-    static inline m44f create_frustum(f32 left,
-                                      f32 right,
-                                      f32 bottom,
-                                      f32 top,
-                                      f32 near,
-                                      f32 far);
-    
-    static inline m44f create_perspective(f32 fov,
-                                          f32 aspect,
-                                          f32 near,
-                                          f32 far);
-    
     inline v4f& operator[](u32 i);
     
 };
@@ -55,7 +22,7 @@ m22f::operator[](u32 i){
 }
 
 static inline m22f 
-concat(m22f lhs, m22f rhs) {
+Concat(m22f lhs, m22f rhs) {
     m22f ret = {};
     for (u8 r = 0; r < 2; r++) { 
         for (u8 c = 0; c < 2; c++) { 
@@ -67,7 +34,7 @@ concat(m22f lhs, m22f rhs) {
 }
 
 static inline v2f
-concat(m22f l, v2f r) {
+Concat(m22f l, v2f r) {
     v2f ret = {};
     ret[0] = l[0][0] * r[0] + l[0][1] * r[1];
     ret[1] = l[1][0] * r[0] + l[1][1] * r[1];
@@ -77,16 +44,16 @@ concat(m22f l, v2f r) {
 
 static inline m22f 
 operator*(m22f l, m22f r) {
-    return concat(l,r);
+    return Concat(l,r);
 }
 
 static inline v2f 
 operator*(m22f l, v2f r) {
-    return concat(l,r);
+    return Concat(l,r);
 }
 
 m22f 
-m22f::create_identity() {
+m22f_Identity() {
     m22f ret = {};
     ret[0][0] = 1.f;
     ret[1][1] = 1.f;
@@ -96,7 +63,7 @@ m22f::create_identity() {
 
 
 inline m22f 
-m22f::create_rotation(f32 rad) {
+m22f_Rotation(f32 rad) {
     // NOTE(Momo): 
     // c -s
     // s  c
@@ -120,7 +87,7 @@ m44f::operator[](u32 i) {
 }
 
 static inline v4f
-concat(m44f l, v4f r) {
+Concat(m44f l, v4f r) {
     v4f ret = {};
     ret[0] = l[0][0] * r[0] + l[0][1] * r[1] + l[0][2] * r[2] + l[0][3] * r[3];
     ret[1] = l[1][0] * r[0] + l[1][1] * r[1] + l[1][2] * r[2] + l[1][3] * r[3];
@@ -131,7 +98,7 @@ concat(m44f l, v4f r) {
 }
 
 static inline m44f 
-concat(m44f lhs, m44f rhs) {
+Concat(m44f lhs, m44f rhs) {
     m44f ret = {};
     for (u8 r = 0; r < 4; r++) { 
         for (u8 c = 0; c < 4; c++) { 
@@ -144,16 +111,16 @@ concat(m44f lhs, m44f rhs) {
 
 static inline m44f 
 operator*(m44f l, m44f r) {
-    return concat(l,r);
+    return Concat(l,r);
 }
 
 static inline v4f 
 operator*(m44f l, v4f r) {
-    return concat(l,r);
+    return Concat(l,r);
 }
 
 inline m44f 
-m44f::create_identity() {
+m44f_Identity() {
     m44f ret = {};
     ret[0][0] = 1.f;
     ret[1][1] = 1.f;
@@ -177,14 +144,14 @@ transpose(m44f m) {
 
 
 inline m44f 
-m44f::create_translation(f32 x, f32 y, f32 z) {
+m44f_Translation(f32 x, f32 y, f32 z) {
     // NOTE(Momo): 
     // 1 0 0 x
     // 0 1 0 y
     // 0 0 1 z
     // 0 0 0 1
     //
-    m44f ret = create_identity();
+    m44f ret = m44f_Identity();
     ret[0][3] = x;
     ret[1][3] = y;
     ret[2][3] = z;
@@ -194,12 +161,12 @@ m44f::create_translation(f32 x, f32 y, f32 z) {
 
 
 inline m44f
-m44f::create_translation(v3f v) {
-    return create_translation(v.x, v.y, v.z);; 
+m44f_Translation(v3f v) {
+    return m44f_Translation(v.x, v.y, v.z);
 }
 
 inline m44f 
-m44f::create_rotation_x(f32 rad) {
+m44f_RotationX(f32 rad) {
     // NOTE(Momo): 
     // 1  0  0  0
     // 0  c -s  0
@@ -220,7 +187,7 @@ m44f::create_rotation_x(f32 rad) {
 }
 
 inline m44f 
-m44f::create_rotation_y(f32 rad) {
+m44f_RotationY(f32 rad) {
     // NOTE(Momo): 
     //  c  0  s  0
     //  0  1  0  0
@@ -241,7 +208,7 @@ m44f::create_rotation_y(f32 rad) {
 }
 
 inline m44f 
-m44f::create_rotation_z(f32 rad) {
+m44f_RotationZ(f32 rad) {
     // NOTE(Momo): 
     //  c -s  0  0
     //  s  c  0  0
@@ -262,7 +229,7 @@ m44f::create_rotation_z(f32 rad) {
 }
 
 inline m44f
-m44f::create_scale(f32 x, f32 y, f32 z) {
+m44f_Scale(f32 x, f32 y, f32 z) {
     // NOTE(Momo): 
     //  x  0  0  0
     //  0  y  0  0
@@ -278,14 +245,14 @@ m44f::create_scale(f32 x, f32 y, f32 z) {
 }
 
 inline m44f
-m44f::create_scale(v3f v) {
-    return create_scale(v.x, v.y, v.z);; 
+m44f_Scale(v3f v) {
+    return m44f_Scale(v.x, v.y, v.z);; 
 }
 
 inline m44f 
-m44f::create_orthographic(f32 left, f32 right, 
-                          f32 bottom, f32 top,
-                          f32 near, f32 far) 
+m44f_Orthographic(f32 left, f32 right, 
+                  f32 bottom, f32 top,
+                  f32 near, f32 far) 
 {
     m44f ret = {};
     ret[0][0] = 2.f/(right-left);
@@ -300,9 +267,9 @@ m44f::create_orthographic(f32 left, f32 right,
 }
 
 m44f 
-m44f::create_frustum(f32 left, f32 right, 
-                     f32 bottom, f32 top,
-                     f32 near, f32 far) 
+m44f_Frustum(f32 left, f32 right, 
+             f32 bottom, f32 top,
+             f32 near, f32 far) 
 {
     m44f ret = {};
     ret[0][0] = (2.f*near)/(right-left);
@@ -317,14 +284,14 @@ m44f::create_frustum(f32 left, f32 right,
 }
 
 m44f 
-m44f::create_perspective(f32 fov, f32 aspect,
-                         f32 near, f32 far) 
+m44f_Perspective(f32 fov, f32 aspect,
+                 f32 near, f32 far) 
 {
     f32 top = near * Tan(fov*0.5f);
     f32 right = top * aspect;
-    return create_frustum(-right, right,
-                          -top, top,
-                          near, far);
+    return m44f_Frustum(-right, right,
+                        -top, top,
+                        near, far);
 }
 
 

@@ -11,7 +11,7 @@ struct Game_Mode_Sandbox_Bullet {
 };
 struct Game_Mode_Sandbox {
     Game_Mode_Sandbox_Bullet bullets[2500];
-    Game_Camera camera;
+    Camera camera;
     
     v2f prev_mouse_pos;
     v2f cur_mouse_pos; 
@@ -31,8 +31,8 @@ init_sandbox_mode(Permanent_State* perm_state) {
         mode->camera.anchor = v3f_Create(0.5f, 0.5f, 0.5f);
         mode->camera.color = C4F_GREY2;
         mode->camera.dimensions = v3f_Create(GAME_DESIGN_WIDTH,
-                                              GAME_DESIGN_HEIGHT,
-                                              Game_DesignDepth);
+                                             GAME_DESIGN_HEIGHT,
+                                             Game_DesignDepth);
     }
     
     
@@ -41,10 +41,10 @@ init_sandbox_mode(Permanent_State* perm_state) {
     f32 start_y = GAME_DESIGN_HEIGHT * -0.5f + bullet_radius;
     f32 offset_x = 0.f;
     f32 offset_y = 0.f;
-    for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
+    for (u32 I = 0; I < ArrayCount(mode->bullets); ++I) {
         Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
         b->position = v2f_Create(start_x + offset_x, start_y + offset_y);
-        b->hit_circle = circle2f::create({}, bullet_radius);
+        b->hit_circle = circle2f_Create({}, bullet_radius);
         
         offset_x += bullet_radius * 2; // padding
         if(offset_x >= GAME_DESIGN_WIDTH) {
@@ -70,12 +70,12 @@ update_sandbox_mode(Permanent_State* perm_state,
     // NOTE(Momo): Update
     if (g_input->button_switch.is_poked()) {
         mode->prev_mouse_pos = mode->cur_mouse_pos;
-        mode->cur_mouse_pos = mode->camera.screen_to_world(g_input->design_mouse_pos);
+        mode->cur_mouse_pos = Camera_ScreenToWorld(&mode->camera, g_input->design_mouse_pos);
         ++mode->click_count;
     }
     
     // NOTE(Momo): Update bullets
-    for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
+    for (u32 I = 0; I < ArrayCount(mode->bullets); ++I) {
         Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
         if (b->is_hit) {
             continue;
@@ -91,7 +91,7 @@ update_sandbox_mode(Permanent_State* perm_state,
     if (mode->click_count >= 2) {
         if (!IsEqual(mode->prev_mouse_pos, mode->cur_mouse_pos)) {
             
-            for (u32 i = 0; i < ARRAY_COUNT(mode->bullets); ++i) {
+            for (u32 i = 0; i < ArrayCount(mode->bullets); ++i) {
                 Game_Mode_Sandbox_Bullet* b = mode->bullets + i;
                 if (b->is_hit) {
                     continue;
@@ -99,8 +99,8 @@ update_sandbox_mode(Permanent_State* perm_state,
                 circle2f c = b->hit_circle;
                 c.origin = b->position;
                 
-                circle2f pc = circle2f::create(mode->prev_mouse_pos,
-                                               mode->player_circle_radius);
+                circle2f pc = circle2f_Create(mode->prev_mouse_pos,
+                                              mode->player_circle_radius);
                 v2f pc_vel = mode->cur_mouse_pos - mode->prev_mouse_pos;
                 v2f timed_velocity = b->velocity * dt;
                 
@@ -113,37 +113,37 @@ update_sandbox_mode(Permanent_State* perm_state,
     }
     
     // NOTE(Momo): Render
-    mode->camera.set();
+    Camera_Set(&mode->camera);
     
     // NOTE(Momo): Render bullets
     f32 z_order = 0.f;
-    for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
+    for (u32 I = 0; I < ArrayCount(mode->bullets); ++I) {
         Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
         if (b->is_hit) {
             continue;
         }
-        m44f S = m44f::create_scale(b->hit_circle.radius*2, b->hit_circle.radius*2, 1.f);
-        m44f T = m44f::create_translation(b->position.x,
-                                          b->position.y,
-                                          z_order += 0.001f);
+        m44f S = m44f_Scale(b->hit_circle.radius*2, b->hit_circle.radius*2, 1.f);
+        m44f T = m44f_Translation(b->position.x,
+                                  b->position.y,
+                                  z_order += 0.001f);
         
-        draw_textured_quad_from_image(IMAGE_BULLET_DOT,
-                                      T*S, 
-                                      c4f{1.f, 1.f, 1.f, 0.5f});
+        DrawTexturedQuadFromImage(IMAGE_BULLET_DOT,
+                                  T*S, 
+                                  c4f{1.f, 1.f, 1.f, 0.5f});
     }
     
     // NOTE(Momo) Render Lines
     if (mode->click_count >= 2) {
         z_order = 10.f;
-        Renderer_DrawLine2f(g_renderer, 
+        Renderer_DrawLine(g_renderer, 
                             bonk_line,
                             mode->player_circle_radius * 2,
                             C4F_GREEN,
                             z_order);
         
-        circle2f start_circle = circle2f::create(bonk_line.min, 
-                                                 mode->player_circle_radius);
-        Renderer_DrawCircle2f(g_renderer,
+        circle2f start_circle = circle2f_Create(bonk_line.min, 
+                                                mode->player_circle_radius);
+        Renderer_DrawCircle(g_renderer,
                               start_circle,
                               1.f, 
                               8, 
@@ -151,9 +151,9 @@ update_sandbox_mode(Permanent_State* perm_state,
                               z_order);
         
         
-        circle2f end_circle = circle2f::create(bonk_line.max, 
-                                               mode->player_circle_radius);
-        Renderer_DrawCircle2f(g_renderer,
+        circle2f end_circle = circle2f_Create(bonk_line.max, 
+                                              mode->player_circle_radius);
+        Renderer_DrawCircle(g_renderer,
                               end_circle,
                               1.f, 
                               8, 

@@ -78,7 +78,7 @@ Image_ID karu_front_frames[] = {
 
 static Asset_Builder_Anime_Context
 g_anime_contexts[] = {
-    ANIME_KARU_FRONT, karu_front_frames, ARRAY_COUNT(karu_front_frames),
+    ANIME_KARU_FRONT, karu_front_frames, ArrayCount(karu_front_frames),
 };
 
 

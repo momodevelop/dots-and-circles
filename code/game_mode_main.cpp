@@ -88,7 +88,7 @@ init_main_mode(Permanent_State* perm_state,
 #endif
     
     
-    mode->camera.set();
+    Camera_Set(&mode->camera);
     
     mode->state = GAME_MODE_MAIN_STATE_SPAWN;
     return true; 
@@ -170,7 +170,7 @@ update_main_mode_spawn_state(Permanent_State* perm_state,
 {
     Game_Mode_Main* mode = perm_state->main_mode;
     
-    f32 ease = ease_out_bounce(CLAMP(mode->spawn_timer/mode->spawn_duration, 0.f, 1.f));
+    f32 ease = EaseOutBounce(Clamp(mode->spawn_timer/mode->spawn_duration, 0.f, 1.f));
     mode->player.size = mode->player.max_size * ease;
     
     update_input(mode);
@@ -215,19 +215,15 @@ update_main_mode(Permanent_State* perm_state,
     
     //Main_RenderDebugLines(mode, RenderCommands);
     String buffer = String_Create("Dots: ");
-    debug_state->inspector.push_u32(buffer,
-                                    mode->dot_bullets.count);
+    Inspector_Push(&debug_state->inspector, buffer, mode->dot_bullets.count);
     buffer = String_Create("Circles: ");
-    debug_state->inspector.push_u32(buffer, 
-                                    mode->circle_bullets.count);
+    Inspector_Push(&debug_state->inspector, buffer, mode->circle_bullets.count);
     
     buffer = String_Create("Bullets: ");
-    debug_state->inspector.push_u32(buffer, 
-                                    mode->dot_bullets.count + mode->circle_bullets.count);
+    Inspector_Push(&debug_state->inspector, buffer, mode->dot_bullets.count + mode->circle_bullets.count);
     
     buffer = String_Create("enemies: ");
-    debug_state->inspector.push_u32(buffer, 
-                                    mode->enemies.count);
+    Inspector_Push(&debug_state->inspector, buffer, mode->enemies.count);
 }
 
 #endif //GAME_MODE_H

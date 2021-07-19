@@ -29,19 +29,19 @@ Splash_Image_Entity::update(f32 dt)
         return;
     
     // NOTE(Momo): Update
-    f32 Ease = ease_out_bounce(CLAMP(this->timer/this->duration, 0.f, 1.f));
+    f32 Ease = EaseOutBounce(Clamp(this->timer/this->duration, 0.f, 1.f));
     
     this->position.x = this->start_x + (this->end_x - this->start_x) * Ease; 
     this->timer += dt;
     
     // NOTE(Momo): Render
-    m44f T = m44f::create_translation(this->position.x,
+    m44f T = m44f_Translation(this->position.x,
                                       this->position.y,
                                       this->position.z);
-    m44f S = m44f::create_scale(this->scale.x,
+    m44f S = m44f_Scale(this->scale.x,
                                 this->scale.y,
                                 1.f);
-    draw_textured_quad_from_image(this->texture_aabb,
+    DrawTexturedQuadFromImage(this->texture_aabb,
                                   T*S,
                                   this->colors);
     
@@ -69,14 +69,14 @@ Splash_Blackout_Entity::update(f32 dt)
     if (this->cd_timer <= this->cd_duration) 
         return;
     
-    this->colors.a = ease_in_sine(CLAMP(this->timer/this->duration, 0.f, 1.f));
+    this->colors.a = EaseInSine(Clamp(this->timer/this->duration, 0.f, 1.f));
     this->timer += dt;
     
     // NOTE(Momo): Render
-    m44f T = m44f::create_translation(this->position.x,
+    m44f T = m44f_Translation(this->position.x,
                                       this->position.y,
                                       this->position.z);
-    m44f S = m44f::create_scale(this->scale.x, this->scale.y, 1.f);
+    m44f S = m44f_Scale(this->scale.x, this->scale.y, 1.f);
     
     Renderer_DrawQuad(g_renderer, this->colors, T*S);
     
@@ -146,13 +146,13 @@ update_splash_mode(Permanent_State* perm_state,
         
         Renderer_ClearColor(g_renderer, color);
         
-        aabb3f frustum = aabb3f::create_centered(dimensions, anchor);
+        aabb3f frustum = aabb2u_CreateCentered(dimensions, anchor);
         Renderer_SetOrthoCamera(g_renderer, 
                                 position, 
                                 frustum);
     }
     
-    for (u32 i = 0; i < ARRAY_COUNT(mode->images); ++i) {
+    for (u32 i = 0; i < ArrayCount(mode->images); ++i) {
         mode->images[i].update(dt);
     }
     

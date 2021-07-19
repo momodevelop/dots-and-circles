@@ -108,18 +108,18 @@ ConsumeBlock(void** p, u32 size) {
 
 template<typename type>
 static inline void
-consume_struct(void** memory) {
+Consume(void** memory) {
     return (type*)ConsumeBlock(memory, sizeof(type));
 }
 
 static inline void
-write_block(void** P, void* Item, u32 ItemSize) {
+WriteBlock(void** P, void* Item, u32 ItemSize) {
     // TODO
 }
 
 template<typename T>
 static inline void
-write_struct(void** P, T Item) {
+Write(void** P, T Item) {
     T* LocationAsT = (T*)(*P);
     (*LocationAsT) = Item;
     (*P) = (u8*)(*P) + sizeof(T);

@@ -81,7 +81,7 @@ Enemy_DoStateActive(Enemy* enemy, Player* player, Game_Mode_Main* mode, f32 dt) 
         case ENEMY_SHOOT_TYPE_8_DIR: {
             Enemy_Shoot_8_Dir* shoot = &enemy->shoot_8_dir;
             shoot->timer += dt;
-            static m22f rotate_mtx = m22f::create_rotation(TAU/8);
+            static m22f rotate_mtx = m22f_Rotation(TAU/8);
             if (shoot->timer > shoot->duration) {
                 v2f dir = v2f_Create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
@@ -150,7 +150,7 @@ render_enemies(Game_Mode_Main* mode)
         switch(enemy->state) {
             case EnemyState_Spawning: {
                 Enemy_State_Spawn* spawn = &enemy->state_spawn;
-                f32 ease = ease_out_quad(spawn->timer/spawn->duration);
+                f32 ease = EaseOutQuad(spawn->timer/spawn->duration);
                 size = enemy->size * ease;
             } break;
             case EnemyState_Dying: {
@@ -159,13 +159,13 @@ render_enemies(Game_Mode_Main* mode)
                 size = enemy->size * ease;
             }
         }
-        m44f s = m44f::create_scale(size, size, 1.f);
-        m44f r = m44f::create_rotation_z(enemy->rotation);
-        m44f t = m44f::create_translation(enemy->position.x,
+        m44f s = m44f_Scale(size, size, 1.f);
+        m44f r = m44f_RotationZ(enemy->rotation);
+        m44f t = m44f_Translation(enemy->position.x,
                                           enemy->position.y,
                                           ZLayEnemy + offset);
         
-        draw_textured_quad_from_image(IMAGE_ENEMY,
+        DrawTexturedQuadFromImage(IMAGE_ENEMY,
                                       t*r*s, 
                                       C4F_WHITE);
     };

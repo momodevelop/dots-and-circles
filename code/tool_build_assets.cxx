@@ -53,8 +53,8 @@ int main() {
     //~ NOTE(Momo): Initialize context for images in atlas
     
     
-    Atlas_Context_Image atlas_image_contexts[ARRAY_COUNT(g_image_contexts)] = {};
-    for (u32 I = 0; I < ARRAY_COUNT(g_image_contexts); ++I) {
+    Atlas_Context_Image atlas_image_contexts[ArrayCount(g_image_contexts)] = {};
+    for (u32 I = 0; I < ArrayCount(g_image_contexts); ++I) {
         Asset_Builder_Image_Context* builder_context = g_image_contexts + I;
         Atlas_Context_Image* atlas_context = atlas_image_contexts + I;
         
@@ -69,18 +69,18 @@ int main() {
     //~ NOTE(Momo): Initialize contexts for font images in atlas
     Atlas_Context_Font atlas_font_contexts[FONT_GLYPH_COUNT];
     
-    const u32 aabb_count = ARRAY_COUNT(atlas_image_contexts) + ARRAY_COUNT(atlas_font_contexts);
+    const u32 aabb_count = ArrayCount(atlas_image_contexts) + ArrayCount(atlas_font_contexts);
     aabb2u aabbs[aabb_count] = {};
     void* user_datas[aabb_count] = {};
     u32 aabb_counter = 0;
-    for (u32 I = 0; I < ARRAY_COUNT(atlas_image_contexts); ++I ) {
+    for (u32 I = 0; I < ArrayCount(atlas_image_contexts); ++I ) {
         Atlas_Context_Image* Context = atlas_image_contexts + I;
         aabb2u* aabb = aabbs + aabb_counter;
         
         s32 W, H, C;
         stbi_info(Context->filename, &W, &H, &C);
         
-        (*aabb) = aabb2u::create_wh((u32)W, (u32)H);
+        (*aabb) = aabb2u_CreateWH((u32)W, (u32)H);
         
         
         user_datas[aabb_counter] = Context;
@@ -88,7 +88,7 @@ int main() {
         ++aabb_counter;
     }
     
-    for (u32 i = 0; i < ARRAY_COUNT(atlas_font_contexts); ++i) {
+    for (u32 i = 0; i < ArrayCount(atlas_font_contexts); ++i) {
         Atlas_Context_Font* font = atlas_font_contexts + i;
         font->type = ATLAS_CONTEXT_TYPE_FONT;
         font->loaded_font = &loaded_font;
@@ -106,7 +106,7 @@ int main() {
                                      font->raster_scale, 
                                      &ix0, &iy0, &ix1, &iy1);
         
-        (*aabb) = aabb2u::create_wh((u32)(ix1 - ix0), (u32)(iy1 - iy0));
+        (*aabb) = aabb2u_CreateWH((u32)(ix1 - ix0), (u32)(iy1 - iy0));
         user_datas[aabb_counter] = font;
         
         ++aabb_counter;
@@ -189,7 +189,7 @@ int main() {
                                           &box.max.x, 
                                           &box.max.y);
                     
-                    aabb2f scaled_box = Mul(to_aabb2f(box), font_pixel_scale);
+                    aabb2f scaled_box = Mul(aabb2f_Create(box), font_pixel_scale);
                     asset_builder.write_font_glyph(font->font_id, 
                                                    font->image_id,
                                                    font->texture_id,
@@ -244,7 +244,7 @@ int main() {
     //NOTE(Momo): Anime
     printf("[Build Assets] Writing Anime...\n");
     {
-        for(u32 i = 0; i < ARRAY_COUNT(g_anime_contexts); ++i) {
+        for(u32 i = 0; i < ArrayCount(g_anime_contexts); ++i) {
             Asset_Builder_Anime_Context * ctx = g_anime_contexts + i;
             asset_builder.write_anime(ctx->id,
                                       ctx->frames,
@@ -255,7 +255,7 @@ int main() {
     // NOTE(Momo): Msg
     printf("[Build Assets] Writing Msg...\n");
     {
-        for(u32 i = 0; i < ARRAY_COUNT(g_msg_contexts); ++i) {
+        for(u32 i = 0; i < ArrayCount(g_msg_contexts); ++i) {
             Asset_Builder_Msg_Context* ctx = g_msg_contexts + i;
             asset_builder.write_msg(ctx->id,
                                     ctx->str);
@@ -265,7 +265,7 @@ int main() {
     
     printf("[Build Assets] Writing Sound...\n");
     {
-        for(u32 I = 0; I < ARRAY_COUNT(g_sound_contexts); ++I) {
+        for(u32 I = 0; I < ArrayCount(g_sound_contexts); ++I) {
             Asset_Builder_Sound_Context* ctx = g_sound_contexts + I;
             
             Arena_Marker mark = Arena_Mark(&arena);

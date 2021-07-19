@@ -23,7 +23,7 @@ create(Anime_Component* a,
 
 static inline void
 update(Anime_Component* a, f32 dt) {
-    Anime* anime = g_assets->get_anime(ANIME_KARU_FRONT);
+    Anime* anime = Assets_GetAnime(g_assets, ANIME_KARU_FRONT);
     a->timer_per_frame += dt;
     
     a->timer_per_frame += dt;
@@ -72,17 +72,17 @@ update_anime_test_mode(Permanent_State* perm_state,
     update(&entity->anime_com, delta_time);
     
     // TODO(Momo): Draw function?
-    m44f t = m44f::create_translation(entity->pos.x, entity->pos.y, entity->pos.z);
-    m44f s = m44f::create_scale(entity->size.x, entity->size.y, entity->size.z);
+    m44f t = m44f_Translation(entity->pos.x, entity->pos.y, entity->pos.z);
+    m44f s = m44f_Scale(entity->size.x, entity->size.y, entity->size.z);
     
     c4f color = C4F_WHITE;
     Anime_Component* anime_com = &entity->anime_com;
     {
-        Anime* anime = g_assets->get_anime(anime_com->anime_id);
+        Anime* anime = Assets_GetAnime(g_assets, anime_com->anime_id);
         Image_ID image_id = anime->frames[anime_com->current_frame_index];
-        draw_textured_quad_from_image(image_id,
-                                      t*s,
-                                      color);
+        DrawTexturedQuadFromImage(image_id,
+                                  t*s,
+                                  color);
         
     }
     

@@ -16,7 +16,7 @@ static inline String
 String_Create(const c8* cstr) {
     String ret = {};
     ret.data = (u8*)cstr;
-    ret.count = cstr_length(cstr);
+    ret.count = Sistr_Length(cstr);
     return ret;
     
 }
@@ -206,7 +206,7 @@ StringBuffer_Push(StringBuffer* s, u32 num) {
     // Reverse starting from start point to count
     u32 sub_str_len_half = (s->count - start_pt)/2;
     for(u32 i = 0; i < sub_str_len_half; ++i) {
-        SWAP(s->data[start_pt + i], s->data[s->count - 1 - i]);
+        Swap(s->data[start_pt + i], s->data[s->count - 1 - i]);
     }
     return true;
 }
@@ -224,7 +224,7 @@ StringBuffer_Push(StringBuffer* s, s32 num) {
     u32 start_pt = s->count; 
     
     b8 Negative = num < 0;
-    num = ABS(num);
+    num = Abs(num);
     
     for(; num != 0; num /= 10) {
         s32 digit_to_convert = num % 10;
@@ -238,7 +238,7 @@ StringBuffer_Push(StringBuffer* s, s32 num) {
     // Reverse starting from start point to count
     u32 sub_str_len_half = (s->count - start_pt)/2;
     for(u32 i = 0; i < sub_str_len_half; ++i) {
-        SWAP(s->data[start_pt + i], 
+        Swap(s->data[start_pt + i], 
              s->data[s->count-1-i]);
         
     }

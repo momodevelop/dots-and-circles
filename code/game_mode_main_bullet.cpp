@@ -23,7 +23,7 @@ spawn_bullet(Game_Mode_Main* mode,
     b->position = position;
 	b->speed = speed;
     b->size = v2f_Create(16.f, 16.f);
-    b->hit_circle = circle2f::create(v2f_Create(0.f, 0.f), 4.f);
+    b->hit_circle = circle2f_Create(v2f_Create(0.f, 0.f), 4.f);
     
     if (LengthSq(direction) > 0.f) {
 	    b->direction = Normalize(direction);
@@ -57,15 +57,15 @@ render_bullets(Game_Mode_Main* mode)
     // Thus we have to render Dots first before Circles.
     f32 layer_offset = 0.f;
     auto for_lamb = [&](Bullet* b, Image_ID image) {
-        m44f s = m44f::create_scale(b->size.x, 
+        m44f s = m44f_Scale(b->size.x, 
                                     b->size.y, 
                                     1.f);
         
-        m44f t = m44f::create_translation(b->position.x,
+        m44f t = m44f_Translation(b->position.x,
                                           b->position.y,
                                           ZLayBullet + layer_offset);
         
-        draw_textured_quad_from_image(image,
+        DrawTexturedQuadFromImage(image,
                                       t*s, 
                                       C4F_WHITE);
         layer_offset += 0.00001f;

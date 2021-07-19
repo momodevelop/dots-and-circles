@@ -33,7 +33,7 @@ Asset_Builder::begin(const char* filename,
     ASSERT(this->file);
     
     // NOTE(Momo): Write signature
-    fwrite(signature, sizeof(u8), cstr_length(signature), this->file);
+    fwrite(signature, sizeof(u8), Sistr_Length(signature), this->file);
     this->entry_count_at = ftell(this->file);
     
     // NOTE(Momo): Reserve space for entry_count
@@ -195,7 +195,7 @@ Asset_Builder::write_msg(Msg_ID msg_id,
     
     Asset_File_Msg msg = {};
     msg.id = msg_id;
-    msg.count = cstr_length(message) - 1;
+    msg.count = Sistr_Length(message) - 1;
     
     fwrite(&msg, sizeof(msg), 1, this->file);
     fwrite(message, sizeof(char), msg.count, this->file);

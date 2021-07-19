@@ -94,7 +94,7 @@ struct Win32_State {
     
     // Handle pool
     HANDLE handles[8];
-    u32 handle_free_list[ARRAY_COUNT(handles)];
+    u32 handle_free_list[ArrayCount(handles)];
     u32 handle_free_count;
     
     Opengl* opengl;
@@ -108,7 +108,7 @@ static inline void
 win32_write_console(const char* Message) {
     WriteConsoleA(g_std_out,
                   Message, 
-                  cstr_length(Message), 
+                  Sistr_Length(Message), 
                   0, 
                   NULL);
 }
@@ -301,10 +301,10 @@ win32_init() {
     
     // NOTE(Momo): initialize file handle store
     //Globalfile_handles = CreatePool<HANDLE>(&g_state->Arena, 8);
-    for (u32 i = 0; i < ARRAY_COUNT(state->handles); ++i) {
+    for (u32 i = 0; i < ArrayCount(state->handles); ++i) {
         state->handle_free_list[i] = i;
     }
-    state->handle_free_count = ARRAY_COUNT(state->handles);
+    state->handle_free_count = ArrayCount(state->handles);
     
 #if INTERNAL
     // NOTE(Momo): initialize console
@@ -1186,13 +1186,13 @@ PLATFORM_LOG_FILE_ERROR_DECL(win32_log_file_error) {
 
 static inline
 PLATFORM_CLOSE_FILE_DECL(win32_close_file) {
-    ASSERT(handle->id < ARRAY_COUNT(g_state->handles));
+    ASSERT(handle->id < ArrayCount(g_state->handles));
     HANDLE win32_handle = g_state->handles[handle->id];
     if (win32_handle != INVALID_HANDLE_VALUE) {
         CloseHandle(win32_handle); 
     }
     g_state->handle_free_list[g_state->handle_free_count++] = handle->id;
-    ASSERT(g_state->handle_free_count <= ARRAY_COUNT(g_state->handles));
+    ASSERT(g_state->handle_free_count <= ArrayCount(g_state->handles));
 }
 static inline
 PLATFORM_ADD_TEXTURE_DECL(win32_add_texture) {
@@ -1209,7 +1209,7 @@ PLATFORM_READ_FILE_DECL(win32_read_file) {
     if (handle->error) {
         return;
     }
-    ASSERT(handle->id < ARRAY_COUNT(g_state->handles));
+    ASSERT(handle->id < ArrayCount(g_state->handles));
     
     HANDLE win32_handle = g_state->handles[handle->id];
     OVERLAPPED overlapped = {};

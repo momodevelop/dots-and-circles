@@ -46,11 +46,11 @@ render_particles(Game_Mode_Main* mode) {
         
         f32 Offset = current_count*0.001f;
         
-        m44f S = m44f::create_scale(size, size, 1.f);
-        m44f T = m44f::create_translation(p->position.x,
+        m44f S = m44f_Scale(size, size, 1.f);
+        m44f T = m44f_Translation(p->position.x,
                                           p->position.y,
                                           ZLayParticles + Offset);
-        draw_textured_quad_from_image(IMAGE_PARTICLE,
+        DrawTexturedQuadFromImage(IMAGE_PARTICLE,
                                       T*S,
                                       c4f::create(1.f, 1.f, 1.f, alpha));
         ++current_count;

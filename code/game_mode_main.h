@@ -98,7 +98,7 @@ struct Game_Mode_Main {
     static constexpr f32 spawn_duration = 1.f;
     
     Player player;
-    Game_Camera camera;
+    Camera camera;
     
     List<Bullet> circle_bullets;
     List<Bullet> dot_bullets;
@@ -111,7 +111,7 @@ struct Game_Mode_Main {
     BigInt score;
     
     // Audio handles
-    Game_Audio_Mixer_Handle bgm_handle;
+    AudioMixer_Handle bgm_handle;
     
     
 };

@@ -327,7 +327,7 @@ load_png_from_memory(Png_Image* png,
     static constexpr u8 png_signature[] = { 
         137, 80, 78, 71, 13, 10, 26, 10 
     };
-    for (u32 I = 0; I < ARRAY_COUNT(png_signature); ++I) {
+    for (u32 I = 0; I < ArrayCount(png_signature); ++I) {
         if (png_signature[I] != png_header->signature[I]) {
             PNG_LOG("Png Singature wrong!\n");
             return PngError_Badsignature;

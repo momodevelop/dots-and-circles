@@ -44,7 +44,7 @@ _QuickSortPartition(SortEntry* arr,
         // If the value left of large_index is smaller than pivot,
         // swap positions with the value in small_index
         else {
-            SWAP(arr[large_index-1], arr[small_index]);
+            Swap(arr[large_index-1], arr[small_index]);
             ++small_index;
         }
     }

@@ -2,21 +2,20 @@
 #define __GAME_CONSOLE__
 
 
-typedef void (*Debug_Console_Callback)(struct Debug_Console* console, void* context, String args);
+typedef void (*Console_Callback)(struct Console* console, void* context, String args);
 
-struct Debug_Console_Command {
+struct Console_Command {
     String key;
-    Debug_Console_Callback callback;
+    Console_Callback callback;
     void* context;
 };
 
-struct Debug_Console_Line {
+struct Console_Line {
     StringBuffer text;
     c4f color;
 };
 
-struct Debug_Console {
-    //- Variables 
+struct Console {
     b8 is_active;
     
     v3f dimensions;
@@ -24,8 +23,8 @@ struct Debug_Console {
     v3f start_position;
     v3f end_position;
     
-    Array<Debug_Console_Line> info_lines;
-    Debug_Console_Line input_line;
+    Array<Console_Line> info_lines;
+    Console_Line input_line;
     
     // Backspace (to delete character) related
     // Maybe make an easing system?
@@ -37,55 +36,45 @@ struct Debug_Console {
     Timer transit_timer;
     
     // List of commands
-    List<Debug_Console_Command> commands;
-    
-    
-    //- Functions
-    inline b8 init(Arena* arena, u32 max_commands);
-    inline b8 add_command(String key, Debug_Console_Callback callback, void* context);
-    inline void push_info(String str, c4f color);
-    inline void pop();
-    inline void update(f32 dt);
-    inline void render();
-    inline void remove_command(String key);
+    List<Console_Command> commands;
 };
 
 
-b8
-Debug_Console::init(Arena* arena, u32 max_commands)
+static inline b8
+Console_Init(Console* c, Arena* arena, u32 max_commands)
 {
     const u32 line_length = 110;
     const u32 info_line_count = 5;
     const f32 z_position = 90.f;
     
-    transit_timer = Timer::create(0.25f);
+    c->transit_timer = Timer::create(0.25f);
     
-    dimensions = v3f_Create(GAME_DESIGN_WIDTH, 240.f, 1.f);
-    start_position = v3f_Create(0.f, 
-                                -GAME_DESIGN_HEIGHT/2 - dimensions.h/2,
-                                z_position);
-    end_position = v3f_Create(0.f, 
-                              -GAME_DESIGN_HEIGHT/2 + dimensions.h/2,
-                              z_position);
-    position = v3f_Create();
+    c->dimensions = v3f_Create(GAME_DESIGN_WIDTH, 240.f, 1.f);
+    c->start_position = v3f_Create(0.f, 
+                                   -GAME_DESIGN_HEIGHT/2 - c->dimensions.h/2,
+                                   z_position);
+    c->end_position = v3f_Create(0.f, 
+                                 -GAME_DESIGN_HEIGHT/2 + c->dimensions.h/2,
+                                 z_position);
+    c->position = v3f_Create();
     
     // NOTE(Momo): Timers related to type
-    start_pop_repeat_timer = Timer::create(0.5f);
-    pop_repeat_timer = Timer::create(0.1f); 
+    c->start_pop_repeat_timer = Timer::create(0.5f);
+    c->pop_repeat_timer = Timer::create(0.1f); 
     
-    if (!List_Alloc(&commands, arena, max_commands)) {
+    if (!List_Alloc(&c->commands, arena, max_commands)) {
         return false;
     }
     
-    if (!StringBuffer_Alloc(&input_line.text, arena, line_length)) {
+    if (!StringBuffer_Alloc(&c->input_line.text, arena, line_length)) {
         return false;
     }
     
-    if (!Array_Alloc(&info_lines, arena, 5)) {
+    if (!Array_Alloc(&c->info_lines, arena, 5)) {
         return false;
     }
-    for (u32 i = 0; i < info_lines.count; ++i) {
-        if (!StringBuffer_Alloc(&info_lines[i].text, arena, line_length)){
+    for (u32 i = 0; i < c->info_lines.count; ++i) {
+        if (!StringBuffer_Alloc(&c->info_lines[i].text, arena, line_length)){
             return false;
         }
     }
@@ -93,12 +82,12 @@ Debug_Console::init(Arena* arena, u32 max_commands)
     return true;
 }
 
-b8 
-Debug_Console::add_command(String key, 
-                           Debug_Console_Callback callback, 
-                           void* context)
+static inline b8 
+Console_AddCommand(Console* c, String key, 
+                   Console_Callback callback, 
+                   void* context)
 {
-    Debug_Console_Command* command = List_Push(&commands);
+    Console_Command* command = List_Push(&c->commands);
     if (command == nullptr) {
         return false;
     }
@@ -111,31 +100,31 @@ Debug_Console::add_command(String key,
 
 
 
-void
-Debug_Console::push_info(String str, c4f color) {
-    for (u32 i = 0; i < info_lines.count - 1; ++i) {
-        u32 j = info_lines.count - 1 - i;
-        Debug_Console_Line* dest = info_lines + j;
-        Debug_Console_Line* src = info_lines + j - 1;
+static inline void
+Console_PushInfo(Console* c, String str, c4f color) {
+    for (u32 i = 0; i < c->info_lines.count - 1; ++i) {
+        u32 j = c->info_lines.count - 1 - i;
+        Console_Line* dest = c->info_lines + j;
+        Console_Line* src = c->info_lines + j - 1;
         StringBuffer_Copy(&dest->text, src->text.str);
         dest->color = src->color;
     }
-    info_lines[0].color = color;
-    StringBuffer_Clear(&info_lines[0].text);
-    StringBuffer_Copy(&info_lines[0].text, str);
+    c->info_lines[0].color = color;
+    StringBuffer_Clear(&c->info_lines[0].text);
+    StringBuffer_Copy(&c->info_lines[0].text, str);
 }
 
 
-void 
-Debug_Console::pop() {
-    StringBuffer_Pop(&input_line.text);
+static inline void 
+Console_Pop(Console* c) {
+    StringBuffer_Pop(&c->input_line.text);
 }
 
-void 
-Debug_Console::remove_command(String key) {
-    for (u32 i = 0; i < commands.count; ++i) {
-        if (commands[i].key == key) {
-            List_Slear(&commands, i);
+static inline void 
+Console_RemoveCommand(Console* c, String key) {
+    for (u32 i = 0; i < c->commands.count; ++i) {
+        if (c->commands[i].key == key) {
+            List_Slear(&c->commands, i);
             return;
         }
     }
@@ -143,60 +132,60 @@ Debug_Console::remove_command(String key) {
 }
 
 // Returns true if there is a new command
-void 
-Debug_Console::update(f32 dt) 
+static inline void 
+Console_Update(Console* c, f32 dt) 
 {
     if (g_input->button_console.is_poked()) {
-        is_active = !is_active; 
+        c->is_active = !c->is_active; 
     }
     
     // Transition
     {
-        f32 p = ease_in_quad(transit_timer.percent());
-        v3f delta = (end_position - start_position) * p; 
-        position = start_position + delta; 
+        f32 p = EaseInQuad(c->transit_timer.percent());
+        v3f delta = (c->end_position - c->start_position) * p; 
+        c->position = c->start_position + delta; 
     }
     
-    if (is_active) {
-        transit_timer.tick(dt);
+    if (c->is_active) {
+        c->transit_timer.tick(dt);
         if (g_input->characters.count > 0 && 
-            g_input->characters.count <= StringBuffer_Remaining(&input_line.text))
+            g_input->characters.count <= StringBuffer_Remaining(&c->input_line.text))
         {  
-            StringBuffer_Push(&input_line.text, g_input->characters.str);
+            StringBuffer_Push(&c->input_line.text, g_input->characters.str);
         }
         
         // Remove character backspace logic
         if (g_input->button_back.is_down()) {
-            if(!is_start_pop) {
-                pop();
-                is_start_pop = true;
-                start_pop_repeat_timer.reset();
-                pop_repeat_timer.reset();
+            if(!c->is_start_pop) {
+                Console_Pop(c);
+                c->is_start_pop = true;
+                c->start_pop_repeat_timer.reset();
+                c->pop_repeat_timer.reset();
             }
             else {
-                if (start_pop_repeat_timer.is_end()) {
-                    if(pop_repeat_timer.is_end()) {
-                        pop();
-                        pop_repeat_timer.reset();
+                if (c->start_pop_repeat_timer.is_end()) {
+                    if(c->pop_repeat_timer.is_end()) {
+                        Console_Pop(c);
+                        c->pop_repeat_timer.reset();
                     }
-                    pop_repeat_timer.tick(dt);
+                    c->pop_repeat_timer.tick(dt);
                 }
-                start_pop_repeat_timer.tick(dt);
+                c->start_pop_repeat_timer.tick(dt);
             }
         }
         else {
-            is_start_pop = false; 
+            c->is_start_pop = false; 
         }
         
         // Execute command
-        String input_line_str = input_line.text.str;
+        String input_line_str = c->input_line.text.str;
         if (g_input->button_confirm.is_poked()) {
-            push_info(input_line_str, C4F_WHITE);
+            Console_PushInfo(c, input_line_str, C4F_WHITE);
             
             u32 min = 0;
             u32 max = 0;
-            for (u32 i = 0; i < input_line.text.count; ++i) {
-                if (input_line.text.data[i] == ' ') {
+            for (u32 i = 0; i < c->input_line.text.count; ++i) {
+                if (c->input_line.text.data[i] == ' ') {
                     max = i;
                     break;
                 }
@@ -204,89 +193,84 @@ Debug_Console::update(f32 dt)
             String command_str = String_Create(input_line_str, min, max);
             
             // Send a command to a callback
-            for (u32 i = 0; i < commands.count; ++i) {
-                Debug_Console_Command* command = commands + i;
+            for (u32 i = 0; i < c->commands.count; ++i) {
+                Console_Command* command = c->commands + i;
                 if (command->key == command_str) {
-                    command->callback(this, 
+                    command->callback(c, 
                                       command->context, 
                                       input_line_str);
                 }
             }
             
-            StringBuffer_Clear(&input_line.text);
+            StringBuffer_Clear(&c->input_line.text);
             
         }
     }
-    else if (!is_active) {
-        transit_timer.untick(dt);
+    else if (!c->is_active) {
+        c->transit_timer.untick(dt);
     }
     
     
 }
 
 
-void
-Debug_Console::render() 
+static inline void
+Console_Render(Console* c) 
 {
-    if (transit_timer.is_begin()) {
+    if (c->transit_timer.is_begin()) {
         return;
     }
     
-    Font* font= g_assets->get_font(FONT_DEFAULT);
-    f32 bottom = position.y - dimensions.h * 0.5f;
-    f32 left = position.x - dimensions.w * 0.5f;
-    f32 line_height = dimensions.h / (info_lines.count + 1);
+    Font* font= Assets_GetFont(g_assets, FONT_DEFAULT);
+    f32 bottom = c->position.y - c->dimensions.h * 0.5f;
+    f32 left = c->position.x - c->dimensions.w * 0.5f;
+    f32 line_height = c->dimensions.h / (c->info_lines.count + 1);
     f32 font_size = line_height * 0.9f;
-    f32 font_height = font->Height() * font_size;
+    f32 font_height = Font_Height(font) * font_size;
     
-    f32 padding_h = (line_height - font_height) * 0.5f  + ABS(font->descent) * font_size; 
-    f32 padding_w = dimensions.w * 0.005f;
+    f32 padding_h = (line_height - font_height) * 0.5f  + Abs(font->descent) * font_size; 
+    f32 padding_w = c->dimensions.w * 0.005f;
     {
-        m44f s = m44f::create_scale(dimensions);
-        m44f p = m44f::create_translation(position);
-        Renderer_DrawQuad(g_renderer, 
-                          C4F_GREY3, 
-                          p* s);
+        m44f s = m44f_Scale(c->dimensions);
+        m44f p = m44f_Translation(c->position);
+        Renderer_DrawQuad(g_renderer, C4F_GREY3, p*s);
     }
     
     {
-        m44f s = m44f::create_scale(dimensions.w, line_height, 0.f);
-        m44f p = m44f::create_translation(position.x, 
-                                          bottom + line_height * 0.5f,
-                                          position.z + 0.01f);
+        m44f s = m44f_Scale(c->dimensions.w, line_height, 0.f);
+        m44f p = m44f_Translation(c->position.x, 
+                                  bottom + line_height * 0.5f,
+                                  c->position.z + 0.01f);
         
-        
-        Renderer_DrawQuad(g_renderer, 
-                          C4F_GREY2, 
-                          p* s);
+        Renderer_DrawQuad(g_renderer, C4F_GREY2, p*s);
     }
     
     // Draw info text
     {
-        for (u32 i = 0; i < info_lines.count ; ++i) {
+        for (u32 i = 0; i < c->info_lines.count ; ++i) {
             v3f text_position = {};
             text_position.x = left + padding_w;
             text_position.y = bottom + ((i+1) * line_height) + padding_h;
-            text_position.z = position.z + 0.01f;
+            text_position.z = c->position.z + 0.01f;
             
-            String infoLineCStr = info_lines[i].text.str;
-            draw_text(FONT_DEFAULT, 
-                      text_position,
-                      info_lines[i].text.str,
-                      font_size,
-                      info_lines[i].color);
+            String infoLineCStr = c->info_lines[i].text.str;
+            DrawText(FONT_DEFAULT, 
+                     text_position,
+                     c->info_lines[i].text.str,
+                     font_size,
+                     c->info_lines[i].color);
         }
         
         v3f text_position = {};
         text_position.x = left + padding_w;
         text_position.y = bottom + padding_h;
-        text_position.z = position.z + 0.02f;
+        text_position.z = c->position.z + 0.02f;
         
-        draw_text(FONT_DEFAULT, 
-                  text_position,
-                  input_line.text.str,
-                  font_size,
-                  C4F_WHITE);
+        DrawText(FONT_DEFAULT, 
+                 text_position,
+                 c->input_line.text.str,
+                 font_size,
+                 C4F_WHITE);
         
         
     }

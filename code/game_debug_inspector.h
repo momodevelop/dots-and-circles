@@ -4,29 +4,22 @@
 #define GAME_DEBUG_INSPECTOR_H
 
 
-struct Debug_Inspector {
+struct Inspector {
     b8 is_active;
     List<StringBuffer> entries;
-    
-    inline b8 init(Arena* arena);
-    inline void begin();
-    inline void end();
-    inline StringBuffer* push_entry(String label);
-    inline void push_u32(String label, u32 item);
-    inline void push_s32(String label, s32 item);
 };
 
 b8
-Debug_Inspector::init(Arena* arena) {
+Inspector_Init(Inspector* in, Arena* arena) {
     constexpr static u32 entry_count = 32;
     
-    this->is_active = false;
-    if (!List_Alloc(&this->entries, arena, entry_count)) {
+    in->is_active = false;
+    if (!List_Alloc(&in->entries, arena, entry_count)) {
         return false;
     }
     
     for (u32 i = 0; i < entry_count; ++i) {
-        StringBuffer* item = List_Push(&this->entries);
+        StringBuffer* item = List_Push(&in->entries);
         if (!StringBuffer_Alloc(item, arena, entry_count)) {
             return false;
         }
@@ -36,23 +29,23 @@ Debug_Inspector::init(Arena* arena) {
 }
 
 void
-Debug_Inspector::begin() {
-    if(!this->is_active)
+Inspector_Begin(Inspector* in) {
+    if(!in->is_active)
         return;
     
-    List_Clear(&this->entries);
+    List_Clear(&in->entries);
 }
 
 void 
-Debug_Inspector::end() 
+Inspector_End(Inspector* in) 
 {
-    if(!this->is_active)
+    if(!in->is_active)
         return;
     
     f32 offset_y = 0.f;
     
-    for (u32 I = 0; I < this->entries.count; ++I) {
-        StringBuffer* entry = this->entries + I;
+    for (u32 i = 0; i < in->entries.count; ++i) {
+        StringBuffer* entry = in->entries + i;
         v3f position = { 
             -GAME_DESIGN_WIDTH * 0.5f + 10.f, 
             (GAME_DESIGN_HEIGHT * 0.5f - 32.f) + offset_y, 
@@ -60,40 +53,41 @@ Debug_Inspector::end()
         }; 
         
         
-        draw_text(FONT_DEFAULT, 
-                  position, 
-                  entry->str,
-                  32.f, 
-                  C4F_WHITE);
+        DrawText(FONT_DEFAULT, 
+                 position, 
+                 entry->str,
+                 32.f, 
+                 C4F_WHITE);
         StringBuffer_Clear(entry);
         offset_y -= 32.f;
     }
 }
 
 StringBuffer*
-Debug_Inspector::push_entry(String label) {
-    StringBuffer* entry = List_Push(&this->entries);
+Inspector_PushEntry(Inspector* in, String label) {
+    StringBuffer* entry = List_Push(&in->entries);
     StringBuffer_Copy(entry, label);
     return entry;
 }
 
 void
-Debug_Inspector::push_u32(String label, 
-                          u32 item)
+Inspector_Push(Inspector* in, 
+               String label, 
+               u32 item)
 {
-    if(!this->is_active)
+    if(!in->is_active)
         return;
-    StringBuffer* entry = this->push_entry(label);
+    StringBuffer* entry = Inspector_PushEntry(in, label);
     StringBuffer_Push(entry, item);
 }
 
 void
-Debug_Inspector::push_s32(String label, s32 item)
+Inspector_Push(Inspector* in, String label, s32 item)
 {
-    if(!this->is_active)
+    if(!in->is_active)
         return;
     
-    StringBuffer* entry = this->push_entry(label);
+    StringBuffer* entry = Inspector_PushEntry(in, label);
     StringBuffer_Push(entry, item);
 }
 

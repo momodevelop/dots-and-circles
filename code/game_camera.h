@@ -6,44 +6,37 @@
 // NOTE(Momo): "2D" Orthographic camera. 
 // Saves the current camera state.
 // No direction because we are assuming 2D
-struct Game_Camera {
+struct Camera {
     v3f position;
     v3f anchor; 
     v3f dimensions; // In 2D, this represents the near and far clip planes
     c4f color;
-    
-    inline void set();
-    inline v2f screen_to_view(v2f screen_pos);
-    inline v2f screen_to_world(v2f screen_pos);
-    
 };
 
-void
-Game_Camera::set() {
-    aabb3f center_box = aabb3f::create_centered(this->dimensions, this->anchor);
-    Renderer_ClearColor(g_renderer, this->color);
+static inline void
+Camera_Set(Camera* c) {
+    aabb3f center_box = aabb2u_CreateCentered(c->dimensions, c->anchor);
+    Renderer_ClearColor(g_renderer, c->color);
     Renderer_SetOrthoCamera(g_renderer, 
-                            this->position, 
+                            c->position, 
                             center_box);
 }
 
-v2f
-Game_Camera::screen_to_view(v2f screen_pos) {
+static inline v2f
+Camera_ScreenToView(Camera* c, v2f screen_pos) {
     v2f ret = {};
-    ret.x = screen_pos.x - this->dimensions.w * 0.5f;
-    ret.y = -(screen_pos.y - this->dimensions.h * 0.5f);
+    ret.x = screen_pos.x - c->dimensions.w * 0.5f;
+    ret.y = -(screen_pos.y - c->dimensions.h * 0.5f);
     
     return ret;
 }
 
 // TODO(Momo): Largely untested!!
-v2f
-Game_Camera::screen_to_world(v2f screen_pos) {
-    
-    v2f ret = screen_to_view(screen_pos);
-    ret.x -= this->position.x;
-    ret.y -= this->position.y;
-    
+static inline v2f
+Camera_ScreenToWorld(Camera* c, v2f screen_pos) {
+    v2f ret = Camera_ScreenToView(c, screen_pos);
+    ret.x -= c->position.x;
+    ret.y -= c->position.y;
     
     return ret;
 }

@@ -121,7 +121,7 @@ Queue_Get(Queue<T>* q, u32 index) {
 
 template<typename T, typename Callback, typename... Args>
 static inline void
-_Queue_ForEach(Queue<T>* q, u32 start, u32 finish, Callback callback, Args... args) {
+Queue__ForEach(Queue<T>* q, u32 start, u32 finish, Callback callback, Args... args) {
     for (u32 i = q->start; i <= q->finish; ++i) {
         T* item = q->data + i;
         callback(item, args...);
@@ -137,11 +137,11 @@ Queue_ForEach(Queue<T>* q, Callback callback, Args... args) {
     
     // Then update the living ones
     if (q->start <= q->finish) {
-        _Queue_ForEach(q, q->start, q->finish, callback, args...);
+        Queue__ForEach(q, q->start, q->finish, callback, args...);
     }
     else {
-        _Queue_ForEach(q, q->start, q->cap - 1, callback, args...);
-        _Queue_ForEach(q, 0, q->finish, callback, args...);
+        Queue__ForEach(q, q->start, q->cap - 1, callback, args...);
+        Queue__ForEach(q, 0, q->finish, callback, args...);
     }
     
 }

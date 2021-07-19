@@ -56,7 +56,7 @@ sort_aabbs_for_packer(aabb2u* aabbs,
             for (u32 i = 0; i < sort_entry_count; ++i) {
                 u32 aabb_w = Width(aabbs[i]);
                 u32 aabb_h = Height(aabbs[i]);
-                f32 key = -(f32)(MAX(aabb_w, aabb_h));
+                f32 key = -(f32)(Max(aabb_w, aabb_h));
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
             }
@@ -66,8 +66,8 @@ sort_aabbs_for_packer(aabb2u* aabbs,
                 u32 aabb_w = Width(aabbs[i]);
                 u32 aabb_h = Height(aabbs[i]);
                 
-                u32 wh_max = MAX(aabb_w, aabb_h);
-                u32 wh_min = MIN(aabb_w, aabb_h);
+                u32 wh_max = Max(aabb_w, aabb_h);
+                u32 wh_min = Min(aabb_w, aabb_h);
                 f32 key = -(f32)(wh_max/wh_min * aabb_w * aabb_h);
                 sort_entries[i].key = key;
                 sort_entries[i].index = i;
@@ -99,7 +99,7 @@ pack_aabbs(Arena* arena,
     u32 current_node_count = 0;
     
     auto* nodes = Arena_PushArray<aabb2u>(arena, aabb_count+1);
-    nodes[current_node_count++] = aabb2u::create(0, 0, total_width, total_height);
+    nodes[current_node_count++] = aabb2u_Create(0, 0, total_width, total_height);
     
     for (u32 i = 0; i < aabb_count; ++i) {
         aabb2u* Aabb = aabbs + sort_entries[i].index;
@@ -142,7 +142,7 @@ pack_aabbs(Arena* arena,
         if (chosen_space_w != aabb_width && chosen_space_h == aabb_height) {
             // Split right
             aabb2u split_space_right = 
-                aabb2u::create_xywh(chosen_space.min.x + aabb_width,
+                aabb2u_CreateXYWH(chosen_space.min.x + aabb_width,
                                     chosen_space.min.y,
                                     chosen_space_w - aabb_width,
                                     chosen_space_h);
@@ -151,7 +151,7 @@ pack_aabbs(Arena* arena,
         else if (chosen_space_w == aabb_width && chosen_space_h != aabb_height) {
             // Split down
             aabb2u split_space_down = 
-                aabb2u::create_xywh(chosen_space.min.x,
+                aabb2u_CreateXYWH(chosen_space.min.x,
                                     chosen_space.min.y + aabb_height,
                                     chosen_space_w,
                                     chosen_space_h - aabb_height);
@@ -160,14 +160,14 @@ pack_aabbs(Arena* arena,
         else if (chosen_space_w != aabb_width && chosen_space_h != aabb_height) {
             // Split right
             aabb2u split_space_right = 
-                aabb2u::create_xywh(chosen_space.min.x + aabb_width,
+                aabb2u_CreateXYWH(chosen_space.min.x + aabb_width,
                                     chosen_space.min.y,
                                     chosen_space_w - aabb_width,
                                     aabb_height);
             
             // Split down
             aabb2u split_space_down = 
-                aabb2u::create_xywh(chosen_space.min.x,
+                aabb2u_CreateXYWH(chosen_space.min.x,
                                     chosen_space.min.y + aabb_height,
                                     chosen_space_w,
                                     chosen_space_h - aabb_height);
@@ -193,7 +193,7 @@ pack_aabbs(Arena* arena,
         }
         
         // NOTE(Momo): Translate the Aabb
-        (*Aabb) = translate((*Aabb),
+        (*Aabb) = Translate((*Aabb),
                             chosen_space.min.x,
                             chosen_space.min.y);
     }

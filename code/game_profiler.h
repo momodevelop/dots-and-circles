@@ -27,7 +27,7 @@ zawarudo_start_profiling(u32 index,
                          u32 line_number)
 {
     
-    ASSERT(index < ARRAY_COUNT(G_ProfilerEntries));
+    ASSERT(index < ArrayCount(G_ProfilerEntries));
     Profiler_Entry* e = G_ProfilerEntries + index;
     ASSERT(!e->is_started);
     e->custom_name = custom_name;
