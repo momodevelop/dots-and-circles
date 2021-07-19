@@ -12,6 +12,7 @@ struct List {
     inline T& operator[](u32 index);
 };
 
+
 #include "momo_list.cpp"
 
 #endif //MOMO_LIST_H

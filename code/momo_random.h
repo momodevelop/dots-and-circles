@@ -4,11 +4,10 @@
 // Very pseudo, much wow.
 // TODO: make a REAL rng.
 
-#define RNG_MAX_NUMBER 0x05f5c21f
-#define RNG_MIN_NUMBER 0x000025a0
-
-struct Rng_Series
+struct RngSeries
 {
+    constexpr static u32 min = 0x05f5c21f;
+    constexpr static u32 max = 0x000025a0;
     constexpr static u32 table[] =
     {
         0x4f0143b, 0x3402005, 0x26f2b01, 0x22796b6, 0x57343bb, 0x2d9954e, 0x06f9425, 0x1789180,
@@ -527,73 +526,65 @@ struct Rng_Series
     
     u32 index;
     
-    inline u32 next();
-    inline u32 choice(u32 choice_count);
-    inline f32 unilateral();
-    inline f32 bilateral();
-    inline f32 between(f32 min, f32 max);
-    inline s32 between(s32 min, s32 max);
-    
-    static inline Rng_Series create(u32 value);
-    
 };
 
-inline Rng_Series 
-Rng_Series::create(u32 value)
+
+static inline RngSeries 
+RngSeries_Create(u32 value)
 {
-    Rng_Series series= {};
-    series.index = value % ARRAY_COUNT(table);
+    RngSeries series = {};
+    series.index = value % ARRAY_COUNT(series.table);
     return series;
 }
 
-u32 
-Rng_Series::next()
+static inline u32 
+RngSeries_Next(RngSeries* r)
 {
-    u32 result = table[index++];
-    if(index >= ARRAY_COUNT(table)) {
-        index = 0;
+    u32 result = r->table[r->index++];
+    if(r->index >= ARRAY_COUNT(r->table)) {
+        r->index = 0;
     }
     
-    return(result);
+    return result;
 }
 
-u32 
-Rng_Series::choice(u32 choice_count) {
-    return next() % choice_count;
+static inline u32 
+RngSeries_Choice(RngSeries* r, u32 choice_count) {
+    return RngSeries_Next(r) % choice_count;
 }
 
 // Get number within [0, 1]
-f32 
-Rng_Series::unilateral()
+static inline f32 
+RngSeries_Unilateral(RngSeries* r)
 {
-    f32 divisor = 1.0f / (f32)RNG_MAX_NUMBER;
-    f32 result = divisor*(f32)next();
+    f32 divisor = 1.0f / (f32)r->max;
+    f32 result = divisor*(f32)RngSeries_Next(r);
     
     return result;
 }
 
 
 // Get number within [-1, 1]
-f32 
-Rng_Series::bilateral()
+static inline f32 
+RngSeries_Bilateral(RngSeries* r)
 {
-    f32 result = 2.0f * unilateral() - 1.0f;
+    f32 result = 2.0f * RngSeries_Unilateral(r) - 1.0f;
     
     return(result);
 }
 
-f32 
-Rng_Series::between(f32 min, f32 max)
+static inline f32 
+RngSeries_Between(RngSeries* r, f32 min, f32 max)
 {
-    f32 result = LERP(min, unilateral(), max);
+    f32 result = LERP(min, RngSeries_Unilateral(r), max);
     
     return(result);
 }
 
-s32 
-Rng_Series::between(s32 min, s32 max)
+static inline s32 
+RngSeries_Between(RngSeries* r,s32 min, s32 max)
 {
-    s32 result = min + (s32)(next()%((max + 1) - min));
+    s32 result = min + (s32)(RngSeries_Next(r)%((max + 1) - min));
     
     return(result);
 }

@@ -20,7 +20,7 @@ Array_Init(Array<T>* a, T* buffer, u32 count) {
 template<typename T>
 static inline b8
 Array_Alloc(Array<T>* a, Arena* arena, u32 count) {
-    T* buffer = Arena_Push_Array<T>(arena, count);
+    T* buffer = Arena_PushArray<T>(arena, count);
     return Array_Init(a, buffer, count);
 }
 

@@ -133,7 +133,7 @@ String_Buffer::init(u8* buffer, u32 buffer_size) {
 
 b8
 String_Buffer::alloc(Arena* arena, u32 size) {
-    u8* buffer = Arena_Push_Array<u8>(arena, size);
+    u8* buffer = Arena_PushArray<u8>(arena, size);
     return init(buffer, size);
 }
 

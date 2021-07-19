@@ -28,7 +28,7 @@ update_player_bullet_collision(Game_Mode_Main* mode,
                 v2f vector_to_bullet = normalize(b->position - player->position);
                 v2f SpawnPos = player->position + vector_to_bullet * player->hit_circle.radius;
                 spawn_particles(mode, SpawnPos, 5);
-                mode->score += 50;
+                BigInt_Add(&mode->score, 50);
             }
             else {
                 player->is_dead = true;

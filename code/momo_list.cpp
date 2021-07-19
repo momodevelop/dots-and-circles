@@ -23,7 +23,7 @@ List_Init(List<T>* l, T* data, u32 cap) {
 template<typename T>
 static inline b8
 List_Alloc(List<T>* l, Arena* arena, u32 cap) {
-    T* buffer = Arena_Push_Array<T>(arena, cap);
+    T* buffer = Arena_PushArray<T>(arena, cap);
     if (!buffer) {
         return false;
     }

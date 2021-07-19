@@ -50,7 +50,7 @@ Arena_Push(Arena* arena) {
 
 template<class T>
 static inline T*
-Arena_Push_Array(Arena* arena, u32 count) {
+Arena_PushArray(Arena* arena, u32 count) {
     return (T*)Arena_Push_Block(arena, sizeof(T) * count, alignof(T));
 }
 

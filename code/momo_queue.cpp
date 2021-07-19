@@ -1,91 +1,92 @@
 
 template<typename T>
-b8
-Queue<T>::init(T* buffer, u32 cap_in) {
-    if (!buffer || cap_in < 0) {
+static inline b8
+Queue_Init(Queue<T>* q, T* buffer, u32 cap) {
+    if (!buffer || cap < 0) {
         return false;
     }
-    start = finish = cap_in;
-    cap = cap_in;
-    data = buffer;
+    q->start = q->finish = cap;
+    q->cap = cap;
+    q->data = buffer;
     
     return true;
 }
 
 template<typename T>
-b8
-Queue<T>::alloc(Arena* arena, u32 cap_in) {
-    T* buffer = Arena_Push_Array<T>(arena, cap_in);
+static inline b8
+Queue_Alloc(Queue<T>* q, Arena* arena, u32 cap) {
+    T* buffer = Arena_PushArray<T>(arena, cap);
     if (!buffer) {
         return false;
     }
     
-    return init(buffer, cap_in);
+    return Queue_Init(q, buffer, cap);
 }
 
 template<typename T>
-b8 
-Queue<T>::is_empty() {
-    return start == cap || 
-        finish == cap;
+static inline b8 
+Queue_IsEmpty(Queue<T>* q) {
+    return q->start == q->cap || 
+        q->finish == q->cap;
 }
 
 template<typename T>
-b8
-Queue<T>::is_full() {
-    b8 normal_case = (start == 0 && finish == cap-1);
-    b8 backward_case = finish == (start-1);
+static inline b8
+Queue_IsFull(Queue<T>* q) {
+    b8 normal_case = (q->start == 0 && q->finish == q->cap-1);
+    b8 backward_case = q->finish == (q->start-1);
     
-    return !is_empty() && (normal_case || backward_case);
+    return !Queue_IsEmpty(q) && (normal_case || backward_case);
 }
 
 template<typename T>
-T* 
-Queue<T>::push() {
-    if (is_full()) {
+static inline T* 
+Queue_Push(Queue<T>* q) {
+    if (Queue_IsFull(q)) {
         return nullptr;
     }
-    else if (is_empty()) {
-        start = finish = 0;
+    else if (Queue_IsEmpty(q)) {
+        q->start = q->finish = 0;
     }
-    else if (finish == cap - 1) {
+    else if (q->finish == q->cap - 1) {
         // finish is already at the back of the array
-        finish = 0;
+        q->finish = 0;
     }
     else {
         // Normal case: just advance finish
-        ++finish;
+        ++q->finish;
     }
-    return data + finish;
+    return q->data + q->finish;
+    
 }
 
 template<typename T>
-T*
-Queue<T>::next() {
-    if (is_empty()) {
+static inline T*
+Queue_Next(Queue<T>* q) {
+    if (Queue_IsEmpty(q)) {
         return nullptr;
     }
-    return data + start;
+    return q->data + q->start;
 }
 
 template<typename T>
-b8
-Queue<T>::pop() {
-    if (is_empty()) {
+static inline b8
+Queue_Pop(Queue<T>* q) {
+    if (Queue_IsEmpty(q)) {
         return false;
     }
-    if (start == finish) {
+    if (q->start == q->finish) {
         // One item case
-        start = finish = cap;
+        q->start = q->finish = q->cap;
     }
-    else if (start == cap - 1) {
+    else if (q->start == q->cap - 1) {
         // start is at the finish of the array,
         // so we reset to the front of the array
-        start = 0;
+        q->start = 0;
     }
     else {
         // Normal case: just advance start
-        ++start;
+        ++q->start;
     }
     
     return true;
@@ -94,22 +95,22 @@ Queue<T>::pop() {
 // NOTE(Momo): Not part of standard 'Queue' API, but in case you want to get
 // someone from the Queue
 template<typename T>
-T*
-Queue<T>::get(u32 index) {
-    if (is_empty()) {
+static inline T*
+Queue_Get(Queue<T>* q, u32 index) {
+    if (Queue_IsEmpty(q)) {
         return nullptr;
     }
-    if (start <= finish) {
-        if (index < start || index > finish) {
+    if (q->start <= q->finish) {
+        if (index < q->start || index > q->finish) {
             return nullptr;
         }
         else {
-            return data + index;
+            return q->data + index;
         }
     }
     else {
-        if (index <= finish || (index >= start && index < cap)) {
-            return data + index;
+        if (index <= q->finish || (index >= q->start && index < q->cap)) {
+            return q->data + index;
         }
         else {
             return nullptr;
@@ -117,43 +118,41 @@ Queue<T>::get(u32 index) {
     }
 }
 
-template<typename T>
-template<typename Callback, typename... Args>
-void
-Queue<T>::_foreach_sub(u32 start_in, u32 finish_in, Callback callback, Args... args) {
-    for (u32 i = start_in; i <= finish_in; ++i) {
-        T* item = data + i;
+
+template<typename T, typename Callback, typename... Args>
+static inline void
+_Queue_ForEach(Queue<T>* q, u32 start, u32 finish, Callback callback, Args... args) {
+    for (u32 i = q->start; i <= q->finish; ++i) {
+        T* item = q->data + i;
         callback(item, args...);
     }
 }
 
-template<typename T>
-template<typename Callback, typename... Args>
-void
-Queue<T>::foreach(Callback callback, Args... args) {
-    if (is_empty()) {
+template<typename T, typename Callback, typename... Args>
+static inline void
+Queue_ForEach(Queue<T>* q, Callback callback, Args... args) {
+    if (Queue_IsEmpty(q)) {
         return;
     }
     
     // Then update the living ones
-    if (start <= finish) {
-        _foreach_sub(start, finish, callback, args...);
+    if (q->start <= q->finish) {
+        _Queue_ForEach(q, q->start, q->finish, callback, args...);
     }
     else {
-        _foreach_sub(start, cap - 1, callback, args...);
-        _foreach_sub(0, finish, callback, args...);
+        _Queue_ForEach(q, q->start, q->cap - 1, callback, args...);
+        _Queue_ForEach(q, 0, q->finish, callback, args...);
     }
     
 }
 
-template<typename T>
-template<typename Callback, typename... Args>
-void
-Queue<T>::pop_until(Callback callback, Args... args) {
-    T* item = this->next();
+template<typename T, typename Callback, typename... Args>
+static inline void
+Queue_PopUntil(Queue<T>* q, Callback callback, Args... args) {
+    T* item = Queue_Next(q);
     while(item != nullptr && callback(item, args...)) {
-        this->pop();
-        item = this->next();
+        Queue_Pop(q);
+        item = Queue_Next(q);
     }
 }
 

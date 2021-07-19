@@ -223,22 +223,22 @@ Assets::init(Arena* arena)
     g_platform->clear_textures();
     
     this->texture_count = TEXTURE_COUNT;
-    this->textures = Arena_Push_Array<Texture>(arena, TEXTURE_COUNT);
+    this->textures = Arena_PushArray<Texture>(arena, TEXTURE_COUNT);
     
     this->image_count = IMAGE_COUNT;
-    this->images = Arena_Push_Array<Image>(arena, IMAGE_COUNT);
+    this->images = Arena_PushArray<Image>(arena, IMAGE_COUNT);
     
     this->font_count = FONT_COUNT;
-    this->fonts = Arena_Push_Array<Font>(arena, FONT_COUNT);
+    this->fonts = Arena_PushArray<Font>(arena, FONT_COUNT);
     
     this->anime_count = ANIME_COUNT;
-    this->animes = Arena_Push_Array<Anime>(arena, ANIME_COUNT);
+    this->animes = Arena_PushArray<Anime>(arena, ANIME_COUNT);
     
     this->msg_count = MSG_COUNT;
-    this->msgs = Arena_Push_Array<Msg>(arena, MSG_COUNT);
+    this->msgs = Arena_PushArray<Msg>(arena, MSG_COUNT);
     
     this->sound_count = SOUND_COUNT;
-    this->sounds = Arena_Push_Array<Sound>(arena, SOUND_COUNT);
+    this->sounds = Arena_PushArray<Sound>(arena, SOUND_COUNT);
     
     Platform_File_Handle asset_file = g_platform->open_asset_file();
     if (asset_file.error) {

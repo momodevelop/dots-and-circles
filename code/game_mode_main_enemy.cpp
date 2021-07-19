@@ -35,13 +35,13 @@ Enemy_Spawn(Game_Mode_Main* mode,
             Enemy_Shoot_Homing* shoot = &enemy->shoot_homing;
             shoot->timer = 0.f;
             shoot->duration = 0.1f;
-            shoot->mood = (Mood_Type)mode->rng.choice(MOOD_TYPE_COUNT);
+            shoot->mood = (Mood_Type)RngSeries_Choice(&mode->rng, MOOD_TYPE_COUNT);
         } break;
         case ENEMY_SHOOT_TYPE_8_DIR: {
             Enemy_Shoot_8_Dir* shoot = &enemy->shoot_8_dir;
             shoot->timer = 0.f;
             shoot->duration = 0.1f;
-            shoot->mood = (Mood_Type)mode->rng.choice(MOOD_TYPE_COUNT);
+            shoot->mood = (Mood_Type)RngSeries_Choice(&mode->rng, MOOD_TYPE_COUNT);
         } break;
     };
     

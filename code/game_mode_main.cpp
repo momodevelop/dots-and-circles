@@ -48,18 +48,18 @@ init_main_mode(Permanent_State* perm_state,
         return false;
     }
     
-    success = mode->particles.alloc(mode_arena, ParticleCap);
+    success = Queue_Alloc(&mode->particles, mode_arena, ParticleCap);
     if (!success) {
         return false;
     }
     
     
-    success = mode->score.alloc(mode_arena, 128);
+    success = BigInt_Alloc(&mode->score, mode_arena, 128);
     if (!success) {
         return false;
     }
     mode->wave.is_done = true;
-    mode->rng = Rng_Series::create(0); // TODO: Used system clock for seed.
+    mode->rng = RngSeries_Create(0); // TODO: Used system clock for seed.
     
     Player* player = &mode->player;
     {

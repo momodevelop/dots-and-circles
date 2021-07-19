@@ -107,8 +107,8 @@ struct Game_Mode_Main {
     Death_Bomb death_bomb;
     
     Wave wave;
-    Rng_Series rng;
-    Big_Int score;
+    RngSeries rng;
+    BigInt score;
     
     // Audio handles
     Game_Audio_Mixer_Handle bgm_handle;
