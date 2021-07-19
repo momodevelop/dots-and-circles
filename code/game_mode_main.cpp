@@ -23,12 +23,12 @@ init_main_mode(Permanent_State* perm_state,
     
     // NOTE(Momo): Init camera
     {
-        mode->camera.position = v3f::create(0.f, 0.f, 0.f);
-        mode->camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        mode->camera.position = v3f_Create(0.f, 0.f, 0.f);
+        mode->camera.anchor = v3f_Create(0.5f, 0.5f, 0.5f);
         mode->camera.color = C4F_GREY2;
-        mode->camera.dimensions = v3f::create(GAME_DESIGN_WIDTH,
-                                              GAME_DESIGN_HEIGHT,
-                                              Game_DesignDepth);
+        mode->camera.dimensions = v3f_Create(GAME_DESIGN_WIDTH,
+                                             GAME_DESIGN_HEIGHT,
+                                             Game_DesignDepth);
     }
     
     b8 success = false;
@@ -119,7 +119,7 @@ Main_StateNormal_Update(Permanent_State* perm_state,
         mode->death_bomb.position = mode->player.position;
         
         mode->state = GAME_MODE_MAIN_STATE_PLAYER_DIED;
-        mode->player.position = v2f::create(-1000.f, -1000.f);
+        mode->player.position = v2f_Create(-1000.f, -1000.f);
     }
     
     render_player(mode);
@@ -214,19 +214,18 @@ update_main_mode(Permanent_State* perm_state,
     }
     
     //Main_RenderDebugLines(mode, RenderCommands);
-    String buffer = {};
-    buffer.init("Dots: ");
+    String buffer = String_Create("Dots: ");
     debug_state->inspector.push_u32(buffer,
                                     mode->dot_bullets.count);
-    buffer.init("Circles: ");
+    buffer = String_Create("Circles: ");
     debug_state->inspector.push_u32(buffer, 
                                     mode->circle_bullets.count);
     
-    buffer.init("Bullets: ");
+    buffer = String_Create("Bullets: ");
     debug_state->inspector.push_u32(buffer, 
                                     mode->dot_bullets.count + mode->circle_bullets.count);
     
-    buffer.init("enemies: ");
+    buffer = String_Create("enemies: ");
     debug_state->inspector.push_u32(buffer, 
                                     mode->enemies.count);
 }

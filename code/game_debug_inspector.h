@@ -6,12 +6,12 @@
 
 struct Debug_Inspector {
     b8 is_active;
-    List<String_Buffer> entries;
+    List<StringBuffer> entries;
     
     inline b8 init(Arena* arena);
     inline void begin();
     inline void end();
-    inline String_Buffer* push_entry(String label);
+    inline StringBuffer* push_entry(String label);
     inline void push_u32(String label, u32 item);
     inline void push_s32(String label, s32 item);
 };
@@ -26,8 +26,8 @@ Debug_Inspector::init(Arena* arena) {
     }
     
     for (u32 i = 0; i < entry_count; ++i) {
-        String_Buffer* item = List_Push(&this->entries);
-        if (!item->alloc(arena, entry_count)) {
+        StringBuffer* item = List_Push(&this->entries);
+        if (!StringBuffer_Alloc(item, arena, entry_count)) {
             return false;
         }
     }
@@ -52,7 +52,7 @@ Debug_Inspector::end()
     f32 offset_y = 0.f;
     
     for (u32 I = 0; I < this->entries.count; ++I) {
-        String_Buffer* entry = this->entries + I;
+        StringBuffer* entry = this->entries + I;
         v3f position = { 
             -GAME_DESIGN_WIDTH * 0.5f + 10.f, 
             (GAME_DESIGN_HEIGHT * 0.5f - 32.f) + offset_y, 
@@ -65,15 +65,15 @@ Debug_Inspector::end()
                   entry->str,
                   32.f, 
                   C4F_WHITE);
-        entry->clear();
+        StringBuffer_Clear(entry);
         offset_y -= 32.f;
     }
 }
 
-String_Buffer*
+StringBuffer*
 Debug_Inspector::push_entry(String label) {
-    String_Buffer* entry = List_Push(&this->entries);
-    entry->copy(label);
+    StringBuffer* entry = List_Push(&this->entries);
+    StringBuffer_Copy(entry, label);
     return entry;
 }
 
@@ -83,8 +83,8 @@ Debug_Inspector::push_u32(String label,
 {
     if(!this->is_active)
         return;
-    String_Buffer* entry = this->push_entry(label);
-    entry->push(item);
+    StringBuffer* entry = this->push_entry(label);
+    StringBuffer_Push(entry, item);
 }
 
 void
@@ -93,8 +93,8 @@ Debug_Inspector::push_s32(String label, s32 item)
     if(!this->is_active)
         return;
     
-    String_Buffer* entry = this->push_entry(label);
-    entry->push(item);
+    StringBuffer* entry = this->push_entry(label);
+    StringBuffer_Push(entry, item);
 }
 
 #endif //GAME_DEBUG_INSPECTOR_H

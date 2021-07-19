@@ -354,8 +354,8 @@ Opengl::align_viewport()
     u32 x, y, w, h;
     x = region.min.x;
     y = region.min.y;
-    w = width(region);
-    h = height(region);
+    w = Width(region);
+    h = Height(region);
     
     this->glViewport(x, y, w, h);
     this->glScissor(x, y, w, h);
@@ -744,12 +744,12 @@ Opengl::render(Mailbox* commands)
     this->glClear(GL_C4f_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     for (u32 i = 0; i < commands->entry_count; ++i) {
-        Mailbox_Entry_Header* Entry = commands->get_entry(i);
+        Mailbox_EntryHeader* entry = Mailbox_GetEntry(commands, i);
         
-        switch(Entry->type) {
+        switch(entry->type) {
             case RENDERER_COMMAND_TYPE_SET_DESIGN_RESOLUTION: {
                 auto* data = (renderer_command_set_design_resolution*)
-                    commands->get_entry_data(Entry);
+                    Mailbox_GetEntryData(commands, entry);
                 
                 this->design_dimensions.w = data->Width;
                 this->design_dimensions.h = data->Height;
@@ -757,7 +757,7 @@ Opengl::render(Mailbox* commands)
             } break;
             case RENDERER_COMMAND_SET_BASIS: {
                 auto* data = (renderer_command_set_basis*)
-                    commands->get_entry_data(Entry);
+                    Mailbox_GetEntryData(commands, entry);
                 
                 this->draw_instances(current_texture, 
                                      instances_to_draw, 
@@ -777,7 +777,7 @@ Opengl::render(Mailbox* commands)
             } break;
             case RENDERER_COMMAND_CLEAR_COLOR: {
                 auto* data = (renderer_command_clear_color*)
-                    commands->get_entry_data(Entry);
+                    Mailbox_GetEntryData(commands, entry);
                 this->glClearColor(data->Colors.r, 
                                    data->Colors.g, 
                                    data->Colors.b, 
@@ -785,7 +785,7 @@ Opengl::render(Mailbox* commands)
             } break;
             case RENDERER_COMMAND_DRAW_QUAD: {
                 auto* data = (renderer_command_draw_quad*)
-                    commands->get_entry_data(Entry);
+                    Mailbox_GetEntryData(commands, entry);
                 
                 GLuint OpenglTextureHandle = *(this->textures + OPENGL_PREDEF_TEXTURE_BLANK);
                 
@@ -825,7 +825,7 @@ Opengl::render(Mailbox* commands)
             } break;
             case RENDERER_COMMAND_DRAW_TEXTURED_QUAD: {
                 auto* data = (renderer_command_draw_textured_quad*)
-                    commands->get_entry_data(Entry);
+                    Mailbox_GetEntryData(commands, entry);
                 
                 GLuint texture_handle = *(this->textures + data->TextureHandle.id); 
                 

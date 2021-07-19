@@ -24,17 +24,17 @@ Ratio(f32 value, f32 min, f32 max) {
 
 // NOTE(Momo): Common Functions
 static inline b8
-is_equal(f32 L, f32 R) {
+IsEqual(f32 L, f32 R) {
     return ABS(L - R) <= EPSILON;
 }
 
 static inline f32 
-Deg_To_Rad(f32 degrees) {
+DegToRad(f32 degrees) {
     return degrees * PI / 180.f;
 }
 
 static inline f32 
-Rad_To_Deg(f32 radians) {
+RadToDeg(f32 radians) {
     return radians * 180.f / PI;
 }
 

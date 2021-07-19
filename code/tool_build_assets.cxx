@@ -189,7 +189,7 @@ int main() {
                                           &box.max.x, 
                                           &box.max.y);
                     
-                    aabb2f scaled_box = mul(to_aabb2f(box), font_pixel_scale);
+                    aabb2f scaled_box = Mul(to_aabb2f(box), font_pixel_scale);
                     asset_builder.write_font_glyph(font->font_id, 
                                                    font->image_id,
                                                    font->texture_id,

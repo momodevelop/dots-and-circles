@@ -25,7 +25,7 @@ update_player_bullet_collision(Game_Mode_Main* mode,
                                           b_vel)) 
         {
             if (player->mood_type == b->mood_type) {
-                v2f vector_to_bullet = normalize(b->position - player->position);
+                v2f vector_to_bullet = Normalize(b->position - player->position);
                 v2f SpawnPos = player->position + vector_to_bullet * player->hit_circle.radius;
                 spawn_particles(mode, SpawnPos, 5);
                 BigInt_Add(&mode->score, 50);

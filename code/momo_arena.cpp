@@ -28,7 +28,7 @@ Arena_Push_Block(Arena* arena, u32 size, u8 alignment = alignof(void*)) {
     if (size == 0 || alignment == 0) {
         return nullptr;
     }
-    u8 adjust = align_memory_forward_diff((u8*)arena->memory + arena->used, alignment);
+    u8 adjust = AlignMemoryForwardDiff((u8*)arena->memory + arena->used, alignment);
     
     // if not enough space, return 
     u8* memory_end = (u8*)arena->memory + arena->capacity;

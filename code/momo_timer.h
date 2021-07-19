@@ -16,7 +16,7 @@ struct Timer {
 
 inline Timer
 Timer::create(f32 duration) {
-    ASSERT(!is_equal(duration, 0.f));
+    ASSERT(!IsEqual(duration, 0.f));
     Timer ret = {};
     ret.end = duration;
     return ret;

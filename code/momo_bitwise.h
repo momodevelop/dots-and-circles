@@ -24,7 +24,7 @@
 // e.g.  8 bytes -> ~(1000 - 1) = ~0111 = 1000
 // And thus, the forumla for backward alignment is: A & ~(N-1)
 static inline void* 
-align_memory_backward(void* ptr, u8 align) {
+AlignMemoryBackward(void* ptr, u8 align) {
     ASSERT(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)(umi(ptr) & ~(align - 1));
 }
@@ -35,23 +35,23 @@ align_memory_backward(void* ptr, u8 align) {
 // Then the formula for the difference is the the original address minus the result: 
 // A - (A & ~(N-1))
 static inline void* 
-align_memory_forward(void* ptr, u8 align) {
+AlignMemoryForward(void* ptr, u8 align) {
     ASSERT(align > 0 && (align & (align - 1)) == 0); // power of 2 only
     return (void*)((umi(ptr) + (align - 1)) & ~(align - 1));
 }
 
 static inline u8 
-align_memory_backward_diff(void* ptr, u8 align)  {
-    return u8((umi)ptr - umi(align_memory_backward(ptr, align)));
+AlignMemoryBackwardDiff(void* ptr, u8 align)  {
+    return u8((umi)ptr - umi(AlignMemoryBackward(ptr, align)));
 }
 
 static inline u8 
-align_memory_forward_diff(void* ptr, u8 align)  {
-    return u8(umi(align_memory_forward(ptr, align)) - umi(ptr));
+AlignMemoryForwardDiff(void* ptr, u8 align)  {
+    return u8(umi(AlignMemoryForward(ptr, align)) - umi(ptr));
 }
 
 static inline void 
-copy_block(void* dest, void* src, umi size) {
+CopyBlock(void* dest, void* src, umi size) {
     for (u8 *p = (u8*)dest, *q = (u8*)src, *e = p + size; 
          p < e; ++p, 
          ++q)
@@ -61,7 +61,7 @@ copy_block(void* dest, void* src, umi size) {
 }
 
 static inline void 
-zero_block(void *mem, u32 size) {
+ZeroBlock(void *mem, u32 size) {
     for (u8 *p = (u8*)mem, *e = p + size; 
          p < e; 
          ++p)
@@ -70,13 +70,13 @@ zero_block(void *mem, u32 size) {
     }
 }
 
-#define ZERO_STRUCT(p) zero_block((p), sizeof(*(p)))
-#define ZERO_ARRAY(a) zero_block((a), sizeof((a)))
-#define ZERO_DYNAMIC_ARRAY(a, c) zero_block((a), sizeof(*(a)) * c)
+#define ZeroStruct(p) ZeroBlock((p), sizeof(*(p)))
+#define ZeroArray(a) ZeroBlock((a), sizeof((a)))
+#define ZeroDynamicArray(a, c) ZeroBlock((a), sizeof(*(a)) * c)
 
 
 static inline u32
-constexpr four_cc(const char str[5]) {
+constexpr FourCC(const char str[5]) {
     return 
         ((u32)(str[0]) << 0 ) |
         ((u32)(str[1]) << 8 ) |
@@ -85,13 +85,13 @@ constexpr four_cc(const char str[5]) {
 }
 
 static inline void
-endian_swap(u16* value) {
+EndianSwap(u16* value) {
     u16 origin = (*value);
     (*value) = ((origin << 8) | origin >> 8);
 }
 
 static inline void
-endian_swap(u32* value) {
+EndianSwap(u32* value) {
     u32 origin = (*value);
     (*value) =  ((origin << 24) |
                  ((origin & 0xFF00) << 8) |
@@ -100,7 +100,7 @@ endian_swap(u32* value) {
 }
 
 static inline void*
-consume_block(void** p, u32 size) {
+ConsumeBlock(void** p, u32 size) {
     void* Ret = (*p);
     (*p) = (u8*)(*p) + size; 
     return Ret;
@@ -109,7 +109,7 @@ consume_block(void** p, u32 size) {
 template<typename type>
 static inline void
 consume_struct(void** memory) {
-    return (type*)consume_block(memory, sizeof(type));
+    return (type*)ConsumeBlock(memory, sizeof(type));
 }
 
 static inline void

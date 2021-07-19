@@ -36,8 +36,8 @@ write_sub_texture_to_atlas(u8** atlas_memory, u32 atlas_width, u32 atlas_height,
                            u8* texture_memory, aabb2u texture_aabb) 
 {
     s32 j = 0;
-    u32 texture_aabb_w = width(texture_aabb);
-    u32 texture_aabb_h = height(texture_aabb);
+    u32 texture_aabb_w = Width(texture_aabb);
+    u32 texture_aabb_h = Height(texture_aabb);
     
     for (u32 y = texture_aabb.min.y; y < texture_aabb.min.y + texture_aabb_h; ++y) {
         for (u32 x = texture_aabb.min.x; x < texture_aabb.min.x + texture_aabb_w; ++x) {

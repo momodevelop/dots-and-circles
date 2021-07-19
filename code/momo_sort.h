@@ -17,19 +17,19 @@
 // If they need to go from biggest to smallest, they can just iterate backwards.
 
 // NOTE(Momo): 64-bits!
-struct Sort_Entry {
+struct SortEntry {
     f32 key;
     u32 index;
 };
 
 static inline u32
-quick_sort_partition(Sort_Entry* arr,
+_QuickSortPartition(SortEntry* arr,
                      u32 left_index, 
                      u32 one_past_right_index) 
 {
     // Save the rightmost index as pivot
     // This frees up the right most index as a slot
-    Sort_Entry pivot_value = arr[one_past_right_index - 1]; 
+    SortEntry pivot_value = arr[one_past_right_index - 1]; 
     u32 small_index = left_index;
     u32 large_index = one_past_right_index - 1;
     
@@ -56,28 +56,28 @@ quick_sort_partition(Sort_Entry* arr,
 
 // NOTE(Momo): This is done inplace
 static inline void 
-quick_sort_range(Sort_Entry* arr, 
+QuickSortRange(SortEntry* arr, 
                  u32 left_index, 
                  u32 one_past_right_index) 
 {
     if (one_past_right_index - left_index <= 1) {
         return;
     }
-    u32 pivot_index = quick_sort_partition(arr, 
+    u32 pivot_index = _QuickSortPartition(arr, 
                                            left_index, 
                                            one_past_right_index);
     
-    quick_sort_range(arr, left_index, pivot_index);
-    quick_sort_range(arr, pivot_index + 1, one_past_right_index);
+    QuickSortRange(arr, left_index, pivot_index);
+    QuickSortRange(arr, pivot_index + 1, one_past_right_index);
     
     // Don't need to concatenate! O_o
 }
 
 static inline void
-quick_sort(Sort_Entry* arr, 
+QuickSort(SortEntry* arr, 
            u32 arr_count) 
 {
-    quick_sort_range(arr, 0, arr_count);
+    QuickSortRange(arr, 0, arr_count);
 }
 
 #endif //MM_SORT_H

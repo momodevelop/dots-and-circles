@@ -22,11 +22,11 @@ spawn_bullet(Game_Mode_Main* mode,
     }
     b->position = position;
 	b->speed = speed;
-    b->size = v2f::create(16.f, 16.f);
-    b->hit_circle = circle2f::create(v2f::create(0.f, 0.f), 4.f);
+    b->size = v2f_Create(16.f, 16.f);
+    b->hit_circle = circle2f::create(v2f_Create(0.f, 0.f), 4.f);
     
-    if (length_sq(direction) > 0.f) {
-	    b->direction = normalize(direction);
+    if (LengthSq(direction) > 0.f) {
+	    b->direction = Normalize(direction);
     }
     b->mood_type = mood;
 }

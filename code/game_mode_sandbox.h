@@ -27,10 +27,10 @@ init_sandbox_mode(Permanent_State* perm_state) {
     Game_Mode_Sandbox* mode = perm_state->sandbox_mode;     
     // NOTE(Momo): Init camera
     {
-        mode->camera.position = v3f::create(0.f, 0.f, 0.f);
-        mode->camera.anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        mode->camera.position = v3f_Create(0.f, 0.f, 0.f);
+        mode->camera.anchor = v3f_Create(0.5f, 0.5f, 0.5f);
         mode->camera.color = C4F_GREY2;
-        mode->camera.dimensions = v3f::create(GAME_DESIGN_WIDTH,
+        mode->camera.dimensions = v3f_Create(GAME_DESIGN_WIDTH,
                                               GAME_DESIGN_HEIGHT,
                                               Game_DesignDepth);
     }
@@ -43,7 +43,7 @@ init_sandbox_mode(Permanent_State* perm_state) {
     f32 offset_y = 0.f;
     for (u32 I = 0; I < ARRAY_COUNT(mode->bullets); ++I) {
         Game_Mode_Sandbox_Bullet* b = mode->bullets + I;
-        b->position = v2f::create(start_x + offset_x, start_y + offset_y);
+        b->position = v2f_Create(start_x + offset_x, start_y + offset_y);
         b->hit_circle = circle2f::create({}, bullet_radius);
         
         offset_x += bullet_radius * 2; // padding
@@ -51,7 +51,7 @@ init_sandbox_mode(Permanent_State* perm_state) {
             offset_x = 0.f;
             offset_y += bullet_radius * 2;
         }
-        b->velocity = v2f::create(0.f, 0.f);
+        b->velocity = v2f_Create(0.f, 0.f);
     }
     
     mode->click_count = 0;
@@ -89,7 +89,7 @@ update_sandbox_mode(Permanent_State* perm_state,
     // NOTE(Momo): Line to circle collision
     line2f bonk_line = line2f::create(mode->prev_mouse_pos, mode->cur_mouse_pos);
     if (mode->click_count >= 2) {
-        if (!is_equal(mode->prev_mouse_pos, mode->cur_mouse_pos)) {
+        if (!IsEqual(mode->prev_mouse_pos, mode->cur_mouse_pos)) {
             
             for (u32 i = 0; i < ARRAY_COUNT(mode->bullets); ++i) {
                 Game_Mode_Sandbox_Bullet* b = mode->bullets + i;

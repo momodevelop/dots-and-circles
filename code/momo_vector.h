@@ -21,7 +21,7 @@ struct v2f {
     };
     
     inline f32& operator[](u32 i);
-    static inline v2f create(f32 x = 0.f, f32 y = 0.f);
+    
 };
 
 struct v2u {
@@ -38,7 +38,6 @@ struct v2u {
     };
     
     inline u32& operator[](u32 i);
-    static inline v2u create(u32 x = 0, u32 y = 0);
     
 };
 
@@ -85,7 +84,6 @@ struct v3f {
     };
     
     inline f32& operator[](u32 i);
-    static inline v3f create(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f);
 };
 
 struct v3s {
@@ -113,7 +111,6 @@ struct v3s {
     };
     
     inline s32& operator[](u32 i);
-    static inline v3s create(s32 x = 0.f, s32 y = 0.f, s32 z = 0.f);
 };
 
 struct v4f {
@@ -139,7 +136,6 @@ struct v4f {
     };
     
     inline f32& operator[](u32 i);
-    static inline v4f create(f32 x = 0.f, f32 y = 0.f, f32 z = 0.f, f32 w = 0.f);
     
 };
 
@@ -152,12 +148,12 @@ v2f::operator[](u32 i) {
 }
 
 v2f 
-v2f::create(f32 x, f32 y)  {
+v2f_Create(f32 x, f32 y)  {
     return { x, y };
 }
 
 static inline v2f 
-add(v2f l, v2f r) {
+Add(v2f l, v2f r) {
     l.x += r.x;
     l.y += r.y;
     return l;
@@ -165,7 +161,7 @@ add(v2f l, v2f r) {
 
 static inline v2f 
 operator+(v2f lhs, v2f rhs) {
-    return add(lhs, rhs);
+    return Add(lhs, rhs);
 }
 
 static inline v2f&
@@ -175,7 +171,7 @@ operator+=(v2f& lhs, v2f rhs) {
 
 
 static inline v2f
-sub(v2f l, v2f r) {
+Sub(v2f l, v2f r) {
     l.x -= r.x;
     l.y -= r.y;
     return l;
@@ -184,7 +180,7 @@ sub(v2f l, v2f r) {
 
 static inline v2f 
 operator-(v2f lhs, v2f rhs) {
-    return sub(lhs, rhs);
+    return Sub(lhs, rhs);
 }
 
 static inline v2f&
@@ -193,7 +189,7 @@ operator-=(v2f& lhs, v2f rhs) {
 }
 
 static inline v2f
-mul(v2f l, f32 r) {
+Mul(v2f l, f32 r) {
     l.x *= r;
     l.y *= r;
     return l;
@@ -202,7 +198,7 @@ mul(v2f l, f32 r) {
 
 static inline v2f 
 operator*(v2f lhs, f32 rhs) {
-    return mul(lhs, rhs);
+    return Mul(lhs, rhs);
 }
 
 static inline v2f 
@@ -212,12 +208,12 @@ operator*=(v2f lhs, f32 rhs) {
 
 static inline v2f 
 operator*(f32 lhs, v2f rhs) {
-    return mul(rhs, lhs);
+    return Mul(rhs, lhs);
 }
 
 
 static inline v2f
-div(v2f l, f32 r) {
+Div(v2f l, f32 r) {
     l.x /= r;
     l.y /= r;
     
@@ -240,95 +236,95 @@ neg(v2f v){
 }
 
 static inline b8 
-is_equal(v2f l, v2f r) {
+IsEqual(v2f l, v2f r) {
     return 
-        is_equal(l.x, r.x) && 
-        is_equal(l.y, r.y);
+        IsEqual(l.x, r.x) && 
+        IsEqual(l.y, r.y);
 }
 
 static inline f32 
-dot(v2f l, v2f r) {
+Dot(v2f l, v2f r) {
     f32 ret = {};
     ret = l.x * r.x + l.y * r.y;
     return ret;
 }
 
 static inline v2f 
-midpoint(v2f l, v2f r)  {
+Midpoint(v2f l, v2f r)  {
     return (l + r) * 0.5f; 
 }
 
 static inline f32
-length_sq(v2f v) { 
+LengthSq(v2f v) { 
     // NOTE(Momo): Dot Product trick!
-    return dot(v, v);
+    return Dot(v, v);
 }
 
 
 static inline f32 
-length(v2f l)  { 
-    return Sqrt(length_sq(l));
+Length(v2f l)  { 
+    return Sqrt(LengthSq(l));
 }
 
 static inline f32
-distance_sq(v2f l, v2f r) {
-    return length_sq(r - l);
+DistanceSq(v2f l, v2f r) {
+    return LengthSq(r - l);
 }
 
 static inline f32
-distance(v2f l, v2f r)  { 
-    return Sqrt(distance_sq(l, r)); 
+Distance(v2f l, v2f r)  { 
+    return Sqrt(DistanceSq(l, r)); 
 }
 
 static inline v2f 
-normalize(v2f V)  {
-    f32 len = length(V);
-    v2f ret = div(V, len);
+Normalize(v2f V)  {
+    f32 len = Length(V);
+    v2f ret = Div(V, len);
     return ret;
 }
 
 static inline f32
-angle_between(v2f l, v2f r) {
-    f32 l_len = length(l);
-    f32 r_len = length(r);
-    f32 lr_dot = dot(l,r);
+AngleBetween(v2f l, v2f r) {
+    f32 l_len = Length(l);
+    f32 r_len = Length(r);
+    f32 lr_dot = Dot(l,r);
     f32 ret = Acos(lr_dot/(l_len * r_len));
     return ret;
 }
 
 static inline b8
-is_perpendicular(v2f l, v2f r) { 
-    f32 lr_dot = dot(l,r);
-    return is_equal(lr_dot, 0.f); 
+IsPerpendicular(v2f l, v2f r) { 
+    f32 lr_dot = Dot(l,r);
+    return IsEqual(lr_dot, 0.f); 
 }
 
 
 static inline b8 
-is_same_direction(v2f l, v2f r) { 
-    f32 lr_dot = dot(l,r);
+IsSameDirection(v2f l, v2f r) { 
+    f32 lr_dot = Dot(l,r);
     return lr_dot > 0; 
 }
 
 
 static inline b8 
-is_opposite_direction(v2f l, v2f r) { 
-    f32 lr_dot = dot(l,r);
+IsOppositeDirection(v2f l, v2f r) { 
+    f32 lr_dot = Dot(l,r);
     return lr_dot < 0;
 }
 
 static inline v2f 
-project(v2f from, v2f to) { 
+Project(v2f from, v2f to) { 
     // (to . from)/LenSq(to) * to
-    f32 to_len_sq = length_sq(to);
+    f32 to_len_sq = LengthSq(to);
     
-    f32 to_dot_from = dot(to, from);
+    f32 to_dot_from = Dot(to, from);
     f32 unit_projection_scalar = to_dot_from / to_len_sq;
     v2f ret = to * unit_projection_scalar;
     return ret;
 }
 
 static inline v2f
-rotate(v2f v, f32 rad) {
+Rotate(v2f v, f32 rad) {
     // Technically, we can use matrices but
     // meh, it's easy to code this out without it.
     // Removes dependencies too
@@ -349,13 +345,13 @@ v2u::operator[](u32 i) {
 }
 
 v2u 
-v2u::create(u32 x, u32 y)  {
+v2u_Create(u32 x = 0.f, u32 y = 0.f)  {
     return { x, y };
 }
 
 //~ NOTE(Momo): v2s Functions
 static inline v2s 
-add(v2s l, v2s r) {
+Add(v2s l, v2s r) {
     l.x += r.x;
     l.y += r.y;
     return l;
@@ -363,11 +359,11 @@ add(v2s l, v2s r) {
 
 static inline v2s
 operator+(v2s l, v2s r) {
-    return add(l,r);
+    return Add(l,r);
 }
 
 static inline v2s
-sub(v2s l, v2s r) {
+Sub(v2s l, v2s r) {
     l.x -= r.x;
     l.y -= r.y;
     return l;
@@ -376,11 +372,11 @@ sub(v2s l, v2s r) {
 
 static inline v2s
 operator-(v2s l, v2s r) {
-    return sub(l,r);
+    return Sub(l,r);
 }
 
 static inline v2s
-mul(v2s l, f32 r) {
+Mul(v2s l, f32 r) {
     l.x = s32(l.x * r);
     l.y = s32(l.y * r);
     return l;
@@ -389,7 +385,7 @@ mul(v2s l, f32 r) {
 
 static inline v2s 
 operator*(v2s lhs, f32 rhs) {
-    return mul(lhs, rhs);
+    return Mul(lhs, rhs);
 }
 
 //~ NOTE(Momo): v3s Functions
@@ -400,12 +396,12 @@ v3s::operator[](u32 i) {
 }
 
 v3s 
-v3s::create(s32 x, s32 y, s32 z)  {
+v3s_Create(s32 x = 0, s32 y = 0, s32 z = 0)  {
     return { x, y, z };
 }
 
 v3s
-cross(v3s lhs, v3s rhs) {
+Cross(v3s lhs, v3s rhs) {
     return {
         (lhs.y * rhs.z) - (lhs.z * rhs.y),
         (lhs.z * rhs.x) - (lhs.x * rhs.z),
@@ -422,12 +418,12 @@ v3f::operator[](u32 i) {
 }
 
 v3f 
-v3f::create(f32 x, f32 y, f32 z)  {
+v3f_Create(f32 x = 0, f32 y = 0, f32 z = 0)  {
     return { x, y, z };
 }
 
 static inline v3f 
-add(v3f l, v3f r) {
+Add(v3f l, v3f r) {
     l.x += r.x;
     l.y += r.y;
     l.z += r.z;
@@ -436,7 +432,7 @@ add(v3f l, v3f r) {
 
 static inline v3f
 operator+(v3f l, v3f r) {
-    return add(l,r);
+    return Add(l,r);
 }
 
 static inline v3f&
@@ -446,7 +442,7 @@ operator+=(v3f& l, v3f r) {
 
 
 static inline v3f
-sub(v3f l, v3f r) {
+Sub(v3f l, v3f r) {
     l.x -= r.x;
     l.y -= r.y;
     l.z -= r.z;
@@ -456,7 +452,7 @@ sub(v3f l, v3f r) {
 
 static inline v3f
 operator-(v3f l, v3f r) {
-    return sub(l,r);
+    return Sub(l,r);
 }
 
 static inline v3f&
@@ -467,7 +463,7 @@ operator-=(v3f& l, v3f r) {
 
 
 static inline v3f
-mul(v3f l, f32 r) {
+Mul(v3f l, f32 r) {
     l.x *= r;
     l.y *= r;
     l.z *= r;
@@ -477,7 +473,7 @@ mul(v3f l, f32 r) {
 
 static inline v3f 
 operator*(v3f lhs, f32 rhs) {
-    return mul(lhs, rhs);
+    return Mul(lhs, rhs);
 }
 
 static inline v3f 
@@ -487,13 +483,13 @@ operator*=(v3f lhs, f32 rhs) {
 
 static inline v3f 
 operator*(f32 lhs, v3f rhs) {
-    return mul(rhs, lhs);
+    return Mul(rhs, lhs);
 }
 
 
 static inline v3f
-div(v3f l, f32 r) {
-    ASSERT(!is_equal(r, 0));
+Div(v3f l, f32 r) {
+    ASSERT(!IsEqual(r, 0));
     l.x /= r;
     l.y /= r;
     l.z /= r;
@@ -509,59 +505,59 @@ neg(v3f v){
 }
 
 static inline b8 
-is_equal(v3f l, v3f r) {
+IsEqual(v3f l, v3f r) {
     return 
-        is_equal(l.x, r.x) && 
-        is_equal(l.y, r.y) &&
-        is_equal(l.z, r.z);
+        IsEqual(l.x, r.x) && 
+        IsEqual(l.y, r.y) &&
+        IsEqual(l.z, r.z);
 }
 
 static inline f32 
-dot(v3f l, v3f r) {
+Dot(v3f l, v3f r) {
     f32 ret = {};
     ret = l.x * r.x + l.y * r.y + l.z * r.z;
     return ret;
 }
 
 static inline v3f 
-midpoint(v3f l, v3f r)  { 
+Midpoint(v3f l, v3f r)  { 
     return (l + r) * 0.5f; 
 }
 
 static inline f32
-length_sq(v3f V) { 
+LengthSq(v3f V) { 
     // NOTE(Momo): Dot Product trick!
-    return dot(V, V);
+    return Dot(V, V);
 }
 
 static inline f32
-distance_sq(v3f l, v3f r) {
-    f32 ret = length_sq(l - r); 
+DistanceSq(v3f l, v3f r) {
+    f32 ret = LengthSq(l - r); 
     return ret;
 }
 
 static inline f32
-distance(v3f l, v3f r)  { 
-    return Sqrt(distance_sq(l, r)); 
+Distance(v3f l, v3f r)  { 
+    return Sqrt(DistanceSq(l, r)); 
 }
 
 static inline f32 
-length(v3f l)  { 
-    return Sqrt(length_sq(l));
+Length(v3f l)  { 
+    return Sqrt(LengthSq(l));
 }
 
 static inline v3f 
-normalize(v3f v)  {
-    f32 len = length(v);
-    v3f ret = div(v, len);
+Normalize(v3f v)  {
+    f32 len = Length(v);
+    v3f ret = Div(v, len);
     return ret;
 }
 
 static inline f32
-angle_between(v3f L, v3f R) {
-    f32 l_len = length(L);
-    f32 r_len = length(R);
-    f32 LRDot = dot(L,R);
+AngleBetween(v3f L, v3f R) {
+    f32 l_len = Length(L);
+    f32 r_len = Length(R);
+    f32 LRDot = Dot(L,R);
     f32 Ret = Acos(LRDot/(l_len * r_len));
     
     return Ret;
@@ -569,33 +565,33 @@ angle_between(v3f L, v3f R) {
 
 
 static inline b8
-is_perpendicular(v3f l, v3f r) { 
-    f32 lr_dot = dot(l,r);
-    return is_equal(lr_dot, 0); 
+IsPerpendicular(v3f l, v3f r) { 
+    f32 lr_dot = Dot(l,r);
+    return IsEqual(lr_dot, 0); 
 }
 
 
 static inline b8 
-is_same_direction(v3f l, v3f r) { 
-    f32 lr_dot = dot(l,r);
+IsSameDirection(v3f l, v3f r) { 
+    f32 lr_dot = Dot(l,r);
     return lr_dot > 0; 
 }
 
 
 static inline b8 
-is_opposite_dir(v3f l, v3f r) { 
-    f32 lr_dot = dot(l,r);
+IsOppositeDirection(v3f l, v3f r) { 
+    f32 lr_dot = Dot(l,r);
     return lr_dot < 0;
 }
 
 static inline v3f 
-project(v3f from, v3f to) { 
+Project(v3f from, v3f to) { 
     // (to . from)/LenSq(to) * to
-    f32 to_len_sq = length_sq(to);
+    f32 to_len_sq = LengthSq(to);
     
-    f32 to_dot_from = dot(to, from);
+    f32 to_dot_from = Dot(to, from);
     f32 unit_projection_scalar = to_dot_from / to_len_sq;
-    v3f ret = mul(to, unit_projection_scalar);
+    v3f ret = Mul(to, unit_projection_scalar);
     return ret;
 }
 
@@ -608,14 +604,14 @@ v4f::operator[](u32 i) {
 }
 
 v4f
-v4f::create(f32 x, f32 y, f32 z, f32 w)  {
+v4f_Create(f32 x = 0, f32 y = 0, f32 z = 0, f32 w = 0)  {
     return { x, y, z, w };
 }
 
 
 //~ TODO: I'm not sure if these are better are free functions or member functions...
 static inline v3f 
-to_v3f(v2f v) {
+v3f_Create(v2f v) {
     v3f ret = {};
     ret.x = v.x;
     ret.y = v.y;
@@ -625,17 +621,17 @@ to_v3f(v2f v) {
 }
 
 static inline v2f 
-to_v2f(v2s v) {
+v2f_Create(v2s v) {
     return { f32(v.x), f32(v.y) };
 }
 
 static inline v2f
-to_v2f(v2u v) {
+v2f_Create(v2u v) {
     return { f32(v.x), f32(v.y) };
 }
 
 static inline v2s 
-to_v2s(v2f v) {
+v2s_Create(v2f v) {
     return { s32(v.x), s32(v.y) };
 }
 

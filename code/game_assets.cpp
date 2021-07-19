@@ -2,7 +2,7 @@
 
 //~ NOTE(Momo): Font functions
 f32 
-Font::height() {
+Font::Height() {
     return ABS(ascent) + ABS(descent);
 }
 

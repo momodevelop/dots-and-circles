@@ -57,8 +57,8 @@ load_wav_from_memory(Wav_Load_Result* result,
     if (!riff_chunk) {
         return false;
     }
-    endian_swap(&riff_chunk->id);
-    endian_swap(&riff_chunk->format);
+    EndianSwap(&riff_chunk->id);
+    EndianSwap(&riff_chunk->format);
     if (riff_chunk->id != WAV_RIFF_ID_SIGNATURE) {
         return false;
     }
@@ -71,7 +71,7 @@ load_wav_from_memory(Wav_Load_Result* result,
     if (!fmt_chunk) {
         return false;
     }
-    endian_swap(&fmt_chunk->id);
+    EndianSwap(&fmt_chunk->id);
     if (fmt_chunk->id != WAV_FMT_ID_SIGNATURE) {
         return false;
     }
@@ -96,7 +96,7 @@ load_wav_from_memory(Wav_Load_Result* result,
     if (!data_chunk) {
         return false;
     }
-    endian_swap(&data_chunk->id);
+    EndianSwap(&data_chunk->id);
     if (data_chunk->id != WAV_DATA_ID_SIGNATURE) {
         return false;
     }

@@ -11,7 +11,7 @@ spawn_particles(Game_Mode_Main* mode,
         p->position = position;
         p->direction.x = RngSeries_Bilateral(&mode->rng);
         p->direction.y = RngSeries_Bilateral(&mode->rng);
-        p->direction = normalize(p->direction);
+        p->direction = Normalize(p->direction);
         p->timer = 0.f;
         p->speed = RngSeries_Between(&mode->rng, p->min_speed, p->max_speed);
     }

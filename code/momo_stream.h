@@ -60,7 +60,7 @@ Stream_Write_Block(Stream* s, void* src, u32 src_size) {
     if (s->current + src_size >= s->content_size) {
         return false;
     }
-    copy_block(s->contents + s->current, src, src_size);
+    CopyBlock(s->contents + s->current, src, src_size);
     s->current += src_size; 
     return true;
 }
@@ -82,100 +82,84 @@ struct Bitstream {
     // For bit reading
     u32 bit_buffer;
     u32 bit_count;
-    
-    b8 init(void* memory, u32 memory_size);
-    b8 alloc(Arena* arena, u32 capacity);
-    void reset();
-    b8 is_eos();
-    void* consume_block(u32 amount);
-    
-    template<typename T>
-        T* consume_struct();
-    
-    b8 write_block(void* src, u32 src_size);
-    template<typename T>
-        b8 write_struct(T item);
-    
-    u32 consume_bits(u32 amount);
-    
 };
 
-b8
-Bitstream::init(void* memory, u32 memory_size) {
+static inline b8
+Bitstream_Init(Bitstream* s, void* memory, u32 memory_size) {
     if ( memory == nullptr || memory_size == 0) {
         return false;
     }
-    contents = (u8*)memory;
-    content_size = memory_size;
+    s->contents = (u8*)memory;
+    s->content_size = memory_size;
     return true;
 }
 
 
 
-b8
-Bitstream::alloc(Arena* arena, u32 capacity) {
+static inline b8
+Bitstream_Alloc(Bitstream* s, Arena* arena, u32 capacity) {
     void* memory = Arena_Push_Block(arena, capacity);
-    return init(memory, capacity); 
+    return Bitstream_Init(s, memory, capacity); 
 } 
 
-void
-Bitstream::reset() {
-    current = 0;
+static inline void
+Bitstream_Reset(Bitstream* s) {
+    s->current = 0;
 }
 
-b8
-Bitstream::is_eos() {
-    return current >= content_size;
+static inline b8
+Bitstream_IsEos(Bitstream* s) {
+    return s->current >= s->content_size;
 }
 
-void*
-Bitstream::consume_block(u32 amount) {
+static inline void*
+Bitstream_ConsumeBlock(Bitstream* s, u32 amount) {
     void* ret = nullptr;
-    if (current + amount <= content_size) {
-        ret = contents + current;
+    if (s->current + amount <= s->content_size) {
+        ret = s->contents + s->current;
     }
-    current += amount;
+    s->current += amount;
     return ret;
 }
 
 template<typename T>
-T*
-Bitstream::consume_struct() {
-    return (T*)consume_block(sizeof(T));
+static inline T*
+Bitstream_Consume(Bitstream* s) {
+    return (T*)Bitstream_ConsumeBlock(s, sizeof(T));
 }
 
 
-b8
-Bitstream::write_block(void* src, u32 src_size) {
-    if (current + src_size >= content_size) {
+static inline b8
+Bitstream_WriteBlock(Bitstream* s, void* src, u32 src_size) {
+    if (s->current + src_size >= s->content_size) {
         return false;
     }
-    copy_block(contents + current, src, src_size);
-    current += src_size; 
+    CopyBlock(s->contents + s->current, src, src_size);
+    s->current += src_size; 
     return true;
 }
 
 template<typename T>
-b8
-Bitstream::write_struct(T item) {
-    return write_block(&item, sizeof(T));
+static inline b8
+Bitstream_Write(Bitstream* s, T item) {
+    return Bitstream_WriteBlock(s, &item, sizeof(T));
 }
 
 // Bits are consumed from LSB to MSB
 u32
-Bitstream::consume_bits(u32 amount){
+Bitstream_ConsumeBits(Bitstream* s, u32 amount){
     ASSERT(amount <= 32);
     
-    while(bit_count < amount) {
-        u32 byte = *consume_struct<u8>();
-        bit_buffer |= (byte << bit_count);
-        bit_count += 8;
+    while(s->bit_count < amount) {
+        u32 byte = *Bitstream_Consume<u8>(s);
+        s->bit_buffer |= (byte << s->bit_count);
+        s->bit_count += 8;
     }
     
-    u32 result = bit_buffer & ((1 << amount) - 1); 
+    u32 result = s->bit_buffer & ((1 << amount) - 1); 
     
-    bit_count -= amount;
-    bit_buffer >>= amount;
+    s->bit_count -= amount;
+    s->bit_buffer >>= amount;
     
     return result;
 }

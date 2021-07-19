@@ -17,7 +17,7 @@ struct Platform_Input_Button {
 };
 
 struct Platform_Input {
-    String_Buffer characters;
+    StringBuffer characters;
     union {
         Platform_Input_Button buttons[8];
         struct {
@@ -48,14 +48,14 @@ struct Platform_Input {
 
 b8
 Platform_Input::alloc(Arena* arena) {
-    return characters.alloc(arena, 10);
+    return StringBuffer_Alloc(&characters, arena, 10);
 }
 
 
 b8
 Platform_Input::try_push_character_input(u8 c) {
     if (c >= 32 && c <= 126) {
-        characters.push(c);
+        StringBuffer_Push(&characters, c);
         return true;
     }
     return false;
@@ -63,7 +63,7 @@ Platform_Input::try_push_character_input(u8 c) {
 
 void
 Platform_Input::update() {
-    characters.clear();
+    StringBuffer_Clear(&characters);
     for (auto&& itr : buttons) {
         itr.before = itr.now;
     }

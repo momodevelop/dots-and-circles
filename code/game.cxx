@@ -12,10 +12,10 @@ cmd_jump(Debug_Console* console, void* context, String args) {
     defer{ Arena_Clear(g_scratch); };
     
     String buffer = {};
-    String_Split_Result arg_list = args.split(g_scratch, ' ');
+    String_Split_Result arg_list = String_Split(args, g_scratch, ' ');
     if ( arg_list.item_count != 2 ) {
         // Expect two arguments
-        buffer.init("Expected only 2 arguments");
+        buffer = String_Create("Expected only 2 arguments");
         console->push_info(buffer, 
                            C4F_RED);
         return;
@@ -23,31 +23,31 @@ cmd_jump(Debug_Console* console, void* context, String args) {
     
     String state_to_chage_to = arg_list.items[1];
     if (state_to_chage_to == "main") {
-        buffer.init("Jumping to Main");
+        buffer = String_Create("Jumping to Main");
         console->push_info(buffer, 
                            C4F_YELLOW);
         perm_state->next_game_mode = GAME_MODE_MAIN;
     }
     else if (state_to_chage_to == "splash") {
-        buffer.init("Jumping to Splash");
+        buffer = String_Create("Jumping to Splash");
         console->push_info(buffer,  
                            C4F_YELLOW);
         perm_state->next_game_mode = GAME_MODE_SPLASH;
     }
     else if (state_to_chage_to == "sandbox") {
-        buffer.init("Jumping to Sandbox");
+        buffer = String_Create("Jumping to Sandbox");
         console->push_info(buffer, 
                            C4F_YELLOW);
         perm_state->next_game_mode = GAME_MODE_SANDBOX;
     }
     else if (state_to_chage_to == "anime") {
-        buffer.init("Jumping to Anime");
+        buffer = String_Create("Jumping to Anime");
         console->push_info(buffer, 
                            C4F_YELLOW);
         perm_state->next_game_mode = GAME_MODE_ANIME_TEST;
     }
     else {
-        buffer.init("Invalid state to jump to");
+        buffer = String_Create("Invalid state to jump to");
         console->push_info(buffer, 
                            C4F_RED);
     }
@@ -139,7 +139,7 @@ GameUpdateFunc(game_update)
         // Init console
         {
             String buffer = {};
-            buffer.init("jump");
+            buffer = String_Create("jump");
             
             if (!debug_state->console.init(&debug_state->arena, 16)) {
                 return false;
@@ -222,13 +222,13 @@ GameUpdateFunc(game_update)
     }
     
     String buffer = {};
-    buffer.init("Debug Memory: ");
+    buffer = String_Create("Debug Memory: ");
     debug_state->inspector.push_u32(buffer,
                                     Arena_Remaining(&debug_state->arena));
-    buffer.init("Mode Memory: ");
+    buffer = String_Create("Mode Memory: ");
     debug_state->inspector.push_u32(buffer,
                                     Arena_Remaining(perm_state->mode_arena.arena));
-    buffer.init("Trans Memory: ");
+    buffer = String_Create("Trans Memory: ");
     debug_state->inspector.push_u32(buffer,
                                     Arena_Remaining(&tran_state->arena));
     

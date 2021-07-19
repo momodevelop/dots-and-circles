@@ -2,108 +2,99 @@
 #ifndef __MOMO_MAILBOX_H__
 #define __MOMO_MAILBOX_H__
 
-struct Mailbox_Entry_Header {
+struct Mailbox_EntryHeader {
     u32 type;
     u32 offset_to_data;
 };
 
 struct Mailbox {
-    
     u8* memory;
     u8* data_memory_at;
     u8* entry_memory_start;
     u8* entry_memory_at;   
     u32 memory_size;
     u32 entry_count;
-    
-    inline b8 init(void * mem, u32 mem_size);
-    inline void clear();
-    inline Mailbox_Entry_Header* get_entry(u32 index);
-    inline void* get_entry_data(Mailbox_Entry_Header* entry);
-    inline void* push_block(u32 size, u8 alignment, u32 id);
-    
-    template<typename T>
-        inline T* push_struct(u32);
 };
 
-b8
-Mailbox::init(void* mem, u32 mem_size) {
-    if (!mem || mem_size == 0) {
+
+static inline void
+Mailbox_Clear(Mailbox* m) {
+    m->data_memory_at = m->memory;
+    
+    u8* start = m->memory + m->memory_size - sizeof(Mailbox_EntryHeader);
+    u8 adjust = AlignMemoryBackwardDiff(start, alignof(Mailbox_EntryHeader));
+    start-= adjust;
+    
+    m->entry_memory_start = start;
+    m->entry_memory_at = start;
+    
+    m->entry_count = 0;
+}
+
+
+
+static inline b8
+Mailbox_Init(Mailbox* m, void* memory, u32 memory_size) {
+    if (!memory || memory_size == 0) {
         return false;
     }
     
-    memory = (u8*)mem;
-    memory_size = mem_size;
-    clear();
+    m->memory = (u8*)memory;
+    m->memory_size = memory_size;
+    
+    Mailbox_Clear(m);
     
     return true;
 }
 
 
-
-void
-Mailbox::clear() {
-    data_memory_at = memory;
-    
-    u8* start = memory + memory_size - sizeof(Mailbox_Entry_Header);
-    u8 adjust = align_memory_backward_diff(start, alignof(Mailbox_Entry_Header));
-    start-= adjust;
-    
-    entry_memory_start = start;
-    entry_memory_at = start;
-    
-    entry_count = 0;
-}
-
 // NOTE(Momo): Accessors and Iterators
-Mailbox_Entry_Header*
-Mailbox::get_entry(u32 index) {
-    ASSERT(index < entry_count);
-    return (Mailbox_Entry_Header*)(entry_memory_start - index * sizeof(Mailbox_Entry_Header));
+static inline Mailbox_EntryHeader*
+Mailbox_GetEntry(Mailbox* m, u32 index) {
+    ASSERT(index < m->entry_count);
+    return (Mailbox_EntryHeader*)(m->entry_memory_start - index * sizeof(Mailbox_EntryHeader));
 }
 
 
-void*
-Mailbox::get_entry_data(Mailbox_Entry_Header* entry) {
-    return (memory + entry->offset_to_data);
+static inline void*
+Mailbox_GetEntryData(Mailbox* m, Mailbox_EntryHeader* entry) {
+    return (m->memory + entry->offset_to_data);
 }
 
 
-void*
-Mailbox::push_block(u32 size, 
-                    u8 alignment,
-                    u32 id) 
+static inline void*
+_Mailbox_PushBlock(Mailbox* m, u32 size, u8 alignment,u32 id) 
 {
     // Allocate data
-    u8 data_adjust = align_memory_forward_diff(data_memory_at, alignment);
+    u8 data_adjust = AlignMemoryForwardDiff(m->data_memory_at, alignment);
     u32 data_size = size;
     
     // Allocate entry
-    u8 entry_adjust = align_memory_backward_diff(entry_memory_at, alignof(Mailbox_Entry_Header));
-    u32 entry_size = sizeof(Mailbox_Entry_Header);
+    u8 entry_adjust = AlignMemoryBackwardDiff(m->entry_memory_at, alignof(Mailbox_EntryHeader));
+    u32 entry_size = sizeof(Mailbox_EntryHeader);
     
-    if (entry_memory_at - entry_size - entry_adjust < data_memory_at + data_size +  data_adjust) 
+    if (m->entry_memory_at - entry_size - entry_adjust < m->data_memory_at + data_size +  data_adjust) 
     {
         return nullptr; 
     }
     
-    void* data = ((u8*)data_memory_at + data_adjust);
-    data_memory_at += data_size + data_adjust;
+    void* data = ((u8*)m->data_memory_at + data_adjust);
+    m->data_memory_at += data_size + data_adjust;
     
-    auto* entry = (Mailbox_Entry_Header*)((u8*)entry_memory_at + entry_adjust);
+    auto* entry = (Mailbox_EntryHeader*)((u8*)m->entry_memory_at + entry_adjust);
     
-    entry->offset_to_data = (u32)((u8*)data - memory);
+    entry->offset_to_data = (u32)((u8*)data - m->memory);
     
     entry->type = id; 
-    entry_memory_at -= entry_size;
-    ++entry_count;
+    m->entry_memory_at -= entry_size;
+    ++m->entry_count;
     
     return data;
 }
 
 template<typename T>
-T*
-Mailbox::push_struct(u32 id) {
-    return (T*)push_block(sizeof(T), alignof(T), id);
+static inline T*
+Mailbox_Push(Mailbox* m, u32 id) {
+    return (T*)_Mailbox_PushBlock(m, sizeof(T), alignof(T), id);
 }
 #endif

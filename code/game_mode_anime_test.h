@@ -52,8 +52,8 @@ struct Game_Mode_Anime_Test {
 static inline void 
 init_anime_test_mode(Permanent_State* perm_state) {
     Game_Mode_Anime_Test* mode = perm_state->anime_test_mode;     
-    mode->entity.pos = v3f::create(0.f, 0.f, 0.f);
-    mode->entity.size = v3f::create(48.f*2, 48.f*2, 1.f);
+    mode->entity.pos = v3f_Create(0.f, 0.f, 0.f);
+    mode->entity.size = v3f_Create(48.f*2, 48.f*2, 1.f);
     create(&mode->entity.anime_com, ANIME_KARU_FRONT, 0.25f);
     
 }

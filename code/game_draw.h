@@ -39,8 +39,8 @@ draw_text(Font_ID font_id,
         // NOTE(Momo): Set bottom left as origin
         m44f A = m44f::create_translation(0.5f, 0.5f, 0.f); 
         
-        f32 boxWidth = width(box);
-        f32 boxHeight = height(box);
+        f32 boxWidth = Width(box);
+        f32 boxHeight = Height(box);
         
         m44f S = m44f::create_scale(boxWidth * size, 
                                     boxHeight* size, 

@@ -7,8 +7,8 @@ aabb2u::create(v2u min, v2u max) {
 
 aabb2u
 aabb2u::create(u32 min_x, u32 min_y, u32 max_x, u32 max_y) {
-    v2u min = v2u::create(min_x, min_y);
-    v2u max = v2u::create(max_x, max_y);
+    v2u min = { min_x, min_y };
+    v2u max = { max_x, max_y };
     
     return create(min, max);
     
@@ -16,24 +16,24 @@ aabb2u::create(u32 min_x, u32 min_y, u32 max_x, u32 max_y) {
 
 
 static inline u32
-width(aabb2u a) {
+Width(aabb2u a) {
     return a.max.x - a.min.x;
 }
 
 static inline u32
-height(aabb2u a) {
+Height(aabb2u a) {
     return a.max.y - a.min.y; 
 }
 
 static inline v2u
-dimensions(aabb2u a) {
-    return { width(a), height(a) };
+Dimensions(aabb2u a) {
+    return { Width(a), Height(a) };
 }
 
 static inline aabb2f
-mul(aabb2f lhs, f32 rhs) {
-    lhs.min = mul(lhs.min, rhs);
-    lhs.max = mul(lhs.max, rhs);
+Mul(aabb2f lhs, f32 rhs) {
+    lhs.min = Mul(lhs.min, rhs);
+    lhs.max = Mul(lhs.max, rhs);
     return lhs;
 }
 
@@ -59,18 +59,18 @@ aabb2u::create_wh(u32 w, u32 h) {
 
 //~ NOTE(Momo): aabb2f
 static inline f32
-width(aabb2f a) {
+Width(aabb2f a) {
     return a.max.x - a.min.x;
 }
 
 static inline f32
-height(aabb2f a) {
+Height(aabb2f a) {
     return a.max.y - a.min.y; 
 }
 
 static inline f32
-aspect_ratio(aabb2f a) {
-    return width(a)/height(a);
+Aspect(aabb2f a) {
+    return Width(a)/Height(a);
 }
 
 
@@ -93,16 +93,16 @@ aabb3f::create_centered(v3f dimensions, v3f anchor) {
 static inline aabb2f
 to_aabb2f(aabb2i v) {
     aabb2f ret = {};
-    ret.min = to_v2f(v.min);
-    ret.max = to_v2f(v.max);
+    ret.min = v2f_Create(v.min);
+    ret.max = v2f_Create(v.max);
     return ret;
 }
 
 static inline aabb2f
 to_aabb2f(aabb2u v) {
     aabb2f Ret = {};
-    Ret.min = to_v2f(v.min);
-    Ret.max = to_v2f(v.max);
+    Ret.min = v2f_Create(v.min);
+    Ret.max = v2f_Create(v.max);
     return Ret;
 }
 

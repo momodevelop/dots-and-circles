@@ -340,7 +340,7 @@ load_png_from_memory(Png_Image* png,
     }
     
     // NOTE(Momo): IHDR must appear first
-    if (chunk_header->type_u32 != four_cc("IHDR")) { 
+    if (chunk_header->type_u32 != FourCC("IHDR")) { 
         return PngError_FirstHeaderIsNotIHDR; 
     }
     auto* IHDR = stream.consume_struct<Png_Chunk_data_IHDR>();
@@ -376,8 +376,8 @@ load_png_from_memory(Png_Image* png,
             return PngError_UnsupportedFormat;
         }
     }
-    endian_swap(&IHDR->width);
-    endian_swap(&IHDR->height);
+    EndianSwap(&IHDR->width);
+    EndianSwap(&IHDR->height);
     
     // Just consume the footer. 
     // TODO: CRC check with footer
@@ -394,9 +394,9 @@ load_png_from_memory(Png_Image* png,
     // Search for IDAT header
     while(!stream.is_eos()) {
         chunk_header = stream.consume_struct<Png_Chunk_Header>();
-        endian_swap(&chunk_header->length);
+        EndianSwap(&chunk_header->length);
         switch(chunk_header->type_u32) {
-            case four_cc("IDAT"): {
+            case FourCC("IDAT"): {
                 // temporary stream just to process IDAT
                 Bitstream idat_stream = stream; 
                 
@@ -474,10 +474,10 @@ load_png_from_memory(Png_Image* png,
                     unfiltered_image_stream_mark.revert();
                 }
                 
-                stream.consume_block(chunk_header->length);
+                stream.ConsumeBlock(chunk_header->length);
                 
             } break;
-            case four_cc("IEND"): {
+            case FourCC("IEND"): {
                 png->width = IHDR->width;
                 png->height = IHDR->height;
                 png->channels = image_channels;
@@ -486,7 +486,7 @@ load_png_from_memory(Png_Image* png,
             } break;
             default: {
                 // NOTE(Momo): For now, we don't care about the rest of the chunks
-                stream.consume_block(chunk_header->length);
+                stream.ConsumeBlock(chunk_header->length);
                 
             };
         }

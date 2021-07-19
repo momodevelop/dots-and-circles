@@ -95,8 +95,8 @@ init_splash_mode(Permanent_State* perm_state) {
     
     // NOTE(Momo): Create entities
     {
-        mode->images[0].position = v3f::create( 0.f, 0.f, 0.f );
-        mode->images[0].scale = v3f::create(400.f, 400.f, 1.f);
+        mode->images[0].position = v3f_Create( 0.f, 0.f, 0.f );
+        mode->images[0].scale = v3f_Create(400.f, 400.f, 1.f);
         mode->images[0].colors = c4f::create(1.f, 1.f, 1.f, 1.f);
         mode->images[0].texture_aabb = IMAGE_RYOJI;
         mode->images[0].cd_timer = 0.f;
@@ -107,7 +107,7 @@ init_splash_mode(Permanent_State* perm_state) {
         mode->images[0].end_x = -200.f;
         
         mode->images[1].position = {};
-        mode->images[1].scale = v3f::create(400.f, 400.f, 1.f);
+        mode->images[1].scale = v3f_Create(400.f, 400.f, 1.f);
         mode->images[1].colors = c4f::create(1.f, 1.f, 1.f, 1.f);
         mode->images[1].texture_aabb = IMAGE_YUU;
         mode->images[1].cd_timer = 0.f;
@@ -117,8 +117,8 @@ init_splash_mode(Permanent_State* perm_state) {
         mode->images[1].start_x = 1000.f;
         mode->images[1].end_x = 200.f;
         
-        mode->blackout.position = v3f::create(0.f, 0.f, 1.0f);
-        mode->blackout.scale = v3f::create(1600.f, 900.f, 1.f);
+        mode->blackout.position = v3f_Create(0.f, 0.f, 1.0f);
+        mode->blackout.scale = v3f_Create(1600.f, 900.f, 1.f);
         mode->blackout.colors = c4f::create(0.f, 0.f, 0.f, 0.0f);
         mode->blackout.cd_timer = 0.f;
         mode->blackout.cd_duration = 3.f;
@@ -137,10 +137,10 @@ update_splash_mode(Permanent_State* perm_state,
     
     // NOTE: Camera
     {
-        v3f position = v3f::create(0.f, 0.f, 0.f);
-        v3f anchor = v3f::create(0.5f, 0.5f, 0.5f);
+        v3f position = v3f_Create(0.f, 0.f, 0.f);
+        v3f anchor = v3f_Create(0.5f, 0.5f, 0.5f);
         c4f color = c4f::create(0.f, 0.3f, 0.3f, 1.f);
-        v3f dimensions = v3f::create(800.f,
+        v3f dimensions = v3f_Create(800.f,
                                      800.f,
                                      800.f);
         

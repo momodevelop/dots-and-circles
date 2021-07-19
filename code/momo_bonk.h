@@ -5,7 +5,7 @@
 
 static inline b8
 Bonk2_IsCircleXCircle(circle2f L, circle2f R) {
-	f32 DistSq = distance_sq(L.origin, R.origin);
+	f32 DistSq = DistanceSq(L.origin, R.origin);
 	f32 RSq = L.radius + R.radius;
     RSq *= RSq;
 	return DistSq < RSq;
@@ -15,21 +15,21 @@ static inline b8
 Bonk2_IsCircleXLine(circle2f C, line2f L) {
     // NOTE(Momo): Extend the ends of the lines based on radius of the circle, and use that to form a parametric equation of the line (ray)
     ray2f R = ray2f::create(L);
-    v2f NormalizedDir = normalize(R.dir);
-    L.min = sub(L.min, mul(NormalizedDir, C.radius));
-    L.max = add(L.max, mul(NormalizedDir, C.radius));
+    v2f NormalizedDir = Normalize(R.dir);
+    L.min = Sub(L.min, Mul(NormalizedDir, C.radius));
+    L.max = Add(L.max, Mul(NormalizedDir, C.radius));
     R = ray2f::create(L);
     
-    v2f OriginToCircle = sub(C.origin, R.origin);
-    v2f OriginToClosestPtOnLine = project(OriginToCircle, R.dir); 
-    v2f ClosestPtOnLine = add(R.origin, OriginToClosestPtOnLine);
+    v2f OriginToCircle = Sub(C.origin, R.origin);
+    v2f OriginToClosestPtOnLine = Project(OriginToCircle, R.dir); 
+    v2f ClosestPtOnLine = Add(R.origin, OriginToClosestPtOnLine);
     
     // NOTE(Momo): Find the time of intersection of the ClosestPtOnLine
     f32 Time = {}; 
-    if (!is_equal(R.dir.x, 0.f)) {
+    if (!IsEqual(R.dir.x, 0.f)) {
         Time = (ClosestPtOnLine.x - R.origin.x)/R.dir.x;
     }
-    else if (!is_equal(R.dir.y, 0.f)) {
+    else if (!IsEqual(R.dir.y, 0.f)) {
         Time = (ClosestPtOnLine.y - R.origin.y)/R.dir.y;
     }
     else {
@@ -42,7 +42,7 @@ Bonk2_IsCircleXLine(circle2f C, line2f L) {
     
     // NOTE(Momo): At this point, we are within range of the line segment, so we just have to check if the circle's radius is greater than its distance from the line.
     f32 CircleRadiusSq = C.radius * C.radius;
-    f32 CircleDistFromLineSq = distance_sq(OriginToCircle, 
+    f32 CircleDistFromLineSq = DistanceSq(OriginToCircle, 
                                            OriginToClosestPtOnLine);
     return CircleRadiusSq > CircleDistFromLineSq;
 }
@@ -66,10 +66,10 @@ Bonk2_IsDynaCircleXDynaCircle(circle2f CircleA,
                               v2f VelocityB) 
 {
     
-    f32 VelAMag = length_sq(VelocityA);
-    f32 VelBMag = length_sq(VelocityB);
-    b8 VelADead = is_equal(VelAMag, 0.f);
-    b8 VelBDead = is_equal(VelBMag, 0.f);
+    f32 VelAMag = LengthSq(VelocityA);
+    f32 VelBMag = LengthSq(VelocityB);
+    b8 VelADead = IsEqual(VelAMag, 0.f);
+    b8 VelBDead = IsEqual(VelBMag, 0.f);
     
     
     if (VelADead && VelBDead) {
@@ -82,7 +82,7 @@ Bonk2_IsDynaCircleXDynaCircle(circle2f CircleA,
         return Bonk2_IsDynaCircleXCircle(CircleA, VelocityA, CircleB);
     }
     else {
-        v2f RelativeVel = sub(VelocityB, VelocityA); 
+        v2f RelativeVel = Sub(VelocityB, VelocityA); 
         return Bonk2_IsDynaCircleXCircle(CircleB, RelativeVel, CircleA);
     }
 }

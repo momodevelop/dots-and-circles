@@ -14,7 +14,7 @@ update_death_bomb(Game_Mode_Main* mode, f32 dt) {
         if (Bonk2_IsCircleXCircle(death_bomb_circle,
                                   BCircle)) 
         {
-            v2f vector_to_bullet = normalize(b->position - death_bomb->position);
+            v2f vector_to_bullet = Normalize(b->position - death_bomb->position);
             v2f spawn_pos = death_bomb->position + vector_to_bullet * death_bomb->radius;
             spawn_particles(mode, spawn_pos, 5);
             return true;
@@ -32,7 +32,7 @@ update_death_bomb(Game_Mode_Main* mode, f32 dt) {
         // NOTE(Momo): We can safely assume that the circles are not moving
         if (Bonk2_IsCircleXCircle(death_bomb_circle, ECir)) 
         {
-            v2f vector_to_bullet = normalize(e->position - death_bomb->position);
+            v2f vector_to_bullet = Normalize(e->position - death_bomb->position);
             v2f spawn_pos = death_bomb->position + vector_to_bullet * death_bomb->radius;
             spawn_particles(mode, spawn_pos, 5);
             return true;

@@ -37,7 +37,7 @@ struct Font {
     
     inline void set_kerning(u32 codepoint_a, u32 codepoint_b, u32 kerning);
     inline u32 get_kerning(u32 codepoint_a, u32 codepoint_b);
-    inline f32 height();
+    inline f32 Height();
     inline Font_Glyph* get_glyph(u32 codepoint);
 };
 
@@ -83,7 +83,7 @@ struct Assets {
 
 //~ NOTE(Momo): Font functions
 f32 
-Font::height() {
+Font::Height() {
     return ABS(ascent) + ABS(descent);
 }
 
@@ -254,8 +254,7 @@ Assets::init(Arena* arena)
     {        
         defer { Arena_Clear(g_scratch); };
         
-        String signature = {};
-        signature.init(GAME_ASSET_FILE_SIGNATURE);
+        String signature = String_Create(GAME_ASSET_FILE_SIGNATURE);
         
         void* read_sig = read_block(&asset_file,
                                     g_scratch,

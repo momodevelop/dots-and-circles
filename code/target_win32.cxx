@@ -162,12 +162,12 @@ win32_file_time_to_large_int(FILETIME file_time) {
 }
 
 static inline LONG
-width(RECT value) {
+Width(RECT value) {
     return value.right - value.left;
 }
 
 static inline LONG
-height(RECT value) {
+Height(RECT value) {
     return value.bottom - value.top;
 }
 
@@ -920,9 +920,9 @@ win32_process_messages(HWND window,
                 input->render_mouse_pos.x = input->window_mouse_pos.x - RenderRegion.min.x;
                 input->render_mouse_pos.y = input->window_mouse_pos.y - RenderRegion.min.y;
                 
-                v2f DesignDimsF = to_v2f(state->opengl->design_dimensions);
-                v2u RenderDimsU = dimensions(RenderRegion);
-                v2f RenderDimsF = to_v2f(RenderDimsU);
+                v2f DesignDimsF = v2f_Create(state->opengl->design_dimensions);
+                v2u RenderDimsU = Dimensions(RenderRegion);
+                v2f RenderDimsF = v2f_Create(RenderDimsU);
                 v2f DesignToRenderRatio = Ratio(DesignDimsF, RenderDimsF);
                 
                 input->design_mouse_pos.x = input->render_mouse_pos.x * DesignToRenderRatio.w;
@@ -1092,8 +1092,8 @@ win32_create_window(HINSTANCE instance,
                              Style,
                              WindowRect.left,
                              WindowRect.top,
-                             width(WindowRect),
-                             height(WindowRect),
+                             Width(WindowRect),
+                             Height(WindowRect),
                              0,
                              0,
                              instance,
@@ -1299,8 +1299,8 @@ win32_init_render_commands(Mailbox* render_commands,
         win32_log("[Win32::render_commands] Failed to allocate\n"); 
         return false;
     }
-    render_commands->init(RenderCommandsMemory,
-                          RenderCommandsMemorySize);
+    Mailbox_Init(render_commands, RenderCommandsMemory,
+                 RenderCommandsMemorySize);
     win32_log("[Win32::render_commands] Allocated: %d bytes\n", RenderCommandsMemorySize);
     
     return true;
@@ -1417,7 +1417,7 @@ WinMain(HINSTANCE instance,
             win32_log("[Win32::Main] Reloading game code!\n");
             game_code.unload();
             game_code.load();
-            zero_block(game_memory.head.transient_memory, 
+            ZeroBlock(game_memory.head.transient_memory, 
                        game_memory.head.transient_memory_size);
         }
         
@@ -1463,7 +1463,7 @@ WinMain(HINSTANCE instance,
         
         
         state->opengl->render(&render_commands);
-        render_commands.clear();
+        Mailbox_Clear(&render_commands);
         
         win32_flush_audio(&audio, platform_audio_output);
         

@@ -73,7 +73,7 @@ Enemy_DoStateActive(Enemy* enemy, Player* player, Game_Mode_Main* mode, f32 dt) 
             Enemy_Shoot_Homing* shoot = &enemy->shoot_homing;
             shoot->timer += dt;
             if (shoot->timer > shoot->duration) {
-                v2f direction = normalize(player->position - enemy->position);
+                v2f direction = Normalize(player->position - enemy->position);
                 spawn_bullet(mode, enemy->position, direction, 200.f, shoot->mood);
                 shoot->timer = 0.f;
             }
@@ -83,7 +83,7 @@ Enemy_DoStateActive(Enemy* enemy, Player* player, Game_Mode_Main* mode, f32 dt) 
             shoot->timer += dt;
             static m22f rotate_mtx = m22f::create_rotation(TAU/8);
             if (shoot->timer > shoot->duration) {
-                v2f dir = v2f::create(1.f, 0.f);
+                v2f dir = v2f_Create(1.f, 0.f);
                 for (u32 I = 0; I < 8; ++I) {
                     dir = rotate_mtx * dir;
                     spawn_bullet(mode, enemy->position, dir, 200.f, shoot->mood);

@@ -101,8 +101,7 @@ Renderer_CalcRenderRegion(u32 WindowWidth,
 
 static inline void
 Renderer_SetBasis(Mailbox* commands, m44f basis) {
-    auto* Data = 
-        commands->push_struct<renderer_command_set_basis>(RENDERER_COMMAND_SET_BASIS);
+    auto* Data = Mailbox_Push<renderer_command_set_basis>(commands, RENDERER_COMMAND_SET_BASIS);
     Data->Basis = basis;
 }
 
@@ -111,7 +110,7 @@ Renderer_SetOrthoCamera(Mailbox* commands,
                         v3f position,
                         aabb3f frustum)   
 {
-    auto* Data = commands->push_struct<renderer_command_set_basis>(RENDERER_COMMAND_SET_BASIS);
+    auto* Data = Mailbox_Push<renderer_command_set_basis>(commands, RENDERER_COMMAND_SET_BASIS);
     
     auto P  = m44f::create_orthographic(frustum.min.x,  
                                         frustum.max.x, 
@@ -126,7 +125,7 @@ Renderer_SetOrthoCamera(Mailbox* commands,
 
 static inline void
 Renderer_ClearColor(Mailbox* commands, c4f colors) {
-    auto* Data = commands->push_struct<renderer_command_clear_color>(RENDERER_COMMAND_CLEAR_COLOR);
+    auto* Data = Mailbox_Push<renderer_command_clear_color>(commands, RENDERER_COMMAND_CLEAR_COLOR);
     Data->Colors = colors;
 }
 
@@ -140,7 +139,7 @@ Renderer_DrawTexturedQuad(Mailbox* commands,
                           quad2f texture_coords = Quad2f_CreateDefaultUV())  
 
 {
-    auto* Data = commands->push_struct<renderer_command_draw_textured_quad>(RENDERER_COMMAND_DRAW_TEXTURED_QUAD);
+    auto* Data = Mailbox_Push<renderer_command_draw_textured_quad>(commands, RENDERER_COMMAND_DRAW_TEXTURED_QUAD);
     
     Data->Colors = colors;
     Data->Transform = transform;
@@ -153,7 +152,7 @@ Renderer_DrawQuad(Mailbox* commands,
                   c4f colors, 
                   m44f transform) 
 {
-    auto* Data = commands->push_struct<renderer_command_draw_quad>(RENDERER_COMMAND_DRAW_QUAD);
+    auto* Data = Mailbox_Push<renderer_command_draw_quad>(commands, RENDERER_COMMAND_DRAW_QUAD);
     Data->Colors = colors;
     Data->Transform = transform;
 }
@@ -170,12 +169,12 @@ Renderer_DrawLine2f(Mailbox* commands,
         SWAP(Line.min, Line.max);
     }
     
-    v2f LineVector = sub(Line.max, Line.min);
-    f32 LineLength = length(LineVector);
-    v2f LineMiddle = midpoint(Line.max, Line.min);
+    v2f LineVector = Sub(Line.max, Line.min);
+    f32 LineLength = Length(LineVector);
+    v2f LineMiddle = Midpoint(Line.max, Line.min);
     
     v2f XAxis = { 1.f, 0.f };
-    f32 Angle = angle_between(LineVector, XAxis);
+    f32 Angle = AngleBetween(LineVector, XAxis);
     
     //TODO: Change line3f
     m44f T = m44f::create_translation(LineMiddle.x, LineMiddle.y, PosZ);
@@ -198,7 +197,7 @@ Renderer_DrawCircle2f(Mailbox* commands,
     ASSERT(LineCount >= 3);
     f32 AngleIncrement = TAU / LineCount;
     v2f Pt1 = { 0.f, Circle.radius }; 
-    v2f Pt2 = rotate(Pt1, AngleIncrement);
+    v2f Pt2 = Rotate(Pt1, AngleIncrement);
     
     for (u32 I = 0; I < LineCount; ++I) {
         v2f LinePt1 = Pt1 + Circle.origin;
@@ -211,7 +210,7 @@ Renderer_DrawCircle2f(Mailbox* commands,
                             PosZ);
         
         Pt1 = Pt2;
-        Pt2 = rotate(Pt1, AngleIncrement);
+        Pt2 = Rotate(Pt1, AngleIncrement);
         
     }
 }
@@ -264,13 +263,13 @@ Renderer_DrawAabb2f(Mailbox* commands,
 }
 
 static inline void 
-Renderer_SetDesignResolution(Mailbox* Commands, 
-                             u32 Width, 
-                             u32 Height)  
+Renderer_SetDesignResolution(Mailbox* commands, 
+                             u32 width, 
+                             u32 height)  
 {
-    auto* Data = Commands->push_struct<renderer_command_set_design_resolution>(RENDERER_COMMAND_TYPE_SET_DESIGN_RESOLUTION);
-    Data->Width = Width;
-    Data->Height = Height;
+    auto* Data = Mailbox_Push<renderer_command_set_design_resolution>(commands, RENDERER_COMMAND_TYPE_SET_DESIGN_RESOLUTION);
+    Data->Width = width;
+    Data->Height = height;
 }
 
 #endif //GAME_RENDERER_H

@@ -31,7 +31,7 @@ update_wave(Game_Mode_Main* mode,
                 pattern->timer += dt;
                 if (pattern->spawn_timer >= pattern->spawn_duration ) {
                     v2f pos = 
-                        v2f::create(RngSeries_Bilateral(&mode->rng) * GAME_DESIGN_WIDTH * 0.5f,
+                        v2f_Create(RngSeries_Bilateral(&mode->rng) * GAME_DESIGN_WIDTH * 0.5f,
                                     RngSeries_Bilateral(&mode->rng) * GAME_DESIGN_HEIGHT * 0.5f);
                     
                     

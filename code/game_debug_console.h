@@ -11,7 +11,7 @@ struct Debug_Console_Command {
 };
 
 struct Debug_Console_Line {
-    String_Buffer text;
+    StringBuffer text;
     c4f color;
 };
 
@@ -60,14 +60,14 @@ Debug_Console::init(Arena* arena, u32 max_commands)
     
     transit_timer = Timer::create(0.25f);
     
-    dimensions = v3f::create(GAME_DESIGN_WIDTH, 240.f, 1.f);
-    start_position = v3f::create(0.f, 
-                                 -GAME_DESIGN_HEIGHT/2 - dimensions.h/2,
-                                 z_position);
-    end_position = v3f::create(0.f, 
-                               -GAME_DESIGN_HEIGHT/2 + dimensions.h/2,
-                               z_position);
-    position = v3f::create();
+    dimensions = v3f_Create(GAME_DESIGN_WIDTH, 240.f, 1.f);
+    start_position = v3f_Create(0.f, 
+                                -GAME_DESIGN_HEIGHT/2 - dimensions.h/2,
+                                z_position);
+    end_position = v3f_Create(0.f, 
+                              -GAME_DESIGN_HEIGHT/2 + dimensions.h/2,
+                              z_position);
+    position = v3f_Create();
     
     // NOTE(Momo): Timers related to type
     start_pop_repeat_timer = Timer::create(0.5f);
@@ -77,7 +77,7 @@ Debug_Console::init(Arena* arena, u32 max_commands)
         return false;
     }
     
-    if (!input_line.text.alloc(arena, line_length)) {
+    if (!StringBuffer_Alloc(&input_line.text, arena, line_length)) {
         return false;
     }
     
@@ -85,7 +85,7 @@ Debug_Console::init(Arena* arena, u32 max_commands)
         return false;
     }
     for (u32 i = 0; i < info_lines.count; ++i) {
-        if (!info_lines[i].text.alloc(arena, line_length)){
+        if (!StringBuffer_Alloc(&info_lines[i].text, arena, line_length)){
             return false;
         }
     }
@@ -117,18 +117,18 @@ Debug_Console::push_info(String str, c4f color) {
         u32 j = info_lines.count - 1 - i;
         Debug_Console_Line* dest = info_lines + j;
         Debug_Console_Line* src = info_lines + j - 1;
-        dest->text.copy(src->text.str);
+        StringBuffer_Copy(&dest->text, src->text.str);
         dest->color = src->color;
     }
     info_lines[0].color = color;
-    info_lines[0].text.clear();
-    info_lines[0].text.copy(str);
+    StringBuffer_Clear(&info_lines[0].text);
+    StringBuffer_Copy(&info_lines[0].text, str);
 }
 
 
 void 
 Debug_Console::pop() {
-    input_line.text.pop();
+    StringBuffer_Pop(&input_line.text);
 }
 
 void 
@@ -160,9 +160,9 @@ Debug_Console::update(f32 dt)
     if (is_active) {
         transit_timer.tick(dt);
         if (g_input->characters.count > 0 && 
-            g_input->characters.count <= input_line.text.remaining()) 
+            g_input->characters.count <= StringBuffer_Remaining(&input_line.text))
         {  
-            input_line.text.push(g_input->characters.str);
+            StringBuffer_Push(&input_line.text, g_input->characters.str);
         }
         
         // Remove character backspace logic
@@ -201,10 +201,7 @@ Debug_Console::update(f32 dt)
                     break;
                 }
             }
-            String command_str = {};
-            command_str.init(input_line_str, 
-                             min, 
-                             max); 
+            String command_str = String_Create(input_line_str, min, max);
             
             // Send a command to a callback
             for (u32 i = 0; i < commands.count; ++i) {
@@ -215,7 +212,8 @@ Debug_Console::update(f32 dt)
                                       input_line_str);
                 }
             }
-            input_line.text.clear();
+            
+            StringBuffer_Clear(&input_line.text);
             
         }
     }
@@ -239,7 +237,7 @@ Debug_Console::render()
     f32 left = position.x - dimensions.w * 0.5f;
     f32 line_height = dimensions.h / (info_lines.count + 1);
     f32 font_size = line_height * 0.9f;
-    f32 font_height = font->height() * font_size;
+    f32 font_height = font->Height() * font_size;
     
     f32 padding_h = (line_height - font_height) * 0.5f  + ABS(font->descent) * font_size; 
     f32 padding_w = dimensions.w * 0.005f;
